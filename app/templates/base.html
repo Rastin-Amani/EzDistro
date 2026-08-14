@@ -1,0 +1,359 @@
+<!doctype html>
+<html
+    data-theme="{{ 'light' if tenant.theme == 'custom' else (tenant.theme or 'seoz') }}"
+    dir="rtl"
+>
+    <head>
+        <meta charset="UTF-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+        />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        
+        <link rel="manifest" href="/manifest.json" />
+        <link rel="icon" href="/favicon.ico" />
+
+        <title>{{ title or 'سئوز' }}</title>
+        <link rel="stylesheet" href="{{ url_for('static', path='/app.css') }}" />
+        
+
+
+        <script>
+            (function() {
+                var BANNER_ID = 'offline-banner';
+                var BANNER_TEXT = '\u26A0\uFE0F \u0634\u0645\u0627 \u0622\u0641\u0644\u0627\u06CC\u0646 \u0647\u0633\u062A\u06CC\u062F \u2014 \u062F\u0627\u062F\u0647\u200C\u0647\u0627\u06CC \u0630\u062E\u06CC\u0631\u0647\u200C\u0634\u062F\u0647 \u0646\u0645\u0627\u06CC\u0634 \u062F\u0627\u062F\u0647 \u0645\u06CC\u200C\u0634\u0648\u062F';
+                function createBanner() {
+                    var el = document.createElement('div');
+                    el.id = BANNER_ID;
+                    el.textContent = BANNER_TEXT;
+                    el.style.cssText = 'position:fixed;top:0;left:50%;translate:-50%;z-index:99999;background:#ffedd5;color:#9a3412;text-align:center;font-size:0.875rem;font-weight:700;padding:0.5rem 1rem;border-radius:0 0 0.5rem 0.5rem;max-width:600px;width:100%';
+                    el.style.display = navigator.onLine ? 'none' : '';
+                    document.body.prepend(el);
+                }
+                function updateBanner() {
+                    var el = document.getElementById(BANNER_ID);
+                    if (el) {
+                        el.style.display = navigator.onLine ? 'none' : '';
+                    } else if (!navigator.onLine) {
+                        createBanner();
+                    }
+                }
+                window.addEventListener('offline', createBanner);
+                window.addEventListener('online', function() {
+                    var el = document.getElementById(BANNER_ID);
+                    if (el) el.style.display = 'none';
+                });
+                document.addEventListener('DOMContentLoaded', function() {
+                    if (!navigator.onLine) createBanner();
+                });
+                // MutationObserver — recreates banner immediately after HTMX body swap, no polling gap
+                var observer = new MutationObserver(function() {
+                    if (!navigator.onLine && !document.getElementById(BANNER_ID)) {
+                        createBanner();
+                    }
+                });
+                if (document.body) {
+                    observer.observe(document.body, { childList: true, subtree: false });
+                } else {
+                    document.addEventListener('DOMContentLoaded', function() {
+                        observer.observe(document.body, { childList: true, subtree: false });
+                    });
+                }
+            })();
+        </script>
+    </head>
+
+    <body class="bg-base-200 font-sans! antialiased" hx-boost="true">
+        {% block body_start %}{% endblock %}
+        <div class="mx-auto w-full max-w-150 min-h-screen bg-base-100 shadow-2xl selection:bg-primary selection:text-primary-content">
+            
+            <div
+                id="top-progress-bar"
+                class="fixed top-0 h-0.5 bg-primary z-[9999] transition-all duration-300 ease-out w-0 opacity-0 drop-shadow-md pointer-events-none max-w-150 mx-auto"
+            ></div>
+
+            <main id="main-content" class="px-4">
+                {% block content %}{% endblock %}
+
+                <div id="modal-container"></div>
+                <div
+                    id="toast-container"
+                    class="fixed top-5 right-5 z-50 flex flex-col gap-2"
+                ></div>
+            </main>
+        </div>
+
+        {% block body_end %}{% endblock %}
+
+        <script type="module" src="{{ url_for('static', path='/app.js') }}"></script>
+
+        <script>
+            function getProgressBar() {
+                return document.getElementById('top-progress-bar');
+            }
+
+            function startProgress() {
+                const bar = getProgressBar();
+                if (!bar) return; 
+
+                bar.style.transition = 'width 0.3s ease-out, opacity 0.1s ease-in';
+                bar.style.opacity = '1';
+                bar.style.width = '30%';
+
+                setTimeout(() => {
+                    if (bar.style.opacity === '1') bar.style.width = '70%';
+                }, 400);
+            }
+
+            function stopProgress() {
+                const bar = getProgressBar();
+                if (!bar) return; 
+
+                bar.style.transition = 'width 0.2s ease-out, opacity 0.3s ease-out';
+                bar.style.width = '100%'; 
+
+                setTimeout(() => {
+                    bar.style.opacity = '0';
+                    setTimeout(() => {
+                        bar.style.transition = 'none'; 
+                        bar.style.width = '0%';
+                    }, 300);
+                }, 300);
+            }
+
+            document.addEventListener('htmx:beforeRequest', startProgress);
+            document.addEventListener('htmx:afterSettle', stopProgress);
+            window.addEventListener('beforeunload', startProgress);
+            document.addEventListener('DOMContentLoaded', stopProgress);
+        </script>
+
+        <script>
+            if (!window.toastListenerAttached) {
+                // 1. Toast Listener
+                document.addEventListener('show-toast', function (evt) {
+                    const message = evt.detail.message;
+                    const type = evt.detail.type || 'info';
+
+                    const toastContainer = document.getElementById('toast-container');
+                    if (!toastContainer) return;
+
+                    const toast = document.createElement('div');
+
+                    let colorClass = 'alert-info';
+                    let icon = '';
+
+                    if (type === 'info') {
+                        colorClass = 'alert-info';
+                        icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="h-6 w-6 shrink-0 stroke-current"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+                    } else if (type === 'success') {
+                        colorClass = 'alert-success';
+                        icon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`;
+                    } else if (type === 'error') {
+                        colorClass = 'alert-error';
+                        icon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`;
+                    } else if (type === 'warning') {
+                        colorClass = 'alert-warning';
+                        icon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>`;
+                    }
+
+                    toast.className = `alert ${colorClass} alert-soft shadow-lg transition-all duration-300 transform translate-x-full opacity-0 max-w-sm flex items-center justify-between`;
+
+                    toast.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            ${icon}
+                            <span class="font-bold text-sm">${message}</span>
+                        </div>
+                    `;
+
+                    toastContainer.appendChild(toast);
+
+                    setTimeout(() => {
+                        toast.classList.remove('translate-x-full', 'opacity-0');
+                    }, 50);
+
+                    setTimeout(() => {
+                        toast.classList.add('opacity-0', 'scale-90');
+                        setTimeout(() => toast.remove(), 300);
+                    }, 4000);
+                });
+
+                // 🟢 2. Delayed Redirect Listener (Solves the Race Condition!)
+                document.addEventListener('delayed-redirect', function (evt) {
+                    const targetUrl = evt.detail.url;
+                    setTimeout(() => {
+                        window.location.href = targetUrl;
+                    }, 500); // Gives the toast 1.2 seconds to shine before moving
+                });
+
+                window.toastListenerAttached = true;
+            }
+        </script>
+
+        <!-- Service Worker Registration -->
+        <script>
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', async () => {
+                    try {
+                        const reg = await navigator.serviceWorker.register('/sw.js?v=0.8.1', { scope: '/' });
+                        console.log('SW registered:', reg.scope);
+
+                        reg.addEventListener('updatefound', () => {
+                            const newSW = reg.installing;
+                            newSW.addEventListener('statechange', () => {
+                                if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+                                    document.dispatchEvent(new CustomEvent('show-toast', {
+                                        detail: {
+                                            message: 'نسخه جدید در دسترس است. برای بروزرسانی کلیک کنید.',
+                                            type: 'info',
+                                        },
+                                    }));
+                                }
+                            });
+                        });
+                    } catch (err) {
+                        console.error('SW registration failed:', err);
+                    }
+                });
+            }
+        </script>
+<script>
+            function generateIOSSplashScreen(logoUrl, bgColor, tenantName, textColor, version) {
+                // (Splash screen logic remains identical)
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+
+                const screenWidth = window.screen.width;
+                const screenHeight = window.screen.height;
+                const pixelRatio = window.devicePixelRatio;
+
+                canvas.width = screenWidth * pixelRatio;
+                canvas.height = screenHeight * pixelRatio;
+
+                ctx.fillStyle = bgColor;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                const injectSplashTag = () => {
+                    const dataUrl = canvas.toDataURL('image/png');
+                    const link = document.createElement('link');
+                    link.setAttribute('rel', 'apple-touch-startup-image');
+                    link.setAttribute('href', dataUrl);
+                    link.setAttribute(
+                        'media',
+                        `(device-width: ${screenWidth}px) and (device-height: ${screenHeight}px) and (-webkit-device-pixel-ratio: ${pixelRatio})`
+                    );
+                    document.head.appendChild(link);
+                    console.log('✅ iOS Splash Screen successfully injected!');
+                };
+
+                const drawTextAndDots = (yOffset) => {
+                    ctx.fillStyle = textColor;
+                    ctx.font = `bold ${canvas.width * 0.06}px system-ui, -apple-system, sans-serif`;
+                    ctx.textAlign = "center";
+                    ctx.fillText(tenantName, canvas.width / 2, yOffset + 120);
+
+                    if (version) {
+                        ctx.font = `${canvas.width * 0.035}px system-ui, -apple-system, sans-serif`;
+                        ctx.fillText(version, canvas.width / 2, yOffset + 120 + (canvas.width * 0.06) + 20);
+                    }
+
+                    const dotY = canvas.height - (canvas.height * 0.15); 
+                    const dotRadius = canvas.width * 0.015;
+                    const spacing = canvas.width * 0.07;
+                    const centerX = canvas.width / 2;
+
+                    ctx.fillStyle = textColor;
+                    
+                    ctx.globalAlpha = 0.8;
+                    ctx.beginPath(); ctx.arc(centerX - spacing, dotY, dotRadius, 0, Math.PI * 2); ctx.fill();
+                    ctx.globalAlpha = 0.4;
+                    ctx.beginPath(); ctx.arc(centerX, dotY, dotRadius, 0, Math.PI * 2); ctx.fill();
+                    ctx.globalAlpha = 0.15;
+                    ctx.beginPath(); ctx.arc(centerX + spacing, dotY, dotRadius, 0, Math.PI * 2); ctx.fill();
+                    
+                    ctx.globalAlpha = 1.0; 
+                };
+
+                if (!logoUrl || logoUrl.trim() === '') {
+                    drawTextAndDots(canvas.height / 2);
+                    injectSplashTag();
+                    return;
+                }
+
+                const img = new Image();
+                img.crossOrigin = 'Anonymous';
+
+                img.onload = () => {
+                    const targetLogoWidth = canvas.width / 3.5; 
+                    const scale = targetLogoWidth / img.width;
+                    const targetLogoHeight = img.height * scale;
+
+                    const x = (canvas.width - targetLogoWidth) / 2;
+                    const y = (canvas.height - targetLogoHeight) / 2 - 80; 
+
+                    const radius = canvas.width * 0.04;
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.moveTo(x + radius, y);
+                    ctx.lineTo(x + targetLogoWidth - radius, y);
+                    ctx.quadraticCurveTo(x + targetLogoWidth, y, x + targetLogoWidth, y + radius);
+                    ctx.lineTo(x + targetLogoWidth, y + targetLogoHeight - radius);
+                    ctx.quadraticCurveTo(x + targetLogoWidth, y + targetLogoHeight, x + targetLogoWidth - radius, y + targetLogoHeight);
+                    ctx.lineTo(x + radius, y + targetLogoHeight);
+                    ctx.quadraticCurveTo(x, y + targetLogoHeight, x, y + targetLogoHeight - radius);
+                    ctx.lineTo(x, y + radius);
+                    ctx.quadraticCurveTo(x, y, x + radius, y);
+                    ctx.closePath();
+                    ctx.clip();
+                    
+                    ctx.drawImage(img, x, y, targetLogoWidth, targetLogoHeight);
+                    ctx.restore();
+
+                    drawTextAndDots(y + targetLogoHeight);
+                    injectSplashTag();
+                };
+
+                img.onerror = () => {
+                    console.error('❌ Failed to load logo from database.');
+                    drawTextAndDots(canvas.height / 2);
+                    injectSplashTag();
+                };
+
+                img.src = logoUrl;
+            }
+
+            {% if request.state.tenant and request.state.tenant.logo %}
+                {% set pb_url = request.state.pb.base_url.rstrip("/") %}
+                {% set col_id = request.state.tenant.collection_id %}
+                {% set rec_id = request.state.tenant.id %}
+                {% set filename = request.state.tenant.logo %}
+                {% set dynamic_logo_url = pb_url ~ '/api/files/' ~ col_id ~ '/' ~ rec_id ~ '/' ~ filename ~ '?thumb=512x512f' %}
+            {% else %}
+                {% set dynamic_logo_url = '' %}
+            {% endif %}
+
+            {% if request.state.tenant and request.state.tenant.primary_color %}
+                {% set splash_bg = request.state.tenant.primary_color %}
+            {% elif request.state.tenant and request.state.tenant.brand_colors and request.state.tenant.brand_colors.base_100 %}
+                {% set splash_bg = request.state.tenant.brand_colors.base_100 %}
+            {% else %}
+                {% set splash_bg = 'oklch(14% .004 49.25)' %}
+            {% endif %}
+
+            {% if request.state.tenant and request.state.tenant.brand_colors and request.state.tenant.brand_colors.base_content %}
+                {% set splash_text = request.state.tenant.brand_colors.base_content %}
+            {% else %}
+                {% set splash_text = '#ffffff' %}
+            {% endif %}
+
+            generateIOSSplashScreen(
+                "{{ dynamic_logo_url }}",
+                "{{ splash_bg }}",
+                "{{ request.state.tenant.name | default('Seoz Platform') }}",
+                "{{ splash_text }}",
+            );
+        </script>
+    </body>
+</html>

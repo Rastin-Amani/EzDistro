@@ -1,0 +1,28 @@
+<dialog
+    id="delete-confirmation-modal"
+    class="modal modal-bottom sm:modal-middle modal-open text-right"
+    hx-boost="false"
+>
+    <div class="modal-box bg-base-100 border border-base-300">
+        <h3 class="font-bold text-lg text-error">{{ title }}</h3>
+        <p class="py-4">آیا مطمئن هستید؟ این عملیات قابل بازگشت نیست.</p>
+        <div class="modal-action flex justify-end gap-3">
+            <button type="button" class="btn btn-ghost" onclick="this.closest('dialog').remove()">
+                انصراف
+            </button>
+            <form
+                id="delete-form"
+                hx-delete="{{ delete_url }}"
+                hx-swap="none"
+                hx-boost="false"
+                hx-on::after-request="this.closest('dialog').remove()"
+            >
+                <button type="submit" class="btn btn-error">حذف</button>
+            </form>
+        </div>
+    </div>
+    <div
+        class="modal-backdrop bg-black/40 backdrop-blur-sm cursor-pointer"
+        onclick="this.closest('dialog').remove()"
+    ></div>
+</dialog>

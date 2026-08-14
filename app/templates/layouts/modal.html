@@ -1,0 +1,46 @@
+<!-- Backdrop -->
+<!-- We use 'modal-open' so it opens immediately when HTMX injects it -->
+<dialog
+    id="item-modal"
+    class="modal modal-bottom sm:modal-middle modal-open text-right"
+    hx-boost="false"
+>
+    <div class="modal-box bg-base-100 max-h-[85vh] overflow-y-auto pb-8">
+        <!-- Drag Handle (Visible only on mobile) -->
+        <div class="w-12 h-1.5 bg-base-300 rounded-full mx-auto mb-6 sm:hidden"></div>
+
+        <!-- Modal Title -->
+        <h3 class="font-bold text-xl mb-6">{% block modal_title %}{% endblock %}</h3>
+
+        <!-- Modal Body -->
+        <div class="mt-2">
+            {% block modal_body %}
+                <!-- Your form goes here. Example: -->
+                <form hx-put="/items/{{ item.id }}" hx-swap="none" class="flex flex-col gap-4">
+                    <!-- Form Fields -->
+
+                    <!-- Action Buttons -->
+                    <div class="flex justify-between items-center mt-6">
+                        <button type="submit" class="btn btn-primary w-1/2">ذخیره تغییرات</button>
+
+                        <!-- Cancel button simply removes the modal from the DOM -->
+                        <button
+                            type="button"
+                            class="btn btn-ghost"
+                            hx-on:click="document.getElementById('item-modal').remove()"
+                        >
+                            لغو
+                        </button>
+                    </div>
+                </form>
+            {% endblock %}
+        </div>
+    </div>
+
+    <!-- Backdrop: Clicking outside the modal removes it safely without using nested forms -->
+    <div
+        class="modal-backdrop bg-black/40 backdrop-blur-sm cursor-pointer"
+        hx-on:click="document.getElementById('item-modal').remove()"
+        hx-boost="false"
+    ></div>
+</dialog>

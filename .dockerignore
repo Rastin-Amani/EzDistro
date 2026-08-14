@@ -1,0 +1,12 @@
+# Ignore Vite and Node files 🚫
+node_modules/
+package.json
+package-lock.json
+vite.config.js
+src/
+public/
+
+# Ignore Python cache files 🐍
+__pycache__/
+*.pyc
+.env

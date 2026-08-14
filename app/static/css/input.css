@@ -1,0 +1,17 @@
+@import 'tailwindcss';
+
+@plugin "daisyui" {
+    themes: all;
+}
+
+@theme {
+    --font-sans: 'yekanbakh';
+    --font-brand: 'yekanbakh';
+}
+
+@font-face {
+    font-family: 'YekanBakh';
+    src: url('./assets/YekanBakhFaNum-VF.woff') format('woff2'); /* Ensure .woff2 for better performance */
+    font-weight: 100 900; /* Define the range of weights the variable font covers */
+    font-display: swap;
+}
