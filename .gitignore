@@ -21,6 +21,9 @@ dist/
 .coverage
 htmlcov/
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.dmypy.json
 
 # Usually keep __init__.py tracked.
 # If you REALLY want to ignore all __init__.py, uncomment this:
@@ -68,8 +71,6 @@ logs/
 # -----------------------------
 .DS_Store
 Thumbs.db
-app/routes/__pycache__/dashboard.cpython-313.pyc
-app/__pycache__/main.cpython-313.pyc
 .prettierrc
 
 
