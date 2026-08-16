@@ -9,18 +9,19 @@ Usage:
 
 import logging
 import os
-import structlog
 import sys
 from contextvars import ContextVar
-from typing import Optional
+
+import structlog
 
 # --- Context vars for request-scoped data ---
-_request_ctx: ContextVar[dict] = ContextVar("request_ctx", default={})
+_request_ctx: ContextVar[dict | None] = ContextVar("request_ctx", default=None)
 
 
 def add_correlation_id(logger, method_name, event_dict):
     """Attach req_id to every log (from contextvars)."""
-    req_id = _request_ctx.get().get("req_id")
+    ctx = _request_ctx.get()
+    req_id = ctx.get("req_id") if ctx else None
     if req_id:
         event_dict["req_id"] = req_id
     return event_dict
@@ -71,7 +72,7 @@ structlog.configure(
 logger = structlog.get_logger(__name__)
 
 
-def bind_request_context(req_id: str, tenant_id: Optional[str] = None):
+def bind_request_context(req_id: str, tenant_id: str | None = None):
     """Bind request-scoped context vars (call in middleware)."""
     _request_ctx.set({"req_id": req_id})
 
