@@ -1,0 +1,2488 @@
+[
+  {
+    "name": "projects",
+    "type": "base",
+    "fields": [
+      {
+        "name": "name",
+        "type": "text",
+        "required": true,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "slug",
+        "type": "text",
+        "required": true,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "description",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "status",
+        "type": "select",
+        "required": false,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "active",
+            "archived"
+          ]
+        }
+      },
+      {
+        "name": "language",
+        "type": "select",
+        "required": false,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "fa",
+            "en",
+            "ar",
+            "tr"
+          ]
+        }
+      },
+      {
+        "name": "timezone",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "createdBy",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX idx_projects_slug ON projects (slug)",
+      "CREATE INDEX idx_projects_status ON projects (status)"
+    ],
+    "listRule": "@request.auth.id != ''",
+    "viewRule": "@request.auth.id != ''",
+    "createRule": "@request.auth.id != ''",
+    "updateRule": "@request.auth.id != ''",
+    "deleteRule": "@request.auth.id != ''"
+  },
+  {
+    "name": "project_settings",
+    "type": "base",
+    "fields": [
+      {
+        "name": "project",
+        "type": "relation",
+        "required": true,
+        "options": {
+          "collectionId": "projects",
+          "cascadeDelete": true,
+          "minSelect": null,
+          "maxSelect": 1
+        }
+      },
+      {
+        "name": "defaultLlmProvider",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "defaultLlmModel",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "outlineProvider",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "outlineModel",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "outlineTemperature",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "outlineMaxTokens",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "outlineTimeout",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "outlineRetry",
+        "type": "json",
+        "required": false,
+        "options": {
+          "maxSize": 0
+        }
+      },
+      {
+        "name": "sectionProvider",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "sectionModel",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "sectionTemperature",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "sectionMaxTokens",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "sectionTimeout",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "sectionRetry",
+        "type": "json",
+        "required": false,
+        "options": {
+          "maxSize": 0
+        }
+      },
+      {
+        "name": "metaProvider",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "metaModel",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "reviewProvider",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "reviewModel",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "embeddingProvider",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "embeddingModel",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "embeddingDimensions",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "chunkSize",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "chunkOverlap",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "separatorStrategy",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "maxChunkCount",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "retrievalTopK",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "similarityThreshold",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "rerankingEnabled",
+        "type": "bool",
+        "required": false,
+        "options": {}
+      },
+      {
+        "name": "rerankerProvider",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "rerankerModel",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "rerankerTopN",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "contextMaxLinks",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "contextMaxPassages",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "contextMaxChars",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "generationConcurrency",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "minArticleWords",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "retryPolicy",
+        "type": "json",
+        "required": false,
+        "options": {
+          "maxSize": 0
+        }
+      },
+      {
+        "name": "publishingMode",
+        "type": "select",
+        "required": false,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "draft",
+            "publish"
+          ]
+        }
+      },
+      {
+        "name": "autosave",
+        "type": "json",
+        "required": false,
+        "options": {
+          "maxSize": 0
+        }
+      },
+      {
+        "name": "indexing",
+        "type": "json",
+        "required": false,
+        "options": {
+          "maxSize": 0
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX idx_settings_project ON project_settings (project)"
+    ],
+    "listRule": "@request.auth.id != ''",
+    "viewRule": "@request.auth.id != ''",
+    "createRule": "@request.auth.id != ''",
+    "updateRule": "@request.auth.id != ''",
+    "deleteRule": "@request.auth.id != ''"
+  },
+  {
+    "name": "integrations",
+    "type": "base",
+    "fields": [
+      {
+        "name": "project",
+        "type": "relation",
+        "required": true,
+        "options": {
+          "collectionId": "projects",
+          "cascadeDelete": true,
+          "minSelect": null,
+          "maxSelect": 1
+        }
+      },
+      {
+        "name": "category",
+        "type": "select",
+        "required": true,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "llm",
+            "embedding",
+            "reranker",
+            "vector_store",
+            "publisher"
+          ]
+        }
+      },
+      {
+        "name": "provider",
+        "type": "text",
+        "required": true,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "displayName",
+        "type": "text",
+        "required": true,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "configuration",
+        "type": "json",
+        "required": false,
+        "options": {
+          "maxSize": 0
+        }
+      },
+      {
+        "name": "secretsEnc",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "enabled",
+        "type": "bool",
+        "required": false,
+        "options": {}
+      },
+      {
+        "name": "healthStatus",
+        "type": "select",
+        "required": false,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "unknown",
+            "healthy",
+            "degraded",
+            "unhealthy"
+          ]
+        }
+      },
+      {
+        "name": "lastTestedAt",
+        "type": "date",
+        "required": false,
+        "options": {
+          "min": "",
+          "max": ""
+        }
+      },
+      {
+        "name": "createdBy",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE INDEX idx_integrations_project_category ON integrations (project, category)",
+      "CREATE UNIQUE INDEX idx_integrations_proj_cat_provider_name ON integrations (project, category, provider, displayName)"
+    ],
+    "listRule": "@request.auth.id != ''",
+    "viewRule": "@request.auth.id != ''",
+    "createRule": "@request.auth.id != ''",
+    "updateRule": "@request.auth.id != ''",
+    "deleteRule": "@request.auth.id != ''"
+  },
+  {
+    "name": "prompts",
+    "type": "base",
+    "fields": [
+      {
+        "name": "project",
+        "type": "relation",
+        "required": false,
+        "options": {
+          "collectionId": "projects",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1
+        }
+      },
+      {
+        "name": "type",
+        "type": "select",
+        "required": true,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "outline_system",
+            "outline_user",
+            "section_system",
+            "section_user",
+            "seo_rules",
+            "internal_linking",
+            "brand_voice",
+            "validation"
+          ]
+        }
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "required": true,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "content",
+        "type": "text",
+        "required": true,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "version",
+        "type": "number",
+        "required": true,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "active",
+        "type": "bool",
+        "required": false,
+        "options": {}
+      },
+      {
+        "name": "variables",
+        "type": "json",
+        "required": false,
+        "options": {
+          "maxSize": 0
+        }
+      },
+      {
+        "name": "updatedBy",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE INDEX idx_prompts_project_type_active ON prompts (project, type, active)",
+      "CREATE UNIQUE INDEX idx_prompts_proj_type_name_version ON prompts (project, type, name, version)"
+    ],
+    "listRule": "@request.auth.id != ''",
+    "viewRule": "@request.auth.id != ''",
+    "createRule": "@request.auth.id != ''",
+    "updateRule": "@request.auth.id != ''",
+    "deleteRule": "@request.auth.id != ''"
+  },
+  {
+    "name": "topics",
+    "type": "base",
+    "fields": [
+      {
+        "name": "project",
+        "type": "relation",
+        "required": true,
+        "options": {
+          "collectionId": "projects",
+          "cascadeDelete": true,
+          "minSelect": null,
+          "maxSelect": 1
+        }
+      },
+      {
+        "name": "title",
+        "type": "text",
+        "required": true,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "keyword",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "pillar",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "cluster",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "type",
+        "type": "select",
+        "required": false,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "article",
+            "pillar_page",
+            "guide",
+            "news"
+          ]
+        }
+      },
+      {
+        "name": "status",
+        "type": "select",
+        "required": true,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "planned",
+            "queued",
+            "planning",
+            "outline_ready",
+            "writing",
+            "review",
+            "completed",
+            "publishing",
+            "published",
+            "failed",
+            "cancelled"
+          ]
+        }
+      },
+      {
+        "name": "priority",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "articleId",
+        "type": "relation",
+        "required": false,
+        "options": {
+          "collectionId": "articles",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE INDEX idx_topics_project_status_priority ON topics (project, status, priority)",
+      "CREATE INDEX idx_topics_project_status ON topics (project, status)"
+    ],
+    "listRule": "@request.auth.id != ''",
+    "viewRule": "@request.auth.id != ''",
+    "createRule": "@request.auth.id != ''",
+    "updateRule": "@request.auth.id != ''",
+    "deleteRule": "@request.auth.id != ''"
+  },
+  {
+    "name": "articles",
+    "type": "base",
+    "fields": [
+      {
+        "name": "project",
+        "type": "relation",
+        "required": true,
+        "options": {
+          "collectionId": "projects",
+          "cascadeDelete": true,
+          "minSelect": null,
+          "maxSelect": 1
+        }
+      },
+      {
+        "name": "topicId",
+        "type": "relation",
+        "required": true,
+        "options": {
+          "collectionId": "topics",
+          "cascadeDelete": true,
+          "minSelect": null,
+          "maxSelect": 1
+        }
+      },
+      {
+        "name": "title",
+        "type": "text",
+        "required": true,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "slug",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "status",
+        "type": "select",
+        "required": true,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "draft",
+            "outline_ready",
+            "generating",
+            "review",
+            "publishing",
+            "published",
+            "failed"
+          ]
+        }
+      },
+      {
+        "name": "outlineVersion",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "outline",
+        "type": "json",
+        "required": false,
+        "options": {
+          "maxSize": 0
+        }
+      },
+      {
+        "name": "validation",
+        "type": "json",
+        "required": false,
+        "options": {
+          "maxSize": 0
+        }
+      },
+      {
+        "name": "finalHtml",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "generatedContent",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "lastGeneratedRevision",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "reviewNote",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "metaDescription",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "seoScore",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "wordCount",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "generatedAt",
+        "type": "date",
+        "required": false,
+        "options": {
+          "min": "",
+          "max": ""
+        }
+      },
+      {
+        "name": "publishedAt",
+        "type": "date",
+        "required": false,
+        "options": {
+          "min": "",
+          "max": ""
+        }
+      },
+      {
+        "name": "wordpressPostId",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "wordpressUrl",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "lastJob",
+        "type": "relation",
+        "required": false,
+        "options": {
+          "collectionId": "jobs",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE INDEX idx_articles_project_status ON articles (project, status)",
+      "CREATE UNIQUE INDEX idx_articles_topic ON articles (topicId)"
+    ],
+    "listRule": "@request.auth.id != ''",
+    "viewRule": "@request.auth.id != ''",
+    "createRule": "@request.auth.id != ''",
+    "updateRule": "@request.auth.id != ''",
+    "deleteRule": "@request.auth.id != ''"
+  },
+  {
+    "name": "article_sections",
+    "type": "base",
+    "fields": [
+      {
+        "name": "article",
+        "type": "relation",
+        "required": true,
+        "options": {
+          "collectionId": "articles",
+          "cascadeDelete": true,
+          "minSelect": null,
+          "maxSelect": 1
+        }
+      },
+      {
+        "name": "position",
+        "type": "number",
+        "required": true,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "heading",
+        "type": "text",
+        "required": true,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "contentBrief",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "internalLinks",
+        "type": "json",
+        "required": false,
+        "options": {
+          "maxSize": 0
+        }
+      },
+      {
+        "name": "content",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "status",
+        "type": "select",
+        "required": true,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "pending",
+            "generating",
+            "done",
+            "failed"
+          ]
+        }
+      },
+      {
+        "name": "generationAttempts",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "promptVersion",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "generationStartedAt",
+        "type": "date",
+        "required": false,
+        "options": {
+          "min": "",
+          "max": ""
+        }
+      },
+      {
+        "name": "provider",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "model",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "tokenUsage",
+        "type": "json",
+        "required": false,
+        "options": {
+          "maxSize": 0
+        }
+      },
+      {
+        "name": "generationLatency",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "error",
+        "type": "json",
+        "required": false,
+        "options": {
+          "maxSize": 0
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX idx_sections_article_position ON article_sections (article, position)"
+    ],
+    "listRule": "@request.auth.id != ''",
+    "viewRule": "@request.auth.id != ''",
+    "createRule": "@request.auth.id != ''",
+    "updateRule": "@request.auth.id != ''",
+    "deleteRule": "@request.auth.id != ''"
+  },
+  {
+    "name": "article_revisions",
+    "type": "base",
+    "fields": [
+      {
+        "name": "article",
+        "type": "relation",
+        "required": true,
+        "options": {
+          "collectionId": "articles",
+          "cascadeDelete": true,
+          "minSelect": null,
+          "maxSelect": 1
+        }
+      },
+      {
+        "name": "revision",
+        "type": "number",
+        "required": true,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "kind",
+        "type": "select",
+        "required": true,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "generated",
+            "manual",
+            "checkpoint",
+            "rollback"
+          ]
+        }
+      },
+      {
+        "name": "snapshot",
+        "type": "json",
+        "required": false,
+        "options": {
+          "maxSize": 0
+        }
+      },
+      {
+        "name": "note",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "createdBy",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX idx_revisions_article_rev ON article_revisions (article, revision)",
+      "CREATE INDEX idx_revisions_article_created ON article_revisions (article, created)"
+    ],
+    "listRule": "@request.auth.id != ''",
+    "viewRule": "@request.auth.id != ''",
+    "createRule": "@request.auth.id != ''",
+    "updateRule": "@request.auth.id != ''",
+    "deleteRule": "@request.auth.id != ''"
+  },
+  {
+    "name": "documents",
+    "type": "base",
+    "fields": [
+      {
+        "name": "project",
+        "type": "relation",
+        "required": true,
+        "options": {
+          "collectionId": "projects",
+          "cascadeDelete": true,
+          "minSelect": null,
+          "maxSelect": 1
+        }
+      },
+      {
+        "name": "sourceType",
+        "type": "select",
+        "required": true,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "wordpress",
+            "url",
+            "manual"
+          ]
+        }
+      },
+      {
+        "name": "sourceId",
+        "type": "text",
+        "required": true,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "sourceUrl",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "title",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "contentHash",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "embeddingProvider",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "embeddingModel",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "embeddingDimensions",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "chunkCount",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "indexStatus",
+        "type": "select",
+        "required": true,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "pending",
+            "indexed",
+            "failed",
+            "deleted"
+          ]
+        }
+      },
+      {
+        "name": "indexedAt",
+        "type": "date",
+        "required": false,
+        "options": {
+          "min": "",
+          "max": ""
+        }
+      },
+      {
+        "name": "lastRun",
+        "type": "relation",
+        "required": false,
+        "options": {
+          "collectionId": "index_runs",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX idx_documents_project_source ON documents (project, sourceType, sourceId)",
+      "CREATE INDEX idx_documents_project_status ON documents (project, indexStatus)"
+    ],
+    "listRule": "@request.auth.id != ''",
+    "viewRule": "@request.auth.id != ''",
+    "createRule": "@request.auth.id != ''",
+    "updateRule": "@request.auth.id != ''",
+    "deleteRule": "@request.auth.id != ''"
+  },
+  {
+    "name": "index_runs",
+    "type": "base",
+    "fields": [
+      {
+        "name": "project",
+        "type": "relation",
+        "required": true,
+        "options": {
+          "collectionId": "projects",
+          "cascadeDelete": true,
+          "minSelect": null,
+          "maxSelect": 1
+        }
+      },
+      {
+        "name": "job",
+        "type": "relation",
+        "required": false,
+        "options": {
+          "collectionId": "jobs",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1
+        }
+      },
+      {
+        "name": "trigger",
+        "type": "select",
+        "required": false,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "manual",
+            "schedule"
+          ]
+        }
+      },
+      {
+        "name": "status",
+        "type": "select",
+        "required": true,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "running",
+            "succeeded",
+            "failed",
+            "cancelled"
+          ]
+        }
+      },
+      {
+        "name": "totalDocuments",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "processedDocuments",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "unchangedDocuments",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "changedDocuments",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "indexedDocuments",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "skippedDocuments",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "failedDocuments",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "elapsedSeconds",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "lastSourceId",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "startedAt",
+        "type": "date",
+        "required": false,
+        "options": {
+          "min": "",
+          "max": ""
+        }
+      },
+      {
+        "name": "finishedAt",
+        "type": "date",
+        "required": false,
+        "options": {
+          "min": "",
+          "max": ""
+        }
+      },
+      {
+        "name": "error",
+        "type": "json",
+        "required": false,
+        "options": {
+          "maxSize": 0
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE INDEX idx_index_runs_project_created ON index_runs (project, created)"
+    ],
+    "listRule": "@request.auth.id != ''",
+    "viewRule": "@request.auth.id != ''",
+    "createRule": "@request.auth.id != ''",
+    "updateRule": "@request.auth.id != ''",
+    "deleteRule": "@request.auth.id != ''"
+  },
+  {
+    "name": "jobs",
+    "type": "base",
+    "fields": [
+      {
+        "name": "project",
+        "type": "relation",
+        "required": true,
+        "options": {
+          "collectionId": "projects",
+          "cascadeDelete": true,
+          "minSelect": null,
+          "maxSelect": 1
+        }
+      },
+      {
+        "name": "type",
+        "type": "text",
+        "required": true,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "entityType",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "entityId",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "status",
+        "type": "select",
+        "required": true,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "pending",
+            "running",
+            "completed",
+            "failed",
+            "cancelled",
+            "retrying"
+          ]
+        }
+      },
+      {
+        "name": "priority",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "payload",
+        "type": "json",
+        "required": false,
+        "options": {
+          "maxSize": 0
+        }
+      },
+      {
+        "name": "progress",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "stage",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "progressMessage",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "currentItem",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "totalItems",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "attempts",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "maxAttempts",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "availableAt",
+        "type": "date",
+        "required": false,
+        "options": {
+          "min": "",
+          "max": ""
+        }
+      },
+      {
+        "name": "lockedAt",
+        "type": "date",
+        "required": false,
+        "options": {
+          "min": "",
+          "max": ""
+        }
+      },
+      {
+        "name": "lockedBy",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "leaseExpiresAt",
+        "type": "date",
+        "required": false,
+        "options": {
+          "min": "",
+          "max": ""
+        }
+      },
+      {
+        "name": "heartbeatAt",
+        "type": "date",
+        "required": false,
+        "options": {
+          "min": "",
+          "max": ""
+        }
+      },
+      {
+        "name": "startedAt",
+        "type": "date",
+        "required": false,
+        "options": {
+          "min": "",
+          "max": ""
+        }
+      },
+      {
+        "name": "finishedAt",
+        "type": "date",
+        "required": false,
+        "options": {
+          "min": "",
+          "max": ""
+        }
+      },
+      {
+        "name": "errorCode",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "errorMessage",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "errorDetails",
+        "type": "json",
+        "required": false,
+        "options": {
+          "maxSize": 0
+        }
+      },
+      {
+        "name": "result",
+        "type": "json",
+        "required": false,
+        "options": {
+          "maxSize": 0
+        }
+      },
+      {
+        "name": "idempotencyKey",
+        "type": "text",
+        "required": true,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "cancelRequested",
+        "type": "bool",
+        "required": false,
+        "options": {}
+      },
+      {
+        "name": "parent",
+        "type": "relation",
+        "required": false,
+        "options": {
+          "collectionId": "jobs",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX idx_jobs_idempotency_key ON jobs (idempotencyKey)",
+      "CREATE INDEX idx_jobs_status_available_priority ON jobs (status, availableAt, priority)",
+      "CREATE INDEX idx_jobs_project_status ON jobs (project, status)",
+      "CREATE INDEX idx_jobs_entity ON jobs (entityType, entityId)",
+      "CREATE INDEX idx_jobs_type_status ON jobs (type, status)"
+    ],
+    "listRule": "@request.auth.id != ''",
+    "viewRule": "@request.auth.id != ''",
+    "createRule": "@request.auth.id != ''",
+    "updateRule": "@request.auth.id != ''",
+    "deleteRule": "@request.auth.id != ''"
+  },
+  {
+    "name": "job_leases",
+    "type": "base",
+    "fields": [
+      {
+        "name": "job",
+        "type": "relation",
+        "required": true,
+        "options": {
+          "collectionId": "jobs",
+          "cascadeDelete": true,
+          "minSelect": null,
+          "maxSelect": 1
+        }
+      },
+      {
+        "name": "workerId",
+        "type": "text",
+        "required": true,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "expiresAt",
+        "type": "date",
+        "required": true,
+        "options": {
+          "min": "",
+          "max": ""
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX idx_job_leases_job ON job_leases (job)",
+      "CREATE INDEX idx_job_leases_expires ON job_leases (expiresAt)"
+    ],
+    "listRule": "@request.auth.id != ''",
+    "viewRule": "@request.auth.id != ''",
+    "createRule": "@request.auth.id != ''",
+    "updateRule": "@request.auth.id != ''",
+    "deleteRule": "@request.auth.id != ''"
+  },
+  {
+    "name": "job_events",
+    "type": "base",
+    "fields": [
+      {
+        "name": "job",
+        "type": "relation",
+        "required": false,
+        "options": {
+          "collectionId": "jobs",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1
+        }
+      },
+      {
+        "name": "project",
+        "type": "relation",
+        "required": true,
+        "options": {
+          "collectionId": "projects",
+          "cascadeDelete": true,
+          "minSelect": null,
+          "maxSelect": 1
+        }
+      },
+      {
+        "name": "eventType",
+        "type": "text",
+        "required": true,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "message",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "metadata",
+        "type": "json",
+        "required": false,
+        "options": {
+          "maxSize": 0
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE INDEX idx_job_events_job_created ON job_events (job, created)",
+      "CREATE INDEX idx_job_events_project_created ON job_events (project, created)"
+    ],
+    "listRule": "@request.auth.id != ''",
+    "viewRule": "@request.auth.id != ''",
+    "createRule": "@request.auth.id != ''",
+    "updateRule": "@request.auth.id != ''",
+    "deleteRule": "@request.auth.id != ''"
+  },
+  {
+    "name": "publishing_runs",
+    "type": "base",
+    "fields": [
+      {
+        "name": "project",
+        "type": "relation",
+        "required": true,
+        "options": {
+          "collectionId": "projects",
+          "cascadeDelete": true,
+          "minSelect": null,
+          "maxSelect": 1
+        }
+      },
+      {
+        "name": "article",
+        "type": "relation",
+        "required": true,
+        "options": {
+          "collectionId": "articles",
+          "cascadeDelete": true,
+          "minSelect": null,
+          "maxSelect": 1
+        }
+      },
+      {
+        "name": "job",
+        "type": "relation",
+        "required": false,
+        "options": {
+          "collectionId": "jobs",
+          "cascadeDelete": false,
+          "minSelect": null,
+          "maxSelect": 1
+        }
+      },
+      {
+        "name": "status",
+        "type": "select",
+        "required": true,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "pending",
+            "published",
+            "failed",
+            "skipped_duplicate"
+          ]
+        }
+      },
+      {
+        "name": "attempt",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "mode",
+        "type": "select",
+        "required": false,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "draft",
+            "publish"
+          ]
+        }
+      },
+      {
+        "name": "wordpressPostId",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "wordpressUrl",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "responseMetadata",
+        "type": "json",
+        "required": false,
+        "options": {
+          "maxSize": 0
+        }
+      },
+      {
+        "name": "error",
+        "type": "json",
+        "required": false,
+        "options": {
+          "maxSize": 0
+        }
+      },
+      {
+        "name": "startedAt",
+        "type": "date",
+        "required": false,
+        "options": {
+          "min": "",
+          "max": ""
+        }
+      },
+      {
+        "name": "completedAt",
+        "type": "date",
+        "required": false,
+        "options": {
+          "min": "",
+          "max": ""
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE INDEX idx_publishing_project_created ON publishing_runs (project, created)",
+      "CREATE INDEX idx_publishing_article_created ON publishing_runs (article, created)"
+    ],
+    "listRule": "@request.auth.id != ''",
+    "viewRule": "@request.auth.id != ''",
+    "createRule": "@request.auth.id != ''",
+    "updateRule": "@request.auth.id != ''",
+    "deleteRule": "@request.auth.id != ''"
+  },
+  {
+    "name": "provider_metrics",
+    "type": "base",
+    "fields": [
+      {
+        "name": "project",
+        "type": "relation",
+        "required": true,
+        "options": {
+          "collectionId": "projects",
+          "cascadeDelete": true,
+          "minSelect": null,
+          "maxSelect": 1
+        }
+      },
+      {
+        "name": "provider",
+        "type": "text",
+        "required": true,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "model",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "operation",
+        "type": "text",
+        "required": true,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "day",
+        "type": "text",
+        "required": true,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "requestCount",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "successCount",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "failureCount",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "retryCount",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "promptTokens",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "completionTokens",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "latencySum",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "latencyBuckets",
+        "type": "json",
+        "required": false,
+        "options": {
+          "maxSize": 0
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX idx_provider_metrics_key ON provider_metrics (project, provider, model, operation, day)",
+      "CREATE INDEX idx_provider_metrics_project_day ON provider_metrics (project, day)"
+    ],
+    "listRule": "@request.auth.id != ''",
+    "viewRule": "@request.auth.id != ''",
+    "createRule": "@request.auth.id != ''",
+    "updateRule": "@request.auth.id != ''",
+    "deleteRule": "@request.auth.id != ''"
+  },
+  {
+    "name": "schedules",
+    "type": "base",
+    "fields": [
+      {
+        "name": "project",
+        "type": "relation",
+        "required": true,
+        "options": {
+          "collectionId": "projects",
+          "cascadeDelete": true,
+          "minSelect": null,
+          "maxSelect": 1
+        }
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "required": true,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "kind",
+        "type": "select",
+        "required": true,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "index",
+            "write"
+          ]
+        }
+      },
+      {
+        "name": "enabled",
+        "type": "bool",
+        "required": false,
+        "options": {}
+      },
+      {
+        "name": "intervalMinutes",
+        "type": "number",
+        "required": true,
+        "options": {
+          "min": null,
+          "max": null,
+          "step": null
+        }
+      },
+      {
+        "name": "nextRunAt",
+        "type": "date",
+        "required": false,
+        "options": {
+          "min": "",
+          "max": ""
+        }
+      },
+      {
+        "name": "lastRunAt",
+        "type": "date",
+        "required": false,
+        "options": {
+          "min": "",
+          "max": ""
+        }
+      },
+      {
+        "name": "payload",
+        "type": "json",
+        "required": false,
+        "options": {
+          "maxSize": 0
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE INDEX idx_schedules_next_run ON schedules (enabled, nextRunAt)"
+    ],
+    "listRule": "@request.auth.id != ''",
+    "viewRule": "@request.auth.id != ''",
+    "createRule": "@request.auth.id != ''",
+    "updateRule": "@request.auth.id != ''",
+    "deleteRule": "@request.auth.id != ''"
+  },
+  {
+    "name": "app_settings",
+    "type": "base",
+    "fields": [
+      {
+        "name": "key",
+        "type": "text",
+        "required": true,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "name": "value",
+        "type": "json",
+        "required": false,
+        "options": {
+          "maxSize": 0
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX idx_app_settings_key ON app_settings (key)"
+    ],
+    "listRule": "@request.auth.id != ''",
+    "viewRule": "@request.auth.id != ''",
+    "createRule": "@request.auth.id != ''",
+    "updateRule": "@request.auth.id != ''",
+    "deleteRule": "@request.auth.id != ''"
+  },
+  {
+    "name": "project_members",
+    "type": "base",
+    "fields": [
+      {
+        "name": "project",
+        "type": "relation",
+        "required": true,
+        "options": {
+          "collectionId": "projects",
+          "cascadeDelete": true,
+          "minSelect": null,
+          "maxSelect": 1
+        }
+      },
+      {
+        "name": "user",
+        "type": "relation",
+        "required": true,
+        "options": {
+          "collectionId": "users",
+          "cascadeDelete": true,
+          "minSelect": null,
+          "maxSelect": 1
+        }
+      },
+      {
+        "name": "role",
+        "type": "select",
+        "required": true,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "owner",
+            "admin",
+            "editor",
+            "viewer"
+          ]
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX idx_members_project_user ON project_members (project, user)",
+      "CREATE INDEX idx_members_user ON project_members (user)"
+    ],
+    "listRule": "@request.auth.id != ''",
+    "viewRule": "@request.auth.id != ''",
+    "createRule": "@request.auth.id != ''",
+    "updateRule": "@request.auth.id != ''",
+    "deleteRule": "@request.auth.id != ''"
+  }
+]
