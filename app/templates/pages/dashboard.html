@@ -1,0 +1,83 @@
+{% extends "layouts/platform.html" %}
+{% block dashboard_content %}
+<div class="flex items-center justify-between mb-4">
+    <h1 class="text-lg font-bold">داشبورد</h1>
+    <span class="text-xs opacity-50 hidden sm:block" id="last-updated"></span>
+</div>
+
+<div id="stats-row"
+     hx-get="/dashboard/partial/stats"
+     hx-trigger="every 8s"
+     hx-swap="outerHTML">
+    {% include "pages/dashboard/_stats.html" %}
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6">
+    <!-- Recent jobs -->
+    <section class="card bg-base-100 border border-base-200">
+        <div class="card-body p-4 gap-3">
+            <div class="flex items-center justify-between">
+                <h2 class="font-bold">وظایف اخیر</h2>
+                <a href="/jobs" class="btn btn-ghost btn-xs">همه وظایف</a>
+            </div>
+            {% if recent_jobs %}
+            <div class="overflow-x-auto">
+                <table class="table table-sm">
+                    <thead>
+                        <tr class="text-xs opacity-60">
+                            <th>نوع</th>
+                            <th>وضعیت</th>
+                            <th>پیشرفت</th>
+                            <th>زمان</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for j in recent_jobs %}
+                        <tr>
+                            <td class="text-xs">{{ j.type }}</td>
+                            <td><span class="badge badge-sm {{ j.status|status_badge }}">{{ j.status|status_label }}</span></td>
+                            <td>
+                                <div class="flex items-center gap-2">
+                                    <progress class="progress progress-primary w-20 h-1.5" value="{{ j.progress or 0 }}" max="100"></progress>
+                                    <span class="text-xs">{{ j.progress or 0 }}٪</span>
+                                </div>
+                            </td>
+                            <td class="text-xs opacity-60 whitespace-nowrap">{{ j.created|jalali_dt }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-sm opacity-50 py-6 text-center">هنوز وظیفه‌ای ثبت نشده است.</p>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- Recent events -->
+    <section class="card bg-base-100 border border-base-200">
+        <div class="card-body p-4 gap-3">
+            <div class="flex items-center justify-between">
+                <h2 class="font-bold">رویدادهای اخیر</h2>
+                <a href="/logs" class="btn btn-ghost btn-xs">همه رویدادها</a>
+            </div>
+            {% if recent_events %}
+            <ul class="flex flex-col gap-2">
+                {% for e in recent_events %}
+                <li class="flex items-start gap-2 text-sm">
+                    <span class="badge badge-xs mt-0.5 {{ e.level|status_badge }}">{{ e.level|status_label }}</span>
+                    <div class="min-w-0">
+                        <p class="truncate">{{ e.message }}</p>
+                        <p class="text-xs opacity-40">{{ e.created|jalali_dt }}</p>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="text-sm opacity-50 py-6 text-center">رویدادی ثبت نشده است.</p>
+            {% endif %}
+        </div>
+    </section>
+</div>
+
+{% endblock %}

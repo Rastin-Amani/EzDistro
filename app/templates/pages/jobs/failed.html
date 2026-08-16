@@ -1,0 +1,39 @@
+{% extends "layouts/platform.html" %}
+{% block dashboard_content %}
+<div class="flex items-center justify-between mb-4">
+    <h1 class="text-lg font-bold">وظایف ناموفق</h1>
+    <a href="/jobs" class="btn btn-ghost btn-sm">همه وظایف</a>
+</div>
+
+{% if jobs %}
+<div class="flex flex-col gap-3" id="failed-list"
+     hx-get="/failed" hx-trigger="every 10s" hx-swap="innerHTML" hx-select="#failed-list">
+    {% for j in jobs %}
+    <div class="card bg-base-100 border border-error/40">
+        <div class="card-body p-4 gap-2">
+            <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2 min-w-0">
+                    <span class="badge badge-sm badge-soft badge-error">{{ j.type }}</span>
+                    <span class="text-xs opacity-60">{{ j.project[:8] }}</span>
+                    <span class="text-xs opacity-40">{{ j.updated|jalali_dt }}</span>
+                </div>
+                <button class="btn btn-primary btn-xs" hx-post="/jobs/{{ j.id }}/retry" hx-swap="none">تلاش مجدد</button>
+            </div>
+            {% if j.errorCode %}
+            <div class="text-xs bg-error/5 border border-error/20 rounded-lg p-2 font-mono break-words" dir="ltr">
+                <span class="text-error">{{ j.errorCode }}:</span> {{ j.errorMessage }}
+                {% if j.errorDetails and j.errorDetails.attempts %}<span class="opacity-50">(تلاش {{ j.errorDetails.attempts }})</span>{% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card bg-base-100 border border-base-200">
+    <div class="card-body items-center py-8 text-center">
+        <p class="text-sm opacity-50">وظیفه ناموفقی وجود ندارد. عالی!</p>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,121 @@
+<div id="integrations-tab"
+     hx-get="/projects/{{ project.id }}/tabs/integrations"
+     hx-trigger="refreshIntegrations from:body"
+     hx-swap="outerHTML">
+    <div class="flex flex-col gap-5">
+        {% for category, label in categories.items() %}
+        {% set integs = integrations | selectattr('category', 'equalto', category) | list %}
+        <section class="card bg-base-100 border border-base-200">
+            <div class="card-body p-4 gap-3">
+                <div class="flex items-center justify-between">
+                    <h2 class="font-bold text-sm">{{ label }}</h2>
+                    <button class="btn btn-ghost btn-xs" onclick="document.getElementById('int-modal-{{ category }}').showModal()">+ افزودن</button>
+                </div>
+
+                {% if integs %}
+                <div class="overflow-x-auto">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr class="text-xs opacity-60">
+                                <th>نام</th>
+                                <th>ارائه‌دهنده</th>
+                                <th>کلید</th>
+                                <th>سلامت</th>
+                                <th>آخرین تست</th>
+                                <th>فعال</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for i in integs %}
+                            <tr>
+                                <td class="text-xs">{{ i.displayName }}</td>
+                                <td class="text-xs" dir="ltr">{{ i.provider }}</td>
+                                <td class="text-xs font-mono" dir="ltr">{{ i.configuration.masked if i.configuration and i.configuration.masked else '—' }}</td>
+                                <td><span class="badge badge-sm {{ i.healthStatus|status_badge }}">{{ health_labels.get(i.healthStatus, i.healthStatus) }}</span></td>
+                                <td class="text-xs opacity-60">{{ i.lastTestedAt|jalali_dt if i.lastTestedAt else '—' }}</td>
+                                <td>
+                                    <button class="toggle toggle-xs {{ 'toggle-primary' if i.enabled }}"
+                                            hx-post="/projects/{{ project.id }}/integrations/{{ i.id }}/toggle"
+                                            hx-swap="none"
+                                            title="تغییر وضعیت"></button>
+                                </td>
+                                <td class="whitespace-nowrap">
+                                    <button class="btn btn-ghost btn-xs"
+                                            hx-post="/projects/{{ project.id }}/integrations/{{ i.id }}/test"
+                                            hx-target="#health-{{ i.id }}" hx-swap="outerHTML">
+                                        <span class="loading loading-spinner loading-xs htmx-indicator"></span>
+                                        تست اتصال
+                                    </button>
+                                    <button class="btn btn-ghost btn-xs text-error"
+                                            hx-post="/projects/{{ project.id }}/integrations/{{ i.id }}/delete"
+                                            hx-swap="none"
+                                            hx-confirm="اتصال «{{ i.displayName }}» حذف شود؟">حذف</button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    <div class="px-2 pb-1">
+                        {% for i in integs %}<div id="health-{{ i.id }}"></div>{% endfor %}
+                    </div>
+                </div>
+                {% else %}
+                <p class="text-xs opacity-50 py-2">اتصالی ثبت نشده است.</p>
+                {% endif %}
+            </div>
+        </section>
+
+        <!-- Integration modal -->
+        <dialog id="int-modal-{{ category }}" class="modal modal-bottom sm:modal-middle">
+            <div class="modal-box bg-base-100">
+                <h3 class="font-bold text-lg mb-4">اتصال {{ label }}</h3>
+                <form hx-post="/projects/{{ project.id }}/integrations" hx-swap="none" class="flex flex-col gap-3">
+                    <input type="hidden" name="category" value="{{ category }}" />
+                    <input type="hidden" name="record_id" value="" />
+                    <label class="form-control">
+                        <span class="label-text text-xs">نام نمایشی</span>
+                        <input name="display_name" class="input input-sm" placeholder="مثلاً: OpenAI اصلی" required />
+                    </label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="form-control">
+                            <span class="label-text text-xs">ارائه‌دهنده</span>
+                            <input name="provider" class="input input-sm" dir="ltr" placeholder="openai_compat" value="openai_compat" list="providers-{{ category }}" />
+                            <datalist id="providers-{{ category }}">
+                                {% for p in known_providers.get(category, []) %}
+                                <option value="{{ p }}"></option>
+                                {% endfor %}
+                            </datalist>
+                        </label>
+                        <label class="form-control">
+                            <span class="label-text text-xs">مدل (اختیاری)</span>
+                            <input name="model" class="input input-sm" dir="ltr" />
+                        </label>
+                    </div>
+                    <label class="form-control">
+                        <span class="label-text text-xs">آدرس پایه (Base URL)</span>
+                        <input name="base_url" class="input input-sm" dir="ltr"
+                               placeholder="https://api.openai.com/v1{% if category == 'vector_store' %} | http://127.0.0.1:6333{% endif %}{% if category == 'publisher' %} | https://site.com{% endif %}" />
+                    </label>
+                    {% if category == 'publisher' %}
+                    <label class="form-control">
+                        <span class="label-text text-xs">نام کاربری وردپرس</span>
+                        <input name="username" class="input input-sm" dir="ltr" autocomplete="off" />
+                    </label>
+                    {% endif %}
+                    <label class="form-control">
+                        <span class="label-text text-xs">
+                            {% if category == 'publisher' %}رمز برنامه (Application Password){% else %}کلید API{% endif %}
+                        </span>
+                        <input type="password" name="secret" class="input input-sm" dir="ltr" autocomplete="new-password" placeholder="در صورت خالی بودن، مقدار قبلی حفظ می‌شود" />
+                    </label>
+                    <div class="flex gap-3 mt-2">
+                        <button type="submit" class="btn btn-primary flex-1">ذخیره</button>
+                        <button type="button" class="btn btn-ghost" onclick="document.getElementById('int-modal-{{ category }}').close()">انصراف</button>
+                    </div>
+                </form>
+            </div>
+        </dialog>
+        {% endfor %}
+    </div>
+</div>

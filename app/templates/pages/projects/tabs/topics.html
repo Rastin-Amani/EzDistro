@@ -1,0 +1,119 @@
+<div id="topics-tab"
+     hx-get="/projects/{{ project.id }}/tabs/topics"
+     hx-trigger="refreshTopics from:body"
+     hx-swap="outerHTML">
+    <div class="flex flex-col gap-3">
+        <div class="flex items-center justify-between">
+            <div class="join join-sm">
+                <a class="join-item btn btn-xs {{ 'btn-primary' if not status_filter }}" hx-get="/projects/{{ project.id }}/tabs/topics" hx-target="#tab-content">همه</a>
+                {% for s in ['planned', 'queued', 'planning', 'outline_ready', 'writing', 'review', 'publishing', 'published', 'failed', 'cancelled'] %}
+                <a class="join-item btn btn-xs {{ 'btn-primary' if status_filter == s }}"
+                   hx-get="/projects/{{ project.id }}/tabs/topics?status={{ s }}" hx-target="#tab-content">{{ s }}</a>
+                {% endfor %}
+            </div>
+            <div class="flex items-center gap-2">
+                <a href="/projects/{{ project.id }}/topics" class="btn btn-ghost btn-xs">نمای کامل</a>
+                <button class="btn btn-primary btn-xs" onclick="document.getElementById('new-topic-modal').showModal()">+ موضوع</button>
+            </div>
+        </div>
+
+        {% if topics %}
+        <div class="card bg-base-100 border border-base-200">
+            <div class="overflow-x-auto">
+                <table class="table table-sm">
+                    <thead>
+                        <tr class="text-xs opacity-60">
+                            <th>عنوان</th>
+                            <th>کلمه کلیدی</th>
+                            <th>ستون/خوشه</th>
+                            <th>وضعیت</th>
+                            <th>اولویت</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for t in topics %}
+                        <tr>
+                            <td class="text-xs max-w-50">
+                                <p class="truncate">{{ t.title }}</p>
+                                {% if t.type %}<span class="badge badge-soft badge-neutral badge-xs">{{ t.type }}</span>{% endif %}
+                            </td>
+                            <td class="text-xs">{{ t.keyword or '—' }}</td>
+                            <td class="text-xs max-w-32">
+                                <p class="truncate">{{ t.pillar or '—' }}{% if t.cluster %} / {{ t.cluster }}{% endif %}</p>
+                            </td>
+                            <td><span class="badge badge-sm {{ t.status|status_badge }}">{{ t.status|status_label }}</span></td>
+                            <td class="text-xs">{{ t.priority or 0 }}</td>
+                            <td class="whitespace-nowrap">
+                                {% if t.status in ['planned', 'failed', 'cancelled'] %}
+                                <button class="btn btn-ghost btn-xs text-primary"
+                                        hx-post="/projects/{{ project.id }}/topics/{{ t.id }}/write" hx-swap="none">نوشتن مقاله</button>
+                                {% endif %}
+                                {% if t.articleId %}
+                                <a class="btn btn-ghost btn-xs" href="/projects/{{ project.id }}/articles/{{ t.articleId }}">مقاله</a>
+                                {% endif %}
+                                <button class="btn btn-ghost btn-xs text-error"
+                                        hx-post="/projects/{{ project.id }}/topics/{{ t.id }}/delete" hx-swap="none"
+                                        hx-confirm="موضوع «{{ t.title }}» حذف شود؟">حذف</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% else %}
+        <div class="card bg-base-100 border border-base-200">
+            <div class="card-body items-center py-8 text-center">
+                <p class="text-sm opacity-50">موضوعی یافت نشد.</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- New topic modal -->
+    <dialog id="new-topic-modal" class="modal modal-bottom sm:modal-middle">
+        <div class="modal-box bg-base-100">
+            <h3 class="font-bold text-lg mb-4">موضوع جدید</h3>
+            <form hx-post="/projects/{{ project.id }}/topics" hx-swap="none" class="flex flex-col gap-3">
+                <label class="form-control">
+                    <span class="label-text text-xs">عنوان موضوع</span>
+                    <input name="title" class="input input-sm" required placeholder="مثلاً: بهترین روش‌های سئو در ۱۴۰۵" />
+                </label>
+                <div class="grid grid-cols-2 gap-3">
+                    <label class="form-control">
+                        <span class="label-text text-xs">کلمه کلیدی</span>
+                        <input name="keyword" class="input input-sm" />
+                    </label>
+                    <label class="form-control">
+                        <span class="label-text text-xs">نوع</span>
+                        <select name="type" class="select select-sm">
+                            <option value="article">مقاله</option>
+                            <option value="pillar_page">صفحه ستون</option>
+                            <option value="guide">راهنما</option>
+                            <option value="news">خبر</option>
+                        </select>
+                    </label>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <label class="form-control">
+                        <span class="label-text text-xs">ستون (Pillar)</span>
+                        <input name="pillar" class="input input-sm" />
+                    </label>
+                    <label class="form-control">
+                        <span class="label-text text-xs">خوشه (Cluster)</span>
+                        <input name="cluster" class="input input-sm" />
+                    </label>
+                </div>
+                <label class="form-control">
+                    <span class="label-text text-xs">اولویت</span>
+                    <input name="priority" type="number" class="input input-sm" value="0" />
+                </label>
+                <div class="flex gap-3 mt-2">
+                    <button type="submit" class="btn btn-primary flex-1">افزودن</button>
+                    <button type="button" class="btn btn-ghost" onclick="document.getElementById('new-topic-modal').close()">انصراف</button>
+                </div>
+            </form>
+        </div>
+    </dialog>
+</div>

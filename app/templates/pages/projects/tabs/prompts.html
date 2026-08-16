@@ -1,0 +1,125 @@
+<div id="prompts-tab" class="flex flex-col gap-4"
+     hx-get="/projects/{{ project.id }}/tabs/prompts"
+     hx-trigger="refreshPrompts from:body"
+     hx-swap="outerHTML">
+    <!-- Variables reference -->
+    <details class="card bg-base-100 border border-base-200">
+        <summary class="card-body p-4 py-3 cursor-pointer text-sm font-bold">متغیرهای قابل استفاده</summary>
+        <div class="px-4 pb-4 grid grid-cols-1 sm:grid-cols-2 gap-1 text-xs">
+            {% for name, desc in variables.items() %}
+            <code class="bg-base-200/60 rounded px-2 py-1 font-mono" dir="ltr">{{ '{{ ' ~ name ~ ' }}' }}</code>
+            <span class="opacity-70">{{ desc }}</span>
+            {% endfor %}
+        </div>
+    </details>
+
+    {% for ptype, label in prompt_types.items() %}
+    {% set active = prompts | selectattr('type', 'equalto', ptype) | selectattr('active', 'equalto', true) | first %}
+    {% set versions = history.get(ptype, []) %}
+    <section class="card bg-base-100 border border-base-200" x-data="{ testOpen: false }">
+        <div class="card-body p-4 gap-3">
+            <div class="flex items-center justify-between">
+                <h2 class="font-bold text-sm">{{ label }}</h2>
+                {% if active %}
+                <span class="badge badge-soft badge-success badge-sm">نسخه فعال: v{{ active.version }}</span>
+                {% else %}
+                <span class="badge badge-soft badge-warning badge-sm">پیش‌فرض سراسری استفاده می‌شود</span>
+                {% endif %}
+            </div>
+
+            <form hx-post="/projects/{{ project.id }}/prompts" hx-swap="none" class="flex flex-col gap-2">
+                <textarea name="{{ ptype }}" class="textarea textarea-sm font-mono text-xs min-h-28" dir="auto">{{ active.content if active else '' }}</textarea>
+                <div class="flex items-center justify-between">
+                    <span class="text-xs opacity-40">ذخیره = نسخه جدید (v{{ (active.version or 0) + 1 }})</span>
+                    <button type="submit" class="btn btn-ghost btn-sm" hx-disabled-elt="this">ذخیره نسخه جدید</button>
+                </div>
+            </form>
+
+            <!-- Tester -->
+            <details class="border border-base-200 rounded-xl px-3 py-2">
+                <summary class="text-xs opacity-70 cursor-pointer">تست تعاملی پرامپت (بدون تغییر نسخه‌ها)</summary>
+                <form hx-post="/projects/{{ project.id }}/prompts/test" hx-target="#test-result-{{ ptype }}" hx-swap="innerHTML" class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2">
+                    <input type="hidden" name="ptype" value="{{ ptype }}" />
+                    <input type="hidden" name="content" value="{{ active.content if active else '' }}" />
+                    <label class="form-control col-span-2 sm:col-span-1">
+                        <span class="label-text text-xs">موضوع</span>
+                        <select name="topic_id" class="select select-xs">
+                            <option value="">— بدون موضوع —</option>
+                            {% for t in topics %}
+                            <option value="{{ t.id }}">{{ t.title }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                    <label class="form-control">
+                        <span class="label-text text-xs">مدل</span>
+                        <select name="model_role" class="select select-xs">
+                            <option value="outline">Outline</option>
+                            <option value="section">Section</option>
+                        </select>
+                    </label>
+                    <button type="submit" class="btn btn-primary btn-xs self-end" hx-disabled-elt="this">
+                        <span class="loading loading-spinner loading-xs htmx-indicator"></span>
+                        تست پرامپت
+                    </button>
+                </form>
+                <div id="test-result-{{ ptype }}" class="mt-2"></div>
+            </details>
+
+            <!-- Version history -->
+            {% if versions|length > 1 %}
+            <div class="overflow-x-auto">
+                <table class="table table-xs">
+                    <thead>
+                        <tr class="text-xs opacity-60">
+                            <th>نسخه</th>
+                            <th>نویسنده</th>
+                            <th>زمان</th>
+                            <th>وضعیت</th>
+                            <th>عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for v in versions %}
+                        <tr class="{{ 'bg-primary/5' if v.active }}">
+                            <td class="font-mono">v{{ v.version }}</td>
+                            <td class="text-xs">{{ v.updatedBy or '—' }}</td>
+                            <td class="text-xs opacity-60 whitespace-nowrap">{{ v.created|jalali_dt }}</td>
+                            <td>
+                                {% if v.active %}
+                                <span class="badge badge-soft badge-success badge-xs">فعال</span>
+                                {% else %}
+                                <span class="badge badge-soft badge-neutral badge-xs">غیرفعال</span>
+                                {% endif %}
+                            </td>
+                            <td class="whitespace-nowrap">
+                                {% if not v.active %}
+                                <button class="btn btn-ghost btn-xs text-primary"
+                                        hx-post="/projects/{{ project.id }}/prompts/{{ ptype }}/activate"
+                                        hx-vals='{"version_id": "{{ v.id }}"}'
+                                        hx-swap="none"
+                                        hx-confirm="نسخه v{{ v.version }} فعال شود؟ (بازگشت)">فعال‌سازی</button>
+                                {% endif %}
+                                <button class="btn btn-ghost btn-xs"
+                                        hx-post="/projects/{{ project.id }}/prompts/{{ ptype }}/duplicate"
+                                        hx-vals='{"version_id": "{{ v.id }}"}'
+                                        hx-swap="none"
+                                        title="کپی به‌عنوان نسخه جدید (غیرفعال)">تکراری‌سازی</button>
+                                {% set other = versions | rejectattr('id', 'equalto', v.id) | first %}
+                                {% if other %}
+                                <button class="btn btn-ghost btn-xs"
+                                        hx-get="/projects/{{ project.id }}/prompts/compare?ptype={{ ptype }}&a={{ v.id }}&b={{ other.id }}"
+                                        hx-target="#compare-modal" hx-swap="innerHTML">مقایسه</button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+        </div>
+    </section>
+    {% endfor %}
+
+    <div id="compare-modal"></div>
+</div>

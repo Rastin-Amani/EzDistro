@@ -1,0 +1,19 @@
+<dialog id="compare-dialog" class="modal modal-bottom sm:modal-middle modal-open">
+    <div class="modal-box bg-base-100 max-w-3xl">
+        <div class="flex items-center justify-between mb-3">
+            <h3 class="font-bold">مقایسه نسخه‌ها — {{ ptype }}</h3>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('compare-dialog').remove()">بستن</button>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+            <div>
+                <p class="text-xs font-bold mb-1">نسخه v{{ va.version if va else '?' }} <span class="opacity-50">{{ va.created|jalali_dt if va else '' }}</span></p>
+                <pre class="text-xs font-mono bg-base-200/60 rounded-xl p-3 max-h-96 overflow-auto whitespace-pre-wrap" dir="auto">{{ va.content if va else '—' }}</pre>
+            </div>
+            <div>
+                <p class="text-xs font-bold mb-1">نسخه v{{ vb.version if vb else '?' }} <span class="opacity-50">{{ vb.created|jalali_dt if vb else '' }}</span></p>
+                <pre class="text-xs font-mono bg-base-200/60 rounded-xl p-3 max-h-96 overflow-auto whitespace-pre-wrap" dir="auto">{{ vb.content if vb else '—' }}</pre>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop bg-black/40 cursor-pointer" onclick="document.getElementById('compare-dialog').remove()"></div>
+</dialog>

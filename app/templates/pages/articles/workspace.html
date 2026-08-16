@@ -1,0 +1,257 @@
+{% extends "layouts/platform.html" %}
+{% block dashboard_content %}
+{% set generating = sections | selectattr('status', 'in', ['pending', 'generating']) | list %}
+<div class="flex items-center justify-between mb-3">
+    <div class="flex items-center gap-2 min-w-0">
+        <a href="/projects/{{ project.id }}?tab=articles" class="btn btn-ghost btn-circle btn-sm" aria-label="بازگشت">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+        </a>
+        <div class="min-w-0">
+            <h1 class="font-bold text-base truncate">{{ article.title }}</h1>
+            <div class="flex items-center gap-2 text-xs opacity-50 flex-wrap">
+                <span class="badge badge-sm {{ article.status|status_badge }}">{{ article.status|status_label }}</span>
+                <span>{{ article.wordCount or 0 }} کلمه</span>
+                <span>رئوس v{{ article.outlineVersion or 0 }}</span>
+                {% if article.wpUrl %}<a href="{{ article.wpUrl }}" target="_blank" rel="noopener" class="link link-primary" dir="ltr">مشاهده در وردپرس</a>{% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="flex items-center gap-2">
+        {% if article.status == 'review' %}
+        <a href="/projects/{{ project.id }}/articles/{{ article.id }}/review" class="btn btn-primary btn-sm">بازبینی و تأیید</a>
+        {% elif article.status == 'approved' %}
+        <button class="btn btn-primary btn-sm" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/publish"
+                hx-swap="none" hx-confirm="مقاله به وردپرس ارسال شود؟">
+            <span class="loading loading-spinner loading-xs htmx-indicator"></span>
+            انتشار
+        </button>
+        {% elif article.status == 'published' %}
+        <button class="btn btn-ghost btn-sm" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/update"
+                hx-swap="none" hx-confirm="محتوای پست وردپرس با نسخه فعلی به‌روزرسانی شود؟">به‌روزرسانی</button>
+        <button class="btn btn-ghost btn-sm text-warning"
+                hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/unpublish"
+                hx-swap="none" hx-confirm="پست وردپرس خصوصی شود (لغو انتشار)؟">لغو انتشار</button>
+        {% endif %}
+        {% elif article.status in ['sent_back', 'failed'] %}
+        <button class="btn btn-primary btn-sm" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/regenerate"
+                hx-swap="none">بازتولید مقاله</button>
+        {% endif %}
+        {% if article.status in ['review', 'approved', 'sent_back'] %}
+        <a href="/projects/{{ project.id }}/articles/{{ article.id }}/review" class="btn btn-ghost btn-sm">بازبینی</a>
+        {% endif %}
+        {% if article.finalHtml and article.status not in ['published', 'publishing', 'generating'] %}
+        <button class="btn btn-ghost btn-sm" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/assemble"
+                hx-swap="none" title="بازسازی مقاله از بخش‌های فعلی">بازسازی</button>
+        {% endif %}
+    </div>
+</div>
+
+<div id="workspace-grid" class="grid grid-cols-1 lg:grid-cols-[260px_1fr_280px] gap-4 items-start"
+     hx-get="/projects/{{ project.id }}/articles/{{ article.id }}/workspace"
+     hx-trigger="refreshArticle from:body"
+     hx-swap="innerHTML" hx-select="#workspace-grid">
+
+    <!-- Left: outline navigation -->
+    <aside class="card bg-base-100 border border-base-200 lg:sticky lg:top-16">
+        <div class="card-body p-3 gap-2">
+            <div class="flex items-center justify-between">
+                <h2 class="font-bold text-xs">رئوس مقاله</h2>
+                <span class="text-xs opacity-50">{{ sections|length }} بخش</span>
+            </div>
+            <div id="outline-pane"
+                 {% if generating %}hx-get="/projects/{{ project.id }}/articles/{{ article.id }}/outline" hx-trigger="every 4s" hx-swap="outerHTML"{% endif %}>
+                {% include "pages/articles/_outline_pane.html" %}
+            </div>
+        </div>
+    </aside>
+
+    <!-- Center: content -->
+    <section class="flex flex-col gap-4 min-w-0">
+        <!-- Title / meta -->
+        <div class="card bg-base-100 border border-base-200">
+            <div class="card-body p-4 gap-3">
+                <form hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/meta" hx-swap="none" class="flex flex-col gap-3">
+                    <label class="form-control">
+                        <span class="label-text text-xs">عنوان</span>
+                        <input name="title" class="input input-sm" value="{{ article.title }}" />
+                    </label>
+                    <label class="form-control">
+                        <span class="label-text text-xs">متا توضیحات</span>
+                        <textarea name="meta_description" class="textarea textarea-sm" rows="2">{{ article.metaDescription or '' }}</textarea>
+                    </label>
+                    <div><button type="submit" class="btn btn-ghost btn-sm">ذخیره</button></div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Section editor (center focus) -->
+        {% for s in sections %}
+        <div class="card bg-base-100 border border-base-200" id="section-{{ s.id }}">
+            <div class="card-body p-4 gap-3">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-bold text-sm flex items-center gap-2">
+                        <span class="opacity-40 text-xs">{{ loop.index }}</span>
+                        <span class="truncate">{{ s.heading }}</span>
+                    </h3>
+                    <span id="section-status-{{ s.id }}">
+                        {% include "pages/articles/_section_status.html" %}
+                    </span>
+                </div>
+                {% if s.status in ['pending', 'generating'] %}
+                <div id="live-{{ s.id }}" hx-get="/projects/{{ project.id }}/articles/{{ article.id }}/sections/{{ s.id }}/status"
+                     hx-trigger="every 2.5s" hx-swap="outerHTML" class="text-xs opacity-60">
+                    {% include "pages/articles/_section_status.html" %}
+                </div>
+                {% endif %}
+                <form hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/sections/{{ s.id }}" hx-swap="none" class="flex flex-col gap-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <label class="form-control">
+                            <span class="label-text text-xs">تیتر بخش</span>
+                            <input name="heading" class="input input-sm" value="{{ s.heading }}" />
+                        </label>
+                        <label class="form-control">
+                            <span class="label-text text-xs">کلمه کلیدی</span>
+                            <input name="keyword" class="input input-sm" value="{{ s.keyword }}" />
+                        </label>
+                    </div>
+                    <label class="form-control">
+                        <span class="label-text text-xs">خلاصه محتوا (brief)</span>
+                        <textarea name="content_brief" class="textarea textarea-sm" rows="2">{{ s.contentBrief or '' }}</textarea>
+                    </label>
+                    <label class="form-control">
+                        <span class="label-text text-xs">محتوای HTML</span>
+                        <textarea name="content" class="textarea textarea-sm font-mono text-xs min-h-40" dir="auto">{{ s.content or '' }}</textarea>
+                    </label>
+                    <div class="flex items-center justify-between flex-wrap gap-2">
+                        <span class="text-xs opacity-50">
+                            {% if s.generationLatency %}آخرین تولید: {{ s.generationLatency }}ms{% endif %}
+                            {% if s.model %}<span class="font-mono" dir="ltr">{{ s.provider }}/{{ s.model }}</span>{% endif %}
+                        </span>
+                        <div class="flex gap-2">
+                            <button type="button" class="btn btn-ghost btn-xs"
+                                    hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/regenerate"
+                                    hx-vals='{"section_id": "{{ s.id }}"}'
+                                    hx-swap="none"
+                                    hx-confirm="این بخش دوباره تولید شود؟">بازتولید بخش</button>
+                            <button type="submit" class="btn btn-ghost btn-sm">ذخیره بخش</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% else %}
+        <div class="card bg-base-100 border border-base-200">
+            <div class="card-body items-center py-8 text-center">
+                <p class="text-sm opacity-50">بخشی وجود ندارد — ابتدا رئوس مطالب تولید کنید.</p>
+            </div>
+        </div>
+        {% endfor %}
+    </section>
+
+    <!-- Right: metadata -->
+    <aside class="flex flex-col gap-4 lg:sticky lg:top-16">
+        <div class="card bg-base-100 border border-base-200">
+            <div class="card-body p-4 gap-2">
+                <h2 class="font-bold text-xs">وضعیت</h2>
+                <div class="flex items-center justify-between">
+                    <span class="badge badge-md {{ article.status|status_badge }}">{{ article.status|status_label }}</span>
+                    {% if topic %}<span class="text-xs opacity-50">{{ topic.title }}</span>{% endif %}
+                </div>
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                    <div class="border border-base-200 rounded-lg p-2">
+                        <span class="opacity-50 block">امتیاز سئو</span>
+                        <span class="font-bold text-primary">{{ article.seoScore or 0 }}/۱۰۰</span>
+                    </div>
+                    <div class="border border-base-200 rounded-lg p-2">
+                        <span class="opacity-50 block">کلمات</span>
+                        <span class="font-bold">{{ article.wordCount or 0 }}</span>
+                    </div>
+                    <div class="border border-base-200 rounded-lg p-2">
+                        <span class="opacity-50 block">نسخه رئوس</span>
+                        <span class="font-bold">v{{ article.outlineVersion or 0 }}</span>
+                    </div>
+                    <div class="border border-base-200 rounded-lg p-2">
+                        <span class="opacity-50 block">کلمه کلیدی</span>
+                        <span class="font-bold">{{ topic.keyword if topic and topic.keyword else '—' }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if article.validation %}
+        <div class="card bg-base-100 border {{ 'border-success/40' if article.validation.ok else 'border-error/40' }}">
+            <div class="card-body p-4 gap-1">
+                <h2 class="font-bold text-xs">اعتبارسنجی</h2>
+                <span class="badge badge-sm mt-1 {{ 'badge-soft badge-success' if article.validation.ok else 'badge-soft badge-error' }}">
+                    {{ 'معتبر' if article.validation.ok else 'نامعتبر' }}
+                </span>
+                {% for issue in article.validation.issues %}
+                <p class="text-xs text-error">{{ issue.message }}</p>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="card bg-base-100 border border-base-200">
+            <div class="card-body p-4 gap-2">
+                <h2 class="font-bold text-xs">تولید بخش‌ها</h2>
+                <ul class="flex flex-col gap-1 text-xs">
+                    {% for s in sections %}
+                    <li class="flex items-center justify-between gap-2 border border-base-200 rounded-lg px-2 py-1">
+                        <span class="truncate opacity-70">{{ loop.index }}. {{ s.heading }}</span>
+                        <span class="flex items-center gap-1 shrink-0">
+                            {% if s.model %}<span class="font-mono opacity-60 hidden sm:inline" dir="ltr">{{ s.model }}</span>{% endif %}
+                            {% if s.promptVersion %}<span class="badge badge-soft badge-info badge-xs">v{{ s.promptVersion }}</span>{% endif %}
+                            <span class="badge badge-xs {{ s.status|status_badge }}">{{ s.status|status_label }}</span>
+                        </span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="card bg-base-100 border border-base-200">
+            <div class="card-body p-4 gap-2">
+                <h2 class="font-bold text-xs">لینک‌های داخلی</h2>
+                {% if internal_links %}
+                <ul class="flex flex-col gap-1 text-xs">
+                    {% for link in internal_links %}
+                    <li class="truncate"><a href="{{ link.url }}" target="_blank" rel="noopener" class="link link-primary" dir="ltr">{{ link.title }}</a></li>
+                    {% endfor %}
+                </ul>
+                {% else %}<p class="text-xs opacity-50">لینک داخلی تعریف نشده است.</p>{% endif %}
+                {% else %}<p class="text-xs opacity-50">رئوس موجود نیست.</p>{% endif %}
+            </div>
+        </div>
+
+        {% if publish_runs %}
+        <div class="card bg-base-100 border border-base-200">
+            <div class="card-body p-4 gap-1">
+                <h2 class="font-bold text-xs">تاریخچه انتشار</h2>
+                {% for r in publish_runs %}
+                <div class="flex items-center justify-between gap-2 text-xs border border-base-200 rounded-lg px-2 py-1">
+                    <span class="flex items-center gap-1 min-w-0">
+                        <span class="badge badge-xs {{ r.status|status_badge }}">{{ r.status|status_label }}</span>
+                        <span class="badge badge-soft badge-neutral badge-xs">{{ r.mode }}</span>
+                        <span class="opacity-40 font-mono hidden sm:inline" title="شناسه درخواست">#{{ r.requestId or '—' }}</span>
+                        {% if r.responseStatus %}<span class="opacity-40">HTTP {{ r.responseStatus }}</span>{% endif %}
+                    </span>
+                    <span class="flex items-center gap-1 shrink-0">
+                        <span class="opacity-60 whitespace-nowrap">{{ r.created|jalali_dt }}</span>
+                        {% if r.wordpressUrl %}<a href="{{ r.wordpressUrl }}" target="_blank" rel="noopener" class="link link-primary" dir="ltr">پست {{ r.wordpressPostId }}</a>{% endif %}
+                        {% if r.status == 'failed' %}
+                        <button class="btn btn-ghost btn-xs" title="تلاش مجدد"
+                                hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/publish-runs/{{ r.id }}/retry"
+                                hx-swap="none">تلاش مجدد</button>
+                        {% endif %}
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </aside>
+</div>
+{% endblock %}

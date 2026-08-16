@@ -1,79 +1,90 @@
-# fast api imports
-import os
+"""FastAPI application factory (web process)."""
+
 from fastapi import FastAPI
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse
-import structlog
 
-from .routes import debug
-from .routes import pwa
-from .templates import templates
-
-# logging config
-try:
-    from app.logging_config import logger
-except ImportError:
-    import logging
-
-    logger = logging.getLogger(__name__)
-    logger.warning("structlog not available — falling back to stdlib logging")
-
-# middleware import
-
-# swagger/docs only in dev
-IS_PROD = os.getenv("ENV", "dev").lower() == "production"
+from app.api import articles, auth, dashboard, jobs, logs, projects, workspace
+from app.config import settings
+from app.middleware import AuthMiddleware
+from app.routes import pwa
+from app.templates import templates
 
 app = FastAPI(
-    title="Fast-Htmx Boilerplate",
+    title=settings.app_name,
     docs_url=None,
     redoc_url=None,
-    openapi_url="/openapi.json" if not IS_PROD else None,
+    openapi_url="/openapi.json" if not settings.is_prod else None,
 )
 
-APP_VERSION = os.getenv("APP_VERSION", "0.1.0")
-templates.env.globals["app_version"] = APP_VERSION
+templates.env.globals["app_version"] = settings.app_version
+templates.env.globals["app_name"] = settings.app_name
 
-# static folder
+# static files
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
-# middleware
+# auth + correlation middleware (was previously dead code)
+app.add_middleware(AuthMiddleware)
 
-# include routers
-if not IS_PROD:
-    app.include_router(debug.router)
+# routers
+app.include_router(auth.router)
+app.include_router(dashboard.router)
+app.include_router(projects.router)
+app.include_router(articles.router)
+app.include_router(workspace.router)
+app.include_router(jobs.router)
+app.include_router(logs.router)
 app.include_router(pwa.router)
 
+if not settings.is_prod:
+    from app.routes import debug
 
-# swagger ui
-if not IS_PROD:
+    app.include_router(debug.router)
 
     @app.get("/docs", include_in_schema=False)
     def custom_docs():
-        return HTMLResponse("""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Fast-Htmx Boilerplate API Docs</title>
-            <link rel="stylesheet" type="text/css" href="/static/swagger/swagger-ui.css">
-        </head>
-        <body>
-            <div id="swagger-ui"></div>
+        return HTMLResponse(
+            """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Seoz Platform API Docs</title>
+                <link rel="stylesheet" type="text/css" href="/static/swagger/swagger-ui.css">
+            </head>
+            <body>
+                <div id="swagger-ui"></div>
+                <script src="/static/swagger/swagger-ui-bundle.js"></script>
+                <script src="/static/swagger/swagger-ui-standalone-preset.js"></script>
+                <script>
+                window.onload = function() {
+                    SwaggerUIBundle({
+                        url: '/openapi.json',
+                        dom_id: '#swagger-ui',
+                        presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
+                        layout: "StandaloneLayout"
+                    });
+                };
+                </script>
+            </body>
+            </html>
+            """
+        )
 
-            <script src="/static/swagger/swagger-ui-bundle.js"></script>
-            <script src="/static/swagger/swagger-ui-standalone-preset.js"></script>
-            <script>
-            window.onload = function() {
-                SwaggerUIBundle({
-                    url: '/openapi.json',
-                    dom_id: '#swagger-ui',
-                    presets: [
-                        SwaggerUIBundle.presets.apis,
-                        SwaggerUIStandalonePreset
-                    ],
-                    layout: "StandaloneLayout"
-                });
-            };
-            </script>
-        </body>
-        </html>
-        """)
+
+@app.get("/health", include_in_schema=False)
+def health():
+    """Liveness probe — reflects PocketBase reachability (degraded when down)."""
+    from app.pb import get_pb
+
+    try:
+        pb = get_pb()
+        pb.health.check()  # raises on failure
+        pb_ok = True
+    except Exception:
+        pb_ok = False
+    if not pb_ok:
+        return JSONResponse(
+            {"status": "degraded", "version": settings.app_version, "pocketbase": "unreachable"},
+            status_code=503,
+        )
+    return JSONResponse({"status": "ok", "version": settings.app_version, "pocketbase": "ok"})

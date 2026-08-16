@@ -1,0 +1,63 @@
+<div id="jobs-table"
+     hx-get="/jobs/partial?status={{ status_filter or '' }}"
+     hx-trigger="every 5s, refreshJobs from:body"
+     hx-swap="outerHTML">
+    {% if jobs %}
+    <div class="card bg-base-100 border border-base-200">
+        <div class="overflow-x-auto">
+            <table class="table table-sm">
+                <thead>
+                    <tr class="text-xs opacity-60">
+                        <th>نوع</th>
+                        <th>پروژه</th>
+                        <th>وضعیت</th>
+                        <th>پیشرفت</th>
+                        <th>پیام</th>
+                        <th>تلاش</th>
+                        <th>زمان</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for j in jobs %}
+                    <tr>
+                        <td class="text-xs whitespace-nowrap">{{ j.type }}</td>
+                        <td class="text-xs opacity-60">{{ j.project[:8] }}</td>
+                        <td><span class="badge badge-sm {{ j.status|status_badge }}">{{ j.status|status_label }}</span></td>
+                        <td class="w-32">
+                            <div class="flex items-center gap-2">
+                                <progress class="progress progress-primary w-16 h-1.5" value="{{ j.progress or 0 }}" max="100"></progress>
+                                <span class="text-xs">{{ j.progress or 0 }}٪</span>
+                            </div>
+                        </td>
+                        <td class="text-xs max-w-48">
+                            <p class="truncate">{{ j.progressMessage or '—' }}</p>
+                            {% if j.stage %}<p class="opacity-50 text-xs" dir="ltr">{{ j.stage }}</p>{% endif %}
+                            {% if j.currentItem and j.totalItems %}<p class="opacity-50">{{ j.currentItem }} / {{ j.totalItems }}</p>{% endif %}
+                        </td>
+                        <td class="text-xs">{{ j.attempts or 0 }}/{{ j.maxAttempts or 3 }}</td>
+                        <td class="text-xs opacity-50 whitespace-nowrap">{{ j.created|jalali_dt }}</td>
+                        <td class="whitespace-nowrap">
+                            {% if j.status in ['pending', 'retrying', 'running'] %}
+                            <button class="btn btn-ghost btn-xs text-warning"
+                                    hx-post="/jobs/{{ j.id }}/cancel" hx-swap="none"
+                                    hx-confirm="لغو این وظیفه؟">لغو</button>
+                            {% elif j.status == 'failed' %}
+                            <button class="btn btn-ghost btn-xs text-primary"
+                                    hx-post="/jobs/{{ j.id }}/retry" hx-swap="none">تلاش مجدد</button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="card bg-base-100 border border-base-200">
+        <div class="card-body items-center py-8 text-center">
+            <p class="text-sm opacity-50">وظیفه‌ای وجود ندارد.</p>
+        </div>
+    </div>
+    {% endif %}
+</div>

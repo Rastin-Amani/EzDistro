@@ -1,0 +1,42 @@
+<div id="publishing-tab">
+    {% if records %}
+    <div class="card bg-base-100 border border-base-200">
+        <div class="overflow-x-auto">
+            <table class="table table-sm">
+                <thead>
+                    <tr class="text-xs opacity-60">
+                        <th>مقاله</th>
+                        <th>تلاش</th>
+                        <th>حالت</th>
+                        <th>وضعیت</th>
+                        <th>شناسه پست</th>
+                        <th>آدرس</th>
+                        <th>زمان</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in records %}
+                    <tr>
+                        <td class="text-xs max-w-50"><p class="truncate">{{ r.article }}</p></td>
+                        <td class="text-xs">{{ r.attempt or 1 }}</td>
+                        <td><span class="badge badge-sm {{ r.mode|status_badge }}">{{ r.mode }}</span></td>
+                        <td><span class="badge badge-sm {{ r.status|status_badge }}">{{ r.status|status_label }}</span></td>
+                        <td class="text-xs">{{ r.wordpressPostId or '—' }}</td>
+                        <td class="text-xs max-w-40">
+                            {% if r.wordpressUrl %}<a href="{{ r.wordpressUrl }}" target="_blank" rel="noopener" class="link link-primary truncate block" dir="ltr">{{ r.wordpressUrl }}</a>{% else %}—{% endif %}
+                        </td>
+                        <td class="text-xs opacity-50 whitespace-nowrap">{{ r.created|jalali_dt }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="card bg-base-100 border border-base-200">
+        <div class="card-body items-center py-8 text-center">
+            <p class="text-sm opacity-50">هنوز انتشاراتی ثبت نشده است.</p>
+        </div>
+    </div>
+    {% endif %}
+</div>

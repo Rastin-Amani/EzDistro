@@ -1,0 +1,134 @@
+<div id="ai-models-tab" class="flex flex-col gap-5 max-w-3xl">
+    <div class="flex items-center justify-between">
+        <div>
+            <h2 class="font-bold text-sm">مدل‌های هوش مصنوعی</h2>
+            <p class="text-xs opacity-50">
+                اولویت: تنظیم پروژه ← پیش‌فرض سراسری. تغییر مدل فقط یک رویداد ممیزی می‌سازد؛
+                متادیتای مقالات قبلی (provider/model/نسخه پرامپت) هرگز تغییر نمی‌کند.
+            </p>
+        </div>
+    </div>
+
+    <form hx-post="/projects/{{ project.id }}/ai-models" hx-swap="none" class="flex flex-col gap-5">
+        {% for role, label, with_params in roles %}
+        {% set cfg = settings[role ~ 'Provider'] if settings[role ~ 'Provider'] else '' %}
+        {% set sel_provider = settings[role ~ 'Provider'] or '' %}
+        {% set sel_model = settings[role ~ 'Model'] or '' %}
+        <section class="card bg-base-100 border border-base-200">
+            <div class="card-body p-4 gap-3" x-data="{ provider: '{{ sel_provider }}' }">
+                <h3 class="font-bold text-sm">{{ label }}</h3>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <label class="form-control">
+                        <span class="label-text text-xs">ارائه‌دهنده</span>
+                        <select name="{{ role }}_provider" class="select select-sm" x-model="provider">
+                            <option value="">— پیش‌فرض سراسری —</option>
+                            {% for meta in llm_meta %}
+                            <option value="{{ meta.provider }}" {{ 'selected' if sel_provider == meta.provider }}>{{ meta.provider }}</option>
+                            {% endfor %}
+                        </select>
+                        <span class="text-xs opacity-40 mt-1">{{ llm_meta | selectattr('provider', 'equalto', sel_provider) | map(attribute='description') | first | default('') }}</span>
+                    </label>
+
+                    <label class="form-control">
+                        <span class="label-text text-xs">مدل</span>
+                        <div class="flex gap-1">
+                            <input name="{{ role }}_model" class="input input-sm flex-1" dir="ltr" value="{{ sel_model }}"
+                                   placeholder="{{ global_defaults[role].model if global_defaults.get(role) else '' }}" list="models-{{ role }}" />
+                            <button type="button" class="btn btn-ghost btn-sm"
+                                    hx-get="/projects/{{ project.id }}/ai-models/{{ role }}/models"
+                                    hx-target="#models-{{ role }}" hx-swap="innerHTML"
+                                    title="دریافت مدل‌ها از ارائه‌دهنده">
+                                <span class="loading loading-spinner loading-xs htmx-indicator"></span>
+                                دریافت
+                            </button>
+                        </div>
+                        <datalist id="models-{{ role }}"></datalist>
+                        <span class="text-xs opacity-40 mt-1">می‌توانید شناسه مدل را دستی وارد کنید.</span>
+                    </label>
+
+                    <label class="form-control">
+                        <span class="label-text text-xs">پیش‌فرض سراسری</span>
+                        <div class="text-xs opacity-60 border border-base-200 rounded-lg px-3 py-2" dir="ltr">
+                            {% if global_defaults.get(role) and global_defaults[role].provider %}
+                            {{ global_defaults[role].provider }} / {{ global_defaults[role].model }}
+                            {% else %}— تعریف نشده —{% endif %}
+                        </div>
+                    </label>
+                </div>
+
+                {% if with_params %}
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" x-show="provider !== 'meta' && provider !== 'review'">
+                    <label class="form-control" x-show="provider !== 'custom'">
+                        <span class="label-text text-xs">دما (temperature)</span>
+                        <input name="{{ role }}_temperature" type="number" step="0.1" min="0" max="2" class="input input-sm"
+                               value="{{ settings[role ~ 'Temperature'] or 0.7 }}" />
+                    </label>
+                    <label class="form-control">
+                        <span class="label-text text-xs">حداکثر توکن</span>
+                        <input name="{{ role }}_max_tokens" type="number" class="input input-sm"
+                               value="{{ settings[role ~ 'MaxTokens'] or 4096 }}" />
+                    </label>
+                    <label class="form-control">
+                        <span class="label-text text-xs">تایم‌اوت (ثانیه)</span>
+                        <input name="{{ role }}_timeout" type="number" class="input input-sm"
+                               value="{{ settings[role ~ 'Timeout'] or 120 }}" />
+                    </label>
+                    <label class="form-control">
+                        <span class="label-text text-xs">حداکثر تلاش</span>
+                        <input name="{{ role }}_retry_attempts" type="number" class="input input-sm"
+                               value="{{ (settings[role ~ 'Retry'] or {}).max_attempts or 3 }}" />
+                    </label>
+                    <label class="form-control">
+                        <span class="label-text text-xs">پایه تأخیر (s)</span>
+                        <input name="{{ role }}_retry_base" type="number" class="input input-sm"
+                               value="{{ (settings[role ~ 'Retry'] or {}).backoff_base or 30 }}" />
+                    </label>
+                </div>
+                {% endif %}
+
+                {% if role == 'outline' or role == 'section' %}
+                <details class="border border-base-200 rounded-xl px-3 py-2" x-show="provider === 'custom' || provider === 'openai_compat'">
+                    <summary class="text-xs opacity-70 cursor-pointer">اتصال اختصاصی (Base URL + کلید — اختیاری)</summary>
+                    <div class="grid grid-cols-2 gap-3 mt-2">
+                        <label class="form-control">
+                            <span class="label-text text-xs">Base URL</span>
+                            <input name="base_url" class="input input-sm" dir="ltr" placeholder="https://api.example.com/v1" />
+                        </label>
+                        <label class="form-control">
+                            <span class="label-text text-xs">API Key (خالی = حفظ قبلی)</span>
+                            <input type="password" name="api_key" class="input input-sm" dir="ltr" autocomplete="new-password" />
+                        </label>
+                    </div>
+                </details>
+                {% endif %}
+            </div>
+        </section>
+        {% endfor %}
+
+        <button type="submit" class="btn btn-primary max-w-3xl" hx-disabled-elt="this">
+            <span class="loading loading-spinner loading-xs htmx-indicator"></span>
+            ذخیره مدل‌ها
+        </button>
+    </form>
+
+    {% if user and user.role == 'admin' %}
+    <section class="card bg-base-100 border border-base-200">
+        <div class="card-body p-4 gap-3">
+            <h3 class="font-bold text-sm">پیش‌فرض‌های سراسری (فقط مدیر)</h3>
+            <p class="text-xs opacity-50">تنظیم پروژه همیشه بر این مقادیر اولویت دارد.</p>
+            <form hx-post="/projects/{{ project.id }}/ai-models/global" hx-swap="none" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {% for role in ['outline', 'section', 'meta', 'review'] %}
+                {% set g = global_defaults.get(role) or {} %}
+                <div class="flex flex-col gap-2 border border-base-200 rounded-xl p-3">
+                    <span class="text-xs font-semibold">{{ role }}</span>
+                    <input name="{{ role }}_provider" class="input input-xs" dir="ltr" placeholder="provider" value="{{ g.provider or '' }}" />
+                    <input name="{{ role }}_model" class="input input-xs" dir="ltr" placeholder="model" value="{{ g.model or '' }}" />
+                </div>
+                {% endfor %}
+                <button type="submit" class="btn btn-ghost btn-sm col-span-2 sm:col-span-4">ذخیره پیش‌فرض‌ها</button>
+            </form>
+        </div>
+    </section>
+    {% endif %}
+</div>

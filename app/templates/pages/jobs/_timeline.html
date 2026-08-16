@@ -1,0 +1,32 @@
+<div id="job-timeline" class="flex flex-col gap-1.5 text-xs">
+    {% for e in events %}
+    <div class="flex items-start gap-2 border border-base-200 rounded-lg px-2 py-1.5">
+        <span class="badge badge-xs mt-0.5 shrink-0 {{ e.eventType|status_badge }}">{{ e.eventType|status_label }}</span>
+        <div class="min-w-0 flex-1">
+            <p class="truncate">{{ e.message }}</p>
+            {% if e.eventType == 'provider_call' and e.metadata %}
+            <p class="opacity-60 truncate" dir="ltr">
+                {{ e.metadata.provider }}/{{ e.metadata.model }} — {{ e.metadata.operation }} —
+                {{ e.metadata.latency_ms }}ms{% if e.metadata.success %} ✓{% else %} ✗ {{ e.metadata.error_category }}{% endif %}
+                {% if e.metadata.retries %} ({{ e.metadata.retries }} retries){% endif %}
+                {% if e.metadata.prompt_tokens is not none %} — {{ e.metadata.prompt_tokens }}+{{ e.metadata.completion_tokens }} tokens{% endif %}
+            </p>
+            {% endif %}
+            {% if e.eventType == 'job.retry_scheduled' and e.metadata %}
+            <p class="opacity-60">تلاش {{ e.metadata.attempt }}/{{ e.metadata.max_attempts }} — تأخیر {{ e.metadata.delay_seconds }}s</p>
+            {% endif %}
+            {% if e.metadata and e.eventType not in ['provider_call', 'job.retry_scheduled'] and e.metadata != {} %}
+                {% if is_admin %}
+                <details class="mt-0.5">
+                    <summary class="opacity-40 cursor-pointer">JSON</summary>
+                    <pre class="bg-base-200/60 rounded-lg p-2 font-mono overflow-auto max-h-40" dir="ltr">{{ e.metadata|tojson(indent=2) }}</pre>
+                </details>
+                {% endif %}
+            {% endif %}
+        </div>
+        <span class="opacity-40 whitespace-nowrap shrink-0">{{ e.created|jalali_dt }}</span>
+    </div>
+    {% else %}
+    <p class="opacity-50 py-4 text-center">رویدادی ثبت نشده است.</p>
+    {% endfor %}
+</div>

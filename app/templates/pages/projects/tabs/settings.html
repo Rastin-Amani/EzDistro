@@ -1,0 +1,243 @@
+<form hx-post="/projects/{{ project.id }}/settings" hx-swap="none" class="flex flex-col gap-5 max-w-2xl">
+    <!-- Embedding -->
+    <section class="card bg-base-100 border border-base-200">
+        <div class="card-body p-4 gap-3">
+            <h2 class="font-bold text-sm">جاسازی متن (Embedding)</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <label class="form-control">
+                    <span class="label-text text-xs">ارائه‌دهنده</span>
+                    <select name="embedding_provider" class="select select-sm">
+                        {% for p in embedding_providers %}
+                        <option value="{{ p }}" {{ 'selected' if settings.embeddingProvider == p }}>{{ p }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label class="form-control">
+                    <span class="label-text text-xs">مدل</span>
+                    <input name="embedding_model" class="input input-sm" value="{{ settings.embeddingModel }}" dir="ltr" placeholder="embed-v4.0" />
+                </label>
+                <label class="form-control">
+                    <span class="label-text text-xs">ابعاد</span>
+                    <input name="embedding_dimensions" type="number" class="input input-sm" value="{{ settings.embeddingDimensions }}" />
+                </label>
+            </div>
+            <p class="text-xs opacity-50">تغییر مدل = فضای نام جدید در کیوردنت؛ ابعاد باید با مدل هماهنگ باشد (embed-v4.0 = 1024).</p>
+        </div>
+    </section>
+
+    <!-- AI models shortcut -->
+    <section class="card bg-base-100 border border-base-200">
+        <div class="card-body p-4 flex-row items-center justify-between">
+            <div>
+                <h2 class="font-bold text-sm">مدل‌های هوش مصنوعی</h2>
+                <p class="text-xs opacity-50">ارائه‌دهنده، مدل، دما، توکن و تایم‌اوت هر نقش (رئوس / بخش‌ها) از اینجا قابل تنظیم است.</p>
+            </div>
+            <a href="/projects/{{ project.id }}?tab=ai_models" class="btn btn-primary btn-sm"
+               hx-get="/projects/{{ project.id }}/tabs/ai_models" hx-target="#tab-content">پیکربندی مدل‌ها</a>
+        </div>
+    </section>
+
+    <!-- Chunking -->
+    <section class="card bg-base-100 border border-base-200">
+        <div class="card-body p-4 gap-3">
+            <h2 class="font-bold text-sm">تکه‌بندی (Chunking)</h2>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-2xl">
+                <label class="form-control">
+                    <span class="label-text text-xs">اندازه تکه (کلمه)</span>
+                    <input name="chunk_size" type="number" class="input input-sm" value="{{ settings.chunkSize }}" />
+                </label>
+                <label class="form-control">
+                    <span class="label-text text-xs">همپوشانی</span>
+                    <input name="chunk_overlap" type="number" class="input input-sm" value="{{ settings.chunkOverlap }}" />
+                </label>
+                <label class="form-control">
+                    <span class="label-text text-xs">استراتژی جداکننده</span>
+                    <select name="separator_strategy" class="select select-sm">
+                        {% set strategies = [('auto', 'خودکار (پاراگراف→جمله)'), ('paragraph', 'پاراگراف'), ('sentence', 'جمله'), ('word', 'کلمه')] %}
+                        {% for value, label in strategies %}
+                        <option value="{{ value }}" {{ 'selected' if settings.separatorStrategy == value }}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label class="form-control">
+                    <span class="label-text text-xs">حداکثر تعداد تکه (۰ = نامحدود)</span>
+                    <input name="max_chunk_count" type="number" class="input input-sm" value="{{ settings.maxChunkCount or 0 }}" />
+                </label>
+            </div>
+            <p class="text-xs opacity-50">متن فارسی ابتدا بر اساس مرز پاراگراف/جمله شکسته می‌شود و تنها در صورت نیاز به حد سخت کلمه می‌رسد — هیچ‌گاه شکستن در وسط کلمه.</p>
+        </div>
+    </section>
+
+    <!-- Retrieval -->
+    <section class="card bg-base-100 border border-base-200">
+        <div class="card-body p-4 gap-3">
+            <h2 class="font-bold text-sm">بازیابی (Retrieval)</h2>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-2xl">
+                <label class="form-control">
+                    <span class="label-text text-xs">تعداد کاندیدا (Top K)</span>
+                    <input name="retrieval_top_k" type="number" class="input input-sm" value="{{ settings.retrievalTopK }}" />
+                </label>
+                <label class="form-control">
+                    <span class="label-text text-xs">آستانه تشابه</span>
+                    <input name="similarity_threshold" type="number" step="0.05" class="input input-sm" value="{{ settings.similarityThreshold }}" />
+                </label>
+                <label class="form-control">
+                    <span class="label-text text-xs">بازچینش (Rerank)</span>
+                    <select name="reranking_enabled" class="select select-sm">
+                        <option value="0" {{ 'selected' if not settings.rerankingEnabled }}>غیرفعال</option>
+                        <option value="1" {{ 'selected' if settings.rerankingEnabled }}>فعال</option>
+                    </select>
+                </label>
+                <label class="form-control">
+                    <span class="label-text text-xs">نتایج پس از بازچینش</span>
+                    <input name="reranker_top_n" type="number" class="input input-sm" value="{{ settings.rerankerTopN or 8 }}" />
+                </label>
+                <label class="form-control">
+                    <span class="label-text text-xs">مدل بازچینش</span>
+                    <input name="reranker_model" class="input input-sm" value="{{ settings.rerankerModel }}" dir="ltr" />
+                </label>
+                <label class="form-control">
+                    <span class="label-text text-xs">ارائه‌دهنده بازچینش</span>
+                    <select name="reranker_provider" class="select select-sm">
+                        {% for p in reranker_providers %}
+                        <option value="{{ p }}" {{ 'selected' if settings.rerankerProvider == p }}>{{ p }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+            </div>
+        </div>
+    </section>
+
+    <!-- Prompt context budget -->
+    <section class="card bg-base-100 border border-base-200">
+        <div class="card-body p-4 gap-3">
+            <h2 class="font-bold text-sm">بودجه زمینه پرامپت (Context)</h2>
+            <p class="text-xs opacity-50">فقط همین مقدار از نتایج بازیابی به مدل زبانی داده می‌شود — نه کل مستندات.</p>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 max-w-2xl">
+                <label class="form-control">
+                    <span class="label-text text-xs">حداکثر لینک داخلی</span>
+                    <input name="context_max_links" type="number" class="input input-sm" value="{{ settings.contextMaxLinks or 5 }}" />
+                </label>
+                <label class="form-control">
+                    <span class="label-text text-xs">حداکثر بخش مرتبط</span>
+                    <input name="context_max_passages" type="number" class="input input-sm" value="{{ settings.contextMaxPassages or 5 }}" />
+                </label>
+                <label class="form-control">
+                    <span class="label-text text-xs">حداکثر کاراکتر</span>
+                    <input name="context_max_chars" type="number" class="input input-sm" value="{{ settings.contextMaxChars or 4000 }}" />
+                </label>
+            </div>
+        </div>
+    </section>
+
+    <!-- Generation & publishing -->
+    <section class="card bg-base-100 border border-base-200">
+        <div class="card-body p-4 gap-3">
+            <h2 class="font-bold text-sm">تولید و انتشار</h2>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 max-w-2xl">
+                <label class="form-control">
+                    <span class="label-text text-xs">تولید هم‌زمان بخش‌ها</span>
+                    <input name="generation_concurrency" type="number" class="input input-sm" value="{{ settings.generationConcurrency }}" />
+                </label>
+                <label class="form-control">
+                    <span class="label-text text-xs">حداقل کلمات مقاله</span>
+                    <input name="min_article_words" type="number" class="input input-sm" value="{{ settings.minArticleWords or 300 }}" />
+                </label>
+                <label class="form-control">
+                    <span class="label-text text-xs">حالت انتشار</span>
+                    <select name="publishing_mode" class="select select-sm">
+                        <option value="draft" {{ 'selected' if settings.publishingMode == 'draft' }}>پیش‌نویس</option>
+                        <option value="publish" {{ 'selected' if settings.publishingMode == 'publish' }}>انتشار زنده</option>
+                    </select>
+                </label>
+                <label class="form-control">
+                    <span class="label-text text-xs">ذخیره خودکار (Autosave)</span>
+                    <select name="autosave_enabled" class="select select-sm">
+                        <option value="0" {{ 'selected' if not settings.autosave.enabled }}>غیرفعال</option>
+                        <option value="1" {{ 'selected' if settings.autosave.enabled }}>فعال</option>
+                    </select>
+                </label>
+                <label class="form-control">
+                    <span class="label-text text-xs">بازه autosave (دقیقه)</span>
+                    <input name="autosave_interval_minutes" type="number" class="input input-sm" value="{{ settings.autosave.interval_minutes or 5 }}" />
+                </label>
+            </div>
+        </div>
+    </section>
+
+    <!-- Retry -->
+    <section class="card bg-base-100 border border-base-200">
+        <div class="card-body p-4 gap-3">
+            <h2 class="font-bold text-sm">تلاش مجدد (Retry)</h2>
+            <div class="grid grid-cols-3 gap-3 max-w-2xl">
+                <label class="form-control">
+                    <span class="label-text text-xs">حداکثر تلاش</span>
+                    <input name="retry_max_attempts" type="number" class="input input-sm" value="{{ settings.retryPolicy.max_attempts }}" />
+                </label>
+                <label class="form-control">
+                    <span class="label-text text-xs">پایه تأخیر (ثانیه)</span>
+                    <input name="retry_backoff_base" type="number" class="input input-sm" value="{{ settings.retryPolicy.backoff_base }}" />
+                </label>
+                <label class="form-control">
+                    <span class="label-text text-xs">سقف تأخیر (ثانیه)</span>
+                    <input name="retry_backoff_max" type="number" class="input input-sm" value="{{ settings.retryPolicy.backoff_max }}" />
+                </label>
+            </div>
+        </div>
+    </section>
+
+    <!-- Indexing -->
+    <section class="card bg-base-100 border border-base-200">
+        <div class="card-body p-4 gap-3">
+            <h2 class="font-bold text-sm">نمایه‌سازی</h2>
+            <div class="grid grid-cols-2 gap-3 max-w-md">
+                <label class="form-control">
+                    <span class="label-text text-xs">زمان‌بندی خودکار</span>
+                    <select name="indexing_schedule_enabled" class="select select-sm">
+                        <option value="0" {{ 'selected' if not settings.indexing.schedule_enabled }}>غیرفعال</option>
+                        <option value="1" {{ 'selected' if settings.indexing.schedule_enabled }}>فعال</option>
+                    </select>
+                </label>
+                <label class="form-control">
+                    <span class="label-text text-xs">بازه (دقیقه)</span>
+                    <input name="indexing_schedule_interval_minutes" type="number" class="input input-sm" value="{{ settings.indexing.schedule_interval_minutes or 1440 }}" />
+                </label>
+            </div>
+        </div>
+    </section>
+
+    <!-- Schedules -->
+    <section class="card bg-base-100 border border-base-200">
+        <div class="card-body p-4 gap-3">
+            <h2 class="font-bold text-sm">زمان‌بندی وظایف</h2>
+            <p class="text-xs opacity-50">کارگر (worker) هر دقیقه زمان‌بندی‌ها را بررسی و در بازه تعیین‌شده وظیفه می‌سازد.</p>
+            {% set kinds = [('index', 'نمایه‌سازی خودکار'), ('write', 'نویسندگی خودکار')] %}
+            {% for kind, label in kinds %}
+            {% set sched = schedules | selectattr('kind', 'equalto', kind) | first %}
+            <form hx-post="/projects/{{ project.id }}/schedules" hx-swap="none" class="border border-base-200 rounded-xl p-3 flex flex-wrap items-end gap-3">
+                <input type="hidden" name="kind" value="{{ kind }}" />
+                <div class="flex flex-col gap-1 min-w-40">
+                    <span class="text-xs font-semibold">{{ label }}</span>
+                    <select name="enabled" class="select select-xs">
+                        <option value="1" {{ 'selected' if sched and sched.enabled }}>فعال</option>
+                        <option value="0" {{ 'selected' if not sched or not sched.enabled }}>غیرفعال</option>
+                    </select>
+                </div>
+                <label class="form-control">
+                    <span class="label-text text-xs">بازه (دقیقه)</span>
+                    <input name="interval_minutes" type="number" class="input input-sm w-28" value="{{ sched.intervalMinutes if sched else 1440 }}" />
+                </label>
+                <button type="submit" class="btn btn-ghost btn-sm">ذخیره</button>
+                {% if sched and sched.lastRunAt %}
+                <span class="text-xs opacity-40">آخرین اجرا: {{ sched.lastRunAt|jalali_dt }}</span>
+                {% endif %}
+            </form>
+            {% endfor %}
+        </div>
+    </section>
+
+    <button type="submit" class="btn btn-primary max-w-2xl" hx-disabled-elt="this">
+        <span class="loading loading-spinner loading-xs htmx-indicator"></span>
+        ذخیره تنظیمات
+    </button>
+</form>

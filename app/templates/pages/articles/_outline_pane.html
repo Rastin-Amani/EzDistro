@@ -1,0 +1,37 @@
+<div id="outline-pane" class="flex flex-col gap-1.5">
+    {% for s in sections %}
+    <div class="border border-base-200 rounded-lg p-2 flex flex-col gap-1 {{ 'bg-primary/5' if s.status == 'generating' }}">
+        <div class="flex items-center justify-between gap-1">
+            <span class="text-xs font-semibold truncate">{{ loop.index }}. {{ s.heading }}</span>
+            <span class="badge badge-xs shrink-0 {{ s.status|status_badge }}">{{ s.status|status_label }}</span>
+        </div>
+        <div class="flex items-center gap-1">
+            <a href="#section-{{ s.id }}" class="btn btn-ghost btn-xs p-0 h-5" title="پرش به بخش">مشاهده</a>
+            <form hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/outline/sections/{{ loop.index0 }}/move"
+                  hx-swap="none" class="inline">
+                <input type="hidden" name="direction" value="up" />
+                <button type="submit" class="btn btn-ghost btn-xs p-0 h-5" {{ 'disabled' if loop.first }} title="بالا">↑</button>
+            </form>
+            <form hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/outline/sections/{{ loop.index0 }}/move"
+                  hx-swap="none" class="inline">
+                <input type="hidden" name="direction" value="down" />
+                <button type="submit" class="btn btn-ghost btn-xs p-0 h-5" {{ 'disabled' if loop.last }} title="پایین">↓</button>
+            </form>
+            <button class="btn btn-ghost btn-xs p-0 h-5 text-error"
+                    hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/outline/sections/{{ loop.index0 }}/delete"
+                    hx-swap="none" hx-confirm="بخش «{{ s.heading }}» حذف شود؟" title="حذف">✕</button>
+        </div>
+    </div>
+    {% else %}
+    <p class="text-xs opacity-50 py-2 text-center">بخشی وجود ندارد.</p>
+    {% endfor %}
+
+    <details class="border border-dashed border-base-300 rounded-lg p-2">
+        <summary class="text-xs opacity-70 cursor-pointer">+ افزودن بخش</summary>
+        <form hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/outline/sections/add" hx-swap="none" class="flex flex-col gap-1.5 mt-2">
+            <input name="heading" class="input input-xs" placeholder="تیتر بخش" required />
+            <textarea name="content_brief" class="textarea textarea-xs" rows="2" placeholder="خلاصه محتوا"></textarea>
+            <button type="submit" class="btn btn-primary btn-xs">افزودن</button>
+        </form>
+    </details>
+</div>

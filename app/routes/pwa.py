@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse, JSONResponse, Response
+from fastapi import APIRouter
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 
 router = APIRouter()
 
@@ -11,12 +11,11 @@ SW_PATH = Path(__file__).resolve().parent.parent / "static" / "sw.js"
 
 @router.get("/sw.js", include_in_schema=False)
 async def service_worker():
-    # Lazy import avoids circular import: main.py imports pwa before APP_VERSION is defined
-    from app.main import APP_VERSION
+    from app.config import settings
 
     content = SW_PATH.read_text(encoding="utf-8")
     # Inject app version into CACHE_VERSION so caches auto-purge on deploy
-    content = content.replace("__CACHE_VERSION__", APP_VERSION)
+    content = content.replace("__CACHE_VERSION__", settings.app_version)
     return Response(
         content=content,
         media_type="application/javascript",
@@ -95,14 +94,21 @@ async def dynamic_manifest():
         "background_color": "#1d232a",
         "theme_color": "#1d232a",
         "icons": [
-            {"src": "/static/icons/icon-192x192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
-            {"src": "/static/icons/icon-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"},
+            {
+                "src": "/static/icons/icon-192x192.png",
+                "sizes": "192x192",
+                "type": "image/png",
+                "purpose": "any maskable",
+            },
+            {
+                "src": "/static/icons/icon-512x512.png",
+                "sizes": "512x512",
+                "type": "image/png",
+                "purpose": "any maskable",
+            },
         ],
     }
     return manifest
-
-
-from fastapi.responses import RedirectResponse
 
 
 @router.get("/favicon.ico", include_in_schema=False)

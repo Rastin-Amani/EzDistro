@@ -1,0 +1,27 @@
+<div id="articles-tab">
+    {% if articles %}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {% for a in articles %}
+        <a href="/projects/{{ project.id }}/articles/{{ a.id }}/workspace" class="card bg-base-100 border border-base-200 hover:border-primary/40 transition-colors">
+            <div class="card-body p-4 gap-2">
+                <div class="flex items-center justify-between gap-2">
+                    <h3 class="font-bold text-sm truncate">{{ a.title }}</h3>
+                    <span class="badge badge-sm shrink-0 {{ a.status|status_badge }}">{{ a.status|status_label }}</span>
+                </div>
+                <div class="flex items-center gap-3 text-xs opacity-50">
+                    <span>{{ a.wordCount or 0 }} کلمه</span>
+                    {% if a.wpUrl %}<span class="truncate" dir="ltr">{{ a.wpUrl }}</span>{% endif %}
+                    <span>{{ a.updated|jalali_dt }}</span>
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card bg-base-100 border border-base-200">
+        <div class="card-body items-center py-8 text-center">
+            <p class="text-sm opacity-50">هنوز مقاله‌ای تولید نشده است. از تب «موضوع‌ها» یک موضوع انتخاب کنید.</p>
+        </div>
+    </div>
+    {% endif %}
+</div>

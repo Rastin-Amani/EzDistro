@@ -1,0 +1,73 @@
+<div class="flex flex-col gap-4">
+    <div class="card bg-base-100 border border-base-200">
+        <div class="card-body p-4 gap-2">
+            <h2 class="font-bold text-sm">نتایج برای: «{{ query }}»</h2>
+            <p class="text-xs opacity-50">
+                {{ results|length }} نتیجه — کاندیدا: {{ options.candidate_count }}
+                {% if options.similarity_threshold %} — آستانه: {{ options.similarity_threshold }}{% endif %}
+                {% if options.rerank %} — بازچینش: {{ options.rerank_top_n }} نتیجه نهایی{% endif %}
+            </p>
+
+            {% if results %}
+            <div class="overflow-x-auto mt-2">
+                <table class="table table-sm">
+                    <thead>
+                        <tr class="text-xs opacity-60">
+                            <th>#</th>
+                            <th>عنوان</th>
+                            <th>آدرس</th>
+                            <th>نمره برداری</th>
+                            <th>نمره بازچینش</th>
+                            <th>نمره نهایی</th>
+                            <th>قطعه</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in results %}
+                        <tr>
+                            <td class="text-xs opacity-50">{{ loop.index }}</td>
+                            <td class="text-xs max-w-40"><p class="truncate">{{ r.title }}</p></td>
+                            <td class="text-xs max-w-40">
+                                {% if r.source_url %}<a href="{{ r.source_url }}" target="_blank" rel="noopener" class="link link-primary truncate block" dir="ltr">{{ r.source_url }}</a>{% else %}—{% endif %}
+                            </td>
+                            <td class="text-xs font-mono">{{ '%.3f'|format(r.vector_score) }}</td>
+                            <td class="text-xs font-mono">{{ '%.3f'|format(r.rerank_score) if r.rerank_score is not none else '—' }}</td>
+                            <td class="text-xs font-mono font-bold text-primary">{{ '%.3f'|format(r.final_score) }}</td>
+                            <td class="text-xs max-w-60"><p class="truncate">{{ r.snippet }}</p></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-sm opacity-50 py-4 text-center">نتیجه‌ای یافت نشد (آستانه تشابه یا خالی بودن نمایه را بررسی کنید).</p>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if context.links %}
+    <div class="card bg-base-100 border border-base-200">
+        <div class="card-body p-4 gap-2">
+            <h2 class="font-bold text-sm">کاندیداهای لینک داخلی ({{ context.links|length }})</h2>
+            <ul class="flex flex-col gap-1">
+                {% for link in context.links %}
+                <li class="flex items-center justify-between gap-2 text-sm border border-base-200 rounded-lg px-3 py-1.5">
+                    <span class="truncate">{{ link.title }}</span>
+                    <span class="text-xs opacity-50 truncate" dir="ltr">{{ link.url }}</span>
+                    <span class="badge badge-soft badge-primary badge-sm">{{ '%.2f'|format(link.relevance_score) }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if context.passages %}
+    <div class="card bg-base-100 border border-base-200">
+        <div class="card-body p-4 gap-2">
+            <h2 class="font-bold text-sm">زمینه پرامپت ({{ context.passages|length }} بخش — {{ context.used_chars }} کاراکتر)</h2>
+            <pre class="text-xs bg-base-200/60 rounded-xl p-3 whitespace-pre-wrap max-h-72 overflow-auto">{{ context.format_for_prompt }}</pre>
+        </div>
+    </div>
+    {% endif %}
+</div>

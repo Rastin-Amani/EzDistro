@@ -1,0 +1,46 @@
+<div id="logs-table"
+     hx-get="/projects/{{ project.id }}/tabs/logs"
+     hx-trigger="every 8s"
+     hx-swap="outerHTML">
+    {% if events %}
+    <div class="card bg-base-100 border border-base-200">
+        <div class="overflow-x-auto">
+            <table class="table table-sm">
+                <thead>
+                    <tr class="text-xs opacity-60">
+                        <th>سطح</th>
+                        <th>پیام</th>
+                        <th>داده</th>
+                        <th>زمان</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for e in events %}
+                    <tr>
+                        <td><span class="badge badge-sm {{ e.eventType|status_badge }}">{{ e.eventType|status_label }}</span></td>
+                        <td class="text-xs max-w-60"><p class="truncate">{{ e.message }}</p></td>
+                        <td class="text-xs max-w-40">
+                            {% if e.metadata and e.metadata != {} %}
+                            <details class="dropdown dropdown-end">
+                                <summary class="btn btn-ghost btn-xs">JSON</summary>
+                                <div class="dropdown-content bg-base-100 border border-base-200 rounded-xl p-3 w-80 text-xs font-mono max-h-48 overflow-auto z-50">
+                                    <pre>{{ e.metadata|tojson }}</pre>
+                                </div>
+                            </details>
+                            {% else %}—{% endif %}
+                        </td>
+                        <td class="text-xs opacity-50 whitespace-nowrap">{{ e.created|jalali_dt }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="card bg-base-100 border border-base-200">
+        <div class="card-body items-center py-8 text-center">
+            <p class="text-sm opacity-50">رویدادی ثبت نشده است.</p>
+        </div>
+    </div>
+    {% endif %}
+</div>

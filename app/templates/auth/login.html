@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="min-h-screen flex items-center justify-center px-4">
+    <div class="w-full max-w-sm">
+        <div class="text-center mb-8">
+            <div class="w-14 h-14 mx-auto rounded-2xl bg-primary text-primary-content grid place-items-center text-2xl font-black mb-3">س</div>
+            <h1 class="text-xl font-bold">ورود به سئوز</h1>
+            <p class="text-sm opacity-60 mt-1">پلتفرم اتوماسیون سئو</p>
+        </div>
+
+        <form hx-post="/login" hx-swap="none" class="card bg-base-100 border border-base-200">
+            <div class="card-body gap-4">
+                {% if error %}
+                <div class="alert alert-soft alert-error text-sm" id="login-error">{{ error }}</div>
+                {% endif %}
+
+                <label class="floating-label">
+                    <span>ایمیل</span>
+                    <input type="email" name="email" class="input validator" placeholder="you@example.com" required autocomplete="email" />
+                </label>
+
+                <label class="floating-label">
+                    <span>رمز عبور</span>
+                    <input type="password" name="password" class="input validator" placeholder="••••••••" required autocomplete="current-password" />
+                </label>
+
+                <button type="submit" class="btn btn-primary w-full mt-2" hx-disabled-elt="this">
+                    <span class="loading loading-spinner loading-xs htmx-indicator"></span>
+                    ورود
+                </button>
+            </div>
+        </form>
+
+        <p class="text-center text-xs opacity-50 mt-6">نسخه {{ app_version }}</p>
+    </div>
+</div>
+{% endblock %}

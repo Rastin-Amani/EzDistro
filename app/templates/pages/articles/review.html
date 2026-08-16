@@ -1,0 +1,208 @@
+{% extends "layouts/platform.html" %}
+{% block dashboard_content %}
+<div class="flex items-center justify-between mb-4">
+    <div class="flex items-center gap-2 min-w-0">
+        <a href="/projects/{{ project.id }}/articles/{{ article.id }}/workspace" class="btn btn-ghost btn-circle btn-sm" aria-label="بازگشت به کارگاه">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+        </a>
+        <div class="min-w-0">
+            <h1 class="font-bold text-base truncate">بازبینی: {{ article.title }}</h1>
+            <div class="flex items-center gap-2 text-xs opacity-50 flex-wrap">
+                <span class="badge badge-sm {{ article.status|status_badge }}">{{ article.status|status_label }}</span>
+                <span>{{ article.wordCount or 0 }} کلمه</span>
+                <span>رئوس v{{ article.outlineVersion or 0 }}</span>
+                {% if article.generatedAt %}<span>تولید: {{ article.generatedAt|jalali_dt }}</span>{% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="flex items-center gap-2">
+        {% if article.status == 'review' %}
+        <button class="btn btn-ghost btn-sm text-warning"
+                hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/send-back" hx-swap="none"
+                onclick="document.getElementById('sendback-note').showModal()">بازگرداندن</button>
+        <button class="btn btn-primary btn-sm" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/approve" hx-swap="none">
+            <span class="loading loading-spinner loading-xs htmx-indicator"></span>
+            تأیید
+        </button>
+        {% elif article.status == 'approved' %}
+        <span class="badge badge-soft badge-success">تأیید شده — انتشار فعال</span>
+        <button class="btn btn-primary btn-sm" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/publish"
+                hx-swap="none" hx-confirm="مقاله به وردپرس ارسال شود؟">انتشار</button>
+        {% elif article.status == 'sent_back' %}
+        <span class="badge badge-soft badge-warning">بازگردانده شده</span>
+        <button class="btn btn-primary btn-sm" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/regenerate" hx-swap="none">بازتولید مقاله</button>
+        {% endif %}
+        {% if article.status in ['review', 'approved', 'sent_back', 'failed'] %}
+        <button class="btn btn-ghost btn-sm" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/regenerate"
+                hx-swap="none" hx-confirm="نسخه فعلی در تاریخچه ذخیره می‌شود؛ بازتولید ادامه یابد؟">بازتولید کامل</button>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Send back note modal -->
+<dialog id="sendback-note" class="modal modal-bottom sm:modal-middle">
+    <div class="modal-box bg-base-100">
+        <h3 class="font-bold text-lg mb-3">بازگرداندن مقاله</h3>
+        <form hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/send-back" hx-swap="none" class="flex flex-col gap-3">
+            <textarea name="note" class="textarea textarea-sm" rows="3" placeholder="دلیل بازگرداندن (برای تاریخچه ثبت می‌شود)…"></textarea>
+            <div class="flex gap-3">
+                <button type="submit" class="btn btn-warning flex-1">بازگرداندن</button>
+                <button type="button" class="btn btn-ghost" onclick="document.getElementById('sendback-note').close()">انصراف</button>
+            </div>
+        </form>
+    </div>
+</dialog>
+
+<div class="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4 items-start">
+    <!-- Left: validation + metadata -->
+    <aside class="flex flex-col gap-4">
+        <!-- Validation panel -->
+        <div class="card bg-base-100 border {{ 'border-success/40' if report.ok else 'border-error/40' }}">
+            <div class="card-body p-4 gap-2">
+                <div class="flex items-center justify-between">
+                    <h2 class="font-bold text-xs">پنل اعتبارسنجی</h2>
+                    <span class="badge badge-sm {{ 'badge-soft badge-success' if report.ok else 'badge-soft badge-error' }}">
+                        {{ 'گذشت' if report.ok else 'خطا' }}
+                    </span>
+                </div>
+                {% if report.ok %}
+                <p class="text-xs opacity-60">همه بررسی‌ها موفق بودند — مقاله قابل تأیید است.</p>
+                {% else %}
+                <ul class="flex flex-col gap-1">
+                    {% for issue in report.issues %}
+                    <li class="text-xs flex items-start gap-2 border border-error/20 bg-error/5 rounded-lg px-2 py-1">
+                        <span class="badge badge-xs badge-soft badge-error shrink-0">{{ issue.code }}</span>
+                        <span class="text-error">{{ issue.message }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+                <div class="grid grid-cols-3 gap-1 text-xs opacity-60">
+                    <span>{{ report.stats.words }} کلمه</span>
+                    <span>{{ report.stats.sections }} بخش</span>
+                    <span>حداقل {{ report.stats.min_words }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Metadata -->
+        <div class="card bg-base-100 border border-base-200">
+            <div class="card-body p-4 gap-2">
+                <h2 class="font-bold text-xs">اطلاعات تولید</h2>
+                <dl class="text-xs flex flex-col gap-1.5">
+                    <div class="flex justify-between"><dt class="opacity-50">نسخه آخرین تولید</dt><dd class="font-mono">v{{ article.lastGeneratedRevision or '—' }}</dd></div>
+                    <div class="flex justify-between"><dt class="opacity-50">زمان تولید</dt><dd>{{ article.generatedAt|jalali_dt if article.generatedAt else '—' }}</dd></div>
+                    <div class="flex justify-between"><dt class="opacity-50">امتیاز سئو</dt><dd class="font-bold text-primary">{{ article.seoScore or 0 }}/۱۰۰</dd></div>
+                    {% if topic %}<div class="flex justify-between"><dt class="opacity-50">کلمه کلیدی</dt><dd>{{ topic.keyword or '—' }}</dd></div>{% endif %}
+                </dl>
+                <h3 class="font-bold text-xs mt-2">بخش‌ها (مدل/نسخه پرامپت)</h3>
+                <ul class="flex flex-col gap-1">
+                    {% for s in sections %}
+                    <li class="text-xs flex items-center justify-between border border-base-200 rounded-lg px-2 py-1">
+                        <span class="truncate opacity-70">{{ loop.index }}. {{ s.heading }}</span>
+                        <span class="shrink-0">
+                            {% if s.model %}<span class="font-mono opacity-60 hidden sm:inline" dir="ltr">{{ s.provider }}/{{ s.model }}</span>{% endif %}
+                            {% if s.promptVersion %}<span class="badge badge-soft badge-info badge-xs">v{{ s.promptVersion }}</span>{% endif %}
+                            {% if s.generationLatency %}<span class="opacity-40">{{ s.generationLatency }}ms</span>{% endif %}
+                        </span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                <h3 class="font-bold text-xs mt-2">لینک‌های داخلی</h3>
+                <ul class="flex flex-col gap-1 text-xs">
+                    {% for link in internal_links %}
+                    <li class="truncate"><a href="{{ link.url }}" target="_blank" rel="noopener" class="link link-primary" dir="ltr">{{ link.title }}</a></li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <!-- Revision history -->
+        <div class="card bg-base-100 border border-base-200">
+            <div class="card-body p-4 gap-2">
+                <h2 class="font-bold text-xs">تاریخچه نسخه‌ها</h2>
+                {% if revisions %}
+                <ul class="flex flex-col gap-1">
+                    {% for r in revisions %}
+                    <li class="text-xs border border-base-200 rounded-lg px-2 py-1 flex items-center justify-between gap-2">
+                        <span class="flex items-center gap-1.5 min-w-0">
+                            <span class="badge badge-soft badge-neutral badge-xs shrink-0">v{{ r.revision }}</span>
+                            <span class="badge badge-soft badge-info badge-xs shrink-0">{{ r.kind }}</span>
+                            <span class="truncate opacity-60">{{ r.note or r.created|jalali_dt }}</span>
+                        </span>
+                        {% if r.revision != article.lastGeneratedRevision %}
+                        <button class="btn btn-ghost btn-xs shrink-0"
+                                hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/revisions/{{ r.id }}/rollback"
+                                hx-swap="none"
+                                hx-confirm="بازگشت به نسخه v{{ r.revision }}؟ نسخه فعلی در تاریخچه ذخیره می‌شود.">بازگشت</button>
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-xs opacity-50">تاریخچه‌ای ثبت نشده است.</p>
+                {% endif %}
+            </div>
+        </div>
+    </aside>
+
+    <!-- Right: the article -->
+    <section class="flex flex-col gap-4 min-w-0">
+        <div class="card bg-base-100 border border-base-200">
+            <div class="card-body p-4 gap-2">
+                <h2 class="font-bold text-xs opacity-60">عنوان</h2>
+                <h1 class="text-xl font-bold">{{ article.title }}</h1>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                    <div>
+                        <span class="opacity-50 block">اسلاگ</span>
+                        <code class="font-mono" dir="ltr">{{ article.slug or '—' }}</code>
+                    </div>
+                    <div>
+                        <span class="opacity-50 block">متا توضیحات</span>
+                        <p class="opacity-80">{{ article.metaDescription or '—' }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Outline -->
+        <div class="card bg-base-100 border border-base-200">
+            <div class="card-body p-4 gap-2">
+                <h2 class="font-bold text-xs opacity-60">رئوس مطالب</h2>
+                <ol class="flex flex-col gap-1.5">
+                    {% for plan in (article.outline.sections if article.outline else []) %}
+                    <li class="text-sm border border-base-200 rounded-lg px-3 py-1.5">
+                        <span class="font-semibold">{{ loop.index }}. {{ plan.heading }}</span>
+                        {% if plan.content_brief %}<p class="text-xs opacity-50 mt-0.5">{{ plan.content_brief }}</p>{% endif %}
+                    </li>
+                    {% endfor %}
+                </ol>
+            </div>
+        </div>
+
+        <!-- Article body -->
+        <div class="card bg-base-100 border border-base-200">
+            <div class="card-body p-4 gap-2">
+                <h2 class="font-bold text-xs opacity-60">بدنه مقاله</h2>
+                {% if article.finalHtml %}
+                <article class="prose-sm max-w-none" dir="auto">{{ article.finalHtml|safe }}</article>
+                {% else %}
+                <p class="text-sm opacity-50 py-6 text-center">محتوایی تولید نشده است.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Generated vs current -->
+        {% if article.generatedContent and article.generatedContent != article.finalHtml %}
+        <div class="card bg-base-100 border border-base-200">
+            <div class="card-body p-4 gap-2">
+                <h2 class="font-bold text-xs opacity-60">نسخه تولیدشده (v{{ article.lastGeneratedRevision }}) — متفاوت از نسخه فعلی</h2>
+                <p class="text-xs opacity-60">برای بازگشت به این نسخه از تاریخچه استفاده کنید.</p>
+            </div>
+        </div>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

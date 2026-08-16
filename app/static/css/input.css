@@ -1,7 +1,7 @@
 @import 'tailwindcss';
 
 @plugin "daisyui" {
-    themes: all;
+    themes: seoz --default;
 }
 
 @theme {
@@ -9,9 +9,62 @@
     --font-brand: 'yekanbakh';
 }
 
+/* Seoz brand theme — flat, border-driven depth (no shadows) */
+@plugin "daisyui/theme" {
+    name: "seoz";
+    default: true;
+    prefersdark: false;
+    color-scheme: light;
+
+    --color-base-100: oklch(99% 0.002 280);
+    --color-base-200: oklch(96.5% 0.004 280);
+    --color-base-300: oklch(92% 0.008 280);
+    --color-base-content: oklch(24% 0.02 280);
+
+    --color-primary: oklch(52% 0.21 278);
+    --color-primary-content: oklch(99% 0.005 280);
+    --color-secondary: oklch(64% 0.15 200);
+    --color-secondary-content: oklch(99% 0.005 280);
+    --color-accent: oklch(70% 0.14 45);
+    --color-accent-content: oklch(24% 0.02 280);
+    --color-neutral: oklch(42% 0.02 280);
+    --color-neutral-content: oklch(98% 0.004 280);
+
+    --color-info: oklch(58% 0.16 245);
+    --color-info-content: oklch(99% 0.005 280);
+    --color-success: oklch(58% 0.14 155);
+    --color-success-content: oklch(99% 0.005 280);
+    --color-warning: oklch(70% 0.16 70);
+    --color-warning-content: oklch(24% 0.02 280);
+    --color-error: oklch(58% 0.2 25);
+    --color-error-content: oklch(99% 0.005 280);
+
+    --radius-selector: 0.75rem;
+    --radius-field: 0.75rem;
+    --radius-box: 1rem;
+    --size-selector: 0.25rem;
+    --size-field: 0.25rem;
+    --border: 1.5px;
+    --depth: 0;
+    --noise: 0;
+}
+
 @font-face {
     font-family: 'YekanBakh';
-    src: url('./assets/YekanBakhFaNum-VF.woff') format('woff2'); /* Ensure .woff2 for better performance */
-    font-weight: 100 900; /* Define the range of weights the variable font covers */
+    src: url('./assets/YekanBakhFaNum-VF.woff') format('woff2');
+    font-weight: 100 900;
     font-display: swap;
+}
+
+/* Coherent visual system refinements */
+.card {
+    @apply border border-base-200 rounded-box;
+}
+
+.stat {
+    @apply rounded-box;
+}
+
+.btn {
+    @apply border border-base-300;
 }

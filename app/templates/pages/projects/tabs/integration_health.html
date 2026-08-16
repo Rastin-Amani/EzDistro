@@ -1,0 +1,14 @@
+<div id="health-{{ integration.id }}" class="text-xs border rounded-lg px-3 py-2 mt-1 flex flex-wrap items-center gap-2 {{ 'border-success/40 bg-success/5' if result.ok else 'border-error/40 bg-error/5' }}">
+    <span class="badge badge-sm {{ 'badge-soft badge-success' if result.ok else 'badge-soft badge-error' }}">
+        {{ 'موفق' if result.ok else 'ناموفق' }}
+    </span>
+    <span class="opacity-70">تأخیر: {{ result.latency_ms }}ms</span>
+    {% if result.models %}
+    <span class="opacity-70">مدل‌های موجود: {{ result.models|length }} — {{ result.models[:5]|join('، ') }}{% if result.models|length > 5 %}…{% endif %}</span>
+    {% elif result.ok %}
+    <span class="opacity-70">لیست مدل‌ها توسط ارائه‌دهنده پشتیبانی نمی‌شود — شناسه مدل را دستی وارد کنید.</span>
+    {% endif %}
+    {% if not result.ok %}
+    <span class="text-error font-mono break-all" dir="ltr">{{ result.message }}</span>
+    {% endif %}
+</div>

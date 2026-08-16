@@ -1,0 +1,84 @@
+{% extends "layouts/platform.html" %}
+{% block dashboard_content %}
+<div class="flex items-center justify-between mb-4">
+    <h1 class="text-lg font-bold">پروژه‌ها</h1>
+    <button class="btn btn-primary btn-sm" onclick="document.getElementById('new-project-modal').showModal()">
+        پروژه جدید
+    </button>
+</div>
+
+{% if projects %}
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    {% for p in projects %}
+    <a href="/projects/{{ p.id }}" class="card bg-base-100 border border-base-200 hover:border-primary/40 transition-colors">
+        <div class="card-body p-4 gap-2">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2 min-w-0">
+                    <div class="w-9 h-9 rounded-xl bg-primary/10 text-primary grid place-items-center font-bold shrink-0">{{ p.name[:1] }}</div>
+                    <div class="min-w-0">
+                        <h2 class="font-bold truncate">{{ p.name }}</h2>
+                        <p class="text-xs opacity-50 truncate" dir="ltr">{{ p.slug }}</p>
+                    </div>
+                </div>
+                <span class="badge badge-soft badge-info badge-sm">{{ p.language or 'fa' }}</span>
+            </div>
+            {% if p.description %}
+            <p class="text-sm opacity-60 line-clamp-2">{{ p.description }}</p>
+            {% endif %}
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card bg-base-100 border border-base-200">
+    <div class="card-body items-center py-12 gap-3 text-center">
+        <p class="opacity-60 text-sm">هنوز پروژه‌ای نساخته‌اید.</p>
+        <button class="btn btn-primary btn-sm" onclick="document.getElementById('new-project-modal').showModal()">ساخت اولین پروژه</button>
+    </div>
+</div>
+{% endif %}
+
+<!-- Create project modal -->
+<dialog id="new-project-modal" class="modal modal-bottom sm:modal-middle">
+    <div class="modal-box bg-base-100">
+        <h3 class="font-bold text-lg mb-4">پروژه جدید</h3>
+        <form hx-post="/projects" hx-swap="none" class="flex flex-col gap-4">
+            <label class="floating-label">
+                <span>نام پروژه</span>
+                <input name="name" class="input validator" required placeholder="مثلاً: مجله فناوری" />
+            </label>
+            <label class="floating-label">
+                <span>شناسه (slug) — انگلیسی</span>
+                <input name="slug" class="input" dir="ltr" placeholder="tech-magazine" />
+                <span class="text-xs opacity-50">اگر خالی بماند از نام ساخته می‌شود</span>
+            </label>
+            <label class="floating-label">
+                <span>زبان</span>
+                <select name="language" class="select">
+                    <option value="fa">فارسی</option>
+                    <option value="en">English</option>
+                    <option value="ar">العربية</option>
+                    <option value="tr">Türkçe</option>
+                </select>
+            </label>
+            <label class="floating-label">
+                <span>منطقه زمانی</span>
+                <select name="timezone" class="select">
+                    <option value="Asia/Tehran">Asia/Tehran</option>
+                    <option value="UTC">UTC</option>
+                    <option value="Europe/London">Europe/London</option>
+                    <option value="America/New_York">America/New_York</option>
+                </select>
+            </label>
+            <label class="floating-label">
+                <span>توضیحات</span>
+                <textarea name="description" class="textarea" rows="2"></textarea>
+            </label>
+            <div class="flex gap-3 mt-2">
+                <button type="submit" class="btn btn-primary flex-1">ساخت</button>
+                <button type="button" class="btn btn-ghost" onclick="document.getElementById('new-project-modal').close()">انصراف</button>
+            </div>
+        </form>
+    </div>
+</dialog>
+{% endblock %}

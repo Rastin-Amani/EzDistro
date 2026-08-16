@@ -1,0 +1,46 @@
+<div id="retrieval-tab" class="flex flex-col gap-4 max-w-3xl">
+    <section class="card bg-base-100 border border-base-200">
+        <div class="card-body p-4 gap-3">
+            <h2 class="font-bold text-sm">تشخیص بازیابی</h2>
+            <p class="text-xs opacity-50">
+                عبارت جستجو را وارد کنید تا بازیابی واقعی (جاسازی → جستجو در کیوردنت → بازچینش اختیاری)
+                اجرا و نتیجه بررسی شود. مقادیر پیش‌فرض از تنظیمات پروژه می‌آیند.
+            </p>
+            <form hx-post="/projects/{{ project.id }}/retrieval/diagnose" hx-target="#retrieval-results" hx-swap="innerHTML" class="flex flex-col gap-3">
+                <label class="form-control">
+                    <span class="label-text text-xs">عبارت جستجو</span>
+                    <input name="query" class="input input-sm" required placeholder="مثلاً: بهترین روش‌های سئو" />
+                </label>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <label class="form-control">
+                        <span class="label-text text-xs">تعداد کاندیدا</span>
+                        <input name="candidate_count" type="number" class="input input-sm" value="{{ settings.retrievalTopK or 20 }}" />
+                    </label>
+                    <label class="form-control">
+                        <span class="label-text text-xs">آستانه تشابه</span>
+                        <input name="similarity_threshold" type="number" step="0.05" class="input input-sm" value="{{ settings.similarityThreshold or 0.35 }}" />
+                    </label>
+                    <label class="form-control">
+                        <span class="label-text text-xs">بازچینش</span>
+                        <select name="rerank_enabled" class="select select-sm">
+                            <option value="0">غیرفعال</option>
+                            <option value="1" {{ 'selected' if settings.rerankingEnabled }}>فعال</option>
+                        </select>
+                    </label>
+                    <label class="form-control">
+                        <span class="label-text text-xs">نتایج نهایی (Top N)</span>
+                        <input name="rerank_top_n" type="number" class="input input-sm" value="{{ settings.rerankerTopN or 8 }}" />
+                    </label>
+                </div>
+                <div>
+                    <button type="submit" class="btn btn-primary btn-sm" hx-disabled-elt="this">
+                        <span class="loading loading-spinner loading-xs htmx-indicator"></span>
+                        اجرای بازیابی
+                    </button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <div id="retrieval-results"></div>
+</div>

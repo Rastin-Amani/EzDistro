@@ -1,0 +1,55 @@
+<div id="stats-row"
+     hx-get="/dashboard/partial/stats"
+     hx-trigger="every 8s"
+     hx-swap="outerHTML">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div class="stat bg-base-100 border border-base-200 rounded-2xl">
+            <div class="stat-title text-xs">موضوع‌های برنامه‌ریزی‌شده</div>
+            <div class="stat-value text-2xl">{{ stats.topics_planned }}</div>
+        </div>
+        <div class="stat bg-base-100 border border-base-200 rounded-2xl">
+            <div class="stat-title text-xs">مقالات در حال نگارش</div>
+            <div class="stat-value text-2xl text-warning">{{ stats.articles_writing }}</div>
+        </div>
+        <div class="stat bg-base-100 border border-base-200 rounded-2xl">
+            <div class="stat-title text-xs">در انتظار بازبینی</div>
+            <div class="stat-value text-2xl text-info">{{ stats.articles_review }}</div>
+        </div>
+        <div class="stat bg-base-100 border border-base-200 rounded-2xl">
+            <div class="stat-title text-xs">منتشر شده</div>
+            <div class="stat-value text-2xl text-success">{{ stats.articles_published }}</div>
+        </div>
+        <div class="stat bg-base-100 border border-base-200 rounded-2xl">
+            <div class="stat-title text-xs">وظایف در انتظار</div>
+            <div class="stat-value text-2xl">{{ stats.jobs_pending }}</div>
+        </div>
+        <div class="stat bg-base-100 border border-base-200 rounded-2xl">
+            <div class="stat-title text-xs">در حال اجرا / تلاش مجدد</div>
+            <div class="stat-value text-2xl text-warning">{{ stats.jobs_running + stats.jobs_retrying }}</div>
+        </div>
+        <div class="stat bg-base-100 border border-base-200 rounded-2xl">
+            <div class="stat-title text-xs">ناموفق</div>
+            <div class="stat-value text-2xl text-error">{{ stats.jobs_failed }}</div>
+        </div>
+        <div class="stat bg-base-100 border border-base-200 rounded-2xl">
+            <div class="stat-title text-xs">نرخ شکست / میانگین مدت (s)</div>
+            <div class="stat-value text-xl">{{ (stats.failure_rate * 100)|round(1) }}٪ / {{ stats.average_duration_s }}</div>
+        </div>
+        <div class="stat bg-base-100 border border-base-200 rounded-2xl">
+            <div class="stat-title text-xs">سلامت نمایه‌سازی (پروژه‌ها)</div>
+            <div class="flex items-center gap-2 mt-1">
+                <span class="badge badge-soft badge-success badge-sm">{{ stats.indexing_ok }} سالم</span>
+                <span class="badge badge-soft {{ 'badge-error' if stats.indexing_failed else 'badge-neutral' }} badge-sm">{{ stats.indexing_failed }} مشکل‌دار</span>
+            </div>
+        </div>
+        <div class="stat bg-base-100 border border-base-200 rounded-2xl col-span-2 lg:col-span-3">
+            <div class="stat-title text-xs">سلامت ارائه‌دهنده‌ها</div>
+            <div class="flex items-center gap-2 mt-1 flex-wrap">
+                <span class="badge badge-soft badge-success badge-sm">{{ stats.provider_healthy }} سالم</span>
+                <span class="badge badge-soft {{ 'badge-error' if stats.provider_unhealthy else 'badge-neutral' }} badge-sm">{{ stats.provider_unhealthy }} ناسالم</span>
+                <span class="badge badge-soft badge-neutral badge-sm">{{ stats.provider_unknown }} تست‌نشده</span>
+                <span class="text-xs opacity-50">میانگین تأخیر ارائه‌دهنده: {{ stats.provider_latency_ms }}ms</span>
+            </div>
+        </div>
+    </div>
+</div>

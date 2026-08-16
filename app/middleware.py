@@ -1,20 +1,25 @@
 import time
 import uuid
-from starlette.middleware.base import BaseHTTPMiddleware
+
 from fastapi import Request
 from fastapi.responses import RedirectResponse
+from starlette.middleware.base import BaseHTTPMiddleware
 from structlog import get_logger
 
-from app.pb import get_pb
 from app.logging_config import bind_request_context, clear_request_context
+from app.pb import get_pb
 
-# 🟢 1. Define routes that anyone can access without a token.
-# Notice "/" is REMOVED from this list so .startswith() doesn't match everything.
+# Routes anyone can access without a token.
 PUBLIC_PATHS = [
-    "/static",  # Required so your CSS/JS loads
-    "/manifest.json",  # Required for PWA
-    "/sw.js",  # Required for offline caching
+    "/login",
+    "/static",
+    "/manifest.json",
+    "/sw.js",
     "/favicon.ico",
+    "/health",
+    "/openapi.json",
+    "/docs",
+    "/offline",
 ]
 
 logger = get_logger(__name__)
@@ -25,8 +30,6 @@ class AuthMiddleware(BaseHTTPMiddleware):
         # ---- Request ID for correlation ----
         req_id = str(uuid.uuid4())[:8]
         request.state.req_id = req_id
-
-        # Bind request context for all logs in this request
         bind_request_context(req_id=req_id, tenant_id=None)
 
         # ---- Auth detection ----
@@ -44,21 +47,25 @@ class AuthMiddleware(BaseHTTPMiddleware):
                 logger.warning("auth_refresh_failed", error=str(e))
                 pb.auth_store.clear()
 
+        # ---- Gate: authenticated users only ----
+        path = request.url.path
+        is_public = path == "/" or any(path.startswith(p) for p in PUBLIC_PATHS)
+        if not request.state.user and not is_public:
+            return RedirectResponse(url="/login", status_code=303)
+
         # ---- Request lifecycle log ----
         start = time.time()
         method = request.method
-        url = str(request.url.path)
-
-        logger.info("request.started", method=method, path=url)
+        logger.info("request.started", method=method, path=path)
 
         try:
             response = await call_next(request)
-        except Exception as e:
+        except Exception:
             elapsed = time.time() - start
             logger.exception(
                 "request.error",
                 method=method,
-                path=url,
+                path=path,
                 duration_ms=round(elapsed * 1000),
             )
             raise
@@ -68,7 +75,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
         logger.info(
             "request.completed",
             method=method,
-            path=url,
+            path=path,
             status=status,
             duration_ms=round(elapsed * 1000),
         )

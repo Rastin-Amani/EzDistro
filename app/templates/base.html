@@ -1,8 +1,5 @@
 <!doctype html>
-<html
-    data-theme="{{ 'light' if tenant.theme == 'custom' else (tenant.theme or 'seoz') }}"
-    dir="rtl"
->
+<html lang="fa" dir="rtl" data-theme="seoz">
     <head>
         <meta charset="UTF-8" />
         <meta
@@ -12,14 +9,12 @@
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        
+
         <link rel="manifest" href="/manifest.json" />
         <link rel="icon" href="/favicon.ico" />
 
         <title>{{ title or 'سئوز' }}</title>
         <link rel="stylesheet" href="{{ url_for('static', path='/app.css') }}" />
-        
-
 
         <script>
             (function() {
@@ -68,14 +63,13 @@
 
     <body class="bg-base-200 font-sans! antialiased" hx-boost="true">
         {% block body_start %}{% endblock %}
-        <div class="mx-auto w-full max-w-150 min-h-screen bg-base-100 shadow-2xl selection:bg-primary selection:text-primary-content">
-            
+        <div class="mx-auto min-h-screen bg-base-100 selection:bg-primary selection:text-primary-content max-w-300">
             <div
                 id="top-progress-bar"
-                class="fixed top-0 h-0.5 bg-primary z-[9999] transition-all duration-300 ease-out w-0 opacity-0 drop-shadow-md pointer-events-none max-w-150 mx-auto"
+                class="fixed top-0 h-0.5 bg-primary z-[9999] transition-all duration-300 ease-out w-0 opacity-0 drop-shadow-md pointer-events-none max-w-300 mx-auto"
             ></div>
 
-            <main id="main-content" class="px-4">
+            <main id="main-content" class="pb-24">
                 {% block content %}{% endblock %}
 
                 <div id="modal-container"></div>
@@ -97,7 +91,7 @@
 
             function startProgress() {
                 const bar = getProgressBar();
-                if (!bar) return; 
+                if (!bar) return;
 
                 bar.style.transition = 'width 0.3s ease-out, opacity 0.1s ease-in';
                 bar.style.opacity = '1';
@@ -110,15 +104,15 @@
 
             function stopProgress() {
                 const bar = getProgressBar();
-                if (!bar) return; 
+                if (!bar) return;
 
                 bar.style.transition = 'width 0.2s ease-out, opacity 0.3s ease-out';
-                bar.style.width = '100%'; 
+                bar.style.width = '100%';
 
                 setTimeout(() => {
                     bar.style.opacity = '0';
                     setTimeout(() => {
-                        bar.style.transition = 'none'; 
+                        bar.style.transition = 'none';
                         bar.style.width = '0%';
                     }, 300);
                 }, 300);
@@ -159,7 +153,7 @@
                         icon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>`;
                     }
 
-                    toast.className = `alert ${colorClass} alert-soft shadow-lg transition-all duration-300 transform translate-x-full opacity-0 max-w-sm flex items-center justify-between`;
+                    toast.className = `alert ${colorClass} alert-soft transition-all duration-300 transform translate-x-full opacity-0 max-w-sm flex items-center justify-between`;
 
                     toast.innerHTML = `
                         <div class="flex items-center gap-3">
@@ -180,12 +174,32 @@
                     }, 4000);
                 });
 
-                // 🟢 2. Delayed Redirect Listener (Solves the Race Condition!)
+                // 2. Delayed Redirect Listener — toast animates, THEN navigate
                 document.addEventListener('delayed-redirect', function (evt) {
                     const targetUrl = evt.detail.url;
                     setTimeout(() => {
                         window.location.href = targetUrl;
-                    }, 500); // Gives the toast 1.2 seconds to shine before moving
+                    }, 1200);
+                });
+
+                // 3. HTMX failure feedback — network errors and 4xx/5xx must never
+                //    fail silently (e.g. server down while offline-cached page is shown).
+                document.addEventListener('htmx:sendError', function () {
+                    document.dispatchEvent(new CustomEvent('show-toast', {
+                        detail: {
+                            message: 'اتصال به سرور برقرار نشد. دوباره تلاش کنید.',
+                            type: 'error',
+                        },
+                    }));
+                });
+                document.addEventListener('htmx:responseError', function (evt) {
+                    const status = (evt.detail && evt.detail.xhr && evt.detail.xhr.status) || '';
+                    document.dispatchEvent(new CustomEvent('show-toast', {
+                        detail: {
+                            message: `خطا در پردازش درخواست${status ? ' (کد ' + status + ')' : ''}.`,
+                            type: 'error',
+                        },
+                    }));
                 });
 
                 window.toastListenerAttached = true;
@@ -197,7 +211,7 @@
             if ('serviceWorker' in navigator) {
                 window.addEventListener('load', async () => {
                     try {
-                        const reg = await navigator.serviceWorker.register('/sw.js?v=0.8.1', { scope: '/' });
+                        const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
                         console.log('SW registered:', reg.scope);
 
                         reg.addEventListener('updatefound', () => {
@@ -206,7 +220,7 @@
                                 if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
                                     document.dispatchEvent(new CustomEvent('show-toast', {
                                         detail: {
-                                            message: 'نسخه جدید در دسترس است. برای بروزرسانی کلیک کنید.',
+                                            message: 'نسخه جدید در دسترس است.',
                                             type: 'info',
                                         },
                                     }));
@@ -218,142 +232,6 @@
                     }
                 });
             }
-        </script>
-<script>
-            function generateIOSSplashScreen(logoUrl, bgColor, tenantName, textColor, version) {
-                // (Splash screen logic remains identical)
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-
-                const screenWidth = window.screen.width;
-                const screenHeight = window.screen.height;
-                const pixelRatio = window.devicePixelRatio;
-
-                canvas.width = screenWidth * pixelRatio;
-                canvas.height = screenHeight * pixelRatio;
-
-                ctx.fillStyle = bgColor;
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-                const injectSplashTag = () => {
-                    const dataUrl = canvas.toDataURL('image/png');
-                    const link = document.createElement('link');
-                    link.setAttribute('rel', 'apple-touch-startup-image');
-                    link.setAttribute('href', dataUrl);
-                    link.setAttribute(
-                        'media',
-                        `(device-width: ${screenWidth}px) and (device-height: ${screenHeight}px) and (-webkit-device-pixel-ratio: ${pixelRatio})`
-                    );
-                    document.head.appendChild(link);
-                    console.log('✅ iOS Splash Screen successfully injected!');
-                };
-
-                const drawTextAndDots = (yOffset) => {
-                    ctx.fillStyle = textColor;
-                    ctx.font = `bold ${canvas.width * 0.06}px system-ui, -apple-system, sans-serif`;
-                    ctx.textAlign = "center";
-                    ctx.fillText(tenantName, canvas.width / 2, yOffset + 120);
-
-                    if (version) {
-                        ctx.font = `${canvas.width * 0.035}px system-ui, -apple-system, sans-serif`;
-                        ctx.fillText(version, canvas.width / 2, yOffset + 120 + (canvas.width * 0.06) + 20);
-                    }
-
-                    const dotY = canvas.height - (canvas.height * 0.15); 
-                    const dotRadius = canvas.width * 0.015;
-                    const spacing = canvas.width * 0.07;
-                    const centerX = canvas.width / 2;
-
-                    ctx.fillStyle = textColor;
-                    
-                    ctx.globalAlpha = 0.8;
-                    ctx.beginPath(); ctx.arc(centerX - spacing, dotY, dotRadius, 0, Math.PI * 2); ctx.fill();
-                    ctx.globalAlpha = 0.4;
-                    ctx.beginPath(); ctx.arc(centerX, dotY, dotRadius, 0, Math.PI * 2); ctx.fill();
-                    ctx.globalAlpha = 0.15;
-                    ctx.beginPath(); ctx.arc(centerX + spacing, dotY, dotRadius, 0, Math.PI * 2); ctx.fill();
-                    
-                    ctx.globalAlpha = 1.0; 
-                };
-
-                if (!logoUrl || logoUrl.trim() === '') {
-                    drawTextAndDots(canvas.height / 2);
-                    injectSplashTag();
-                    return;
-                }
-
-                const img = new Image();
-                img.crossOrigin = 'Anonymous';
-
-                img.onload = () => {
-                    const targetLogoWidth = canvas.width / 3.5; 
-                    const scale = targetLogoWidth / img.width;
-                    const targetLogoHeight = img.height * scale;
-
-                    const x = (canvas.width - targetLogoWidth) / 2;
-                    const y = (canvas.height - targetLogoHeight) / 2 - 80; 
-
-                    const radius = canvas.width * 0.04;
-                    ctx.save();
-                    ctx.beginPath();
-                    ctx.moveTo(x + radius, y);
-                    ctx.lineTo(x + targetLogoWidth - radius, y);
-                    ctx.quadraticCurveTo(x + targetLogoWidth, y, x + targetLogoWidth, y + radius);
-                    ctx.lineTo(x + targetLogoWidth, y + targetLogoHeight - radius);
-                    ctx.quadraticCurveTo(x + targetLogoWidth, y + targetLogoHeight, x + targetLogoWidth - radius, y + targetLogoHeight);
-                    ctx.lineTo(x + radius, y + targetLogoHeight);
-                    ctx.quadraticCurveTo(x, y + targetLogoHeight, x, y + targetLogoHeight - radius);
-                    ctx.lineTo(x, y + radius);
-                    ctx.quadraticCurveTo(x, y, x + radius, y);
-                    ctx.closePath();
-                    ctx.clip();
-                    
-                    ctx.drawImage(img, x, y, targetLogoWidth, targetLogoHeight);
-                    ctx.restore();
-
-                    drawTextAndDots(y + targetLogoHeight);
-                    injectSplashTag();
-                };
-
-                img.onerror = () => {
-                    console.error('❌ Failed to load logo from database.');
-                    drawTextAndDots(canvas.height / 2);
-                    injectSplashTag();
-                };
-
-                img.src = logoUrl;
-            }
-
-            {% if request.state.tenant and request.state.tenant.logo %}
-                {% set pb_url = request.state.pb.base_url.rstrip("/") %}
-                {% set col_id = request.state.tenant.collection_id %}
-                {% set rec_id = request.state.tenant.id %}
-                {% set filename = request.state.tenant.logo %}
-                {% set dynamic_logo_url = pb_url ~ '/api/files/' ~ col_id ~ '/' ~ rec_id ~ '/' ~ filename ~ '?thumb=512x512f' %}
-            {% else %}
-                {% set dynamic_logo_url = '' %}
-            {% endif %}
-
-            {% if request.state.tenant and request.state.tenant.primary_color %}
-                {% set splash_bg = request.state.tenant.primary_color %}
-            {% elif request.state.tenant and request.state.tenant.brand_colors and request.state.tenant.brand_colors.base_100 %}
-                {% set splash_bg = request.state.tenant.brand_colors.base_100 %}
-            {% else %}
-                {% set splash_bg = 'oklch(14% .004 49.25)' %}
-            {% endif %}
-
-            {% if request.state.tenant and request.state.tenant.brand_colors and request.state.tenant.brand_colors.base_content %}
-                {% set splash_text = request.state.tenant.brand_colors.base_content %}
-            {% else %}
-                {% set splash_text = '#ffffff' %}
-            {% endif %}
-
-            generateIOSSplashScreen(
-                "{{ dynamic_logo_url }}",
-                "{{ splash_bg }}",
-                "{{ request.state.tenant.name | default('Seoz Platform') }}",
-                "{{ splash_text }}",
-            );
         </script>
     </body>
 </html>
