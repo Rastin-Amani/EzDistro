@@ -16,6 +16,7 @@ from fastapi.responses import HTMLResponse
 from app.api.deps import (
     PROJECT_ADMIN_ROLES,
     ensure_record_in_project,
+    is_hx_request,
     project_scope,
     require_hx,
     require_project_access,
@@ -26,6 +27,8 @@ from app.api.deps import (
     safe_int,
     safe_str,
 )
+from app.api.errors import hx_error
+from app.domain.validation import normalize_base_url
 from app.repositories.articles import ArticleRepo
 from app.repositories.indexing import DocumentRepo, IndexRunRepo
 from app.repositories.integrations import IntegrationRepo
@@ -95,6 +98,7 @@ def projects_list(request: Request):
 
 
 @router.post("/projects")
+@hx_error("ساخت پروژه ناموفق بود")
 def create_project(
     request: Request,
     name: str = Form(""),
@@ -103,44 +107,65 @@ def create_project(
     timezone: str = Form("Asia/Tehran"),
     description: str = Form(""),
 ):
-    try:
-        require_hx(request)
-        user = require_user(request)
-        slug_value = slug.strip().lower() or None
-        if not slug_value:
-            slug_value = (
-                re.sub(r"[^a-z0-9-]+", "-", name.strip().lower()).strip("-")
-                or f"project-{int(time.time())}"
-            )
-        project = ProjectRepo(request.state.pb).create(
-            name=safe_str(name),
-            slug=slug_value,
-            language=safe_str(language, "fa"),
-            timezone=safe_str(timezone, "Asia/Tehran"),
-            description=safe_str(description),
-            created_by=user.get("id", ""),
+    require_hx(request)
+    user = require_user(request)
+    slug_value = slug.strip().lower() or None
+    if not slug_value:
+        slug_value = (
+            re.sub(r"[^a-z0-9-]+", "-", name.strip().lower()).strip("-")
+            or f"project-{int(time.time())}"
         )
-        # Creator becomes owner of the project (authorization).
-        MemberRepo(request.state.pb).add(
-            project=project["id"], user=user.get("id", ""), role="owner"
-        )
-        return ok_with_redirect("پروژه ساخته شد", f"/projects/{project['id']}")
-    except Exception as e:
-        print("create_project error:", e)
-        return error_response("ساخت پروژه ناموفق بود")
+    project = ProjectRepo(request.state.pb).create(
+        name=safe_str(name),
+        slug=slug_value,
+        language=safe_str(language, "fa"),
+        timezone=safe_str(timezone, "Asia/Tehran"),
+        description=safe_str(description),
+        created_by=user.get("id", ""),
+    )
+    # Creator becomes owner of the project (authorization).
+    MemberRepo(request.state.pb).add(project=project["id"], user=user.get("id", ""), role="owner")
+    return ok_with_redirect("پروژه ساخته شد", f"/projects/{project['id']}")
 
 
 @router.post("/projects/{project_id}/delete")
+@hx_error("حذف پروژه ناموفق بود")
 def delete_project(request: Request, project_id: str):
-    try:
-        require_hx(request)
-        require_project_access(request, project_id)
-        require_project_role(request, project_id, PROJECT_ADMIN_ROLES)
-        ProjectRepo(request.state.pb).delete(project_id)
-        return ok_with_redirect("پروژه حذف شد", "/projects", type="info")
-    except Exception as e:
-        print("delete_project error:", e)
-        return error_response("حذف پروژه ناموفق بود")
+    require_hx(request)
+    require_project_access(request, project_id)
+    require_project_role(request, project_id, PROJECT_ADMIN_ROLES)
+    ProjectRepo(request.state.pb).delete(project_id)
+    return ok_with_redirect("پروژه حذف شد", "/projects", type="info")
+
+
+# ---------------------------------------------------------------------------
+# Project status (live active/inactive toggle)
+# ---------------------------------------------------------------------------
+@router.get("/projects/{project_id}/status-toggle", response_class=HTMLResponse)
+def project_status_toggle(request: Request, project_id: str):
+    """Fragment — the header's live status toggle (refreshed via refreshProjectStatus)."""
+    project = require_project_access(request, project_id)
+    return templates.TemplateResponse(
+        request,
+        "pages/projects/_status_toggle.html",
+        {"project": project, "project_id": project_id},
+    )
+
+
+@router.post("/projects/{project_id}/toggle-status")
+@hx_error("تغییر وضعیت پروژه ناموفق بود")
+def toggle_project_status(request: Request, project_id: str):
+    """Flip the project between active and inactive (live)."""
+    require_hx(request)
+    require_project_access(request, project_id)
+    require_project_role(request, project_id, PROJECT_ADMIN_ROLES)
+    project = ProjectRepo(request.state.pb).get(project_id)
+    if not project:
+        return error_response("پروژه یافت نشد")
+    new_status = "inactive" if project.get("status") == "active" else "active"
+    ProjectRepo(request.state.pb).set_status(project_id, new_status)
+    message = "پروژه فعال شد" if new_status == "active" else "پروژه غیرفعال شد"
+    return success_response(message, extra_events={"refreshProjectStatus": True})
 
 
 # ---------------------------------------------------------------------------
@@ -208,99 +233,86 @@ def topics_page(
 
 
 @router.post("/projects/{project_id}/topics/bulk")
+@hx_error("عملیات گروهی ناموفق بود")
 def topics_bulk(
     request: Request, project_id: str, action: str = Form(""), topic_ids: str = Form("")
 ):
     """Bulk actions: generate | retry | cancel (comma-separated topic ids)."""
-    try:
-        require_hx(request)
-        require_project_access(request, project_id)
-        require_project_role(request, project_id)
-        ids = [i.strip() for i in topic_ids.split(",") if i.strip()]
-        if not ids:
-            return error_response("موضوعی انتخاب نشده است")
-        repo = TopicRepo(request.state.pb)
-        jobs = JobRepo(request.state.pb)
-        done = 0
-        for topic_id in ids:
-            topic = repo.get(topic_id)
-            if not topic or topic.get("project") != project_id:
-                continue
-            if action in ("generate", "retry") and topic.get("status") in (
-                "planned",
-                "failed",
-                "cancelled",
-            ):
-                repo.set_status(topic_id, "queued")
-                jobs.create(
-                    project=project_id,
-                    type="write_article",
-                    payload={"topicId": topic_id},
-                    idempotency_key=f"write:article:{topic_id}",
-                    max_attempts=3,
-                    entity_type="topic",
-                    entity_id=topic_id,
-                    priority=int(topic.get("priority") or 0),
-                )
-                done += 1
-            elif action == "cancel" and topic.get("status") in (
-                "planned",
-                "queued",
-                "planning",
-                "outline_ready",
-                "writing",
-            ):
-                repo.set_status(topic_id, "cancelled")
-                done += 1
-        return success_response(
-            f"{done} موضوع به‌روزرسانی شد", extra_events={"refreshTopics": True, "refreshJobs": True}
-        )
-    except Exception as e:
-        print("topics_bulk error:", e)
-        return error_response("عملیات گروهی ناموفق بود")
+    require_hx(request)
+    require_project_access(request, project_id)
+    require_project_role(request, project_id)
+    ids = [i.strip() for i in topic_ids.split(",") if i.strip()]
+    if not ids:
+        return error_response("موضوعی انتخاب نشده است")
+    repo = TopicRepo(request.state.pb)
+    jobs = JobRepo(request.state.pb)
+    done = 0
+    for topic_id in ids:
+        topic = repo.get(topic_id)
+        if not topic or topic.get("project") != project_id:
+            continue
+        if action in ("generate", "retry") and topic.get("status") in (
+            "planned",
+            "failed",
+            "cancelled",
+        ):
+            repo.set_status(topic_id, "queued")
+            jobs.create(
+                project=project_id,
+                type="write_article",
+                payload={"topicId": topic_id},
+                idempotency_key=f"write:article:{topic_id}",
+                max_attempts=3,
+                entity_type="topic",
+                entity_id=topic_id,
+                priority=int(topic.get("priority") or 0),
+            )
+            done += 1
+        elif action == "cancel" and topic.get("status") in (
+            "planned",
+            "queued",
+            "planning",
+            "outline_ready",
+            "writing",
+        ):
+            repo.set_status(topic_id, "cancelled")
+            done += 1
+    return success_response(
+        f"{done} موضوع به‌روزرسانی شد", extra_events={"refreshTopics": True, "refreshJobs": True}
+    )
 
 
 @router.post("/projects/{project_id}/topics/{topic_id}/cancel")
+@hx_error("لغو موضوع ناموفق بود")
 def cancel_topic(request: Request, project_id: str, topic_id: str):
-    try:
-        require_hx(request)
-        require_project_access(request, project_id)
-        require_project_role(request, project_id)
-        topic = TopicRepo(request.state.pb).get(topic_id)
-        if not topic or topic.get("project") != project_id:
-            return error_response("موضوع یافت نشد")
-        TopicRepo(request.state.pb).set_status(topic_id, "cancelled")
-        return success_response("موضوع لغو شد", extra_events={"refreshTopics": True})
-    except Exception as e:
-        print("cancel_topic error:", e)
-        return error_response("لغو موضوع ناموفق بود")
+    require_hx(request)
+    require_project_access(request, project_id)
+    require_project_role(request, project_id)
+    topic = TopicRepo(request.state.pb).get(topic_id)
+    if not topic or topic.get("project") != project_id:
+        return error_response("موضوع یافت نشد")
+    TopicRepo(request.state.pb).set_status(topic_id, "cancelled")
+    return success_response("موضوع لغو شد", extra_events={"refreshTopics": True})
 
 
 # ---------------------------------------------------------------------------
 # Project page + tabs
 # ---------------------------------------------------------------------------
-@router.get("/projects/{project_id}", response_class=HTMLResponse)
-def project_detail(request: Request, project_id: str, tab: str = "settings"):
-    project = require_project_access(request, project_id)
-    return templates.TemplateResponse(
-        request,
-        "pages/projects/detail.html",
-        {
-            "title": project.get("name", "پروژه"),
-            "project": project,
-            "active_tab": tab if tab in TABS else "settings",
-            "tabs": TABS,
-        },
-    )
+def _tab_context(
+    pb: Any,
+    project: dict[str, Any],
+    tab: str,
+    *,
+    status: str = "",
+) -> dict[str, Any]:
+    """Build the template context a project tab needs.
 
-
-@router.get("/projects/{project_id}/tabs/{tab}", response_class=HTMLResponse)
-def project_tab(request: Request, project_id: str, tab: str):
-    project = require_project_access(request, project_id)
-    if tab not in TABS:
-        return HTMLResponse("")
-
-    pb = request.state.pb
+    Shared by the full-page render (``detail.html`` includes the active tab
+    partial inline) and the HTMX tab fragment. Without this a direct load of
+    ``/projects/{id}`` 500s because the included tab template has no variables
+    (e.g. ``settings`` is undefined) — the crash fixed here.
+    """
+    project_id = project["id"]
     context: dict[str, Any] = {"project": project}
 
     if tab == "settings":
@@ -343,7 +355,6 @@ def project_tab(request: Request, project_id: str, tab: str):
         context["topics"] = TopicRepo(pb).list_for_project(project_id, per_page=50)
         context["variables"] = VARIABLE_REGISTRY
     elif tab == "topics":
-        status = request.query_params.get("status") or None
         context["topics"] = TopicRepo(pb).list_for_project(project_id, status=status, per_page=50)
         context["status_filter"] = status or ""
     elif tab == "articles":
@@ -379,6 +390,48 @@ def project_tab(request: Request, project_id: str, tab: str):
     elif tab == "logs":
         context["events"] = JobEventRepo(pb).list_for_project(project_id, per_page=40)
 
+    return context
+
+
+@router.get("/projects/{project_id}", response_class=HTMLResponse)
+def project_detail(request: Request, project_id: str, tab: str = "settings"):
+    try:
+        project = require_project_access(request, project_id)
+    except (PermissionError, ValueError):
+        return templates.TemplateResponse(
+            request, "pages/projects/not_found.html", {"title": "پروژه یافت نشد"}
+        )
+    active = tab if tab in TABS else "settings"
+    context = _tab_context(
+        request.state.pb,
+        project,
+        active,
+        status=request.query_params.get("status") or "",
+    )
+    context["title"] = project.get("name", "پروژه")
+    context["active_tab"] = active
+    context["tabs"] = TABS
+    return templates.TemplateResponse(request, "pages/projects/detail.html", context)
+
+
+@router.get("/projects/{project_id}/tabs/{tab}", response_class=HTMLResponse)
+def project_tab(request: Request, project_id: str, tab: str):
+    try:
+        project = require_project_access(request, project_id)
+    except (PermissionError, ValueError):
+        if is_hx_request(request):
+            return error_response("پروژه یافت نشد یا دسترسی ندارید")
+        return templates.TemplateResponse(
+            request, "pages/projects/not_found.html", {"title": "پروژه یافت نشد"}
+        )
+    if tab not in TABS:
+        return HTMLResponse("")
+    context = _tab_context(
+        request.state.pb,
+        project,
+        tab,
+        status=request.query_params.get("status") or "",
+    )
     return templates.TemplateResponse(request, f"pages/projects/tabs/{tab}.html", context)
 
 
@@ -386,6 +439,7 @@ def project_tab(request: Request, project_id: str, tab: str):
 # Settings (flat schema)
 # ---------------------------------------------------------------------------
 @router.post("/projects/{project_id}/settings")
+@hx_error("ذخیره تنظیمات ناموفق بود")
 def save_settings(
     request: Request,
     project_id: str,
@@ -418,57 +472,54 @@ def save_settings(
     indexing_schedule_enabled: str = Form(""),
     indexing_schedule_interval_minutes: str = Form(""),
 ):
-    try:
-        require_hx(request)
-        require_project_access(request, project_id)
-        require_project_role(request, project_id)
-        data = {
-            "defaultLlmProvider": safe_str(default_llm_provider, "openai_compat"),
-            "defaultLlmModel": safe_str(default_llm_model, "gpt-4o-mini"),
-            "embeddingProvider": safe_str(embedding_provider, "openai_compat"),
-            "embeddingModel": safe_str(embedding_model, "text-embedding-3-small"),
-            "embeddingDimensions": safe_int(embedding_dimensions, 1536),
-            "chunkSize": safe_int(chunk_size, 500),
-            "chunkOverlap": safe_int(chunk_overlap, 100),
-            "separatorStrategy": safe_str(separator_strategy, "auto"),
-            "maxChunkCount": safe_int(max_chunk_count, 0),
-            "retrievalTopK": safe_int(retrieval_top_k, 8),
-            "similarityThreshold": safe_float(similarity_threshold, 0.35),
-            "rerankingEnabled": safe_bool(reranking_enabled),
-            "rerankerProvider": safe_str(reranker_provider, "cohere_compat"),
-            "rerankerModel": safe_str(reranker_model, "rerank-v4.0"),
-            "rerankerTopN": safe_int(reranker_top_n, 8),
-            "contextMaxLinks": safe_int(context_max_links, 5),
-            "contextMaxPassages": safe_int(context_max_passages, 5),
-            "contextMaxChars": safe_int(context_max_chars, 4000),
-            "generationConcurrency": safe_int(generation_concurrency, 2),
-            "minArticleWords": safe_int(min_article_words, 300),
-            "retryPolicy": {
-                "max_attempts": safe_int(retry_max_attempts, 3),
-                "backoff_base": safe_int(retry_backoff_base, 30),
-                "backoff_max": safe_int(retry_backoff_max, 3600),
-            },
-            "publishingMode": safe_str(publishing_mode, "draft"),
-            "autosave": {
-                "enabled": safe_bool(autosave_enabled),
-                "interval_minutes": safe_int(autosave_interval_minutes, 5),
-            },
-            "indexing": {
-                "schedule_enabled": safe_bool(indexing_schedule_enabled),
-                "schedule_interval_minutes": safe_int(indexing_schedule_interval_minutes, 1440),
-            },
-        }
-        ProjectSettingsRepo(request.state.pb).upsert(project_id, data)
-        return success_response("تنظیمات ذخیره شد")
-    except Exception as e:
-        print("save_settings error:", e)
-        return error_response("ذخیره تنظیمات ناموفق بود")
+    require_hx(request)
+    require_project_access(request, project_id)
+    require_project_role(request, project_id)
+    data = {
+        "defaultLlmProvider": safe_str(default_llm_provider, "openai_compat"),
+        "defaultLlmModel": safe_str(default_llm_model, "gpt-4o-mini"),
+        "embeddingProvider": safe_str(embedding_provider, "openai_compat"),
+        "embeddingModel": safe_str(embedding_model, "text-embedding-3-small"),
+        "embeddingDimensions": safe_int(embedding_dimensions, 1536),
+        "chunkSize": safe_int(chunk_size, 500),
+        "chunkOverlap": safe_int(chunk_overlap, 100),
+        "separatorStrategy": safe_str(separator_strategy, "auto"),
+        "maxChunkCount": safe_int(max_chunk_count, 0),
+        "retrievalTopK": safe_int(retrieval_top_k, 8),
+        "similarityThreshold": safe_float(similarity_threshold, 0.35),
+        "rerankingEnabled": safe_bool(reranking_enabled),
+        "rerankerProvider": safe_str(reranker_provider, "cohere_compat"),
+        "rerankerModel": safe_str(reranker_model, "rerank-v4.0"),
+        "rerankerTopN": safe_int(reranker_top_n, 8),
+        "contextMaxLinks": safe_int(context_max_links, 5),
+        "contextMaxPassages": safe_int(context_max_passages, 5),
+        "contextMaxChars": safe_int(context_max_chars, 4000),
+        "generationConcurrency": safe_int(generation_concurrency, 2),
+        "minArticleWords": safe_int(min_article_words, 300),
+        "retryPolicy": {
+            "max_attempts": safe_int(retry_max_attempts, 3),
+            "backoff_base": safe_int(retry_backoff_base, 30),
+            "backoff_max": safe_int(retry_backoff_max, 3600),
+        },
+        "publishingMode": safe_str(publishing_mode, "draft"),
+        "autosave": {
+            "enabled": safe_bool(autosave_enabled),
+            "interval_minutes": safe_int(autosave_interval_minutes, 5),
+        },
+        "indexing": {
+            "schedule_enabled": safe_bool(indexing_schedule_enabled),
+            "schedule_interval_minutes": safe_int(indexing_schedule_interval_minutes, 1440),
+        },
+    }
+    ProjectSettingsRepo(request.state.pb).upsert(project_id, data)
+    return success_response("تنظیمات ذخیره شد")
 
 
 # ---------------------------------------------------------------------------
 # Schedules
 # ---------------------------------------------------------------------------
 @router.post("/projects/{project_id}/schedules")
+@hx_error("ذخیره زمان‌بندی ناموفق بود")
 def save_schedules(
     request: Request,
     project_id: str,
@@ -476,39 +527,36 @@ def save_schedules(
     enabled: str = Form(""),
     interval_minutes: str = Form(""),
 ):
-    try:
-        require_hx(request)
-        require_project_access(request, project_id)
-        require_project_role(request, project_id)
-        schedule = ScheduleRepo(request.state.pb)
-        existing = schedule.first(filter=f'project="{project_id}" && kind="{kind}"')
-        payload = {
-            "enabled": safe_bool(enabled),
-            "intervalMinutes": safe_int(interval_minutes, 1440),
-        }
-        if existing:
-            schedule.update(existing["id"], payload)
-        else:
-            schedule.create(
-                project=project_id,
-                name=kind,
-                kind=kind,
-                interval_minutes=safe_int(interval_minutes, 1440),
-                payload={},
-            )
-            created = schedule.first(filter=f'project="{project_id}" && kind="{kind}"')
-            if created:
-                schedule.update(created["id"], payload)
-        return success_response("زمان‌بندی ذخیره شد")
-    except Exception as e:
-        print("save_schedules error:", e)
-        return error_response("ذخیره زمان‌بندی ناموفق بود")
+    require_hx(request)
+    require_project_access(request, project_id)
+    require_project_role(request, project_id)
+    schedule = ScheduleRepo(request.state.pb)
+    existing = schedule.first(filter=f'project="{project_id}" && kind="{kind}"')
+    payload = {
+        "enabled": safe_bool(enabled),
+        "intervalMinutes": safe_int(interval_minutes, 1440),
+    }
+    if existing:
+        schedule.update(existing["id"], payload)
+    else:
+        schedule.create(
+            project=project_id,
+            name=kind,
+            kind=kind,
+            interval_minutes=safe_int(interval_minutes, 1440),
+            payload={},
+        )
+        created = schedule.first(filter=f'project="{project_id}" && kind="{kind}"')
+        if created:
+            schedule.update(created["id"], payload)
+    return success_response("زمان‌بندی ذخیره شد")
 
 
 # ---------------------------------------------------------------------------
 # Integrations (configurable; secrets encrypted, never rendered plaintext)
 # ---------------------------------------------------------------------------
 @router.post("/projects/{project_id}/integrations")
+@hx_error("ذخیره اتصال ناموفق بود")
 def save_integration(
     request: Request,
     project_id: str,
@@ -521,111 +569,107 @@ def save_integration(
     username: str = Form(""),
     secret: str = Form(""),
 ):
-    try:
-        require_hx(request)
-        require_project_access(request, project_id)
-        require_project_role(request, project_id)
-        user = require_user(request)
-        if category not in INTEGRATION_CATEGORIES:
-            return error_response("دسته‌بندی نامعتبر است")
-        secrets: SecretsService = get_secrets_service()
-        repo = IntegrationRepo(request.state.pb)
+    require_hx(request)
+    require_project_access(request, project_id)
+    require_project_role(request, project_id)
+    user = require_user(request)
+    if category not in INTEGRATION_CATEGORIES:
+        return error_response("دسته‌بندی نامعتبر است")
+    secrets: SecretsService = get_secrets_service()
+    repo = IntegrationRepo(request.state.pb)
 
-        existing = repo.get(record_id) if record_id else None
-        if existing:
-            ensure_record_in_project(existing, project_id, "integration")
-        if existing and not secret:
-            secrets_enc = existing.get("secretsEnc") or ""
-        else:
-            import json
+    existing = repo.get(record_id) if record_id else None
+    if existing:
+        ensure_record_in_project(existing, project_id, "integration")
+    if existing and not secret:
+        secrets_enc = existing.get("secretsEnc") or ""
+    else:
+        import json
 
-            secrets_enc = secrets.encrypt(json.dumps({"api_key": secret}, ensure_ascii=False))
+        secrets_enc = secrets.encrypt(json.dumps({"api_key": secret}, ensure_ascii=False))
 
-        configuration: dict[str, Any] = {
-            "base_url": safe_str(base_url),
-            "model": safe_str(model),
-            # masked preview — the browser NEVER receives the real secret
-            "masked": (existing.get("configuration") or {}).get("masked")
-            if existing and not secret
-            else (secrets.mask(secret) if secret else ""),
-        }
-        if category == "publisher":
-            configuration["username"] = safe_str(username)
+    configuration: dict[str, Any] = {
+        "base_url": normalize_base_url(safe_str(base_url)),
+        "model": safe_str(model),
+        # masked preview — the browser NEVER receives the real secret
+        "masked": (existing.get("configuration") or {}).get("masked")
+        if existing and not secret
+        else (secrets.mask(secret) if secret else ""),
+    }
+    if category == "publisher":
+        configuration["username"] = safe_str(username)
 
-        payload = {
-            "category": category,
-            "provider": safe_str(provider) or "openai_compat",
-            "displayName": safe_str(display_name) or category,
-            "configuration": configuration,
-            "secretsEnc": secrets_enc,
-            "enabled": bool(existing.get("enabled")) if existing else True,
-            "createdBy": user.get("id", ""),
-        }
-        if existing:
-            repo.update(existing["id"], payload)
-        else:
-            repo.create(project=project_id, **payload)
-        return success_response("اتصال ذخیره شد", extra_events={"refreshIntegrations": True})
-    except Exception as e:
-        print("save_integration error:", e)
-        return error_response("ذخیره اتصال ناموفق بود")
+    payload = {
+        "category": category,
+        "provider": safe_str(provider) or "openai_compat",
+        "displayName": safe_str(display_name) or category,
+        "configuration": configuration,
+        "secretsEnc": secrets_enc,
+        "enabled": bool(existing.get("enabled")) if existing else True,
+        "createdBy": user.get("id", ""),
+    }
+    if existing:
+        repo.update(existing["id"], payload)
+    else:
+        repo.create(
+            project=project_id,
+            category=payload["category"],
+            provider=payload["provider"],
+            display_name=payload["displayName"],
+            configuration=payload["configuration"],
+            secrets_enc=payload["secretsEnc"],
+            enabled=payload["enabled"],
+            created_by=payload["createdBy"],
+        )
+    return success_response("اتصال ذخیره شد", extra_events={"refreshIntegrations": True})
 
 
 @router.post("/projects/{project_id}/integrations/{record_id}/toggle")
+@hx_error("تغییر وضعیت ناموفق بود")
 def toggle_integration(request: Request, project_id: str, record_id: str):
-    try:
-        require_hx(request)
-        require_project_access(request, project_id)
-        require_project_role(request, project_id)
-        repo = IntegrationRepo(request.state.pb)
-        integration = repo.get(record_id)
-        if not integration:
-            return error_response("اتصال یافت نشد")
-        ensure_record_in_project(integration, project_id, "integration")
-        repo.set_enabled(record_id, not integration.get("enabled", False))
-        return success_response("وضعیت اتصال تغییر کرد", extra_events={"refreshIntegrations": True})
-    except Exception as e:
-        print("toggle_integration error:", e)
-        return error_response("تغییر وضعیت ناموفق بود")
+    require_hx(request)
+    require_project_access(request, project_id)
+    require_project_role(request, project_id)
+    repo = IntegrationRepo(request.state.pb)
+    integration = repo.get(record_id)
+    if not integration:
+        return error_response("اتصال یافت نشد")
+    ensure_record_in_project(integration, project_id, "integration")
+    repo.set_enabled(record_id, not integration.get("enabled", False))
+    return success_response("وضعیت اتصال تغییر کرد", extra_events={"refreshIntegrations": True})
 
 
 @router.post("/projects/{project_id}/integrations/{record_id}/test")
+@hx_error("تست اتصال ناموفق بود")
 async def test_integration(request: Request, project_id: str, record_id: str):
-    try:
-        require_hx(request)
-        require_project_access(request, project_id)
-        repo = IntegrationRepo(request.state.pb)
-        integration = repo.get(record_id)
-        if not integration or integration.get("project") != project_id:
-            return error_response("اتصال یافت نشد")
-        from app.providers.registry import ProviderRegistry
+    require_hx(request)
+    require_project_access(request, project_id)
+    repo = IntegrationRepo(request.state.pb)
+    integration = repo.get(record_id)
+    if not integration or integration.get("project") != project_id:
+        return error_response("اتصال یافت نشد")
+    from app.providers.registry import ProviderRegistry
 
-        result = await ProviderRegistry(request.state.pb).test_integration(
-            require_project_access(request, project_id), integration
-        )
-        return templates.TemplateResponse(
-            request,
-            "pages/projects/tabs/integration_health.html",
-            {"integration": integration, "result": result},
-        )
-    except Exception as e:
-        print("test_integration error:", e)
-        return error_response("تست اتصال ناموفق بود")
+    result = await ProviderRegistry(request.state.pb).test_integration(
+        require_project_access(request, project_id), integration
+    )
+    return templates.TemplateResponse(
+        request,
+        "pages/projects/tabs/integration_health.html",
+        {"integration": integration, "result": result},
+    )
 
 
 @router.post("/projects/{project_id}/integrations/{record_id}/delete")
+@hx_error("حذف اتصال ناموفق بود")
 def delete_integration(request: Request, project_id: str, record_id: str):
-    try:
-        require_hx(request)
-        require_project_access(request, project_id)
-        require_project_role(request, project_id)
-        integration = IntegrationRepo(request.state.pb).get(record_id)
-        ensure_record_in_project(integration, project_id, "integration")
-        IntegrationRepo(request.state.pb).delete(record_id)
-        return success_response("اتصال حذف شد", extra_events={"refreshIntegrations": True})
-    except Exception as e:
-        print("delete_integration error:", e)
-        return error_response("حذف اتصال ناموفق بود")
+    require_hx(request)
+    require_project_access(request, project_id)
+    require_project_role(request, project_id)
+    integration = IntegrationRepo(request.state.pb).get(record_id)
+    ensure_record_in_project(integration, project_id, "integration")
+    IntegrationRepo(request.state.pb).delete(record_id)
+    return success_response("اتصال حذف شد", extra_events={"refreshIntegrations": True})
 
 
 # ---------------------------------------------------------------------------
@@ -644,87 +688,76 @@ def save_prompts(
     brand_voice: str = Form(""),
     validation: str = Form(""),
 ):
-    try:
-        require_hx(request)
-        require_project_access(request, project_id)
-        require_project_role(request, project_id)
-        user = require_user(request)
-        values = {
-            "outline_system": outline_system,
-            "outline_user": outline_user,
-            "section_system": section_system,
-            "section_user": section_user,
-            "seo_rules": seo_rules,
-            "internal_linking": internal_linking,
-            "brand_voice": brand_voice,
-            "validation": validation,
-        }
-        from app.domain.prompt_render import PromptRenderError
-        from app.services.prompt_service import PromptService
+    require_hx(request)
+    require_project_access(request, project_id)
+    require_project_role(request, project_id)
+    user = require_user(request)
+    values = {
+        "outline_system": outline_system,
+        "outline_user": outline_user,
+        "section_system": section_system,
+        "section_user": section_user,
+        "seo_rules": seo_rules,
+        "internal_linking": internal_linking,
+        "brand_voice": brand_voice,
+        "validation": validation,
+    }
+    from app.domain.prompt_render import PromptRenderError
+    from app.services.prompt_service import PromptService
 
-        service = PromptService(request.state.pb)
+    service = PromptService(request.state.pb)
+    try:
         for _ptype, content in values.items():
             unknown = service.validate_content(content)
             if unknown:
                 raise PromptRenderError(unknown)
-        for ptype, content in values.items():
-            service.save(project_id, ptype, content, author=user.get("id", ""))
-        return success_response("پرامپت‌ها ذخیره شد", extra_events={"refreshPrompts": True})
     except PromptRenderError as e:
         return error_response(
             "متغیر(های) نامعتبر: " + ", ".join(e.unknown), extra_events={"refreshPrompts": True}
         )
-    except Exception as e:
-        print("save_prompts error:", e)
-        return error_response("ذخیره پرامپت‌ها ناموفق بود")
+    for ptype, content in values.items():
+        service.save(project_id, ptype, content, author=user.get("id", ""))
+    return success_response("پرامپت‌ها ذخیره شد", extra_events={"refreshPrompts": True})
 
 
 # ---------------------------------------------------------------------------
 # Prompt management (versioning, compare, tester)
 # ---------------------------------------------------------------------------
 @router.post("/projects/{project_id}/prompts/{ptype}/activate")
+@hx_error("فعال‌سازی نسخه ناموفق بود")
 def activate_prompt_version(
     request: Request, project_id: str, ptype: str, version_id: str = Form("")
 ):
-    try:
-        require_hx(request)
-        require_project_access(request, project_id)
-        require_project_role(request, project_id)
-        version = PromptRepo(request.state.pb).get(version_id)
-        if version is None or version.get("type") != ptype:
-            return error_response("نسخه یافت نشد")
-        if str(version.get("project") or "") not in ("", project_id):
-            return error_response("نسخه یافت نشد")
-        PromptService(request.state.pb).activate(project_id, ptype, version_id)
-        return success_response("نسخه فعال شد", extra_events={"refreshPrompts": True})
-    except Exception as e:
-        print("activate_prompt_version error:", e)
-        return error_response("فعال‌سازی نسخه ناموفق بود")
+    require_hx(request)
+    require_project_access(request, project_id)
+    require_project_role(request, project_id)
+    version = PromptRepo(request.state.pb).get(version_id)
+    if version is None or version.get("type") != ptype:
+        return error_response("نسخه یافت نشد")
+    if str(version.get("project") or "") not in ("", project_id):
+        return error_response("نسخه یافت نشد")
+    PromptService(request.state.pb).activate(project_id, ptype, version_id)
+    return success_response("نسخه فعال شد", extra_events={"refreshPrompts": True})
 
 
 @router.post("/projects/{project_id}/prompts/{ptype}/duplicate")
+@hx_error("تکراری‌سازی ناموفق بود")
 def duplicate_prompt_version(
     request: Request, project_id: str, ptype: str, version_id: str = Form("")
 ):
-    try:
-        require_hx(request)
-        require_project_access(request, project_id)
-        require_project_role(request, project_id)
-        user = require_user(request)
-        version = PromptRepo(request.state.pb).get(version_id)
-        if version is None or version.get("type") != ptype:
-            return error_response("نسخه یافت نشد")
-        if str(version.get("project") or "") not in ("", project_id):
-            return error_response("نسخه یافت نشد")
-        PromptService(request.state.pb).duplicate(
-            project_id, ptype, version_id, author=user.get("id", "")
-        )
-        return success_response(
-            "نسخه تکراری‌سازی شد (غیرفعال)", extra_events={"refreshPrompts": True}
-        )
-    except Exception as e:
-        print("duplicate_prompt_version error:", e)
-        return error_response("تکراری‌سازی ناموفق بود")
+    require_hx(request)
+    require_project_access(request, project_id)
+    require_project_role(request, project_id)
+    user = require_user(request)
+    version = PromptRepo(request.state.pb).get(version_id)
+    if version is None or version.get("type") != ptype:
+        return error_response("نسخه یافت نشد")
+    if str(version.get("project") or "") not in ("", project_id):
+        return error_response("نسخه یافت نشد")
+    PromptService(request.state.pb).duplicate(
+        project_id, ptype, version_id, author=user.get("id", "")
+    )
+    return success_response("نسخه تکراری‌سازی شد (غیرفعال)", extra_events={"refreshPrompts": True})
 
 
 @router.get("/projects/{project_id}/prompts/compare")
@@ -745,12 +778,12 @@ def compare_prompt_versions(
             "pages/projects/tabs/prompt_compare.html",
             {"va": va, "vb": vb, "ptype": ptype},
         )
-    except Exception as e:
-        print("compare_prompt_versions error:", e)
+    except Exception:
         return HTMLResponse("")
 
 
 @router.post("/projects/{project_id}/prompts/test")
+@hx_error("تست پرامپت ناموفق بود")
 async def test_prompt(
     request: Request,
     project_id: str,
@@ -760,67 +793,63 @@ async def test_prompt(
     model_role: str = Form(""),
 ):
     """Interactive prompt tester — renders + runs WITHOUT touching stored versions."""
-    try:
-        require_hx(request)
-        require_project_access(request, project_id)
-        from app.services.settings import ProjectConfig
+    require_hx(request)
+    require_project_access(request, project_id)
+    from app.services.settings import ProjectConfig
 
-        config = ProjectConfig.load(request.state.pb, project_id)
-        topic = None
-        if topic_id:
-            topic = TopicRepo(request.state.pb).get(topic_id)
+    config = ProjectConfig.load(request.state.pb, project_id)
+    topic = None
+    if topic_id:
+        topic = TopicRepo(request.state.pb).get(topic_id)
 
-        # live retrieval context for the tester (same subsystem the writer uses)
-        retrieval_context, links = "", []
-        if topic and ptype in ("outline_user", "outline_system", "section_user", "section_system"):
-            from app.services.internal_linking import ContextBuilder
-            from app.services.retrieval import RetrievalService
+    # live retrieval context for the tester (same subsystem the writer uses)
+    retrieval_context, links = "", []
+    if topic and ptype in ("outline_user", "outline_system", "section_user", "section_system"):
+        from app.services.internal_linking import ContextBuilder
+        from app.services.retrieval import RetrievalService
 
-            service = RetrievalService(request.state.pb)
-            from app.schemas.retrieval import RetrievalOptions
+        service = RetrievalService(request.state.pb)
+        from app.schemas.retrieval import RetrievalOptions
 
-            options = RetrievalOptions(
-                candidate_count=int(config.retrieval.get("top_k") or 20),
-                similarity_threshold=float(config.retrieval.get("similarity_threshold") or 0.0)
-                or None,
-                rerank=bool(config.retrieval.get("rerank_enabled")),
-                rerank_top_n=int(config.retrieval.get("rerank_top_n") or 8),
-            )
-            results = await service.retrieve(
-                config, f"{topic.get('title') or ''} {topic.get('keyword') or ''}".strip(), options
-            )
-            builder = ContextBuilder(
-                max_links=int(config.context.get("max_links") or 5),
-                max_passages=int(config.context.get("max_passages") or 5),
-                max_chars=int(config.context.get("max_chars") or 4000),
-            )
-            ctx = builder.build("", results, current_title=str(topic.get("title") or ""))
-            retrieval_context = ctx.format_for_prompt()
-            links = [link.to_dict() for link in ctx.links]
-
-        result = await PromptService(request.state.pb).test(
-            config,
-            ptype=ptype,
-            content=content,
-            topic=topic,
-            retrieval_context=retrieval_context,
-            internal_links=links,
-            model_role=model_role or ("outline" if ptype.startswith("outline") else "section"),
+        options = RetrievalOptions(
+            candidate_count=int(config.retrieval.get("top_k") or 20),
+            similarity_threshold=float(config.retrieval.get("similarity_threshold") or 0.0) or None,
+            rerank=bool(config.retrieval.get("rerank_enabled")),
+            rerank_top_n=int(config.retrieval.get("rerank_top_n") or 8),
         )
-        return templates.TemplateResponse(
-            request,
-            "pages/projects/tabs/prompt_test_result.html",
-            {"result": result, "ptype": ptype},
+        results = await service.retrieve(
+            config, f"{topic.get('title') or ''} {topic.get('keyword') or ''}".strip(), options
         )
-    except Exception as e:
-        print("test_prompt error:", e)
-        return error_response("تست پرامپت ناموفق بود")
+        builder = ContextBuilder(
+            max_links=int(config.context.get("max_links") or 5),
+            max_passages=int(config.context.get("max_passages") or 5),
+            max_chars=int(config.context.get("max_chars") or 4000),
+        )
+        ctx = builder.build("", results, current_title=str(topic.get("title") or ""))
+        retrieval_context = ctx.format_for_prompt()
+        links = [link.to_dict() for link in ctx.links]
+
+    result = await PromptService(request.state.pb).test(
+        config,
+        ptype=ptype,
+        content=content,
+        topic=topic,
+        retrieval_context=retrieval_context,
+        internal_links=links,
+        model_role=model_role or ("outline" if ptype.startswith("outline") else "section"),
+    )
+    return templates.TemplateResponse(
+        request,
+        "pages/projects/tabs/prompt_test_result.html",
+        {"result": result, "ptype": ptype},
+    )
 
 
 # ---------------------------------------------------------------------------
 # Topics
 # ---------------------------------------------------------------------------
 @router.post("/projects/{project_id}/topics")
+@hx_error("افزودن موضوع ناموفق بود")
 def create_topic(
     request: Request,
     project_id: str,
@@ -831,159 +860,141 @@ def create_topic(
     type: str = Form("article"),
     priority: str = Form(""),
 ):
-    try:
-        require_hx(request)
-        require_project_access(request, project_id)
-        require_project_role(request, project_id)
-        if not safe_str(title):
-            return error_response("عنوان موضوع الزامی است")
-        TopicRepo(request.state.pb).create(
-            project=project_id,
-            title=safe_str(title),
-            keyword=safe_str(keyword),
-            pillar=safe_str(pillar),
-            cluster=safe_str(cluster),
-            type=safe_str(type, "article"),
-            priority=safe_int(priority, 0),
-        )
-        return success_response("موضوع اضافه شد", extra_events={"refreshTopics": True})
-    except Exception as e:
-        print("create_topic error:", e)
-        return error_response("افزودن موضوع ناموفق بود")
+    require_hx(request)
+    require_project_access(request, project_id)
+    require_project_role(request, project_id)
+    if not safe_str(title):
+        return error_response("عنوان موضوع الزامی است")
+    TopicRepo(request.state.pb).create(
+        project=project_id,
+        title=safe_str(title),
+        keyword=safe_str(keyword),
+        pillar=safe_str(pillar),
+        cluster=safe_str(cluster),
+        type=safe_str(type, "article"),
+        priority=safe_int(priority, 0),
+    )
+    return success_response("موضوع اضافه شد", extra_events={"refreshTopics": True})
 
 
 @router.post("/projects/{project_id}/topics/{topic_id}/write")
+@hx_error("شروع تولید مقاله ناموفق بود")
 def write_topic(request: Request, project_id: str, topic_id: str):
-    try:
-        require_hx(request)
-        require_project_access(request, project_id)
-        require_project_role(request, project_id)
-        topic = TopicRepo(request.state.pb).get(topic_id)
-        if not topic or topic.get("project") != project_id:
-            return error_response("موضوع یافت نشد")
-        topic = TopicRepo(request.state.pb).set_status(topic_id, "queued")
-        JobRepo(request.state.pb).create(
-            project=project_id,
-            type="write_article",
-            payload={"topicId": topic_id},
-            idempotency_key=f"write:article:{topic_id}",
-            max_attempts=3,
-            entity_type="topic",
-            entity_id=topic_id,
-            priority=int(topic.get("priority") or 0),
-        )
-        return success_response(
-            "تولید مقاله آغاز شد", extra_events={"refreshTopics": True, "refreshJobs": True}
-        )
-    except Exception as e:
-        print("write_topic error:", e)
-        return error_response("شروع تولید مقاله ناموفق بود")
+    require_hx(request)
+    require_project_access(request, project_id)
+    require_project_role(request, project_id)
+    topic = TopicRepo(request.state.pb).get(topic_id)
+    if not topic or topic.get("project") != project_id:
+        return error_response("موضوع یافت نشد")
+    topic = TopicRepo(request.state.pb).set_status(topic_id, "queued")
+    JobRepo(request.state.pb).create(
+        project=project_id,
+        type="write_article",
+        payload={"topicId": topic_id},
+        idempotency_key=f"write:article:{topic_id}",
+        max_attempts=3,
+        entity_type="topic",
+        entity_id=topic_id,
+        priority=int(topic.get("priority") or 0),
+    )
+    return success_response(
+        "تولید مقاله آغاز شد", extra_events={"refreshTopics": True, "refreshJobs": True}
+    )
 
 
 @router.post("/projects/{project_id}/topics/{topic_id}/delete")
+@hx_error("حذف موضوع ناموفق بود")
 def delete_topic(request: Request, project_id: str, topic_id: str):
-    try:
-        require_hx(request)
-        require_project_access(request, project_id)
-        require_project_role(request, project_id)
-        topic = TopicRepo(request.state.pb).get(topic_id)
-        if not topic or topic.get("project") != project_id:
-            return error_response("موضوع یافت نشد")
-        TopicRepo(request.state.pb).delete(topic_id)
-        return success_response("موضوع حذف شد", extra_events={"refreshTopics": True})
-    except Exception as e:
-        print("delete_topic error:", e)
-        return error_response("حذف موضوع ناموفق بود")
+    require_hx(request)
+    require_project_access(request, project_id)
+    require_project_role(request, project_id)
+    topic = TopicRepo(request.state.pb).get(topic_id)
+    if not topic or topic.get("project") != project_id:
+        return error_response("موضوع یافت نشد")
+    TopicRepo(request.state.pb).delete(topic_id)
+    return success_response("موضوع حذف شد", extra_events={"refreshTopics": True})
 
 
 # ---------------------------------------------------------------------------
 # Actions: index run
 # ---------------------------------------------------------------------------
 @router.post("/projects/{project_id}/run-index")
+@hx_error("شروع نمایه‌سازی ناموفق بود")
 def run_index(request: Request, project_id: str, full: str = Form("0")):
     """Start an indexing run. full=1 → force re-embed + stale vector cleanup."""
-    try:
-        require_hx(request)
-        require_project_access(request, project_id)
-        require_project_role(request, project_id)
-        is_full = safe_bool(full)
-        JobRepo(request.state.pb).create(
-            project=project_id,
-            type="index_project",
-            payload={"trigger": "manual", "force": is_full, "full": is_full},
-            idempotency_key=f"index:project:{project_id}:{'full' if is_full else 'incr'}:{int(time.time())}",
-            max_attempts=3,
-            entity_type="project",
-            entity_id=project_id,
-        )
-        return success_response(
-            "بازنمایه کامل آغاز شد" if is_full else "نمایه‌سازی افزایشی آغاز شد",
-            extra_events={"refreshIndexing": True, "refreshJobs": True},
-        )
-    except Exception as e:
-        print("run_index error:", e)
-        return error_response("شروع نمایه‌سازی ناموفق بود")
+    require_hx(request)
+    require_project_access(request, project_id)
+    require_project_role(request, project_id)
+    is_full = safe_bool(full)
+    JobRepo(request.state.pb).create(
+        project=project_id,
+        type="index_project",
+        payload={"trigger": "manual", "force": is_full, "full": is_full},
+        idempotency_key=f"index:project:{project_id}:{'full' if is_full else 'incr'}:{int(time.time())}",
+        max_attempts=3,
+        entity_type="project",
+        entity_id=project_id,
+    )
+    return success_response(
+        "بازنمایه کامل آغاز شد" if is_full else "نمایه‌سازی افزایشی آغاز شد",
+        extra_events={"refreshIndexing": True, "refreshJobs": True},
+    )
 
 
 @router.post("/projects/{project_id}/documents/{document_id}/reindex")
+@hx_error("شروع نمایه‌سازی مستند ناموفق بود")
 def reindex_document(request: Request, project_id: str, document_id: str, force: str = Form("0")):
     """Reindex a single document (selected-document reindex)."""
-    try:
-        require_hx(request)
-        require_project_access(request, project_id)
-        require_project_role(request, project_id)
-        doc = DocumentRepo(request.state.pb).get(document_id)
-        if not doc or doc.get("project") != project_id:
-            return error_response("مستند یافت نشد")
-        JobRepo(request.state.pb).create(
-            project=project_id,
-            type="index_document",
-            payload={"sourceId": str(doc.get("sourceId")), "force": safe_bool(force)},
-            idempotency_key=f"index:document:{project_id}:{doc.get('sourceId')}:{int(time.time())}",
-            max_attempts=3,
-            entity_type="document",
-            entity_id=document_id,
-        )
-        return success_response(
-            "نمایه‌سازی مستند آغاز شد", extra_events={"refreshIndexing": True, "refreshJobs": True}
-        )
-    except Exception as e:
-        print("reindex_document error:", e)
-        return error_response("شروع نمایه‌سازی مستند ناموفق بود")
+    require_hx(request)
+    require_project_access(request, project_id)
+    require_project_role(request, project_id)
+    doc = DocumentRepo(request.state.pb).get(document_id)
+    if not doc or doc.get("project") != project_id:
+        return error_response("مستند یافت نشد")
+    JobRepo(request.state.pb).create(
+        project=project_id,
+        type="index_document",
+        payload={"sourceId": str(doc.get("sourceId")), "force": safe_bool(force)},
+        idempotency_key=f"index:document:{project_id}:{doc.get('sourceId')}:{int(time.time())}",
+        max_attempts=3,
+        entity_type="document",
+        entity_id=document_id,
+    )
+    return success_response(
+        "نمایه‌سازی مستند آغاز شد", extra_events={"refreshIndexing": True, "refreshJobs": True}
+    )
 
 
 @router.post("/projects/{project_id}/index-runs/{run_id}/retry")
+@hx_error("تلاش مجدد ناموفق بود")
 def retry_index_run(request: Request, project_id: str, run_id: str):
     """Retry a failed indexing run — resumes from its checkpoint."""
-    try:
-        require_hx(request)
-        require_project_access(request, project_id)
-        require_project_role(request, project_id)
-        run = IndexRunRepo(request.state.pb).get(run_id)
-        if not run or run.get("project") != project_id:
-            return error_response("اجرا یافت نشد")
-        JobRepo(request.state.pb).create(
-            project=project_id,
-            type="index_project",
-            payload={"trigger": "manual", "resumeFrom": str(run.get("lastSourceId") or "0")},
-            idempotency_key=f"index:project:{project_id}:retry:{run_id}:{int(time.time())}",
-            max_attempts=3,
-            entity_type="project",
-            entity_id=project_id,
-        )
-        return success_response(
-            "اجرای نمایه‌سازی دوباره برنامه‌ریزی شد",
-            extra_events={"refreshIndexing": True, "refreshJobs": True},
-        )
-    except Exception as e:
-        print("retry_index_run error:", e)
-        return error_response("تلاش مجدد ناموفق بود")
+    require_hx(request)
+    require_project_access(request, project_id)
+    require_project_role(request, project_id)
+    run = IndexRunRepo(request.state.pb).get(run_id)
+    if not run or run.get("project") != project_id:
+        return error_response("اجرا یافت نشد")
+    JobRepo(request.state.pb).create(
+        project=project_id,
+        type="index_project",
+        payload={"trigger": "manual", "resumeFrom": str(run.get("lastSourceId") or "0")},
+        idempotency_key=f"index:project:{project_id}:retry:{run_id}:{int(time.time())}",
+        max_attempts=3,
+        entity_type="project",
+        entity_id=project_id,
+    )
+    return success_response(
+        "اجرای نمایه‌سازی دوباره برنامه‌ریزی شد",
+        extra_events={"refreshIndexing": True, "refreshJobs": True},
+    )
 
 
 # ---------------------------------------------------------------------------
 # AI models
 # ---------------------------------------------------------------------------
 @router.post("/projects/{project_id}/ai-models")
+@hx_error("ذخیره مدل‌ها ناموفق بود")
 def save_ai_models(
     request: Request,
     project_id: str,
@@ -1017,54 +1028,48 @@ def save_ai_models(
     Model changes create an audit event (previous config preserved); historical
     section metadata (provider/model/promptVersion) is never modified.
     """
-    try:
-        require_hx(request)
-        require_project_access(request, project_id)
-        require_project_role(request, project_id)
-        user = require_user(request)
+    require_hx(request)
+    require_project_access(request, project_id)
+    require_project_role(request, project_id)
+    user = require_user(request)
 
-        settings = ProjectSettingsRepo(request.state.pb)
-        before = settings.get_for_project(project_id)
+    settings = ProjectSettingsRepo(request.state.pb)
+    before = settings.get_for_project(project_id)
 
-        data = {
-            "outlineProvider": safe_str(outline_provider),
-            "outlineModel": safe_str(outline_model),
-            "outlineTemperature": safe_float(outline_temperature, 0.7) or 0.7,
-            "outlineMaxTokens": safe_int(outline_max_tokens, 4096) or 4096,
-            "outlineTimeout": safe_float(outline_timeout, 120.0) or 120.0,
-            "outlineRetry": {
-                "max_attempts": safe_int(outline_retry_attempts, 3) or 3,
-                "backoff_base": safe_int(outline_retry_base, 30) or 30,
-            },
-            "sectionProvider": safe_str(section_provider),
-            "sectionModel": safe_str(section_model),
-            "sectionTemperature": safe_float(section_temperature, 0.7) or 0.7,
-            "sectionMaxTokens": safe_int(section_max_tokens, 4096) or 4096,
-            "sectionTimeout": safe_float(section_timeout, 120.0) or 120.0,
-            "sectionRetry": {
-                "max_attempts": safe_int(section_retry_attempts, 3) or 3,
-                "backoff_base": safe_int(section_retry_base, 30) or 30,
-            },
-            "metaProvider": safe_str(meta_provider),
-            "metaModel": safe_str(meta_model),
-            "reviewProvider": safe_str(review_provider),
-            "reviewModel": safe_str(review_model),
-        }
-        settings.upsert(project_id, data)
+    data = {
+        "outlineProvider": safe_str(outline_provider),
+        "outlineModel": safe_str(outline_model),
+        "outlineTemperature": safe_float(outline_temperature, 0.7) or 0.7,
+        "outlineMaxTokens": safe_int(outline_max_tokens, 4096) or 4096,
+        "outlineTimeout": safe_float(outline_timeout, 120.0) or 120.0,
+        "outlineRetry": {
+            "max_attempts": safe_int(outline_retry_attempts, 3) or 3,
+            "backoff_base": safe_int(outline_retry_base, 30) or 30,
+        },
+        "sectionProvider": safe_str(section_provider),
+        "sectionModel": safe_str(section_model),
+        "sectionTemperature": safe_float(section_temperature, 0.7) or 0.7,
+        "sectionMaxTokens": safe_int(section_max_tokens, 4096) or 4096,
+        "sectionTimeout": safe_float(section_timeout, 120.0) or 120.0,
+        "sectionRetry": {
+            "max_attempts": safe_int(section_retry_attempts, 3) or 3,
+            "backoff_base": safe_int(section_retry_base, 30) or 30,
+        },
+        "metaProvider": safe_str(meta_provider),
+        "metaModel": safe_str(meta_model),
+        "reviewProvider": safe_str(review_provider),
+        "reviewModel": safe_str(review_model),
+    }
+    settings.upsert(project_id, data)
 
-        # inline connection (custom/openai-compat endpoints): upsert an llm integration
-        if base_url or api_key:
-            _upsert_llm_integration(
-                request, project_id, outline_provider or section_provider, base_url, api_key, user
-            )
-
-        _audit_model_changes(
-            request, project_id, user, before, settings.get_for_project(project_id)
+    # inline connection (custom/openai-compat endpoints): upsert an llm integration
+    if base_url or api_key:
+        _upsert_llm_integration(
+            request, project_id, outline_provider or section_provider, base_url, api_key, user
         )
-        return success_response("مدل‌ها ذخیره شد")
-    except Exception as e:
-        print("save_ai_models error:", e)
-        return error_response("ذخیره مدل‌ها ناموفق بود")
+
+    _audit_model_changes(request, project_id, user, before, settings.get_for_project(project_id))
+    return success_response("مدل‌ها ذخیره شد")
 
 
 def _upsert_llm_integration(
@@ -1084,7 +1089,10 @@ def _upsert_llm_integration(
     existing = repo.first(
         filter=f'project="{project_id}" && category="llm" && provider="{provider_name}"'
     )
-    configuration: dict[str, Any] = {"base_url": safe_str(base_url), "model": ""}
+    configuration: dict[str, Any] = {
+        "base_url": normalize_base_url(safe_str(base_url)),
+        "model": "",
+    }
     if api_key:
         import json
 
@@ -1165,12 +1173,12 @@ async def discover_models(request: Request, project_id: str, role: str):
             "pages/projects/tabs/model_options.html",
             {"models": models, "role": role},
         )
-    except Exception as e:
-        print("discover_models error:", e)
+    except Exception:
         return HTMLResponse("")
 
 
 @router.post("/projects/{project_id}/ai-models/global")
+@hx_error("ذخیره پیش‌فرض‌ها ناموفق بود")
 def save_global_llm_defaults(
     request: Request,
     project_id: str,
@@ -1184,34 +1192,31 @@ def save_global_llm_defaults(
     review_model: str = Form(""),
 ):
     """Global default LLM settings (admin only) — per-project values override."""
-    try:
-        require_hx(request)
-        from app.api.deps import require_admin
+    require_hx(request)
+    from app.api.deps import require_admin
 
-        require_admin(request)
-        from app.repositories.app_settings import AppSettingsRepo
+    require_admin(request)
+    from app.repositories.app_settings import AppSettingsRepo
 
-        repo = AppSettingsRepo(request.state.pb)
-        current = repo.get_defaults().get("llm") or {}
-        for role, provider, model in (
-            ("outline", outline_provider, outline_model),
-            ("section", section_provider, section_model),
-            ("meta", meta_provider, meta_model),
-            ("review", review_provider, review_model),
-        ):
-            current.setdefault(role, {})["provider"] = safe_str(provider)
-            current.setdefault(role, {})["model"] = safe_str(model)
-        repo.set_llm_defaults(current)
-        return success_response("پیش‌فرض‌های سراسری ذخیره شد")
-    except Exception as e:
-        print("save_global_llm_defaults error:", e)
-        return error_response("ذخیره پیش‌فرض‌ها ناموفق بود")
+    repo = AppSettingsRepo(request.state.pb)
+    current = repo.get_defaults().get("llm") or {}
+    for role, provider, model in (
+        ("outline", outline_provider, outline_model),
+        ("section", section_provider, section_model),
+        ("meta", meta_provider, meta_model),
+        ("review", review_provider, review_model),
+    ):
+        current.setdefault(role, {})["provider"] = safe_str(provider)
+        current.setdefault(role, {})["model"] = safe_str(model)
+    repo.set_llm_defaults(current)
+    return success_response("پیش‌فرض‌های سراسری ذخیره شد")
 
 
 # ---------------------------------------------------------------------------
 # Retrieval diagnostics
 # ---------------------------------------------------------------------------
 @router.post("/projects/{project_id}/retrieval/diagnose")
+@hx_error("بازیابی ناموفق بود")
 async def retrieval_diagnose(
     request: Request,
     project_id: str,
@@ -1222,42 +1227,38 @@ async def retrieval_diagnose(
     rerank_top_n: str = Form(""),
 ):
     """Interactive retrieval diagnostics — shows query, scores, candidates."""
-    try:
-        require_hx(request)
-        require_project_access(request, project_id)
-        if not safe_str(query):
-            return error_response("عبارت جستجو الزامی است")
-        from app.schemas.retrieval import RetrievalOptions
-        from app.services.internal_linking import ContextBuilder
-        from app.services.retrieval import RetrievalService
-        from app.services.settings import ProjectConfig
+    require_hx(request)
+    require_project_access(request, project_id)
+    if not safe_str(query):
+        return error_response("عبارت جستجو الزامی است")
+    from app.schemas.retrieval import RetrievalOptions
+    from app.services.internal_linking import ContextBuilder
+    from app.services.retrieval import RetrievalService
+    from app.services.settings import ProjectConfig
 
-        project = require_project_access(request, project_id)
-        config = ProjectConfig.load(request.state.pb, project_id)
-        options = RetrievalOptions(
-            candidate_count=safe_int(candidate_count, 20) or 20,
-            similarity_threshold=safe_float(similarity_threshold, 0.0) or None,
-            rerank=safe_bool(rerank_enabled),
-            rerank_top_n=safe_int(rerank_top_n, 8) or 8,
-        )
-        results = await RetrievalService(request.state.pb).retrieve(config, query, options)
-        builder = ContextBuilder(
-            max_links=int(config.context.get("max_links") or 5),
-            max_passages=int(config.context.get("max_passages") or 5),
-            max_chars=int(config.context.get("max_chars") or 4000),
-        )
-        context = builder.build(query, results, current_title="")
-        return templates.TemplateResponse(
-            request,
-            "pages/projects/tabs/retrieval_results.html",
-            {
-                "project": project,
-                "query": query,
-                "results": results,
-                "context": context,
-                "options": options,
-            },
-        )
-    except Exception as e:
-        print("retrieval_diagnose error:", e)
-        return error_response("بازیابی ناموفق بود")
+    project = require_project_access(request, project_id)
+    config = ProjectConfig.load(request.state.pb, project_id)
+    options = RetrievalOptions(
+        candidate_count=safe_int(candidate_count, 20) or 20,
+        similarity_threshold=safe_float(similarity_threshold, 0.0) or None,
+        rerank=safe_bool(rerank_enabled),
+        rerank_top_n=safe_int(rerank_top_n, 8) or 8,
+    )
+    results = await RetrievalService(request.state.pb).retrieve(config, query, options)
+    builder = ContextBuilder(
+        max_links=int(config.context.get("max_links") or 5),
+        max_passages=int(config.context.get("max_passages") or 5),
+        max_chars=int(config.context.get("max_chars") or 4000),
+    )
+    context = builder.build(query, results, current_title="")
+    return templates.TemplateResponse(
+        request,
+        "pages/projects/tabs/retrieval_results.html",
+        {
+            "project": project,
+            "query": query,
+            "results": results,
+            "context": context,
+            "options": options,
+        },
+    )

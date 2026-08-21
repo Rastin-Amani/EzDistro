@@ -14,6 +14,7 @@ from app.api.deps import (
     require_user,
     safe_str,
 )
+from app.api.errors import hx_error
 from app.domain.article_validation import ArticleValidator
 from app.repositories.articles import ArticleRepo, SectionRepo
 from app.repositories.jobs import JobRepo, now_utc
@@ -119,53 +120,47 @@ def section_status(request: Request, project_id: str, article_id: str, section_i
 
 
 @router.post("/projects/{project_id}/articles/{article_id}/status")
+@hx_error("تغییر وضعیت ناموفق بود")
 def set_article_status(request: Request, project_id: str, article_id: str, status: str = Form("")):
     """Explicit status transitions from the workspace (e.g. review → ready_to_publish)."""
-    try:
-        require_hx(request)
-        require_project_access(request, project_id)
-        require_project_role(request, project_id)
-        article = ArticleRepo(request.state.pb).get(article_id)
-        if not article or article.get("project") != project_id:
-            return error_response("مقاله یافت نشد")
-        if status == "ready_to_publish" and article.get("status") not in (
-            "review",
-            "ready_to_publish",
-        ):
-            return error_response("مقاله هنوز آماده انتشار نیست")
-        ArticleRepo(request.state.pb).set_status(article_id, status)
-        return success_response("وضعیت مقاله به‌روزرسانی شد", extra_events={"refreshArticle": True})
-    except Exception as e:
-        print("set_article_status error:", e)
-        return error_response("تغییر وضعیت ناموفق بود")
+    require_hx(request)
+    require_project_access(request, project_id)
+    require_project_role(request, project_id)
+    article = ArticleRepo(request.state.pb).get(article_id)
+    if not article or article.get("project") != project_id:
+        return error_response("مقاله یافت نشد")
+    if status == "ready_to_publish" and article.get("status") not in (
+        "review",
+        "ready_to_publish",
+    ):
+        return error_response("مقاله هنوز آماده انتشار نیست")
+    ArticleRepo(request.state.pb).set_status(article_id, status)
+    return success_response("وضعیت مقاله به‌روزرسانی شد", extra_events={"refreshArticle": True})
 
 
 @router.post("/projects/{project_id}/articles/{article_id}/assemble")
+@hx_error("برنامه‌ریزی بازسازی ناموفق بود")
 def queue_assemble(request: Request, project_id: str, article_id: str):
     """Queue an assemble job (rebuild final HTML from current sections)."""
-    try:
-        require_hx(request)
-        require_project_access(request, project_id)
-        require_project_role(request, project_id)
-        article = ArticleRepo(request.state.pb).get(article_id)
-        if not article or article.get("project") != project_id:
-            return error_response("مقاله یافت نشد")
-        JobRepo(request.state.pb).create(
-            project=project_id,
-            type="assemble_article",
-            payload={"articleId": article_id},
-            idempotency_key=f"assemble:article:{article_id}",
-            max_attempts=60,
-            entity_type="article",
-            entity_id=article_id,
-        )
-        return success_response(
-            "بازسازی مقاله برنامه‌ریزی شد",
-            extra_events={"refreshArticle": True, "refreshJobs": True},
-        )
-    except Exception as e:
-        print("queue_assemble error:", e)
-        return error_response("برنامه‌ریزی بازسازی ناموفق بود")
+    require_hx(request)
+    require_project_access(request, project_id)
+    require_project_role(request, project_id)
+    article = ArticleRepo(request.state.pb).get(article_id)
+    if not article or article.get("project") != project_id:
+        return error_response("مقاله یافت نشد")
+    JobRepo(request.state.pb).create(
+        project=project_id,
+        type="assemble_article",
+        payload={"articleId": article_id},
+        idempotency_key=f"assemble:article:{article_id}",
+        max_attempts=60,
+        entity_type="article",
+        entity_id=article_id,
+    )
+    return success_response(
+        "بازسازی مقاله برنامه‌ریزی شد",
+        extra_events={"refreshArticle": True, "refreshJobs": True},
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -179,26 +174,25 @@ def _load_article(request: Request, project_id: str, article_id: str) -> dict | 
 
 
 @router.post("/projects/{project_id}/articles/{article_id}/outline/sections/{position}/move")
+@hx_error("جابه‌جایی بخش ناموفق بود")
 def outline_move(
     request: Request, project_id: str, article_id: str, position: int, direction: str = Form("")
 ):
+    require_hx(request)
+    require_project_access(request, project_id)
+    require_project_role(request, project_id)
+    article = _load_article(request, project_id, article_id)
+    if not article:
+        return error_response("مقاله یافت نشد")
     try:
-        require_hx(request)
-        require_project_access(request, project_id)
-        require_project_role(request, project_id)
-        article = _load_article(request, project_id, article_id)
-        if not article:
-            return error_response("مقاله یافت نشد")
         OutlineEditor(request.state.pb).move(article, position, direction)
-        return success_response("بخش جابه‌جا شد", extra_events={"refreshArticle": True})
     except ValueError as e:
         return error_response(str(e))
-    except Exception as e:
-        print("outline_move error:", e)
-        return error_response("جابه‌جایی بخش ناموفق بود")
+    return success_response("بخش جابه‌جا شد", extra_events={"refreshArticle": True})
 
 
 @router.post("/projects/{project_id}/articles/{article_id}/outline/sections/add")
+@hx_error("افزودن بخش ناموفق بود")
 def outline_add(
     request: Request,
     project_id: str,
@@ -206,41 +200,37 @@ def outline_add(
     heading: str = Form(""),
     content_brief: str = Form(""),
 ):
+    require_hx(request)
+    require_project_access(request, project_id)
+    require_project_role(request, project_id)
+    article = _load_article(request, project_id, article_id)
+    if not article:
+        return error_response("مقاله یافت نشد")
     try:
-        require_hx(request)
-        require_project_access(request, project_id)
-        require_project_role(request, project_id)
-        article = _load_article(request, project_id, article_id)
-        if not article:
-            return error_response("مقاله یافت نشد")
         OutlineEditor(request.state.pb).add(article, safe_str(heading), safe_str(content_brief))
-        return success_response("بخش اضافه شد", extra_events={"refreshArticle": True})
     except ValueError as e:
         return error_response(str(e))
-    except Exception as e:
-        print("outline_add error:", e)
-        return error_response("افزودن بخش ناموفق بود")
+    return success_response("بخش اضافه شد", extra_events={"refreshArticle": True})
 
 
 @router.post("/projects/{project_id}/articles/{article_id}/outline/sections/{position}/delete")
+@hx_error("حذف بخش ناموفق بود")
 def outline_delete(request: Request, project_id: str, article_id: str, position: int):
+    require_hx(request)
+    require_project_access(request, project_id)
+    require_project_role(request, project_id)
+    article = _load_article(request, project_id, article_id)
+    if not article:
+        return error_response("مقاله یافت نشد")
     try:
-        require_hx(request)
-        require_project_access(request, project_id)
-        require_project_role(request, project_id)
-        article = _load_article(request, project_id, article_id)
-        if not article:
-            return error_response("مقاله یافت نشد")
         OutlineEditor(request.state.pb).delete(article, position)
-        return success_response("بخش حذف شد", extra_events={"refreshArticle": True})
     except ValueError as e:
         return error_response(str(e))
-    except Exception as e:
-        print("outline_delete error:", e)
-        return error_response("حذف بخش ناموفق بود")
+    return success_response("بخش حذف شد", extra_events={"refreshArticle": True})
 
 
 @router.post("/projects/{project_id}/articles/{article_id}/outline/sections/{position}/brief")
+@hx_error("ذخیره خلاصه ناموفق بود")
 def outline_update_brief(
     request: Request,
     project_id: str,
@@ -249,25 +239,22 @@ def outline_update_brief(
     heading: str = Form(""),
     content_brief: str = Form(""),
 ):
+    require_hx(request)
+    require_project_access(request, project_id)
+    require_project_role(request, project_id)
+    article = _load_article(request, project_id, article_id)
+    if not article:
+        return error_response("مقاله یافت نشد")
     try:
-        require_hx(request)
-        require_project_access(request, project_id)
-        require_project_role(request, project_id)
-        article = _load_article(request, project_id, article_id)
-        if not article:
-            return error_response("مقاله یافت نشد")
         OutlineEditor(request.state.pb).update_brief(
             article, position, safe_str(heading), safe_str(content_brief)
         )
-        return success_response(
-            "خلاصه بخش ذخیره شد — بخش برای بازتولید علامت‌گذاری شد",
-            extra_events={"refreshArticle": True},
-        )
     except ValueError as e:
         return error_response(str(e))
-    except Exception as e:
-        print("outline_update_brief error:", e)
-        return error_response("ذخیره خلاصه ناموفق بود")
+    return success_response(
+        "خلاصه بخش ذخیره شد — بخش برای بازتولید علامت‌گذاری شد",
+        extra_events={"refreshArticle": True},
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -325,111 +312,100 @@ def article_review(request: Request, project_id: str, article_id: str):
 
 
 @router.post("/projects/{project_id}/articles/{article_id}/approve")
+@hx_error("تأیید مقاله ناموفق بود")
 def approve_article(request: Request, project_id: str, article_id: str):
     """review → approved. Only allowed when the live validation passes."""
-    try:
-        require_hx(request)
-        require_project_access(request, project_id)
-        require_project_role(request, project_id)
-        article = ArticleRepo(request.state.pb).get(article_id)
-        if not article or article.get("project") != project_id:
-            return error_response("مقاله یافت نشد")
-        if article.get("status") != "review":
-            return error_response("فقط مقاله در وضعیت بازبینی قابل تأیید است")
-        sections = SectionRepo(request.state.pb).list_for_article(article_id)
-        topic = TopicRepo(request.state.pb).get(article.get("topicId") or "")
-        report = _live_validation(
-            request.state.pb, article, sections, str(topic.get("keyword") or "") if topic else ""
-        )
-        if not report.ok:
-            issues = "; ".join(i.message for i in report.issues[:5])
-            return error_response(f"مقاله اعتبارسنجی را پاس نکرد: {issues}")
-        RevisionService(request.state.pb).snapshot(
-            article,
-            "manual",
-            note="approved by reviewer",
-            created_by=require_user(request).get("id", ""),
-        )
-        ArticleRepo(request.state.pb).set_approved(article_id)
-        return success_response(
-            "مقاله تأیید شد — انتشار فعال شد", extra_events={"refreshArticle": True}
-        )
-    except Exception as e:
-        print("approve_article error:", e)
-        return error_response("تأیید مقاله ناموفق بود")
+    require_hx(request)
+    require_project_access(request, project_id)
+    require_project_role(request, project_id)
+    article = ArticleRepo(request.state.pb).get(article_id)
+    if not article or article.get("project") != project_id:
+        return error_response("مقاله یافت نشد")
+    if article.get("status") != "review":
+        return error_response("فقط مقاله در وضعیت بازبینی قابل تأیید است")
+    sections = SectionRepo(request.state.pb).list_for_article(article_id)
+    topic = TopicRepo(request.state.pb).get(article.get("topicId") or "")
+    report = _live_validation(
+        request.state.pb, article, sections, str(topic.get("keyword") or "") if topic else ""
+    )
+    if not report.ok:
+        issues = "; ".join(i.message for i in report.issues[:5])
+        return error_response(f"مقاله اعتبارسنجی را پاس نکرد: {issues}")
+    RevisionService(request.state.pb).snapshot(
+        article,
+        "manual",
+        note="approved by reviewer",
+        created_by=require_user(request).get("id", ""),
+    )
+    ArticleRepo(request.state.pb).set_approved(article_id)
+    return success_response(
+        "مقاله تأیید شد — انتشار فعال شد", extra_events={"refreshArticle": True}
+    )
 
 
 @router.post("/projects/{project_id}/articles/{article_id}/send-back")
+@hx_error("بازگرداندن مقاله ناموفق بود")
 def send_back_article(request: Request, project_id: str, article_id: str, note: str = Form("")):
     """review/approved → sent_back with reviewer feedback (history preserved)."""
-    try:
-        require_hx(request)
-        require_project_access(request, project_id)
-        require_project_role(request, project_id)
-        article = ArticleRepo(request.state.pb).get(article_id)
-        if not article or article.get("project") != project_id:
-            return error_response("مقاله یافت نشد")
-        if article.get("status") not in ("review", "approved"):
-            return error_response("مقاله در وضعیت قابل بازگشت نیست")
-        RevisionService(request.state.pb).snapshot(
-            article,
-            "manual",
-            note=f"sent back: {note}",
-            created_by=require_user(request).get("id", ""),
-        )
-        ArticleRepo(request.state.pb).send_back(article_id, safe_str(note))
-        return success_response("مقاله بازگردانده شد", extra_events={"refreshArticle": True})
-    except Exception as e:
-        print("send_back_article error:", e)
-        return error_response("بازگرداندن مقاله ناموفق بود")
+    require_hx(request)
+    require_project_access(request, project_id)
+    require_project_role(request, project_id)
+    article = ArticleRepo(request.state.pb).get(article_id)
+    if not article or article.get("project") != project_id:
+        return error_response("مقاله یافت نشد")
+    if article.get("status") not in ("review", "approved"):
+        return error_response("مقاله در وضعیت قابل بازگشت نیست")
+    RevisionService(request.state.pb).snapshot(
+        article,
+        "manual",
+        note=f"sent back: {note}",
+        created_by=require_user(request).get("id", ""),
+    )
+    ArticleRepo(request.state.pb).send_back(article_id, safe_str(note))
+    return success_response("مقاله بازگردانده شد", extra_events={"refreshArticle": True})
 
 
 @router.post("/projects/{project_id}/articles/{article_id}/regenerate")
+@hx_error("شروع بازتولید ناموفق بود")
 def regenerate_article(request: Request, project_id: str, article_id: str):
     """Queue full regeneration — the previous version stays in history."""
-    try:
-        require_hx(request)
-        require_project_access(request, project_id)
-        require_project_role(request, project_id)
-        article = ArticleRepo(request.state.pb).get(article_id)
-        if not article or article.get("project") != project_id:
-            return error_response("مقاله یافت نشد")
-        topic_id = article.get("topicId") or ""
-        if not topic_id:
-            return error_response("مقاله به موضوعی متصل نیست")
-        ArticleRepo(request.state.pb).set_status(article_id, "generating")
-        JobRepo(request.state.pb).create(
-            project=project_id,
-            type="write_article",
-            payload={"topicId": topic_id, "regenerate": True},
-            idempotency_key=f"write:article:{topic_id}:regen:{int(__import__('time').time())}",
-            max_attempts=3,
-            entity_type="article",
-            entity_id=article_id,
-        )
-        return success_response(
-            "بازتولید مقاله آغاز شد (نسخه قبلی حفظ می‌شود)",
-            extra_events={"refreshArticle": True, "refreshJobs": True},
-        )
-    except Exception as e:
-        print("regenerate_article error:", e)
-        return error_response("شروع بازتولید ناموفق بود")
+    require_hx(request)
+    require_project_access(request, project_id)
+    require_project_role(request, project_id)
+    article = ArticleRepo(request.state.pb).get(article_id)
+    if not article or article.get("project") != project_id:
+        return error_response("مقاله یافت نشد")
+    topic_id = article.get("topicId") or ""
+    if not topic_id:
+        return error_response("مقاله به موضوعی متصل نیست")
+    ArticleRepo(request.state.pb).set_status(article_id, "generating")
+    JobRepo(request.state.pb).create(
+        project=project_id,
+        type="write_article",
+        payload={"topicId": topic_id, "regenerate": True},
+        idempotency_key=f"write:article:{topic_id}:regen:{int(__import__('time').time())}",
+        max_attempts=3,
+        entity_type="article",
+        entity_id=article_id,
+    )
+    return success_response(
+        "بازتولید مقاله آغاز شد (نسخه قبلی حفظ می‌شود)",
+        extra_events={"refreshArticle": True, "refreshJobs": True},
+    )
 
 
 @router.post("/projects/{project_id}/articles/{article_id}/revisions/{revision_id}/rollback")
+@hx_error("بازگشت به نسخه ناموفق بود")
 def rollback_article(request: Request, project_id: str, article_id: str, revision_id: str):
+    require_hx(request)
+    require_project_access(request, project_id)
+    require_project_role(request, project_id)
+    user = require_user(request)
     try:
-        require_hx(request)
-        require_project_access(request, project_id)
-        require_project_role(request, project_id)
-        user = require_user(request)
         RevisionService(request.state.pb).rollback(
             article_id, revision_id, created_by=user.get("id", "")
         )
-        ArticleRepo(request.state.pb).set_status(article_id, "review")
-        return success_response("بازگشت به نسخه انجام شد", extra_events={"refreshArticle": True})
     except ValueError as e:
         return error_response(str(e))
-    except Exception as e:
-        print("rollback_article error:", e)
-        return error_response("بازگشت به نسخه ناموفق بود")
+    ArticleRepo(request.state.pb).set_status(article_id, "review")
+    return success_response("بازگشت به نسخه انجام شد", extra_events={"refreshArticle": True})

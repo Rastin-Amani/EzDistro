@@ -45,6 +45,7 @@ def make_req(pb: FakePocketBase, user: dict, project_id: str) -> SimpleNamespace
         state=SimpleNamespace(pb=pb, user=user, req_id="r1"),
         headers={"HX-Request": "true"},
         url=SimpleNamespace(path=f"/projects/{project_id}"),
+        query_params={},
         url_for=url_for,
     )
 
@@ -317,19 +318,42 @@ def test_owner_can_delete_project(setup):
 
 
 def test_non_member_cannot_access_project(setup):
-    """A user with NO membership in project A is refused."""
+    """A user with NO membership in project A is refused a friendly error (no 500)."""
     pb = setup["pb"]
     pb.collection("users").create(
         {"email": "u3@x.com", "password": "x", "passwordConfirm": "x", "role": "member"}
     )
     req = make_req(pb, make_user("u3"), setup["proj_a"]["id"])
-    from fastapi import Request
+    resp = call_route(P.project_tab, req, setup["proj_a"]["id"], "settings")
+    # the HTMX tab partial is an error toast, never a 500 white screen
+    assert resp.status_code == 200
+    assert "show-toast" in resp.headers.get("HX-Trigger", "")
 
-    from app.api.deps import require_project_access
 
-    # require_project_access raises PermissionError for non-members
-    with pytest.raises(PermissionError):
-        call_route(P.project_tab, req, setup["proj_a"]["id"], "settings")
+def test_project_detail_missing_project_renders_not_found(setup):
+    """Stale/deleted project id renders a friendly page instead of raising (500)."""
+    req = make_req(setup["pb"], make_user(), "does-not-exist")
+    resp = call_route(P.project_detail, req, "does-not-exist")
+    assert resp.status_code == 200
+    assert "پروژه یافت نشد" in resp.body.decode()
+
+
+def test_project_detail_renders_active_tab_with_context(setup):
+    """Direct load of /projects/{id} renders the default settings tab without 500."""
+    req = make_req(setup["pb"], make_user(), setup["proj_a"]["id"])
+    resp = call_route(P.project_detail, req, setup["proj_a"]["id"])
+    assert resp.status_code == 200
+    body = resp.body.decode()
+    assert ">A</h1>" in body  # project name heading
+    assert "جاسازی متن (Embedding)" in body  # settings tab partial rendered inline
+
+
+def test_project_tab_prompts_empty_history_renders(setup):
+    """Prompts tab renders even when the project has no prompt versions yet."""
+    req = make_req(setup["pb"], make_user(), setup["proj_a"]["id"])
+    resp = call_route(P.project_tab, req, setup["proj_a"]["id"], "prompts")
+    assert resp.status_code == 200
+    assert "پیش‌فرض سراسری استفاده می‌شود" in resp.body.decode()
 
 
 # ---------------------------------------------------------------------------

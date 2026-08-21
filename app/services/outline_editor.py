@@ -24,10 +24,10 @@ class OutlineEditor:
         snapshot = dict(article.get("outline") or {})
         sections = snapshot.get("sections") or []
         if not (0 <= position < len(sections)):
-            raise ValueError("invalid section position")
+            raise ValueError("جایگاه بخش نامعتبر است")
         target = position - 1 if direction == "up" else position + 1
         if not (0 <= target < len(sections)):
-            raise ValueError("cannot move section in that direction")
+            raise ValueError("جابه‌جایی در این جهت ممکن نیست")
         sections[position], sections[target] = sections[target], sections[position]
         return self._commit(article, snapshot)
 
@@ -39,7 +39,7 @@ class OutlineEditor:
         internal_links: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
         if not heading.strip():
-            raise ValueError("heading is required")
+            raise ValueError("عنوان بخش الزامی است")
         snapshot = dict(article.get("outline") or {})
         sections = list(snapshot.get("sections") or [])
         sections.append(
@@ -56,7 +56,7 @@ class OutlineEditor:
         snapshot = dict(article.get("outline") or {})
         sections = snapshot.get("sections") or []
         if not (0 <= position < len(sections)):
-            raise ValueError("invalid section position")
+            raise ValueError("جایگاه بخش نامعتبر است")
         del sections[position]
         snapshot["sections"] = sections
         return self._commit(article, snapshot)
@@ -67,9 +67,9 @@ class OutlineEditor:
         snapshot = dict(article.get("outline") or {})
         sections = snapshot.get("sections") or []
         if not (0 <= position < len(sections)):
-            raise ValueError("invalid section position")
+            raise ValueError("جایگاه بخش نامعتبر است")
         if not heading.strip():
-            raise ValueError("heading is required")
+            raise ValueError("عنوان بخش الزامی است")
         sections[position] = {
             **sections[position],
             "heading": heading.strip(),

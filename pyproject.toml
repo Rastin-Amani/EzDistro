@@ -34,6 +34,7 @@ disable_error_code = ["override"]
 # no mypy plugin, so keyword logging calls are exempted from call-arg checks.
 [[tool.mypy.overrides]]
 module = [
+    "app.api.errors",
     "app.jobs.engine",
     "app.services.scheduler",
     "app.workers.worker",

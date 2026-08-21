@@ -12,6 +12,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 
 from app.api.deps import project_scope, require_hx, require_user
+from app.api.errors import hx_error
 from app.repositories.jobs import JobEventRepo, JobRepo
 from app.repositories.projects import ProjectRepo
 from app.templates import templates
@@ -184,47 +185,41 @@ def job_events_fragment(request: Request, job_id: str):
 
 
 @router.post("/jobs/{job_id}/cancel")
+@hx_error("لغو وظیفه ناموفق بود")
 def cancel_job(request: Request, job_id: str):
-    try:
-        require_hx(request)
-        require_user(request)
-        job = JobRepo(request.state.pb).get(job_id)
-        if not _job_accessible(request, job):
-            return error_response("وظیفه یافت نشد")
-        JobRepo(request.state.pb).request_cancel(job_id)
-        return toast_response(
-            "لغو وظیفه درخواست شد", type="warning", extra_events={"refreshJobs": True}
-        )
-    except Exception as e:
-        print("cancel_job error:", e)
-        return error_response("لغو وظیفه ناموفق بود")
+    require_hx(request)
+    require_user(request)
+    job = JobRepo(request.state.pb).get(job_id)
+    if not _job_accessible(request, job):
+        return error_response("وظیفه یافت نشد")
+    JobRepo(request.state.pb).request_cancel(job_id)
+    return toast_response(
+        "لغو وظیفه درخواست شد", type="warning", extra_events={"refreshJobs": True}
+    )
 
 
 @router.post("/jobs/{job_id}/retry")
+@hx_error("تلاش مجدد ناموفق بود")
 def retry_job(request: Request, job_id: str):
     """Human retry — enqueues a `retry_failed_job` job (auditable, idempotent)."""
-    try:
-        require_hx(request)
-        require_user(request)
-        job = JobRepo(request.state.pb).get(job_id)
-        if not _job_accessible(request, job):
-            return error_response("وظیفه یافت نشد")
-        if not job or job.get("status") != "failed":
-            return toast_response("این وظیفه در حالت ناموفق نیست", type="warning")
-        existing = JobRepo(request.state.pb).first(
-            filter=f'type="retry_failed_job" && payload.targetJobId="{job_id}" && (status="pending" || status="retrying" || status="running")'
+    require_hx(request)
+    require_user(request)
+    job = JobRepo(request.state.pb).get(job_id)
+    if not _job_accessible(request, job):
+        return error_response("وظیفه یافت نشد")
+    if not job or job.get("status") != "failed":
+        return toast_response("این وظیفه در حالت ناموفق نیست", type="warning")
+    existing = JobRepo(request.state.pb).first(
+        filter=f'type="retry_failed_job" && payload.targetJobId="{job_id}" && (status="pending" || status="retrying" || status="running")'
+    )
+    if not existing:
+        JobRepo(request.state.pb).create(
+            project=str(job["project"]),
+            type="retry_failed_job",
+            payload={"targetJobId": job_id},
+            idempotency_key=f"retry:job:{job_id}:{int(time.time())}",
+            max_attempts=1,
+            entity_type="job",
+            entity_id=job_id,
         )
-        if not existing:
-            JobRepo(request.state.pb).create(
-                project=str(job["project"]),
-                type="retry_failed_job",
-                payload={"targetJobId": job_id},
-                idempotency_key=f"retry:job:{job_id}:{int(time.time())}",
-                max_attempts=1,
-                entity_type="job",
-                entity_id=job_id,
-            )
-        return success_response("تلاش مجدد برنامه‌ریزی شد", extra_events={"refreshJobs": True})
-    except Exception as e:
-        print("retry_job error:", e)
-        return error_response("تلاش مجدد ناموفق بود")
+    return success_response("تلاش مجدد برنامه‌ریزی شد", extra_events={"refreshJobs": True})

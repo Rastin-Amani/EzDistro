@@ -79,11 +79,11 @@ class RevisionService:
         """Restore article + sections from a revision snapshot (history preserved)."""
         revision = self._revisions.get(revision_id)
         if not revision or revision.get("article") != article_id:
-            raise ValueError("revision not found")
+            raise ValueError("نسخه‌ای یافت نشد")
         snapshot = revision.get("snapshot") or {}
         article = self._articles.get(article_id)
         if not article:
-            raise ValueError("article not found")
+            raise ValueError("مقاله‌ای یافت نشد")
 
         # checkpoint the current state before overwriting (never destroy)
         self.snapshot(
