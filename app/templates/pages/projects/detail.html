@@ -1,7 +1,7 @@
 {% extends "layouts/platform.html" %}
 {% block dashboard_content %}
-<div class="flex items-center justify-between mb-3">
-    <div class="flex items-center gap-2">
+<div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+    <div class="flex items-center gap-2 min-w-0">
         <a href="/projects" class="btn btn-ghost btn-circle btn-sm" aria-label="بازگشت">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
@@ -9,18 +9,21 @@
         </a>
         <h1 class="font-bold truncate">{{ project.name }}</h1>
         <span class="badge badge-soft badge-info badge-sm">{{ project.language or 'fa' }}</span>
+        {% include "pages/projects/_status_toggle.html" %}
     </div>
     <div class="flex items-center gap-2">
-        <button class="btn btn-primary btn-xs" hx-post="/projects/{{ project.id }}/run-index" hx-swap="none" hx-disabled-elt="this">
-            <span class="loading loading-spinner loading-xs htmx-indicator"></span>
-            نمایه‌سازی
-        </button>
+        <span class="tooltip tooltip-bottom" data-tip="فقط مستندات تغییر‌یافته را دوباره نمایه می‌کند">
+            <button class="btn btn-primary btn-xs" hx-post="/projects/{{ project.id }}/run-index" hx-swap="none" hx-disabled-elt="this">
+                <span class="loading loading-spinner loading-xs htmx-indicator"></span>
+                نمایه‌سازی
+            </button>
+        </span>
         <button class="btn btn-ghost btn-xs text-error" onclick="document.getElementById('delete-project-modal').showModal()">حذف</button>
     </div>
 </div>
 
 <!-- Tabs -->
-<div class="tabs tabs-border tabs-sm overflow-x-auto pb-px" role="tablist">
+<div id="project-tabs" class="tabs tabs-border tabs-sm overflow-x-auto pb-px" role="tablist">
     {% set labels = {
         'settings': 'تنظیمات', 'integrations': 'اتصالات', 'ai_models': 'مدل‌های AI', 'prompts': 'پرامپت‌ها',
         'topics': 'موضوع‌ها', 'articles': 'مقاله‌ها', 'retrieval': 'بازیابی', 'jobs': 'وظایف',
@@ -28,12 +31,14 @@
     } %}
     {% for tab in tabs %}
     <a role="tab"
+       data-tab="{{ tab }}"
        class="tab tab-border {{ 'tab-active' if tab == active_tab else 'opacity-60' }}"
        hx-get="/projects/{{ project.id }}/tabs/{{ tab }}"
        hx-target="#tab-content"
-       hx-push-url="/projects/{{ project.id }}?tab={{ tab }}"
+       hx-push-url="?tab={{ tab }}"
        hx-swap="innerHTML"
-       hx-indicator="#tab-indicator">
+       hx-indicator="#tab-indicator"
+       {% if tab == active_tab %}aria-selected="true"{% else %}aria-selected="false"{% endif %}>
         {{ labels[tab] }}
     </a>
     {% endfor %}
@@ -41,15 +46,15 @@
 
 <span id="tab-indicator" class="htmx-indicator text-xs opacity-60 block py-1">در حال بارگذاری…</span>
 
-<div id="tab-content" class="mt-3">
+<div id="tab-content" class="mt-3 w-full">
     {% include "pages/projects/tabs/" ~ active_tab ~ ".html" %}
 </div>
 
 <!-- Delete project modal -->
 <dialog id="delete-project-modal" class="modal modal-bottom sm:modal-middle">
-    <div class="modal-box bg-base-100">
+    <div class="modal-box bg-base-100 border border-base-300">
         <h3 class="font-bold text-lg">حذف پروژه</h3>
-        <p class="text-sm opacity-70 mt-2">پروژه «{{ project.name }}» و همه داده‌های مرتبط حذف می‌شود. این عمل قابل بازگشت نیست.</p>
+        <p class="text-sm opacity-70 mt-2 leading-relaxed">پروژه «{{ project.name }}» و همه داده‌های مرتبط حذف می‌شود. این عمل قابل بازگشت نیست.</p>
         <div class="flex gap-3 mt-6">
             <form hx-post="/projects/{{ project.id }}/delete" hx-swap="none" class="flex-1">
                 <button type="submit" class="btn btn-error w-full">حذف پروژه</button>
@@ -58,4 +63,24 @@
         </div>
     </div>
 </dialog>
+
+<script>
+    // Keep the active tab in sync with the URL after every HTMX swap and on
+    // browser back/forward — the tab bar is server-rendered only on full load.
+    (function () {
+        function syncProjectTabs() {
+            var params = new URLSearchParams(window.location.search);
+            var active = params.get('tab') || 'settings';
+            document.querySelectorAll('#project-tabs [data-tab]').forEach(function (t) {
+                var on = t.getAttribute('data-tab') === active;
+                t.classList.toggle('tab-active', on);
+                t.classList.toggle('opacity-60', !on);
+                t.setAttribute('aria-selected', on ? 'true' : 'false');
+            });
+        }
+        document.addEventListener('htmx:afterSettle', syncProjectTabs);
+        window.addEventListener('popstate', syncProjectTabs);
+        syncProjectTabs();
+    })();
+</script>
 {% endblock %}

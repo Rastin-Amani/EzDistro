@@ -1,10 +1,11 @@
+{% import 'macros/forms.html' as f %}
 <div id="topics-tab"
      hx-get="/projects/{{ project.id }}/tabs/topics"
      hx-trigger="refreshTopics from:body"
      hx-swap="outerHTML">
     <div class="flex flex-col gap-3">
-        <div class="flex items-center justify-between">
-            <div class="join join-sm">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="join join-sm overflow-x-auto">
                 <a class="join-item btn btn-xs {{ 'btn-primary' if not status_filter }}" hx-get="/projects/{{ project.id }}/tabs/topics" hx-target="#tab-content">همه</a>
                 {% for s in ['planned', 'queued', 'planning', 'outline_ready', 'writing', 'review', 'publishing', 'published', 'failed', 'cancelled'] %}
                 <a class="join-item btn btn-xs {{ 'btn-primary' if status_filter == s }}"
@@ -18,7 +19,7 @@
         </div>
 
         {% if topics %}
-        <div class="card bg-base-100 border border-base-200">
+        <div class="card bg-base-100 border border-base-200 shadow-none">
             <div class="overflow-x-auto">
                 <table class="table table-sm">
                     <thead>
@@ -54,7 +55,7 @@
                                 {% endif %}
                                 <button class="btn btn-ghost btn-xs text-error"
                                         hx-post="/projects/{{ project.id }}/topics/{{ t.id }}/delete" hx-swap="none"
-                                        hx-confirm="موضوع «{{ t.title }}» حذف شود؟">حذف</button>
+                                        hx-confirm="موضوع «{{ t.title }}» حذف شود؟ این عمل قابل بازگشت نیست.">حذف</button>
                             </td>
                         </tr>
                         {% endfor %}
@@ -63,7 +64,7 @@
             </div>
         </div>
         {% else %}
-        <div class="card bg-base-100 border border-base-200">
+        <div class="card bg-base-100 border border-base-200 shadow-none">
             <div class="card-body items-center py-8 text-center">
                 <p class="text-sm opacity-50">موضوعی یافت نشد.</p>
             </div>
@@ -73,45 +74,32 @@
 
     <!-- New topic modal -->
     <dialog id="new-topic-modal" class="modal modal-bottom sm:modal-middle">
-        <div class="modal-box bg-base-100">
-            <h3 class="font-bold text-lg mb-4">موضوع جدید</h3>
-            <form hx-post="/projects/{{ project.id }}/topics" hx-swap="none" class="flex flex-col gap-3">
-                <label class="form-control">
-                    <span class="label-text text-xs">عنوان موضوع</span>
-                    <input name="title" class="input input-sm" required placeholder="مثلاً: بهترین روش‌های سئو در ۱۴۰۵" />
-                </label>
-                <div class="grid grid-cols-2 gap-3">
-                    <label class="form-control">
-                        <span class="label-text text-xs">کلمه کلیدی</span>
-                        <input name="keyword" class="input input-sm" />
-                    </label>
-                    <label class="form-control">
-                        <span class="label-text text-xs">نوع</span>
-                        <select name="type" class="select select-sm">
-                            <option value="article">مقاله</option>
-                            <option value="pillar_page">صفحه ستون</option>
-                            <option value="guide">راهنما</option>
-                            <option value="news">خبر</option>
-                        </select>
-                    </label>
+        <div class="modal-box bg-base-100 border border-base-300">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-bold text-lg">موضوع جدید</h3>
+                <button type="button" class="btn btn-ghost btn-circle btn-sm" onclick="document.getElementById('new-topic-modal').close()" aria-label="بستن">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+            <form hx-post="/projects/{{ project.id }}/topics" hx-swap="none"
+                  hx-on::after-request="if (event.detail.successful) document.getElementById('new-topic-modal').close()"
+                  class="flex flex-col gap-4">
+                {{ f.text('title', 'عنوان موضوع', '', 'عنوان مقاله‌ای که می‌خواهید درباره‌اش بنویسید — هرچه دقیق‌تر باشد خروجی بهتری می‌گیرید.', 'مثلاً: بهترین روش‌های سئو در ۱۴۰۵', true, hint='این عنوان به‌عنوان ورودی اصلی تولید مقاله استفاده می‌شود.') }}
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {{ f.text('keyword', 'کلمه کلیدی', '', 'عبارت یا کلمه کلیدی اصلی این مقاله برای بهینه‌سازی سئو.', 'مثلاً: آموزش سئو') }}
+                    {{ f.select('type', 'نوع', [('article', 'مقاله'), ('pillar_page', 'صفحه ستون'), ('guide', 'راهنما'), ('news', 'خبر')], 'article', 'نوع محتوا — صفحه ستون پایه کل خوشه محتواست.') }}
                 </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <label class="form-control">
-                        <span class="label-text text-xs">ستون (Pillar)</span>
-                        <input name="pillar" class="input input-sm" />
-                    </label>
-                    <label class="form-control">
-                        <span class="label-text text-xs">خوشه (Cluster)</span>
-                        <input name="cluster" class="input input-sm" />
-                    </label>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {{ f.text('pillar', 'ستون (Pillar)', '', 'مقاله ستون اصلی که این موضوع به آن مرتبط است (برای لینک‌سازی داخلی).') }}
+                    {{ f.text('cluster', 'خوشه (Cluster)', '', 'نام خوشه محتوایی برای گروه‌بندی موضوعات مرتبط.') }}
                 </div>
-                <label class="form-control">
-                    <span class="label-text text-xs">اولویت</span>
-                    <input name="priority" type="number" class="input input-sm" value="0" />
-                </label>
+                {{ f.number('priority', 'اولویت', '0', 'هرچه بزرگ‌تر، زودتر در صف تولید قرار می‌گیرد.', min='0', hint='موضوعات با اولویت بالاتر زودتر پردازش می‌شوند.') }}
                 <div class="flex gap-3 mt-2">
-                    <button type="submit" class="btn btn-primary flex-1">افزودن</button>
-                    <button type="button" class="btn btn-ghost" onclick="document.getElementById('new-topic-modal').close()">انصراف</button>
+                    <button type="submit" class="btn btn-primary flex-1" hx-disabled-elt="this">
+                        <span class="loading loading-spinner loading-xs htmx-indicator"></span>
+                        افزودن
+                    </button>
+                    <button type="button" class="btn btn-ghost flex-1" onclick="document.getElementById('new-topic-modal').close()">انصراف</button>
                 </div>
             </form>
         </div>

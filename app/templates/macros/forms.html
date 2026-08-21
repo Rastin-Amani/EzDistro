@@ -1,0 +1,111 @@
+{# ═══════════════════════════════════════════════════════════════════════
+   Shared form building blocks — consistent, aligned, tooltip-rich.
+   Usage: {% import 'macros/forms.html' as f %}
+   Every field is full-width inside its grid cell, labels sit above inputs
+   with a helpful tooltip icon, and helper text lives under the control.
+   ═══════════════════════════════════════════════════════════════════════ #}
+
+{% macro tip(tip_text) -%}
+    {% if tip_text %}<span class="tooltip tooltip-left sm:tooltip-top" data-tip="{{ tip_text }}"><span class="cursor-help text-base-content/40 hover:text-base-content/70"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/></svg></span></span>{% endif %}
+{%- endmacro %}
+
+{% macro label(label_text, tip_text='', required=false) -%}
+    <div class="label px-0 pb-1">
+        <span class="label-text font-medium text-sm">
+            {{ label_text }}{% if required %} <span class="text-error">*</span>{% endif %}
+        </span>
+        {{ tip(tip_text) }}
+    </div>
+{%- endmacro %}
+
+{% macro text(name, label_text, value='', tip_text='', placeholder='', required=false, dir='', hint='', autocomplete='off') -%}
+    <label class="form-control w-full">
+        {{ label(label_text, tip_text, required) }}
+        <input type="text" name="{{ name }}" value="{{ value }}"
+               class="input input-bordered w-full"
+               {% if placeholder %}placeholder="{{ placeholder }}"{% endif %}
+               {% if required %}required{% endif %}
+               {% if dir %}dir="{{ dir }}"{% endif %}
+               {% if autocomplete %}autocomplete="{{ autocomplete }}"{% endif %} />
+        {% if hint %}<p class="text-xs opacity-50 mt-1 leading-relaxed">{{ hint }}</p>{% endif %}
+    </label>
+{%- endmacro %}
+
+{% macro number(name, label_text, value='', tip_text='', step='', min='', max='', required=false, hint='') -%}
+    <label class="form-control w-full">
+        {{ label(label_text, tip_text, required) }}
+        <input type="number" name="{{ name }}" value="{{ value }}"
+               class="input input-bordered w-full"
+               {% if step %}step="{{ step }}"{% endif %}
+               {% if min %}min="{{ min }}"{% endif %}
+               {% if max %}max="{{ max }}"{% endif %}
+               {% if required %}required{% endif %} />
+        {% if hint %}<p class="text-xs opacity-50 mt-1 leading-relaxed">{{ hint }}</p>{% endif %}
+    </label>
+{%- endmacro %}
+
+{% macro password(name, label_text, value='', tip_text='', placeholder='', hint='') -%}
+    <label class="form-control w-full">
+        {{ label(label_text, tip_text) }}
+        <input type="password" name="{{ name }}" value="{{ value }}"
+               class="input input-bordered w-full" dir="ltr" autocomplete="new-password"
+               {% if placeholder %}placeholder="{{ placeholder }}"{% endif %} />
+        {% if hint %}<p class="text-xs opacity-50 mt-1 leading-relaxed">{{ hint }}</p>{% endif %}
+    </label>
+{%- endmacro %}
+
+{% macro select(name, label_text, options, selected='', tip_text='', required=false, hint='') -%}
+    <label class="form-control w-full">
+        {{ label(label_text, tip_text, required) }}
+        <select name="{{ name }}" class="select select-bordered w-full" {% if required %}required{% endif %}>
+            {% for opt in options %}
+            {% if opt is string %}
+            <option value="{{ opt }}" {{ 'selected' if selected == opt }}>{{ opt }}</option>
+            {% else %}
+            <option value="{{ opt[0] }}" {{ 'selected' if selected == opt[0] }}>{{ opt[1] }}</option>
+            {% endif %}
+            {% endfor %}
+        </select>
+        {% if hint %}<p class="text-xs opacity-50 mt-1 leading-relaxed">{{ hint }}</p>{% endif %}
+    </label>
+{%- endmacro %}
+
+{% macro textarea(name, label_text, value='', tip_text='', rows=4, required=false, placeholder='', hint='', dir='auto', classes='') -%}
+    <label class="form-control w-full">
+        {{ label(label_text, tip_text, required) }}
+        <textarea name="{{ name }}" rows="{{ rows }}" {% if dir %}dir="{{ dir }}"{% endif %}
+                  class="textarea textarea-bordered w-full font-mono text-xs leading-relaxed {{ classes }}"
+                  {% if placeholder %}placeholder="{{ placeholder }}"{% endif %}
+                  {% if required %}required{% endif %}>{{ value }}</textarea>
+        {% if hint %}<p class="text-xs opacity-50 mt-1 leading-relaxed">{{ hint }}</p>{% endif %}
+    </label>
+{%- endmacro %}
+
+{% macro section_open(title, tip_text='', description='') -%}
+    <section class="card bg-base-100 border border-base-200 shadow-none">
+        <div class="card-body p-5 gap-4">
+            <div class="flex items-center gap-2">
+                <h2 class="font-bold text-sm">{{ title }}</h2>
+                {{ tip(tip_text) }}
+            </div>
+            {% if description %}<p class="text-xs opacity-50 leading-relaxed -mt-2">{{ description }}</p>{% endif %}
+{%- endmacro %}
+
+{% macro section_close() -%}
+        </div>
+    </section>
+{%- endmacro %}
+
+{# Action bar pinned to the bottom of the tab so the save button is always
+   reachable on long forms. #}
+{% macro sticky_save(label_text, tip_text='') -%}
+    <div class="sticky bottom-20 md:bottom-4 z-20 mt-2">
+        <div class="bg-base-100 border border-base-300 rounded-box p-2 flex items-center gap-2 shadow-lg">
+            <span class="text-xs opacity-60 px-2 flex-1">تغییرات را پس از پایان ذخیره کنید</span>
+            <button type="submit" class="btn btn-primary" hx-disabled-elt="this">
+                <span class="loading loading-spinner loading-xs htmx-indicator"></span>
+                {{ label_text }}
+            </button>
+        </div>
+    </div>
+{%- endmacro %}

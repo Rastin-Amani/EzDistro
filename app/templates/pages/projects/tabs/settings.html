@@ -1,243 +1,138 @@
-<form hx-post="/projects/{{ project.id }}/settings" hx-swap="none" class="flex flex-col gap-5 max-w-2xl">
-    <!-- Embedding -->
-    <section class="card bg-base-100 border border-base-200">
-        <div class="card-body p-4 gap-3">
-            <h2 class="font-bold text-sm">جاسازی متن (Embedding)</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <label class="form-control">
-                    <span class="label-text text-xs">ارائه‌دهنده</span>
-                    <select name="embedding_provider" class="select select-sm">
-                        {% for p in embedding_providers %}
-                        <option value="{{ p }}" {{ 'selected' if settings.embeddingProvider == p }}>{{ p }}</option>
-                        {% endfor %}
-                    </select>
-                </label>
-                <label class="form-control">
-                    <span class="label-text text-xs">مدل</span>
-                    <input name="embedding_model" class="input input-sm" value="{{ settings.embeddingModel }}" dir="ltr" placeholder="embed-v4.0" />
-                </label>
-                <label class="form-control">
-                    <span class="label-text text-xs">ابعاد</span>
-                    <input name="embedding_dimensions" type="number" class="input input-sm" value="{{ settings.embeddingDimensions }}" />
-                </label>
-            </div>
-            <p class="text-xs opacity-50">تغییر مدل = فضای نام جدید در کیوردنت؛ ابعاد باید با مدل هماهنگ باشد (embed-v4.0 = 1024).</p>
-        </div>
-    </section>
+{% import 'macros/forms.html' as f %}
+<form hx-post="/projects/{{ project.id }}/settings" hx-swap="none" class="flex flex-col gap-5 w-full">
 
-    <!-- AI models shortcut -->
-    <section class="card bg-base-100 border border-base-200">
-        <div class="card-body p-4 flex-row items-center justify-between">
-            <div>
-                <h2 class="font-bold text-sm">مدل‌های هوش مصنوعی</h2>
-                <p class="text-xs opacity-50">ارائه‌دهنده، مدل، دما، توکن و تایم‌اوت هر نقش (رئوس / بخش‌ها) از اینجا قابل تنظیم است.</p>
-            </div>
-            <a href="/projects/{{ project.id }}?tab=ai_models" class="btn btn-primary btn-sm"
+    {{ f.section_open('جاسازی متن (Embedding)', 'تنظیم مدل جاسازی، انتخابگر متن به بردار. تغییر مدل، فضای بردار جدیدی در کیوردنت می‌سازد.', 'مدل جاسازی متن را به بردار تبدیل می‌کند؛ برای بازیابی معنایی استفاده می‌شود.') }}
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {{ f.select('embedding_provider', 'ارائه‌دهنده', embedding_providers, settings.embeddingProvider,
+                'ارائه‌دهنده سرویس جاسازی (مثلاً Cohere یا OpenAI). باید یک اتصال فعال در تب «اتصالات» داشته باشد.',
+                hint='باید با یک اتصال فعال هماهنگ باشد.') }}
+            {{ f.text('embedding_model', 'مدل', settings.embeddingModel,
+                'شناسه مدل جاسازی — برای Cohere معمولاً embed-v4.0 و برای OpenAI text-embedding-3-small.',
+                dir='ltr', placeholder='embed-v4.0') }}
+            {{ f.number('embedding_dimensions', 'ابعاد', settings.embeddingDimensions,
+                'تعداد ابعاد بردار خروجی — باید با مدل هماهنگ باشد (embed-v4.0 = 1024، text-embedding-3-small = 1536).',
+                hint='تغییر مدل یا ابعاد = فضای بردار جدید؛ نیاز به بازنمایه کامل دارد.') }}
+        </div>
+    {{ f.section_close() }}
+
+    {{ f.section_open('مدل‌های هوش مصنوعی', 'پیکربندی مدل‌های تولید محتوا در تب جداگانه.', 'ارائه‌دهنده، مدل، دما، توکن و تایم‌اوت هر نقش (رئوس / بخش‌ها) از اینجا قابل تنظیم است.') }}
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <p class="text-xs opacity-60 leading-relaxed">تنظیم دقیق مدل‌های LLM برای رئوس‌سازی و نگارش بخش‌ها.</p>
+            <a href="/projects/{{ project.id }}?tab=ai_models" class="btn btn-primary btn-sm shrink-0"
                hx-get="/projects/{{ project.id }}/tabs/ai_models" hx-target="#tab-content">پیکربندی مدل‌ها</a>
         </div>
-    </section>
+    {{ f.section_close() }}
 
-    <!-- Chunking -->
-    <section class="card bg-base-100 border border-base-200">
-        <div class="card-body p-4 gap-3">
-            <h2 class="font-bold text-sm">تکه‌بندی (Chunking)</h2>
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-2xl">
-                <label class="form-control">
-                    <span class="label-text text-xs">اندازه تکه (کلمه)</span>
-                    <input name="chunk_size" type="number" class="input input-sm" value="{{ settings.chunkSize }}" />
-                </label>
-                <label class="form-control">
-                    <span class="label-text text-xs">همپوشانی</span>
-                    <input name="chunk_overlap" type="number" class="input input-sm" value="{{ settings.chunkOverlap }}" />
-                </label>
-                <label class="form-control">
-                    <span class="label-text text-xs">استراتژی جداکننده</span>
-                    <select name="separator_strategy" class="select select-sm">
-                        {% set strategies = [('auto', 'خودکار (پاراگراف→جمله)'), ('paragraph', 'پاراگراف'), ('sentence', 'جمله'), ('word', 'کلمه')] %}
-                        {% for value, label in strategies %}
-                        <option value="{{ value }}" {{ 'selected' if settings.separatorStrategy == value }}>{{ label }}</option>
-                        {% endfor %}
-                    </select>
-                </label>
-                <label class="form-control">
-                    <span class="label-text text-xs">حداکثر تعداد تکه (۰ = نامحدود)</span>
-                    <input name="max_chunk_count" type="number" class="input input-sm" value="{{ settings.maxChunkCount or 0 }}" />
-                </label>
-            </div>
-            <p class="text-xs opacity-50">متن فارسی ابتدا بر اساس مرز پاراگراف/جمله شکسته می‌شود و تنها در صورت نیاز به حد سخت کلمه می‌رسد — هیچ‌گاه شکستن در وسط کلمه.</p>
+    {{ f.section_open('تکه‌بندی (Chunking)', 'مستندات برای بازیابی به تکه‌های کوچک تقسیم می‌شوند.', 'متن فارسی ابتدا بر اساس مرز پاراگراف/جمله شکسته می‌شود و تنها در صورت نیاز به حد سخت کلمه می‌رسد — هیچ‌گاه در وسط کلمه.') }}
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {{ f.number('chunk_size', 'اندازه تکه (کلمه)', settings.chunkSize,
+                'حد مطلوب کلمات در هر تکه برای بازیابی. مقادیر کوچکتر = دقت بیشتر، هزینه بالاتر.') }}
+            {{ f.number('chunk_overlap', 'همپوشانی', settings.chunkOverlap,
+                'تعداد کلمات مشترک بین تکه‌های مجاور تا زمینه از دست نرود. معمولاً ۱۵ تا ۲۰٪ اندازه تکه.') }}
+            {{ f.select('separator_strategy', 'استراتژی جداکننده',
+                [('auto', 'خودکار (پاراگراف→جمله)'), ('paragraph', 'پاراگراف'), ('sentence', 'جمله'), ('word', 'کلمه')],
+                settings.separatorStrategy,
+                'مرز شکستن متن: خودکار ابتدا پاراگراف و سپس جمله را امتحان می‌کند.') }}
+            {{ f.number('max_chunk_count', 'حداکثر تکه (۰ = نامحدود)', settings.maxChunkCount or 0,
+                'سقف تعداد تکه‌های هر مستند؛ ۰ یعنی بدون محدودیت. برای کنترل هزینه مفید است.') }}
         </div>
-    </section>
+    {{ f.section_close() }}
 
-    <!-- Retrieval -->
-    <section class="card bg-base-100 border border-base-200">
-        <div class="card-body p-4 gap-3">
-            <h2 class="font-bold text-sm">بازیابی (Retrieval)</h2>
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-2xl">
-                <label class="form-control">
-                    <span class="label-text text-xs">تعداد کاندیدا (Top K)</span>
-                    <input name="retrieval_top_k" type="number" class="input input-sm" value="{{ settings.retrievalTopK }}" />
-                </label>
-                <label class="form-control">
-                    <span class="label-text text-xs">آستانه تشابه</span>
-                    <input name="similarity_threshold" type="number" step="0.05" class="input input-sm" value="{{ settings.similarityThreshold }}" />
-                </label>
-                <label class="form-control">
-                    <span class="label-text text-xs">بازچینش (Rerank)</span>
-                    <select name="reranking_enabled" class="select select-sm">
-                        <option value="0" {{ 'selected' if not settings.rerankingEnabled }}>غیرفعال</option>
-                        <option value="1" {{ 'selected' if settings.rerankingEnabled }}>فعال</option>
-                    </select>
-                </label>
-                <label class="form-control">
-                    <span class="label-text text-xs">نتایج پس از بازچینش</span>
-                    <input name="reranker_top_n" type="number" class="input input-sm" value="{{ settings.rerankerTopN or 8 }}" />
-                </label>
-                <label class="form-control">
-                    <span class="label-text text-xs">مدل بازچینش</span>
-                    <input name="reranker_model" class="input input-sm" value="{{ settings.rerankerModel }}" dir="ltr" />
-                </label>
-                <label class="form-control">
-                    <span class="label-text text-xs">ارائه‌دهنده بازچینش</span>
-                    <select name="reranker_provider" class="select select-sm">
-                        {% for p in reranker_providers %}
-                        <option value="{{ p }}" {{ 'selected' if settings.rerankerProvider == p }}>{{ p }}</option>
-                        {% endfor %}
-                    </select>
-                </label>
-            </div>
+    {{ f.section_open('بازیابی (Retrieval)', 'جستجوی معنایی و مرتب‌سازی نتایج.', 'هنگام نوشتن مقاله، مرتبط‌ترین تکه‌های مستندات بازیابی و به مدل داده می‌شود.') }}
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {{ f.number('retrieval_top_k', 'تعداد کاندیدا (Top K)', settings.retrievalTopK,
+                'تعداد تکه‌های نامزد که از کیوردنت بازیابی می‌شوند قبل از بازچینش.') }}
+            {{ f.number('similarity_threshold', 'آستانه تشابه', settings.similarityThreshold,
+                'حداقل امتیاز شباهت برای قبول یک تکه (۰ تا ۱). بالاتر = نتایج محدودتر و دقیق‌تر.', step='0.05') }}
+            {{ f.select('reranking_enabled', 'بازچینش (Rerank)',
+                [('0', 'غیرفعال'), ('1', 'فعال')], '1' if settings.rerankingEnabled else '0',
+                'با یک مدل بازچینش، کاندیداها دوباره مرتب می‌شوند تا مرتبط‌ترین‌ها بالا بیایند.') }}
+            {{ f.number('reranker_top_n', 'نتایج پس از بازچینش', settings.rerankerTopN or 8,
+                'تعداد نهایی تکه‌هایی که پس از بازچینش به مدل داده می‌شود.') }}
+            {{ f.text('reranker_model', 'مدل بازچینش', settings.rerankerModel,
+                'شناسه مدل بازچینش (مثلاً rerank-v4.0 از Cohere).', dir='ltr', placeholder='rerank-v4.0') }}
+            {{ f.select('reranker_provider', 'ارائه‌دهنده بازچینش', reranker_providers, settings.rerankerProvider,
+                'ارائه‌دهنده سرویس بازچینش — باید اتصال فعال داشته باشد.') }}
         </div>
-    </section>
+    {{ f.section_close() }}
 
-    <!-- Prompt context budget -->
-    <section class="card bg-base-100 border border-base-200">
-        <div class="card-body p-4 gap-3">
-            <h2 class="font-bold text-sm">بودجه زمینه پرامپت (Context)</h2>
-            <p class="text-xs opacity-50">فقط همین مقدار از نتایج بازیابی به مدل زبانی داده می‌شود — نه کل مستندات.</p>
-            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 max-w-2xl">
-                <label class="form-control">
-                    <span class="label-text text-xs">حداکثر لینک داخلی</span>
-                    <input name="context_max_links" type="number" class="input input-sm" value="{{ settings.contextMaxLinks or 5 }}" />
-                </label>
-                <label class="form-control">
-                    <span class="label-text text-xs">حداکثر بخش مرتبط</span>
-                    <input name="context_max_passages" type="number" class="input input-sm" value="{{ settings.contextMaxPassages or 5 }}" />
-                </label>
-                <label class="form-control">
-                    <span class="label-text text-xs">حداکثر کاراکتر</span>
-                    <input name="context_max_chars" type="number" class="input input-sm" value="{{ settings.contextMaxChars or 4000 }}" />
-                </label>
-            </div>
+    {{ f.section_open('بودجه زمینه پرامپت (Context)', 'سقف داده‌ای که به مدل داده می‌شود.', 'فقط همین مقدار از نتایج بازیابی به مدل زبانی داده می‌شود — نه کل مستندات.') }}
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            {{ f.number('context_max_links', 'حداکثر لینک داخلی', settings.contextMaxLinks or 5,
+                'تعداد لینک‌های داخلی پیشنهادی که در هر بخش به مقاله اضافه می‌شود.') }}
+            {{ f.number('context_max_passages', 'حداکثر بخش مرتبط', settings.contextMaxPassages or 5,
+                'تعداد تکه‌های بازیابی‌شده‌ای که وارد زمینه پرامپت می‌شوند.') }}
+            {{ f.number('context_max_chars', 'حداکثر کاراکتر', settings.contextMaxChars or 4000,
+                'سقف کل کاراکترهای زمینه برای کنترل هزینه و طول پرامپت.') }}
         </div>
-    </section>
+    {{ f.section_close() }}
 
-    <!-- Generation & publishing -->
-    <section class="card bg-base-100 border border-base-200">
-        <div class="card-body p-4 gap-3">
-            <h2 class="font-bold text-sm">تولید و انتشار</h2>
-            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 max-w-2xl">
-                <label class="form-control">
-                    <span class="label-text text-xs">تولید هم‌زمان بخش‌ها</span>
-                    <input name="generation_concurrency" type="number" class="input input-sm" value="{{ settings.generationConcurrency }}" />
-                </label>
-                <label class="form-control">
-                    <span class="label-text text-xs">حداقل کلمات مقاله</span>
-                    <input name="min_article_words" type="number" class="input input-sm" value="{{ settings.minArticleWords or 300 }}" />
-                </label>
-                <label class="form-control">
-                    <span class="label-text text-xs">حالت انتشار</span>
-                    <select name="publishing_mode" class="select select-sm">
-                        <option value="draft" {{ 'selected' if settings.publishingMode == 'draft' }}>پیش‌نویس</option>
-                        <option value="publish" {{ 'selected' if settings.publishingMode == 'publish' }}>انتشار زنده</option>
-                    </select>
-                </label>
-                <label class="form-control">
-                    <span class="label-text text-xs">ذخیره خودکار (Autosave)</span>
-                    <select name="autosave_enabled" class="select select-sm">
-                        <option value="0" {{ 'selected' if not settings.autosave.enabled }}>غیرفعال</option>
-                        <option value="1" {{ 'selected' if settings.autosave.enabled }}>فعال</option>
-                    </select>
-                </label>
-                <label class="form-control">
-                    <span class="label-text text-xs">بازه autosave (دقیقه)</span>
-                    <input name="autosave_interval_minutes" type="number" class="input input-sm" value="{{ settings.autosave.interval_minutes or 5 }}" />
-                </label>
-            </div>
+    {{ f.section_open('تولید و انتشار', 'تنظیم همزمانی، حداقل طول و حالت انتشار.', '') }}
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            {{ f.number('generation_concurrency', 'تولید هم‌زمان بخش‌ها', settings.generationConcurrency,
+                'تعداد بخش‌هایی که همزمان تولید می‌شوند. بالاتر = سریع‌تر ولی هزینه و محدودیت نرخ بیشتر.') }}
+            {{ f.number('min_article_words', 'حداقل کلمات مقاله', settings.minArticleWords or 300,
+                'حداقل کلمات کل مقاله برای قبولی در اعتبارسنجی.') }}
+            {{ f.select('publishing_mode', 'حالت انتشار',
+                [('draft', 'پیش‌نویس'), ('publish', 'انتشار زنده')], settings.publishingMode,
+                'پیش‌نویس: مقاله فقط ذخیره می‌شود. انتشار زنده: بلافاصله در وردپرس منتشر می‌شود.') }}
+            {{ f.select('autosave_enabled', 'ذخیره خودکار (Autosave)',
+                [('0', 'غیرفعال'), ('1', 'فعال')], '1' if settings.autosave.enabled else '0',
+                'ذخیره دوره‌ای خودکار ویرایش‌های workspace تا کار شما از بین نرود.') }}
+            {{ f.number('autosave_interval_minutes', 'بازه autosave (دقیقه)', settings.autosave.interval_minutes or 5,
+                'هر چند دقیقه یک‌بار تغییرات به‌صورت خودکار ذخیره شوند.') }}
         </div>
-    </section>
+    {{ f.section_close() }}
 
-    <!-- Retry -->
-    <section class="card bg-base-100 border border-base-200">
-        <div class="card-body p-4 gap-3">
-            <h2 class="font-bold text-sm">تلاش مجدد (Retry)</h2>
-            <div class="grid grid-cols-3 gap-3 max-w-2xl">
-                <label class="form-control">
-                    <span class="label-text text-xs">حداکثر تلاش</span>
-                    <input name="retry_max_attempts" type="number" class="input input-sm" value="{{ settings.retryPolicy.max_attempts }}" />
-                </label>
-                <label class="form-control">
-                    <span class="label-text text-xs">پایه تأخیر (ثانیه)</span>
-                    <input name="retry_backoff_base" type="number" class="input input-sm" value="{{ settings.retryPolicy.backoff_base }}" />
-                </label>
-                <label class="form-control">
-                    <span class="label-text text-xs">سقف تأخیر (ثانیه)</span>
-                    <input name="retry_backoff_max" type="number" class="input input-sm" value="{{ settings.retryPolicy.backoff_max }}" />
-                </label>
-            </div>
+    {{ f.section_open('تلاش مجدد (Retry)', 'رفتار خطاهای موقتی در تماس با ارائه‌دهنده‌ها.', 'هنگام خطای موقت (نرخ، شبکه، ۵xx) وظیفه با تأخیر نمایی دوباره تلاش می‌شود.') }}
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {{ f.number('retry_max_attempts', 'حداکثر تلاش', settings.retryPolicy.max_attempts,
+                'بیشترین تعداد تلاش برای هر وظیفه قبل از علامت‌گذاری به‌عنوان ناموفق.') }}
+            {{ f.number('retry_backoff_base', 'پایه تأخیر (ثانیه)', settings.retryPolicy.backoff_base,
+                'تأخیر اولیه قبل از اولین تلاش مجدد؛ با هر بار شکست به‌صورت نمایی رشد می‌کند.') }}
+            {{ f.number('retry_backoff_max', 'سقف تأخیر (ثانیه)', settings.retryPolicy.backoff_max,
+                'بیشترین تأخیر ممکن بین دو تلاش مجدد.') }}
         </div>
-    </section>
+    {{ f.section_close() }}
 
-    <!-- Indexing -->
-    <section class="card bg-base-100 border border-base-200">
-        <div class="card-body p-4 gap-3">
-            <h2 class="font-bold text-sm">نمایه‌سازی</h2>
-            <div class="grid grid-cols-2 gap-3 max-w-md">
-                <label class="form-control">
-                    <span class="label-text text-xs">زمان‌بندی خودکار</span>
-                    <select name="indexing_schedule_enabled" class="select select-sm">
-                        <option value="0" {{ 'selected' if not settings.indexing.schedule_enabled }}>غیرفعال</option>
-                        <option value="1" {{ 'selected' if settings.indexing.schedule_enabled }}>فعال</option>
-                    </select>
-                </label>
-                <label class="form-control">
-                    <span class="label-text text-xs">بازه (دقیقه)</span>
-                    <input name="indexing_schedule_interval_minutes" type="number" class="input input-sm" value="{{ settings.indexing.schedule_interval_minutes or 1440 }}" />
-                </label>
-            </div>
+    {{ f.section_open('نمایه‌سازی', 'زمان‌بندی خودکار نمایه‌سازی.', '') }}
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {{ f.select('indexing_schedule_enabled', 'زمان‌بندی خودکار',
+                [('0', 'غیرفعال'), ('1', 'فعال')], '1' if settings.indexing.schedule_enabled else '0',
+                'هر چند ساعت یک‌بار مستندات پروژه به‌صورت خودکار نمایه شوند.') }}
+            {{ f.number('indexing_schedule_interval_minutes', 'بازه (دقیقه)', settings.indexing.schedule_interval_minutes or 1440,
+                'فاصله بین دو نمایه‌سازی خودکار.') }}
         </div>
-    </section>
+    {{ f.section_close() }}
 
-    <!-- Schedules -->
-    <section class="card bg-base-100 border border-base-200">
-        <div class="card-body p-4 gap-3">
-            <h2 class="font-bold text-sm">زمان‌بندی وظایف</h2>
-            <p class="text-xs opacity-50">کارگر (worker) هر دقیقه زمان‌بندی‌ها را بررسی و در بازه تعیین‌شده وظیفه می‌سازد.</p>
-            {% set kinds = [('index', 'نمایه‌سازی خودکار'), ('write', 'نویسندگی خودکار')] %}
-            {% for kind, label in kinds %}
+    {{ f.section_open('زمان‌بندی وظایف', 'زمان‌بندی نمایه‌سازی و نویسندگی خودکار.', 'کارگر (worker) هر دقیقه زمان‌بندی‌ها را بررسی و در بازه تعیین‌شده وظیفه می‌سازد.') }}
+        {% set kinds = [('index', 'نمایه‌سازی خودکار'), ('write', 'نویسندگی خودکار')] %}
+        <div class="flex flex-col gap-3">
+        {% for kind, label_text in kinds %}
             {% set sched = schedules | selectattr('kind', 'equalto', kind) | first %}
-            <form hx-post="/projects/{{ project.id }}/schedules" hx-swap="none" class="border border-base-200 rounded-xl p-3 flex flex-wrap items-end gap-3">
+            <form hx-post="/projects/{{ project.id }}/schedules" hx-swap="none"
+                  class="border border-base-200 rounded-xl p-4 flex flex-wrap items-end gap-4">
                 <input type="hidden" name="kind" value="{{ kind }}" />
                 <div class="flex flex-col gap-1 min-w-40">
-                    <span class="text-xs font-semibold">{{ label }}</span>
-                    <select name="enabled" class="select select-xs">
+                    <span class="text-xs font-semibold">{{ label_text }}</span>
+                    <select name="enabled" class="select select-sm select-bordered">
                         <option value="1" {{ 'selected' if sched and sched.enabled }}>فعال</option>
                         <option value="0" {{ 'selected' if not sched or not sched.enabled }}>غیرفعال</option>
                     </select>
                 </div>
                 <label class="form-control">
-                    <span class="label-text text-xs">بازه (دقیقه)</span>
-                    <input name="interval_minutes" type="number" class="input input-sm w-28" value="{{ sched.intervalMinutes if sched else 1440 }}" />
+                    <span class="label-text text-xs font-medium">بازه (دقیقه)</span>
+                    <input name="interval_minutes" type="number" class="input input-sm input-bordered w-28"
+                           value="{{ sched.intervalMinutes if sched else 1440 }}" />
                 </label>
                 <button type="submit" class="btn btn-ghost btn-sm">ذخیره</button>
                 {% if sched and sched.lastRunAt %}
                 <span class="text-xs opacity-40">آخرین اجرا: {{ sched.lastRunAt|jalali_dt }}</span>
                 {% endif %}
             </form>
-            {% endfor %}
+        {% endfor %}
         </div>
-    </section>
+    {{ f.section_close() }}
 
-    <button type="submit" class="btn btn-primary max-w-2xl" hx-disabled-elt="this">
-        <span class="loading loading-spinner loading-xs htmx-indicator"></span>
-        ذخیره تنظیمات
-    </button>
+    {{ f.sticky_save('ذخیره تنظیمات') }}
 </form>

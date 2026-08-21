@@ -33,7 +33,6 @@
         <button class="btn btn-ghost btn-sm text-warning"
                 hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/unpublish"
                 hx-swap="none" hx-confirm="پست وردپرس خصوصی شود (لغو انتشار)؟">لغو انتشار</button>
-        {% endif %}
         {% elif article.status in ['sent_back', 'failed'] %}
         <button class="btn btn-primary btn-sm" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/regenerate"
                 hx-swap="none">بازتولید مقاله</button>
@@ -222,7 +221,6 @@
                     {% endfor %}
                 </ul>
                 {% else %}<p class="text-xs opacity-50">لینک داخلی تعریف نشده است.</p>{% endif %}
-                {% else %}<p class="text-xs opacity-50">رئوس موجود نیست.</p>{% endif %}
             </div>
         </div>
 

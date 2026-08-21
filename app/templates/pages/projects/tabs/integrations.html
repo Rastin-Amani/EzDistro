@@ -1,19 +1,26 @@
 <div id="integrations-tab"
+     x-data="integrationsEditor()"
      hx-get="/projects/{{ project.id }}/tabs/integrations"
      hx-trigger="refreshIntegrations from:body"
      hx-swap="outerHTML">
     <div class="flex flex-col gap-5">
         {% for category, label in categories.items() %}
         {% set integs = integrations | selectattr('category', 'equalto', category) | list %}
-        <section class="card bg-base-100 border border-base-200">
-            <div class="card-body p-4 gap-3">
-                <div class="flex items-center justify-between">
-                    <h2 class="font-bold text-sm">{{ label }}</h2>
-                    <button class="btn btn-ghost btn-xs" onclick="document.getElementById('int-modal-{{ category }}').showModal()">+ افزودن</button>
+        <section class="card bg-base-100 border border-base-200 shadow-none">
+            <div class="card-body p-5 gap-4">
+                <div class="flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-2">
+                        <h2 class="font-bold text-sm">{{ label }}</h2>
+                        <span class="tooltip tooltip-right" data-tip="اتصالات فعال در این دسته — برای هر ارائه‌دهنده یک اتصال بسازید و در تنظیمات پروژه از آن استفاده کنید.">
+                            <span class="cursor-help text-base-content/40"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/></svg></span>
+                        </span>
+                        <span class="badge badge-soft badge-neutral badge-sm">{{ integs|length }} اتصال</span>
+                    </div>
+                    <button type="button" class="btn btn-primary btn-sm" @click="openEditor(null, '{{ category }}')">+ افزودن</button>
                 </div>
 
                 {% if integs %}
-                <div class="overflow-x-auto">
+                <div class="overflow-x-auto -mx-2">
                     <table class="table table-sm">
                         <thead>
                             <tr class="text-xs opacity-60">
@@ -23,34 +30,43 @@
                                 <th>سلامت</th>
                                 <th>آخرین تست</th>
                                 <th>فعال</th>
-                                <th></th>
+                                <th class="w-44"></th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for i in integs %}
+                            {% set cfg = i.configuration or {} %}
                             <tr>
-                                <td class="text-xs">{{ i.displayName }}</td>
-                                <td class="text-xs" dir="ltr">{{ i.provider }}</td>
-                                <td class="text-xs font-mono" dir="ltr">{{ i.configuration.masked if i.configuration and i.configuration.masked else '—' }}</td>
+                                <td class="text-xs font-medium">{{ i.displayName }}</td>
+                                <td class="text-xs opacity-70" dir="ltr">{{ i.provider }}</td>
+                                <td class="text-xs font-mono opacity-70" dir="ltr">{{ cfg.masked if cfg.masked else '—' }}</td>
                                 <td><span class="badge badge-sm {{ i.healthStatus|status_badge }}">{{ health_labels.get(i.healthStatus, i.healthStatus) }}</span></td>
-                                <td class="text-xs opacity-60">{{ i.lastTestedAt|jalali_dt if i.lastTestedAt else '—' }}</td>
+                                <td class="text-xs opacity-60 whitespace-nowrap">{{ i.lastTestedAt|jalali_dt if i.lastTestedAt else '—' }}</td>
                                 <td>
-                                    <button class="toggle toggle-xs {{ 'toggle-primary' if i.enabled }}"
-                                            hx-post="/projects/{{ project.id }}/integrations/{{ i.id }}/toggle"
-                                            hx-swap="none"
-                                            title="تغییر وضعیت"></button>
+                                    <label class="tooltip tooltip-top cursor-pointer" data-tip="{{ 'فعال — برای غیرفعال‌سازی کلیک کنید' if i.enabled else 'غیرفعال — برای فعال‌سازی کلیک کنید' }}">
+                                        <input type="checkbox" class="toggle toggle-xs toggle-primary" {% if i.enabled %}checked{% endif %}
+                                               hx-post="/projects/{{ project.id }}/integrations/{{ i.id }}/toggle"
+                                               hx-trigger="change" hx-swap="none"
+                                               aria-label="تغییر وضعیت اتصال {{ i.displayName }}" />
+                                    </label>
                                 </td>
                                 <td class="whitespace-nowrap">
-                                    <button class="btn btn-ghost btn-xs"
-                                            hx-post="/projects/{{ project.id }}/integrations/{{ i.id }}/test"
-                                            hx-target="#health-{{ i.id }}" hx-swap="outerHTML">
-                                        <span class="loading loading-spinner loading-xs htmx-indicator"></span>
-                                        تست اتصال
-                                    </button>
-                                    <button class="btn btn-ghost btn-xs text-error"
-                                            hx-post="/projects/{{ project.id }}/integrations/{{ i.id }}/delete"
-                                            hx-swap="none"
-                                            hx-confirm="اتصال «{{ i.displayName }}» حذف شود؟">حذف</button>
+                                    <div class="flex items-center gap-1">
+                                        <button type="button" class="btn btn-ghost btn-xs"
+                                                data-category="{{ category }}"
+                                                data-payload='{{ {"id": i.id, "category": category, "displayName": i.displayName, "provider": i.provider, "model": cfg.model or "", "baseUrl": cfg.base_url or "", "username": cfg.username or "", "masked": cfg.masked or ""} | tojson }}'
+                                                @click="openEditorFrom($event.currentTarget)">ویرایش</button>
+                                        <button class="btn btn-ghost btn-xs"
+                                                hx-post="/projects/{{ project.id }}/integrations/{{ i.id }}/test"
+                                                hx-target="#health-{{ i.id }}" hx-swap="outerHTML">
+                                            <span class="loading loading-spinner loading-xs htmx-indicator"></span>
+                                            تست
+                                        </button>
+                                        <button class="btn btn-ghost btn-xs text-error"
+                                                hx-post="/projects/{{ project.id }}/integrations/{{ i.id }}/delete"
+                                                hx-swap="none"
+                                                hx-confirm="اتصال «{{ i.displayName }}» حذف شود؟ این عمل قابل بازگشت نیست.">حذف</button>
+                                    </div>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -61,61 +77,114 @@
                     </div>
                 </div>
                 {% else %}
-                <p class="text-xs opacity-50 py-2">اتصالی ثبت نشده است.</p>
+                <div class="border border-dashed border-base-300 rounded-xl py-6 text-center">
+                    <p class="text-sm opacity-50">اتصالی در این دسته ثبت نشده است.</p>
+                    <p class="text-xs opacity-40 mt-1">با «+ افزودن» اولین اتصال را بسازید.</p>
+                </div>
                 {% endif %}
             </div>
         </section>
+        {% endfor %}
+    </div>
 
-        <!-- Integration modal -->
-        <dialog id="int-modal-{{ category }}" class="modal modal-bottom sm:modal-middle">
-            <div class="modal-box bg-base-100">
-                <h3 class="font-bold text-lg mb-4">اتصال {{ label }}</h3>
-                <form hx-post="/projects/{{ project.id }}/integrations" hx-swap="none" class="flex flex-col gap-3">
-                    <input type="hidden" name="category" value="{{ category }}" />
-                    <input type="hidden" name="record_id" value="" />
-                    <label class="form-control">
-                        <span class="label-text text-xs">نام نمایشی</span>
-                        <input name="display_name" class="input input-sm" placeholder="مثلاً: OpenAI اصلی" required />
-                    </label>
-                    <div class="grid grid-cols-2 gap-3">
-                        <label class="form-control">
-                            <span class="label-text text-xs">ارائه‌دهنده</span>
-                            <input name="provider" class="input input-sm" dir="ltr" placeholder="openai_compat" value="openai_compat" list="providers-{{ category }}" />
-                            <datalist id="providers-{{ category }}">
-                                {% for p in known_providers.get(category, []) %}
-                                <option value="{{ p }}"></option>
-                                {% endfor %}
-                            </datalist>
-                        </label>
-                        <label class="form-control">
-                            <span class="label-text text-xs">مدل (اختیاری)</span>
-                            <input name="model" class="input input-sm" dir="ltr" />
-                        </label>
-                    </div>
-                    <label class="form-control">
-                        <span class="label-text text-xs">آدرس پایه (Base URL)</span>
-                        <input name="base_url" class="input input-sm" dir="ltr"
-                               placeholder="https://api.openai.com/v1{% if category == 'vector_store' %} | http://127.0.0.1:6333{% endif %}{% if category == 'publisher' %} | https://site.com{% endif %}" />
-                    </label>
-                    {% if category == 'publisher' %}
-                    <label class="form-control">
-                        <span class="label-text text-xs">نام کاربری وردپرس</span>
-                        <input name="username" class="input input-sm" dir="ltr" autocomplete="off" />
-                    </label>
-                    {% endif %}
-                    <label class="form-control">
-                        <span class="label-text text-xs">
-                            {% if category == 'publisher' %}رمز برنامه (Application Password){% else %}کلید API{% endif %}
+    <!-- Shared add/edit editor — bottomsheet on mobile, centered modal on desktop -->
+    <dialog id="int-editor" class="modal modal-bottom sm:modal-middle" hx-boost="false">
+        <div class="modal-box bg-base-100 border border-base-300">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-bold text-lg" x-text="isEdit ? 'ویرایش اتصال' : 'اتصال جدید'"></h3>
+                <button type="button" class="btn btn-ghost btn-circle btn-sm" @click="closeEditor()" aria-label="بستن">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+
+            <form hx-post="/projects/{{ project.id }}/integrations"
+                  hx-swap="none"
+                  hx-on::after-request="if (event.detail.successful) document.getElementById('int-editor').close()"
+                  class="flex flex-col gap-4">
+                <input type="hidden" name="category" x-model="form.category" />
+                <input type="hidden" name="record_id" x-model="form.record_id" />
+
+                <label class="form-control">
+                    <div class="label px-0 pb-1">
+                        <span class="label-text font-medium text-sm">نام نمایشی <span class="text-error">*</span></span>
+                        <span class="tooltip tooltip-left sm:tooltip-top" data-tip="نامی که در جدول اتصالات می‌بینید، مثلاً «OpenAI اصلی»">
+                            <span class="cursor-help text-base-content/40"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/></svg></span>
                         </span>
-                        <input type="password" name="secret" class="input input-sm" dir="ltr" autocomplete="new-password" placeholder="در صورت خالی بودن، مقدار قبلی حفظ می‌شود" />
+                    </div>
+                    <input name="display_name" class="input input-bordered w-full" x-model="form.display_name" required />
+                </label>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <label class="form-control">
+                        <div class="label px-0 pb-1">
+                            <span class="label-text font-medium text-sm">ارائه‌دهنده</span>
+                            <span class="tooltip tooltip-left sm:tooltip-top" data-tip="شناسه ارائه‌دهنده (مثلاً openai_compat) — از فهرست انتخاب کنید یا دستی وارد کنید">
+                                <span class="cursor-help text-base-content/40"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/></svg></span>
+                            </span>
+                        </div>
+                        <input name="provider" class="input input-bordered w-full" dir="ltr" x-model="form.provider"
+                               list="int-providers" placeholder="openai_compat" />
                     </label>
+                    <label class="form-control">
+                        <div class="label px-0 pb-1">
+                            <span class="label-text font-medium text-sm">مدل (اختیاری)</span>
+                            <span class="tooltip tooltip-left sm:tooltip-top" data-tip="مدل پیش‌فرض این اتصال (مثلاً gpt-4o-mini) — در تنظیمات پروژه قابل تغییر است">
+                                <span class="cursor-help text-base-content/40"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/></svg></span>
+                            </span>
+                        </div>
+                        <input name="model" class="input input-bordered w-full" dir="ltr" x-model="form.model" />
+                    </label>
+                </div>
+
+                <label class="form-control">
+                    <div class="label px-0 pb-1">
+                        <span class="label-text font-medium text-sm">آدرس پایه (Base URL)</span>
+                        <span class="tooltip tooltip-left sm:tooltip-top" data-tip="آدرس API — برای OpenAI معمولاً …/v1 و برای Qdrant معمولاً http://127.0.0.1:6333. اگر بدون پروتکل وارد کنید https:// اضافه می‌شود.">
+                            <span class="cursor-help text-base-content/40"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/></svg></span>
+                            </span>
+                        </div>
+                        <input name="base_url" class="input input-bordered w-full" dir="ltr" x-model="form.base_url"
+                               placeholder="https://api.openai.com/v1" />
+                    </label>
+
+                    <label class="form-control" x-show="isPublisher()">
+                        <div class="label px-0 pb-1">
+                            <span class="label-text font-medium text-sm">نام کاربری وردپرس</span>
+                            <span class="tooltip tooltip-left sm:tooltip-top" data-tip="نام کاربری وردپرس همراه با رمز برنامه (Application Password)">
+                                <span class="cursor-help text-base-content/40"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/></svg></span>
+                            </span>
+                        </div>
+                        <input name="username" class="input input-bordered w-full" dir="ltr" autocomplete="off" x-model="form.username" />
+                    </label>
+
+                    <label class="form-control">
+                        <div class="label px-0 pb-1">
+                            <span class="label-text font-medium text-sm">کلید API</span>
+                            <span class="tooltip tooltip-left sm:tooltip-top" data-tip="هنگام ویرایش اگر خالی بماند، کلید قبلی حفظ می‌شود. کلید هرگز ذخیره یا نمایش داده نمی‌شود — فقط نسخه رمزنگاری‌شده نگهداری می‌گردد">
+                                <span class="cursor-help text-base-content/40"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/></svg></span>
+                            </span>
+                        </div>
+                        <input type="password" name="secret" class="input input-bordered w-full" dir="ltr"
+                               autocomplete="new-password" x-model="form.secret"
+                               placeholder="در صورت خالی بودن، مقدار قبلی حفظ می‌شود" />
+                    </label>
+
                     <div class="flex gap-3 mt-2">
-                        <button type="submit" class="btn btn-primary flex-1">ذخیره</button>
-                        <button type="button" class="btn btn-ghost" onclick="document.getElementById('int-modal-{{ category }}').close()">انصراف</button>
+                        <button type="submit" class="btn btn-primary flex-1" hx-disabled-elt="this">
+                            <span class="loading loading-spinner loading-xs htmx-indicator"></span>
+                            ذخیره
+                        </button>
+                        <button type="button" class="btn btn-ghost flex-1" @click="closeEditor()">انصراف</button>
                     </div>
                 </form>
             </div>
         </dialog>
-        {% endfor %}
+
+        <datalist id="int-providers">
+            {% for cat in categories %}
+            {% for p in known_providers.get(cat, []) %}
+            <option value="{{ p }}"></option>
+            {% endfor %}
+            {% endfor %}
+        </datalist>
     </div>
-</div>

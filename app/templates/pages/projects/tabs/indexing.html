@@ -67,16 +67,18 @@
                 </div>
             </div>
             <div class="flex items-center gap-2">
-                <button class="btn btn-primary btn-sm" hx-post="/projects/{{ project.id }}/run-index" hx-swap="none" hx-disabled-elt="this">
-                    <span class="loading loading-spinner loading-xs htmx-indicator"></span>
-                    نمایه‌سازی افزایشی
-                </button>
-                <form hx-post="/projects/{{ project.id }}/run-index" hx-swap="none">
-                    <input type="hidden" name="full" value="1" />
-                    <button type="submit" class="btn btn-ghost btn-sm text-warning"
-                            hx-confirm="بازنمایه کامل: همه مستندات دوباره جاسازی می‌شوند و برداری‌های قدیمی پاک می‌شوند. ادامه؟">
-                        بازنمایه کامل
+                <span class="tooltip tooltip-top" data-tip="فقط مستندات تغییرکرده را نمایه می‌کند — سریع و کم‌هزینه">
+                    <button class="btn btn-primary btn-sm" hx-post="/projects/{{ project.id }}/run-index" hx-swap="none" hx-disabled-elt="this">
+                        <span class="loading loading-spinner loading-xs htmx-indicator"></span>
+                        نمایه‌سازی افزایشی
                     </button>
+                </span>
+                <form hx-post="/projects/{{ project.id }}/run-index" hx-swap="none"
+                      hx-confirm="بازنمایه کامل: همه مستندات دوباره جاسازی می‌شوند و برداری‌های قدیمی پاک می‌شوند. ادامه می‌دهید؟">
+                    <input type="hidden" name="full" value="1" />
+                    <span class="tooltip tooltip-top" data-tip="همه مستندات از نو جاسازی می‌شوند — برای تغییر مدل/ابعاد جاسازی لازم است">
+                        <button type="submit" class="btn btn-ghost btn-sm text-warning">بازنمایه کامل</button>
+                    </span>
                 </form>
             </div>
         </div>

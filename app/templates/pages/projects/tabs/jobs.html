@@ -35,12 +35,16 @@
                         <td class="text-xs">{{ j.attempts or 0 }}/{{ j.maxAttempts or 3 }}</td>
                         <td class="whitespace-nowrap">
                             {% if j.status in ['pending', 'retrying', 'running'] %}
-                            <button class="btn btn-ghost btn-xs text-warning"
-                                    hx-post="/jobs/{{ j.id }}/cancel" hx-swap="none"
-                                    hx-confirm="لغو این وظیفه؟">لغو</button>
+                            <span class="tooltip tooltip-top" data-tip="درخواست لغو — وظیفه در اولین فرصت متوقف می‌شود">
+                                <button class="btn btn-ghost btn-xs text-warning"
+                                        hx-post="/jobs/{{ j.id }}/cancel" hx-swap="none"
+                                        hx-confirm="لغو این وظیفه؟">لغو</button>
+                            </span>
                             {% elif j.status == 'failed' %}
-                            <button class="btn btn-ghost btn-xs text-primary"
-                                    hx-post="/jobs/{{ j.id }}/retry" hx-swap="none">تلاش مجدد</button>
+                            <span class="tooltip tooltip-top" data-tip="وظیفه را دوباره در صف قرار می‌دهد">
+                                <button class="btn btn-ghost btn-xs text-primary"
+                                        hx-post="/jobs/{{ j.id }}/retry" hx-swap="none">تلاش مجدد</button>
+                            </span>
                             {% endif %}
                         </td>
                     </tr>
