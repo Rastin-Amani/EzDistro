@@ -1,7 +1,35 @@
 <!doctype html>
-<html lang="fa" dir="rtl" data-theme="seoz">
+<html lang="fa" dir="rtl">
     <head>
         <meta charset="UTF-8" />
+        <script>
+            /* Theme bootstrap — runs before first paint so the very first frame is
+               already the resolved theme (no light/dark flash). Reads the persisted
+               choice from localStorage; falls back to the OS preference. */
+            (function () {
+                var KEY = 'seoz-theme';
+                var mode = 'light';
+                try {
+                    var stored = localStorage.getItem(KEY);
+                    if (stored === 'light' || stored === 'dark') {
+                        mode = stored;
+                    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                        mode = 'dark';
+                    } else {
+                        mode = 'light';
+                    }
+                } catch (e) {}
+                var el = document.documentElement;
+                el.dataset.theme = mode === 'dark' ? 'seoz-dark' : 'seoz';
+                el.dataset.themeMode = mode;
+                try {
+                    var v = localStorage.getItem(KEY);
+                    el.dataset.themeChoice = v === 'system' || v === 'light' || v === 'dark' ? v : 'system';
+                } catch (e) {
+                    el.dataset.themeChoice = 'system';
+                }
+            })();
+        </script>
         <meta
             name="viewport"
             content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
@@ -9,9 +37,21 @@
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="theme-color" content="#f4f2ec" />
 
         <link rel="manifest" href="/manifest.json" />
         <link rel="icon" href="/favicon.ico" />
+
+        <!-- Fonts are referenced from app.css; preloading them lets them
+             download in parallel with the stylesheet instead of waiting for
+             it to finish parsing (shorter critical chain → earlier text paint). -->
+        <link
+            rel="preload"
+            href="{{ url_for('static', path='/assets/Vazirmatn-RD[wght].ttf') }}"
+            as="font"
+            type="font/ttf"
+            crossorigin
+        />
 
         <title>{{ title or 'سئوز' }}</title>
         <link rel="stylesheet" href="{{ url_for('static', path='/app.css') }}" />
@@ -80,9 +120,35 @@
             </main>
         </div>
 
+        <!-- Global confirmation dialog — replaces native window.confirm() for
+             every hx-confirm action (driven by js/confirm-dialog.js). -->
+        <dialog id="confirm-dialog" class="modal modal-bottom sm:modal-middle" hx-boost="false">
+            <div class="modal-box bg-base-100 border border-base-300">
+                <div class="flex items-start gap-4">
+                    <div class="shrink-0 w-11 h-11 rounded-full bg-warning/15 text-warning grid place-items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-6">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                        </svg>
+                    </div>
+                    <div class="min-w-0">
+                        <h3 class="font-bold text-lg">تأیید عملیات</h3>
+                        <p class="py-2 text-sm opacity-70 leading-relaxed" data-confirm-text></p>
+                    </div>
+                </div>
+                <div class="modal-action flex gap-3">
+                    <button type="button" class="btn btn-ghost flex-1" data-confirm-cancel>انصراف</button>
+                    <button type="button" class="btn btn-error flex-1" data-confirm-ok>تأیید</button>
+                </div>
+            </div>
+            <div class="modal-backdrop bg-black/40 backdrop-blur-sm cursor-pointer" data-confirm-backdrop></div>
+        </dialog>
+
         {% block body_end %}{% endblock %}
 
+        <script type="module" src="{{ url_for('static', path='/js/integrations.js') }}"></script>
         <script type="module" src="{{ url_for('static', path='/app.js') }}"></script>
+        <script defer src="{{ url_for('static', path='/js/theme.js') }}"></script>
+        <script defer src="{{ url_for('static', path='/js/confirm-dialog.js') }}"></script>
 
         <script>
             function getProgressBar() {
@@ -193,10 +259,9 @@
                     }));
                 });
                 document.addEventListener('htmx:responseError', function (evt) {
-                    const status = (evt.detail && evt.detail.xhr && evt.detail.xhr.status) || '';
                     document.dispatchEvent(new CustomEvent('show-toast', {
                         detail: {
-                            message: `خطا در پردازش درخواست${status ? ' (کد ' + status + ')' : ''}.`,
+                            message: 'مشکلی پیش آمد؛ دوباره تلاش کنید.',
                             type: 'error',
                         },
                     }));

@@ -1,59 +1,131 @@
 @import 'tailwindcss';
 
 @plugin "daisyui" {
-    themes: seoz --default;
+    themes: seoz --default, seoz-dark;
 }
 
 @theme {
-    --font-sans: 'yekanbakh';
-    --font-brand: 'yekanbakh';
+    --font-sans: 'vazirmatn', ui-sans-serif, system-ui, sans-serif;
+    --font-brand: 'vazirmatn', ui-sans-serif, system-ui, sans-serif;
 }
 
-/* Seoz brand theme — flat, border-driven depth (no shadows) */
+/* ════════════ "seoz" light theme — DaisyUI Garden (warm, editorial) ════════════
+   Garden's cream paper + terracotta/rose primary, olive neutral. Applied via
+   data-theme="seoz". */
 @plugin "daisyui/theme" {
     name: "seoz";
     default: true;
     prefersdark: false;
     color-scheme: light;
 
-    --color-base-100: oklch(99% 0.002 280);
-    --color-base-200: oklch(96.5% 0.004 280);
-    --color-base-300: oklch(92% 0.008 280);
-    --color-base-content: oklch(24% 0.02 280);
+    --color-base-100: oklch(92.951% 0.002 17.197);
+    --color-base-200: oklch(86.445% 0.002 17.197);
+    --color-base-300: oklch(79.938% 0.001 17.197);
+    --color-base-content: oklch(16.961% 0.001 17.32);
 
-    --color-primary: oklch(52% 0.21 278);
-    --color-primary-content: oklch(99% 0.005 280);
-    --color-secondary: oklch(64% 0.15 200);
-    --color-secondary-content: oklch(99% 0.005 280);
-    --color-accent: oklch(70% 0.14 45);
-    --color-accent-content: oklch(24% 0.02 280);
-    --color-neutral: oklch(42% 0.02 280);
-    --color-neutral-content: oklch(98% 0.004 280);
+    --color-primary: oklch(62.45% 0.278 3.836);
+    --color-primary-content: oklch(100% 0 0);
+    --color-secondary: oklch(48.495% 0.11 355.095);
+    --color-secondary-content: oklch(89.699% 0.022 355.095);
+    --color-accent: oklch(56.273% 0.054 154.39);
+    --color-accent-content: oklch(100% 0 0);
+    --color-neutral: oklch(24.155% 0.049 89.07);
+    --color-neutral-content: oklch(92.951% 0.002 17.197);
 
-    --color-info: oklch(58% 0.16 245);
-    --color-info-content: oklch(99% 0.005 280);
-    --color-success: oklch(58% 0.14 155);
-    --color-success-content: oklch(99% 0.005 280);
-    --color-warning: oklch(70% 0.16 70);
-    --color-warning-content: oklch(24% 0.02 280);
-    --color-error: oklch(58% 0.2 25);
-    --color-error-content: oklch(99% 0.005 280);
+    --color-info: oklch(72.06% 0.191 231.6);
+    --color-info-content: oklch(0% 0 0);
+    --color-success: oklch(64.8% 0.15 160);
+    --color-success-content: oklch(0% 0 0);
+    --color-warning: oklch(84.71% 0.199 83.87);
+    --color-warning-content: oklch(0% 0 0);
+    --color-error: oklch(71.76% 0.221 22.18);
+    --color-error-content: oklch(0% 0 0);
 
-    --radius-selector: 0.75rem;
-    --radius-field: 0.75rem;
+    --radius-selector: 1rem;
+    --radius-field: 0.5rem;
     --radius-box: 1rem;
     --size-selector: 0.25rem;
     --size-field: 0.25rem;
-    --border: 1.5px;
+    --border: 1px;
+    --depth: 0;
+    --noise: 0;
+}
+
+/* ════════════ "seoz-dark" theme — Garden flipped to night ════════════
+   Same brand soul (rose primary, olive neutral, soft green accent) but a
+   warm near-black environment. Shares radius/size/border tokens with `seoz`
+   so both themes feel like one system. Applied via data-theme="seoz-dark". */
+@plugin "daisyui/theme" {
+    name: "seoz-dark";
+    default: false;
+    prefersdark: true;
+    color-scheme: dark;
+
+    --color-base-100: oklch(21% 0.014 120);
+    --color-base-200: oklch(26% 0.016 120);
+    --color-base-300: oklch(32% 0.02 120);
+    --color-base-content: oklch(92% 0.008 90);
+
+    --color-primary: oklch(72% 0.19 22);
+    --color-primary-content: oklch(18% 0.04 22);
+    --color-secondary: oklch(58% 0.11 355.095);
+    --color-secondary-content: oklch(96% 0.01 355.095);
+    --color-accent: oklch(62% 0.06 154.39);
+    --color-accent-content: oklch(18% 0.02 154.39);
+    --color-neutral: oklch(36% 0.022 120);
+    --color-neutral-content: oklch(90% 0.01 90);
+
+    --color-info: oklch(70% 0.15 231.6);
+    --color-info-content: oklch(16% 0.03 231.6);
+    --color-success: oklch(66% 0.12 160);
+    --color-success-content: oklch(14% 0.03 160);
+    --color-warning: oklch(82% 0.14 83.87);
+    --color-warning-content: oklch(18% 0.03 83.87);
+    --color-error: oklch(68% 0.17 22.18);
+    --color-error-content: oklch(18% 0.04 22.18);
+
+    --radius-selector: 1rem;
+    --radius-field: 0.5rem;
+    --radius-box: 1rem;
+    --size-selector: 0.25rem;
+    --size-field: 0.25rem;
+    --border: 1px;
     --depth: 0;
     --noise: 0;
 }
 
 @font-face {
-    font-family: 'YekanBakh';
-    src: url('./assets/YekanBakhFaNum-VF.woff') format('woff2');
-    font-weight: 100 900;
+    font-family: 'vazirmatn';
+    src: url('./assets/Vazirmatn-RD[wght].ttf') format('truetype');
+    font-weight: 100 900; /* variable font weight range */
     font-display: swap;
+}
+
+/* ════════════ Theme switch transition — premium but fast, reduced-motion aware ════════════
+   `.theme-switching` is added (and removed ~260ms later) by js/theme.js right
+   before/after data-theme flips, so tokens animate once instead of per-element. */
+@media (prefers-reduced-motion: no-preference) {
+    html.theme-switching,
+    html.theme-switching *,
+    html.theme-switching *::before,
+    html.theme-switching *::after {
+        transition:
+            background-color 0.25s ease,
+            border-color 0.25s ease,
+            color 0.25s ease,
+            fill 0.25s ease,
+            stroke 0.25s ease !important;
+    }
+}
+
+/* Numeric inputs render LTR by default in browsers — force RTL alignment */
+input[type='number'],
+input[type='date'],
+input[type='time'],
+input[type='datetime-local'],
+input[type='tel'] {
+    direction: rtl;
+    text-align: right;
 }
 
 /* Coherent visual system refinements */
@@ -67,4 +139,21 @@
 
 .btn {
     @apply border border-base-300;
+}
+
+/* Comfortable, consistent form controls: full width inside their grid cell,
+   equal heights, clear focus ring. */
+.form-control input,
+.form-control select,
+.form-control textarea {
+    @apply w-full;
+}
+
+.form-control .label {
+    @apply px-0 pt-0;
+}
+
+/* Help-cursor for tooltip triggers so users discover the hint icon */
+.tooltip[data-tip] {
+    cursor: help;
 }

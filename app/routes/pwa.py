@@ -91,8 +91,8 @@ async def dynamic_manifest():
         "scope": "/",
         "display": "standalone",
         "orientation": "portrait",
-        "background_color": "#1d232a",
-        "theme_color": "#1d232a",
+        "background_color": "#f4f2ec",
+        "theme_color": "#f4f2ec",
         "icons": [
             {
                 "src": "/static/icons/icon-192x192.png",
