@@ -21,7 +21,7 @@ from collections.abc import Callable
 from typing import Any
 
 from app.config import settings as app_settings
-from app.domain.validation import UnsafeUrlError, validate_url
+from app.domain.validation import UnsafeUrlError, normalize_base_url, validate_url
 from app.providers.base import (
     EmbeddingProvider,
     LLMProvider,
@@ -304,7 +304,9 @@ class ProviderRegistry:
             ) from exc
 
     def _safe_url(self, integration: dict[str, Any], default: str) -> str:
-        raw = str((integration.get("configuration") or {}).get("base_url") or "")
+        raw = normalize_base_url(
+            str((integration.get("configuration") or {}).get("base_url") or "")
+        )
         try:
             return validate_url(raw) if raw else default
         except UnsafeUrlError as exc:

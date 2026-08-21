@@ -204,9 +204,22 @@ def raise_for_provider(response: httpx.Response, *, what: str) -> None:
     retry_after = _parse_retry_after(response.headers.get("Retry-After"))
     if retry_after is not None:
         details["retry_after_seconds"] = retry_after
+    if _looks_like_html(body):
+        # A web UI (dashboard, landing page) was returned instead of an API
+        # response — almost always a base URL pointing at the site root
+        # instead of the OpenAI-compatible endpoint (usually …/v1).
+        body = (
+            "an HTML web page, not an API response — check that the base URL "
+            "points at the API endpoint (usually ends in /v1), not the site root"
+        )
     if status in (429,) or 500 <= status <= 599:
         raise TransientError(f"{what} failed with HTTP {status}: {body}", details)
     raise PermanentError(f"{what} failed with HTTP {status}: {body}", details)
+
+
+def _looks_like_html(text: str) -> bool:
+    stripped = text.lstrip().lower()
+    return stripped.startswith("<!doctype html") or stripped.startswith("<html")
 
 
 def _parse_retry_after(value: str | None) -> int | None:

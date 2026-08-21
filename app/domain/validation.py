@@ -32,6 +32,21 @@ class UnsafeUrlError(ValueError):
     """Raised when a URL fails scheme or SSRF validation."""
 
 
+def normalize_base_url(url: str) -> str:
+    """Prepend ``https://`` to scheme-less base URLs (``api.example.com/v1`` → ``https://…``).
+
+    Keeps already-schemed URLs untouched so explicit ``http://`` (e.g. local
+    Qdrant) survives. Empty input stays empty — callers fall back to their
+    provider default.
+    """
+    url = (url or "").strip()
+    if not url:
+        return ""
+    if "://" not in url:
+        url = "https://" + url
+    return url
+
+
 def validate_url(url: str, *, allow_private: bool | None = None) -> str:
     """Return the normalized URL when safe; raise UnsafeUrlError otherwise."""
     if not url or not url.strip():

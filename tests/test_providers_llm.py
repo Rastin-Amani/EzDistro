@@ -7,9 +7,10 @@ import json
 import httpx
 import pytest
 
-from app.providers.base import GenerationParams, TransientError
+from app.providers.base import GenerationParams, PermanentError, TransientError
 from app.providers.embedding.cohere import CohereEmbedding
 from app.providers.embedding.openai_compat import OpenAICompatEmbedding
+from app.providers.http import raise_for_provider
 from app.providers.llm.gemini import GeminiLLM
 from app.providers.llm.openai_compat import OpenAICompatLLM
 from app.providers.metrics import ProviderCallRecord
@@ -27,6 +28,33 @@ class RecordingObserver:
 
 def transport_for(handler):
     return httpx.MockTransport(handler)
+
+
+# ---------------------------------------------------------------------------
+# Error classification (raise_for_provider)
+# ---------------------------------------------------------------------------
+def test_html_response_is_flagged_as_web_page_not_api():
+    """A 404 serving the provider's dashboard HTML (wrong base URL path) must
+    produce a helpful message instead of dumping raw HTML."""
+    response = httpx.Response(
+        404,
+        text="<!DOCTYPE html><html><head><meta charSet='utf-8'/><link rel='preload' href='/_next/static/…'/></head></html>",
+    )
+    with pytest.raises(PermanentError) as exc:
+        raise_for_provider(response, what="llm.ping")
+    message = str(exc.value)
+    assert "HTML web page" in message
+    assert "base URL" in message
+    assert "<html" not in message
+
+
+def test_json_error_response_keeps_api_body():
+    response = httpx.Response(
+        401, json={"error": {"message": "invalid api key", "code": "invalid_api_key"}}
+    )
+    with pytest.raises(PermanentError) as exc:
+        raise_for_provider(response, what="llm.ping")
+    assert "invalid api key" in str(exc.value)
 
 
 # ---------------------------------------------------------------------------

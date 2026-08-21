@@ -1,6 +1,19 @@
 import pytest
 
-from app.domain.validation import UnsafeUrlError, validate_url
+from app.domain.validation import UnsafeUrlError, normalize_base_url, validate_url
+
+
+def test_normalize_base_url_prepends_https_to_scheme_less_urls():
+    assert normalize_base_url("api.openai.com/v1") == "https://api.openai.com/v1"
+    assert normalize_base_url("localhost:11434/v1") == "https://localhost:11434/v1"
+    assert normalize_base_url("  api.example.com  ") == "https://api.example.com"
+
+
+def test_normalize_base_url_preserves_explicit_schemes_and_empty():
+    assert normalize_base_url("https://api.openai.com/v1") == "https://api.openai.com/v1"
+    assert normalize_base_url("http://localhost:6333") == "http://localhost:6333"
+    assert normalize_base_url("") == ""
+    assert normalize_base_url(None) == ""
 
 
 def test_rejects_bad_schemes():

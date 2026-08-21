@@ -111,6 +111,27 @@ def test_registry_embedding_defaults_to_cohere():
     assert embedding2.dimensions == 1536
 
 
+def test_registry_embedding_normalizes_scheme_less_base_url():
+    """Scheme-less base URLs (the 'unsupported URL scheme' failure) get https://
+    prepended before validation, so health checks and calls work."""
+    pb = make_pb()
+    project = make_project(pb)
+    registry = ProviderRegistry(pb, secrets=SecretsService(b"0123456789abcdef0123456789abcdef"))
+    add_integration(pb, project["id"], "embedding", "openai_compat", base_url="api.openai.com/v1")
+
+    embedding = registry.get_embedding_provider(
+        project,
+        {
+            "embeddingProvider": "openai_compat",
+            "embeddingModel": "text-embedding-3-small",
+            "embeddingDimensions": 1536,
+            "retryPolicy": {},
+        },
+    )
+    assert isinstance(embedding, OpenAICompatEmbedding)
+    assert embedding._base_url == "https://api.openai.com/v1"
+
+
 def test_registry_unknown_provider_raises_permanently():
     pb = make_pb()
     project = make_project(pb)
@@ -213,6 +234,25 @@ def test_logging_observer_never_logs_content(monkeypatch):
     assert captured["request_chars"] == 123
     assert "content" not in captured
     assert captured["prompt_tokens"] == 1
+
+
+def test_logging_observer_accepts_keyword_fields_on_failure():
+    """Failed-record logging must not crash: the observer logs structlog-style
+    keyword fields, which a raw stdlib Logger._log() would reject with
+    "unexpected keyword argument 'provider'" (broke 'test connection')."""
+    observer = LoggingObserver()
+    observer.on_call(
+        ProviderCallRecord(
+            provider="p",
+            model="m",
+            operation="op",
+            latency_ms=5,
+            success=False,
+            error_category="transient",
+            error_message="boom",
+            retries=1,
+        )
+    )
 
 
 def test_event_observer_writes_job_events_without_content():

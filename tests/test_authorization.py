@@ -158,6 +158,83 @@ def test_toggle_integration_cannot_toggle_foreign_integration(setup):
     assert IntegrationRepo(setup["pb"]).get(setup["int_b"]["id"])["enabled"] is True  # unchanged
 
 
+def test_save_integration_creates_new_integration(setup):
+    """New integrations must save via the form endpoint (was: TypeError on
+    'displayName' — camelCase payload vs snake_case create() kwargs)."""
+    req = make_req(setup["pb"], make_user(), setup["proj_a"]["id"])
+    call_route(
+        P.save_integration,
+        req,
+        setup["proj_a"]["id"],
+        category="embedding",
+        provider="openai_compat",
+        display_name="Embedder",
+        base_url="https://example.com/v1",
+        model="text-embedding-3-small",
+        secret="sk-embed-1234",
+    )
+    records = IntegrationRepo(setup["pb"]).list_for_project(setup["proj_a"]["id"], "embedding")
+    assert len(records) == 1
+    rec = records[0]
+    assert rec["provider"] == "openai_compat"
+    assert rec["displayName"] == "Embedder"
+    assert rec["configuration"]["model"] == "text-embedding-3-small"
+    assert rec["configuration"]["base_url"] == "https://example.com/v1"
+    assert rec["enabled"] is True
+    assert rec["secretsEnc"]  # encrypted at rest
+    assert "sk-embed-1234" not in rec["secretsEnc"]
+    assert rec["configuration"]["masked"]
+
+
+def test_save_integration_normalizes_scheme_less_base_url(setup):
+    """Typing a base URL without a scheme must not brick the health check."""
+    req = make_req(setup["pb"], make_user(), setup["proj_a"]["id"])
+    call_route(
+        P.save_integration,
+        req,
+        setup["proj_a"]["id"],
+        category="llm",
+        provider="openai_compat",
+        display_name="Router",
+        base_url="router.example.com/v1",
+        secret="sk-router-1",
+    )
+    records = IntegrationRepo(setup["pb"]).list_for_project(setup["proj_a"]["id"], "llm")
+    assert records[0]["configuration"]["base_url"] == "https://router.example.com/v1"
+
+
+def test_save_integration_update_keeps_existing_secret(setup):
+    """Editing an integration without typing a new secret must keep the
+    previously encrypted one (never blank it)."""
+    pb = setup["pb"]
+    existing = IntegrationRepo(pb).create(
+        project=setup["proj_a"]["id"],
+        category="llm",
+        provider="openai_compat",
+        display_name="LLM A",
+        configuration={"base_url": "https://example.com/v1", "masked": "sk-l…234"},
+        secrets_enc="gAAAAAexisting-ciphertext",
+        enabled=True,
+    )
+    req = make_req(pb, make_user(), setup["proj_a"]["id"])
+    call_route(
+        P.save_integration,
+        req,
+        setup["proj_a"]["id"],
+        record_id=existing["id"],
+        category="llm",
+        provider="openai_compat",
+        display_name="LLM A (renamed)",
+        base_url="https://example.com/v1",
+        model="gpt-4o-mini",
+        secret="",
+    )
+    rec = IntegrationRepo(pb).get(existing["id"])
+    assert rec["secretsEnc"] == "gAAAAAexisting-ciphertext"
+    assert rec["displayName"] == "LLM A (renamed)"
+    assert rec["configuration"]["masked"] == "sk-l…234"
+
+
 def test_queue_assemble_rejects_foreign_article(setup):
     req = make_req(setup["pb"], make_user(), setup["proj_a"]["id"])
     call_route(W.queue_assemble, req, setup["proj_a"]["id"], setup["article_b"]["id"])

@@ -11,13 +11,11 @@ or tests.
 
 from __future__ import annotations
 
-import logging
 from dataclasses import dataclass
 from typing import Any, Protocol
 
+from app.logging_config import logger
 from app.providers.base import LLMResult
-
-logger = logging.getLogger("provider.metrics")
 
 ERROR_NONE = "none"
 ERROR_TRANSIENT = "transient"
@@ -62,7 +60,7 @@ class CallObserver(Protocol):
 class LoggingObserver:
     """Debug-level logging. Content is never logged (size only)."""
 
-    def __init__(self, log: logging.Logger | None = None) -> None:
+    def __init__(self, log: Any = None) -> None:
         self._log = log or logger
 
     def on_call(self, record: ProviderCallRecord) -> None:
