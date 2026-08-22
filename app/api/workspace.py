@@ -365,35 +365,6 @@ def send_back_article(request: Request, project_id: str, article_id: str, note: 
     return success_response("مقاله بازگردانده شد", extra_events={"refreshArticle": True})
 
 
-@router.post("/projects/{project_id}/articles/{article_id}/regenerate")
-@hx_error("شروع بازتولید ناموفق بود")
-def regenerate_article(request: Request, project_id: str, article_id: str):
-    """Queue full regeneration — the previous version stays in history."""
-    require_hx(request)
-    require_project_access(request, project_id)
-    require_project_role(request, project_id)
-    article = ArticleRepo(request.state.pb).get(article_id)
-    if not article or article.get("project") != project_id:
-        return error_response("مقاله یافت نشد")
-    topic_id = article.get("topicId") or ""
-    if not topic_id:
-        return error_response("مقاله به موضوعی متصل نیست")
-    ArticleRepo(request.state.pb).set_status(article_id, "generating")
-    JobRepo(request.state.pb).create(
-        project=project_id,
-        type="write_article",
-        payload={"topicId": topic_id, "regenerate": True},
-        idempotency_key=f"write:article:{topic_id}:regen:{int(__import__('time').time())}",
-        max_attempts=3,
-        entity_type="article",
-        entity_id=article_id,
-    )
-    return success_response(
-        "بازتولید مقاله آغاز شد (نسخه قبلی حفظ می‌شود)",
-        extra_events={"refreshArticle": True, "refreshJobs": True},
-    )
-
-
 @router.post("/projects/{project_id}/articles/{article_id}/revisions/{revision_id}/rollback")
 @hx_error("بازگشت به نسخه ناموفق بود")
 def rollback_article(request: Request, project_id: str, article_id: str, revision_id: str):

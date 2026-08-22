@@ -114,33 +114,59 @@ def save_section(
 
 
 @router.post("/projects/{project_id}/articles/{article_id}/regenerate")
-@hx_error("بازنشانی بخش ناموفق بود")
-def regenerate_section(
+@hx_error("شروع بازتولید ناموفق بود")
+def regenerate_article(
     request: Request, project_id: str, article_id: str, section_id: str = Form("")
 ):
-    """Regenerate one section as an independent job (idempotent per section)."""
+    """Regenerate one section (when `section_id` is given) or the whole
+    article. NOTE: this is the single handler for this path — a duplicate
+    route in workspace.py used to shadow/be shadowed; the review page's
+    «بازتولید کامل» hits this with no section_id."""
     require_hx(request)
     require_project_access(request, project_id)
     require_project_role(request, project_id)
-    repo = SectionRepo(request.state.pb)
-    section = repo.get(section_id)
-    if not section or section.get("article") != article_id:
-        return error_response("بخش یافت نشد")
     article = ArticleRepo(request.state.pb).get(article_id)
-    ensure_record_in_project(article, project_id, "article")
-    repo.update(section_id, {"status": "pending", "content": "", "error": {}})
+    if not article or article.get("project") != project_id:
+        return error_response("مقاله یافت نشد")
+
+    if section_id:
+        # --- per-section regeneration (workspace editor) ---
+        repo = SectionRepo(request.state.pb)
+        section = repo.get(section_id)
+        if not section or section.get("article") != article_id:
+            return error_response("بخش یافت نشد")
+        repo.update(section_id, {"status": "pending", "content": "", "error": {}})
+        ArticleRepo(request.state.pb).set_status(article_id, "generating")
+        JobRepo(request.state.pb).create(
+            project=project_id,
+            type="generate_section",
+            payload={"sectionId": section_id},
+            idempotency_key=f"generate:section:{section_id}",
+            max_attempts=3,
+            entity_type="section",
+            entity_id=section_id,
+        )
+        return success_response(
+            "بازتولید بخش برنامه‌ریزی شد",
+            extra_events={"refreshArticle": True, "refreshJobs": True},
+        )
+
+    # --- full article regeneration (review page: «بازتولید کامل») ---
+    topic_id = article.get("topicId") or ""
+    if not topic_id:
+        return error_response("مقاله به موضوعی متصل نیست")
     ArticleRepo(request.state.pb).set_status(article_id, "generating")
     JobRepo(request.state.pb).create(
         project=project_id,
-        type="generate_section",
-        payload={"sectionId": section_id},
-        idempotency_key=f"generate:section:{section_id}",
+        type="write_article",
+        payload={"topicId": topic_id, "regenerate": True},
+        idempotency_key=f"write:article:{topic_id}:regen:{int(__import__('time').time())}",
         max_attempts=3,
-        entity_type="section",
-        entity_id=section_id,
+        entity_type="article",
+        entity_id=article_id,
     )
     return success_response(
-        "بازتولید بخش برنامه‌ریزی شد",
+        "بازتولید مقاله آغاز شد (نسخه قبلی حفظ می‌شود)",
         extra_events={"refreshArticle": True, "refreshJobs": True},
     )
 
