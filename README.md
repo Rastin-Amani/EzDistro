@@ -66,13 +66,15 @@ Architecture, data model, job-state design and provider interfaces: see [docs/AR
 ## Data model
 
 The PocketBase schema is designed around the product domain (not the old n8n
-workflows): **17 collections** covering projects, flat project settings,
+workflows): **18 collections** covering projects, flat project settings,
 configurable integrations (encrypted secrets), versioned prompts, topics with a
 full editorial pipeline, articles + sections (the outline IS the ordered section
-rows), indexed documents, index runs, the job engine (jobs / atomic leases /
-append-only job events), publishing runs (append-only publish audit), schedules
-and project memberships. Relationships, cascades, uniqueness and the indexing
-strategy: [docs/SCHEMA.md](docs/SCHEMA.md).
+rows), article revisions (append-only history), indexed documents, index runs,
+the job engine (jobs / atomic leases / append-only job events), publishing runs
+(append-only publish audit), provider metrics, schedules and project memberships
+(plus the built-in `users` collection extended with `role`/`displayName`).
+Relationships, cascades, uniqueness and the indexing strategy:
+[docs/SCHEMA.md](docs/SCHEMA.md).
 
 ## Quick start
 
