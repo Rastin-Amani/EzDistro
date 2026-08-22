@@ -71,7 +71,7 @@ class FakeRecordService:
         return self._eval_atom(record, token, op_token, value_token)
 
     def _eval_atom(self, record: dict, field: str, op: str, raw_value: str) -> bool:
-        actual = record.get(field)
+        actual = self._resolve_field(record, field)
         if raw_value.startswith('"') and raw_value.endswith('"'):
             expected: Any = raw_value[1:-1]
         elif raw_value == "true":
@@ -104,6 +104,32 @@ class FakeRecordService:
             except re.error:
                 return expected in str(actual)
         raise AssertionError(f"unsupported filter op {op!r}")
+
+    def _resolve_field(self, record: dict[str, Any], field: str) -> Any:
+        """Resolve `relation.field` dotted paths (PocketBase relation traversal).
+
+        A dotted path means the first segment is a relation id on this record;
+        the referenced record is looked up across collections so filters behave
+        like real PB (which rejects filters on non-existent fields with a 400).
+        """
+        parts = field.split(".")
+        current: Any = record
+        for part in parts:
+            while isinstance(current, str):
+                # Relation id → resolve to the referenced record first.
+                found = None
+                for name in self._storage.collection_names():
+                    found = self._storage.get(name, current)
+                    if found is not None:
+                        break
+                if found is None:
+                    return None
+                current = found
+            if isinstance(current, dict):
+                current = current.get(part)
+            else:
+                return None
+        return current
 
     # -- sort ----------------------------------------------------------------------
     @staticmethod
@@ -185,6 +211,9 @@ class FakeStorage:
     def records(self, name: str) -> list[dict]:
         self._bump_read()
         return list(self._records.setdefault(name, {}).values())
+
+    def collection_names(self) -> list[str]:
+        return list(self._records.keys())
 
     def get(self, name: str, record_id: str) -> dict | None:
         self._bump_read()

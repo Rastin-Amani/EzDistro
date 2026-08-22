@@ -251,7 +251,8 @@ def project_metrics(pb: Any, project_id: str) -> dict[str, Any]:
     jobs = JobRepo(pb)
     indexed = docs.count(filter=f'project="{project_id}" && indexStatus="indexed"')
     stale = docs.count(filter=f'project="{project_id}" && indexStatus="deleted"')
-    sections_done = SectionRepo(pb).count(filter=f'project="{project_id}" && status="done"')
+    # article_sections has no `project` field — scope through the article relation.
+    sections_done = SectionRepo(pb).count(filter=f'article.project="{project_id}" && status="done"')
     return {
         "indexed_documents": indexed,
         "stale_documents": stale,

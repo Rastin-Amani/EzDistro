@@ -288,7 +288,7 @@ def test_project_metrics_counts():
             "contentHash": "b",
         }
     )
-    pb.collection("articles").create(
+    article = pb.collection("articles").create(
         {
             "project": project["id"],
             "topicId": topic["id"],
@@ -298,7 +298,7 @@ def test_project_metrics_counts():
         }
     )
     pb.collection("article_sections").create(
-        {"project": project["id"], "article": "a1", "position": 0, "heading": "ب", "status": "done"}
+        {"article": article["id"], "position": 0, "heading": "ب", "status": "done"}
     )
     seed_job(pb, project["id"], status="failed")
 
