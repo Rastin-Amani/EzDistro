@@ -74,7 +74,8 @@ Thumbs.db
 .prettierrc
 
 
-docs/
+# docs/ is intentionally tracked (documentation set + the Dockerfile copies it
+# into the image). Do not re-add "docs/" here.
 
 # Uploads
 app/static/uploads/
