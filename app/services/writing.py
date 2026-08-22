@@ -55,7 +55,13 @@ async def handle_write_article(ctx: JobContext) -> dict[str, Any]:
     topic = topics.get(topic_id)
     if not topic:
         raise ValueError(f"topic not found: {topic_id}")
-    if topic.get("status") not in ("planned", "failed", "cancelled", "outline_ready"):
+    if topic.get("status") not in (
+        "queued",
+        "planned",
+        "failed",
+        "cancelled",
+        "outline_ready",
+    ):
         if topic.get("status") == "planning":
             # Crash-recovery: a previous attempt died mid-outline and left the
             # topic in "planning" (nobody else can be writing it — this job

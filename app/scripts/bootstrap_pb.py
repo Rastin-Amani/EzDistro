@@ -50,8 +50,12 @@ def col(
     }
 
 
-def t(name: str, *, required: bool = False, unique: bool = False) -> dict[str, Any]:
-    opts: dict[str, Any] = {"min": None, "max": None, "pattern": ""}
+def t(
+    name: str, *, required: bool = False, unique: bool = False, max_len: int | None = None
+) -> dict[str, Any]:
+    # NOTE: PocketBase enforces a 5000-char default cap when max is unset (0) —
+    # long-content fields must pass an explicit max_len or writes get rejected.
+    opts: dict[str, Any] = {"min": None, "max": max_len, "pattern": ""}
     if unique:
         opts["unique"] = True
     return {"name": name, "type": "text", "required": required, "options": opts}
@@ -280,6 +284,8 @@ COLLECTIONS: list[dict[str, Any]] = [
                     "outline_ready",
                     "generating",
                     "review",
+                    "approved",
+                    "sent_back",
                     "publishing",
                     "published",
                     "failed",
@@ -289,8 +295,8 @@ COLLECTIONS: list[dict[str, Any]] = [
             num("outlineVersion"),
             json_field("outline"),
             json_field("validation"),
-            t("finalHtml"),
-            t("generatedContent"),
+            t("finalHtml", max_len=100_000),
+            t("generatedContent", max_len=100_000),
             num("lastGeneratedRevision"),
             t("reviewNote"),
             t("metaDescription"),
@@ -312,11 +318,13 @@ COLLECTIONS: list[dict[str, Any]] = [
         "article_sections",
         [
             rel("article", "articles", required=True, cascade=True),
-            num("position", required=True),
+            # NOT required: PocketBase's `required` validation treats 0 (the
+            # first section position) as blank and rejects the record.
+            num("position"),
             t("heading", required=True),
             t("contentBrief"),
             json_field("internalLinks"),
-            t("content"),
+            t("content", max_len=100_000),
             select("status", ["pending", "generating", "done", "failed"], required=True),
             num("generationAttempts"),
             num("promptVersion"),
@@ -593,9 +601,16 @@ DEFAULT_PROMPTS: dict[str, str] = {
         "اضافه‌ای تولید می‌کنی."
     ),
     "section_user": (
-        "یک بخش از مقاله سئو را بنویس.\n"
-        "خروجی باید فقط HTML معتبر باشد: تیتر بخش با <h2> و محتوا با <p>، <ul>، <ol>، <strong>، <em> و <a>.\n"
-        "هیچ استایل inline، تگ <html>، <body> یا تیتر <h1> استفاده نکن. بدون توضیح اضافه، فقط HTML.\n"
+        "یک بخش از مقاله را دقیقاً طبق تیتر و خلاصه زیر بنویس — نه موضوع دیگری.\n"
+        "## عنوان مقاله\n{{ article.title }}\n"
+        "## تیتر این بخش\n{{ section.heading }}\n"
+        "## خلاصه محتوای این بخش\n{{ section.content_brief }}\n"
+        "## کلمه کلیدی\n{{ topic.keyword }}\n"
+        "## قوانین لینک‌سازی داخلی\n{{ internal_linking_rules }}\n"
+        "## لینک‌های داخلی مرتبط (در صورت نیاز استفاده کن)\n{{ internal_links }}\n"
+        "خروجی باید فقط HTML معتبر باشد: محتوا با <p>، <ul>، <ol>، <strong>، <em> و <a>.\n"
+        "تیتر را ننویس — سیستم خودش تیتر <h2> را اضافه می‌کند.\n"
+        "هیچ استایل inline، تگ <html>، <body> یا تیتر <h1>/<h2> استفاده نکن. بدون توضیح اضافه، فقط HTML.\n"
         "پاراگراف‌ها کوتاه باشند (۲ تا ۴ جمله) و کلمه کلیدی به‌طور طبیعی در متن تکرار شود."
     ),
     "seo_rules": (

@@ -56,11 +56,11 @@ class PromptRepo(BaseRepo):
     ) -> dict[str, str]:
         """Resolve many prompt types in TWO queries (project rows + global rows),
         instead of one query pair per type."""
+        # NOTE: no `type ~ ".*"` here — PB's regex `~` doesn't match select
+        # fields, which silently zeroed every prompt row (→ generic fallbacks).
         suffix = f' && name="{name}" && active=true' if name else " && active=true"
-        project_rows = self.list_records(
-            filter=f'project="{project_id}" && type ~ ".*"{suffix}', per_page=200
-        )
-        global_rows = self.list_records(filter=f'project="" && type ~ ".*"{suffix}', per_page=200)
+        project_rows = self.list_records(filter=f'project="{project_id}"{suffix}', per_page=200)
+        global_rows = self.list_records(filter=f'project=""{suffix}', per_page=200)
         by_type: dict[str, str] = {}
         for rows in (project_rows, global_rows):
             for row in rows:

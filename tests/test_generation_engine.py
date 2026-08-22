@@ -213,6 +213,26 @@ def test_assembly_normalizes_fences_and_whitespace():
     assert "\n\n\n\n" not in normalize_article_html(raw)
 
 
+def test_write_article_accepts_queued_topic():
+    """Regression: the write endpoints set topics to `queued` before dispatching
+    write_article, so the handler must accept it as a start state."""
+    pb = FakePocketBase(default_unique_fields())
+    project = make_project(pb)
+    topic = TopicRepo(pb).create(project=project["id"], title="ت", keyword="سئو")
+    TopicRepo(pb).set_status(topic["id"], "queued")
+    registry = FakeRegistry()
+    registry.llm.responses = [OUTLINE_JSON] + [SECTION_HTML] * 3
+
+    result = run_write(pb, registry, topic["id"])
+
+    # The queued topic entered the write pipeline (outline generated, sections queued)
+    # instead of being rejected as "unexpected state: queued".
+    article = pb.collection("articles").get_one(result["articleId"])
+    assert article["status"] == "generating"
+    assert TopicRepo(pb).get(topic["id"])["status"] == "writing"
+    assert pb.collection("jobs").get_first_list_item('type="generate_section"')
+
+
 # ---------------------------------------------------------------------------
 # Chained pipeline — independent sections, wait, validation
 # ---------------------------------------------------------------------------
