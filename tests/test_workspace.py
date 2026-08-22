@@ -238,3 +238,75 @@ def test_workspace_stats_indexing_health_flags_failures():
     stats = global_stats(pb)
     assert stats["indexing_ok"] == 0
     assert stats["indexing_failed"] == 1
+
+
+def test_workspace_template_renders_section_statuses():
+    """Regression: _section_status.html expects `section`, but the workspace
+    loop used `s` — any workspace page with sections raised UndefinedError."""
+    from app.templates import templates
+
+    class FakeRequest:
+        url = type("U", (), {"path": "/projects/p1/articles/a1/workspace"})()
+
+        def url_for(self, name: str, **path_params: Any) -> str:
+            return "/"
+
+    context = {
+        "request": FakeRequest(),
+        "title": "تست",
+        "project": {"id": "p1", "slug": "p1", "name": "پروژه"},
+        "article": {
+            "id": "a1",
+            "title": "مقاله",
+            "status": "review",
+            "wordCount": 888,
+            "outlineVersion": 1,
+            "validation": {"ok": True, "issues": []},
+        },
+        "sections": [
+            {
+                "id": "s1",
+                "heading": "مقدمه",
+                "status": "done",
+                "generationLatency": 120,
+                "model": "deepseek-v3.2",
+                "contentBrief": "",
+                "content": "<p>x</p>",
+                "keyword": "",
+                "promptVersion": 1,
+                "provider": "openai_compat",
+            },
+            {
+                "id": "s2",
+                "heading": "بدنه",
+                "status": "generating",
+                "generationLatency": 0,
+                "model": "deepseek-v3.2",
+                "contentBrief": "",
+                "content": "",
+                "keyword": "",
+                "promptVersion": 1,
+                "provider": "openai_compat",
+            },
+            {
+                "id": "s3",
+                "heading": "نتیجه",
+                "status": "failed",
+                "generationLatency": 0,
+                "model": "",
+                "contentBrief": "",
+                "content": "",
+                "keyword": "",
+                "promptVersion": 0,
+                "provider": "",
+                "error": {"message": "too short", "type": "SectionValidationError"},
+            },
+        ],
+        "topic": {"title": "موضوع", "keyword": "سئو"},
+        "publish_runs": [],
+        "internal_links": [],
+    }
+    html = templates.get_template("pages/articles/workspace.html").render(context)
+    assert "در حال تولید" in html  # generating badge
+    assert "ناموفق" in html  # failed badge
+    assert "انجام شد" in html  # done badge

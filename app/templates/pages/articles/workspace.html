@@ -87,6 +87,7 @@
 
         <!-- Section editor (center focus) -->
         {% for s in sections %}
+        {% set section = s %}{# _section_status.html expects `section` #}
         <div class="card bg-base-100 border border-base-200" id="section-{{ s.id }}">
             <div class="card-body p-4 gap-3">
                 <div class="flex items-center justify-between">
