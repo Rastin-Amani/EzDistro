@@ -84,7 +84,7 @@ DEFAULT_SETTINGS: dict[str, Any] = {
     "generationConcurrency": 2,
     "minArticleWords": 300,
     "retryPolicy": {"max_attempts": 3, "backoff_base": 30, "backoff_max": 3600},
-    "publishingMode": "draft",
+    "publishingMode": "publish",
     "autosave": {"enabled": False, "interval_minutes": 5},
     "indexing": {
         "schedule_enabled": False,

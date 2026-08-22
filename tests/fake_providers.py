@@ -256,8 +256,10 @@ class FakePublisher:
     async def create_post(
         self, *, title, html, status, slug, meta=None, excerpt=""
     ) -> PublishResult:
+        self.next_id += 1
         self.created.append(
             {
+                "id": self.next_id,
                 "title": title,
                 "html": html,
                 "status": status,
@@ -266,7 +268,6 @@ class FakePublisher:
                 "excerpt": excerpt,
             }
         )
-        self.next_id += 1
         if meta:
             self.post_meta.setdefault(self.next_id, {}).update(meta)
         if self.crash_after_create:
@@ -275,14 +276,14 @@ class FakePublisher:
             raise SystemExit(1)
         return PublishResult(post_id=self.next_id, link=f"https://site.test/?p={self.next_id}")
 
-    async def find_post_by_meta(self, meta_key: str, meta_value: str) -> WPPost | None:
-        for pid, meta in self.post_meta.items():
-            if meta.get(meta_key) == meta_value:
+    async def find_post_by_slug(self, slug: str) -> WPPost | None:
+        for created in self.created:
+            if created.get("slug") == slug:
                 return WPPost(
-                    id=pid,
+                    id=created["id"],
                     title="orphan",
                     content_html="",
-                    link=f"https://site.test/?p={pid}",
+                    link=f"https://site.test/?p={created['id']}",
                     status="publish",
                     modified="",
                 )

@@ -358,7 +358,10 @@ async def test_publish_article_publishes_once_and_guards_duplicates():
     assert len(registry.publisher.created) == 1
     created = registry.publisher.created[0]
     assert created["title"] == "عنوان مقاله"
-    assert created["status"] == "draft"  # default publishing mode
+    assert created["status"] == "publish"  # default publishing mode
+    # WP renders the title itself — the leading <h1> must not be sent
+    assert "<h1>" not in created["html"]
+    assert "<p>محتوا</p>" in created["html"]
 
     runs = pb.collection("publishing_runs").get_full_list()
     assert len(runs) == 1

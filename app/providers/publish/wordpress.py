@@ -232,27 +232,32 @@ class WordPressPublisher:
         response = await with_retry(_call, attempts=2, what="wp.ping", logger_name="wp")
         raise_for_provider(response, what="wp.ping")
 
-    async def find_post_by_meta(self, meta_key: str, meta_value: str) -> WPPost | None:
-        """Find a post by a registered (show_in_rest) meta value.
+    async def find_post_by_slug(self, slug: str) -> WPPost | None:
+        """Find a post by its exact slug (WP REST `slug` param — reliable).
 
-        Used to recover from a crash between `create_post` and storing the post
-        id: a retried publish finds the orphaned post by its seoz_article_id
-        meta and UPDATEs it instead of creating a duplicate.
+        Used to recover from a crash between `create_post` and storing the
+        post id: a retried publish finds the orphaned post by the article
+        slug and UPDATEs it instead of creating a duplicate.
+
+        NOTE: meta-based lookups (meta_key/meta_value) are NOT used here —
+        WP REST silently ignores those params for unregistered meta, which
+        made `find_post_by_meta` return the FIRST post for any query.
         """
+        if not slug:
+            return None
         params: dict[str, Any] = {
             "per_page": 5,
             "_fields": "id,title,link,status,modified,content",
-            "meta_key": meta_key,
-            "meta_value": meta_value,
+            "slug": slug,
         }
 
         async def _call() -> httpx.Response:
             return await self._client.get("/wp-json/wp/v2/posts", params=params)
 
         response = await with_retry(
-            _call, attempts=2, what="wp.find_post_by_meta", logger_name="wp"
+            _call, attempts=2, what="wp.find_post_by_slug", logger_name="wp"
         )
-        raise_for_provider(response, what="wp.find_post_by_meta")
+        raise_for_provider(response, what="wp.find_post_by_slug")
         data = response.json()
         if not isinstance(data, list) or not data:
             return None

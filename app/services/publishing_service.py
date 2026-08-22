@@ -15,6 +15,7 @@ Safe, idempotent WordPress publishing:
 
 from __future__ import annotations
 
+import re
 import uuid
 from typing import Any
 
@@ -27,6 +28,15 @@ from app.repositories.publishing_runs import PublishingRunRepo
 from app.repositories.topics import TopicRepo
 
 PUBLISH_ACTIONS = ("publish", "update", "unpublish")
+
+# WordPress themes render the post title as their own <h1>; drop the
+# article's leading <h1> (added by build_article_html) so the published
+# page has exactly one header instead of a duplicated one.
+_LEADING_H1 = re.compile(r"^\s*<h1[^>]*>.*?</h1>\s*", re.DOTALL)
+
+
+def strip_leading_h1(html: str) -> str:
+    return _LEADING_H1.sub("", html, count=1)
 
 
 @register_job("publish_article")
@@ -88,6 +98,9 @@ async def handle_publish_article(ctx: JobContext) -> dict[str, Any]:
     if not html:
         raise ValueError("article has no content — run the writer first")
 
+    # WP renders the post title itself — avoid the duplicated <h1>.
+    html = strip_leading_h1(html)
+
     mode = ctx.config.publishing["mode"]
     request_id = uuid.uuid4().hex[:16]
     articles.set_status(article_id, "publishing")
@@ -121,13 +134,15 @@ async def handle_publish_article(ctx: JobContext) -> dict[str, Any]:
             )
         else:
             # Crash-recovery: a previous attempt may have created the post but
-            # died BEFORE the post id was stored. Find it by our unique meta
-            # and UPDATE it instead of creating a duplicate.
+            # died BEFORE the post id was stored. Find it by the article slug
+            # (WP REST `slug` filter) and UPDATE it instead of duplicating.
             orphan = None
-            find = getattr(publisher, "find_post_by_meta", None)
+            find = getattr(publisher, "find_post_by_slug", None)
             if find is not None:
                 try:
-                    orphan = await find("seoz_article_id", article_id)
+                    orphan = await find(
+                        article.get("slug") or slugify(article.get("title") or "post")
+                    )
                 except Exception:
                     orphan = None
             if orphan is not None and orphan.id:
