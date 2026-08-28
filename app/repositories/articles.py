@@ -15,6 +15,7 @@ ARTICLE_STATUSES = (
     "outline_ready",
     "generating",
     "review",
+    "ready_to_publish",
     "approved",
     "sent_back",
     "publishing",

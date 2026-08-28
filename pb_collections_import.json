@@ -7,77 +7,101 @@
         "name": "name",
         "type": "text",
         "required": true,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "slug",
         "type": "text",
         "required": true,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "description",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "status",
         "type": "select",
         "required": false,
-        "options": {
-          "maxSelect": 1,
-          "values": [
-            "active",
-            "archived"
-          ]
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSelect": 1,
+        "values": [
+          "active",
+          "archived"
+        ]
       },
       {
         "name": "language",
         "type": "select",
         "required": false,
-        "options": {
-          "maxSelect": 1,
-          "values": [
-            "fa",
-            "en",
-            "ar",
-            "tr"
-          ]
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSelect": 1,
+        "values": [
+          "fa",
+          "en",
+          "ar",
+          "tr"
+        ]
       },
       {
         "name": "timezone",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "createdBy",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       }
     ],
     "indexes": [
@@ -98,400 +122,513 @@
         "name": "project",
         "type": "relation",
         "required": true,
-        "options": {
-          "collectionId": "projects",
-          "cascadeDelete": true,
-          "minSelect": null,
-          "maxSelect": 1
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "collectionId": "projects",
+        "cascadeDelete": true,
+        "minSelect": 0,
+        "maxSelect": 1
       },
       {
         "name": "defaultLlmProvider",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "defaultLlmModel",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "outlineProvider",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "outlineModel",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "outlineTemperature",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "outlineMaxTokens",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "outlineTimeout",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "outlineRetry",
         "type": "json",
         "required": false,
-        "options": {
-          "maxSize": 0
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSize": 0
       },
       {
         "name": "sectionProvider",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "sectionModel",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "sectionTemperature",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "sectionMaxTokens",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "sectionTimeout",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "sectionRetry",
         "type": "json",
         "required": false,
-        "options": {
-          "maxSize": 0
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSize": 0
       },
       {
         "name": "metaProvider",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "metaModel",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "reviewProvider",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "reviewModel",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "embeddingProvider",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "embeddingModel",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "embeddingDimensions",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "chunkSize",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "chunkOverlap",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "separatorStrategy",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "maxChunkCount",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "retrievalTopK",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "similarityThreshold",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "rerankingEnabled",
         "type": "bool",
         "required": false,
-        "options": {}
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": ""
       },
       {
         "name": "rerankerProvider",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "rerankerModel",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "rerankerTopN",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "contextMaxLinks",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "contextMaxPassages",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "contextMaxChars",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "generationConcurrency",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "minArticleWords",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "retryPolicy",
         "type": "json",
         "required": false,
-        "options": {
-          "maxSize": 0
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSize": 0
       },
       {
         "name": "publishingMode",
         "type": "select",
         "required": false,
-        "options": {
-          "maxSelect": 1,
-          "values": [
-            "draft",
-            "publish"
-          ]
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSelect": 1,
+        "values": [
+          "draft",
+          "publish"
+        ]
       },
       {
         "name": "autosave",
         "type": "json",
         "required": false,
-        "options": {
-          "maxSize": 0
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSize": 0
       },
       {
         "name": "indexing",
         "type": "json",
         "required": false,
-        "options": {
-          "maxSize": 0
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSize": 0
       }
     ],
     "indexes": [
@@ -511,104 +648,133 @@
         "name": "project",
         "type": "relation",
         "required": true,
-        "options": {
-          "collectionId": "projects",
-          "cascadeDelete": true,
-          "minSelect": null,
-          "maxSelect": 1
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "collectionId": "projects",
+        "cascadeDelete": true,
+        "minSelect": 0,
+        "maxSelect": 1
       },
       {
         "name": "category",
         "type": "select",
         "required": true,
-        "options": {
-          "maxSelect": 1,
-          "values": [
-            "llm",
-            "embedding",
-            "reranker",
-            "vector_store",
-            "publisher"
-          ]
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSelect": 1,
+        "values": [
+          "llm",
+          "embedding",
+          "reranker",
+          "vector_store",
+          "publisher"
+        ]
       },
       {
         "name": "provider",
         "type": "text",
         "required": true,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "displayName",
         "type": "text",
         "required": true,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "configuration",
         "type": "json",
         "required": false,
-        "options": {
-          "maxSize": 0
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSize": 0
       },
       {
         "name": "secretsEnc",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "enabled",
         "type": "bool",
         "required": false,
-        "options": {}
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": ""
       },
       {
         "name": "healthStatus",
         "type": "select",
         "required": false,
-        "options": {
-          "maxSelect": 1,
-          "values": [
-            "unknown",
-            "healthy",
-            "degraded",
-            "unhealthy"
-          ]
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSelect": 1,
+        "values": [
+          "unknown",
+          "healthy",
+          "degraded",
+          "unhealthy"
+        ]
       },
       {
         "name": "lastTestedAt",
         "type": "date",
         "required": false,
-        "options": {
-          "min": "",
-          "max": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": "",
+        "max": ""
       },
       {
         "name": "createdBy",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       }
     ],
     "indexes": [
@@ -629,84 +795,107 @@
         "name": "project",
         "type": "relation",
         "required": false,
-        "options": {
-          "collectionId": "projects",
-          "cascadeDelete": false,
-          "minSelect": null,
-          "maxSelect": 1
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "collectionId": "projects",
+        "cascadeDelete": false,
+        "minSelect": 0,
+        "maxSelect": 1
       },
       {
         "name": "type",
         "type": "select",
         "required": true,
-        "options": {
-          "maxSelect": 1,
-          "values": [
-            "outline_system",
-            "outline_user",
-            "section_system",
-            "section_user",
-            "seo_rules",
-            "internal_linking",
-            "brand_voice",
-            "validation"
-          ]
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSelect": 1,
+        "values": [
+          "outline_system",
+          "outline_user",
+          "section_system",
+          "section_user",
+          "seo_rules",
+          "internal_linking",
+          "brand_voice",
+          "validation"
+        ]
       },
       {
         "name": "name",
         "type": "text",
         "required": true,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "content",
         "type": "text",
         "required": true,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "version",
         "type": "number",
         "required": true,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "active",
         "type": "bool",
         "required": false,
-        "options": {}
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": ""
       },
       {
         "name": "variables",
         "type": "json",
         "required": false,
-        "options": {
-          "maxSize": 0
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSize": 0
       },
       {
         "name": "updatedBy",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       }
     ],
     "indexes": [
@@ -727,113 +916,166 @@
         "name": "project",
         "type": "relation",
         "required": true,
-        "options": {
-          "collectionId": "projects",
-          "cascadeDelete": true,
-          "minSelect": null,
-          "maxSelect": 1
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "collectionId": "projects",
+        "cascadeDelete": true,
+        "minSelect": 0,
+        "maxSelect": 1
       },
       {
         "name": "title",
         "type": "text",
         "required": true,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "keyword",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "pillar",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "cluster",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "type",
         "type": "select",
         "required": false,
-        "options": {
-          "maxSelect": 1,
-          "values": [
-            "article",
-            "pillar_page",
-            "guide",
-            "news"
-          ]
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSelect": 1,
+        "values": [
+          "article",
+          "pillar_page",
+          "guide",
+          "news"
+        ]
       },
       {
         "name": "status",
         "type": "select",
         "required": true,
-        "options": {
-          "maxSelect": 1,
-          "values": [
-            "planned",
-            "queued",
-            "planning",
-            "outline_ready",
-            "writing",
-            "review",
-            "completed",
-            "publishing",
-            "published",
-            "failed",
-            "cancelled"
-          ]
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSelect": 1,
+        "values": [
+          "planned",
+          "queued",
+          "planning",
+          "outline_ready",
+          "writing",
+          "review",
+          "completed",
+          "publishing",
+          "published",
+          "failed",
+          "cancelled"
+        ]
       },
       {
         "name": "priority",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
+      },
+      {
+        "name": "week",
+        "type": "number",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
+      },
+      {
+        "name": "url",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "articleId",
         "type": "relation",
         "required": false,
-        "options": {
-          "collectionId": "articles",
-          "cascadeDelete": false,
-          "minSelect": null,
-          "maxSelect": 1
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "collectionId": "articles",
+        "cascadeDelete": false,
+        "minSelect": 0,
+        "maxSelect": 1
       }
     ],
     "indexes": [
       "CREATE INDEX idx_topics_project_status_priority ON topics (project, status, priority)",
-      "CREATE INDEX idx_topics_project_status ON topics (project, status)"
+      "CREATE INDEX idx_topics_project_status ON topics (project, status)",
+      "CREATE INDEX idx_topics_project_week ON topics (project, week)"
     ],
     "listRule": "@request.auth.id != ''",
     "viewRule": "@request.auth.id != ''",
@@ -849,205 +1091,262 @@
         "name": "project",
         "type": "relation",
         "required": true,
-        "options": {
-          "collectionId": "projects",
-          "cascadeDelete": true,
-          "minSelect": null,
-          "maxSelect": 1
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "collectionId": "projects",
+        "cascadeDelete": true,
+        "minSelect": 0,
+        "maxSelect": 1
       },
       {
         "name": "topicId",
         "type": "relation",
         "required": true,
-        "options": {
-          "collectionId": "topics",
-          "cascadeDelete": true,
-          "minSelect": null,
-          "maxSelect": 1
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "collectionId": "topics",
+        "cascadeDelete": true,
+        "minSelect": 0,
+        "maxSelect": 1
       },
       {
         "name": "title",
         "type": "text",
         "required": true,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "slug",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "status",
         "type": "select",
         "required": true,
-        "options": {
-          "maxSelect": 1,
-          "values": [
-            "draft",
-            "outline_ready",
-            "generating",
-            "review",
-            "publishing",
-            "published",
-            "failed"
-          ]
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSelect": 1,
+        "values": [
+          "draft",
+          "outline_ready",
+          "generating",
+          "review",
+          "ready_to_publish",
+          "approved",
+          "sent_back",
+          "publishing",
+          "published",
+          "failed"
+        ]
       },
       {
         "name": "outlineVersion",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "outline",
         "type": "json",
         "required": false,
-        "options": {
-          "maxSize": 0
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSize": 0
       },
       {
         "name": "validation",
         "type": "json",
         "required": false,
-        "options": {
-          "maxSize": 0
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSize": 0
       },
       {
         "name": "finalHtml",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 100000
       },
       {
         "name": "generatedContent",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 100000
       },
       {
         "name": "lastGeneratedRevision",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "reviewNote",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "metaDescription",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "seoScore",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "wordCount",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "generatedAt",
         "type": "date",
         "required": false,
-        "options": {
-          "min": "",
-          "max": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": "",
+        "max": ""
       },
       {
         "name": "publishedAt",
         "type": "date",
         "required": false,
-        "options": {
-          "min": "",
-          "max": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": "",
+        "max": ""
       },
       {
         "name": "wordpressPostId",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "wordpressUrl",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "lastJob",
         "type": "relation",
         "required": false,
-        "options": {
-          "collectionId": "jobs",
-          "cascadeDelete": false,
-          "minSelect": null,
-          "maxSelect": 1
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "collectionId": "jobs",
+        "cascadeDelete": false,
+        "minSelect": 0,
+        "maxSelect": 1
       }
     ],
     "indexes": [
@@ -1068,149 +1367,189 @@
         "name": "article",
         "type": "relation",
         "required": true,
-        "options": {
-          "collectionId": "articles",
-          "cascadeDelete": true,
-          "minSelect": null,
-          "maxSelect": 1
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "collectionId": "articles",
+        "cascadeDelete": true,
+        "minSelect": 0,
+        "maxSelect": 1
       },
       {
         "name": "position",
         "type": "number",
-        "required": true,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "heading",
         "type": "text",
         "required": true,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "contentBrief",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "internalLinks",
         "type": "json",
         "required": false,
-        "options": {
-          "maxSize": 0
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSize": 0
       },
       {
         "name": "content",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 100000
       },
       {
         "name": "status",
         "type": "select",
         "required": true,
-        "options": {
-          "maxSelect": 1,
-          "values": [
-            "pending",
-            "generating",
-            "done",
-            "failed"
-          ]
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSelect": 1,
+        "values": [
+          "pending",
+          "generating",
+          "done",
+          "failed"
+        ]
       },
       {
         "name": "generationAttempts",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "promptVersion",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "generationStartedAt",
         "type": "date",
         "required": false,
-        "options": {
-          "min": "",
-          "max": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": "",
+        "max": ""
       },
       {
         "name": "provider",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "model",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "tokenUsage",
         "type": "json",
         "required": false,
-        "options": {
-          "maxSize": 0
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSize": 0
       },
       {
         "name": "generationLatency",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "error",
         "type": "json",
         "required": false,
-        "options": {
-          "maxSize": 0
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSize": 0
       }
     ],
     "indexes": [
@@ -1230,64 +1569,80 @@
         "name": "article",
         "type": "relation",
         "required": true,
-        "options": {
-          "collectionId": "articles",
-          "cascadeDelete": true,
-          "minSelect": null,
-          "maxSelect": 1
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "collectionId": "articles",
+        "cascadeDelete": true,
+        "minSelect": 0,
+        "maxSelect": 1
       },
       {
         "name": "revision",
         "type": "number",
         "required": true,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "kind",
         "type": "select",
         "required": true,
-        "options": {
-          "maxSelect": 1,
-          "values": [
-            "generated",
-            "manual",
-            "checkpoint",
-            "rollback"
-          ]
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSelect": 1,
+        "values": [
+          "generated",
+          "manual",
+          "checkpoint",
+          "rollback"
+        ]
       },
       {
         "name": "snapshot",
         "type": "json",
         "required": false,
-        "options": {
-          "maxSize": 0
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSize": 0
       },
       {
         "name": "note",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "createdBy",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       }
     ],
     "indexes": [
@@ -1308,139 +1663,177 @@
         "name": "project",
         "type": "relation",
         "required": true,
-        "options": {
-          "collectionId": "projects",
-          "cascadeDelete": true,
-          "minSelect": null,
-          "maxSelect": 1
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "collectionId": "projects",
+        "cascadeDelete": true,
+        "minSelect": 0,
+        "maxSelect": 1
       },
       {
         "name": "sourceType",
         "type": "select",
         "required": true,
-        "options": {
-          "maxSelect": 1,
-          "values": [
-            "wordpress",
-            "url",
-            "manual"
-          ]
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSelect": 1,
+        "values": [
+          "wordpress",
+          "url",
+          "manual"
+        ]
       },
       {
         "name": "sourceId",
         "type": "text",
         "required": true,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "sourceUrl",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "title",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "contentHash",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "embeddingProvider",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "embeddingModel",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "embeddingDimensions",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "chunkCount",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "indexStatus",
         "type": "select",
         "required": true,
-        "options": {
-          "maxSelect": 1,
-          "values": [
-            "pending",
-            "indexed",
-            "failed",
-            "deleted"
-          ]
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSelect": 1,
+        "values": [
+          "pending",
+          "indexed",
+          "failed",
+          "deleted"
+        ]
       },
       {
         "name": "indexedAt",
         "type": "date",
         "required": false,
-        "options": {
-          "min": "",
-          "max": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": "",
+        "max": ""
       },
       {
         "name": "lastRun",
         "type": "relation",
         "required": false,
-        "options": {
-          "collectionId": "index_runs",
-          "cascadeDelete": false,
-          "minSelect": null,
-          "maxSelect": 1
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "collectionId": "index_runs",
+        "cascadeDelete": false,
+        "minSelect": 0,
+        "maxSelect": 1
       }
     ],
     "indexes": [
@@ -1461,165 +1854,199 @@
         "name": "project",
         "type": "relation",
         "required": true,
-        "options": {
-          "collectionId": "projects",
-          "cascadeDelete": true,
-          "minSelect": null,
-          "maxSelect": 1
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "collectionId": "projects",
+        "cascadeDelete": true,
+        "minSelect": 0,
+        "maxSelect": 1
       },
       {
         "name": "job",
         "type": "relation",
         "required": false,
-        "options": {
-          "collectionId": "jobs",
-          "cascadeDelete": false,
-          "minSelect": null,
-          "maxSelect": 1
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "collectionId": "jobs",
+        "cascadeDelete": false,
+        "minSelect": 0,
+        "maxSelect": 1
       },
       {
         "name": "trigger",
         "type": "select",
         "required": false,
-        "options": {
-          "maxSelect": 1,
-          "values": [
-            "manual",
-            "schedule"
-          ]
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSelect": 1,
+        "values": [
+          "manual",
+          "schedule"
+        ]
       },
       {
         "name": "status",
         "type": "select",
         "required": true,
-        "options": {
-          "maxSelect": 1,
-          "values": [
-            "running",
-            "succeeded",
-            "failed",
-            "cancelled"
-          ]
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSelect": 1,
+        "values": [
+          "running",
+          "succeeded",
+          "failed",
+          "cancelled"
+        ]
       },
       {
         "name": "totalDocuments",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "processedDocuments",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "unchangedDocuments",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "changedDocuments",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "indexedDocuments",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "skippedDocuments",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "failedDocuments",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "elapsedSeconds",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "lastSourceId",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "startedAt",
         "type": "date",
         "required": false,
-        "options": {
-          "min": "",
-          "max": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": "",
+        "max": ""
       },
       {
         "name": "finishedAt",
         "type": "date",
         "required": false,
-        "options": {
-          "min": "",
-          "max": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": "",
+        "max": ""
       },
       {
         "name": "error",
         "type": "json",
         "required": false,
-        "options": {
-          "maxSize": 0
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSize": 0
       }
     ],
     "indexes": [
@@ -1639,273 +2066,348 @@
         "name": "project",
         "type": "relation",
         "required": true,
-        "options": {
-          "collectionId": "projects",
-          "cascadeDelete": true,
-          "minSelect": null,
-          "maxSelect": 1
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "collectionId": "projects",
+        "cascadeDelete": true,
+        "minSelect": 0,
+        "maxSelect": 1
       },
       {
         "name": "type",
         "type": "text",
         "required": true,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "entityType",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "entityId",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "status",
         "type": "select",
         "required": true,
-        "options": {
-          "maxSelect": 1,
-          "values": [
-            "pending",
-            "running",
-            "completed",
-            "failed",
-            "cancelled",
-            "retrying"
-          ]
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSelect": 1,
+        "values": [
+          "pending",
+          "running",
+          "completed",
+          "failed",
+          "cancelled",
+          "retrying"
+        ]
       },
       {
         "name": "priority",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "payload",
         "type": "json",
         "required": false,
-        "options": {
-          "maxSize": 0
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSize": 0
       },
       {
         "name": "progress",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "stage",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "progressMessage",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "currentItem",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "totalItems",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "attempts",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "maxAttempts",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "availableAt",
         "type": "date",
         "required": false,
-        "options": {
-          "min": "",
-          "max": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": "",
+        "max": ""
       },
       {
         "name": "lockedAt",
         "type": "date",
         "required": false,
-        "options": {
-          "min": "",
-          "max": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": "",
+        "max": ""
       },
       {
         "name": "lockedBy",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "leaseExpiresAt",
         "type": "date",
         "required": false,
-        "options": {
-          "min": "",
-          "max": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": "",
+        "max": ""
       },
       {
         "name": "heartbeatAt",
         "type": "date",
         "required": false,
-        "options": {
-          "min": "",
-          "max": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": "",
+        "max": ""
       },
       {
         "name": "startedAt",
         "type": "date",
         "required": false,
-        "options": {
-          "min": "",
-          "max": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": "",
+        "max": ""
       },
       {
         "name": "finishedAt",
         "type": "date",
         "required": false,
-        "options": {
-          "min": "",
-          "max": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": "",
+        "max": ""
       },
       {
         "name": "errorCode",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "errorMessage",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "errorDetails",
         "type": "json",
         "required": false,
-        "options": {
-          "maxSize": 0
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSize": 0
       },
       {
         "name": "result",
         "type": "json",
         "required": false,
-        "options": {
-          "maxSize": 0
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSize": 0
       },
       {
         "name": "idempotencyKey",
         "type": "text",
         "required": true,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "cancelRequested",
         "type": "bool",
         "required": false,
-        "options": {}
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": ""
       },
       {
         "name": "parent",
         "type": "relation",
         "required": false,
-        "options": {
-          "collectionId": "jobs",
-          "cascadeDelete": false,
-          "minSelect": null,
-          "maxSelect": 1
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "collectionId": "jobs",
+        "cascadeDelete": false,
+        "minSelect": 0,
+        "maxSelect": 1
       }
     ],
     "indexes": [
@@ -1929,31 +2431,39 @@
         "name": "job",
         "type": "relation",
         "required": true,
-        "options": {
-          "collectionId": "jobs",
-          "cascadeDelete": true,
-          "minSelect": null,
-          "maxSelect": 1
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "collectionId": "jobs",
+        "cascadeDelete": true,
+        "minSelect": 0,
+        "maxSelect": 1
       },
       {
         "name": "workerId",
         "type": "text",
         "required": true,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "expiresAt",
         "type": "date",
         "required": true,
-        "options": {
-          "min": "",
-          "max": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": "",
+        "max": ""
       }
     ],
     "indexes": [
@@ -1974,51 +2484,65 @@
         "name": "job",
         "type": "relation",
         "required": false,
-        "options": {
-          "collectionId": "jobs",
-          "cascadeDelete": false,
-          "minSelect": null,
-          "maxSelect": 1
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "collectionId": "jobs",
+        "cascadeDelete": false,
+        "minSelect": 0,
+        "maxSelect": 1
       },
       {
         "name": "project",
         "type": "relation",
         "required": true,
-        "options": {
-          "collectionId": "projects",
-          "cascadeDelete": true,
-          "minSelect": null,
-          "maxSelect": 1
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "collectionId": "projects",
+        "cascadeDelete": true,
+        "minSelect": 0,
+        "maxSelect": 1
       },
       {
         "name": "eventType",
         "type": "text",
         "required": true,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "message",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "metadata",
         "type": "json",
         "required": false,
-        "options": {
-          "maxSize": 0
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSize": 0
       }
     ],
     "indexes": [
@@ -2039,124 +2563,150 @@
         "name": "project",
         "type": "relation",
         "required": true,
-        "options": {
-          "collectionId": "projects",
-          "cascadeDelete": true,
-          "minSelect": null,
-          "maxSelect": 1
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "collectionId": "projects",
+        "cascadeDelete": true,
+        "minSelect": 0,
+        "maxSelect": 1
       },
       {
         "name": "article",
         "type": "relation",
         "required": true,
-        "options": {
-          "collectionId": "articles",
-          "cascadeDelete": true,
-          "minSelect": null,
-          "maxSelect": 1
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "collectionId": "articles",
+        "cascadeDelete": true,
+        "minSelect": 0,
+        "maxSelect": 1
       },
       {
         "name": "job",
         "type": "relation",
         "required": false,
-        "options": {
-          "collectionId": "jobs",
-          "cascadeDelete": false,
-          "minSelect": null,
-          "maxSelect": 1
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "collectionId": "jobs",
+        "cascadeDelete": false,
+        "minSelect": 0,
+        "maxSelect": 1
       },
       {
         "name": "status",
         "type": "select",
         "required": true,
-        "options": {
-          "maxSelect": 1,
-          "values": [
-            "pending",
-            "published",
-            "failed",
-            "skipped_duplicate"
-          ]
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSelect": 1,
+        "values": [
+          "pending",
+          "published",
+          "failed",
+          "skipped_duplicate"
+        ]
       },
       {
         "name": "attempt",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "mode",
         "type": "select",
         "required": false,
-        "options": {
-          "maxSelect": 1,
-          "values": [
-            "draft",
-            "publish"
-          ]
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSelect": 1,
+        "values": [
+          "draft",
+          "publish"
+        ]
       },
       {
         "name": "wordpressPostId",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "wordpressUrl",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "responseMetadata",
         "type": "json",
         "required": false,
-        "options": {
-          "maxSize": 0
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSize": 0
       },
       {
         "name": "error",
         "type": "json",
         "required": false,
-        "options": {
-          "maxSize": 0
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSize": 0
       },
       {
         "name": "startedAt",
         "type": "date",
         "required": false,
-        "options": {
-          "min": "",
-          "max": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": "",
+        "max": ""
       },
       {
         "name": "completedAt",
         "type": "date",
         "required": false,
-        "options": {
-          "min": "",
-          "max": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": "",
+        "max": ""
       }
     ],
     "indexes": [
@@ -2177,130 +2727,164 @@
         "name": "project",
         "type": "relation",
         "required": true,
-        "options": {
-          "collectionId": "projects",
-          "cascadeDelete": true,
-          "minSelect": null,
-          "maxSelect": 1
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "collectionId": "projects",
+        "cascadeDelete": true,
+        "minSelect": 0,
+        "maxSelect": 1
       },
       {
         "name": "provider",
         "type": "text",
         "required": true,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "model",
         "type": "text",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "operation",
         "type": "text",
         "required": true,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "day",
         "type": "text",
         "required": true,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "requestCount",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "successCount",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "failureCount",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "retryCount",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "promptTokens",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "completionTokens",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "latencySum",
         "type": "number",
         "required": false,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "latencyBuckets",
         "type": "json",
         "required": false,
-        "options": {
-          "maxSize": 0
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSize": 0
       }
     ],
     "indexes": [
@@ -2321,76 +2905,95 @@
         "name": "project",
         "type": "relation",
         "required": true,
-        "options": {
-          "collectionId": "projects",
-          "cascadeDelete": true,
-          "minSelect": null,
-          "maxSelect": 1
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "collectionId": "projects",
+        "cascadeDelete": true,
+        "minSelect": 0,
+        "maxSelect": 1
       },
       {
         "name": "name",
         "type": "text",
         "required": true,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "kind",
         "type": "select",
         "required": true,
-        "options": {
-          "maxSelect": 1,
-          "values": [
-            "index",
-            "write"
-          ]
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSelect": 1,
+        "values": [
+          "index",
+          "write"
+        ]
       },
       {
         "name": "enabled",
         "type": "bool",
         "required": false,
-        "options": {}
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": ""
       },
       {
         "name": "intervalMinutes",
         "type": "number",
         "required": true,
-        "options": {
-          "min": null,
-          "max": null,
-          "step": null
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false
       },
       {
         "name": "nextRunAt",
         "type": "date",
         "required": false,
-        "options": {
-          "min": "",
-          "max": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": "",
+        "max": ""
       },
       {
         "name": "lastRunAt",
         "type": "date",
         "required": false,
-        "options": {
-          "min": "",
-          "max": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": "",
+        "max": ""
       },
       {
         "name": "payload",
         "type": "json",
         "required": false,
-        "options": {
-          "maxSize": 0
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSize": 0
       }
     ],
     "indexes": [
@@ -2410,19 +3013,25 @@
         "name": "key",
         "type": "text",
         "required": true,
-        "options": {
-          "min": null,
-          "max": null,
-          "pattern": ""
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0
       },
       {
         "name": "value",
         "type": "json",
         "required": false,
-        "options": {
-          "maxSize": 0
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSize": 0
       }
     ],
     "indexes": [
@@ -2442,37 +3051,43 @@
         "name": "project",
         "type": "relation",
         "required": true,
-        "options": {
-          "collectionId": "projects",
-          "cascadeDelete": true,
-          "minSelect": null,
-          "maxSelect": 1
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "collectionId": "projects",
+        "cascadeDelete": true,
+        "minSelect": 0,
+        "maxSelect": 1
       },
       {
         "name": "user",
         "type": "relation",
         "required": true,
-        "options": {
-          "collectionId": "users",
-          "cascadeDelete": true,
-          "minSelect": null,
-          "maxSelect": 1
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "collectionId": "users",
+        "cascadeDelete": true,
+        "minSelect": 0,
+        "maxSelect": 1
       },
       {
         "name": "role",
         "type": "select",
         "required": true,
-        "options": {
-          "maxSelect": 1,
-          "values": [
-            "owner",
-            "admin",
-            "editor",
-            "viewer"
-          ]
-        }
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSelect": 1,
+        "values": [
+          "owner",
+          "admin",
+          "editor",
+          "viewer"
+        ]
       }
     ],
     "indexes": [

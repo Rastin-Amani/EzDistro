@@ -50,63 +50,78 @@ def col(
     }
 
 
-def t(
-    name: str, *, required: bool = False, unique: bool = False, max_len: int | None = None
-) -> dict[str, Any]:
-    # NOTE: PocketBase enforces a 5000-char default cap when max is unset (0) —
-    # long-content fields must pass an explicit max_len or writes get rejected.
-    opts: dict[str, Any] = {"min": None, "max": max_len, "pattern": ""}
-    if unique:
-        opts["unique"] = True
-    return {"name": name, "type": "text", "required": required, "options": opts}
-
-
-def num(name: str, *, required: bool = False) -> dict[str, Any]:
+def _base_field(name: str, ftype: str, *, required: bool = False) -> dict[str, Any]:
+    """PocketBase >= 0.23 field shape: flat options (no nested ``options``)."""
     return {
         "name": name,
-        "type": "number",
+        "type": ftype,
         "required": required,
-        "options": {"min": None, "max": None, "step": None},
+        "system": False,
+        "hidden": False,
+        "presentable": False,
+        "help": "",
     }
 
 
+def t(name: str, *, required: bool = False, max_len: int | None = None) -> dict[str, Any]:
+    # NOTE: PocketBase enforces a 5000-char default cap when max is unset (0) —
+    # long-content fields must pass an explicit max_len or writes get rejected.
+    field = _base_field(name, "text", required=required)
+    field.update(
+        {
+            "primaryKey": False,
+            "autogeneratePattern": "",
+            "pattern": "",
+            "min": 0,
+            "max": max_len or 0,
+        }
+    )
+    return field
+
+
+def num(name: str, *, required: bool = False) -> dict[str, Any]:
+    field = _base_field(name, "number", required=required)
+    field.update({"min": None, "max": None, "onlyInt": False})
+    return field
+
+
 def boolean(name: str, *, required: bool = False) -> dict[str, Any]:
-    return {"name": name, "type": "bool", "required": required, "options": {}}
+    return _base_field(name, "bool", required=required)
 
 
 def date(name: str, *, required: bool = False) -> dict[str, Any]:
-    return {"name": name, "type": "date", "required": required, "options": {"min": "", "max": ""}}
+    field = _base_field(name, "date", required=required)
+    field.update({"min": "", "max": ""})
+    return field
 
 
 def json_field(name: str, *, required: bool = False) -> dict[str, Any]:
-    return {"name": name, "type": "json", "required": required, "options": {"maxSize": 0}}
+    field = _base_field(name, "json", required=required)
+    field.update({"maxSize": 0})
+    return field
 
 
 def select(
     name: str, values: list[str], *, required: bool = False, max_select: int = 1
 ) -> dict[str, Any]:
-    return {
-        "name": name,
-        "type": "select",
-        "required": required,
-        "options": {"maxSelect": max_select, "values": values},
-    }
+    field = _base_field(name, "select", required=required)
+    field.update({"maxSelect": max_select, "values": list(values)})
+    return field
 
 
 def rel(
     name: str, collection: str, *, required: bool = False, cascade: bool = False
 ) -> dict[str, Any]:
-    return {
-        "name": name,
-        "type": "relation",
-        "required": required,
-        "options": {
+    field = _base_field(name, "relation", required=required)
+    field.update(
+        {
             "collectionId": collection,
             "cascadeDelete": cascade,
-            "minSelect": None,
+            "minSelect": 0,
             "maxSelect": 1,
-        },
-    }
+        }
+    )
+    return field
 
 
 # ---------------------------------------------------------------------------
@@ -262,11 +277,14 @@ COLLECTIONS: list[dict[str, Any]] = [
                 required=True,
             ),
             num("priority"),
+            num("week"),  # editorial-calendar week (from CSV imports)
+            t("url"),  # published URL (from CSV imports)
             rel("articleId", "articles"),  # no cascade; cleared in app code
         ],
         indexes=[
             "CREATE INDEX idx_topics_project_status_priority ON topics (project, status, priority)",
             "CREATE INDEX idx_topics_project_status ON topics (project, status)",
+            "CREATE INDEX idx_topics_project_week ON topics (project, week)",
         ],
     ),
     # --------------------------------------------------------------- articles
@@ -284,6 +302,7 @@ COLLECTIONS: list[dict[str, Any]] = [
                     "outline_ready",
                     "generating",
                     "review",
+                    "ready_to_publish",
                     "approved",
                     "sent_back",
                     "publishing",
@@ -637,8 +656,22 @@ DEFAULT_PROMPTS: dict[str, str] = {
 # Bootstrap
 # ---------------------------------------------------------------------------
 def import_collections(pb: PocketBase) -> None:
+    specs = [dict(c) for c in COLLECTIONS]  # type: ignore[var-annotated]
+    # PocketBase 0.23 validates relation collectionId as a collection ID during
+    # import (names are only resolved when a batch creates the collections from
+    # scratch). Resolve existing name-based refs so re-bootstraps stay clean.
     try:
-        specs = [c for c in COLLECTIONS]  # type: ignore[var-annotated]
+        by_name = {c.name: c.id for c in pb.collections.get_full_list()}
+    except Exception:
+        by_name = {}
+    if by_name:
+        for spec in specs:
+            for field in spec.get("fields", []):
+                if field.get("type") == "relation":
+                    ref = str(field.get("collectionId") or "")
+                    if not ref.startswith("pbc_") and ref in by_name:
+                        field["collectionId"] = by_name[ref]
+    try:
         pb.collections.import_collections(collections=specs, delete_missing=False)  # type: ignore[arg-type]
     except Exception as exc:
         raise RuntimeError(
@@ -657,13 +690,26 @@ def ensure_users_fields(pb: PocketBase) -> None:
             "name": "role",
             "type": "select",
             "required": False,
-            "options": {"maxSelect": 1, "values": ["admin", "member"]},
+            "system": False,
+            "hidden": False,
+            "presentable": False,
+            "help": "",
+            "maxSelect": 1,
+            "values": ["admin", "member"],
         },
         {
             "name": "displayName",
             "type": "text",
             "required": False,
-            "options": {"min": None, "max": None, "pattern": ""},
+            "system": False,
+            "hidden": False,
+            "presentable": False,
+            "help": "",
+            "primaryKey": False,
+            "autogeneratePattern": "",
+            "pattern": "",
+            "min": 0,
+            "max": 0,
         },
     ]
     added = [f for f in additions if f["name"] not in names]

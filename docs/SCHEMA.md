@@ -171,9 +171,11 @@ Persian content — see `DEFAULT_PROMPTS` in `bootstrap_pb.py`.
 | type | sel | `article` \| `pillar_page` \| `guide` \| `news` |
 | status* | sel | `planned` \| `queued` \| `planning` \| `outline_ready` \| `writing` \| `review` \| `completed` \| `publishing` \| `published` \| `failed` \| `cancelled` |
 | priority | num | higher first when picking topics/jobs |
+| week | num | editorial-calendar week (bulk/CSV imports) |
+| url | text | published URL (bulk/CSV imports) |
 | articleId R | articles | no cascade; cleared by app code |
 
-Indexes: (project, status, priority); (project, status).
+Indexes: (project, status, priority); (project, status); (project, week).
 
 ### 3.6 articles
 
@@ -183,7 +185,7 @@ Indexes: (project, status, priority); (project, status).
 | topicId* R U | topics | cascade from topic; 1:1 |
 | title* | text | |
 | slug | text | |
-| status* | sel | `draft` \| `outline_ready` \| `generating` \| `review` \| `approved` \| `sent_back` \| `publishing` \| `published` \| `failed` |
+| status* | sel | `draft` \| `outline_ready` \| `generating` \| `review` \| `ready_to_publish` \| `approved` \| `sent_back` \| `publishing` \| `published` \| `failed` |
 | outlineVersion | num | bumped on every outline (re)build |
 | outline | json | immutable validated snapshot `{title, slug, sections[{heading, content_brief, internal_links[{title,url,anchor_text}]}]}` |
 | validation | json | assembler's report `{ok, issues[], stats}` |
