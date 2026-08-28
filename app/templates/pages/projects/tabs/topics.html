@@ -6,17 +6,32 @@
     <div class="flex flex-col gap-3">
         <div class="flex flex-wrap items-center justify-between gap-2">
             <div class="join join-sm overflow-x-auto">
-                <a class="join-item btn btn-xs {{ 'btn-primary' if not status_filter }}" hx-get="/projects/{{ project.id }}/tabs/topics" hx-target="#tab-content">همه</a>
+                <a class="join-item btn btn-xs {{ 'btn-primary' if not status_filter }}"
+                   hx-get="/projects/{{ project.id }}/tabs/topics?q={{ q }}" hx-target="#tab-content">همه</a>
                 {% for s in ['planned', 'queued', 'planning', 'outline_ready', 'writing', 'review', 'publishing', 'published', 'failed', 'cancelled'] %}
                 <a class="join-item btn btn-xs {{ 'btn-primary' if status_filter == s }}"
-                   hx-get="/projects/{{ project.id }}/tabs/topics?status={{ s }}" hx-target="#tab-content">{{ s }}</a>
+                   hx-get="/projects/{{ project.id }}/tabs/topics?status={{ s }}&q={{ q }}" hx-target="#tab-content">{{ s|status_label }}</a>
                 {% endfor %}
             </div>
             <div class="flex items-center gap-2">
                 <a href="/projects/{{ project.id }}/topics" class="btn btn-ghost btn-xs">نمای کامل</a>
+                <button class="btn btn-ghost btn-xs" onclick="document.getElementById('topic-import-modal').showModal()">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" /></svg>
+                    CSV / گروهی
+                </button>
                 <button class="btn btn-primary btn-xs" onclick="document.getElementById('new-topic-modal').showModal()">+ موضوع</button>
             </div>
         </div>
+
+        <form class="flex items-center gap-2" hx-get="/projects/{{ project.id }}/tabs/topics" hx-target="#tab-content"
+              hx-trigger="submit" hx-swap="innerHTML">
+            <input id="topics-tab-search" name="q" type="search" value="{{ q }}" class="input input-sm w-full max-w-64"
+                   placeholder="جستجو در عنوان یا کلمه کلیدی…" />
+            <input type="hidden" name="status" value="{{ status_filter }}" />
+            {% if q %}
+            <a class="btn btn-ghost btn-xs text-error" href="/projects/{{ project.id }}?tab=topics">پاک‌کردن</a>
+            {% endif %}
+        </form>
 
         {% if topics %}
         <div class="card bg-base-100 border border-base-200 shadow-none">
@@ -93,7 +108,11 @@
                     {{ f.text('pillar', 'ستون (Pillar)', '', 'مقاله ستون اصلی که این موضوع به آن مرتبط است (برای لینک‌سازی داخلی).') }}
                     {{ f.text('cluster', 'خوشه (Cluster)', '', 'نام خوشه محتوایی برای گروه‌بندی موضوعات مرتبط.') }}
                 </div>
-                {{ f.number('priority', 'اولویت', '0', 'هرچه بزرگ‌تر، زودتر در صف تولید قرار می‌گیرد.', min='0', hint='موضوعات با اولویت بالاتر زودتر پردازش می‌شوند.') }}
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {{ f.number('priority', 'اولویت', '0', 'هرچه بزرگ‌تر، زودتر در صف تولید قرار می‌گیرد.', min='0') }}
+                    {{ f.number('week', 'هفته', '', 'هفته تقویم تحریریه (اختیاری).') }}
+                </div>
+                {{ f.text('url', 'لینک مقاله', '', 'آدرس منتشرشده (اختیاری).') }}
                 <div class="flex gap-3 mt-2">
                     <button type="submit" class="btn btn-primary flex-1" hx-disabled-elt="this">
                         <span class="loading loading-spinner loading-xs htmx-indicator"></span>
@@ -104,4 +123,6 @@
             </form>
         </div>
     </dialog>
+
+    {% include "components/topics/import_modal.html" %}
 </div>

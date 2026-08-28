@@ -1,0 +1,75 @@
+{# Step 2: column mapping — rendered by POST /projects/{id}/topics/import/preview.
+   One select per import field; each select lists the detected columns. #}
+<div class="flex flex-col gap-4">
+    <div class="flex flex-wrap items-center justify-between gap-2">
+        <p class="text-xs opacity-70 truncate">
+            <span class="font-semibold">{{ filename }}</span>
+            — {{ row_count }} موضوع
+        </p>
+        <div class="flex items-center gap-1">
+            <span class="badge badge-soft badge-neutral badge-xs">{{ 'دارای هدر' if has_header else 'بدون هدر' }}</span>
+            <span class="badge badge-soft badge-neutral badge-xs">جداکننده: {{ 'Tab' if delimiter == '\t' else delimiter }}</span>
+        </div>
+    </div>
+
+    {% if data_preview %}
+    <div class="overflow-x-auto border border-base-200 rounded-box">
+        <table class="table table-xs">
+            <thead>
+                <tr class="text-xs opacity-60">
+                    <th>#</th>
+                    {% for c in columns[:6] %}
+                    <th class="max-w-28"><p class="truncate" title="{{ c.name }}">{{ c.name }}</p></th>
+                    {% endfor %}
+                    {% if columns|length > 6 %}<th>…</th>{% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in data_preview %}
+                <tr class="text-xs">
+                    <td class="opacity-40">{{ loop.index + (1 if has_header else 0) }}</td>
+                    {% for cell in row[:6] %}
+                    <td class="max-w-28"><p class="truncate" title="{{ cell }}">{{ cell or '—' }}</p></td>
+                    {% endfor %}
+                    {% if row|length > 6 %}<td class="opacity-40">+{{ row|length - 6 }}</td>{% endif %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <form hx-post="/projects/{{ project.id }}/topics/import"
+          hx-target="#topic-import-body" hx-swap="innerHTML"
+          class="flex flex-col gap-3">
+        <input type="hidden" name="token" value="{{ token }}" />
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
+            {% for field in fields %}
+            <label class="form-control w-full">
+                <span class="label-text text-xs font-medium">{{ field_labels.get(field, field) }}</span>
+                <select name="col_{{ field }}" class="select select-sm select-bordered w-full">
+                    <option value="-1">— نادیده بگیر —</option>
+                    {% for c in columns %}
+                    <option value="{{ c.index }}" {{ 'selected' if column_map.get(field) == c.index }}>
+                        {{ c.name }}{% if c.samples %} · {{ c.samples|join('، ') }}{% endif %}
+                    </option>
+                    {% endfor %}
+                </select>
+            </label>
+            {% endfor %}
+        </div>
+        <p class="text-xs opacity-50 leading-relaxed">
+            ردیف‌هایی که عنوان یا کلمه کلیدی‌شان قبلاً در پروژه (یا همین فایل) وجود داشته باشد خودکار رد می‌شوند.
+            همه موضوع‌ها با وضعیت «برنامه‌ریزی‌شده» اضافه می‌شوند.
+        </p>
+        <div class="flex gap-3">
+            <button type="submit" class="btn btn-primary flex-1" hx-disabled-elt="this">
+                <span class="loading loading-spinner loading-xs htmx-indicator"></span>
+                افزودن {{ row_count }} موضوع
+            </button>
+            <button type="button" class="btn btn-ghost"
+                    hx-get="/projects/{{ project.id }}/topics/import"
+                    hx-target="#topic-import-body" hx-swap="innerHTML">تغییر متن</button>
+        </div>
+    </form>
+</div>

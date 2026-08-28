@@ -10,7 +10,13 @@
         <h1 class="font-bold">موضوع‌ها</h1>
         <span class="text-xs opacity-50">{{ total }} مورد</span>
     </div>
-    <button class="btn btn-primary btn-sm" onclick="document.getElementById('new-topic-modal').showModal()">+ موضوع</button>
+    <div class="flex items-center gap-2">
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('topic-import-modal').showModal()">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-4"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" /></svg>
+            CSV / گروهی
+        </button>
+        <button class="btn btn-primary btn-sm" onclick="document.getElementById('new-topic-modal').showModal()">+ موضوع</button>
+    </div>
 </div>
 
 <!-- Filters + search -->
@@ -184,6 +190,10 @@
                 <span class="label-text text-xs">اولویت</span>
                 <input name="priority" type="number" class="input input-sm" value="0" />
             </label>
+            <label class="form-control">
+                <span class="label-text text-xs">هفته</span>
+                <input name="week" type="number" class="input input-sm" placeholder="هفته تقویم تحریریه (اختیاری)" />
+            </label>
             <div class="flex gap-3 mt-2">
                 <button type="submit" class="btn btn-primary flex-1">افزودن</button>
                 <button type="button" class="btn btn-ghost" onclick="document.getElementById('new-topic-modal').close()">انصراف</button>
@@ -191,4 +201,13 @@
         </form>
     </div>
 </dialog>
+
+{% include "components/topics/import_modal.html" %}
+
+<script>
+    // Full-page topics list: refresh (reload) when a mutation inside the import
+    // modal signals completion — the project tab listens to the same event via
+    // hx-trigger, so both entry points stay in sync.
+    document.addEventListener('refreshTopics', function () { window.location.reload(); });
+</script>
 {% endblock %}
