@@ -35,6 +35,8 @@ class TopicRepo(BaseRepo):
         cluster: str = "",
         type: str = "article",
         priority: int = 0,
+        week: int | None = None,
+        url: str = "",
     ) -> dict[str, Any]:
         if type not in TOPIC_TYPES:
             raise ValueError(f"invalid topic type: {type}")
@@ -48,6 +50,8 @@ class TopicRepo(BaseRepo):
                 "type": type,
                 "status": "planned",
                 "priority": priority,
+                "week": week,
+                "url": url,
             }
         )
 
@@ -97,3 +101,33 @@ class TopicRepo(BaseRepo):
 
     def link_article(self, topic_id: str, article_id: str) -> dict[str, Any]:
         return self.update(topic_id, {"articleId": article_id})
+
+    def existing_keys(self, project_id: str) -> tuple[set[str], set[str]]:
+        """All normalized titles and keywords already in the project.
+
+        Used by bulk/CSV import to skip duplicates cheaply: one bounded
+        paginated read instead of a query per incoming row.
+        """
+        titles: set[str] = set()
+        keywords: set[str] = set()
+        page = 1
+        while True:
+            batch = self.list_records(
+                filter=f'project="{project_id}"',
+                sort="-created",
+                page=page,
+                per_page=500,
+            )
+            if not batch:
+                break
+            for t in batch:
+                title = (t.get("title") or "").strip()
+                if title:
+                    titles.add(title)
+                keyword = (t.get("keyword") or "").strip()
+                if keyword:
+                    keywords.add(keyword)
+            if len(batch) < 500:
+                break
+            page += 1
+        return titles, keywords
