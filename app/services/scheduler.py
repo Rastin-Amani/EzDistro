@@ -15,6 +15,7 @@ import structlog
 from app.repositories.jobs import JobRepo, now_utc
 from app.repositories.projects import ProjectRepo
 from app.repositories.schedules import ScheduleRepo
+from app.repositories.topics import TopicRepo
 
 logger = structlog.get_logger("worker.scheduler")
 
@@ -43,11 +44,30 @@ def run_schedule_poll(pb: Any) -> int:
                 ("project", project_id),
             )
         elif kind == "write":
-            idempotency_key = f"write:article:{project_id}:{schedule['id']}:{window}"
+            # The write schedule targets the next planned topic (highest
+            # priority, oldest first). Without a topic there is nothing to
+            # write — advance the schedule and skip, instead of enqueueing a
+            # job that could never produce content.
+            topic = TopicRepo(pb).next_unwritten(project_id)
+            if topic is None:
+                next_run = now_utc() + dt.timedelta(minutes=interval_minutes)
+                ScheduleRepo(pb).mark_run(schedule["id"], next_run)
+                logger.info(
+                    "schedule fired without planned topics",
+                    schedule_id=schedule["id"],
+                    kind=kind,
+                    project=project_id,
+                )
+                continue
+            idempotency_key = f"write:article:{topic['id']}:{window}"
             job_type, payload, entity = (
                 "write_article",
-                {"trigger": "schedule", "scheduleId": schedule["id"]},
-                ("project", project_id),
+                {
+                    "trigger": "schedule",
+                    "scheduleId": schedule["id"],
+                    "topicId": topic["id"],
+                },
+                ("topic", topic["id"]),
             )
         else:
             logger.warning(
