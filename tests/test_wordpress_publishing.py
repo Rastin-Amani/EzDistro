@@ -261,3 +261,32 @@ def test_publish_gate_refuses_non_approved():
         run_publish(pb, registry, article["id"], key="gate1")
     assert excinfo.value.details.get("required_state") == "approved"
     assert registry.publisher.created == []
+
+
+def test_publish_enqueues_instant_index_job_for_live_posts():
+    pb = FakePocketBase(default_unique_fields())
+    project = make_project(pb)  # DEFAULT_SETTINGS → publishingMode="publish"
+    article = make_article(pb, project["id"])
+    registry = FakeRegistry()
+
+    result = run_publish(pb, registry, article["id"], key="idx1")
+    jobs = pb.collection("jobs").get_full_list()
+    index_jobs = [j for j in jobs if j["type"] == "index_document"]
+    assert len(index_jobs) == 1
+    assert index_jobs[0]["payload"]["sourceId"] == str(result["postId"])
+    assert index_jobs[0]["project"] == project["id"]
+
+
+def test_publish_draft_mode_skips_indexing():
+    pb = FakePocketBase(default_unique_fields())
+    project = make_project(pb)
+    settings = pb.collection("project_settings").get_first_list_item(
+        f'project="{project["id"]}"', {"perPage": 1}
+    )
+    pb.collection("project_settings").update(settings["id"], {"publishingMode": "draft"})
+    article = make_article(pb, project["id"])
+    registry = FakeRegistry()
+
+    run_publish(pb, registry, article["id"], key="draft1")
+    jobs = pb.collection("jobs").get_full_list()
+    assert all(j["type"] != "index_document" for j in jobs)

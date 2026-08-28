@@ -85,11 +85,30 @@ def test_disabled_and_inactive_project_schedules_skipped():
     assert run_schedule_poll(pb) == 0
 
 
-def test_write_schedule_creates_write_job():
+def test_write_schedule_creates_write_job_for_next_planned_topic():
     from app.services.scheduler import run_schedule_poll
 
     pb = FakePocketBase(default_unique_fields())
     project_id = seed(pb)
+    # two planned topics; priority decides which one is picked
+    pb.collection("topics").create(
+        {
+            "project": project_id,
+            "title": "کم‌اولویت",
+            "status": "planned",
+            "priority": 1,
+            "type": "article",
+        }
+    )
+    high = pb.collection("topics").create(
+        {
+            "project": project_id,
+            "title": "پراولویت",
+            "status": "planned",
+            "priority": 9,
+            "type": "article",
+        }
+    )
     pb.collection("schedules").create(
         {
             "project": project_id,
@@ -104,3 +123,28 @@ def test_write_schedule_creates_write_job():
     assert run_schedule_poll(pb) == 1
     job = pb.collection("jobs").get_first_list_item('type="write_article"')
     assert job["type"] == "write_article"
+    assert job["payload"]["topicId"] == high["id"]
+    assert job["entityId"] == high["id"]
+
+
+def test_write_schedule_without_planned_topics_skips_job():
+    from app.services.scheduler import run_schedule_poll
+
+    pb = FakePocketBase(default_unique_fields())
+    project_id = seed(pb)
+    sched = pb.collection("schedules").create(
+        {
+            "project": project_id,
+            "name": "نویسنده",
+            "kind": "write",
+            "enabled": True,
+            "intervalMinutes": 120,
+            "nextRunAt": "2020-01-01 00:00:00.000Z",
+            "payload": {},
+        }
+    )
+    assert run_schedule_poll(pb) == 0
+    assert len(pb.collection("jobs").get_full_list()) == 0
+    # the schedule still advanced so the poller doesn't re-fire immediately
+    after = pb.collection("schedules").get_one(sched["id"])
+    assert after["nextRunAt"] != "2020-01-01 00:00:00.000Z"
