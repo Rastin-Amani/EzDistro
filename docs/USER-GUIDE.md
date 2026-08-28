@@ -153,13 +153,23 @@ Single post changed? Use the per-document reindex action instead of a full run.
 ## 7. Topics: queue article writing (موضوع‌ها)
 
 1. In **موضوع‌ها**, add topics with **موضوع جدید**: title, optional keyword, pillar /
-   cluster labels, type (article/pillar/guide/news), priority.
+   cluster labels, type (article/pillar/guide/news), priority, editorial week and
+   published URL.
 2. Filter chips show counts per status; search matches title/keyword; sorting by
    priority/created/title; bulk actions allow generating/retrying/cancelling several
    topics at once.
-3. Press **نوشتن مقاله** on a topic to enqueue writing. Topic moves through:
+3. **افزودن گروهی (CSV / گروهی)** imports many topics at once:
+   - Paste text (one topic per line, or full CSV) or upload a `.csv`/`.tsv` file.
+   - Columns are auto-detected from headers (English or Persian: `Title/عنوان`,
+     `Keyword/کلمه کلیدی`, `Related Pillar/ستون`, `Cluster/خوشه`, `Type/نوع`,
+     `Priority/اولویت`, `Week/هفته`, `URL/لینک`, …) and can be re-mapped before
+     importing.
+   - Rows whose title or keyword already exists (in the project or the same file)
+     are skipped automatically; unknown type labels fall back to *مقاله* and are
+     reported. The result screen shows added / skipped / error counts per row.
+4. Press **نوشتن مقاله** on a topic to enqueue writing. Topic moves through:
    `planned → planning → outline_ready → writing → review`.
-4. When the assembler finishes, the topic sits at **review** and its article waits in
+5. When the assembler finishes, the topic sits at **review** and its article waits in
    **مقاله‌ها**.
 
 **Expected result:** a fully structured article with outline, sections, word count and
