@@ -10,8 +10,9 @@ import re
 import time
 from typing import Any
 
-from fastapi import APIRouter, Form, Request
+from fastapi import APIRouter, File, Form, Request, UploadFile
 from fastapi.responses import HTMLResponse
+from starlette.datastructures import UploadFile as StarletteUploadFile
 
 from app.api.deps import (
     PROJECT_ADMIN_ROLES,
@@ -41,6 +42,17 @@ from app.repositories.schedules import ScheduleRepo
 from app.repositories.topics import TopicRepo
 from app.services.prompt_service import PromptService
 from app.services.secrets import SecretsService, get_secrets_service
+from app.services.topic_import import (
+    FIELD_LABELS,
+    IMPORT_FIELDS,
+    build_column_map,
+    detect_columns,
+    detect_header,
+    get_preview,
+    import_rows,
+    parse_delimited,
+    store_preview,
+)
 from app.templates import templates
 from app.utils import error_response, ok_with_redirect, success_response
 
@@ -304,6 +316,7 @@ def _tab_context(
     tab: str,
     *,
     status: str = "",
+    q: str = "",
 ) -> dict[str, Any]:
     """Build the template context a project tab needs.
 
@@ -355,8 +368,11 @@ def _tab_context(
         context["topics"] = TopicRepo(pb).list_for_project(project_id, per_page=50)
         context["variables"] = VARIABLE_REGISTRY
     elif tab == "topics":
-        context["topics"] = TopicRepo(pb).list_for_project(project_id, status=status, per_page=50)
+        topic_repo = TopicRepo(pb)
+        rows, _total = topic_repo.search(project_id, status=status or None, q=q, per_page=50)
+        context["topics"] = rows
         context["status_filter"] = status or ""
+        context["q"] = q
     elif tab == "articles":
         context["articles"] = ArticleRepo(pb).list_for_project(project_id, per_page=50)
     elif tab == "ai_models":
@@ -407,6 +423,7 @@ def project_detail(request: Request, project_id: str, tab: str = "settings"):
         project,
         active,
         status=request.query_params.get("status") or "",
+        q=request.query_params.get("q") or "",
     )
     context["title"] = project.get("name", "پروژه")
     context["active_tab"] = active
@@ -431,6 +448,7 @@ def project_tab(request: Request, project_id: str, tab: str):
         project,
         tab,
         status=request.query_params.get("status") or "",
+        q=request.query_params.get("q") or "",
     )
     return templates.TemplateResponse(request, f"pages/projects/tabs/{tab}.html", context)
 
@@ -859,12 +877,15 @@ def create_topic(
     cluster: str = Form(""),
     type: str = Form("article"),
     priority: str = Form(""),
+    week: str = Form(""),
+    url: str = Form(""),
 ):
     require_hx(request)
     require_project_access(request, project_id)
     require_project_role(request, project_id)
     if not safe_str(title):
         return error_response("عنوان موضوع الزامی است")
+    week_value = safe_int(week, 0)
     TopicRepo(request.state.pb).create(
         project=project_id,
         title=safe_str(title),
@@ -873,6 +894,8 @@ def create_topic(
         cluster=safe_str(cluster),
         type=safe_str(type, "article"),
         priority=safe_int(priority, 0),
+        week=week_value or None,
+        url=safe_str(url),
     )
     return success_response("موضوع اضافه شد", extra_events={"refreshTopics": True})
 
@@ -913,6 +936,133 @@ def delete_topic(request: Request, project_id: str, topic_id: str):
         return error_response("موضوع یافت نشد")
     TopicRepo(request.state.pb).delete(topic_id)
     return success_response("موضوع حذف شد", extra_events={"refreshTopics": True})
+
+
+# ---------------------------------------------------------------------------
+# Topics — bulk import (paste / CSV / TSV)
+# ---------------------------------------------------------------------------
+def _decode_csv_bytes(data: bytes) -> str:
+    """Best-effort decode for uploaded CSV files (Excel-safe)."""
+    for encoding in ("utf-8-sig", "utf-16", "cp1256"):
+        try:
+            return data.decode(encoding)
+        except (UnicodeDecodeError, ValueError):
+            continue
+    return data.decode("utf-8", errors="replace")
+
+
+@router.post("/projects/{project_id}/topics/import/preview")
+@hx_error("خواندن فایل یا متن ناموفق بود")
+async def topic_import_preview(
+    request: Request,
+    project_id: str,
+    csv_text: str = Form(""),
+    file: UploadFile | None = File(None),
+):
+    """Parse pasted text or an uploaded CSV and render the column-mapping form.
+
+    The parsed rows are cached behind a one-time token so the confirm step
+    doesn't re-transmit or re-parse the payload.
+    """
+    require_hx(request)
+    require_project_access(request, project_id)
+    require_project_role(request, project_id)
+
+    filename = ""
+    # Note: request.form() builds starlette UploadFile instances, while the
+    # route annotation uses fastapi's UploadFile (a subclass) — isinstance
+    # against starlette's class is what matches the bound object.
+    if isinstance(file, StarletteUploadFile) and file.filename:
+        filename = file.filename
+        csv_text = _decode_csv_bytes(await file.read())
+    csv_text = csv_text.strip()
+    if not csv_text:
+        return error_response("متن یا فایلی وارد نشده است")
+
+    delimiter, rows = parse_delimited(csv_text)
+    if not rows:
+        return error_response("هیچ ردیفی پیدا نشد")
+    has_header = detect_header(rows)
+    columns = detect_columns(rows, has_header)
+    column_map = build_column_map(columns, has_header)
+    token = store_preview(
+        rows=rows,
+        delimiter=delimiter,
+        has_header=has_header,
+        columns=columns,
+        filename=filename,
+    )
+    data_preview = rows[1 : min(4, len(rows))] if has_header else rows[:3]
+    return templates.TemplateResponse(
+        request,
+        "components/topics/import_mapping.html",
+        {
+            "token": token,
+            "filename": filename,
+            "delimiter": delimiter,
+            "has_header": has_header,
+            "columns": columns,
+            "column_map": column_map,
+            "fields": IMPORT_FIELDS,
+            "field_labels": FIELD_LABELS,
+            "row_count": len(rows) - (1 if has_header else 0),
+            "data_preview": data_preview,
+            "project": require_project_access(request, project_id),
+        },
+    )
+
+
+@router.post("/projects/{project_id}/topics/import")
+@hx_error("افزودن گروهی ناموفق بود")
+async def topic_import(request: Request, project_id: str):
+    """Confirm an import: create the cached rows using the chosen column map."""
+    require_hx(request)
+    require_project_access(request, project_id)
+    require_project_role(request, project_id)
+
+    form = await request.form()
+    token = str(form.get("token", "") or "")
+    entry = get_preview(token)
+    if not entry:
+        return error_response("پیش‌نمایش منقضی شده است؛ دوباره تلاش کنید")
+
+    mapping: dict[str, int] = {}
+    for field in IMPORT_FIELDS:
+        raw = str(form.get(f"col_{field}", "") or "")
+        if raw.isdigit():
+            mapping[field] = int(raw)
+    if "title" not in mapping:
+        return error_response("ستون عنوان را انتخاب کنید")
+
+    summary = import_rows(
+        request.state.pb,
+        project_id,
+        entry["rows"],
+        mapping,
+        bool(entry.get("has_header")),
+    )
+    return templates.TemplateResponse(
+        request,
+        "components/topics/import_result.html",
+        {
+            "summary": summary,
+            "filename": entry.get("filename", "") or "متن جای‌گذاری‌شده",
+            "project": require_project_access(request, project_id),
+        },
+    )
+
+
+@router.get("/projects/{project_id}/topics/import")
+@hx_error("بارگذاری فرم ناموفق بود")
+def topic_import_form(request: Request, project_id: str):
+    """Step-1 partial (paste/file) — used by the «تغییر متن» back button."""
+    require_hx(request)
+    require_project_access(request, project_id)
+    require_project_role(request, project_id)
+    project = require_project_access(request, project_id)
+    return templates.TemplateResponse(
+        request, "components/topics/import_step1.html", {"project": project}
+    )
 
 
 # ---------------------------------------------------------------------------
