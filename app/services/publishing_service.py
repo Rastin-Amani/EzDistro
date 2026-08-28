@@ -16,6 +16,7 @@ Safe, idempotent WordPress publishing:
 from __future__ import annotations
 
 import re
+import time
 import uuid
 from typing import Any
 
@@ -24,6 +25,7 @@ from app.jobs.context import JobContext
 from app.jobs.handlers import register_job
 from app.providers.base import ProviderError
 from app.repositories.articles import ArticleRepo
+from app.repositories.jobs import JobRepo
 from app.repositories.publishing_runs import PublishingRunRepo
 from app.repositories.topics import TopicRepo
 
@@ -190,6 +192,22 @@ async def handle_publish_article(ctx: JobContext) -> dict[str, Any]:
     topic = article.get("topicId")
     if topic:
         TopicRepo(ctx.pb).set_status(topic, "published")
+
+    # Make the live post available to retrieval immediately: enqueue a
+    # per-document reindex of the WordPress post (idempotent by content hash).
+    # Draft-mode pushes are skipped — draft content must not enter the corpus.
+    if mode == "publish":
+        JobRepo(ctx.pb).create(
+            project=ctx.project_id,
+            type="index_document",
+            payload={"sourceId": str(result.post_id), "force": False},
+            idempotency_key=(
+                f"index:document:{ctx.project_id}:{result.post_id}:{int(time.time())}"
+            ),
+            max_attempts=3,
+            entity_type="article",
+            entity_id=article_id,
+        )
 
     ctx.stage_completed("publishing", "مقاله در وردپرس به‌روزرسانی شد")
     ctx.progress(100, stage="done", message="مقاله در وردپرس به‌روزرسانی شد")
