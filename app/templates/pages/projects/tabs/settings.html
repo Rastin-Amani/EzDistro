@@ -95,16 +95,6 @@
         </div>
     {{ f.section_close() }}
 
-    {{ f.section_open('نمایه‌سازی', 'زمان‌بندی خودکار نمایه‌سازی.', '') }}
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {{ f.select('indexing_schedule_enabled', 'زمان‌بندی خودکار',
-                [('0', 'غیرفعال'), ('1', 'فعال')], '1' if settings.indexing.schedule_enabled else '0',
-                'هر چند ساعت یک‌بار مستندات پروژه به‌صورت خودکار نمایه شوند.') }}
-            {{ f.number('indexing_schedule_interval_minutes', 'بازه (دقیقه)', settings.indexing.schedule_interval_minutes or 1440,
-                'فاصله بین دو نمایه‌سازی خودکار.') }}
-        </div>
-    {{ f.section_close() }}
-
     {{ f.section_open('زمان‌بندی وظایف', 'زمان‌بندی نمایه‌سازی و نویسندگی خودکار.', 'کارگر (worker) هر دقیقه زمان‌بندی‌ها را بررسی و در بازه تعیین‌شده وظیفه می‌سازد.') }}
         {% set kinds = [('index', 'نمایه‌سازی خودکار'), ('write', 'نویسندگی خودکار')] %}
         <div class="flex flex-col gap-3">

@@ -487,8 +487,6 @@ def save_settings(
     publishing_mode: str = Form(""),
     autosave_enabled: str = Form(""),
     autosave_interval_minutes: str = Form(""),
-    indexing_schedule_enabled: str = Form(""),
-    indexing_schedule_interval_minutes: str = Form(""),
 ):
     require_hx(request)
     require_project_access(request, project_id)
@@ -523,10 +521,6 @@ def save_settings(
         "autosave": {
             "enabled": safe_bool(autosave_enabled),
             "interval_minutes": safe_int(autosave_interval_minutes, 5),
-        },
-        "indexing": {
-            "schedule_enabled": safe_bool(indexing_schedule_enabled),
-            "schedule_interval_minutes": safe_int(indexing_schedule_interval_minutes, 1440),
         },
     }
     ProjectSettingsRepo(request.state.pb).upsert(project_id, data)
