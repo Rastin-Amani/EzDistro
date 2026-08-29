@@ -11,6 +11,7 @@ from app.repositories.integrations import IntegrationRepo
 from app.repositories.jobs import JobEventRepo, JobRepo
 from app.repositories.projects import ProjectRepo
 from app.repositories.topics import TopicRepo
+from app.repositories.worker_heartbeats import WorkerHeartbeatRepo
 
 # Dashboard aggregates are derived, read-only data: a short TTL cache collapses
 # repeated poll queries (multiple users × 8s polling). Mutable article state is
@@ -50,11 +51,11 @@ def _compute_stats(pb: Any, project_scope: list[str] | None = None) -> dict[str,
 
     result = {
         "projects": projects.count(filter=proj_filter) if proj_filter else projects.count(),
-        "jobs_pending": jobs.count(filter=f'status="pending"{scope_filter}'),
-        "jobs_retrying": jobs.count(filter=f'status="retrying"{scope_filter}'),
-        "jobs_running": jobs.count(filter=f'status="running"{scope_filter}'),
-        "jobs_failed": jobs.count(filter=f'status="failed"{scope_filter}'),
-        "jobs_completed": jobs.count(filter=f'status="completed"{scope_filter}'),
+        "jobs_pending": jobs.count(filter=f'status="pending"{_and(scope_filter)}'),
+        "jobs_retrying": jobs.count(filter=f'status="retrying"{_and(scope_filter)}'),
+        "jobs_running": jobs.count(filter=f'status="running"{_and(scope_filter)}'),
+        "jobs_failed": jobs.count(filter=f'status="failed"{_and(scope_filter)}'),
+        "jobs_completed": jobs.count(filter=f'status="completed"{_and(scope_filter)}'),
         "average_duration_s": _average_duration(pb, project_scope),
         "failure_rate": _failure_rate(pb, project_scope),
         "provider_latency_ms": _provider_latency(pb, project_scope),
@@ -67,6 +68,7 @@ def _compute_stats(pb: Any, project_scope: list[str] | None = None) -> dict[str,
         "provider_healthy": 0,
         "provider_unhealthy": 0,
         "provider_unknown": 0,
+        "workers_active": 0,
     }
     indexing_ok, indexing_failed = _indexing_health(pb, project_scope)
     provider_healthy, provider_unhealthy, provider_unknown = _provider_health(pb, project_scope)
@@ -76,7 +78,34 @@ def _compute_stats(pb: Any, project_scope: list[str] | None = None) -> dict[str,
         provider_unhealthy,
         provider_unknown,
     )
+    result["workers_active"] = _active_workers(pb)
     return result
+
+
+def _active_workers(pb: Any) -> int:
+    """Workers whose heartbeat is fresher than ~45s (missed ≤2 beats)."""
+    import datetime as dt
+
+    try:
+        rows = WorkerHeartbeatRepo(pb).list_recent(limit=200)
+    except Exception:
+        return 0
+    cutoff = dt.datetime.now(dt.UTC) - dt.timedelta(seconds=45)
+    active = 0
+    for row in rows:
+        last = row.get("lastHeartbeatAt")
+        if not last:
+            continue
+        if isinstance(last, dt.datetime):
+            parsed = last if last.tzinfo else last.replace(tzinfo=dt.UTC)
+        else:
+            try:
+                parsed = dt.datetime.fromisoformat(str(last).replace("Z", "+00:00"))
+            except ValueError:
+                continue
+        if parsed >= cutoff:
+            active += 1
+    return active
 
 
 def recent_jobs(
@@ -94,13 +123,23 @@ def recent_events(
 
 
 def _scope_filter(scope: list[str] | None, field: str) -> str:
-    """None = unrestricted; [] = match nothing (user has no projects)."""
+    """None = unrestricted; [] = match nothing (user has no projects).
+
+    Always returns a valid *standalone* filter (no leading operator) so it can
+    be passed straight to PocketBase. Compose with :func:`_and` when appending
+    it to a base condition (e.g. ``status="pending"``).
+    """
     if scope is None:
         return ""
     if not scope:
-        return f' && {field}="__no_access__"'
+        return f'{field}="__no_access__"'
     quoted = " || ".join(f'{field}="{s}"' for s in scope)
-    return f" && ({quoted})"
+    return f"({quoted})"
+
+
+def _and(filter_part: str) -> str:
+    """``" && <filter>"`` for composing with a base condition (``""`` if empty)."""
+    return f" && {filter_part}" if filter_part else ""
 
 
 def _average_duration(pb: Any, scope: list[str] | None) -> float:
@@ -108,7 +147,7 @@ def _average_duration(pb: Any, scope: list[str] | None) -> float:
 
     f = _scope_filter(scope, "project")
     recent = JobRepo(pb).list_records(
-        filter=f'status="completed"{f}', sort="-created", page=1, per_page=100
+        filter=f'status="completed"{_and(f)}', sort="-created", page=1, per_page=100
     )
     durations = []
     for job in recent:
@@ -126,8 +165,8 @@ def _average_duration(pb: Any, scope: list[str] | None) -> float:
 def _failure_rate(pb: Any, scope: list[str] | None) -> float:
     jobs = JobRepo(pb)
     f = _scope_filter(scope, "project")
-    failed = jobs.count(filter=f'status="failed"{f}')
-    completed = jobs.count(filter=f'status="completed"{f}')
+    failed = jobs.count(filter=f'status="failed"{_and(f)}')
+    completed = jobs.count(filter=f'status="completed"{_and(f)}')
     total = failed + completed
     return round(failed / total, 3) if total else 0.0
 
@@ -136,7 +175,7 @@ def _provider_latency(pb: Any, scope: list[str] | None) -> float:
     """Average provider call latency from recent provider_call events (bounded)."""
     f = _scope_filter(scope, "project")
     events = JobEventRepo(pb).list_records(
-        filter=f'eventType="provider_call"{f}', sort="-created", page=1, per_page=100
+        filter=f'eventType="provider_call"{_and(f)}', sort="-created", page=1, per_page=100
     )
     latencies = [
         int((e.get("metadata") or {}).get("latency_ms") or 0)
@@ -159,13 +198,13 @@ def _as_dt(value: Any) -> Any:
 
 def _count_topics(pb: Any, scope: list[str] | None, status: str) -> int:
     f = _scope_filter(scope, "project")
-    return TopicRepo(pb).count(filter=f'status="{status}"{f}')
+    return TopicRepo(pb).count(filter=f'status="{status}"{_and(f)}')
 
 
 def _count_articles(pb: Any, scope: list[str] | None, statuses: tuple[str, ...]) -> int:
     f = _scope_filter(scope, "project")
     parts = " || ".join(f'status="{s}"' for s in statuses)
-    return ArticleRepo(pb).count(filter=f"({parts}){f}")
+    return ArticleRepo(pb).count(filter=f"({parts}){_and(f)}")
 
 
 def _indexing_health(pb: Any, scope: list[str] | None) -> tuple[int, int]:
