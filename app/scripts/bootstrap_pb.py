@@ -556,6 +556,29 @@ COLLECTIONS: list[dict[str, Any]] = [
         ],
         indexes=["CREATE INDEX idx_schedules_next_run ON schedules (enabled, nextRunAt)"],
     ),
+    # --------------------------------------------------------- worker_heartbeats
+    col(
+        "worker_heartbeats",
+        [
+            t("workerId", required=True),
+            t("hostname"),
+            t("version"),
+            num("pid"),
+            date("startedAt"),
+            date("lastHeartbeatAt"),
+            num("runningJobs"),
+            num("completedJobs"),
+            num("failedJobs"),
+            num("maxConcurrentJobs"),
+            date("scheduleLastPollAt"),
+            num("scheduleDue"),
+            num("scheduleCreated"),
+            num("scheduleFailed"),
+        ],
+        indexes=[
+            "CREATE UNIQUE INDEX idx_worker_heartbeats_worker ON worker_heartbeats (workerId)"
+        ],
+    ),
     # ------------------------------------------------------------ app_settings
     col(
         "app_settings",
