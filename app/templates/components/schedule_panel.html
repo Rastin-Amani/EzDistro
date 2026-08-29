@@ -1,0 +1,23 @@
+{# One schedule row — a standalone form (never nested inside another form) #}
+<form class="seoz-panel p-4 flex flex-wrap items-end gap-4" id="sched-{{ kind }}"
+      hx-post="/projects/{{ project.id }}/schedules"
+      hx-target="#sched-{{ kind }}"
+      hx-swap="outerHTML">
+    <input type="hidden" name="kind" value="{{ kind }}" />
+    <div class="flex flex-col gap-1 min-w-40">
+        <span class="text-xs font-semibold">{{ label_text }}</span>
+        <select name="enabled" class="select select-sm select-bordered w-full">
+            <option value="1" {{ 'selected' if sched and sched.enabled }}>فعال</option>
+            <option value="0" {{ 'selected' if not sched or not sched.enabled }}>غیرفعال</option>
+        </select>
+    </div>
+    <label class="form-control">
+        <span class="label-text text-xs font-medium">بازه (دقیقه)</span>
+        <input name="interval_minutes" type="number" class="input input-sm input-bordered w-28"
+               value="{{ sched.intervalMinutes if sched else 1440 }}" />
+    </label>
+    <button type="submit" class="btn btn-ghost btn-sm" hx-disabled-elt="this">ذخیره</button>
+    {% if sched and sched.lastRunAt %}
+    <span class="text-xs opacity-40">آخرین اجرا: {{ sched.lastRunAt|jalali_dt }}</span>
+    {% endif %}
+</form>

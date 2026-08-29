@@ -19,13 +19,14 @@ class ScheduleRepo(BaseRepo):
         kind: str,
         interval_minutes: int,
         payload: dict[str, Any] | None = None,
+        enabled: bool = True,
     ) -> dict[str, Any]:
         return super().create(
             {
                 "project": project,
                 "name": name,
                 "kind": kind,
-                "enabled": True,
+                "enabled": bool(enabled),
                 "intervalMinutes": max(1, int(interval_minutes)),
                 "nextRunAt": pb_dt(now_utc()),
                 "payload": payload or {},

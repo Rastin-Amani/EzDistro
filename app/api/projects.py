@@ -54,7 +54,7 @@ from app.services.topic_import import (
     store_preview,
 )
 from app.templates import templates
-from app.utils import error_response, ok_with_redirect, success_response
+from app.utils import error_response, hx_trigger, ok_with_redirect, success_response
 
 router = APIRouter()
 
@@ -487,6 +487,13 @@ def save_settings(
     publishing_mode: str = Form(""),
     autosave_enabled: str = Form(""),
     autosave_interval_minutes: str = Form(""),
+    auto_publish_enabled: str = Form(""),
+    auto_publish_min_score: str = Form(""),
+    auto_publish_max_attempts: str = Form(""),
+    schedule_index_enabled: str = Form(""),
+    schedule_index_interval: str = Form(""),
+    schedule_write_enabled: str = Form(""),
+    schedule_write_interval: str = Form(""),
 ):
     require_hx(request)
     require_project_access(request, project_id)
@@ -522,14 +529,49 @@ def save_settings(
             "enabled": safe_bool(autosave_enabled),
             "interval_minutes": safe_int(autosave_interval_minutes, 5),
         },
+        "autoPublish": {
+            "enabled": safe_bool(auto_publish_enabled),
+            "min_score": max(0, safe_int(auto_publish_min_score, 90)),
+            "max_attempts": max(1, safe_int(auto_publish_max_attempts, 3)),
+        },
     }
     ProjectSettingsRepo(request.state.pb).upsert(project_id, data)
+    # Schedules live in the SAME settings form (one save for the whole page):
+    # persist them with the same submission.
+    _persist_schedule(
+        request.state.pb, project_id, "index", schedule_index_enabled, schedule_index_interval
+    )
+    _persist_schedule(
+        request.state.pb, project_id, "write", schedule_write_enabled, schedule_write_interval
+    )
     return success_response("تنظیمات ذخیره شد")
+
+
+def _persist_schedule(pb: Any, project_id: str, kind: str, enabled: str, interval: str) -> None:
+    """Upsert one schedule row (index/write) from settings-form fields."""
+    repo = ScheduleRepo(pb)
+    existing = repo.first(filter=f'project="{project_id}" && kind="{kind}"')
+    interval_minutes = max(1, safe_int(interval, 1440))
+    enabled_bool = safe_bool(enabled)
+    if existing:
+        repo.update(existing["id"], {"enabled": enabled_bool, "intervalMinutes": interval_minutes})
+    else:
+        repo.create(
+            project=project_id,
+            name=kind,
+            kind=kind,
+            interval_minutes=interval_minutes,
+            payload={},
+            enabled=enabled_bool,
+        )
 
 
 # ---------------------------------------------------------------------------
 # Schedules
 # ---------------------------------------------------------------------------
+_SCHEDULE_KINDS = {"index": "نمایه‌سازی خودکار", "write": "نویسندگی خودکار"}
+
+
 @router.post("/projects/{project_id}/schedules")
 @hx_error("ذخیره زمان‌بندی ناموفق بود")
 def save_schedules(
@@ -542,11 +584,16 @@ def save_schedules(
     require_hx(request)
     require_project_access(request, project_id)
     require_project_role(request, project_id)
+    # A request without a known kind cannot be a schedule save — refuse instead
+    # of silently writing a garbage row (which used to show a success toast).
+    if kind not in _SCHEDULE_KINDS:
+        return error_response("نوع زمان‌بندی نامعتبر است")
     schedule = ScheduleRepo(request.state.pb)
     existing = schedule.first(filter=f'project="{project_id}" && kind="{kind}"')
+    interval = max(1, safe_int(interval_minutes, 1440))
     payload = {
         "enabled": safe_bool(enabled),
-        "intervalMinutes": safe_int(interval_minutes, 1440),
+        "intervalMinutes": interval,
     }
     if existing:
         schedule.update(existing["id"], payload)
@@ -555,13 +602,27 @@ def save_schedules(
             project=project_id,
             name=kind,
             kind=kind,
-            interval_minutes=safe_int(interval_minutes, 1440),
+            interval_minutes=interval,
             payload={},
+            enabled=safe_bool(enabled),
         )
-        created = schedule.first(filter=f'project="{project_id}" && kind="{kind}"')
-        if created:
-            schedule.update(created["id"], payload)
-    return success_response("زمان‌بندی ذخیره شد")
+    # Re-render the row from the DATABASE so the saved status/interval are
+    # visible immediately (swap target #sched-{kind}).
+    sched = schedule.first(filter=f'project="{project_id}" && kind="{kind}"')
+    resp = templates.TemplateResponse(
+        request,
+        "components/schedule_panel.html",
+        {
+            "project": {"id": project_id},
+            "kind": kind,
+            "label_text": _SCHEDULE_KINDS[kind],
+            "sched": sched,
+        },
+    )
+    resp.headers.update(
+        hx_trigger({"show-toast": {"message": "زمان‌بندی ذخیره شد", "type": "success"}})
+    )
+    return resp
 
 
 # ---------------------------------------------------------------------------
