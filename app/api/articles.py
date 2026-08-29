@@ -12,7 +12,7 @@ from app.api.deps import (
     require_project_role,
     safe_str,
 )
-from app.api.errors import hx_error
+from app.api.errors import hx_error, page_guard
 from app.domain.article_html import slugify
 from app.domain.sanitize import sanitize_html
 from app.repositories.articles import ArticleRepo, SectionRepo
@@ -26,6 +26,7 @@ router = APIRouter()
 
 
 @router.get("/projects/{project_id}/articles/{article_id}", response_class=HTMLResponse)
+@page_guard("مشکلی در بارگذاری مقاله پیش آمد — دوباره تلاش کنید.")
 def article_detail(request: Request, project_id: str, article_id: str):
     project = require_project_access(request, project_id)
     article = ArticleRepo(request.state.pb).get(article_id)
@@ -155,6 +156,13 @@ def regenerate_article(
     topic_id = article.get("topicId") or ""
     if not topic_id:
         return error_response("مقاله به موضوعی متصل نیست")
+    # Guard: never queue a second regeneration while one is already running
+    # (the topic stays "writing"/the article stays "generating" until done).
+    active = JobRepo(request.state.pb).first(
+        filter=f'type="write_article" && payload.topicId="{topic_id}" && (status="pending" || status="retrying" || status="running")'
+    )
+    if active:
+        return error_response("مقاله در حال بازتولید است — کمی بعد دوباره تلاش کنید")
     ArticleRepo(request.state.pb).set_status(article_id, "generating")
     JobRepo(request.state.pb).create(
         project=project_id,

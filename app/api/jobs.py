@@ -7,12 +7,13 @@ admins (users see safe summaries).
 from __future__ import annotations
 
 import time
+from typing import Any
 
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 
 from app.api.deps import project_scope, require_hx, require_user
-from app.api.errors import hx_error
+from app.api.errors import hx_error, page_guard
 from app.repositories.jobs import JobEventRepo, JobRepo
 from app.repositories.projects import ProjectRepo
 from app.templates import templates
@@ -40,6 +41,19 @@ def _job_accessible(request: Request, job: dict | None) -> bool:
     return scope is None or job.get("project") in scope
 
 
+def _scheduler_heartbeat(pb: Any) -> dict[str, Any] | None:
+    """Last schedule-poll outcome written by the worker (diagnostics)."""
+    try:
+        from app.repositories.base import record_to_dict
+
+        record = pb.collection("app_settings").get_first_list_item(
+            'key="scheduler_heartbeat"', {"perPage": 1}
+        )
+        return record_to_dict(record).get("value") or None
+    except Exception:
+        return None
+
+
 def _scope_filter(scope: list[str] | None, status: str = "") -> str:
     """None = unrestricted; [] = match nothing (user has no projects)."""
     parts = []
@@ -55,6 +69,7 @@ def _scope_filter(scope: list[str] | None, status: str = "") -> str:
 
 
 @router.get("/jobs", response_class=HTMLResponse)
+@page_guard("مشکلی در بارگذاری صفحه وظایف پیش آمد — دوباره تلاش کنید.")
 def jobs_monitor(
     request: Request,
     project: str = "",
@@ -90,12 +105,14 @@ def jobs_monitor(
     from app.services.metrics import query_provider_metrics
 
     provider_metrics = query_provider_metrics(pb, project_id=project, days=7)
+    scheduler_heartbeat = _scheduler_heartbeat(pb)
     return templates.TemplateResponse(
         request,
         "pages/jobs/monitor.html",
         {
             "title": "وظایف",
             "provider_metrics": provider_metrics,
+            "scheduler_heartbeat": scheduler_heartbeat,
             "jobs": rows,
             "total": total,
             "page": max(1, page),
@@ -118,6 +135,7 @@ def jobs_monitor(
 
 
 @router.get("/failed", response_class=HTMLResponse)
+@page_guard("مشکلی در بارگذاری صفحه وظایف ناموفق پیش آمد — دوباره تلاش کنید.")
 def failed_jobs(request: Request, page: int = 1):
     """Failed jobs (dead-letter view) — retry from here or open the detail."""
     pb = request.state.pb

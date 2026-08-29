@@ -14,7 +14,7 @@ from app.api.deps import (
     require_user,
     safe_str,
 )
-from app.api.errors import hx_error
+from app.api.errors import hx_error, page_guard
 from app.domain.article_validation import ArticleValidator
 from app.repositories.articles import ArticleRepo, SectionRepo
 from app.repositories.jobs import JobRepo, now_utc
@@ -29,6 +29,7 @@ router = APIRouter()
 
 
 @router.get("/projects/{project_id}/articles/{article_id}/workspace", response_class=HTMLResponse)
+@page_guard("مشکلی در بارگذاری کارگاه مقاله پیش آمد — دوباره تلاش کنید.")
 def article_workspace(request: Request, project_id: str, article_id: str):
     project = require_project_access(request, project_id)
     article = ArticleRepo(request.state.pb).get(article_id)
@@ -59,10 +60,17 @@ def article_workspace(request: Request, project_id: str, article_id: str):
 
 def _collect_links(article: dict) -> list[dict]:
     """Deduplicated intended internal links from the outline snapshot."""
+    outline = article.get("outline")
+    if not isinstance(outline, dict):
+        return []
     seen: set[str] = set()
     links: list[dict] = []
-    for plan in (article.get("outline") or {}).get("sections") or []:
+    for plan in outline.get("sections") or []:
+        if not isinstance(plan, dict):
+            continue
         for link in plan.get("internal_links") or []:
+            if not isinstance(link, dict):
+                continue
             url = str(link.get("url") or "").rstrip("/")
             if url and url not in seen:
                 seen.add(url)
@@ -141,18 +149,30 @@ def set_article_status(request: Request, project_id: str, article_id: str, statu
 @router.post("/projects/{project_id}/articles/{article_id}/assemble")
 @hx_error("برنامه‌ریزی بازسازی ناموفق بود")
 def queue_assemble(request: Request, project_id: str, article_id: str):
-    """Queue an assemble job (rebuild final HTML from current sections)."""
+    """Queue an assemble job (rebuild final HTML from current sections).
+
+    Reuses an assemble job that is still active (pending/retrying/running); a
+    fresh job is created otherwise, so re-assembling a finished article works.
+    """
     require_hx(request)
     require_project_access(request, project_id)
     require_project_role(request, project_id)
     article = ArticleRepo(request.state.pb).get(article_id)
     if not article or article.get("project") != project_id:
         return error_response("مقاله یافت نشد")
+    active = JobRepo(request.state.pb).first(
+        filter=f'type="assemble_article" && payload.articleId="{article_id}" && (status="pending" || status="retrying" || status="running")'
+    )
+    if active:
+        return success_response(
+            "مقاله در حال ساخت است — صفحه خودبه‌خود تازه می‌شود",
+            extra_events={"refreshArticle": True},
+        )
     JobRepo(request.state.pb).create(
         project=project_id,
         type="assemble_article",
         payload={"articleId": article_id},
-        idempotency_key=f"assemble:article:{article_id}",
+        idempotency_key=f"assemble:article:{article_id}:{int(now_utc().timestamp())}",
         max_attempts=60,
         entity_type="article",
         entity_id=article_id,
@@ -279,6 +299,7 @@ def _live_validation(pb: Any, article: dict, sections: list[dict], keyword: str)
 
 
 @router.get("/projects/{project_id}/articles/{article_id}/review", response_class=HTMLResponse)
+@page_guard("مشکلی در بارگذاری صفحه بازبینی پیش آمد — دوباره تلاش کنید.")
 def article_review(request: Request, project_id: str, article_id: str):
     project = require_project_access(request, project_id)
     article = ArticleRepo(request.state.pb).get(article_id)
