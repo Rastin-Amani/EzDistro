@@ -306,7 +306,9 @@ async def test_write_article_llm_garbage_outline_is_repaired_by_validation_promp
     assert result["articleId"]
     article = pb.collection("articles").get_one(result["articleId"])
     assert article["status"] == "generating"
-    assert article["outline"]["title"] == "راهنمای سئو"
+    # keyword enforcement: the outline title is prefixed so the H1 always
+    # carries the keyword (score floor), even after the repair pass.
+    assert article["outline"]["title"] == "تست | راهنمای سئو"
     # validation prompt was used → outline garbage (1) + repair (1); sections are
     # separate jobs and were not executed here
     assert len(registry.llm.calls) == 2

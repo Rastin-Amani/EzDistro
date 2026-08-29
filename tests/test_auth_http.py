@@ -125,13 +125,37 @@ def test_public_pages_reachable_anonymously(fake_pb):
 
 def test_login_success_sets_session_cookie(fake_pb):
     with TestClient(app) as client:
-        resp = client.post("/login", data={"email": "owner@x.com", "password": "s3cret"})
-        assert resp.status_code == 200
+        # Native form POST → server-side 303 (top-level navigation) so the
+        # session cookie is set in a user-gesture context (mobile-safe).
+        resp = client.post(
+            "/login", data={"email": "owner@x.com", "password": "s3cret"}, follow_redirects=False
+        )
+        assert resp.status_code == 303
+        assert resp.headers["location"] == "/dashboard?welcome=1"
         cookie = resp.headers.get("set-cookie", "")
         assert "pb_auth=tok-u1" in cookie
         assert "HttpOnly" in cookie
         # now authenticated: /projects no longer redirects
         assert client.get("/projects").status_code == 200
+        # and the post-login landing page actually renders (the redirect target)
+        assert client.get("/dashboard").status_code == 200
+
+
+def test_htmx_login_success_still_sets_cookie_and_redirects(fake_pb):
+    """Legacy HTMX login forms (service-worker cache) keep working: toast +
+    delayed redirect, same cookie."""
+    with TestClient(app) as client:
+        resp = client.post(
+            "/login",
+            data={"email": "owner@x.com", "password": "s3cret"},
+            headers={"HX-Request": "true"},
+        )
+        assert resp.status_code == 200
+        import json
+
+        events = json.loads(resp.headers.get("hx-trigger", "{}"))
+        assert events["delayed-redirect"]["url"] == "/dashboard?welcome=1"
+        assert "pb_auth=tok-u1" in resp.headers.get("set-cookie", "")
 
 
 def test_login_wrong_password_rejected(fake_pb):

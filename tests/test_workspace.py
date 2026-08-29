@@ -240,6 +240,25 @@ def test_workspace_stats_indexing_health_flags_failures():
     assert stats["indexing_failed"] == 1
 
 
+def test_workspace_stats_empty_scope_does_not_crash():
+    """Members with no project memberships (scope=[]) get zeroed stats — not a
+    malformed PocketBase filter (regression: a leading '&&' → 400 → /dashboard 500)."""
+    from app.services.stats import recent_events, recent_jobs
+
+    pb = FakePocketBase(default_unique_fields())
+    make_project(pb)  # data exists but this user cannot see it
+    stats = global_stats(pb, [])
+    assert stats["projects"] == 0
+    assert stats["jobs_pending"] == 0
+    assert stats["jobs_completed"] == 0
+    assert stats["average_duration_s"] == 0.0
+    assert stats["failure_rate"] == 0.0
+    assert stats["indexing_ok"] == 0
+    assert stats["provider_healthy"] == 0
+    assert recent_jobs(pb, []) == []
+    assert recent_events(pb, []) == []
+
+
 def test_workspace_template_renders_section_statuses():
     """Regression: _section_status.html expects `section`, but the workspace
     loop used `s` — any workspace page with sections raised UndefinedError."""

@@ -139,6 +139,33 @@ def test_save_schedules_creates_write_schedule():
     assert sched is not None
 
 
+def test_save_schedules_returns_rendered_panel_with_saved_values():
+    """The save response re-renders the schedule row from the DB so the saved
+    status + interval are visibly confirmed (not just a toast)."""
+    pb, proj_a, _ = _setup()
+    req = make_req(pb, make_user(), proj_a["id"])
+    resp = call_route(
+        P.save_schedules, req, proj_a["id"], kind="index", enabled="0", interval_minutes="90"
+    )
+    assert "ذخیره شد" in toast_message(resp)
+    body = resp.body.decode()
+    assert 'id="sched-index"' in body
+    assert 'value="90"' in body  # saved interval rendered
+    assert '<option value="0" selected>' in body  # saved status rendered
+
+
+def test_save_schedules_rejects_unknown_kind():
+    """A request with a missing/unknown kind must fail loudly — never create a
+    garbage row and show a success toast."""
+    pb, proj_a, _ = _setup()
+    req = make_req(pb, make_user(), proj_a["id"])
+    resp = call_route(
+        P.save_schedules, req, proj_a["id"], kind="", enabled="1", interval_minutes="60"
+    )
+    assert toast_message(resp) == "نوع زمان‌بندی نامعتبر است"
+    assert ScheduleRepo(pb).first(filter=f'project="{proj_a["id"]}" && kind=""') is None
+
+
 # ---------------------------------------------------------------------------
 # Prompts
 # ---------------------------------------------------------------------------

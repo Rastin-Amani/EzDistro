@@ -636,9 +636,10 @@ def test_assemble_article_handler():
     updated = pb.collection("articles").get_one(article["id"])
     assert updated["status"] == "review"
     assert updated["validation"]["ok"] is True
-    assert "<h1>عنوان</h1>" in updated["finalHtml"]
+    # keyword enforcement: the title/H1 must contain the keyword (score floor)
+    assert "<h1>سئو | عنوان</h1>" in updated["finalHtml"]
     assert "https://site.test/1" in updated["finalHtml"]  # intended link preserved
-    assert updated["seoScore"] > 0
+    assert updated["seoScore"] >= 90
     assert result["seoScore"] == updated["seoScore"]
 
 

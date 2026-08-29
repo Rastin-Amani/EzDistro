@@ -19,7 +19,7 @@ from app.repositories.topics import TopicRepo
 from app.services.publishing_service import handle_publish_article
 from app.services.revisions import RevisionService
 from app.services.settings import ProjectConfig
-from app.services.writing import handle_write_article
+from app.services.writing import handle_generate_section, handle_write_article
 from tests.fake_providers import FakeRegistry
 from tests.fakes import FakePocketBase, default_unique_fields
 
@@ -254,6 +254,77 @@ def test_regenerate_article_preserves_previous_version():
     checkpoint = next(r for r in revisions if r["kind"] == "checkpoint")
     assert checkpoint["snapshot"]["title"] == "نسخه قبلی"
     assert "نسخه قبلی" in checkpoint["snapshot"]["finalHtml"]
+
+
+def test_regenerate_from_review_proceeds_not_already_written():
+    """Regression: regenerating an article whose topic is already `review`
+    must actually run — it used to short-circuit with `alreadyWritten`, leaving
+    the article stuck in `generating` while the topic stayed `review`."""
+    pb = FakePocketBase(default_unique_fields())
+    project = make_project(pb)
+    for ptype, content in (
+        ("brand_voice", "تو نویسنده سئو هستی."),
+        ("outline_user", "JSON برگردان."),
+        ("section_user", "HTML برگردان."),
+        ("seo_rules", "قوانین."),
+    ):
+        PromptRepo(pb).save_version(
+            project_id=project["id"], ptype=ptype, name="default", content=content
+        )
+
+    article = make_article(pb, project["id"], status="review")
+    # the split state the user reported: topic review, article stuck generating
+    TopicRepo(pb).set_status(article["topicId"], "review")
+
+    registry = FakeRegistry()
+    registry.llm.responses = [OUTLINE_JSON] + ["<p>" + ("کلمه " * 200).strip() + "</p>"] * 2
+    job = JobRepo(pb).create(
+        project=project["id"],
+        type="write_article",
+        payload={"topicId": article["topicId"], "regenerate": True},
+        idempotency_key=f"write:article:{article['topicId']}:regen:review",
+        max_attempts=3,
+    )
+    result = asyncio.run(handle_write_article(make_ctx(pb, registry, job)))
+    assert result["articleId"] == article["id"]
+    assert result.get("alreadyWritten") is not True
+    assert result["sectionJobs"]  # regeneration actually dispatched sections
+    assert TopicRepo(pb).get(article["topicId"])["status"] == "writing"
+    assert ArticleRepo(pb).get(article["id"])["status"] == "generating"
+
+
+def test_section_regeneration_restores_article_status():
+    """Regression: a per-section regeneration leaves the article `generating`;
+    once the section finishes and no assembler is waiting, it must return to
+    `review` instead of staying stuck."""
+    pb = FakePocketBase(default_unique_fields())
+    project = make_project(pb)
+    for ptype, content in (
+        ("brand_voice", "تو نویسنده سئو هستی."),
+        ("outline_user", "JSON برگردان."),
+        ("section_user", "HTML برگردان."),
+        ("seo_rules", "قوانین."),
+    ):
+        PromptRepo(pb).save_version(
+            project_id=project["id"], ptype=ptype, name="default", content=content
+        )
+    article = make_article(pb, project["id"], status="review")
+    section = pb.collection("article_sections").get_first_list_item(f'article="{article["id"]}"')
+    # simulate the per-section regenerate endpoint
+    ArticleRepo(pb).set_status(article["id"], "generating")
+    pb.collection("article_sections").update(section["id"], {"status": "pending", "content": ""})
+
+    registry = FakeRegistry()
+    registry.llm.responses = ["<p>" + ("کلمه " * 200).strip() + "</p>"]
+    job = JobRepo(pb).create(
+        project=project["id"],
+        type="generate_section",
+        payload={"sectionId": section["id"]},
+        idempotency_key=f"gen:section:{section['id']}",
+        max_attempts=3,
+    )
+    asyncio.run(handle_generate_section(make_ctx(pb, registry, job)))
+    assert ArticleRepo(pb).get(article["id"])["status"] == "review"
 
 
 # ---------------------------------------------------------------------------

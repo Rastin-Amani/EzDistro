@@ -21,8 +21,10 @@ from app.repositories.jobs import JobRepo
 from app.repositories.members import MemberRepo
 from app.repositories.projects import ProjectRepo
 from app.repositories.prompts import PromptRepo
+from app.repositories.schedules import ScheduleRepo
 from app.repositories.topics import TopicRepo
 from tests.fakes import FakePocketBase, default_unique_fields
+from tests.helpers import toast_message
 
 
 def make_pb() -> FakePocketBase:
@@ -346,6 +348,59 @@ def test_project_detail_renders_active_tab_with_context(setup):
     body = resp.body.decode()
     assert ">A</h1>" in body  # project name heading
     assert "جاسازی متن (Embedding)" in body  # settings tab partial rendered inline
+
+
+def test_settings_tab_schedule_forms_are_not_nested(setup):
+    """Regression: schedules must never live in nested <form>s (browsers ignore
+    them, so the schedule save silently fired the outer form). Schedules are
+    plain fields inside the single settings form — one form, one save."""
+    pb = setup["pb"]
+    proj_a = setup["proj_a"]
+    req = make_req(pb, make_user(), proj_a["id"])
+    resp = call_route(P.project_tab, req, proj_a["id"], "settings")
+    assert resp.status_code == 200
+    body = resp.body.decode()
+    # exactly ONE <form> (the settings form) — no nested schedule forms
+    assert body.count("<form") == 1
+    assert body.count("</form>") == 1
+    # schedule fields are part of that single form
+    assert 'name="schedule_index_enabled"' in body
+    assert 'name="schedule_index_interval"' in body
+    assert 'name="schedule_write_enabled"' in body
+    assert 'name="schedule_write_interval"' in body
+
+
+def test_save_settings_persists_schedules(setup):
+    """Saving the settings form persists the schedule rows (same submission)."""
+    pb = setup["pb"]
+    proj_a = setup["proj_a"]
+    req = make_req(pb, make_user(), proj_a["id"])
+    resp = call_route(
+        P.save_settings,
+        req,
+        proj_a["id"],
+        schedule_index_enabled="1",
+        schedule_index_interval="60",
+        schedule_write_enabled="0",
+        schedule_write_interval="120",
+    )
+    assert "ذخیره شد" in toast_message(resp)
+    index = ScheduleRepo(pb).first(filter=f'project="{proj_a["id"]}" && kind="index"')
+    write = ScheduleRepo(pb).first(filter=f'project="{proj_a["id"]}" && kind="write"')
+    assert index is not None and index["enabled"] is True and index["intervalMinutes"] == 60
+    assert write is not None and write["enabled"] is False and write["intervalMinutes"] == 120
+    # second save updates in place (no duplicate rows)
+    call_route(
+        P.save_settings,
+        req,
+        proj_a["id"],
+        schedule_index_enabled="0",
+        schedule_index_interval="720",
+    )
+    rows = ScheduleRepo(pb).list_for_project(proj_a["id"])
+    assert len(rows) == 2
+    index = ScheduleRepo(pb).first(filter=f'project="{proj_a["id"]}" && kind="index"')
+    assert index["enabled"] is False and index["intervalMinutes"] == 720
 
 
 def test_project_tab_prompts_empty_history_renders(setup):

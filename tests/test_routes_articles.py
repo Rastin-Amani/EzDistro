@@ -99,6 +99,24 @@ def test_review_page_renders_validation_report():
     assert "بازبینی" in resp.body.decode()
 
 
+def test_review_page_never_white_screens_on_internal_error(monkeypatch):
+    """A data/render error in the review pipeline must surface a friendly
+    error page (200 + Persian message), never a blank 500."""
+    pb, proj_a, _ = _setup()
+    article = make_article(pb, proj_a["id"], final_html="<p>محتوا</p>")
+    req = make_req(pb, make_user(), proj_a["id"])
+
+    def boom(*args, **kwargs):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr("app.api.workspace._live_validation", boom)
+    resp = call_route(W.article_review, req, proj_a["id"], article["id"])
+    assert resp.status_code == 200
+    body = resp.body.decode()
+    assert "مشکلی در بارگذاری صفحه بازبینی" in body
+    assert "بازگشت به مقاله" in body
+
+
 # ---------------------------------------------------------------------------
 # Status transitions
 # ---------------------------------------------------------------------------
@@ -279,6 +297,78 @@ def test_queue_assemble_creates_job():
     assert jobs[0]["payload"] == {"articleId": article["id"]}
 
 
+def test_queue_assemble_reuses_active_job():
+    """An assemble already pending/running is not duplicated."""
+    pb, proj_a, _ = _setup()
+    article = make_article(pb, proj_a["id"])
+    JobRepo(pb).create(
+        project=proj_a["id"],
+        type="assemble_article",
+        payload={"articleId": article["id"]},
+        idempotency_key=f"assemble:article:{article['id']}",
+        max_attempts=60,
+        entity_type="article",
+        entity_id=article["id"],
+    )
+    req = make_req(pb, make_user(), proj_a["id"])
+    resp = call_route(W.queue_assemble, req, proj_a["id"], article["id"])
+    assert "در حال ساخت است" in toast_message(resp)
+    jobs = JobRepo(pb).list_for_project(proj_a["id"], per_page=10)
+    assert len([j for j in jobs if j["type"] == "assemble_article"]) == 1
+
+
+def test_queue_assemble_reassembles_after_completion():
+    """A completed assemble never blocks a later manual re-assemble."""
+    pb, proj_a, _ = _setup()
+    article = make_article(pb, proj_a["id"])
+    completed = JobRepo(pb).create(
+        project=proj_a["id"],
+        type="assemble_article",
+        payload={"articleId": article["id"]},
+        idempotency_key=f"assemble:article:{article['id']}",
+        max_attempts=60,
+        entity_type="article",
+        entity_id=article["id"],
+    )
+    pb.collection("jobs").update(completed["id"], {"status": "completed"})
+    req = make_req(pb, make_user(), proj_a["id"])
+    resp = call_route(W.queue_assemble, req, proj_a["id"], article["id"])
+    assert "برنامه‌ریزی شد" in toast_message(resp)
+    jobs = JobRepo(pb).list_for_project(proj_a["id"], per_page=10)
+    assert len([j for j in jobs if j["type"] == "assemble_article"]) == 2
+
+
+def test_workspace_generating_shows_progress_and_readonly():
+    """During generation the workspace shows pipeline progress and keeps the
+    in-flight section's content editor read-only (worker will fill it)."""
+    pb, proj_a, _ = _setup()
+    article = make_article(pb, proj_a["id"], status="generating", final_html="<p>x</p>")
+    sections = SectionRepo(pb).list_for_article(article["id"])
+    pb.collection("article_sections").update(
+        sections[0]["id"], {"status": "pending", "content": ""}
+    )
+    req = make_req(pb, make_user(), proj_a["id"])
+    resp = call_route(W.article_workspace, req, proj_a["id"], article["id"])
+    assert resp.status_code == 200
+    body = resp.body.decode()
+    assert "در حال تولید بخش‌ها" in body
+    assert "1 از 2 بخش آماده شد" in body
+    assert "disabled" in body  # in-flight section editor is read-only
+
+
+def test_workspace_generating_all_done_offers_reassemble():
+    """Once every section is done the workspace offers a manual re-assemble
+    even while the article is still in the generating→assembling window."""
+    pb, proj_a, _ = _setup()
+    article = make_article(pb, proj_a["id"], status="generating", final_html="<p>x</p>")
+    req = make_req(pb, make_user(), proj_a["id"])
+    resp = call_route(W.article_workspace, req, proj_a["id"], article["id"])
+    assert resp.status_code == 200
+    body = resp.body.decode()
+    assert "بخش‌ها آماده شدند — در حال ساخت مقاله نهایی" in body
+    assert "بازسازی" in body  # manual assemble available
+
+
 def test_regenerate_section_queues_generate_section():
     pb, proj_a, _ = _setup()
     article = make_article(pb, proj_a["id"])
@@ -303,6 +393,25 @@ def test_regenerate_full_article_queues_write_job():
     jobs = JobRepo(pb).list_for_project(proj_a["id"], per_page=10)
     assert jobs[0]["type"] == "write_article"
     assert jobs[0]["payload"]["regenerate"] is True
+
+
+def test_regenerate_full_article_rejects_duplicate_inflight():
+    """Regression: a second full regeneration while one is already running
+    must be rejected (not leave the article stuck in `generating`)."""
+    pb, proj_a, _ = _setup()
+    article = make_article(pb, proj_a["id"])
+    JobRepo(pb).create(
+        project=proj_a["id"],
+        type="write_article",
+        payload={"topicId": article["topicId"], "regenerate": True},
+        idempotency_key="write:article:inflight:1",
+        max_attempts=3,
+        entity_type="article",
+        entity_id=article["id"],
+    )
+    req = make_req(pb, make_user(), proj_a["id"])
+    resp = call_route(A.regenerate_article, req, proj_a["id"], article["id"])
+    assert "در حال بازتولید است" in toast_message(resp)
 
 
 def test_regenerate_foreign_section_rejected():
