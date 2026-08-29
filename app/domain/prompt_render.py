@@ -32,6 +32,7 @@ VARIABLE_REGISTRY: dict[str, str] = {
     "article.meta_description": "متا توضیحات مقاله",
     "section.heading": "تیتر بخش",
     "section.content_brief": "خلاصه محتوای بخش (brief)",
+    "section.position": "شماره ترتیب بخش (۰ = بخش اول مقاله)",
     "retrieved_context": "زمینه بازیابی — بخش‌های مرتبط از مقالات موجود",
     "internal_links": "لینک‌های داخلی پیشنهادی (عنوان + آدرس)",
     "seo_rules": "قوانین سئوی حل‌شده پروژه",

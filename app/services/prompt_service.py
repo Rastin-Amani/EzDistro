@@ -63,6 +63,7 @@ class PromptService:
             "section.content_brief": section.get("content_brief")
             or section.get("contentBrief")
             or "",
+            "section.position": str(section.get("position") or ""),
             "retrieved_context": retrieval_context or "",
             "internal_links": format_internal_links(internal_links),
             "language": config.language,
