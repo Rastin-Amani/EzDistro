@@ -10,6 +10,7 @@ Requires PB_ADMIN_EMAIL / PB_ADMIN_PASSWORD (env or .env).
 
 from __future__ import annotations
 
+import hashlib
 import os
 import sys
 import time
@@ -657,20 +658,73 @@ DEFAULT_PROMPTS: dict[str, str] = {
 # ---------------------------------------------------------------------------
 def import_collections(pb: PocketBase) -> None:
     specs = [dict(c) for c in COLLECTIONS]  # type: ignore[var-annotated]
-    # PocketBase 0.23 validates relation collectionId as a collection ID during
-    # import (names are only resolved when a batch creates the collections from
-    # scratch). Resolve existing name-based refs so re-bootstraps stay clean.
+    # PocketBase 0.23 does NOT auto-add the system fields (id/created/updated)
+    # when a collection is imported with an explicit `fields` array — the list
+    # replaces them. Every query sorts by `created` and several indexes
+    # reference it, so append the system fields explicitly or the import fails
+    # ("no such column: created") and all `-created` sorts return 400.
+    for spec in specs:
+        names = {f.get("name") for f in spec.get("fields", [])}
+        if "id" not in names:
+            spec.setdefault("fields", []).insert(
+                0,
+                {
+                    "name": "id",
+                    "type": "text",
+                    "required": False,
+                    "system": True,
+                    "hidden": False,
+                    "presentable": False,
+                    "primaryKey": True,
+                    "autogeneratePattern": "[a-z0-9]{15}",
+                    "pattern": "",
+                    "min": 0,
+                    "max": 15,
+                },
+            )
+        if "created" not in names:
+            spec.setdefault("fields", []).append(
+                {
+                    "name": "created",
+                    "type": "date",
+                    "required": False,
+                    "system": True,
+                    "hidden": False,
+                    "presentable": False,
+                    "onCreate": True,
+                }
+            )
+        if "updated" not in names:
+            spec.setdefault("fields", []).append(
+                {
+                    "name": "updated",
+                    "type": "date",
+                    "required": False,
+                    "system": True,
+                    "hidden": False,
+                    "presentable": False,
+                    "onUpdate": True,
+                }
+            )
+    # Relation fields must reference either an existing collection ID (live
+    # DB) or a batch id (`pbc_…`) when the batch creates the collections from
+    # scratch — name references are rejected by PocketBase >= 0.23.
     try:
         by_name = {c.name: c.id for c in pb.collections.get_full_list()}
     except Exception:
         by_name = {}
-    if by_name:
-        for spec in specs:
-            for field in spec.get("fields", []):
-                if field.get("type") == "relation":
-                    ref = str(field.get("collectionId") or "")
-                    if not ref.startswith("pbc_") and ref in by_name:
-                        field["collectionId"] = by_name[ref]
+    batch_ids = {
+        s["name"]: "pbc_" + hashlib.sha256(s["name"].encode()).hexdigest()[:12] for s in specs
+    }
+    for spec in specs:
+        spec["id"] = by_name.get(spec["name"]) or batch_ids[spec["name"]]
+        for field in spec.get("fields", []):
+            if field.get("type") == "relation":
+                ref = str(field.get("collectionId") or "")
+                if ref in by_name:
+                    field["collectionId"] = by_name[ref]
+                elif ref in batch_ids:
+                    field["collectionId"] = batch_ids[ref]
     try:
         pb.collections.import_collections(collections=specs, delete_missing=False)  # type: ignore[arg-type]
     except Exception as exc:
