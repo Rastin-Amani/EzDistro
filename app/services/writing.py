@@ -17,10 +17,10 @@ section failed. The engine is provider-agnostic (all providers via registry).
 from __future__ import annotations
 
 import contextlib
+import time
 from typing import Any
 
 from app.domain.article_html import (
-    build_article_html,
     normalize_article_html,
     normalize_outline,
 )
@@ -55,13 +55,19 @@ async def handle_write_article(ctx: JobContext) -> dict[str, Any]:
     topic = topics.get(topic_id)
     if not topic:
         raise ValueError(f"topic not found: {topic_id}")
-    if topic.get("status") not in (
+    regenerating = bool(payload.get("regenerate"))
+    # An explicit regeneration may start from any post-write state (the article
+    # already exists and its content is being replaced). Everything else that is
+    # already inside the write pipeline is skipped to avoid duplicate writes.
+    in_write_pipeline = topic.get("status") in (
         "queued",
         "planned",
         "failed",
         "cancelled",
         "outline_ready",
-    ):
+    )
+    post_write_states = ("review", "approved", "sent_back", "published", "completed")
+    if not in_write_pipeline and not (regenerating and topic.get("status") in post_write_states):
         if topic.get("status") == "planning":
             # Crash-recovery: a previous attempt died mid-outline and left the
             # topic in "planning" (nobody else can be writing it — this job
@@ -107,7 +113,8 @@ async def _write(
 ) -> dict[str, Any]:
     article = articles.by_topic(topic_id)
     outline_version = 0
-    regenerate = bool(ctx.payload().get("regenerate"))
+    payload = ctx.payload()
+    regenerate = bool(payload.get("regenerate"))
 
     # NEVER destroy the previous version: checkpoint before regenerating.
     if regenerate and article and article.get("finalHtml"):
@@ -180,7 +187,14 @@ async def _write(
     assemble = jobs.create(
         project=ctx.project_id,
         type="assemble_article",
-        payload={"articleId": article_id, "sectionIds": [r["id"] for r in rows]},
+        payload={
+            "articleId": article_id,
+            "sectionIds": [r["id"] for r in rows],
+            # carry the write trigger + auto-publish attempt counter through
+            # the chain so assembly can decide publish-vs-rewrite on its own
+            "trigger": payload.get("trigger") or "",
+            "autoAttempts": int(payload.get("autoAttempts") or 1),
+        },
         idempotency_key=f"assemble:article:{article_id}",
         max_attempts=max(10, 3 * len(rows) + 30),  # generous: waits for sections
         parent=ctx.job_id,
@@ -289,6 +303,16 @@ async def handle_generate_section(ctx: JobContext) -> dict[str, Any]:
         latency_ms=result["latency_ms"],
         prompt_version=result["prompt_version"],
     )
+    # A per-section regeneration (workspace editor) leaves the article in
+    # "generating"; with no assembler waiting, restore it to "review" so it
+    # never gets stuck. During the normal pipeline the assemble job exists and
+    # keeps the "generating" state until assembly completes.
+    if article.get("status") == "generating":
+        waiting = JobRepo(ctx.pb).first(
+            filter=f'type="assemble_article" && payload.articleId="{article.get("id")}" && (status="pending" || status="retrying" || status="running")'
+        )
+        if not waiting:
+            articles.set_status(article.get("id"), "review")
     ctx.progress(100, stage="done", message="بخش تولید شد")
     ctx.info("section generated", {"section": section_id, "words": result.get("words", 0)})
     return {"sectionId": section_id, "promptVersion": result["prompt_version"]}
@@ -337,25 +361,37 @@ async def handle_assemble_article(ctx: JobContext) -> dict[str, Any]:
     ordered = [r for r in rows if r.get("status") == "done"]
     ordered.sort(key=lambda r: int(r.get("position") or 0))
 
-    # 14. deterministic assembly (ordering, deduped h2, sanitized, no separators)
-    internal_links = _collect_links(outline)
-    html = build_article_html(
+    # 14. deterministic assembly with SEO enforcement (guarantees the score
+    # floor: keyword in title/H1, URL slug, first paragraph, and an H2 heading).
+    from app.domain.chunker import word_count_from_html
+    from app.domain.seo_enforce import enforce_article_html
+
+    topic = TopicRepo(ctx.pb).get(article.get("topicId") or "")
+    keyword = str(topic.get("keyword") or "") if topic else ""
+    enforced = enforce_article_html(
         title=article.get("title") or "",
         slug=article.get("slug") or "",
         sections=[
             {"heading": r.get("heading") or "", "content": r.get("content") or ""} for r in ordered
         ],
-        internal_links=internal_links,
-        intro_paragraph="",
+        internal_links=_collect_links(outline),
+        keyword=keyword,
     )
+    html = enforced["html"]
+    fixed_title = enforced["title"]
+    fixed_slug = enforced["slug"]
+    if fixed_title != article.get("title") or fixed_slug != article.get("slug"):
+        articles.update(article_id, {"title": fixed_title, "slug": fixed_slug})
 
-    from app.domain.chunker import word_count_from_html
+    meta_description = article.get("metaDescription") or ""
+    if not meta_description.strip():
+        meta_description = fixed_title
 
     # 15. whole-article validation
     min_words = int(ctx.config.generation.get("min_article_words") or 300)
-    report = ArticleValidator(min_words=min_words).validate(
-        title=article.get("title") or "",
-        slug=article.get("slug") or "",
+    report = ArticleValidator(min_words=min_words, keyword=keyword).validate(
+        title=fixed_title,
+        slug=fixed_slug,
         outline=outline,
         sections=ordered,
         html=html,
@@ -369,18 +405,19 @@ async def handle_assemble_article(ctx: JobContext) -> dict[str, Any]:
             details={"issues": [i.to_dict() for i in report.issues], "stats": report.stats},
         )
 
-    keyword = ""
-    topic = TopicRepo(ctx.pb).get(article.get("topicId") or "")
-    if topic:
-        keyword = str(topic.get("keyword") or "")
     score = seo_score(
-        title=article.get("title") or "",
-        meta_description=article.get("metaDescription") or "",
+        title=fixed_title,
+        meta_description=meta_description,
         html=html,
         keyword=keyword,
     )
+    if score < 90:
+        ctx.warning(
+            "seo score below acceptable floor even after enforcement",
+            {"score": score, "article": article_id},
+        )
     articles.set_final_content(
-        article_id, html, word_count_from_html(html), score, article.get("metaDescription") or ""
+        article_id, html, word_count_from_html(html), score, meta_description
     )
     # Track the generated version: snapshot + record (previous versions in history
     # are never destroyed — the pre-assemble state was snapshotted by the writer).
@@ -395,6 +432,58 @@ async def handle_assemble_article(ctx: JobContext) -> dict[str, Any]:
     articles.record_generated(article_id, html, int(revision.get("revision") or 0))
     if topic:
         TopicRepo(ctx.pb).set_status(topic["id"], "review")
+
+    # Auto-publish: schedule-generated articles skip review entirely. When the
+    # SEO score reaches the threshold → publish straight to WordPress; when it
+    # doesn't → rewrite (regenerate) and try again, up to max_attempts.
+    auto = ctx.config.auto_publish
+    if auto["enabled"] and str(ctx.payload().get("trigger") or "") == "schedule":
+        if score >= int(auto["min_score"]):
+            articles.set_status(article_id, "approved")
+            JobRepo(ctx.pb).create(
+                project=ctx.project_id,
+                type="publish_article",
+                payload={"articleId": article_id, "action": "publish"},
+                idempotency_key=f"publish:article:{article_id}:auto:{int(time.time())}",
+                max_attempts=3,
+                entity_type="article",
+                entity_id=article_id,
+            )
+            ctx.info(
+                "auto-publish triggered (score OK)",
+                {"score": score, "min_score": auto["min_score"], "article": article_id},
+            )
+        else:
+            attempts = int(ctx.payload().get("autoAttempts") or 1)
+            if attempts < int(auto["max_attempts"]):
+                topic_id = article.get("topicId") or ""
+                JobRepo(ctx.pb).create(
+                    project=ctx.project_id,
+                    type="write_article",
+                    payload={
+                        "topicId": topic_id,
+                        "regenerate": True,
+                        "trigger": "schedule",
+                        "autoAttempts": attempts + 1,
+                    },
+                    idempotency_key=(
+                        f"write:article:{topic_id}:auto:{attempts}:{int(time.time())}"
+                    ),
+                    max_attempts=3,
+                    entity_type="article",
+                    entity_id=article_id,
+                )
+                articles.set_status(article_id, "generating")
+                ctx.info(
+                    "auto-rewrite scheduled (score too low)",
+                    {"score": score, "min_score": auto["min_score"], "attempt": attempts},
+                )
+            else:
+                ctx.info(
+                    "auto-publish gave up after max attempts — left for review",
+                    {"score": score, "attempts": attempts, "article": article_id},
+                )
+
     ctx.stage_completed("assembling", "مقاله آماده بازبینی است")
     ctx.progress(100, stage="done", message="مقاله آماده بازبینی است")
     return {
@@ -445,13 +534,18 @@ async def _generate_outline(ctx: JobContext, topic: dict[str, Any]) -> dict[str,
     params = _generation_params(ctx, "outline")
     raw = await ctx.providers.llm.generate(system=system, user=user, params=params)
     try:
-        return normalize_outline(extract_json(raw.text))
+        outline = normalize_outline(extract_json(raw.text))
     except ValueError as first_error:
         # safe repair/retry: one validation-prompt pass before giving up
         repaired = await _repair_outline(ctx, raw.text, topic)
         if repaired is None:
             raise first_error
-        return repaired
+        outline = repaired
+    # deterministic keyword enforcement: title/H1 + at least one H2 always
+    # carry the keyword (prompts are best-effort; this is the guarantee).
+    from app.domain.seo_enforce import enforce_outline
+
+    return enforce_outline(outline, str(topic.get("keyword") or ""))
 
 
 async def _repair_outline(
@@ -514,13 +608,14 @@ def _section_plan_at(
     outline: dict[str, Any], position: int, section: dict[str, Any]
 ) -> dict[str, Any]:
     """The immutable plan for this section (fallback: current row values)."""
-    plans = outline.get("sections") or []
-    if 0 <= position < len(plans):
-        return plans[position]
+    if 0 <= position < len(outline.get("sections") or []):
+        plan = outline["sections"][position]
+        return {**plan, "position": position}
     return {
         "heading": section.get("heading") or "",
         "content_brief": section.get("contentBrief") or "",
         "internal_links": section.get("internalLinks") or [],
+        "position": position,
     }
 
 
@@ -636,12 +731,16 @@ _OUTLINE_TASK_FALLBACK = (
     '{"title": string, "slug": string, "sections": ['
     '{"heading": string, "content_brief": string, "internal_links": [{"title": string, "url": string, "anchor_text": string}]}'
     "]}\n"
-    "سرفصل‌ها مختصر و حاوی کلمه کلیدی باشند؛ هیچ توضیحی خارج از JSON ننویس."
+    "سرفصل‌ها مختصر و حاوی کلمه کلیدی باشند؛ title باید عیناً شامل کلمه کلیدی باشد و slug از روی آن "
+    "ساخته شود تا URL حاوی کلمه کلیدی باشد؛ دست‌کم یک تیتر بخش حاوی کلمه کلیدی باشد؛ "
+    "هیچ توضیحی خارج از JSON ننویس."
 )
 
 _SECTION_TASK_FALLBACK = (
     "فقط HTML معتبر برای بخش برگردان: تیتر با <h2> و محتوا با <p>/<ul>/<ol>/<strong>/<em>/<a>؛ "
-    "بدون استایل inline، بدون تیتر <h1>، بدون fence و بدون توضیح اضافه."
+    "بدون استایل inline، بدون تیتر <h1>، بدون fence و بدون توضیح اضافه. "
+    "هر بخش دست‌کم ۱۵۰ کلمه و دست‌کم یک لیست (ul/ol) داشته باشد؛ بخش اول مقاله باید اولین جمله‌اش را "
+    "با کلمه کلیدی شروع کند؛ کلمه کلیدی را طبیعی و حدود ۱ تا ۲ بار در هر ۱۰۰ کلمه تکرار کن."
 )
 
 
