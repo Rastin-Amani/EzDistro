@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.api import articles, auth, dashboard, jobs, logs, projects, workspace
+from app.api import articles, auth, dashboard, jobs, logs, projects, workers, workspace
 from app.config import settings
 from app.middleware import AuthMiddleware
 from app.routes import pwa
@@ -33,6 +33,7 @@ app.include_router(projects.router)
 app.include_router(articles.router)
 app.include_router(workspace.router)
 app.include_router(jobs.router)
+app.include_router(workers.router)
 app.include_router(logs.router)
 app.include_router(pwa.router)
 
