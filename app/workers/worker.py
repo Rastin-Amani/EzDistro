@@ -16,6 +16,7 @@ from __future__ import annotations
 import asyncio
 import os
 import signal
+import socket
 import sys
 import time
 
@@ -30,6 +31,7 @@ from app.services.scheduler import run_schedule_poll  # noqa: E402
 
 POLL_INTERVAL = max(1.0, settings.poll_interval_seconds)
 SCHEDULE_INTERVAL = max(10.0, settings.schedule_poll_interval_seconds)
+HEARTBEAT_INTERVAL = max(10.0, settings.heartbeat_interval_seconds)
 
 
 async def main() -> None:
@@ -98,9 +100,50 @@ async def main() -> None:
                 created = run_schedule_poll(pb)
                 if created:
                     logger.info("scheduler.created_jobs", count=created)
-            except Exception:
-                logger.exception("worker.schedule.error")
+            except Exception as exc:
+                logger.exception("worker.schedule.error", error=str(exc))
             await asyncio.sleep(SCHEDULE_INTERVAL)
+
+    async def worker_heartbeat_loop() -> None:
+        from app.repositories.jobs import JobRepo, now_utc, pb_dt
+        from app.repositories.worker_heartbeats import WorkerHeartbeatRepo
+
+        repo = WorkerHeartbeatRepo(pb)
+        started_at = now_utc()
+        while not stop.is_set():
+            await asyncio.sleep(HEARTBEAT_INTERVAL)
+            try:
+                running = JobRepo(pb).count(filter=f'status="running" && leaseWorker="{worker_id}"')
+                stats = engine.stats()
+                # scheduler poll outcome (written by run_schedule_poll)
+                schedule: dict[str, object] = {}
+                try:
+                    hb = pb.collection("app_settings").get_first_list_item(
+                        'key="scheduler_heartbeat"', {"perPage": 1}
+                    )
+                    schedule = (hb.get("value") or {}) if hb else {}
+                except Exception:
+                    schedule = {}
+                repo.upsert(
+                    worker_id,
+                    {
+                        "hostname": socket.gethostname(),
+                        "pid": os.getpid(),
+                        "version": settings.app_version,
+                        "startedAt": pb_dt(started_at),
+                        "lastHeartbeatAt": pb_dt(now_utc()),
+                        "runningJobs": running,
+                        "completedJobs": stats["completed"],
+                        "failedJobs": stats["failed"],
+                        "maxConcurrentJobs": settings.max_concurrent_jobs,
+                        "scheduleLastPollAt": schedule.get("lastPollAt") or None,
+                        "scheduleDue": int(schedule.get("due") or 0),
+                        "scheduleCreated": int(schedule.get("created") or 0),
+                        "scheduleFailed": int(schedule.get("failed") or 0),
+                    },
+                )
+            except Exception:
+                logger.exception("worker.heartbeat.error")
 
     async def metrics_flush_loop() -> None:
         while not stop.is_set():
@@ -124,6 +167,7 @@ async def main() -> None:
     tasks = [
         asyncio.create_task(job_poll_loop()),
         asyncio.create_task(schedule_poll_loop()),
+        asyncio.create_task(worker_heartbeat_loop()),
         asyncio.create_task(metrics_flush_loop()),
     ]
     await stop.wait()
