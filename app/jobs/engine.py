@@ -62,6 +62,17 @@ class JobEngine:
         self._embedding_sem = asyncio.Semaphore(max(1, embedding_concurrency))
         self._publish_sem = asyncio.Semaphore(max(1, publish_concurrency))
         self._handlers = handlers or {}
+        # per-session counters surfaced by the worker heartbeat
+        self._completed = 0
+        self._failed = 0
+        self._cancelled = 0
+
+    def stats(self) -> dict[str, int]:
+        return {
+            "completed": self._completed,
+            "failed": self._failed,
+            "cancelled": self._cancelled,
+        }
 
     # ---------------------------------------------------------------------------
     # Polling
@@ -131,6 +142,7 @@ class JobEngine:
                 f"no handler for job type {job.get('type')!r}",
                 {"retryable": False},
             )
+            self._failed += 1
             self.leases.release(job_id)
             return
 
@@ -175,9 +187,11 @@ class JobEngine:
         try:
             result = await handler(ctx)
             self.jobs.complete(job_id, result)
+            self._completed += 1
             logger.info("job completed", job_id=job_id, type=ctx.job.get("type"))
         except JobCancelled:
             self.jobs.cancel(job_id)
+            self._cancelled += 1
             logger.info("job cancelled", job_id=job_id)
         except ProviderError as exc:
             self._handle_provider_failure(ctx, exc)
@@ -260,6 +274,7 @@ class JobEngine:
         else:
             self.jobs.update(job_id, {"attempts": attempts})
             self.jobs.fail(job_id, error_code, error_message, error_details)
+            self._failed += 1
             logger.error("job failed permanently", job_id=job_id, error_code=error_code)
 
     # ---------------------------------------------------------------------------
