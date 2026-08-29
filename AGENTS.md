@@ -8,7 +8,9 @@ Seoz Platform: FastAPI + HTMX (Jinja2/DaisyUI) SEO automation platform (WordPres
 - **Worker**: `make worker` → `python -m app.workers.worker` (separate process; needs `PB_ADMIN_EMAIL`/`PB_ADMIN_PASSWORD`)
 - Bootstrap the PocketBase schema (idempotent): `make bootstrap` → `python -m app.scripts.bootstrap_pb` (also seeds default prompts + admin user).
 
-The full schema (currently **18 collections**, e.g. `article_revisions`, `provider_metrics`) is defined **as code** in `app/scripts/bootstrap_pb.py` — treat the code as the source of truth. `docs/SCHEMA.md` / `docs/ARCHITECTURE.md` are useful but lag the code and `docs/` is gitignored, so do not rely on them in a fresh clone.
+**Working directory matters**: both processes must be launched from the repo root. Config is pydantic-settings, which reads `.env` from the *current working directory* — `make web`/`make worker` already do this, but never start them from another folder. On this host, `make install-web-service` / `make install-worker-service` install systemd units (templates in `deploy/`) that run the same commands with `WorkingDirectory=__ROOT__`.
+
+The full schema (currently **18 collections**, e.g. `article_revisions`, `provider_metrics`) is defined **as code** in `app/scripts/bootstrap_pb.py` — treat the code as the source of truth. `docs/SCHEMA.md` / `docs/ARCHITECTURE.md` are committed (the Dockerfile copies `docs/` into the image) but may lag the code, so prefer the bootstrap script when they disagree.
 
 ## Setup & env
 
@@ -17,6 +19,8 @@ cp .env.example .env        # config is pydantic-settings in app/config.py
 .venv/bin/pip install -r requirements.txt
 npm install && make css
 ```
+
+- **`.env` parsing gotcha**: pydantic-settings treats everything after `=` as the value, so never put trailing comments or whitespace after a value (e.g. `SECRETS_KEY= # note` would set the key to `" # note"`). Keep each value on its own line with no inline comment.
 
 - A ready `.venv` (Python 3.12) already exists — use `.venv/bin/...` for pytest/ruff/mypy rather than reinstalling.
 - **Tests need no live services**: they run against an in-memory fake PocketBase (`tests/fakes.py`, includes unique-constraint + filter emulation) and fake providers. The full suite is ~260 tests and takes **~3 min** — a handful of real-time engine tests dominate (`test_performance.py`, `test_failure_engineering.py`, `test_production_smoke.py`), so give `make test` a long timeout. For focused work run a single file: `.venv/bin/pytest tests/test_engine.py -q`.
