@@ -86,6 +86,10 @@ DEFAULT_SETTINGS: dict[str, Any] = {
     "retryPolicy": {"max_attempts": 3, "backoff_base": 30, "backoff_max": 3600},
     "publishingMode": "publish",
     "autosave": {"enabled": False, "interval_minutes": 5},
+    # auto-publish: schedule-generated articles publish straight to WordPress
+    # when the SEO score reaches the threshold; otherwise they rewrite and
+    # retry up to max_attempts before falling back to review.
+    "autoPublish": {"enabled": False, "min_score": 90, "max_attempts": 3},
     "indexing": {
         "schedule_enabled": False,
         "schedule_interval_minutes": 1440,

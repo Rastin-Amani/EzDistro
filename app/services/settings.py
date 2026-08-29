@@ -174,6 +174,15 @@ class ProjectConfig:
         return self.settings.get("autosave") or {"enabled": False}
 
     @property
+    def auto_publish(self) -> dict[str, Any]:
+        cfg = self.settings.get("autoPublish") or {}
+        return {
+            "enabled": bool(cfg.get("enabled")),
+            "min_score": max(0, int(cfg.get("min_score") or 90)),
+            "max_attempts": max(1, int(cfg.get("max_attempts") or 3)),
+        }
+
+    @property
     def indexing(self) -> dict[str, Any]:
         return self.settings.get("indexing") or {}
 
