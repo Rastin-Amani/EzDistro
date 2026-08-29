@@ -32,7 +32,7 @@
         </script>
         <meta
             name="viewport"
-            content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+            content="width=device-width, initial-scale=1.0, viewport-fit=cover"
         />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -42,9 +42,6 @@
         <link rel="manifest" href="/manifest.json" />
         <link rel="icon" href="/favicon.ico" />
 
-        <!-- Fonts are referenced from app.css; preloading them lets them
-             download in parallel with the stylesheet instead of waiting for
-             it to finish parsing (shorter critical chain → earlier text paint). -->
         <link
             rel="preload"
             href="{{ url_for('static', path='/assets/Vazirmatn-RD[wght].ttf') }}"
@@ -64,7 +61,7 @@
                     var el = document.createElement('div');
                     el.id = BANNER_ID;
                     el.textContent = BANNER_TEXT;
-                    el.style.cssText = 'position:fixed;top:0;left:50%;translate:-50%;z-index:99999;background:#ffedd5;color:#9a3412;text-align:center;font-size:0.875rem;font-weight:700;padding:0.5rem 1rem;border-radius:0 0 0.5rem 0.5rem;max-width:600px;width:100%';
+                    el.style.cssText = 'position:fixed;top:0;left:50%;translate:-50%;z-index:99999;background:oklch(92% 0.05 75);color:oklch(40% 0.1 50);text-align:center;font-size:0.8rem;font-weight:700;padding:0.5rem 1rem;border-radius:0 0 0.75rem 0.75rem;max-width:600px;width:100%';
                     el.style.display = navigator.onLine ? 'none' : '';
                     document.body.prepend(el);
                 }
@@ -84,7 +81,6 @@
                 document.addEventListener('DOMContentLoaded', function() {
                     if (!navigator.onLine) createBanner();
                 });
-                // MutationObserver — recreates banner immediately after HTMX body swap, no polling gap
                 var observer = new MutationObserver(function() {
                     if (!navigator.onLine && !document.getElementById(BANNER_ID)) {
                         createBanner();
@@ -101,31 +97,30 @@
         </script>
     </head>
 
-    <body class="bg-base-200 font-sans! antialiased" hx-boost="true">
+    <body class="bg-base-200 font-sans antialiased" hx-boost="true">
         {% block body_start %}{% endblock %}
-        <div class="mx-auto min-h-screen bg-base-100 selection:bg-primary selection:text-primary-content max-w-300">
-            <div
-                id="top-progress-bar"
-                class="fixed top-0 h-0.5 bg-primary z-[9999] transition-all duration-300 ease-out w-0 opacity-0 drop-shadow-md pointer-events-none max-w-300 mx-auto"
-            ></div>
 
-            <main id="main-content" class="pb-24">
-                {% block content %}{% endblock %}
+        <div
+            id="top-progress-bar"
+            class="fixed top-0 start-0 h-0.5 bg-primary z-[9999] transition-all duration-300 ease-out w-0 opacity-0 pointer-events-none"
+        ></div>
 
-                <div id="modal-container"></div>
-                <div
-                    id="toast-container"
-                    class="fixed top-5 right-5 z-50 flex flex-col gap-2"
-                ></div>
-            </main>
-        </div>
+        {% block content %}{% endblock %}
+
+        <div id="modal-container"></div>
+        <div
+            id="toast-container"
+            class="fixed top-4 right-4 z-[60] flex w-[min(92vw,22rem)] flex-col gap-2"
+            aria-live="polite"
+            aria-atomic="false"
+        ></div>
 
         <!-- Global confirmation dialog — replaces native window.confirm() for
              every hx-confirm action (driven by js/confirm-dialog.js). -->
         <dialog id="confirm-dialog" class="modal modal-bottom sm:modal-middle" hx-boost="false">
-            <div class="modal-box bg-base-100 border border-base-300">
+            <div class="modal-box bg-base-100">
                 <div class="flex items-start gap-4">
-                    <div class="shrink-0 w-11 h-11 rounded-full bg-warning/15 text-warning grid place-items-center">
+                    <div class="shrink-0 grid size-11 place-items-center rounded-2xl bg-warning/15 text-warning">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-6">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
                         </svg>
@@ -154,27 +149,21 @@
             function getProgressBar() {
                 return document.getElementById('top-progress-bar');
             }
-
             function startProgress() {
                 const bar = getProgressBar();
                 if (!bar) return;
-
                 bar.style.transition = 'width 0.3s ease-out, opacity 0.1s ease-in';
                 bar.style.opacity = '1';
                 bar.style.width = '30%';
-
                 setTimeout(() => {
                     if (bar.style.opacity === '1') bar.style.width = '70%';
                 }, 400);
             }
-
             function stopProgress() {
                 const bar = getProgressBar();
                 if (!bar) return;
-
                 bar.style.transition = 'width 0.2s ease-out, opacity 0.3s ease-out';
                 bar.style.width = '100%';
-
                 setTimeout(() => {
                     bar.style.opacity = '0';
                     setTimeout(() => {
@@ -183,7 +172,6 @@
                     }, 300);
                 }, 300);
             }
-
             document.addEventListener('htmx:beforeRequest', startProgress);
             document.addEventListener('htmx:afterSettle', stopProgress);
             window.addEventListener('beforeunload', startProgress);
@@ -192,78 +180,57 @@
 
         <script>
             if (!window.toastListenerAttached) {
-                // 1. Toast Listener
+                const ICONS = {
+                    info: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />',
+                    success: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />',
+                    error: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />',
+                    warning: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />',
+                };
+                const ROLE = {
+                    info: 'seoz-toast-info',
+                    success: 'seoz-toast-success',
+                    error: 'seoz-toast-error',
+                    warning: 'seoz-toast-warning',
+                };
                 document.addEventListener('show-toast', function (evt) {
-                    const message = evt.detail.message;
-                    const type = evt.detail.type || 'info';
-
-                    const toastContainer = document.getElementById('toast-container');
-                    if (!toastContainer) return;
+                    const detail = evt.detail || {};
+                    const message = detail.message || '';
+                    const type = detail.type || 'info';
+                    const container = document.getElementById('toast-container');
+                    if (!container) return;
 
                     const toast = document.createElement('div');
-
-                    let colorClass = 'alert-info';
-                    let icon = '';
-
-                    if (type === 'info') {
-                        colorClass = 'alert-info';
-                        icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="h-6 w-6 shrink-0 stroke-current"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
-                    } else if (type === 'success') {
-                        colorClass = 'alert-success';
-                        icon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`;
-                    } else if (type === 'error') {
-                        colorClass = 'alert-error';
-                        icon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`;
-                    } else if (type === 'warning') {
-                        colorClass = 'alert-warning';
-                        icon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>`;
-                    }
-
-                    toast.className = `alert ${colorClass} alert-soft transition-all duration-300 transform translate-x-full opacity-0 max-w-sm flex items-center justify-between`;
-
+                    toast.className = `seoz-toast ${ROLE[type] || ROLE.info} translate-x-full opacity-0 transition-all duration-300`;
+                    toast.setAttribute('role', 'status');
                     toast.innerHTML = `
-                        <div class="flex items-center gap-3">
-                            ${icon}
-                            <span class="font-bold text-sm">${message}</span>
-                        </div>
-                    `;
-
-                    toastContainer.appendChild(toast);
-
+                        <span class="seoz-toast-ico">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="size-5">${ICONS[type] || ICONS.info}</svg>
+                        </span>
+                        <span class="flex-1 text-sm font-medium">${message}</span>`;
+                    container.appendChild(toast);
+                    requestAnimationFrame(() => toast.classList.remove('translate-x-full', 'opacity-0'));
                     setTimeout(() => {
-                        toast.classList.remove('translate-x-full', 'opacity-0');
-                    }, 50);
-
-                    setTimeout(() => {
-                        toast.classList.add('opacity-0', 'scale-90');
+                        toast.classList.add('opacity-0', 'translate-x-8');
                         setTimeout(() => toast.remove(), 300);
-                    }, 4000);
+                    }, 4200);
                 });
 
-                // 2. Delayed Redirect Listener — toast animates, THEN navigate
+                // Delayed Redirect Listener — toast animates, THEN navigate
                 document.addEventListener('delayed-redirect', function (evt) {
-                    const targetUrl = evt.detail.url;
-                    setTimeout(() => {
-                        window.location.href = targetUrl;
-                    }, 1200);
+                    const targetUrl = evt.detail && evt.detail.url;
+                    if (!targetUrl) return;
+                    setTimeout(() => { window.location.href = targetUrl; }, 1200);
                 });
 
-                // 3. HTMX failure feedback — network errors and 4xx/5xx must never
-                //    fail silently (e.g. server down while offline-cached page is shown).
+                // HTMX failure feedback — network errors and 4xx/5xx must never fail silently
                 document.addEventListener('htmx:sendError', function () {
                     document.dispatchEvent(new CustomEvent('show-toast', {
-                        detail: {
-                            message: 'اتصال به سرور برقرار نشد. دوباره تلاش کنید.',
-                            type: 'error',
-                        },
+                        detail: { message: 'اتصال به سرور برقرار نشد. دوباره تلاش کنید.', type: 'error' },
                     }));
                 });
-                document.addEventListener('htmx:responseError', function (evt) {
+                document.addEventListener('htmx:responseError', function () {
                     document.dispatchEvent(new CustomEvent('show-toast', {
-                        detail: {
-                            message: 'مشکلی پیش آمد؛ دوباره تلاش کنید.',
-                            type: 'error',
-                        },
+                        detail: { message: 'مشکلی پیش آمد؛ دوباره تلاش کنید.', type: 'error' },
                     }));
                 });
 
@@ -277,17 +244,12 @@
                 window.addEventListener('load', async () => {
                     try {
                         const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
-                        console.log('SW registered:', reg.scope);
-
                         reg.addEventListener('updatefound', () => {
                             const newSW = reg.installing;
                             newSW.addEventListener('statechange', () => {
                                 if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
                                     document.dispatchEvent(new CustomEvent('show-toast', {
-                                        detail: {
-                                            message: 'نسخه جدید در دسترس است.',
-                                            type: 'info',
-                                        },
+                                        detail: { message: 'نسخه جدید در دسترس است.', type: 'info' },
                                     }));
                                 }
                             });

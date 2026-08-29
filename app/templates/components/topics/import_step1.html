@@ -5,20 +5,20 @@
       hx-encoding="multipart/form-data" class="flex flex-col gap-4">
     <label class="form-control w-full">
         <span class="label-text font-medium text-sm">جای‌گذاری متن</span>
-        <textarea name="csv_text" rows="7" dir="ltr" class="textarea textarea-bordered w-full font-mono text-xs leading-relaxed"
+        <textarea name="csv_text" rows="7" dir="ltr" class="textarea w-full font-mono text-xs leading-relaxed"
                   placeholder="عنوان | کلمه کلیدی | ستون | خوشه | نوع | اولویت&#10;…یا CSV کامل با هدر (مثل: Week,Title,Keyword,Related Pillar,…)"></textarea>
     </label>
     <div class="flex items-center gap-2 text-xs opacity-50">
-        <span class="flex-1 border-t border-base-200"></span>
+        <span class="flex-1 border-t border-base-300/70"></span>
         یا
-        <span class="flex-1 border-t border-base-200"></span>
+        <span class="flex-1 border-t border-base-300/70"></span>
     </div>
     <label class="form-control w-full">
         <span class="label-text font-medium text-sm">بارگذاری فایل CSV / TSV</span>
         <input type="file" name="file" accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values"
-               class="file-input file-input-bordered file-input-sm w-full" />
+               class="file-input file-input-sm w-full" />
     </label>
-    <div class="alert bg-base-200 border border-base-200 rounded-box text-xs leading-relaxed py-2">
+    <div class="alert alert-soft rounded-xl text-xs leading-relaxed py-2">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-4 shrink-0"><path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" /></svg>
         <span>هر خط یک موضوع است. ستون‌ها با <kbd class="kbd kbd-xs">|</kbd> یا <kbd class="kbd kbd-xs">Tab</kbd> جدا می‌شوند: عنوان | کلمه کلیدی | ستون | خوشه | نوع | اولویت. ستون‌های هدر (Week, ID, Title, Keyword, Related Pillar, Cluster, Type, …) خودکار شناسایی می‌شوند و در مرحله بعد می‌توانید نگاشت را تغییر دهید. ردیف‌های تکراری خودکار رد می‌شوند.</span>
     </div>

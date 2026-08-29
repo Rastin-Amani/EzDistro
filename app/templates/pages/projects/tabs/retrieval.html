@@ -1,11 +1,14 @@
 {% import 'macros/forms.html' as f %}
+{{ f.page_header('بازیابی', 'تشخیص و آزمایش مسیر بازیابی معنایی.', eyebrow='پروژه') }}
 <div id="retrieval-tab" class="flex flex-col gap-4 w-full">
-    <section class="card bg-base-100 border border-base-200 shadow-none">
-        <div class="card-body p-5 gap-4">
+    <div class="seoz-panel">
+        <div class="seoz-panel-head">
             <div class="flex items-center gap-2">
-                <h2 class="font-bold text-sm">تشخیص بازیابی</h2>
+                <h2 class="seoz-panel-title">تشخیص بازیابی</h2>
                 {{ f.tip('عبارت را وارد کنید تا مسیر واقعی بازیابی (جاسازی → جستجو در کیوردنت → بازچینش اختیاری) اجرا و نتیجه بررسی شود.') }}
             </div>
+        </div>
+        <div class="p-4 flex flex-col gap-4">
             <p class="text-xs opacity-50 leading-relaxed">
                 عبارت جستجو را وارد کنید تا بازیابی واقعی اجرا و نتیجه بررسی شود. مقادیر پیش‌فرض از تنظیمات پروژه می‌آیند.
             </p>
@@ -26,7 +29,7 @@
                 </div>
             </form>
         </div>
-    </section>
+    </div>
 
     <div id="retrieval-results"></div>
 </div>

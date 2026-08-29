@@ -9,41 +9,44 @@
     --font-brand: 'vazirmatn', ui-sans-serif, system-ui, sans-serif;
 }
 
-/* ════════════ "seoz" light theme — DaisyUI Garden (warm, editorial) ════════════
-   Garden's cream paper + terracotta/rose primary, olive neutral. Applied via
-   data-theme="seoz". */
+/* ═══════════════════════════════════════════════════════════════════════
+   "seoz" — warm editorial paper & ink & clay.
+   A calm, substantial workspace: warm paper surfaces, clay/terracotta brand,
+   forest accent, deep ink. Flat by design (borders + surface contrast, no
+   shadows). Applied via data-theme="seoz".
+   ═══════════════════════════════════════════════════════════════════════ */
 @plugin "daisyui/theme" {
     name: "seoz";
     default: true;
     prefersdark: false;
     color-scheme: light;
 
-    --color-base-100: oklch(92.951% 0.002 17.197);
-    --color-base-200: oklch(86.445% 0.002 17.197);
-    --color-base-300: oklch(79.938% 0.001 17.197);
-    --color-base-content: oklch(16.961% 0.001 17.32);
+    --color-base-100: oklch(98.5% 0.004 85);
+    --color-base-200: oklch(95.5% 0.007 85);
+    --color-base-300: oklch(89.5% 0.010 85);
+    --color-base-content: oklch(27% 0.020 62);
 
-    --color-primary: oklch(62.45% 0.278 3.836);
-    --color-primary-content: oklch(100% 0 0);
-    --color-secondary: oklch(48.495% 0.11 355.095);
-    --color-secondary-content: oklch(89.699% 0.022 355.095);
-    --color-accent: oklch(56.273% 0.054 154.39);
-    --color-accent-content: oklch(100% 0 0);
-    --color-neutral: oklch(24.155% 0.049 89.07);
-    --color-neutral-content: oklch(92.951% 0.002 17.197);
+    --color-primary: oklch(57% 0.165 32);
+    --color-primary-content: oklch(99% 0.005 85);
+    --color-secondary: oklch(47% 0.105 350);
+    --color-secondary-content: oklch(98% 0.010 85);
+    --color-accent: oklch(50% 0.090 158);
+    --color-accent-content: oklch(99% 0.005 85);
+    --color-neutral: oklch(33% 0.022 75);
+    --color-neutral-content: oklch(96% 0.008 85);
 
-    --color-info: oklch(72.06% 0.191 231.6);
-    --color-info-content: oklch(0% 0 0);
-    --color-success: oklch(64.8% 0.15 160);
-    --color-success-content: oklch(0% 0 0);
-    --color-warning: oklch(84.71% 0.199 83.87);
-    --color-warning-content: oklch(0% 0 0);
-    --color-error: oklch(71.76% 0.221 22.18);
-    --color-error-content: oklch(0% 0 0);
+    --color-info: oklch(55% 0.130 235);
+    --color-info-content: oklch(99% 0.004 85);
+    --color-success: oklch(56% 0.125 152);
+    --color-success-content: oklch(99% 0.004 85);
+    --color-warning: oklch(70% 0.145 72);
+    --color-warning-content: oklch(28% 0.05 75);
+    --color-error: oklch(58% 0.205 25);
+    --color-error-content: oklch(99% 0.004 85);
 
-    --radius-selector: 1rem;
-    --radius-field: 0.5rem;
-    --radius-box: 1rem;
+    --radius-selector: 0.75rem;
+    --radius-field: 0.6rem;
+    --radius-box: 0.9rem;
     --size-selector: 0.25rem;
     --size-field: 0.25rem;
     --border: 1px;
@@ -51,42 +54,42 @@
     --noise: 0;
 }
 
-/* ════════════ "seoz-dark" theme — Garden flipped to night ════════════
-   Same brand soul (rose primary, olive neutral, soft green accent) but a
-   warm near-black environment. Shares radius/size/border tokens with `seoz`
-   so both themes feel like one system. Applied via data-theme="seoz-dark". */
+/* ═══════════════════════════════════════════════════════════════════════
+   "seoz-dark" — paper & ink & clay, after dark.
+   Same brand soul, warm near-black environment.
+   ═══════════════════════════════════════════════════════════════════════ */
 @plugin "daisyui/theme" {
     name: "seoz-dark";
     default: false;
     prefersdark: true;
     color-scheme: dark;
 
-    --color-base-100: oklch(21% 0.014 120);
-    --color-base-200: oklch(26% 0.016 120);
-    --color-base-300: oklch(32% 0.02 120);
-    --color-base-content: oklch(92% 0.008 90);
+    --color-base-100: oklch(23% 0.012 75);
+    --color-base-200: oklch(19% 0.012 75);
+    --color-base-300: oklch(28% 0.015 75);
+    --color-base-content: oklch(92% 0.010 85);
 
-    --color-primary: oklch(72% 0.19 22);
-    --color-primary-content: oklch(18% 0.04 22);
-    --color-secondary: oklch(58% 0.11 355.095);
-    --color-secondary-content: oklch(96% 0.01 355.095);
-    --color-accent: oklch(62% 0.06 154.39);
-    --color-accent-content: oklch(18% 0.02 154.39);
-    --color-neutral: oklch(36% 0.022 120);
-    --color-neutral-content: oklch(90% 0.01 90);
+    --color-primary: oklch(69% 0.150 33);
+    --color-primary-content: oklch(22% 0.04 33);
+    --color-secondary: oklch(60% 0.100 350);
+    --color-secondary-content: oklch(98% 0.010 85);
+    --color-accent: oklch(58% 0.080 158);
+    --color-accent-content: oklch(20% 0.03 158);
+    --color-neutral: oklch(42% 0.022 75);
+    --color-neutral-content: oklch(92% 0.008 85);
 
-    --color-info: oklch(70% 0.15 231.6);
-    --color-info-content: oklch(16% 0.03 231.6);
-    --color-success: oklch(66% 0.12 160);
-    --color-success-content: oklch(14% 0.03 160);
-    --color-warning: oklch(82% 0.14 83.87);
-    --color-warning-content: oklch(18% 0.03 83.87);
-    --color-error: oklch(68% 0.17 22.18);
-    --color-error-content: oklch(18% 0.04 22.18);
+    --color-info: oklch(66% 0.120 235);
+    --color-info-content: oklch(18% 0.03 235);
+    --color-success: oklch(66% 0.110 152);
+    --color-success-content: oklch(16% 0.03 152);
+    --color-warning: oklch(76% 0.125 72);
+    --color-warning-content: oklch(24% 0.04 72);
+    --color-error: oklch(66% 0.175 25);
+    --color-error-content: oklch(20% 0.04 25);
 
-    --radius-selector: 1rem;
-    --radius-field: 0.5rem;
-    --radius-box: 1rem;
+    --radius-selector: 0.75rem;
+    --radius-field: 0.6rem;
+    --radius-box: 0.9rem;
     --size-selector: 0.25rem;
     --size-field: 0.25rem;
     --border: 1px;
@@ -97,13 +100,375 @@
 @font-face {
     font-family: 'vazirmatn';
     src: url('./assets/Vazirmatn-RD[wght].ttf') format('truetype');
-    font-weight: 100 900; /* variable font weight range */
+    font-weight: 100 900;
     font-display: swap;
 }
 
-/* ════════════ Theme switch transition — premium but fast, reduced-motion aware ════════════
-   `.theme-switching` is added (and removed ~260ms later) by js/theme.js right
-   before/after data-theme flips, so tokens animate once instead of per-element. */
+/* ═══════════════════════════════════════════════════════════════════════
+   Base layer — typography, focus, scrollbars, rhythm
+   ═══════════════════════════════════════════════════════════════════════ */
+@layer base {
+    html {
+        -webkit-text-size-adjust: 100%;
+        text-rendering: optimizeLegibility;
+    }
+    body {
+        font-feature-settings: "ss01", "cv01";
+    }
+    /* Tabular numerals everywhere data lives (IDs, counts, dates, metrics) */
+    .tabular,
+    table .num,
+    .stat-value,
+    .font-mono {
+        font-variant-numeric: tabular-nums;
+    }
+    /* Clickable non-link elements (HTMX tabs, role=button/tab, anchors
+       without href) must still show a pointer cursor. */
+    a:not([href]),
+    [role='tab'],
+    [role='button'],
+    [role='menuitem'],
+    summary,
+    [onclick] {
+        cursor: pointer;
+    }
+    /* Visible, consistent focus ring for keyboard users */
+    :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+        outline: 2px solid var(--color-primary);
+        outline-offset: 2px;
+        border-radius: 0.5rem;
+    }
+    /* Subtle, brand-tinted scrollbars */
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: var(--color-base-300) transparent;
+    }
+    *::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+    }
+    *::-webkit-scrollbar-thumb {
+        background-color: color-mix(in oklch, var(--color-base-300) 80%, transparent);
+        border-radius: 9999px;
+        border: 2px solid transparent;
+        background-clip: padding-box;
+    }
+    *::-webkit-scrollbar-thumb:hover {
+        background-color: var(--color-base-content);
+        background-clip: padding-box;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Component layer — refine DaisyUI primitives into the seoz voice
+   (flat: hierarchy via borders, surface contrast, type — never shadows)
+   ═══════════════════════════════════════════════════════════════════════ */
+@layer components {
+    .card {
+        @apply rounded-box border border-base-300/70 bg-base-100;
+    }
+    .card-body {
+        @apply gap-4;
+    }
+
+    .btn {
+        @apply rounded-xl border border-base-300 font-medium;
+    }
+    .btn-ghost {
+        @apply border-transparent;
+    }
+    .btn-primary {
+        @apply border-primary;
+    }
+
+    .input,
+    .select,
+    .textarea {
+        @apply rounded-xl border-base-300 bg-base-100;
+    }
+    .input:focus,
+    .select:focus,
+    .textarea:focus {
+        @apply border-primary ring-2 ring-primary/15 outline-none;
+    }
+    .input::placeholder,
+    .textarea::placeholder {
+        @apply opacity-40;
+    }
+
+    /* Loading indicators must NOT occupy layout space in the default state —
+       the spinner placeholder is what makes buttons look like they have an
+       extra gap. They appear only while an HTMX request is in flight.
+       !important wins over any block/inline utility on the same element. */
+    .htmx-indicator {
+        display: none !important;
+    }
+    .htmx-request .htmx-indicator,
+    .htmx-request.htmx-indicator {
+        display: inline-flex !important;
+    }
+
+    /* Form controls fill their container cell — keeps every field aligned
+       and justified, regardless of which wrapper (form-control / floating-label)
+       the page uses. */
+    .form-control input,
+    .form-control select,
+    .form-control textarea,
+    .floating-label input,
+    .floating-label select,
+    .floating-label textarea {
+        @apply w-full;
+    }
+    .form-control {
+        @apply gap-1;
+    }
+
+    /* Tables — legible, dense, with sticky headers and calm row hover */
+    .table {
+        @apply text-base-content;
+    }
+    .table thead th {
+        @apply bg-base-200/80 font-medium text-base-content/55 text-xs sticky top-0 z-10;
+        position: sticky;
+    }
+    .table tbody tr {
+        @apply border-base-200/80 transition-colors;
+    }
+    .table tbody tr:hover {
+        @apply bg-base-200/50;
+    }
+    .table-zebra tbody tr:nth-child(even):hover {
+        @apply bg-base-200/50;
+    }
+
+    .badge {
+        @apply rounded-md border-transparent font-medium;
+    }
+
+    .stat {
+        @apply rounded-box border border-base-300/70 bg-base-100 px-4 py-3;
+    }
+    .stat-title {
+        @apply text-base-content/55;
+    }
+    .stat-value {
+        @apply leading-tight;
+    }
+
+    .progress {
+        @apply rounded-full;
+    }
+
+    .tabs {
+        @apply border-base-300/70;
+    }
+
+    .alert {
+        @apply rounded-xl border border-base-300/70;
+    }
+
+    .dropdown-content {
+        @apply rounded-box border border-base-300/70 bg-base-100 shadow-none;
+    }
+
+    .modal-box {
+        @apply rounded-2xl border border-base-300/70 bg-base-100;
+    }
+
+    .tooltip[data-tip] {
+        cursor: help;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Seoz design vocabulary — shared, reusable building blocks
+   ═══════════════════════════════════════════════════════════════════════ */
+@layer components {
+    /* Page frame + header ---------------------------------------------- */
+    .seoz-page {
+        @apply mx-auto w-full max-w-300 px-4 pb-24 pt-5;
+    }
+    .seoz-pagehead {
+        @apply flex flex-wrap items-end justify-between gap-3 mb-5;
+    }
+    .seoz-eyebrow {
+        @apply inline-flex items-center gap-1.5 text-xs font-bold text-primary;
+    }
+    .seoz-title {
+        @apply text-xl font-extrabold tracking-tight text-base-content;
+    }
+    .seoz-subtitle {
+        @apply text-sm text-base-content/55 mt-0.5;
+    }
+    .seoz-actions {
+        @apply flex items-center gap-2 flex-wrap;
+    }
+
+    /* Brand mark — the one deliberate signature (flat, ink + clay) ------ */
+    .seoz-logo {
+        @apply grid place-items-center rounded-2xl bg-gradient-to-br from-primary to-secondary text-primary-content font-black;
+        box-shadow: none;
+    }
+
+    /* App shell — robust flex: sidebar is a normal sticky flow child so RTL
+       offset hacks (and the bugs they cause) are unnecessary. */
+    .seoz-shell {
+        @apply flex min-h-screen bg-base-200;
+    }
+    .seoz-sidebar {
+        @apply hidden border-l border-base-300/70 bg-base-100 lg:sticky lg:top-0 lg:h-screen lg:flex lg:w-64 lg:flex-none lg:flex-col;
+    }
+    .seoz-sidebar-brand {
+        @apply flex h-16 items-center gap-2.5 border-b border-base-300/70 px-4;
+    }
+    .seoz-nav {
+        @apply flex-1 overflow-y-auto px-3 py-4 flex flex-col gap-1;
+    }
+    .seoz-nav-group {
+        @apply px-2 pb-1 pt-4 text-[0.65rem] font-bold uppercase tracking-wider text-base-content/40;
+    }
+    .seoz-navlink {
+        @apply relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-base-content/70 transition-colors hover:bg-base-200 hover:text-base-content;
+    }
+    .seoz-navlink svg {
+        @apply size-5 opacity-70;
+    }
+    .seoz-navlink-active {
+        @apply bg-primary/10 text-primary hover:bg-primary/10 hover:text-primary;
+    }
+    .seoz-navlink-active svg {
+        @apply opacity-100;
+    }
+    /* The active rail — a thin clay bar on the inner edge (RTL → left) */
+    .seoz-navlink-active::before {
+        content: "";
+        @apply absolute inset-y-1.5 left-0 w-1 rounded-full bg-primary;
+    }
+    .seoz-sidefoot {
+        @apply border-t border-base-300/70 p-3;
+    }
+
+    /* Mobile dock ----------------------------------------------------- */
+    .seoz-dock {
+        @apply fixed inset-x-0 bottom-0 z-40 flex h-16 items-stretch justify-around border-t border-base-300/70 bg-base-100/95 backdrop-blur lg:hidden;
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+    .seoz-dock a {
+        @apply flex flex-1 flex-col items-center justify-center gap-0.5 text-[0.65rem] font-medium text-base-content/55 transition-colors;
+    }
+    .seoz-dock a svg {
+        @apply size-5;
+    }
+    .seoz-dock a.seoz-dock-active {
+        @apply text-primary;
+    }
+
+    /* Cards / panels -------------------------------------------------- */
+    .seoz-panel {
+        @apply rounded-box border border-base-300/70 bg-base-100;
+    }
+    .seoz-panel-head {
+        @apply flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3;
+    }
+    .seoz-panel-title {
+        @apply font-bold text-sm;
+    }
+
+    /* Metrics / stats -------------------------------------------------- */
+    .seoz-metric {
+        @apply rounded-box border border-base-300/70 bg-base-100 p-4 flex flex-col gap-1;
+    }
+    .seoz-metric-label {
+        @apply text-xs font-medium text-base-content/55;
+    }
+    .seoz-metric-value {
+        @apply text-2xl font-extrabold leading-none text-base-content tabular-nums;
+    }
+    .seoz-metric-swatch {
+        @apply size-2.5 rounded-full;
+    }
+
+    /* Empty / placeholder states -------------------------------------- */
+    .seoz-empty {
+        @apply flex flex-col items-center justify-center gap-3 py-12 text-center;
+    }
+    .seoz-empty-icon {
+        @apply grid size-14 place-items-center rounded-2xl bg-base-200 text-base-content/40;
+    }
+
+    /* Status pills (used alongside daisyui badge-soft) ----------------- */
+    .seoz-pill {
+        @apply inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-medium;
+    }
+
+    /* Project tab bar — mobile-first scrollable pills ------------------ */
+    .seoz-tab-active {
+        @apply bg-primary/10 text-primary border-primary/30 font-semibold;
+    }
+    .seoz-tab-idle {
+        @apply border-transparent text-base-content/55 hover:text-base-content hover:bg-base-100;
+    }
+    .seoz-scroll-x {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+    .seoz-scroll-x::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* Divider with breathing room ------------------------------------- */
+    .seoz-rule {
+        @apply my-4 border-0 border-t border-base-300/70;
+    }
+
+    /* Inline key/value grid for metadata ------------------------------ */
+    .seoz-kv {
+        @apply grid grid-cols-2 gap-2;
+    }
+    .seoz-kv > div {
+        @apply rounded-xl border border-base-300/70 bg-base-200/40 p-2.5;
+    }
+    .seoz-kv .k {
+        @apply block text-[0.7rem] text-base-content/50;
+    }
+    .seoz-kv .v {
+        @apply block font-bold text-base-content;
+    }
+
+    /* Toast — paper card with a colored start accent (RTL → right) ----- */
+    .seoz-toast {
+        @apply flex items-center gap-3 rounded-xl border border-base-300/70 bg-base-100 px-4 py-3 text-sm font-medium text-base-content shadow-none max-w-sm w-full;
+    }
+    .seoz-toast .seoz-toast-ico {
+        @apply grid size-7 shrink-0 place-items-center rounded-lg;
+    }
+    .seoz-toast-info .seoz-toast-ico { @apply bg-info/15 text-info; }
+    .seoz-toast-success .seoz-toast-ico { @apply bg-success/15 text-success; }
+    .seoz-toast-error .seoz-toast-ico { @apply bg-error/15 text-error; }
+    .seoz-toast-warning .seoz-toast-ico { @apply bg-warning/15 text-warning; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Utilities — small, deliberate helpers
+   ═══════════════════════════════════════════════════════════════════════ */
+@layer utilities {
+    .num {
+        font-variant-numeric: tabular-nums;
+    }
+    /* RTL-safe numeric inputs keep their alignment */
+    input[type='number'],
+    input[type='date'],
+    input[type='time'],
+    input[type='datetime-local'],
+    input[type='tel'] {
+        direction: rtl;
+        text-align: right;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Theme switch transition — premium but fast, reduced-motion aware
+   ═══════════════════════════════════════════════════════════════════════ */
 @media (prefers-reduced-motion: no-preference) {
     html.theme-switching,
     html.theme-switching *,
@@ -116,44 +481,4 @@
             fill 0.25s ease,
             stroke 0.25s ease !important;
     }
-}
-
-/* Numeric inputs render LTR by default in browsers — force RTL alignment */
-input[type='number'],
-input[type='date'],
-input[type='time'],
-input[type='datetime-local'],
-input[type='tel'] {
-    direction: rtl;
-    text-align: right;
-}
-
-/* Coherent visual system refinements */
-.card {
-    @apply border border-base-200 rounded-box;
-}
-
-.stat {
-    @apply rounded-box;
-}
-
-.btn {
-    @apply border border-base-300;
-}
-
-/* Comfortable, consistent form controls: full width inside their grid cell,
-   equal heights, clear focus ring. */
-.form-control input,
-.form-control select,
-.form-control textarea {
-    @apply w-full;
-}
-
-.form-control .label {
-    @apply px-0 pt-0;
-}
-
-/* Help-cursor for tooltip triggers so users discover the hint icon */
-.tooltip[data-tip] {
-    cursor: help;
 }

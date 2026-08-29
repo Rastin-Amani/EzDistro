@@ -1,7 +1,9 @@
 <div class="flex flex-col gap-4">
-    <div class="card bg-base-100 border border-base-200">
-        <div class="card-body p-4 gap-2">
-            <h2 class="font-bold text-sm">نتایج برای: «{{ query }}»</h2>
+    <div class="seoz-panel">
+        <div class="seoz-panel-head">
+            <h2 class="seoz-panel-title">نتایج برای: «{{ query }}»</h2>
+        </div>
+        <div class="p-4 flex flex-col gap-2">
             <p class="text-xs opacity-50">
                 {{ results|length }} نتیجه — کاندیدا: {{ options.candidate_count }}
                 {% if options.similarity_threshold %} — آستانه: {{ options.similarity_threshold }}{% endif %}
@@ -46,12 +48,14 @@
     </div>
 
     {% if context.links %}
-    <div class="card bg-base-100 border border-base-200">
-        <div class="card-body p-4 gap-2">
-            <h2 class="font-bold text-sm">کاندیداهای لینک داخلی ({{ context.links|length }})</h2>
+    <div class="seoz-panel">
+        <div class="seoz-panel-head">
+            <h2 class="seoz-panel-title">کاندیداهای لینک داخلی ({{ context.links|length }})</h2>
+        </div>
+        <div class="p-4">
             <ul class="flex flex-col gap-1">
                 {% for link in context.links %}
-                <li class="flex items-center justify-between gap-2 text-sm border border-base-200 rounded-lg px-3 py-1.5">
+                <li class="flex items-center justify-between gap-2 text-sm border border-base-300/70 rounded-lg px-3 py-1.5">
                     <span class="truncate">{{ link.title }}</span>
                     <span class="text-xs opacity-50 truncate" dir="ltr">{{ link.url }}</span>
                     <span class="badge badge-soft badge-primary badge-sm">{{ '%.2f'|format(link.relevance_score) }}</span>
@@ -63,9 +67,11 @@
     {% endif %}
 
     {% if context.passages %}
-    <div class="card bg-base-100 border border-base-200">
-        <div class="card-body p-4 gap-2">
-            <h2 class="font-bold text-sm">زمینه پرامپت ({{ context.passages|length }} بخش — {{ context.used_chars }} کاراکتر)</h2>
+    <div class="seoz-panel">
+        <div class="seoz-panel-head">
+            <h2 class="seoz-panel-title">زمینه پرامپت ({{ context.passages|length }} بخش — {{ context.used_chars }} کاراکتر)</h2>
+        </div>
+        <div class="p-4">
             <pre class="text-xs bg-base-200/60 rounded-xl p-3 whitespace-pre-wrap max-h-72 overflow-auto">{{ context.format_for_prompt }}</pre>
         </div>
     </div>

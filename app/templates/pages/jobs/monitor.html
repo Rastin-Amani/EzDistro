@@ -1,16 +1,41 @@
 {% extends "layouts/platform.html" %}
 {% block dashboard_content %}
-<div class="flex items-center justify-between mb-4">
-    <h1 class="text-lg font-bold">وظایف</h1>
-    <span class="text-xs opacity-50">{{ total }} مورد</span>
+{% import 'macros/forms.html' as f %}
+
+{{ f.page_header('وظایف', 'نظارت بر اجرای نمایه‌سازی و تولید مقاله در همه پروژه‌ها', 'اجرا و نظارت', '<span class="text-xs opacity-50">' ~ total ~ ' مورد</span>') }}
+
+<!-- Worker scheduler status -->
+{% if scheduler_heartbeat %}
+<div class="seoz-panel border-base-300/70">
+    <div class="seoz-panel-head"><h2 class="seoz-panel-title">زمان‌بندی خودکار (کارگر)</h2></div>
+    <div class="p-4 text-xs flex flex-wrap items-center gap-x-6 gap-y-2">
+        <span>آخرین بررسی: <span class="font-bold">{{ scheduler_heartbeat.lastPollAt|jalali_dt }}</span></span>
+        <span>زمان‌بندی آماده: <span class="font-bold tabular">{{ scheduler_heartbeat.due or 0 }}</span></span>
+        <span>وظیفه ساخته‌شده: <span class="font-bold tabular {{ 'text-success' if (scheduler_heartbeat.created or 0) > 0 }}">{{ scheduler_heartbeat.created or 0 }}</span></span>
+        {% if scheduler_heartbeat.failed %}
+        <span class="text-error font-bold">خطا در اجرای {{ scheduler_heartbeat.failed }} زمان‌بندی</span>
+        {% endif %}
+        {% if (scheduler_heartbeat.due or 0) > 0 and not (scheduler_heartbeat.created or 0) %}
+        <span class="text-warning">زمان‌بندی‌ها آماده بودند ولی وظیفه‌ای ساخته نشد — گزارش کارگر را بررسی کنید.</span>
+        {% endif %}
+    </div>
 </div>
+{% else %}
+<div class="seoz-panel border-error/40">
+    <div class="seoz-panel-head"><h2 class="seoz-panel-title text-error">زمان‌بندی خودکار (کارگر)</h2></div>
+    <div class="p-4 text-xs">
+        <span class="text-error font-bold">کارگر هنوز زمان‌بندی‌ها را بررسی نکرده است.</span>
+        <span class="opacity-70"> — مطمئن شوید فرآیند <code class="font-mono" dir="ltr">make worker</code> در حال اجراست (و پس از آخرین تغییر کد راه‌اندازی مجدد شده).</span>
+    </div>
+</div>
+{% endif %}
 
 <!-- Filters -->
-<form method="get" action="/jobs" class="card bg-base-100 border border-base-200 mb-4">
-    <div class="card-body p-4 gap-3">
+{{ f.panel('فیلترها', '', '', 'p-4') }}
+    <form method="get" action="/jobs" class="flex flex-col gap-3">
         <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
             <label class="form-control col-span-2 lg:col-span-1">
-                <span class="label-text text-xs">پروژه</span>
+                <span class="label-text text-xs font-medium">پروژه</span>
                 <select name="project" class="select select-sm">
                     <option value="">همه</option>
                     {% for p in projects %}
@@ -19,7 +44,7 @@
                 </select>
             </label>
             <label class="form-control">
-                <span class="label-text text-xs">نوع</span>
+                <span class="label-text text-xs font-medium">نوع</span>
                 <select name="job_type" class="select select-sm">
                     <option value="">همه</option>
                     {% for t in job_types %}
@@ -28,7 +53,7 @@
                 </select>
             </label>
             <label class="form-control">
-                <span class="label-text text-xs">وضعیت</span>
+                <span class="label-text text-xs font-medium">وضعیت</span>
                 <select name="status" class="select select-sm">
                     <option value="">همه</option>
                     {% for s in statuses %}
@@ -37,7 +62,7 @@
                 </select>
             </label>
             <label class="form-control">
-                <span class="label-text text-xs">نوع خطا</span>
+                <span class="label-text text-xs font-medium">نوع خطا</span>
                 <select name="failure_type" class="select select-sm">
                     <option value="">همه</option>
                     {% for code in error_codes %}
@@ -46,15 +71,15 @@
                 </select>
             </label>
             <label class="form-control">
-                <span class="label-text text-xs">کارگر</span>
+                <span class="label-text text-xs font-medium">کارگر</span>
                 <input name="worker" class="input input-sm" dir="ltr" value="{{ f.worker }}" placeholder="worker id" />
             </label>
             <label class="form-control">
-                <span class="label-text text-xs">از تاریخ</span>
+                <span class="label-text text-xs font-medium">از تاریخ</span>
                 <input name="date_from" type="date" class="input input-sm" value="{{ f.date_from }}" />
             </label>
             <label class="form-control">
-                <span class="label-text text-xs">تا تاریخ</span>
+                <span class="label-text text-xs font-medium">تا تاریخ</span>
                 <input name="date_to" type="date" class="input input-sm" value="{{ f.date_to }}" />
             </label>
         </div>
@@ -62,20 +87,20 @@
             <button type="submit" class="btn btn-primary btn-sm">اعمال فیلتر</button>
             <a href="/jobs" class="btn btn-ghost btn-sm">پاک‌کردن</a>
         </div>
-    </div>
-</form>
+    </form>
+{{ f.panel_close() }}
 
 <!-- Table -->
-<div id="jobs-table" class="card bg-base-100 border border-base-200">
+<div id="jobs-table" class="seoz-panel mt-4">
     <div class="overflow-x-auto">
         <table class="table table-sm">
             <thead>
-                <tr class="text-xs opacity-60">
+                <tr>
                     <th>نوع</th>
                     <th>پروژه</th>
                     <th>وضعیت</th>
                     <th>پیشرفت</th>
-                    <th>کارگر</th>
+                    <th>پیام</th>
                     <th>تلاش</th>
                     <th>زمان</th>
                     <th></th>
@@ -90,11 +115,15 @@
                     <td class="w-32">
                         <div class="flex items-center gap-2">
                             <progress class="progress progress-primary w-16 h-1.5" value="{{ j.progress or 0 }}" max="100"></progress>
-                            <span class="text-xs">{{ j.progress or 0 }}٪</span>
+                            <span class="text-xs tabular">{{ j.progress or 0 }}٪</span>
                         </div>
                     </td>
-                    <td class="text-xs font-mono opacity-60" dir="ltr">{{ j.lockedBy or '—' }}</td>
-                    <td class="text-xs">{{ j.attempts or 0 }}/{{ j.maxAttempts or 3 }}</td>
+                    <td class="text-xs max-w-48">
+                        <p class="truncate">{{ j.progressMessage or '—' }}</p>
+                        {% if j.stage %}<p class="opacity-50 text-xs" dir="ltr">{{ j.stage }}</p>{% endif %}
+                        {% if j.currentItem and j.totalItems %}<p class="opacity-50">{{ j.currentItem }} / {{ j.totalItems }}</p>{% endif %}
+                    </td>
+                    <td class="text-xs tabular">{{ j.attempts or 0 }}/{{ j.maxAttempts or 3 }}</td>
                     <td class="text-xs opacity-50 whitespace-nowrap">{{ j.created|jalali_dt }}</td>
                     <td class="whitespace-nowrap">
                         {% if j.status in ['pending', 'retrying', 'running'] %}
@@ -107,7 +136,7 @@
                     </td>
                 </tr>
                 {% else %}
-                <tr><td colspan="8" class="text-center text-sm opacity-50 py-8">وظیفه‌ای با این فیلترها یافت نشد.</td></tr>
+                <tr><td colspan="8"><div class="seoz-empty py-8"><p class="font-bold text-base-content/70">وظیفه‌ای با این فیلترها یافت نشد</p></div></td></tr>
                 {% endfor %}
             </tbody>
         </table>
@@ -115,12 +144,12 @@
 </div>
 
 {% if provider_metrics %}
-<details class="card bg-base-100 border border-base-200 mt-4" open>
-    <summary class="card-body p-4 py-3 cursor-pointer text-sm font-bold">متریک‌های ارائه‌دهنده (۷ روز اخیر)</summary>
-    <div class="overflow-x-auto px-4 pb-4">
+<details class="seoz-panel mt-4" open>
+    <summary class="seoz-panel-head cursor-pointer text-sm font-bold select-none">متریک‌های ارائه‌دهنده (۷ روز اخیر)</summary>
+    <div class="overflow-x-auto p-4">
         <table class="table table-sm">
             <thead>
-                <tr class="text-xs opacity-60">
+                <tr>
                     <th>ارائه‌دهنده</th><th>مدل</th><th>عملیات</th><th>تعداد</th>
                     <th>موفقیت</th><th>شکست</th><th>میانگین (ms)</th><th>P95 (ms)</th>
                     <th>تلاش مجدد</th><th>توکن‌ها</th>
@@ -132,13 +161,13 @@
                     <td class="text-xs" dir="ltr">{{ m.provider }}</td>
                     <td class="text-xs" dir="ltr">{{ m.model or '—' }}</td>
                     <td class="text-xs" dir="ltr">{{ m.operation }}</td>
-                    <td class="text-xs">{{ m.requestCount }}</td>
-                    <td class="text-xs text-success">{{ (m.successRate * 100)|round(1) }}٪</td>
-                    <td class="text-xs {{ 'text-error' if m.failureRate else 'opacity-50' }}">{{ (m.failureRate * 100)|round(1) }}٪</td>
-                    <td class="text-xs">{{ m.avgLatencyMs }}</td>
-                    <td class="text-xs font-bold">{{ m.p95LatencyMs }}</td>
-                    <td class="text-xs">{{ m.retryCount }}</td>
-                    <td class="text-xs opacity-60">{{ m.promptTokens + m.completionTokens }}</td>
+                    <td class="text-xs tabular">{{ m.requestCount }}</td>
+                    <td class="text-xs text-success tabular">{{ (m.successRate * 100)|round(1) }}٪</td>
+                    <td class="text-xs tabular {{ 'text-error' if m.failureRate else 'opacity-50' }}">{{ (m.failureRate * 100)|round(1) }}٪</td>
+                    <td class="text-xs tabular">{{ m.avgLatencyMs }}</td>
+                    <td class="text-xs font-bold tabular">{{ m.p95LatencyMs }}</td>
+                    <td class="text-xs tabular">{{ m.retryCount }}</td>
+                    <td class="text-xs opacity-60 tabular">{{ m.promptTokens + m.completionTokens }}</td>
                 </tr>
                 {% endfor %}
             </tbody>

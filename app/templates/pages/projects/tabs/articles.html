@@ -1,9 +1,11 @@
+{% import 'macros/forms.html' as f %}
+{{ f.page_header('مقاله‌ها', 'مقاله‌های تولیدشده برای این پروژه.', eyebrow='پروژه') }}
 <div id="articles-tab">
     {% if articles %}
     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
         {% for a in articles %}
-        <a href="/projects/{{ project.id }}/articles/{{ a.id }}/workspace" class="card bg-base-100 border border-base-200 hover:border-primary/40 transition-colors">
-            <div class="card-body p-4 gap-2">
+        <a href="/projects/{{ project.id }}/articles/{{ a.id }}/workspace" class="seoz-panel hover:border-primary/40 transition-colors block">
+            <div class="p-4 flex flex-col gap-2">
                 <div class="flex items-center justify-between gap-2">
                     <h3 class="font-bold text-sm truncate">{{ a.title }}</h3>
                     <span class="badge badge-sm shrink-0 {{ a.status|status_badge }}">{{ a.status|status_label }}</span>
@@ -18,8 +20,8 @@
         {% endfor %}
     </div>
     {% else %}
-    <div class="card bg-base-100 border border-base-200">
-        <div class="card-body items-center py-8 text-center">
+    <div class="seoz-panel">
+        <div class="p-4 flex flex-col items-center gap-3 py-8 text-center">
             <p class="text-sm opacity-50">هنوز مقاله‌ای تولید نشده است. از تب «موضوع‌ها» یک موضوع انتخاب کنید.</p>
         </div>
     </div>

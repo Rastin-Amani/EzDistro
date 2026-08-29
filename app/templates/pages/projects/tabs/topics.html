@@ -3,6 +3,7 @@
      hx-get="/projects/{{ project.id }}/tabs/topics"
      hx-trigger="refreshTopics from:body"
      hx-swap="outerHTML">
+{{ f.page_header('موضوع‌ها', 'مدیریت موضوعات و تولید مقاله.', eyebrow='پروژه') }}
     <div class="flex flex-col gap-3">
         <div class="flex flex-wrap items-center justify-between gap-2">
             <div class="join join-sm overflow-x-auto">
@@ -34,7 +35,8 @@
         </form>
 
         {% if topics %}
-        <div class="card bg-base-100 border border-base-200 shadow-none">
+        <div class="seoz-panel">
+            <div class="seoz-panel-head"><h2 class="seoz-panel-title">موضوع‌ها</h2></div>
             <div class="overflow-x-auto">
                 <table class="table table-sm">
                     <thead>
@@ -79,8 +81,8 @@
             </div>
         </div>
         {% else %}
-        <div class="card bg-base-100 border border-base-200 shadow-none">
-            <div class="card-body items-center py-8 text-center">
+        <div class="seoz-panel">
+            <div class="p-4 flex flex-col items-center gap-3 py-8 text-center">
                 <p class="text-sm opacity-50">موضوعی یافت نشد.</p>
             </div>
         </div>

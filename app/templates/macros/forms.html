@@ -1,17 +1,18 @@
 {# ═══════════════════════════════════════════════════════════════════════
-   Shared form building blocks — consistent, aligned, tooltip-rich.
+   Shared building blocks — seoz design vocabulary.
    Usage: {% import 'macros/forms.html' as f %}
-   Every field is full-width inside its grid cell, labels sit above inputs
-   with a helpful tooltip icon, and helper text lives under the control.
+   Layout helpers (page_header / panel / empty / stat) sit alongside the
+   field macros so every page can stay consistent with one import.
    ═══════════════════════════════════════════════════════════════════════ #}
 
+{# ── Field macros ────────────────────────────────────────────────────── #}
 {% macro tip(tip_text) -%}
     {% if tip_text %}<span class="tooltip tooltip-left sm:tooltip-top" data-tip="{{ tip_text }}"><span class="cursor-help text-base-content/40 hover:text-base-content/70"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/></svg></span></span>{% endif %}
 {%- endmacro %}
 
 {% macro label(label_text, tip_text='', required=false) -%}
-    <div class="label px-0 pb-1">
-        <span class="label-text font-medium text-sm">
+    <div class="label px-0 pb-1.5">
+        <span class="label-text font-medium text-sm text-base-content/80">
             {{ label_text }}{% if required %} <span class="text-error">*</span>{% endif %}
         </span>
         {{ tip(tip_text) }}
@@ -81,8 +82,9 @@
     </label>
 {%- endmacro %}
 
+{# Legacy card-section wrapper (kept for settings tab compatibility) #}
 {% macro section_open(title, tip_text='', description='') -%}
-    <section class="card bg-base-100 border border-base-200 shadow-none">
+    <section class="card bg-base-100 border border-base-300/70">
         <div class="card-body p-5 gap-4">
             <div class="flex items-center gap-2">
                 <h2 class="font-bold text-sm">{{ title }}</h2>
@@ -96,11 +98,9 @@
     </section>
 {%- endmacro %}
 
-{# Action bar pinned to the bottom of the tab so the save button is always
-   reachable on long forms. #}
 {% macro sticky_save(label_text, tip_text='') -%}
     <div class="sticky bottom-20 md:bottom-4 z-20 mt-2">
-        <div class="bg-base-100 border border-base-300 rounded-box p-2 flex items-center gap-2 shadow-lg">
+        <div class="bg-base-100 border border-base-300/70 rounded-box p-2 flex items-center gap-2">
             <span class="text-xs opacity-60 px-2 flex-1">تغییرات را پس از پایان ذخیره کنید</span>
             <button type="submit" class="btn btn-primary" hx-disabled-elt="this">
                 <span class="loading loading-spinner loading-xs htmx-indicator"></span>
@@ -108,4 +108,54 @@
             </button>
         </div>
     </div>
+{%- endmacro %}
+
+{# ── Layout macros ───────────────────────────────────────────────────── #}
+{# actions / icon / action are HTML content slots — callers pass trusted,
+   static template markup only (never user input). Marked safe on purpose. #}
+{% macro page_header(title, subtitle='', eyebrow='', actions='') -%}
+<header class="seoz-pagehead">
+    <div class="min-w-0">
+        {% if eyebrow %}<span class="seoz-eyebrow">{{ eyebrow }}</span>{% endif %}
+        <h1 class="seoz-title">{{ title }}</h1>
+        {% if subtitle %}<p class="seoz-subtitle">{{ subtitle }}</p>{% endif %}
+    </div>
+    {% if actions %}<div class="seoz-actions">{{ actions|safe }}</div>{% endif %}
+</header>
+{%- endmacro %}
+
+{% macro panel(title='', actions='', id='', body_class='p-4') -%}
+<section class="seoz-panel" {% if id %}id="{{ id }}"{% endif %}>
+    {% if title or actions %}
+    <div class="seoz-panel-head">
+        {% if title %}<h2 class="seoz-panel-title">{{ title }}</h2>{% endif %}
+        {% if actions %}<div class="flex items-center gap-2">{{ actions|safe }}</div>{% endif %}
+    </div>
+    {% endif %}
+    <div class="{{ body_class }}">
+{%- endmacro %}
+
+{% macro panel_close() -%}
+    </div>
+</section>
+{%- endmacro %}
+
+{% macro empty(title, hint='', icon='', action='') -%}
+<div class="seoz-empty">
+    {% if icon %}<div class="seoz-empty-icon">{{ icon|safe }}</div>{% endif %}
+    <p class="font-bold text-base-content/75">{{ title }}</p>
+    {% if hint %}<p class="text-sm text-base-content/50 max-w-sm leading-relaxed">{{ hint }}</p>{% endif %}
+    {% if action %}<div class="mt-1">{{ action|safe }}</div>{% endif %}
+</div>
+{%- endmacro %}
+
+{% macro stat(label, value, swatch='', sub='') -%}
+<div class="seoz-metric">
+    <div class="flex items-center gap-2">
+        {% if swatch %}<span class="seoz-metric-swatch {{ swatch }}"></span>{% endif %}
+        <span class="seoz-metric-label">{{ label }}</span>
+    </div>
+    <span class="seoz-metric-value">{{ value }}</span>
+    {% if sub %}<span class="text-xs text-base-content/50">{{ sub }}</span>{% endif %}
+</div>
 {%- endmacro %}

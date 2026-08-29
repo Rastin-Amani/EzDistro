@@ -1,4 +1,5 @@
 {% import 'macros/forms.html' as f %}
+{{ f.page_header('تنظیمات پروژه', 'پیکربندی جاسازی، بازیابی، تولید و انتشار.', eyebrow='تنظیمات') }}
 <form hx-post="/projects/{{ project.id }}/settings" hx-swap="none" class="flex flex-col gap-5 w-full">
 
     {{ f.section_open('جاسازی متن (Embedding)', 'تنظیم مدل جاسازی، انتخابگر متن به بردار. تغییر مدل، فضای بردار جدیدی در کیوردنت می‌سازد.', 'مدل جاسازی متن را به بردار تبدیل می‌کند؛ برای بازیابی معنایی استفاده می‌شود.') }}
@@ -81,6 +82,13 @@
                 'ذخیره دوره‌ای خودکار ویرایش‌های workspace تا کار شما از بین نرود.') }}
             {{ f.number('autosave_interval_minutes', 'بازه autosave (دقیقه)', settings.autosave.interval_minutes or 5,
                 'هر چند دقیقه یک‌بار تغییرات به‌صورت خودکار ذخیره شوند.') }}
+            {{ f.select('auto_publish_enabled', 'انتشار خودکار (Auto-publish)',
+                [('0', 'غیرفعال'), ('1', 'فعال')], '1' if settings.autoPublish.enabled else '0',
+                'مقاله‌های تولیدشده توسط زمان‌بندی خودکار، بدون بازبینی و مستقیم به وردپرس ارسال می‌شوند (طبق حالت انتشار پروژه).') }}
+            {{ f.number('auto_publish_min_score', 'حداقل امتیاز سئو', settings.autoPublish.min_score or 90,
+                'اگر امتیاز سئو به این حد نرسد، مقاله بازنویسی می‌شود تا برسد.') }}
+            {{ f.number('auto_publish_max_attempts', 'حداکثر بازنویسی', settings.autoPublish.max_attempts or 3,
+                'پس از این تعداد بازنویسی ناموفق، مقاله برای بازبینی انسانی رها می‌شود.') }}
         </div>
     {{ f.section_close() }}
 
@@ -96,31 +104,21 @@
     {{ f.section_close() }}
 
     {{ f.section_open('زمان‌بندی وظایف', 'زمان‌بندی نمایه‌سازی و نویسندگی خودکار.', 'کارگر (worker) هر دقیقه زمان‌بندی‌ها را بررسی و در بازه تعیین‌شده وظیفه می‌سازد.') }}
-        {% set kinds = [('index', 'نمایه‌سازی خودکار'), ('write', 'نویسندگی خودکار')] %}
-        <div class="flex flex-col gap-3">
-        {% for kind, label_text in kinds %}
-            {% set sched = schedules | selectattr('kind', 'equalto', kind) | first %}
-            <form hx-post="/projects/{{ project.id }}/schedules" hx-swap="none"
-                  class="border border-base-200 rounded-xl p-4 flex flex-wrap items-end gap-4">
-                <input type="hidden" name="kind" value="{{ kind }}" />
-                <div class="flex flex-col gap-1 min-w-40">
-                    <span class="text-xs font-semibold">{{ label_text }}</span>
-                    <select name="enabled" class="select select-sm select-bordered">
-                        <option value="1" {{ 'selected' if sched and sched.enabled }}>فعال</option>
-                        <option value="0" {{ 'selected' if not sched or not sched.enabled }}>غیرفعال</option>
-                    </select>
-                </div>
-                <label class="form-control">
-                    <span class="label-text text-xs font-medium">بازه (دقیقه)</span>
-                    <input name="interval_minutes" type="number" class="input input-sm input-bordered w-28"
-                           value="{{ sched.intervalMinutes if sched else 1440 }}" />
-                </label>
-                <button type="submit" class="btn btn-ghost btn-sm">ذخیره</button>
-                {% if sched and sched.lastRunAt %}
-                <span class="text-xs opacity-40">آخرین اجرا: {{ sched.lastRunAt|jalali_dt }}</span>
-                {% endif %}
-            </form>
-        {% endfor %}
+        {% set sched_index = schedules | selectattr('kind', 'equalto', 'index') | first %}
+        {% set sched_write = schedules | selectattr('kind', 'equalto', 'write') | first %}
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {{ f.select('schedule_index_enabled', 'نمایه‌سازی خودکار',
+                [('0', 'غیرفعال'), ('1', 'فعال')], '1' if sched_index and sched_index.enabled else '0',
+                'فعال‌سازی نمایه‌سازی خودکار در بازه تعیین‌شده.') }}
+            {{ f.number('schedule_index_interval', 'بازه نمایه‌سازی (دقیقه)',
+                sched_index.intervalMinutes if sched_index else 1440,
+                'فاصله بین دو نمایه‌سازی خودکار.') }}
+            {{ f.select('schedule_write_enabled', 'نویسندگی خودکار',
+                [('0', 'غیرفعال'), ('1', 'فعال')], '1' if sched_write and sched_write.enabled else '0',
+                'نویسندگی خودکار برای اولین موضوع برنامه‌ریزی‌شدهٔ پروژه.') }}
+            {{ f.number('schedule_write_interval', 'بازه نویسندگی (دقیقه)',
+                sched_write.intervalMinutes if sched_write else 1440,
+                'فاصله بین دو اجرای نویسندگی.') }}
         </div>
     {{ f.section_close() }}
 

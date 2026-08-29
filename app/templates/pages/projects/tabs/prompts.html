@@ -3,10 +3,13 @@
      hx-get="/projects/{{ project.id }}/tabs/prompts"
      hx-trigger="refreshPrompts from:body"
      hx-swap="outerHTML">
+{{ f.page_header('پرامپت‌ها', 'مدیریت نسخه‌های پرامپت و تست تعاملی.', eyebrow='پروژه') }}
     <!-- Variables reference -->
-    <details class="card bg-base-100 border border-base-200 shadow-none">
-        <summary class="card-body p-4 py-3 cursor-pointer text-sm font-bold">متغیرهای قابل استفاده</summary>
-        <div class="px-4 pb-4 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs">
+    <details class="seoz-panel">
+        <summary class="seoz-panel-head cursor-pointer">
+            <span class="seoz-panel-title">متغیرهای قابل استفاده</span>
+        </summary>
+        <div class="p-4 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs">
             {% for name, desc in variables.items() %}
             <code class="bg-base-200/60 rounded px-2 py-1 font-mono" dir="ltr">{{ '{{ ' ~ name ~ ' }}' }}</code>
             <span class="opacity-70 leading-relaxed">{{ desc }}</span>
@@ -18,17 +21,16 @@
     {% set active = prompts | selectattr('type', 'equalto', ptype) | selectattr('active', 'equalto', true) | first %}
     {% set versions = history.get(ptype, []) %}
     {% set next_ver = (active.version if active else 0) + 1 %}
-    <section class="card bg-base-100 border border-base-200 shadow-none">
-        <div class="card-body p-5 gap-4">
-            <div class="flex items-center justify-between gap-2">
-                <h2 class="font-bold text-sm">{{ label }}</h2>
-                {% if active %}
-                <span class="badge badge-soft badge-success badge-sm">نسخه فعال: v{{ active.version }}</span>
-                {% else %}
-                <span class="badge badge-soft badge-warning badge-sm">پیش‌فرض سراسری استفاده می‌شود</span>
-                {% endif %}
-            </div>
-
+    <section class="seoz-panel">
+        <div class="seoz-panel-head">
+            <h2 class="seoz-panel-title">{{ label }}</h2>
+            {% if active %}
+            <span class="badge badge-soft badge-success badge-sm">نسخه فعال: v{{ active.version }}</span>
+            {% else %}
+            <span class="badge badge-soft badge-warning badge-sm">پیش‌فرض سراسری استفاده می‌شود</span>
+            {% endif %}
+        </div>
+        <div class="p-4 flex flex-col gap-4">
             <form hx-post="/projects/{{ project.id }}/prompts" hx-swap="none" class="flex flex-col gap-2">
                 {{ f.textarea(ptype, 'متن پرامپت', active.content if active else '', 'متن کامل این پرامپت. از متغیرهای فهرست بالا می‌توانید استفاده کنید.', 5, false, '', 'ذخیره = نسخه جدید (v' ~ next_ver ~ ')') }}
                 <div class="flex items-center justify-end">
@@ -40,9 +42,12 @@
             </form>
 
             <!-- Tester -->
-            <details class="border border-base-200 rounded-xl px-4 py-3">
-                <summary class="text-xs opacity-70 cursor-pointer">تست تعاملی پرامپت (بدون تغییر نسخه‌ها)</summary>
-                <form hx-post="/projects/{{ project.id }}/prompts/test" hx-target="#test-result-{{ ptype }}" hx-swap="innerHTML" class="grid grid-cols-1 sm:grid-cols-4 gap-4 mt-3">
+            <details class="seoz-panel">
+                <summary class="seoz-panel-head cursor-pointer">
+                    <span class="seoz-panel-title text-xs">تست تعاملی پرامپت (بدون تغییر نسخه‌ها)</span>
+                </summary>
+                <div class="p-4">
+                <form hx-post="/projects/{{ project.id }}/prompts/test" hx-target="#test-result-{{ ptype }}" hx-swap="innerHTML" class="grid grid-cols-1 sm:grid-cols-4 gap-4">
                     <input type="hidden" name="ptype" value="{{ ptype }}" />
                     <input type="hidden" name="content" value="{{ active.content if active else '' }}" />
                     <label class="form-control col-span-2">
@@ -75,12 +80,13 @@
                     </div>
                 </form>
                 <div id="test-result-{{ ptype }}" class="mt-3"></div>
+                </div>
             </details>
 
             <!-- Version history -->
             {% if versions|length > 1 %}
             <div class="overflow-x-auto">
-                <table class="table table-xs">
+                <table class="table table-sm">
                     <thead>
                         <tr class="text-xs opacity-60">
                             <th>نسخه</th>

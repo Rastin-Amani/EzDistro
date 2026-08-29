@@ -1,6 +1,6 @@
 <div id="job-timeline" class="flex flex-col gap-1.5 text-xs">
     {% for e in events %}
-    <div class="flex items-start gap-2 border border-base-200 rounded-lg px-2 py-1.5">
+    <div class="flex items-start gap-2 border border-base-300/70 rounded-xl px-2 py-1.5">
         <span class="badge badge-xs mt-0.5 shrink-0 {{ e.eventType|status_badge }}">{{ e.eventType|status_label }}</span>
         <div class="min-w-0 flex-1">
             <p class="truncate">{{ e.message }}</p>
@@ -19,7 +19,7 @@
                 {% if is_admin %}
                 <details class="mt-0.5">
                     <summary class="opacity-40 cursor-pointer">JSON</summary>
-                    <pre class="bg-base-200/60 rounded-lg p-2 font-mono overflow-auto max-h-40" dir="ltr">{{ e.metadata|tojson(indent=2) }}</pre>
+                    <pre class="bg-base-200/60 rounded-xl p-2 font-mono overflow-auto max-h-40" dir="ltr">{{ e.metadata|tojson(indent=2) }}</pre>
                 </details>
                 {% endif %}
             {% endif %}

@@ -1,18 +1,21 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="min-h-screen flex items-center justify-center px-4 relative">
-    <div class="absolute top-4 right-4">
+<div class="min-h-screen flex items-center justify-center px-4 relative bg-base-200">
+    <div class="absolute top-4 end-4">
         {% include "components/theme_switcher.html" %}
     </div>
+
     <div class="w-full max-w-sm">
-        <div class="text-center mb-8">
-            <div class="w-14 h-14 mx-auto rounded-2xl bg-primary text-primary-content grid place-items-center text-2xl font-black mb-3">س</div>
-            <h1 class="text-xl font-bold">ورود به سئوز</h1>
-            <p class="text-sm opacity-60 mt-1">پلتفرم اتوماسیون سئو</p>
+        <div class="text-center mb-7">
+            <span class="seoz-logo size-16 text-3xl mx-auto mb-4">س</span>
+            <h1 class="text-2xl font-extrabold tracking-tight">ورود به {{ app_name }}</h1>
+            <p class="text-sm opacity-55 mt-1">پلتفرم اتوماسیون سئو و تولید محتوا</p>
         </div>
 
-        <form hx-post="/login" hx-swap="none" class="card bg-base-100 border border-base-200">
-            <div class="card-body gap-4">
+        <!-- Native POST (hx-boost disabled): the session cookie is set on a
+             full-page 303 redirect so mobile browsers (iOS ITP) keep it. -->
+        <form method="post" action="/login" hx-boost="false" class="seoz-panel">
+            <div class="p-5 flex flex-col gap-4">
                 {% if error %}
                 <div class="alert alert-soft alert-error text-sm" id="login-error">{{ error }}</div>
                 {% endif %}
@@ -27,10 +30,7 @@
                     <input type="password" name="password" class="input validator" placeholder="••••••••" required autocomplete="current-password" />
                 </label>
 
-                <button type="submit" class="btn btn-primary w-full mt-2" hx-disabled-elt="this">
-                    <span class="loading loading-spinner loading-xs htmx-indicator"></span>
-                    ورود
-                </button>
+                <button type="submit" class="btn btn-primary w-full mt-2">ورود</button>
             </div>
         </form>
 

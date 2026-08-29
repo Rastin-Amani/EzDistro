@@ -1,16 +1,15 @@
 {% extends "layouts/platform.html" %}
 {% block dashboard_content %}
-<div class="flex items-center justify-between mb-4">
-    <h1 class="text-lg font-bold">وظایف ناموفق</h1>
-    <a href="/jobs" class="btn btn-ghost btn-sm">همه وظایف</a>
-</div>
+{% import 'macros/forms.html' as f %}
+
+{{ f.page_header('وظایف ناموفق', 'وظایفی که با خطا مواجه شده‌اند و نیاز به بررسی دارند', 'نظارت', '<a href="/jobs" class="btn btn-ghost btn-sm">همه وظایف</a>') }}
 
 {% if jobs %}
 <div class="flex flex-col gap-3" id="failed-list"
      hx-get="/failed" hx-trigger="every 10s" hx-swap="innerHTML" hx-select="#failed-list">
     {% for j in jobs %}
-    <div class="card bg-base-100 border border-error/40">
-        <div class="card-body p-4 gap-2">
+    <div class="seoz-panel border-error/40">
+        <div class="p-4 flex flex-col gap-2">
             <div class="flex items-center justify-between gap-2">
                 <div class="flex items-center gap-2 min-w-0">
                     <span class="badge badge-sm badge-soft badge-error">{{ j.type }}</span>
@@ -30,9 +29,13 @@
     {% endfor %}
 </div>
 {% else %}
-<div class="card bg-base-100 border border-base-200">
-    <div class="card-body items-center py-8 text-center">
-        <p class="text-sm opacity-50">وظیفه ناموفقی وجود ندارد. عالی!</p>
+<div class="seoz-panel">
+    <div class="seoz-empty">
+        <div class="seoz-empty-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+        </div>
+        <p class="font-bold text-base-content/75">وظیفه ناموفقی وجود ندارد</p>
+        <p class="text-sm text-base-content/50">همه چیز طبق برنامه پیش می‌رود.</p>
     </div>
 </div>
 {% endif %}

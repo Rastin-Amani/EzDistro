@@ -1,24 +1,25 @@
+{% import 'macros/forms.html' as f %}
 <div id="integrations-tab"
      x-data="integrationsEditor()"
      hx-get="/projects/{{ project.id }}/tabs/integrations"
      hx-trigger="refreshIntegrations from:body"
      hx-swap="outerHTML">
+{{ f.page_header('اتصالات', 'اتصالات ارائه‌دهنده‌ها را مدیریت کنید.', eyebrow='پروژه') }}
     <div class="flex flex-col gap-5">
         {% for category, label in categories.items() %}
         {% set integs = integrations | selectattr('category', 'equalto', category) | list %}
-        <section class="card bg-base-100 border border-base-200 shadow-none">
-            <div class="card-body p-5 gap-4">
-                <div class="flex items-center justify-between gap-3">
-                    <div class="flex items-center gap-2">
-                        <h2 class="font-bold text-sm">{{ label }}</h2>
-                        <span class="tooltip tooltip-right" data-tip="اتصالات فعال در این دسته — برای هر ارائه‌دهنده یک اتصال بسازید و در تنظیمات پروژه از آن استفاده کنید.">
-                            <span class="cursor-help text-base-content/40"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/></svg></span>
-                        </span>
-                        <span class="badge badge-soft badge-neutral badge-sm">{{ integs|length }} اتصال</span>
-                    </div>
-                    <button type="button" class="btn btn-primary btn-sm" @click="openEditor(null, '{{ category }}')">+ افزودن</button>
+        <section class="seoz-panel">
+            <div class="seoz-panel-head">
+                <div class="flex items-center gap-2">
+                    <h2 class="seoz-panel-title">{{ label }}</h2>
+                    <span class="tooltip tooltip-right" data-tip="اتصالات فعال در این دسته — برای هر ارائه‌دهنده یک اتصال بسازید و در تنظیمات پروژه از آن استفاده کنید.">
+                        <span class="cursor-help text-base-content/40"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/></svg></span>
+                    </span>
+                    <span class="badge badge-soft badge-neutral badge-sm">{{ integs|length }} اتصال</span>
                 </div>
-
+                <button type="button" class="btn btn-primary btn-sm" @click="openEditor(null, '{{ category }}')">+ افزودن</button>
+            </div>
+            <div class="p-4">
                 {% if integs %}
                 <div class="overflow-x-auto -mx-2">
                     <table class="table table-sm">
@@ -77,9 +78,9 @@
                     </div>
                 </div>
                 {% else %}
-                <div class="border border-dashed border-base-300 rounded-xl py-6 text-center">
-                    <p class="text-sm opacity-50">اتصالی در این دسته ثبت نشده است.</p>
-                    <p class="text-xs opacity-40 mt-1">با «+ افزودن» اولین اتصال را بسازید.</p>
+                <div class="seoz-empty">
+                    <p class="font-bold text-base-content/75">اتصالی در این دسته ثبت نشده است.</p>
+                    <p class="text-sm text-base-content/50">با «+ افزودن» اولین اتصال را بسازید.</p>
                 </div>
                 {% endif %}
             </div>
@@ -141,50 +142,50 @@
                         <span class="label-text font-medium text-sm">آدرس پایه (Base URL)</span>
                         <span class="tooltip tooltip-left sm:tooltip-top" data-tip="آدرس API — برای OpenAI معمولاً …/v1 و برای Qdrant معمولاً http://127.0.0.1:6333. اگر بدون پروتکل وارد کنید https:// اضافه می‌شود.">
                             <span class="cursor-help text-base-content/40"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/></svg></span>
-                            </span>
-                        </div>
-                        <input name="base_url" class="input input-bordered w-full" dir="ltr" x-model="form.base_url"
-                               placeholder="https://api.openai.com/v1" />
-                    </label>
-
-                    <label class="form-control" x-show="isPublisher()">
-                        <div class="label px-0 pb-1">
-                            <span class="label-text font-medium text-sm">نام کاربری وردپرس</span>
-                            <span class="tooltip tooltip-left sm:tooltip-top" data-tip="نام کاربری وردپرس همراه با رمز برنامه (Application Password)">
-                                <span class="cursor-help text-base-content/40"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/></svg></span>
-                            </span>
-                        </div>
-                        <input name="username" class="input input-bordered w-full" dir="ltr" autocomplete="off" x-model="form.username" />
-                    </label>
-
-                    <label class="form-control">
-                        <div class="label px-0 pb-1">
-                            <span class="label-text font-medium text-sm">کلید API</span>
-                            <span class="tooltip tooltip-left sm:tooltip-top" data-tip="هنگام ویرایش اگر خالی بماند، کلید قبلی حفظ می‌شود. کلید هرگز ذخیره یا نمایش داده نمی‌شود — فقط نسخه رمزنگاری‌شده نگهداری می‌گردد">
-                                <span class="cursor-help text-base-content/40"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/></svg></span>
-                            </span>
-                        </div>
-                        <input type="password" name="secret" class="input input-bordered w-full" dir="ltr"
-                               autocomplete="new-password" x-model="form.secret"
-                               placeholder="در صورت خالی بودن، مقدار قبلی حفظ می‌شود" />
-                    </label>
-
-                    <div class="flex gap-3 mt-2">
-                        <button type="submit" class="btn btn-primary flex-1" hx-disabled-elt="this">
-                            <span class="loading loading-spinner loading-xs htmx-indicator"></span>
-                            ذخیره
-                        </button>
-                        <button type="button" class="btn btn-ghost flex-1" @click="closeEditor()">انصراف</button>
+                        </span>
                     </div>
-                </form>
-            </div>
-        </dialog>
+                    <input name="base_url" class="input input-bordered w-full" dir="ltr" x-model="form.base_url"
+                           placeholder="https://api.openai.com/v1" />
+                </label>
 
-        <datalist id="int-providers">
-            {% for cat in categories %}
-            {% for p in known_providers.get(cat, []) %}
-            <option value="{{ p }}"></option>
-            {% endfor %}
-            {% endfor %}
-        </datalist>
-    </div>
+                <label class="form-control" x-show="isPublisher()">
+                    <div class="label px-0 pb-1">
+                        <span class="label-text font-medium text-sm">نام کاربری وردپرس</span>
+                        <span class="tooltip tooltip-left sm:tooltip-top" data-tip="نام کاربری وردپرس همراه با رمز برنامه (Application Password)">
+                            <span class="cursor-help text-base-content/40"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/></svg></span>
+                        </span>
+                    </div>
+                    <input name="username" class="input input-bordered w-full" dir="ltr" autocomplete="off" x-model="form.username" />
+                </label>
+
+                <label class="form-control">
+                    <div class="label px-0 pb-1">
+                        <span class="label-text font-medium text-sm">کلید API</span>
+                        <span class="tooltip tooltip-left sm:tooltip-top" data-tip="هنگام ویرایش اگر خالی بماند، کلید قبلی حفظ می‌شود. کلید هرگز ذخیره یا نمایش داده نمی‌شود — فقط نسخه رمزنگاری‌شده نگهداری می‌گردد">
+                            <span class="cursor-help text-base-content/40"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/></svg></span>
+                        </span>
+                    </div>
+                    <input type="password" name="secret" class="input input-bordered w-full" dir="ltr"
+                           autocomplete="new-password" x-model="form.secret"
+                           placeholder="در صورت خالی بودن، مقدار قبلی حفظ می‌شود" />
+                </label>
+
+                <div class="flex gap-3 mt-2">
+                    <button type="submit" class="btn btn-primary flex-1" hx-disabled-elt="this">
+                        <span class="loading loading-spinner loading-xs htmx-indicator"></span>
+                        ذخیره
+                    </button>
+                    <button type="button" class="btn btn-ghost flex-1" @click="closeEditor()">انصراف</button>
+                </div>
+            </form>
+        </div>
+    </dialog>
+
+    <datalist id="int-providers">
+        {% for cat in categories %}
+        {% for p in known_providers.get(cat, []) %}
+        <option value="{{ p }}"></option>
+        {% endfor %}
+        {% endfor %}
+    </datalist>
+</div>

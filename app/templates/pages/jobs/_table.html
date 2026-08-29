@@ -3,11 +3,11 @@
      hx-trigger="every 5s, refreshJobs from:body"
      hx-swap="outerHTML">
     {% if jobs %}
-    <div class="card bg-base-100 border border-base-200">
+    <div class="seoz-panel">
         <div class="overflow-x-auto">
             <table class="table table-sm">
                 <thead>
-                    <tr class="text-xs opacity-60">
+                    <tr>
                         <th>نوع</th>
                         <th>پروژه</th>
                         <th>وضعیت</th>
@@ -27,7 +27,7 @@
                         <td class="w-32">
                             <div class="flex items-center gap-2">
                                 <progress class="progress progress-primary w-16 h-1.5" value="{{ j.progress or 0 }}" max="100"></progress>
-                                <span class="text-xs">{{ j.progress or 0 }}٪</span>
+                                <span class="text-xs tabular">{{ j.progress or 0 }}٪</span>
                             </div>
                         </td>
                         <td class="text-xs max-w-48">
@@ -35,7 +35,7 @@
                             {% if j.stage %}<p class="opacity-50 text-xs" dir="ltr">{{ j.stage }}</p>{% endif %}
                             {% if j.currentItem and j.totalItems %}<p class="opacity-50">{{ j.currentItem }} / {{ j.totalItems }}</p>{% endif %}
                         </td>
-                        <td class="text-xs">{{ j.attempts or 0 }}/{{ j.maxAttempts or 3 }}</td>
+                        <td class="text-xs tabular">{{ j.attempts or 0 }}/{{ j.maxAttempts or 3 }}</td>
                         <td class="text-xs opacity-50 whitespace-nowrap">{{ j.created|jalali_dt }}</td>
                         <td class="whitespace-nowrap">
                             {% if j.status in ['pending', 'retrying', 'running'] %}
@@ -54,9 +54,9 @@
         </div>
     </div>
     {% else %}
-    <div class="card bg-base-100 border border-base-200">
-        <div class="card-body items-center py-8 text-center">
-            <p class="text-sm opacity-50">وظیفه‌ای وجود ندارد.</p>
+    <div class="seoz-panel">
+        <div class="seoz-empty py-8">
+            <p class="font-bold text-base-content/70">وظیفه‌ای وجود ندارد</p>
         </div>
     </div>
     {% endif %}

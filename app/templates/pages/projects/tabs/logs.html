@@ -1,9 +1,12 @@
+{% import 'macros/forms.html' as f %}
+{{ f.page_header('رویدادها', 'تاریخچه رویدادهای پروژه.', eyebrow='پروژه') }}
 <div id="logs-table"
      hx-get="/projects/{{ project.id }}/tabs/logs"
      hx-trigger="every 8s"
      hx-swap="outerHTML">
     {% if events %}
-    <div class="card bg-base-100 border border-base-200">
+    <div class="seoz-panel">
+        <div class="seoz-panel-head"><h2 class="seoz-panel-title">رویدادها</h2></div>
         <div class="overflow-x-auto">
             <table class="table table-sm">
                 <thead>
@@ -23,7 +26,7 @@
                             {% if e.metadata and e.metadata != {} %}
                             <details class="dropdown dropdown-end">
                                 <summary class="btn btn-ghost btn-xs">JSON</summary>
-                                <div class="dropdown-content bg-base-100 border border-base-200 rounded-xl p-3 w-80 text-xs font-mono max-h-48 overflow-auto z-50">
+                                <div class="dropdown-content bg-base-100 border border-base-300/70 rounded-xl p-3 w-80 text-xs font-mono max-h-48 overflow-auto z-50">
                                     <pre>{{ e.metadata|tojson }}</pre>
                                 </div>
                             </details>
@@ -37,8 +40,8 @@
         </div>
     </div>
     {% else %}
-    <div class="card bg-base-100 border border-base-200">
-        <div class="card-body items-center py-8 text-center">
+    <div class="seoz-panel">
+        <div class="p-4 flex flex-col items-center gap-3 py-8 text-center">
             <p class="text-sm opacity-50">رویدادی ثبت نشده است.</p>
         </div>
     </div>

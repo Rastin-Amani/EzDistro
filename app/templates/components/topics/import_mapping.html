@@ -13,29 +13,31 @@
     </div>
 
     {% if data_preview %}
-    <div class="overflow-x-auto border border-base-200 rounded-box">
-        <table class="table table-xs">
-            <thead>
-                <tr class="text-xs opacity-60">
-                    <th>#</th>
-                    {% for c in columns[:6] %}
-                    <th class="max-w-28"><p class="truncate" title="{{ c.name }}">{{ c.name }}</p></th>
+    <div class="seoz-panel">
+        <div class="overflow-x-auto p-4">
+            <table class="table table-sm">
+                <thead>
+                    <tr class="text-xs opacity-60">
+                        <th>#</th>
+                        {% for c in columns[:6] %}
+                        <th class="max-w-28"><p class="truncate" title="{{ c.name }}">{{ c.name }}</p></th>
+                        {% endfor %}
+                        {% if columns|length > 6 %}<th>…</th>{% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in data_preview %}
+                    <tr class="text-xs">
+                        <td class="opacity-40">{{ loop.index + (1 if has_header else 0) }}</td>
+                        {% for cell in row[:6] %}
+                        <td class="max-w-28"><p class="truncate" title="{{ cell }}">{{ cell or '—' }}</p></td>
+                        {% endfor %}
+                        {% if row|length > 6 %}<td class="opacity-40">+{{ row|length - 6 }}</td>{% endif %}
+                    </tr>
                     {% endfor %}
-                    {% if columns|length > 6 %}<th>…</th>{% endif %}
-                </tr>
-            </thead>
-            <tbody>
-                {% for row in data_preview %}
-                <tr class="text-xs">
-                    <td class="opacity-40">{{ loop.index + (1 if has_header else 0) }}</td>
-                    {% for cell in row[:6] %}
-                    <td class="max-w-28"><p class="truncate" title="{{ cell }}">{{ cell or '—' }}</p></td>
-                    {% endfor %}
-                    {% if row|length > 6 %}<td class="opacity-40">+{{ row|length - 6 }}</td>{% endif %}
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                </tbody>
+            </table>
+        </div>
     </div>
     {% endif %}
 
@@ -47,7 +49,7 @@
             {% for field in fields %}
             <label class="form-control w-full">
                 <span class="label-text text-xs font-medium">{{ field_labels.get(field, field) }}</span>
-                <select name="col_{{ field }}" class="select select-sm select-bordered w-full">
+                <select name="col_{{ field }}" class="select select-sm w-full">
                     <option value="-1">— نادیده بگیر —</option>
                     {% for c in columns %}
                     <option value="{{ c.index }}" {{ 'selected' if column_map.get(field) == c.index }}>

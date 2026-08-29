@@ -1,25 +1,27 @@
-<div class="flex flex-col gap-3 border border-base-200 rounded-xl p-3 text-xs">
-    <div class="flex flex-wrap items-center gap-2">
-        <span class="badge badge-soft {{ 'badge-success' if result.validation.ok is true else ('badge-error' if result.validation.ok is false else 'badge-neutral') }} badge-sm">
-            {% if result.validation.ok is true %}اعتبارسنجی: موفق{% elif result.validation.ok is false %}اعتبارسنجی: ناموفق{% else %}بدون اعتبارسنجی{% endif %}
-        </span>
-        <span class="opacity-70" dir="ltr">{{ result.model }}</span>
-        <span class="opacity-70">تأخیر: {{ result.latency_ms }}ms</span>
-        <span class="opacity-70">توکن: {{ result.usage.completion_tokens or 0 }}</span>
-    </div>
-    {% if result.validation.issues %}
-    <ul class="flex flex-col gap-1">
-        {% for issue in result.validation.issues %}
-        <li class="text-error">{{ issue.message }}</li>
-        {% endfor %}
-    </ul>
-    {% endif %}
-    <div>
-        <p class="font-bold mb-1 opacity-70">پرامپت رندر شده</p>
-        <pre class="bg-base-200/60 rounded-xl p-3 max-h-48 overflow-auto whitespace-pre-wrap font-mono" dir="auto">{{ result.rendered }}</pre>
-    </div>
-    <div>
-        <p class="font-bold mb-1 opacity-70">پاسخ مدل</p>
-        <pre class="bg-base-200/60 rounded-xl p-3 max-h-64 overflow-auto whitespace-pre-wrap font-mono" dir="auto">{{ result.response }}</pre>
+<div class="seoz-panel">
+    <div class="p-3 flex flex-col gap-3 text-xs">
+        <div class="flex flex-wrap items-center gap-2">
+            <span class="badge badge-soft {{ 'badge-success' if result.validation.ok is true else ('badge-error' if result.validation.ok is false else 'badge-neutral') }} badge-sm">
+                {% if result.validation.ok is true %}اعتبارسنجی: موفق{% elif result.validation.ok is false %}اعتبارسنجی: ناموفق{% else %}بدون اعتبارسنجی{% endif %}
+            </span>
+            <span class="opacity-70" dir="ltr">{{ result.model }}</span>
+            <span class="opacity-70">تأخیر: {{ result.latency_ms }}ms</span>
+            <span class="opacity-70">توکن: {{ result.usage.completion_tokens or 0 }}</span>
+        </div>
+        {% if result.validation.issues %}
+        <ul class="flex flex-col gap-1">
+            {% for issue in result.validation.issues %}
+            <li class="text-error">{{ issue.message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+        <div>
+            <p class="font-bold mb-1 opacity-70">پرامپت رندر شده</p>
+            <pre class="bg-base-200/60 rounded-xl p-3 max-h-48 overflow-auto whitespace-pre-wrap font-mono" dir="auto">{{ result.rendered }}</pre>
+        </div>
+        <div>
+            <p class="font-bold mb-1 opacity-70">پاسخ مدل</p>
+            <pre class="bg-base-200/60 rounded-xl p-3 max-h-64 overflow-auto whitespace-pre-wrap font-mono" dir="auto">{{ result.response }}</pre>
+        </div>
     </div>
 </div>

@@ -1,103 +1,114 @@
 {% extends "base.html" %}
 {% block content %}
-    <!-- Top bar -->
-    <header class="sticky top-0 z-40 bg-base-100 border-b border-base-200">
-        <div class="mx-auto max-w-300 px-4 h-14 flex items-center gap-3">
-            <a href="/dashboard" class="flex items-center gap-2">
-                <div class="w-8 h-8 rounded-xl bg-primary text-primary-content grid place-items-center font-black">س</div>
-                <span class="font-bold hidden sm:block">{{ app_name }}</span>
+<div class="seoz-shell">
+    <!-- ════════════ Desktop sidebar (sticky flow child in RTL flex) ════════════ -->
+    <aside class="seoz-sidebar">
+        <div class="seoz-sidebar-brand">
+            <a href="/dashboard" class="flex items-center gap-2.5" aria-label="سئوز — خانه">
+                <span class="seoz-logo size-9 text-lg">س</span>
+                <span class="font-extrabold text-base tracking-tight">{{ app_name }}</span>
             </a>
+        </div>
 
-            <nav class="hidden md:flex items-center gap-1 text-sm flex-auto px-4">
-                {% set nav = [
-                    ('/dashboard', 'داشبورد'),
-                    ('/projects', 'پروژه‌ها'),
-                    ('/jobs', 'وظایف'),
-                    ('/failed', 'وظایف ناموفق'),
-                    ('/logs', 'رویدادها'),
-                ] %}
-                {% for href, label in nav %}
-                    <a href="{{ href }}"
-                       class="px-3 py-1.5 rounded-lg {{ 'bg-primary/10 text-primary font-semibold' if request.url.path.startswith(href) and href != '/' else 'opacity-70 hover:opacity-100' }}">
-                        {{ label }}
-                    </a>
-                {% endfor %}
-            </nav>
+        <nav class="seoz-nav" aria-label="منوی اصلی">
+            <p class="seoz-nav-group">منوی اصلی</p>
+            {% set nav = [
+                ('/dashboard', 'داشبورد', 'M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z'),
+                ('/projects', 'پروژه‌ها', 'M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z'),
+                ('/jobs', 'وظایف', 'M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5'),
+                ('/workers', 'کارگرها', 'M9.75 17.25v3.375c0 .621.504 1.125 1.125 1.125h2.25c.621 0 1.125-.504 1.125-1.125V17.25m3.75 0h.008v.008h-.008v-.008Zm0-5.25h.008v.008h-.008v-.008Zm0-5.25h.008v.008h-.008v-.008ZM12 2.25c-5.385 0-9.75 4.365-9.75 9.75 0 .414.336.75.75.75h.008c.414 0 .75-.336.75-.75 0-4.26 3.12-7.725 7.2-8.326a.75.75 0 0 0 .61-1.02A10.477 10.477 0 0 0 12 2.25Zm-3.75 14.25h.008v.008h-.008v-.008Zm6.75 0h.008v.008h-.008v-.008Zm-4.5 3.75h.008v.008h-.008v-.008Z'),
+                ('/failed', 'وظایف ناموفق', 'M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z'),
+                ('/logs', 'رویدادها', 'M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z'),
+            ] %}
+            {% for href, label, icon in nav %}
+            <a href="{{ href }}" class="seoz-navlink" data-nav="{{ href }}">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor">{{ icon }}</svg>
+                <span>{{ label }}</span>
+            </a>
+            {% endfor %}
+        </nav>
 
-            <div class="flex-auto md:hidden"></div>
-
-            {% include "components/theme_switcher.html" %}
-
-            {% if user %}
-                <div class="dropdown dropdown-end">
-                    <div tabindex="0" role="button" class="btn btn-ghost btn-circle btn-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                        </svg>
+        <div class="seoz-sidefoot">
+            <div class="flex items-center gap-2">
+                {% include "components/theme_switcher.html" %}
+                {% if user %}
+                <div class="dropdown dropdown-top dropdown-end ms-auto">
+                    <div tabindex="0" role="button" class="btn btn-ghost btn-sm gap-2 px-2" aria-label="حساب کاربری">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" class="size-5 opacity-70"><path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
+                        <span class="max-w-28 truncate text-xs font-medium opacity-80">{{ user.email or user.id }}</span>
                     </div>
-                    <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-xl border border-base-200 w-52 p-2 z-50">
-                        <li class="menu-title">{{ user.email or user.id }}</li>
+                    <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box border border-base-300/70 w-52 p-2 z-50">
+                        <li class="menu-title text-xs">{{ user.email or user.id }}</li>
                         <li><a href="/logout" hx-post="/logout" hx-swap="none" hx-on:click="setTimeout(()=>location.href='/login',200)">خروج</a></li>
                     </ul>
                 </div>
-            {% endif %}
+                {% endif %}
+            </div>
         </div>
-    </header>
+    </aside>
 
-    <div class="px-4 pt-4 pb-24 mx-auto max-w-300">
-        {% block dashboard_content %}{% endblock %}
+    <!-- ════════════ Main column ════════════ -->
+    <div class="flex min-w-0 flex-1 flex-col">
+        <!-- Mobile top bar -->
+        <header class="lg:hidden sticky top-0 z-30 flex h-14 items-center justify-between border-b border-base-300/70 bg-base-100/90 px-4 backdrop-blur">
+            <a href="/dashboard" class="flex items-center gap-2" aria-label="سئوز — خانه">
+                <span class="seoz-logo size-8 text-base">س</span>
+                <span class="font-extrabold">{{ app_name }}</span>
+            </a>
+            {% include "components/theme_switcher.html" %}
+        </header>
+
+        <main class="seoz-page">
+            {% block dashboard_content %}{% endblock %}
+        </main>
     </div>
 
-    <!-- Mobile bottom dock -->
-    <nav class="dock text-xs md:hidden max-w-300 mx-auto bg-base-100 border-t-2 border-base-200 fixed bottom-0 left-0 right-0 z-50 h-16">
-        <a href="/dashboard">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5 mb-1 opacity-50">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />
-            </svg>
+    <!-- ════════════ Mobile bottom dock ════════════ -->
+    <nav class="seoz-dock" aria-label="منوی اصلی">
+        <a href="/dashboard" data-nav="/dashboard">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" /></svg>
             داشبورد
         </a>
-        <a href="/projects">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5 mb-1 opacity-50">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" />
-            </svg>
+        <a href="/projects" data-nav="/projects">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" /></svg>
             پروژه‌ها
         </a>
-        <a href="/jobs">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5 mb-1 opacity-50">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
-            </svg>
+        <a href="/jobs" data-nav="/jobs">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" /></svg>
             وظایف
         </a>
-        <a href="/failed">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5 mb-1 opacity-50">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
-            </svg>
+        <a href="/failed" data-nav="/failed">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" /></svg>
             ناموفق
         </a>
-        <a href="/logs">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5 mb-1 opacity-50">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
-            </svg>
+        <a href="/logs" data-nav="/logs">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" /></svg>
             رویدادها
         </a>
     </nav>
+</div>
 
-    <script>
-        (function () {
-            function setActive() {
-                var path = window.location.pathname;
-                document.querySelectorAll('#main-content .dock a, header nav a').forEach(function (link) {
-                    var href = link.getAttribute('href');
-                    if (!href) return;
-                    link.classList.remove('text-primary', 'bg-primary/10', 'font-semibold');
-                    if (path === href || (href !== '/dashboard' && path.startsWith(href))) {
-                        if (link.closest('.dock')) link.classList.add('text-primary');
-                        else link.classList.add('bg-primary/10', 'font-semibold', 'text-primary');
-                    }
-                });
-            }
-            setActive();
-            document.addEventListener('htmx:afterSettle', setActive);
-        })();
-    </script>
+<script>
+    (function () {
+        function isActive(link) {
+            var href = link.getAttribute('href');
+            if (!href) return false;
+            var path = window.location.pathname;
+            if (path === href) return true;
+            if (href === '/dashboard') return false;
+            return path.startsWith(href);
+        }
+        function setActive() {
+            document.querySelectorAll('.seoz-navlink').forEach(function (link) {
+                link.classList.toggle('seoz-navlink-active', isActive(link));
+            });
+            document.querySelectorAll('.seoz-dock a').forEach(function (link) {
+                link.classList.toggle('seoz-dock-active', isActive(link));
+            });
+        }
+        setActive();
+        document.addEventListener('htmx:afterSettle', setActive);
+        window.addEventListener('popstate', setActive);
+    })();
+</script>
 {% endblock %}

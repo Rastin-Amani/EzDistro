@@ -1,6 +1,9 @@
+{% import 'macros/forms.html' as f %}
+{{ f.page_header('انتشار', 'تاریخچه انتشار مقاله‌ها در وردپرس.', eyebrow='پروژه') }}
 <div id="publishing-tab">
     {% if records %}
-    <div class="card bg-base-100 border border-base-200">
+    <div class="seoz-panel">
+        <div class="seoz-panel-head"><h2 class="seoz-panel-title">تاریخچه انتشار</h2></div>
         <div class="overflow-x-auto">
             <table class="table table-sm">
                 <thead>
@@ -33,8 +36,8 @@
         </div>
     </div>
     {% else %}
-    <div class="card bg-base-100 border border-base-200">
-        <div class="card-body items-center py-8 text-center">
+    <div class="seoz-panel">
+        <div class="p-4 flex flex-col items-center gap-3 py-8 text-center">
             <p class="text-sm opacity-50">هنوز انتشاراتی ثبت نشده است.</p>
         </div>
     </div>

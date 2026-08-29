@@ -1,18 +1,20 @@
 {% extends "layouts/platform.html" %}
 {% block dashboard_content %}
-<div class="flex items-center justify-between mb-4">
-    <div class="flex items-center gap-2">
-        <a href="/projects/{{ project.id }}" class="btn btn-ghost btn-circle btn-sm" aria-label="بازگشت">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-            </svg>
+{% import 'macros/forms.html' as f %}
+
+<div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+    <div class="flex items-center gap-2.5 min-w-0">
+        <a href="/projects/{{ project.id }}" class="btn btn-ghost btn-circle btn-sm shrink-0" aria-label="بازگشت">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
         </a>
-        <h1 class="font-bold">موضوع‌ها</h1>
-        <span class="text-xs opacity-50">{{ total }} مورد</span>
+        <div class="min-w-0">
+            <h1 class="font-extrabold text-lg truncate">موضوع‌ها</h1>
+            <span class="text-xs opacity-50">{{ total }} مورد · {{ project.name }}</span>
+        </div>
     </div>
     <div class="flex items-center gap-2">
         <button class="btn btn-ghost btn-sm" onclick="document.getElementById('topic-import-modal').showModal()">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-4"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" /></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="size-4"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" /></svg>
             CSV / گروهی
         </button>
         <button class="btn btn-primary btn-sm" onclick="document.getElementById('new-topic-modal').showModal()">+ موضوع</button>
@@ -24,33 +26,33 @@
     <form method="get" action="/projects/{{ project.id }}/topics" class="flex flex-wrap items-center gap-2">
         <input type="hidden" name="status" value="{{ status_filter }}" />
         <input type="hidden" name="sort" value="{{ sort }}" />
-        <input name="q" value="{{ q }}" class="input input-sm w-56" placeholder="جستجو در عنوان یا کلمه کلیدی…" />
+        <input name="q" value="{{ q }}" class="input input-sm w-full sm:w-56" placeholder="جستجو در عنوان یا کلمه کلیدی…" />
         <button type="submit" class="btn btn-ghost btn-sm">جستجو</button>
         {% if q %}<a href="/projects/{{ project.id }}/topics" class="btn btn-ghost btn-sm text-error">پاک‌کردن</a>{% endif %}
     </form>
 
-    <div class="flex flex-wrap items-center gap-1">
+    <div class="flex flex-wrap items-center gap-1.5">
         <a href="/projects/{{ project.id }}/topics?q={{ q }}&sort={{ sort }}"
-           class="btn btn-xs join-item {{ 'btn-primary' if not status_filter }}">همه ({{ counts.values()|sum }})</a>
+           class="btn btn-xs rounded-full {{ 'btn-primary' if not status_filter }}">همه ({{ counts.values()|sum }})</a>
         {% for s in statuses %}
         <a href="/projects/{{ project.id }}/topics?status={{ s }}&q={{ q }}&sort={{ sort }}"
-           class="btn btn-xs join-item {{ 'btn-primary' if status_filter == s }}">
+           class="btn btn-xs rounded-full {{ 'btn-primary' if status_filter == s }}">
             {{ s|status_label }} ({{ counts.get(s, 0) }})
         </a>
         {% endfor %}
     </div>
 
-    <div class="flex items-center gap-1 text-xs opacity-70">
+    <div class="flex items-center gap-1.5 text-xs opacity-70">
         <span>مرتب‌سازی:</span>
         {% for key, label in [('priority', 'اولویت'), ('priority_asc', 'اولویت ↑'), ('created', 'جدیدترین'), ('title', 'عنوان')] %}
         <a href="/projects/{{ project.id }}/topics?sort={{ key }}&status={{ status_filter }}&q={{ q }}"
-           class="btn btn-xs join-item {{ 'btn-primary' if sort == key }}">{{ label }}</a>
+           class="btn btn-xs rounded-full {{ 'btn-primary' if sort == key }}">{{ label }}</a>
         {% endfor %}
     </div>
 </div>
 
 <!-- Bulk bar -->
-<div class="flex items-center gap-2 mb-3 text-xs opacity-70" id="bulk-bar" hidden>
+<div class="flex items-center gap-2 mb-3 text-xs px-3 py-2 rounded-xl bg-primary/5 border border-primary/20 text-primary font-medium" id="bulk-bar" hidden>
     <span id="bulk-count">0</span> انتخاب شده —
     <button class="btn btn-primary btn-xs" data-bulk-action="generate">تولید مقاله</button>
     <button class="btn btn-ghost btn-xs" data-bulk-action="retry">تلاش مجدد</button>
@@ -62,12 +64,12 @@
 </form>
 
 <!-- Table -->
-<div class="card bg-base-100 border border-base-200">
+<div class="seoz-panel">
     <div class="overflow-x-auto">
         <table class="table table-sm">
             <thead>
-                <tr class="text-xs opacity-60">
-                    <th class="w-8"><input type="checkbox" class="checkbox checkbox-xs" id="check-all" /></th>
+                <tr>
+                    <th class="w-8"><input type="checkbox" class="checkbox checkbox-sm" id="check-all" /></th>
                     <th>عنوان</th>
                     <th>کلمه کلیدی</th>
                     <th>ستون/خوشه</th>
@@ -79,15 +81,15 @@
             <tbody>
                 {% for t in topics %}
                 <tr>
-                    <td><input type="checkbox" class="checkbox checkbox-xs topic-check" value="{{ t.id }}" /></td>
+                    <td><input type="checkbox" class="checkbox checkbox-sm topic-check" value="{{ t.id }}" /></td>
                     <td class="text-xs max-w-56">
                         <p class="truncate font-semibold">{{ t.title }}</p>
-                        {% if t.type %}<span class="badge badge-soft badge-neutral badge-xs">{{ t.type }}</span>{% endif %}
+                        {% if t.type %}<span class="badge badge-soft badge-neutral badge-xs mt-0.5">{{ t.type }}</span>{% endif %}
                     </td>
                     <td class="text-xs">{{ t.keyword or '—' }}</td>
                     <td class="text-xs max-w-32"><p class="truncate">{{ t.pillar or '—' }}{% if t.cluster %} / {{ t.cluster }}{% endif %}</p></td>
                     <td><span class="badge badge-sm {{ t.status|status_badge }}">{{ t.status|status_label }}</span></td>
-                    <td class="text-xs">{{ t.priority or 0 }}</td>
+                    <td class="text-xs tabular">{{ t.priority or 0 }}</td>
                     <td class="whitespace-nowrap">
                         {% if t.status in ['planned', 'failed', 'cancelled'] %}
                         <button class="btn btn-ghost btn-xs text-primary"
@@ -106,14 +108,22 @@
                     </td>
                 </tr>
                 {% else %}
-                <tr><td colspan="7" class="text-center text-sm opacity-50 py-8">موضوعی یافت نشد.</td></tr>
+                <tr><td colspan="7">
+                    <div class="seoz-empty py-8">
+                        <div class="seoz-empty-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 0 0-1.883 2.542l.857 6a2.25 2.25 0 0 0 2.227 1.932H19.05a2.25 2.25 0 0 0 2.227-1.932l.857-6a2.25 2.25 0 0 0-1.883-2.542m-16.5 0V6A2.25 2.25 0 0 1 6 3.75h12A2.25 2.25 0 0 1 20.25 6v3.776" /></svg>
+                        </div>
+                        <p class="font-bold text-base-content/75">موضوعی یافت نشد</p>
+                        <p class="text-sm text-base-content/50 max-w-xs">نخستین موضوع را اضافه کنید یا از واردات CSV استفاده نمایید.</p>
+                        <button class="btn btn-primary btn-sm mt-1" onclick="document.getElementById('new-topic-modal').showModal()">+ موضوع جدید</button>
+                    </div>
+                </td></tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 </div>
 
-<!-- Pagination -->
 {% if pages > 1 %}
 <div class="join mt-4">
     {% for p in range(1, pages + 1) %}
@@ -155,19 +165,22 @@
 <!-- New topic modal -->
 <dialog id="new-topic-modal" class="modal modal-bottom sm:modal-middle">
     <div class="modal-box bg-base-100">
-        <h3 class="font-bold text-lg mb-4">موضوع جدید</h3>
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="font-bold text-lg">موضوع جدید</h3>
+            <button type="button" class="btn btn-ghost btn-sm btn-circle" onclick="document.getElementById('new-topic-modal').close()" aria-label="بستن">✕</button>
+        </div>
         <form hx-post="/projects/{{ project.id }}/topics" hx-swap="none" class="flex flex-col gap-3">
             <label class="form-control">
-                <span class="label-text text-xs">عنوان موضوع</span>
+                <span class="label-text text-xs font-medium">عنوان موضوع</span>
                 <input name="title" class="input input-sm" required placeholder="مثلاً: بهترین روش‌های سئو در ۱۴۰۵" />
             </label>
             <div class="grid grid-cols-2 gap-3">
                 <label class="form-control">
-                    <span class="label-text text-xs">کلمه کلیدی</span>
+                    <span class="label-text text-xs font-medium">کلمه کلیدی</span>
                     <input name="keyword" class="input input-sm" />
                 </label>
                 <label class="form-control">
-                    <span class="label-text text-xs">نوع</span>
+                    <span class="label-text text-xs font-medium">نوع</span>
                     <select name="type" class="select select-sm">
                         <option value="article">مقاله</option>
                         <option value="pillar_page">صفحه ستون</option>
@@ -178,20 +191,20 @@
             </div>
             <div class="grid grid-cols-2 gap-3">
                 <label class="form-control">
-                    <span class="label-text text-xs">ستون (Pillar)</span>
+                    <span class="label-text text-xs font-medium">ستون (Pillar)</span>
                     <input name="pillar" class="input input-sm" />
                 </label>
                 <label class="form-control">
-                    <span class="label-text text-xs">خوشه (Cluster)</span>
+                    <span class="label-text text-xs font-medium">خوشه (Cluster)</span>
                     <input name="cluster" class="input input-sm" />
                 </label>
             </div>
             <label class="form-control">
-                <span class="label-text text-xs">اولویت</span>
+                <span class="label-text text-xs font-medium">اولویت</span>
                 <input name="priority" type="number" class="input input-sm" value="0" />
             </label>
             <label class="form-control">
-                <span class="label-text text-xs">هفته</span>
+                <span class="label-text text-xs font-medium">هفته</span>
                 <input name="week" type="number" class="input input-sm" placeholder="هفته تقویم تحریریه (اختیاری)" />
             </label>
             <div class="flex gap-3 mt-2">
@@ -205,9 +218,6 @@
 {% include "components/topics/import_modal.html" %}
 
 <script>
-    // Full-page topics list: refresh (reload) when a mutation inside the import
-    // modal signals completion — the project tab listens to the same event via
-    // hx-trigger, so both entry points stay in sync.
     document.addEventListener('refreshTopics', function () { window.location.reload(); });
 </script>
 {% endblock %}
