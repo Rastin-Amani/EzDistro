@@ -37,8 +37,9 @@ def login(
     try:
         request.state.pb.collection("users").auth_with_password(email.strip(), password)
     except Exception:
-        # HTMX requests (the login form) swap nothing — give them a visible toast.
-        # Plain browser POSTs (no JS) still get the full error page.
+        # Legacy HTMX login forms (still cached by the service worker) send
+        # HX-Request — give them a toast. Native form POSTs (the default now)
+        # get the full error page re-rendered.
         if request.headers.get("HX-Request"):
             return error_response("ایمیل یا رمز عبور اشتباه است")
         return _login_error(request)
@@ -46,7 +47,15 @@ def login(
     from app.config import settings
 
     token = request.state.pb.auth_store.token
-    response = ok_with_redirect("خوش آمدید", "/dashboard")
+    if request.headers.get("HX-Request"):
+        response = ok_with_redirect("خوش آمدید", "/dashboard?welcome=1")
+    else:
+        # Native form POST → server-side 303. Setting the session cookie on a
+        # full-page POST/redirect (a user-gesture top-level navigation) is far
+        # more reliable on mobile than a Set-Cookie on an XHR response — iOS
+        # Safari's ITP silently drops script-set cookies, so login used to
+        # "succeed" (welcome toast) yet bounce straight back to /login.
+        response = RedirectResponse(url="/dashboard?welcome=1", status_code=303)
     # Secure in production or whenever the request arrived over TLS — never let
     # the session cookie transit in cleartext (see HIGH H4).
     secure = settings.is_prod or request.url.scheme == "https"
