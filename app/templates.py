@@ -162,6 +162,26 @@ def status_label(status: str) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Relative time (Persian)
+# ---------------------------------------------------------------------------
+def to_rel_time(date_str):
+    """'همین حالا' / '۳ دقیقه پیش' / '۲ ساعت پیش' / '۵ روز پیش'."""
+    import datetime as dt
+
+    parsed = _parse_dt(date_str)
+    if not parsed:
+        return "—"
+    seconds = max(0, int((dt.datetime.now(dt.UTC) - parsed.replace(tzinfo=dt.UTC)).total_seconds()))
+    if seconds < 45:
+        return "همین حالا"
+    if seconds < 3600:
+        return f"{seconds // 60} دقیقه پیش"
+    if seconds < 86400:
+        return f"{seconds // 3600} ساعت پیش"
+    return f"{seconds // 86400} روز پیش"
+
+
+# ---------------------------------------------------------------------------
 # Register
 # ---------------------------------------------------------------------------
 templates.env.filters["jalali_year"] = to_jalali_year
@@ -169,3 +189,4 @@ templates.env.filters["jalali_date"] = to_jalali_date
 templates.env.filters["jalali_dt"] = to_jalali_datetime
 templates.env.filters["status_badge"] = status_badge
 templates.env.filters["status_label"] = status_label
+templates.env.filters["rel_time"] = to_rel_time

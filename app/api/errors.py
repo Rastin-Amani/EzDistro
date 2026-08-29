@@ -62,3 +62,56 @@ def hx_error(fail: str) -> Callable[[F], F]:
         return cast(F, wrapper)
 
     return deco
+
+
+def page_guard(fail: str) -> Callable[[F], F]:
+    """Wrap a full-page GET route with graceful error handling.
+
+    On any exception the error is logged WITH the full traceback (so the cause
+    can be found in `make web`/`make worker` output) and a clean Persian error
+    page is rendered instead of a white screen. Handles sync and async routes.
+    """
+
+    def _error_page(request: Request, project_id: str, message: str) -> Any:
+        from app.repositories.projects import ProjectRepo
+        from app.templates import templates
+
+        project = None
+        pb = getattr(request.state, "pb", None)
+        if pb is not None and project_id:
+            try:
+                project = ProjectRepo(pb).get(project_id)
+            except Exception:
+                project = None
+        return templates.TemplateResponse(
+            request,
+            "pages/articles/render_error.html",
+            {"project": project or {"id": project_id or ""}, "message": message},
+        )
+
+    def deco(fn: F) -> F:
+        if inspect.iscoroutinefunction(fn):
+
+            @functools.wraps(fn)
+            async def async_wrapper(request: Request, *args: Any, **kwargs: Any) -> Any:
+                try:
+                    return await fn(request, *args, **kwargs)
+                except Exception:
+                    logger.exception(
+                        "route.page_error", route=fn.__name__, path=str(request.url.path)
+                    )
+                    return _error_page(request, str(kwargs.get("project_id") or ""), fail)
+
+            return cast(F, async_wrapper)
+
+        @functools.wraps(fn)
+        def wrapper(request: Request, *args: Any, **kwargs: Any) -> Any:
+            try:
+                return fn(request, *args, **kwargs)
+            except Exception:
+                logger.exception("route.page_error", route=fn.__name__, path=str(request.url.path))
+                return _error_page(request, str(kwargs.get("project_id") or ""), fail)
+
+        return cast(F, wrapper)
+
+    return deco
