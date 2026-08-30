@@ -113,7 +113,7 @@ async def main() -> None:
         while not stop.is_set():
             await asyncio.sleep(HEARTBEAT_INTERVAL)
             try:
-                running = JobRepo(pb).count(filter=f'status="running" && leaseWorker="{worker_id}"')
+                running = JobRepo(pb).count(filter=f'status="running" && lockedBy="{worker_id}"')
                 stats = engine.stats()
                 # scheduler poll outcome (written by run_schedule_poll)
                 schedule: dict[str, object] = {}
