@@ -33,7 +33,6 @@ from app.jobs.handlers import register_job
 from app.providers.base import GenerationParams, ProviderError, TransientError
 from app.repositories.articles import ArticleRepo, SectionRepo
 from app.repositories.jobs import JobRepo
-from app.repositories.prompts import PromptRepo
 from app.repositories.topics import TopicRepo
 from app.schemas.llm import SectionContent
 
@@ -712,11 +711,9 @@ async def _generate_section(
 
 
 def _active_prompt_version(ctx: JobContext, ptype: str) -> int:
-    try:
-        active = PromptRepo(ctx.pb)._active_row(ctx.project_id, ptype, "default")
-        return int((active or {}).get("version") or 0)
-    except Exception:
-        return 0
+    # Version is carried on config (resolved once per job via resolve_all),
+    # so no per-section PocketBase query is needed here.
+    return ctx.config.prompt_version(ptype)
 
 
 def _generation_params(ctx: JobContext, role: str = "outline") -> GenerationParams:

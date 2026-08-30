@@ -31,7 +31,7 @@ LLM_ROLES = ("outline", "section", "meta", "review")
 class ProjectConfig:
     project: dict[str, Any]
     settings: dict[str, Any]
-    prompts: dict[str, str] = field(default_factory=dict)
+    prompts: dict[str, dict[str, Any]] = field(default_factory=dict)
     global_llm: dict[str, Any] = field(default_factory=dict)  # role → defaults
 
     # -- identity -------------------------------------------------------------------
@@ -188,7 +188,13 @@ class ProjectConfig:
 
     # -- prompts --------------------------------------------------------------------
     def prompt(self, ptype: str, fallback: str = "") -> str:
-        return self.prompts.get(ptype) or fallback
+        entry = self.prompts.get(ptype) or {}
+        return entry.get("content") or fallback
+
+    def prompt_version(self, ptype: str) -> int:
+        """Active prompt version for a type (carried from resolve_all, no query)."""
+        entry = self.prompts.get(ptype) or {}
+        return int(entry.get("version") or 1)
 
     def prompt_with_extra(self, ptype: str, extra: str) -> str:
         base = self.prompt(ptype)

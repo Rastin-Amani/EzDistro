@@ -53,21 +53,29 @@ class PromptRepo(BaseRepo):
 
     def resolve_all(
         self, project_id: str, ptypes: list[str], name: str = "default"
-    ) -> dict[str, str]:
+    ) -> dict[str, dict[str, Any]]:
         """Resolve many prompt types in TWO queries (project rows + global rows),
-        instead of one query pair per type."""
+        instead of one query pair per type.
+
+        Returns ``{ptype: {"content": str, "version": int}}``. The version is
+        carried through so callers can read the active prompt version without a
+        per-section query (see ``ProjectConfig.prompt_version``).
+        """
         # NOTE: no `type ~ ".*"` here — PB's regex `~` doesn't match select
         # fields, which silently zeroed every prompt row (→ generic fallbacks).
         suffix = f' && name="{name}" && active=true' if name else " && active=true"
         project_rows = self.list_records(filter=f'project="{project_id}"{suffix}', per_page=200)
         global_rows = self.list_records(filter=f'project=""{suffix}', per_page=200)
-        by_type: dict[str, str] = {}
+        by_type: dict[str, dict[str, Any]] = {}
         for rows in (project_rows, global_rows):
             for row in rows:
                 ptype = row.get("type") or ""
                 if ptype in ptypes and ptype not in by_type and row.get("content"):
-                    by_type[ptype] = row["content"]
-        return {pt: by_type.get(pt, "") for pt in ptypes}
+                    by_type[ptype] = {
+                        "content": row["content"],
+                        "version": int(row.get("version") or 1),
+                    }
+        return {pt: by_type.get(pt, {"content": "", "version": 0}) for pt in ptypes}
 
     def save_version(
         self,
