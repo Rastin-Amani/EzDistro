@@ -101,7 +101,7 @@
 {% macro sticky_save(label_text, tip_text='') -%}
     <div class="sticky bottom-20 md:bottom-4 z-20 mt-2">
         <div class="bg-base-100 border border-base-300/70 rounded-box p-2 flex items-center gap-2">
-            <span class="text-xs opacity-60 px-2 flex-1">تغییرات را پس از پایان ذخیره کنید</span>
+            <span class="text-xs opacity-60 px-2 flex-1">{{ _('تغییرات را پس از پایان ذخیره کنید') }}</span>
             <button type="submit" class="btn btn-primary" hx-disabled-elt="this">
                 <span class="loading loading-spinner loading-xs htmx-indicator"></span>
                 {{ label_text }}

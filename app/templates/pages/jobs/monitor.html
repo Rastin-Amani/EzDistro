@@ -2,90 +2,90 @@
 {% block dashboard_content %}
 {% import 'macros/forms.html' as f %}
 
-{{ f.page_header('وظایف', 'نظارت بر اجرای نمایه‌سازی و تولید مقاله در همه پروژه‌ها', 'اجرا و نظارت', '<span class="text-xs opacity-50">' ~ total ~ ' مورد</span>') }}
+{{ f.page_header(_('وظایف'), _('نظارت بر اجرای نمایه‌سازی و تولید مقاله در همه پروژه‌ها'), _('اجرا و نظارت'), '<span class="text-xs opacity-50">' ~ total ~ _(' مورد</span>')) }}
 
 <!-- Worker scheduler status -->
 {% if scheduler_heartbeat %}
 <div class="seoz-panel border-base-300/70">
-    <div class="seoz-panel-head"><h2 class="seoz-panel-title">زمان‌بندی خودکار (کارگر)</h2></div>
+    <div class="seoz-panel-head"><h2 class="seoz-panel-title">{{ _('زمان‌بندی خودکار (کارگر)') }}</h2></div>
     <div class="p-4 text-xs flex flex-wrap items-center gap-x-6 gap-y-2">
-        <span>آخرین بررسی: <span class="font-bold">{{ scheduler_heartbeat.lastPollAt|jalali_dt }}</span></span>
-        <span>زمان‌بندی آماده: <span class="font-bold tabular">{{ scheduler_heartbeat.due or 0 }}</span></span>
-        <span>وظیفه ساخته‌شده: <span class="font-bold tabular {{ 'text-success' if (scheduler_heartbeat.created or 0) > 0 }}">{{ scheduler_heartbeat.created or 0 }}</span></span>
+        <span>{{ _('آخرین بررسی:') }} <span class="font-bold">{{ scheduler_heartbeat.lastPollAt|loc_dt }}</span></span>
+        <span>{{ _('زمان‌بندی آماده:') }} <span class="font-bold tabular">{{ scheduler_heartbeat.due or 0 }}</span></span>
+        <span>{{ _('وظیفه ساخته‌شده:') }} <span class="font-bold tabular {{ 'text-success' if (scheduler_heartbeat.created or 0) > 0 }}">{{ scheduler_heartbeat.created or 0 }}</span></span>
         {% if scheduler_heartbeat.failed %}
-        <span class="text-error font-bold">خطا در اجرای {{ scheduler_heartbeat.failed }} زمان‌بندی</span>
+        <span class="text-error font-bold">{{ _('خطا در اجرای %(n)s زمان‌بندی') % {'n': scheduler_heartbeat.failed} }}</span>
         {% endif %}
         {% if (scheduler_heartbeat.due or 0) > 0 and not (scheduler_heartbeat.created or 0) %}
-        <span class="text-warning">زمان‌بندی‌ها آماده بودند ولی وظیفه‌ای ساخته نشد — گزارش کارگر را بررسی کنید.</span>
+        <span class="text-warning">{{ _('زمان‌بندی‌ها آماده بودند ولی وظیفه‌ای ساخته نشد — گزارش کارگر را بررسی کنید.') }}</span>
         {% endif %}
     </div>
 </div>
 {% else %}
 <div class="seoz-panel border-error/40">
-    <div class="seoz-panel-head"><h2 class="seoz-panel-title text-error">زمان‌بندی خودکار (کارگر)</h2></div>
+    <div class="seoz-panel-head"><h2 class="seoz-panel-title text-error">{{ _('زمان‌بندی خودکار (کارگر)') }}</h2></div>
     <div class="p-4 text-xs">
-        <span class="text-error font-bold">کارگر هنوز زمان‌بندی‌ها را بررسی نکرده است.</span>
-        <span class="opacity-70"> — مطمئن شوید فرآیند <code class="font-mono" dir="ltr">make worker</code> در حال اجراست (و پس از آخرین تغییر کد راه‌اندازی مجدد شده).</span>
+        <span class="text-error font-bold">{{ _('کارگر هنوز زمان‌بندی‌ها را بررسی نکرده است.') }}</span>
+        <span class="opacity-70"> {{ _('— مطمئن شوید فرآیند') }} <code class="font-mono" dir="ltr">make worker</code> {{ _('در حال اجراست (و پس از آخرین تغییر کد راه‌اندازی مجدد شده).') }}</span>
     </div>
 </div>
 {% endif %}
 
 <!-- Filters -->
-{{ f.panel('فیلترها', '', '', 'p-4') }}
+{{ f.panel(_('فیلترها'), '', '', 'p-4') }}
     <form method="get" action="/jobs" class="flex flex-col gap-3">
         <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
             <label class="form-control col-span-2 lg:col-span-1">
-                <span class="label-text text-xs font-medium">پروژه</span>
+                <span class="label-text text-xs font-medium">{{ _('پروژه') }}</span>
                 <select name="project" class="select select-sm">
-                    <option value="">همه</option>
+                    <option value="">{{ _('همه') }}</option>
                     {% for p in projects %}
                     <option value="{{ p.id }}" {{ 'selected' if f.project == p.id }}>{{ p.name }}</option>
                     {% endfor %}
                 </select>
             </label>
             <label class="form-control">
-                <span class="label-text text-xs font-medium">نوع</span>
+                <span class="label-text text-xs font-medium">{{ _('نوع') }}</span>
                 <select name="job_type" class="select select-sm">
-                    <option value="">همه</option>
+                    <option value="">{{ _('همه') }}</option>
                     {% for t in job_types %}
                     <option value="{{ t }}" {{ 'selected' if f.job_type == t }}>{{ t }}</option>
                     {% endfor %}
                 </select>
             </label>
             <label class="form-control">
-                <span class="label-text text-xs font-medium">وضعیت</span>
+                <span class="label-text text-xs font-medium">{{ _('وضعیت') }}</span>
                 <select name="status" class="select select-sm">
-                    <option value="">همه</option>
+                    <option value="">{{ _('همه') }}</option>
                     {% for s in statuses %}
                     <option value="{{ s }}" {{ 'selected' if f.status == s }}>{{ s|status_label }}</option>
                     {% endfor %}
                 </select>
             </label>
             <label class="form-control">
-                <span class="label-text text-xs font-medium">نوع خطا</span>
+                <span class="label-text text-xs font-medium">{{ _('نوع خطا') }}</span>
                 <select name="failure_type" class="select select-sm">
-                    <option value="">همه</option>
+                    <option value="">{{ _('همه') }}</option>
                     {% for code in error_codes %}
                     <option value="{{ code }}" {{ 'selected' if f.failure_type == code }}>{{ code }}</option>
                     {% endfor %}
                 </select>
             </label>
             <label class="form-control">
-                <span class="label-text text-xs font-medium">کارگر</span>
+                <span class="label-text text-xs font-medium">{{ _('کارگر') }}</span>
                 <input name="worker" class="input input-sm" dir="ltr" value="{{ f.worker }}" placeholder="worker id" />
             </label>
             <label class="form-control">
-                <span class="label-text text-xs font-medium">از تاریخ</span>
+                <span class="label-text text-xs font-medium">{{ _('از تاریخ') }}</span>
                 <input name="date_from" type="date" class="input input-sm" value="{{ f.date_from }}" />
             </label>
             <label class="form-control">
-                <span class="label-text text-xs font-medium">تا تاریخ</span>
+                <span class="label-text text-xs font-medium">{{ _('تا تاریخ') }}</span>
                 <input name="date_to" type="date" class="input input-sm" value="{{ f.date_to }}" />
             </label>
         </div>
         <div class="flex items-center gap-2">
-            <button type="submit" class="btn btn-primary btn-sm">اعمال فیلتر</button>
-            <a href="/jobs" class="btn btn-ghost btn-sm">پاک‌کردن</a>
+            <button type="submit" class="btn btn-primary btn-sm">{{ _('اعمال فیلتر') }}</button>
+            <a href="/jobs" class="btn btn-ghost btn-sm">{{ _('پاک‌کردن') }}</a>
         </div>
     </form>
 {{ f.panel_close() }}
@@ -96,13 +96,13 @@
         <table class="table table-sm">
             <thead>
                 <tr>
-                    <th>نوع</th>
-                    <th>پروژه</th>
-                    <th>وضعیت</th>
-                    <th>پیشرفت</th>
-                    <th>پیام</th>
-                    <th>تلاش</th>
-                    <th>زمان</th>
+                    <th>{{ _('نوع') }}</th>
+                    <th>{{ _('پروژه') }}</th>
+                    <th>{{ _('وضعیت') }}</th>
+                    <th>{{ _('پیشرفت') }}</th>
+                    <th>{{ _('پیام') }}</th>
+                    <th>{{ _('تلاش') }}</th>
+                    <th>{{ _('زمان') }}</th>
                     <th></th>
                 </tr>
             </thead>
@@ -115,7 +115,7 @@
                     <td class="w-32">
                         <div class="flex items-center gap-2">
                             <progress class="progress progress-primary w-16 h-1.5" value="{{ j.progress or 0 }}" max="100"></progress>
-                            <span class="text-xs tabular">{{ j.progress or 0 }}٪</span>
+                            <span class="text-xs tabular">{{ _('%(n)s٪') % {'n': j.progress or 0} }}</span>
                         </div>
                     </td>
                     <td class="text-xs max-w-48">
@@ -124,19 +124,19 @@
                         {% if j.currentItem and j.totalItems %}<p class="opacity-50">{{ j.currentItem }} / {{ j.totalItems }}</p>{% endif %}
                     </td>
                     <td class="text-xs tabular">{{ j.attempts or 0 }}/{{ j.maxAttempts or 3 }}</td>
-                    <td class="text-xs opacity-50 whitespace-nowrap">{{ j.created|jalali_dt }}</td>
+                    <td class="text-xs opacity-50 whitespace-nowrap">{{ j.created|loc_dt }}</td>
                     <td class="whitespace-nowrap">
                         {% if j.status in ['pending', 'retrying', 'running'] %}
                         <button class="btn btn-ghost btn-xs text-warning"
-                                hx-post="/jobs/{{ j.id }}/cancel" hx-swap="none" hx-confirm="لغو این وظیفه؟">لغو</button>
+                                hx-post="/jobs/{{ j.id }}/cancel" hx-swap="none" hx-confirm="لغو این وظیفه؟">{{ _('لغو') }}</button>
                         {% elif j.status == 'failed' %}
                         <button class="btn btn-ghost btn-xs text-primary"
-                                hx-post="/jobs/{{ j.id }}/retry" hx-swap="none">تلاش مجدد</button>
+                                hx-post="/jobs/{{ j.id }}/retry" hx-swap="none">{{ _('تلاش مجدد') }}</button>
                         {% endif %}
                     </td>
                 </tr>
                 {% else %}
-                <tr><td colspan="8"><div class="seoz-empty py-8"><p class="font-bold text-base-content/70">وظیفه‌ای با این فیلترها یافت نشد</p></div></td></tr>
+                <tr><td colspan="8"><div class="seoz-empty py-8"><p class="font-bold text-base-content/70">{{ _('وظیفه‌ای با این فیلترها یافت نشد') }}</p></div></td></tr>
                 {% endfor %}
             </tbody>
         </table>
@@ -145,14 +145,14 @@
 
 {% if provider_metrics %}
 <details class="seoz-panel mt-4" open>
-    <summary class="seoz-panel-head cursor-pointer text-sm font-bold select-none">متریک‌های ارائه‌دهنده (۷ روز اخیر)</summary>
+    <summary class="seoz-panel-head cursor-pointer text-sm font-bold select-none">{{ _('متریک‌های ارائه‌دهنده (۷ روز اخیر)') }}</summary>
     <div class="overflow-x-auto p-4">
         <table class="table table-sm">
             <thead>
                 <tr>
-                    <th>ارائه‌دهنده</th><th>مدل</th><th>عملیات</th><th>تعداد</th>
-                    <th>موفقیت</th><th>شکست</th><th>میانگین (ms)</th><th>P95 (ms)</th>
-                    <th>تلاش مجدد</th><th>توکن‌ها</th>
+                    <th>{{ _('ارائه‌دهنده') }}</th><th>{{ _('مدل') }}</th><th>{{ _('عملیات') }}</th><th>{{ _('تعداد') }}</th>
+                    <th>{{ _('موفقیت') }}</th><th>{{ _('شکست') }}</th><th>{{ _('میانگین (ms)') }}</th><th>P95 (ms)</th>
+                    <th>{{ _('تلاش مجدد') }}</th><th>{{ _('توکن‌ها') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -162,8 +162,8 @@
                     <td class="text-xs" dir="ltr">{{ m.model or '—' }}</td>
                     <td class="text-xs" dir="ltr">{{ m.operation }}</td>
                     <td class="text-xs tabular">{{ m.requestCount }}</td>
-                    <td class="text-xs text-success tabular">{{ (m.successRate * 100)|round(1) }}٪</td>
-                    <td class="text-xs tabular {{ 'text-error' if m.failureRate else 'opacity-50' }}">{{ (m.failureRate * 100)|round(1) }}٪</td>
+                    <td class="text-xs text-success tabular">{{ _('%(n)s٪') % {'n': (m.successRate * 100)|round(1)} }}</td>
+                    <td class="text-xs tabular {{ 'text-error' if m.failureRate else 'opacity-50' }}">{{ _('%(n)s٪') % {'n': (m.failureRate * 100)|round(1)} }}</td>
                     <td class="text-xs tabular">{{ m.avgLatencyMs }}</td>
                     <td class="text-xs font-bold tabular">{{ m.p95LatencyMs }}</td>
                     <td class="text-xs tabular">{{ m.retryCount }}</td>

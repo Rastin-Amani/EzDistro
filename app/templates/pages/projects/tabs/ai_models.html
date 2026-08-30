@@ -1,152 +1,303 @@
 {% import 'macros/forms.html' as f %}
-{{ f.page_header('مدل‌های هوش مصنوعی', 'اولویت: تنظیم پروژه ← پیش‌فرض سراسری. تغییر مدل فقط یک رویداد ممیزی می‌سازد؛ متادیتای مقالات قبلی (provider/model/نسخه پرامپت) هرگز تغییر نمی‌کند.') }}
+
+{{ f.page_header(_('مدل‌های هوش مصنوعی'), _('اولویت: تنظیم پروژه ← پیش‌فرض سراسری. تغییر مدل فقط یک رویداد ممیزی می‌سازد؛ متادیتای مقالات قبلی (provider/model/نسخه پرامپت) هرگز تغییر نمی‌کند.')) }}
+
 <div id="ai-models-tab" class="flex flex-col gap-5 w-full">
+
     <form hx-post="/projects/{{ project.id }}/ai-models" hx-swap="none" class="flex flex-col gap-4">
+
         {% for role, label, with_params in roles %}
+
         {% set sel_provider = settings[role ~ 'Provider'] or '' %}
+
         {% set sel_model = settings[role ~ 'Model'] or '' %}
+
         <section class="seoz-panel" x-data="{ provider: '{{ sel_provider }}' }">
+
             <div class="seoz-panel-head">
+
                 <div class="flex items-center gap-2">
+
                     <h3 class="seoz-panel-title">{{ label }}</h3>
-                    {{ f.tip('نقش‌ها: Outline رئوس را می‌سازد، Section بخش‌ها را می‌نویسد، Meta و Review اختیاری‌اند. اگر خالی بماند از پیش‌فرض سراسری استفاده می‌شود.') }}
+
+                    {{ f.tip(_('نقش‌ها: Outline رئوس را می‌سازد، Section بخش‌ها را می‌نویسد، Meta و Review اختیاری‌اند. اگر خالی بماند از پیش‌فرض سراسری استفاده می‌شود.')) }}
+
                 </div>
+
             </div>
+
 <div class="p-4 flex flex-col gap-3">
+
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+
                     <label class="form-control">
+
                         <div class="label px-0 pb-1">
-                            <span class="label-text text-xs font-medium">ارائه‌دهنده</span>
-                            {{ f.tip('ارائه‌دهنده LLM این نقش — از اتصالات فعال تب «اتصالات» انتخاب شود.') }}
+
+                            <span class="label-text text-xs font-medium">{{ _('ارائه‌دهنده') }}</span>
+
+                            {{ f.tip(_('ارائه‌دهنده LLM این نقش — از اتصالات فعال تب «اتصالات» انتخاب شود.')) }}
+
                         </div>
+
                         <select name="{{ role }}_provider" class="select select-bordered w-full" x-model="provider">
-                            <option value="">— پیش‌فرض سراسری —</option>
+
+                            <option value="">{{ _('— پیش‌فرض سراسری —') }}</option>
+
                             {% for meta in llm_meta %}
+
                             <option value="{{ meta.provider }}" {{ 'selected' if sel_provider == meta.provider }}>{{ meta.provider }}</option>
+
                             {% endfor %}
+
                         </select>
+
                         <span class="text-xs opacity-40 mt-1 leading-relaxed">{{ llm_meta | selectattr('provider', 'equalto', sel_provider) | map(attribute='description') | first | default('') }}</span>
+
                     </label>
 
+
+
                     <label class="form-control">
+
                         <div class="label px-0 pb-1">
-                            <span class="label-text text-xs font-medium">مدل</span>
-                            {{ f.tip('شناسه مدل — می‌توانید دستی وارد کنید یا با «دریافت» از ارائه‌دهنده بارگیری کنید.') }}
+
+                            <span class="label-text text-xs font-medium">{{ _('مدل') }}</span>
+
+                            {{ f.tip(_('شناسه مدل — می‌توانید دستی وارد کنید یا با «دریافت» از ارائه‌دهنده بارگیری کنید.')) }}
+
                         </div>
+
                         <div class="flex gap-2">
+
                             <input name="{{ role }}_model" class="input input-bordered flex-1" dir="ltr" value="{{ sel_model }}"
+
                                    placeholder="{{ global_defaults[role].model if global_defaults.get(role) else '' }}" list="models-{{ role }}" />
+
                             <button type="button" class="btn btn-ghost btn-sm"
+
                                     hx-get="/projects/{{ project.id }}/ai-models/{{ role }}/models"
+
                                     hx-target="#models-{{ role }}" hx-swap="innerHTML"
-                                    title="دریافت مدل‌ها از ارائه‌دهنده">
+
+                                    title="{{ _('دریافت مدل‌ها از ارائه‌دهنده') }}">
+
                                 <span class="loading loading-spinner loading-xs htmx-indicator"></span>
-                                دریافت
+
+                                {{ _('دریافت') }}
+
                             </button>
+
                         </div>
+
                         <datalist id="models-{{ role }}"></datalist>
-                        <span class="text-xs opacity-40 mt-1">می‌توانید شناسه مدل را دستی وارد کنید.</span>
+
+                        <span class="text-xs opacity-40 mt-1">{{ _('می‌توانید شناسه مدل را دستی وارد کنید.') }}</span>
+
                     </label>
 
+
+
                     <label class="form-control">
+
                         <div class="label px-0 pb-1">
-                            <span class="label-text text-xs font-medium">پیش‌فرض سراسری</span>
-                            {{ f.tip('مقدار سراسری که مدیر تعریف کرده؛ اگر این نقش خالی باشد از همین استفاده می‌شود.') }}
+
+                            <span class="label-text text-xs font-medium">{{ _('پیش‌فرض سراسری') }}</span>
+
+                            {{ f.tip(_('مقدار سراسری که مدیر تعریف کرده؛ اگر این نقش خالی باشد از همین استفاده می‌شود.')) }}
+
                         </div>
+
                         <div class="text-xs opacity-60 border border-base-300/70 rounded-lg px-3 py-2.5" dir="ltr">
+
                             {% if global_defaults.get(role) and global_defaults[role].provider %}
+
                             {{ global_defaults[role].provider }} / {{ global_defaults[role].model }}
-                            {% else %}— تعریف نشده —{% endif %}
+
+                            {% else %}— {{ _('تعریف نشده') }} —{% endif %}
+
                         </div>
+
                     </label>
+
                 </div>
+
+
 
                 {% if with_params %}
+
                 <div class="grid grid-cols-2 sm:grid-cols-5 gap-3" x-show="provider !== 'meta' && provider !== 'review'">
+
                     <label class="form-control" x-show="provider !== 'custom'">
+
                         <div class="label px-0 pb-1">
-                            <span class="label-text text-xs font-medium">دما (temperature)</span>
-                            {{ f.tip('تصادفی بودن خروجی — ۰ یعنی قطعی، ۲ یعنی خلاقانه. برای سئو معمولاً ۰.۶ تا ۰.۸ مناسب است.') }}
+
+                            <span class="label-text text-xs font-medium">{{ _('دما (temperature)') }}</span>
+
+                            {{ f.tip(_('تصادفی بودن خروجی — ۰ یعنی قطعی، ۲ یعنی خلاقانه. برای سئو معمولاً ۰.۶ تا ۰.۸ مناسب است.')) }}
+
                         </div>
+
                         <input name="{{ role }}_temperature" type="number" step="0.1" min="0" max="2"
+
                                class="input input-bordered w-full" value="{{ settings[role ~ 'Temperature'] or 0.7 }}" />
+
                     </label>
+
                     <label class="form-control">
+
                         <div class="label px-0 pb-1">
-                            <span class="label-text text-xs font-medium">حداکثر توکن</span>
-                            {{ f.tip('سقف توکن خروجی هر فراخوانی. بیشتر از ظرفیت مدل نباشد.') }}
+
+                            <span class="label-text text-xs font-medium">{{ _('حداکثر توکن') }}</span>
+
+                            {{ f.tip(_('سقف توکن خروجی هر فراخوانی. بیشتر از ظرفیت مدل نباشد.')) }}
+
                         </div>
+
                         <input name="{{ role }}_max_tokens" type="number" class="input input-bordered w-full"
+
                                value="{{ settings[role ~ 'MaxTokens'] or 4096 }}" />
+
                     </label>
+
                     <label class="form-control">
+
                         <div class="label px-0 pb-1">
-                            <span class="label-text text-xs font-medium">تایم‌اوت (ثانیه)</span>
-                            {{ f.tip('حداکثر زمان انتظار برای پاسخ ارائه‌دهنده قبل از اعلام خطا.') }}
+
+                            <span class="label-text text-xs font-medium">{{ _('تایم‌اوت (ثانیه)') }}</span>
+
+                            {{ f.tip(_('حداکثر زمان انتظار برای پاسخ ارائه‌دهنده قبل از اعلام خطا.')) }}
+
                         </div>
+
                         <input name="{{ role }}_timeout" type="number" class="input input-bordered w-full"
+
                                value="{{ settings[role ~ 'Timeout'] or 120 }}" />
+
                     </label>
+
                     <label class="form-control">
+
                         <div class="label px-0 pb-1">
-                            <span class="label-text text-xs font-medium">حداکثر تلاش</span>
-                            {{ f.tip('تعداد دفعات تلاش مجدد هنگام خطای موقت.') }}
+
+                            <span class="label-text text-xs font-medium">{{ _('حداکثر تلاش') }}</span>
+
+                            {{ f.tip(_('تعداد دفعات تلاش مجدد هنگام خطای موقت.')) }}
+
                         </div>
+
                         <input name="{{ role }}_retry_attempts" type="number" class="input input-bordered w-full"
+
                                value="{{ (settings[role ~ 'Retry'] or {}).max_attempts or 3 }}" />
+
                     </label>
+
                     <label class="form-control">
+
                         <div class="label px-0 pb-1">
-                            <span class="label-text text-xs font-medium">پایه تأخیر (s)</span>
-                            {{ f.tip('تأخیر اولیه قبل از تلاش مجدد؛ با هر شکست نمایی رشد می‌کند.') }}
+
+                            <span class="label-text text-xs font-medium">{{ _('پایه تأخیر (s)') }}</span>
+
+                            {{ f.tip(_('تأخیر اولیه قبل از تلاش مجدد؛ با هر شکست نمایی رشد می‌کند.')) }}
+
                         </div>
+
                         <input name="{{ role }}_retry_base" type="number" class="input input-bordered w-full"
+
                                value="{{ (settings[role ~ 'Retry'] or {}).backoff_base or 30 }}" />
+
                     </label>
+
                 </div>
+
                 {% endif %}
+
+
 
                 {% if role == 'outline' or role == 'section' %}
+
                 <details class="border border-base-300/70 rounded-xl px-4 py-3" x-show="provider === 'custom' || provider === 'openai_compat'">
-                    <summary class="text-xs opacity-70 cursor-pointer">اتصال اختصاصی (Base URL + کلید — اختیاری)</summary>
+
+                    <summary class="text-xs opacity-70 cursor-pointer">{{ _('اتصال اختصاصی (Base URL + کلید — اختیاری)') }}</summary>
+
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
-                        {{ f.text('base_url', 'Base URL', '', 'آدرس سفارشی سازگار با OpenAI — معمولاً با /v1 تمام می‌شود.', 'https://api.example.com/v1', dir='ltr') }}
-                        {{ f.password('api_key', 'API Key (خالی = حفظ قبلی)', '', 'کلید API این اتصال — رمزنگاری‌شده ذخیره و هرگز نمایش داده نمی‌شود.') }}
+
+                        {{ f.text('base_url', 'Base URL', '', _('آدرس سفارشی سازگار با OpenAI — معمولاً با /v1 تمام می‌شود.'), 'https://api.example.com/v1', dir='ltr') }}
+
+                        {{ f.password('api_key', _('API Key (خالی = حفظ قبلی)'), '', _('کلید API این اتصال — رمزنگاری‌شده ذخیره و هرگز نمایش داده نمی‌شود.')) }}
+
                     </div>
+
                 </details>
+
                 {% endif %}
+
             </div>
+
         </section>
+
         {% endfor %}
 
-        {{ f.sticky_save('ذخیره مدل‌ها') }}
+
+
+        {{ f.sticky_save(_('ذخیره مدل‌ها')) }}
+
     </form>
 
+
+
     {% if user and user.role == 'admin' %}
+
     <section class="seoz-panel">
+
         <div class="seoz-panel-head">
+
             <div class="flex items-center gap-2">
-                <h3 class="seoz-panel-title">پیش‌فرض‌های سراسری (فقط مدیر)</h3>
-                {{ f.tip('مقادیری که همه پروژه‌های جدید به‌عنوان پیش‌فرض استفاده می‌کنند؛ تنظیم پروژه همیشه بر این مقادیر اولویت دارد.') }}
+
+                <h3 class="seoz-panel-title">{{ _('پیش‌فرض‌های سراسری (فقط مدیر)') }}</h3>
+
+                {{ f.tip(_('مقادیری که همه پروژه‌های جدید به‌عنوان پیش‌فرض استفاده می‌کنند؛ تنظیم پروژه همیشه بر این مقادیر اولویت دارد.')) }}
+
             </div>
+
         </div>
+
         <div class="p-4 flex flex-col gap-3">
-            <p class="text-xs opacity-50">تنظیم پروژه همیشه بر این مقادیر اولویت دارد.</p>
+
+            <p class="text-xs opacity-50">{{ _('تنظیم پروژه همیشه بر این مقادیر اولویت دارد.') }}</p>
+
             <form hx-post="/projects/{{ project.id }}/ai-models/global" hx-swap="none" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+
                 {% for role in ['outline', 'section', 'meta', 'review'] %}
+
                 {% set g = global_defaults.get(role) or {} %}
+
                 <div class="flex flex-col gap-2 border border-base-300/70 rounded-xl p-3">
+
                     <span class="text-xs font-semibold">{{ role }}</span>
+
                     <input name="{{ role }}_provider" class="input input-xs input-bordered w-full" dir="ltr" placeholder="provider" value="{{ g.provider or '' }}" />
+
                     <input name="{{ role }}_model" class="input input-xs input-bordered w-full" dir="ltr" placeholder="model" value="{{ g.model or '' }}" />
+
                 </div>
+
                 {% endfor %}
+
                 <button type="submit" class="btn btn-ghost btn-sm col-span-2 sm:col-span-4" hx-disabled-elt="this">
+
                     <span class="loading loading-spinner loading-xs htmx-indicator"></span>
-                    ذخیره پیش‌فرض‌ها
+
+                    {{ _('ذخیره پیش‌فرض‌ها') }}
+
                 </button>
+
             </form>
+
         </div>
+
     </section>
+
     {% endif %}
+
 </div>

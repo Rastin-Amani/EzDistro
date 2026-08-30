@@ -1,56 +1,111 @@
 {# Step 3: import result — rendered by POST /projects/{id}/topics/import.
+
    Closing refreshes the surrounding topic lists via the refreshTopics event. #}
+
 <div class="flex flex-col gap-4">
+
     <div class="flex flex-wrap items-center gap-2">
-        <h4 class="font-bold text-sm">نتیجه افزودن — {{ filename }}</h4>
+
+        <h4 class="font-bold text-sm">{{ _('نتیجه افزودن — %(v)s') % {'v': filename} }}</h4>
+
     </div>
+
     <div class="grid grid-cols-3 gap-2 text-center">
+
         <div class="card bg-base-200 border border-base-200 rounded-box py-3">
+
             <p class="text-2xl font-bold text-success">{{ summary.created }}</p>
-            <p class="text-xs opacity-60">افزوده شد</p>
+
+            <p class="text-xs opacity-60">{{ _('افزوده شد') }}</p>
+
         </div>
+
         <div class="card bg-base-200 border border-base-200 rounded-box py-3">
+
             <p class="text-2xl font-bold">{{ summary.skipped }}</p>
-            <p class="text-xs opacity-60">تکراری (رد شد)</p>
+
+            <p class="text-xs opacity-60">{{ _('تکراری (رد شد)') }}</p>
+
         </div>
+
         <div class="card bg-base-200 border border-base-200 rounded-box py-3">
+
             <p class="text-2xl font-bold {{ 'text-error' if summary.error_count else '' }}">{{ summary.error_count }}</p>
-            <p class="text-xs opacity-60">خطا</p>
+
+            <p class="text-xs opacity-60">{{ _('خطا') }}</p>
+
         </div>
+
     </div>
+
+
 
     {% if summary.errors %}
+
     <div class="overflow-x-auto border border-base-200 rounded-box">
+
         <table class="table table-xs">
+
             <thead>
+
                 <tr class="text-xs opacity-60">
-                    <th class="w-16">ردیف</th>
-                    <th>دلیل</th>
+
+                    <th class="w-16">{{ _('ردیف') }}</th>
+
+                    <th>{{ _('دلیل') }}</th>
+
                 </tr>
+
             </thead>
+
             <tbody>
+
                 {% for e in summary.errors %}
+
                 <tr class="text-xs">
+
                     <td class="opacity-60">{{ e.row }}</td>
+
                     <td>{{ e.reason }}</td>
+
                 </tr>
+
                 {% endfor %}
+
             </tbody>
+
         </table>
+
     </div>
+
     {% if summary.has_more_errors %}
-    <p class="text-xs opacity-50">… و خطاهای بیشتری که در اینجا نمایش داده نشدند.</p>
+
+    <p class="text-xs opacity-50">{{ _('… و خطاهای بیشتری که در اینجا نمایش داده نشدند.') }}</p>
+
     {% endif %}
+
     {% endif %}
+
+
 
     {% if summary.coerced %}
+
     <p class="text-xs opacity-60 leading-relaxed">
-        {{ summary.coerced }} ردیف دارای برچسب نوع آزاد (مثل «راهنمای عیب‌یابی» یا «پرسش و پاسخ») بودند که با نوع پیش‌فرض «مقاله» اضافه شدند.
+
+        {{ _('%(n)s ردیف دارای برچسب نوع آزاد (مثل «راهنمای عیب‌یابی» یا «پرسش و پاسخ») بودند که با نوع پیش‌فرض «مقاله» اضافه شدند.') % {'n': summary.coerced} }}
+
     </p>
+
     {% endif %}
 
+
+
     <button type="button" class="btn btn-primary"
+
             onclick="document.getElementById('topic-import-modal').close(); document.body.dispatchEvent(new CustomEvent('refreshTopics'));">
-        اتمام
+
+        {{ _('اتمام') }}
+
     </button>
+
 </div>

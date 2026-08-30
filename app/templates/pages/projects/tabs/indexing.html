@@ -1,155 +1,309 @@
 {% import 'macros/forms.html' as f %}
+
 <div id="indexing-tab"
+
      hx-get="/projects/{{ project.id }}/tabs/indexing"
+
      hx-trigger="every 10s, refreshIndexing from:body"
+
      hx-swap="outerHTML">
-{{ f.page_header('نمایه‌سازی', 'وضعیت نمایه‌سازی، اجراها و مستندات.', eyebrow='پروژه') }}
+
+{{ f.page_header(_('نمایه‌سازی'), _('وضعیت نمایه‌سازی، اجراها و مستندات.'), eyebrow=_('پروژه')) }}
+
     <div class="flex flex-col gap-4">
+
         {% if metrics %}
+
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            {{ f.stat('مستندات نمایه‌شده', metrics.indexed_documents, 'bg-success') }}
-            {{ f.stat('مستندات کهنه', metrics.stale_documents, 'bg-error' if metrics.stale_documents else 'bg-base-300') }}
-            {{ f.stat('مقالات تولیدشده', metrics.articles_generated) }}
-            {{ f.stat('بخش‌های تولیدشده', metrics.sections_generated) }}
-            {{ f.stat('منتشر شده', metrics.articles_published, 'bg-success') }}
-            {{ f.stat('وظایف ناموفق', metrics.failed_jobs, 'bg-error' if metrics.failed_jobs else 'bg-base-300') }}
+
+            {{ f.stat(_('مستندات نمایه‌شده'), metrics.indexed_documents, 'bg-success') }}
+
+            {{ f.stat(_('مستندات کهنه'), metrics.stale_documents, 'bg-error' if metrics.stale_documents else 'bg-base-300') }}
+
+            {{ f.stat(_('مقالات تولیدشده'), metrics.articles_generated) }}
+
+            {{ f.stat(_('بخش‌های تولیدشده'), metrics.sections_generated) }}
+
+            {{ f.stat(_('منتشر شده'), metrics.articles_published, 'bg-success') }}
+
+            {{ f.stat(_('وظایف ناموفق'), metrics.failed_jobs, 'bg-error' if metrics.failed_jobs else 'bg-base-300') }}
+
         </div>
+
         {% if provider_metrics %}
+
         <details class="seoz-panel">
+
             <summary class="seoz-panel-head cursor-pointer">
-                <span class="seoz-panel-title">متریک‌های ارائه‌دهنده</span>
+
+                <span class="seoz-panel-title">{{ _('متریک‌های ارائه‌دهنده') }}</span>
+
             </summary>
+
             <div class="overflow-x-auto p-4">
+
                 <table class="table table-sm">
-                    <thead><tr class="text-xs opacity-60"><th>ارائه‌دهنده</th><th>مدل</th><th>عملیات</th><th>تعداد</th><th>موفقیت</th><th>میانگین (ms)</th><th>P95 (ms)</th></tr></thead>
+
+                    <thead><tr class="text-xs opacity-60"><th>{{ _('ارائه‌دهنده') }}</th><th>{{ _('مدل') }}</th><th>{{ _('عملیات') }}</th><th>{{ _('تعداد') }}</th><th>{{ _('موفقیت') }}</th><th>{{ _('میانگین (ms)') }}</th><th>P95 (ms)</th></tr></thead>
+
                     <tbody>
+
                         {% for m in provider_metrics %}
+
                         <tr>
+
                             <td class="text-xs" dir="ltr">{{ m.provider }}</td>
+
                             <td class="text-xs" dir="ltr">{{ m.model or '—' }}</td>
+
                             <td class="text-xs" dir="ltr">{{ m.operation }}</td>
+
                             <td class="text-xs">{{ m.requestCount }}</td>
-                            <td class="text-xs">{{ (m.successRate * 100)|round(1) }}٪</td>
+
+                            <td class="text-xs">{{ _('%(n)s٪') % {'n': (m.successRate * 100)|round(1)} }}</td>
+
                             <td class="text-xs">{{ m.avgLatencyMs }}</td>
+
                             <td class="text-xs font-bold">{{ m.p95LatencyMs }}</td>
+
                         </tr>
+
                         {% endfor %}
+
                     </tbody>
+
                 </table>
+
             </div>
+
         </details>
+
         {% endif %}
+
         {% endif %}
+
+
 
         <div class="flex items-center justify-between flex-wrap gap-2">
+
             <div class="grid grid-cols-2 gap-3">
-                {{ f.stat('مستندات نمایه‌شده', indexed_count) }}
-                {{ f.stat('اجراهای اخیر', runs|length) }}
+
+                {{ f.stat(_('مستندات نمایه‌شده'), indexed_count) }}
+
+                {{ f.stat(_('اجراهای اخیر'), runs|length) }}
+
             </div>
+
             <div class="flex items-center gap-2">
-                <span class="tooltip tooltip-top" data-tip="فقط مستندات تغییرکرده را نمایه می‌کند — سریع و کم‌هزینه">
+
+                <span class="tooltip tooltip-top" data-tip="{{ _(_( 'فقط مستندات تغییرکرده را نمایه می‌کند — سریع و کم‌هزینه' )) }}">
+
                     <button class="btn btn-primary btn-sm" hx-post="/projects/{{ project.id }}/run-index" hx-swap="none" hx-disabled-elt="this">
+
                         <span class="loading loading-spinner loading-xs htmx-indicator"></span>
-                        نمایه‌سازی افزایشی
+
+                        {{ _('نمایه‌سازی افزایشی') }}
+
                     </button>
+
                 </span>
+
                 <form hx-post="/projects/{{ project.id }}/run-index" hx-swap="none"
-                      hx-confirm="بازنمایه کامل: همه مستندات دوباره جاسازی می‌شوند و برداری‌های قدیمی پاک می‌شوند. ادامه می‌دهید؟">
+
+                      hx-confirm="{{ _(_( 'بازنمایه کامل: همه مستندات دوباره جاسازی می‌شوند و برداری‌های قدیمی پاک می‌شوند. ادامه می‌دهید؟' )) }}">
+
                     <input type="hidden" name="full" value="1" />
-                    <span class="tooltip tooltip-top" data-tip="همه مستندات از نو جاسازی می‌شوند — برای تغییر مدل/ابعاد جاسازی لازم است">
-                        <button type="submit" class="btn btn-ghost btn-sm text-warning">بازنمایه کامل</button>
+
+                    <span class="tooltip tooltip-top" data-tip="{{ _(_( 'همه مستندات از نو جاسازی می‌شوند — برای تغییر مدل/ابعاد جاسازی لازم است' )) }}">
+
+                        <button type="submit" class="btn btn-ghost btn-sm text-warning">{{ _('بازنمایه کامل') }}</button>
+
                     </span>
+
                 </form>
+
             </div>
+
         </div>
+
+
 
         {% if runs %}
+
         <div class="seoz-panel">
-            <div class="seoz-panel-head"><h2 class="seoz-panel-title">اجراهای نمایه‌سازی</h2></div>
+
+            <div class="seoz-panel-head"><h2 class="seoz-panel-title">{{ _('اجراهای نمایه‌سازی') }}</h2></div>
+
             <div class="overflow-x-auto">
+
                 <table class="table table-sm">
+
                     <thead>
+
                         <tr class="text-xs opacity-60">
-                            <th>وضعیت</th>
-                            <th>نوع</th>
-                            <th>کشف</th>
-                            <th>بدون تغییر</th>
-                            <th>تغییر</th>
-                            <th>نمایه‌شده</th>
-                            <th>ردشده</th>
-                            <th>خطا</th>
-                            <th>مدت (s)</th>
-                            <th>زمان</th>
+
+                            <th>{{ _('وضعیت') }}</th>
+
+                            <th>{{ _('نوع') }}</th>
+
+                            <th>{{ _('کشف') }}</th>
+
+                            <th>{{ _('بدون تغییر') }}</th>
+
+                            <th>{{ _('تغییر') }}</th>
+
+                            <th>{{ _('نمایه‌شده') }}</th>
+
+                            <th>{{ _('ردشده') }}</th>
+
+                            <th>{{ _('خطا') }}</th>
+
+                            <th>{{ _('مدت (s)') }}</th>
+
+                            <th>{{ _('زمان') }}</th>
+
                             <th></th>
+
                         </tr>
+
                     </thead>
+
                     <tbody>
+
                         {% for r in runs %}
+
                         <tr>
+
                             <td><span class="badge badge-sm {{ r.status|status_badge }}">{{ r.status|status_label }}</span></td>
+
                             <td><span class="badge badge-sm {{ r.trigger|status_badge }}">{{ r.trigger|status_label }}</span></td>
+
                             <td class="text-xs">{{ r.totalDocuments or 0 }}</td>
+
                             <td class="text-xs">{{ r.unchangedDocuments or 0 }}</td>
+
                             <td class="text-xs">{{ r.changedDocuments or 0 }}</td>
+
                             <td class="text-xs text-success">{{ r.indexedDocuments or 0 }}</td>
+
                             <td class="text-xs">{{ r.skippedDocuments or 0 }}</td>
+
                             <td class="text-xs max-w-40">
+
                                 {% if r.error %}<p class="truncate text-error" title="{{ r.error.message }}">{{ r.error.message }}</p>{% else %}—{% endif %}
+
                             </td>
+
                             <td class="text-xs">{{ r.elapsedSeconds or 0 }}</td>
-                            <td class="text-xs opacity-50 whitespace-nowrap">{{ r.startedAt|jalali_dt }}</td>
+
+                            <td class="text-xs opacity-50 whitespace-nowrap">{{ r.startedAt|loc_dt }}</td>
+
                             <td>
+
                                 {% if r.status == 'failed' %}
+
                                 <button class="btn btn-ghost btn-xs text-primary"
-                                        hx-post="/projects/{{ project.id }}/index-runs/{{ r.id }}/retry" hx-swap="none">تلاش مجدد</button>
+
+                                        hx-post="/projects/{{ project.id }}/index-runs/{{ r.id }}/retry" hx-swap="none">{{ _('تلاش مجدد') }}</button>
+
                                 {% endif %}
+
                             </td>
+
                         </tr>
+
                         {% endfor %}
+
                     </tbody>
+
                 </table>
+
             </div>
+
         </div>
+
         {% endif %}
 
+
+
         {% if documents %}
+
         <div class="seoz-panel">
-            <div class="seoz-panel-head"><h2 class="seoz-panel-title">مستندات اخیر</h2></div>
+
+            <div class="seoz-panel-head"><h2 class="seoz-panel-title">{{ _('مستندات اخیر') }}</h2></div>
+
             <div class="overflow-x-auto">
+
                 <table class="table table-sm">
+
                     <thead>
+
                         <tr class="text-xs opacity-60">
-                            <th>عنوان</th>
-                            <th>منبع</th>
-                            <th>مدل جاسازی</th>
-                            <th>تکه‌ها</th>
-                            <th>وضعیت</th>
-                            <th>به‌روزرسانی</th>
+
+                            <th>{{ _('عنوان') }}</th>
+
+                            <th>{{ _('منبع') }}</th>
+
+                            <th>{{ _('مدل جاسازی') }}</th>
+
+                            <th>{{ _('تکه‌ها') }}</th>
+
+                            <th>{{ _('وضعیت') }}</th>
+
+                            <th>{{ _('به‌روزرسانی') }}</th>
+
                             <th></th>
+
                         </tr>
+
                     </thead>
+
                     <tbody>
+
                         {% for d in documents %}
+
                         <tr>
+
                             <td class="text-xs max-w-50"><p class="truncate">{{ d.title }}</p></td>
+
                             <td class="text-xs opacity-60" dir="ltr">{{ d.sourceType }}:{{ d.sourceId }}</td>
+
                             <td class="text-xs opacity-60" dir="ltr">{{ d.embeddingModel or '—' }}</td>
+
                             <td class="text-xs">{{ d.chunkCount or 0 }}</td>
+
                             <td><span class="badge badge-sm {{ d.indexStatus|status_badge }}">{{ d.indexStatus|status_label }}</span></td>
-                            <td class="text-xs opacity-50">{{ d.updated|jalali_dt }}</td>
+
+                            <td class="text-xs opacity-50">{{ d.updated|loc_dt }}</td>
+
                             <td>
+
                                 <button class="btn btn-ghost btn-xs"
+
                                         hx-post="/projects/{{ project.id }}/documents/{{ d.id }}/reindex"
+
                                         hx-vals='{"force": "1"}'
+
                                         hx-swap="none"
-                                        hx-confirm="این مستند دوباره نمایه شود؟">بازنمایه</button>
+
+                                        hx-confirm="این مستند دوباره نمایه شود؟">{{ _('بازنمایه') }}</button>
+
                             </td>
+
                         </tr>
+
                         {% endfor %}
+
                     </tbody>
+
                 </table>
+
             </div>
+
         </div>
+
         {% endif %}
+
     </div>
+
 </div>
