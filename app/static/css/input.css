@@ -105,6 +105,30 @@
     font-display: swap;
 }
 
+/* Latin-first variable font for LTR locales; Persian glyphs still fall
+   back to Arad when a page mixes scripts. RTL locales keep Arad. */
+@font-face {
+    font-family: 'Inter';
+    src: url('./assets/InterVariable.ttf') format('truetype-variations'),
+         url('./assets/InterVariable.ttf') format('truetype');
+    font-weight: 100 900;
+    font-display: swap;
+}
+
+/* Unlayered overrides (beat all @layer rules) */
+html[dir='ltr'] {
+    font-family: 'Inter', 'Arad', ui-sans-serif, system-ui, sans-serif;
+}
+
+/* daisyUI's .dropdown-end uses inset-inline-end:0, which pushes the panel
+   BEYOND the trigger's inline-end edge — off-screen when the trigger hugs
+   the viewport edge (our sidebar foot + mobile header, RTL and LTR alike).
+   Anchor the panel's inline-start edge instead so it opens INTO the screen. */
+.dropdown-end .dropdown-content {
+    inset-inline-start: 0;
+    inset-inline-end: auto;
+}
+
 /* ═══════════════════════════════════════════════════════════════════════
    Base layer — typography, focus, scrollbars, rhythm
    ═══════════════════════════════════════════════════════════════════════ */
@@ -317,7 +341,7 @@
         @apply flex min-h-screen bg-base-200;
     }
     .seoz-sidebar {
-        @apply hidden border-l border-base-300/70 bg-base-100 md:sticky md:top-0 md:h-screen md:flex md:w-56 md:flex-none md:flex-col lg:w-64;
+        @apply hidden border-e border-base-300/70 bg-base-100 md:sticky md:top-0 md:h-screen md:flex md:w-56 md:flex-none md:flex-col lg:w-64;
     }
     .seoz-sidebar-brand {
         @apply flex h-16 items-center gap-2.5 border-b border-base-300/70 px-4;
@@ -340,10 +364,11 @@
     .seoz-navlink-active svg {
         @apply opacity-100;
     }
-    /* The active rail — a thin clay bar on the inner edge (RTL → left) */
+    /* The active rail — a thin clay bar on the inner edge (logical inline-end:
+       right side in RTL, left side in LTR — always toward the content) */
     .seoz-navlink-active::before {
         content: "";
-        @apply absolute inset-y-1.5 left-0 w-1 rounded-full bg-primary;
+        @apply absolute inset-y-1.5 end-0 w-1 rounded-full bg-primary;
     }
     .seoz-sidefoot {
         @apply border-t border-base-300/70 p-3;

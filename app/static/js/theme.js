@@ -86,20 +86,11 @@
         var input = e.target;
         if (!input || !input.matches || !input.matches('[data-theme-pick]')) return;
         apply(input.getAttribute('data-theme-pick'), true);
-        // Close an open details-dropdown and return focus to its trigger.
-        var dd = input.closest('details[data-theme-switcher]');
-        if (dd) {
-            dd.open = false;
-            var summary = dd.querySelector('summary');
-            if (summary) summary.focus();
+        // Close the popover dropdown (CSS :focus-within keeps it open while
+        // anything inside holds focus) by releasing focus.
+        if (document.activeElement && document.activeElement.blur) {
+            document.activeElement.blur();
         }
-    });
-
-    // Close the dropdown when clicking outside it.
-    document.addEventListener('click', function (e) {
-        document.querySelectorAll('details[data-theme-switcher][open]').forEach(function (dd) {
-            if (!dd.contains(e.target)) dd.open = false;
-        });
     });
 
     // OS flips while in System mode → follow instantly. Manual overrides ignored.

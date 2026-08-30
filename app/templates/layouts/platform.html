@@ -62,9 +62,11 @@
 
             <div class="flex items-center gap-2">
 
+                {% with up=True %}
                 {% include "components/theme_switcher.html" %}
 
                 {% include "components/locale_switcher.html" %}
+                {% endwith %}
 
                 {% if user %}
 
@@ -114,9 +116,13 @@
 
             </a>
 
-            {% include "components/theme_switcher.html" %}
+            <div class="flex items-center gap-1">
 
-            {% include "components/locale_switcher.html" %}
+                {% include "components/theme_switcher.html" %}
+
+                {% include "components/locale_switcher.html" %}
+
+            </div>
 
         </header>
 
