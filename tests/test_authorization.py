@@ -370,6 +370,33 @@ def test_settings_tab_schedule_forms_are_not_nested(setup):
     assert 'name="schedule_write_interval"' in body
 
 
+def test_save_settings_persists_auto_publish(setup):
+    """Regression: the autoPublish block must round-trip through the settings
+    save AND the project_settings schema (an unknown PB field is silently
+    dropped, which used to make the UI setting never persist)."""
+    pb = setup["pb"]
+    proj_a = setup["proj_a"]
+    req = make_req(pb, make_user(), proj_a["id"])
+    resp = call_route(
+        P.save_settings,
+        req,
+        proj_a["id"],
+        auto_publish_enabled="1",
+        auto_publish_min_score="95",
+        auto_publish_max_attempts="2",
+    )
+    assert "ذخیره شد" in toast_message(resp)
+    stored = pb.collection("project_settings").get_first_list_item(f'project="{proj_a["id"]}"')
+    assert stored["autoPublish"] == {"enabled": True, "min_score": 95, "max_attempts": 2}
+    # and the settings read view reflects it
+    from app.repositories.projects import ProjectSettingsRepo
+
+    merged = ProjectSettingsRepo(pb).get_for_project(proj_a["id"])
+    assert merged["autoPublish"]["enabled"] is True
+    assert merged["autoPublish"]["min_score"] == 95
+    assert merged["autoPublish"]["max_attempts"] == 2
+
+
 def test_save_settings_persists_schedules(setup):
     """Saving the settings form persists the schedule rows (same submission)."""
     pb = setup["pb"]

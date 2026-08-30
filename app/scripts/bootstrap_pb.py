@@ -191,6 +191,7 @@ COLLECTIONS: list[dict[str, Any]] = [
             json_field("retryPolicy"),
             select("publishingMode", ["draft", "publish"]),
             json_field("autosave"),
+            json_field("autoPublish"),
             json_field("indexing"),
         ],
         indexes=["CREATE UNIQUE INDEX idx_settings_project ON project_settings (project)"],
@@ -702,60 +703,67 @@ DEFAULT_PROMPTS: dict[str, str] = {
 def import_collections(pb: PocketBase) -> None:
     specs = [dict(c) for c in COLLECTIONS]  # type: ignore[var-annotated]
     # PocketBase 0.23 does NOT auto-add the system fields (id/created/updated)
-    # when a collection is imported with an explicit `fields` array — the list
-    # replaces them. Every query sorts by `created` and several indexes
-    # reference it, so append the system fields explicitly or the import fails
-    # ("no such column: created") and all `-created` sorts return 400.
-    for spec in specs:
-        names = {f.get("name") for f in spec.get("fields", [])}
-        if "id" not in names:
-            spec.setdefault("fields", []).insert(
-                0,
-                {
-                    "name": "id",
-                    "type": "text",
-                    "required": False,
-                    "system": True,
-                    "hidden": False,
-                    "presentable": False,
-                    "primaryKey": True,
-                    "autogeneratePattern": "[a-z0-9]{15}",
-                    "pattern": "",
-                    "min": 0,
-                    "max": 15,
-                },
-            )
-        if "created" not in names:
-            spec.setdefault("fields", []).append(
-                {
-                    "name": "created",
-                    "type": "date",
-                    "required": False,
-                    "system": True,
-                    "hidden": False,
-                    "presentable": False,
-                    "onCreate": True,
-                }
-            )
-        if "updated" not in names:
-            spec.setdefault("fields", []).append(
-                {
-                    "name": "updated",
-                    "type": "date",
-                    "required": False,
-                    "system": True,
-                    "hidden": False,
-                    "presentable": False,
-                    "onUpdate": True,
-                }
-            )
-    # Relation fields must reference either an existing collection ID (live
-    # DB) or a batch id (`pbc_…`) when the batch creates the collections from
-    # scratch — name references are rejected by PocketBase >= 0.23.
+    # when a collection is created with an explicit `fields` array — the list
+    # replaces them. Fresh databases need them appended (indexes and every
+    # `-created` sort reference them); but a LIVE database whose collections
+    # already carry the system fields must NOT receive them again, or the
+    # import fails with "duplicate column name: created". So: append each
+    # system field only when it is missing from BOTH the spec and the live
+    # collection.
     try:
         by_name = {c.name: c.id for c in pb.collections.get_full_list()}
     except Exception:
         by_name = {}
+    live_fields: dict[str, set[str]] = {}
+    try:
+        for c in pb.collections.get_full_list():
+            live_fields[c.name] = {str(f.get("name")) for f in c.fields}
+    except Exception:
+        live_fields = {}
+
+    system_specs = {
+        "id": {
+            "name": "id",
+            "type": "text",
+            "required": False,
+            "system": True,
+            "hidden": False,
+            "presentable": False,
+            "primaryKey": True,
+            "autogeneratePattern": "[a-z0-9]{15}",
+            "pattern": "",
+            "min": 0,
+            "max": 15,
+        },
+        "created": {
+            "name": "created",
+            "type": "date",
+            "required": False,
+            "system": True,
+            "hidden": False,
+            "presentable": False,
+            "onCreate": True,
+        },
+        "updated": {
+            "name": "updated",
+            "type": "date",
+            "required": False,
+            "system": True,
+            "hidden": False,
+            "presentable": False,
+            "onUpdate": True,
+        },
+    }
+    for spec in specs:
+        names = {f.get("name") for f in spec.get("fields", [])}
+        existing = live_fields.get(spec["name"], set())
+        for sys_name in ("id", "created", "updated"):
+            if sys_name not in names and sys_name not in existing:
+                spec.setdefault("fields", []).append(system_specs[sys_name])
+
+    # Relation fields must reference either an existing collection ID (live
+    # DB) or a batch id (`pbc_…`) when the batch creates the collections from
+    # scratch — name references are rejected by PocketBase >= 0.23.
     batch_ids = {
         s["name"]: "pbc_" + hashlib.sha256(s["name"].encode()).hexdigest()[:12] for s in specs
     }
@@ -865,21 +873,28 @@ def seed_defaults(pb: PocketBase) -> None:
 def _upsert_prompt(
     pb: PocketBase, *, project_id: str, ptype: str, name: str, content: str, updated_by: str = ""
 ) -> None:
-    """Append-style versioning: insert a NEW row with version+1, deactivate the old."""
+    """Append-style versioning: insert a NEW row with version+1, deactivate the old.
+
+    Idempotent: when the latest version already has identical content, nothing
+    changes — re-bootstraps never reset customized or already-current prompts.
+    """
     proj_filter = 'project=""' if not project_id else f'project="{project_id}"'
+    try:
+        latest = pb.collection("prompts").get_first_list_item(
+            f'{proj_filter} && type="{ptype}" && name="{name}"', {"sort": "-version", "perPage": 1}
+        )
+    except Exception:
+        latest = None
+    if latest is not None and (latest.content or "") == content:
+        # already seeded with this exact content — leave the active row alone
+        return
     try:
         active = pb.collection("prompts").get_first_list_item(
             f'{proj_filter} && type="{ptype}" && name="{name}" && active=true', {"perPage": 1}
         )
     except Exception:
         active = None
-    try:
-        latest = pb.collection("prompts").get_first_list_item(
-            f'{proj_filter} && type="{ptype}" && name="{name}"', {"sort": "-version", "perPage": 1}
-        )
-        version = int(getattr(latest, "version", 0) or 0) + 1
-    except Exception:
-        version = 1
+    version = int(getattr(latest, "version", 0) or 0) + 1
     if active:
         pb.collection("prompts").update(active.id, {"active": False})
     pb.collection("prompts").create(
