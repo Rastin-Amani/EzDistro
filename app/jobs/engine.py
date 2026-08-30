@@ -13,6 +13,7 @@ from __future__ import annotations
 import asyncio
 import datetime as dt
 import random
+import time
 import traceback
 from typing import Any
 
@@ -62,10 +63,16 @@ class JobEngine:
         self._embedding_sem = asyncio.Semaphore(max(1, embedding_concurrency))
         self._publish_sem = asyncio.Semaphore(max(1, publish_concurrency))
         self._handlers = handlers or {}
-        # per-session counters surfaced by the worker heartbeat
         self._completed = 0
         self._failed = 0
         self._cancelled = 0
+        # ProjectConfig is immutable once loaded and identical for every job of a
+        # project, but ProjectConfig.load issues ~7 PocketBase queries. The engine
+        # is bound to a single PocketBase client, so caching per project_id is
+        # safe; a 60s TTL bounds staleness if project settings change mid-batch.
+        # ponytail: per-engine cache; multi-worker uses each worker's own cache.
+        self._config_cache: dict[str, tuple[ProjectConfig, float]] = {}
+        self._config_ttl = 60.0
 
     def stats(self) -> dict[str, int]:
         return {
@@ -131,6 +138,19 @@ class JobEngine:
             except Exception:
                 logger.exception("job execution crashed", job_id=job.get("id"))
 
+    def _config_for(self, project_id: str) -> ProjectConfig:
+        """Return the project config, using a short-TTL per-engine cache.
+
+        Eliminates the ~7 PocketBase queries ProjectConfig.load issues for every
+        job of the same project (the dominant redundant read in the pipeline).
+        """
+        cached = self._config_cache.get(project_id)
+        if cached is not None and (time.monotonic() - cached[1]) < self._config_ttl:
+            return cached[0]
+        config = ProjectConfig.load(self.pb, project_id)
+        self._config_cache[project_id] = (config, time.monotonic())
+        return config
+
     async def _run(self, job: dict[str, Any]) -> None:
         job_id = job["id"]
         project_id = job["project"]
@@ -151,7 +171,7 @@ class JobEngine:
         )
 
         try:
-            config = ProjectConfig.load(self.pb, project_id)
+            config = self._config_for(project_id)
         except Exception as exc:
             # A transient PB outage while loading config is retryable — only
             # deterministic (non-network) errors are permanent.
