@@ -376,6 +376,8 @@ async def handle_assemble_article(ctx: JobContext) -> dict[str, Any]:
         ],
         internal_links=_collect_links(outline),
         keyword=keyword,
+        # article_sections content was sanitized when each section completed
+        sanitize=False,
     )
     html = enforced["html"]
     fixed_title = enforced["title"]

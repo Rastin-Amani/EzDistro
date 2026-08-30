@@ -87,11 +87,17 @@ def build_article_html(
     sections: list[dict[str, str]],  # [{"heading", "content"}] in order
     internal_links: list[dict[str, str]] | None = None,  # [{"title","url","anchor_text"}]
     intro_paragraph: str = "",
+    sanitize: bool = True,
 ) -> str:
     """Assemble the final article (h1 + optional intro + deduped h2 sections).
 
     Returns clean semantic HTML: <h1>, <p>, <h2>, <ul>, <a>. No decorative
     separators are added.
+
+    ``sanitize`` defaults to True (safe for untrusted section content). Callers
+    that pass already-sanitized content (e.g. the assembler, which receives
+    section HTML sanitized when each section completed) should pass False to
+    avoid re-sanitizing trusted data.
     """
     parts: list[str] = []
     parts.append(f"<h1>{_escape(title)}</h1>")
@@ -104,7 +110,8 @@ def build_article_html(
         if not heading:
             heading = f"بخش {i}"
         heading = _dedupe_heading(heading, used_headings)
-        content = sanitize_html(normalize_article_html(section.get("content") or ""))
+        raw = normalize_article_html(section.get("content") or "")
+        content = sanitize_html(raw) if sanitize else raw
         if not content:
             continue
         parts.append(f"<h2>{_escape(heading)}</h2>")

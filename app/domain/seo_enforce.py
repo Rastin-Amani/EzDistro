@@ -55,10 +55,16 @@ def enforce_article_html(
     sections: list[dict[str, Any]],
     internal_links: list[dict[str, Any]] | None = None,
     keyword: str = "",
+    sanitize: bool = True,
 ) -> dict[str, Any]:
     """Assemble the final HTML with keyword placement guaranteed.
 
     Returns {"title", "slug", "html"} — the caller persists title/slug/html.
+
+    ``sanitize`` defaults to True (safe for untrusted section content). Callers
+    passing already-sanitized stored section HTML (the assembler receives
+    section content sanitized when each section completed) set it False to skip
+    re-sanitizing trusted data.
     """
     kw = (keyword or "").strip()
     fixed_title = enforce_title(title, kw)
@@ -77,6 +83,7 @@ def enforce_article_html(
             sections=sections,
             internal_links=internal_links,
             intro_paragraph=intro,
+            sanitize=sanitize,
         )
 
     html = _build()
