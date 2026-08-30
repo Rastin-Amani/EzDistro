@@ -6,7 +6,6 @@ from fastapi.responses import RedirectResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from structlog import get_logger
 
-from app.i18n import LOCALE_COOKIE, set_request_locale
 from app.logging_config import bind_request_context, clear_request_context
 from app.pb import get_pb
 
@@ -28,9 +27,6 @@ logger = get_logger(__name__)
 
 class AuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
-        # ---- Locale resolution (cookie preference, allowlisted, default fa) ----
-        set_request_locale(request.cookies.get(LOCALE_COOKIE))
-
         # ---- Request ID for correlation ----
         req_id = str(uuid.uuid4())[:8]
         request.state.req_id = req_id

@@ -1,371 +1,186 @@
 {% extends "layouts/platform.html" %}
-
 {% block dashboard_content %}
-
 {% import 'macros/forms.html' as f %}
 
-
-
 <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-
     <div class="flex items-center gap-2.5 min-w-0">
-
-        <a href="/projects/{{ project.id }}?tab=articles" class="btn btn-ghost btn-circle btn-sm shrink-0" aria-label="{{ _('بازگشت') }}">
-
+        <a href="/projects/{{ project.id }}?tab=articles" class="btn btn-ghost btn-circle btn-sm shrink-0" aria-label="بازگشت">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
-
         </a>
-
         <div class="min-w-0">
-
             <h1 class="font-extrabold text-base truncate">{{ article.title }}</h1>
-
             <div class="flex items-center gap-2 text-xs opacity-50 flex-wrap">
-
                 <span class="badge badge-sm {{ article.status|status_badge }}">{{ article.status|status_label }}</span>
-
-                <span class="tabular">{{ _('%(n)s کلمه') % {'n': article.wordCount or 0} }}</span>
-
-                {% if article.seoScore is not none %}<span class="badge badge-soft badge-info badge-sm">{{ _('سئو: %(n)s/۱۰۰') % {'n': article.seoScore} }}</span>{% endif %}
-
-                <span>{{ _('نسخه رئوس: %(n)s') % {'n': article.outlineVersion or 0} }}</span>
-
-                {% if article.wordpressUrl %}<a href="{{ article.wordpressUrl }}" target="_blank" rel="noopener" class="link link-primary" dir="ltr">{{ _('مشاهده در وردپرس') }}</a>{% endif %}
-
+                <span class="tabular">{{ article.wordCount or 0 }} کلمه</span>
+                {% if article.seoScore is not none %}<span class="badge badge-soft badge-info badge-sm">سئو: {{ article.seoScore }}/۱۰۰</span>{% endif %}
+                <span>نسخه رئوس: {{ article.outlineVersion or 0 }}</span>
+                {% if article.wordpressUrl %}<a href="{{ article.wordpressUrl }}" target="_blank" rel="noopener" class="link link-primary" dir="ltr">مشاهده در وردپرس</a>{% endif %}
             </div>
-
         </div>
-
     </div>
-
     {% if article.finalHtml and article.status not in ['published', 'publishing'] %}
-
-    <button class="btn btn-primary btn-sm" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/publish" hx-swap="none" hx-confirm="{{ _(_( 'مقاله به وردپرس ارسال شود؟' )) }}">
-
+    <button class="btn btn-primary btn-sm" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/publish" hx-swap="none" hx-confirm="مقاله به وردپرس ارسال شود؟">
         <span class="loading loading-spinner loading-xs htmx-indicator"></span>
-
-        {{ _('انتشار') }}
-
+        انتشار
     </button>
-
     {% endif %}
-
 </div>
-
-
 
 <div class="flex flex-col gap-4" id="article-body"
-
      hx-get="/projects/{{ project.id }}/articles/{{ article.id }}"
-
      hx-trigger="refreshArticle from:body"
-
      hx-swap="outerHTML"
-
      hx-select="#article-body">
 
-
-
     <!-- Title / meta editor -->
-
     <div class="seoz-panel">
-
-        <div class="seoz-panel-head"><h2 class="seoz-panel-title">{{ _('عنوان و متا') }}</h2></div>
-
+        <div class="seoz-panel-head"><h2 class="seoz-panel-title">عنوان و متا</h2></div>
         <div class="p-4">
-
             <form hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/meta" hx-swap="none" class="flex flex-col gap-4">
-
                 <label class="form-control">
-
-                    <span class="label-text text-xs font-medium">{{ _('عنوان') }}</span>
-
+                    <span class="label-text text-xs font-medium">عنوان</span>
                     <input name="title" class="input w-full text-base" dir="auto" value="{{ article.title }}" />
-
                 </label>
-
                 <label class="form-control">
-
-                    <span class="label-text text-xs font-medium">{{ _('متا توضیحات') }}</span>
-
+                    <span class="label-text text-xs font-medium">متا توضیحات</span>
                     <textarea name="meta_description" class="textarea w-full" rows="3" dir="auto">{{ article.metaDescription or '' }}</textarea>
-
                 </label>
-
                 <div class="flex justify-end">
-
                     <button type="submit" class="btn btn-primary btn-sm" hx-disabled-elt="this">
-
                         <span class="loading loading-spinner loading-xs htmx-indicator"></span>
-
-                        {{ _('ذخیره') }}
-
+                        ذخیره
                     </button>
-
                 </div>
-
             </form>
-
         </div>
-
     </div>
-
-
 
     <!-- Validation results -->
-
     {% if article.validation %}
-
     <div class="seoz-panel {{ 'border-success/40' if article.validation.ok else 'border-error/40' }}">
-
         <div class="seoz-panel-head">
-
-            <h2 class="seoz-panel-title">{{ _('اعتبارسنجی مقاله') }}</h2>
-
+            <h2 class="seoz-panel-title">اعتبارسنجی مقاله</h2>
             <span class="badge badge-sm {{ 'badge-soft badge-success' if article.validation.ok else 'badge-soft badge-error' }}">
-
-                {{ _('معتبر') if article.validation.ok else _('نامعتبر') }}
-
+                {{ 'معتبر' if article.validation.ok else 'نامعتبر' }}
             </span>
-
         </div>
-
         <div class="p-4 flex flex-col gap-2">
-
             {% if article.validation.stats %}
-
             <p class="text-xs opacity-50">
-
-                {{ _('کلمات: %(a)s — بخش‌ها: %(b)s —') % {'a': article.validation.stats.words, 'b': article.validation.stats.sections} }}
-
-                {{ _('حداقل: %(n)s') % {'n': article.validation.stats.min_words} }}
-
+                کلمات: {{ article.validation.stats.words }} — بخش‌ها: {{ article.validation.stats.sections }} —
+                حداقل: {{ article.validation.stats.min_words }}
             </p>
-
             {% endif %}
-
             {% if article.validation.issues %}
-
             <ul class="flex flex-col gap-1">
-
                 {% for issue in article.validation.issues %}
-
                 <li class="text-xs text-error bg-error/5 border border-error/20 rounded-lg px-3 py-1.5">
-
-                    {% if issue.section %}<span class="badge badge-soft badge-neutral badge-xs">{{ _('بخش %(n)s') % {'n': issue.section} }}</span>{% endif %}
-
+                    {% if issue.section %}<span class="badge badge-soft badge-neutral badge-xs">بخش {{ issue.section }}</span>{% endif %}
                     {{ issue.message }}
-
                     <span class="opacity-50 font-mono" dir="ltr">({{ issue.code }})</span>
-
                 </li>
-
                 {% endfor %}
-
             </ul>
-
             {% endif %}
-
         </div>
-
     </div>
-
     {% endif %}
-
-
 
     <!-- Sections (the article outline) -->
-
     <div class="seoz-panel">
-
-        <div class="seoz-panel-head"><h2 class="seoz-panel-title">{{ _('بخش‌ها — رئوس مقاله (%(n)s)') % {'n': sections|length} }}</h2></div>
-
+        <div class="seoz-panel-head"><h2 class="seoz-panel-title">بخش‌ها — رئوس مقاله ({{ sections|length }})</h2></div>
         <div class="p-4 flex flex-col gap-3">
-
             {% for s in sections %}
-
             <details class="border border-base-300/70 rounded-xl overflow-hidden" {{ 'open' if s.status != 'done' }}>
-
                 <summary class="flex items-center gap-2 px-3 py-2 text-sm cursor-pointer select-none">
-
                     <span class="opacity-40 text-xs tabular">{{ loop.index }}</span>
-
                     <span class="truncate font-semibold">{{ s.heading }}</span>
-
                     {% if s.model %}<span class="badge badge-soft badge-neutral badge-xs hidden sm:inline-flex" dir="ltr">{{ s.model }}</span>{% endif %}
-
-                    {% if s.promptVersion %}<span class="badge badge-soft badge-info badge-xs" title="{{ _('نسخه پرامپت') }}">v{{ s.promptVersion }}</span>{% endif %}
-
+                    {% if s.promptVersion %}<span class="badge badge-soft badge-info badge-xs" title="نسخه پرامپت">v{{ s.promptVersion }}</span>{% endif %}
                     <span class="badge badge-sm ms-auto {{ s.status|status_badge }}">{{ s.status|status_label }}</span>
-
                 </summary>
-
                 <form hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/sections/{{ s.id }}" hx-swap="none" class="p-3 flex flex-col gap-4 border-t border-base-300/70">
-
                     <label class="form-control">
-
-                        <span class="label-text text-xs font-medium">{{ _('تیتر بخش') }}</span>
-
+                        <span class="label-text text-xs font-medium">تیتر بخش</span>
                         <input name="heading" class="input w-full" value="{{ s.heading }}" />
-
                     </label>
-
                     <label class="form-control">
-
-                        <span class="label-text text-xs font-medium">{{ _('خلاصه محتوا (brief)') }}</span>
-
+                        <span class="label-text text-xs font-medium">خلاصه محتوا (brief)</span>
                         <textarea name="content_brief" class="textarea w-full" rows="3">{{ s.contentBrief or '' }}</textarea>
-
                     </label>
-
                     <label class="form-control">
-
-                        <span class="label-text text-xs font-medium">{{ _('محتوای HTML') }}</span>
-
+                        <span class="label-text text-xs font-medium">محتوای HTML</span>
                         <textarea name="content" class="textarea w-full font-mono text-xs min-h-40" dir="auto">{{ s.content or '' }}</textarea>
-
                     </label>
-
                     <div class="flex items-center justify-between flex-wrap gap-2 pt-3 border-t border-base-300/60">
-
                         <span class="text-xs opacity-50">
-
-                            {% if s.generationLatency %}{{ _('زمان تولید: %(a)sms — تلاش‌ها: %(b)s') % {'a': s.generationLatency, 'b': s.generationAttempts or 0 } }}{% else %}{{ _('تولید نشده') }}{% endif %}
-
-                            {% if s.tokenUsage and s.tokenUsage != {} %} — {{ _('توکن: %(n)s') % {'n': s.tokenUsage.completion_tokens or 0} }}{% endif %}
-
+                            {% if s.generationLatency %}زمان تولید: {{ s.generationLatency }}ms — تلاش‌ها: {{ s.generationAttempts or 0 }}{% else %}تولید نشده{% endif %}
+                            {% if s.tokenUsage and s.tokenUsage != {} %} — توکن: {{ s.tokenUsage.completion_tokens or 0 }}{% endif %}
                         </span>
-
                         <div class="flex gap-2">
-
                             <button type="button" class="btn btn-ghost btn-xs"
-
                                     hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/regenerate"
-
                                     hx-vals='{"section_id": "{{ s.id }}"}'
-
                                     hx-swap="none"
-
-                                    hx-confirm="این بخش برای بازتولید علامت‌گذاری شود؟">{{ _('بازتولید') }}</button>
-
-                            <button type="submit" class="btn btn-primary btn-sm">{{ _('ذخیره بخش') }}</button>
-
+                                    hx-confirm="این بخش برای بازتولید علامت‌گذاری شود؟">بازتولید</button>
+                            <button type="submit" class="btn btn-primary btn-sm">ذخیره بخش</button>
                         </div>
-
                     </div>
-
                 </form>
-
             </details>
-
             {% else %}
-
-            <p class="text-sm opacity-50 py-4 text-center">{{ _('بخشی وجود ندارد — ابتدا رئوس مطالب تولید کنید.') }}</p>
-
+            <p class="text-sm opacity-50 py-4 text-center">بخشی وجود ندارد — ابتدا رئوس مطالب تولید کنید.</p>
             {% endfor %}
-
         </div>
-
     </div>
-
-
 
     <!-- Publish history -->
-
     {% if publish_runs %}
-
     <div class="seoz-panel">
-
-        <div class="seoz-panel-head"><h2 class="seoz-panel-title">{{ _('تاریخچه انتشار') }}</h2></div>
-
+        <div class="seoz-panel-head"><h2 class="seoz-panel-title">تاریخچه انتشار</h2></div>
         <div class="p-4">
-
             <div class="overflow-x-auto">
-
                 <table class="table table-sm">
-
                     <thead>
-
                         <tr>
-
-                            <th>{{ _('تلاش') }}</th>
-
-                            <th>{{ _('حالت') }}</th>
-
-                            <th>{{ _('وضعیت') }}</th>
-
-                            <th>{{ _('شناسه پست') }}</th>
-
-                            <th>{{ _('آدرس') }}</th>
-
-                            <th>{{ _('زمان') }}</th>
-
+                            <th>تلاش</th>
+                            <th>حالت</th>
+                            <th>وضعیت</th>
+                            <th>شناسه پست</th>
+                            <th>آدرس</th>
+                            <th>زمان</th>
                         </tr>
-
                     </thead>
-
                     <tbody>
-
                         {% for r in publish_runs %}
-
                         <tr>
-
                             <td class="text-xs tabular">{{ r.attempt or 1 }}</td>
-
                             <td><span class="badge badge-sm {{ r.mode|status_badge }}">{{ r.mode }}</span></td>
-
                             <td><span class="badge badge-sm {{ r.status|status_badge }}">{{ r.status|status_label }}</span></td>
-
                             <td class="text-xs tabular">{{ r.wordpressPostId or '—' }}</td>
-
                             <td class="text-xs max-w-40">
-
                                 {% if r.wordpressUrl %}<a href="{{ r.wordpressUrl }}" target="_blank" rel="noopener" class="link link-primary truncate block" dir="ltr">{{ r.wordpressUrl }}</a>{% else %}—{% endif %}
-
                             </td>
-
-                            <td class="text-xs opacity-50 whitespace-nowrap">{{ r.created|loc_dt }}</td>
-
+                            <td class="text-xs opacity-50 whitespace-nowrap">{{ r.created|jalali_dt }}</td>
                         </tr>
-
                         {% endfor %}
-
                     </tbody>
-
                 </table>
-
             </div>
-
         </div>
-
     </div>
-
     {% endif %}
-
-
 
     <!-- Preview -->
-
     {% if article.finalHtml %}
-
     <div class="seoz-panel">
-
-        <div class="seoz-panel-head"><h2 class="seoz-panel-title">{{ _('پیش‌نمایش (امن‌سازی‌شده)') }}</h2></div>
-
+        <div class="seoz-panel-head"><h2 class="seoz-panel-title">پیش‌نمایش (امن‌سازی‌شده)</h2></div>
         <div class="p-4">
-
             <article class="prose-sm max-w-none text-sm" dir="auto">
-
                 {{ article.finalHtml|safe }}
-
             </article>
-
         </div>
-
     </div>
-
     {% endif %}
-
 </div>
-
 {% endblock %}

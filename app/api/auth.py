@@ -6,7 +6,6 @@ from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 
 from app.api.deps import current_user
-from app.i18n import _
 from app.templates import templates
 from app.utils import error_response, ok_with_redirect
 
@@ -25,7 +24,7 @@ def login_page(request: Request):
     if current_user(request):
         return RedirectResponse(url="/dashboard", status_code=303)
     return templates.TemplateResponse(
-        request, "auth/login.html", {"title": _("ورود به سئوز"), "error": None}
+        request, "auth/login.html", {"title": "ورود به سئوز", "error": None}
     )
 
 
@@ -42,14 +41,14 @@ def login(
         # HX-Request — give them a toast. Native form POSTs (the default now)
         # get the full error page re-rendered.
         if request.headers.get("HX-Request"):
-            return error_response(_("ایمیل یا رمز عبور اشتباه است"))
+            return error_response("ایمیل یا رمز عبور اشتباه است")
         return _login_error(request)
 
     from app.config import settings
 
     token = request.state.pb.auth_store.token
     if request.headers.get("HX-Request"):
-        response = ok_with_redirect(_("خوش آمدید"), "/dashboard?welcome=1")
+        response = ok_with_redirect("خوش آمدید", "/dashboard?welcome=1")
     else:
         # Native form POST → server-side 303. Setting the session cookie on a
         # full-page POST/redirect (a user-gesture top-level navigation) is far
@@ -73,13 +72,13 @@ def login(
 
 def _login_error(request: Request) -> Response:
     html = templates.get_template("auth/login.html").render(
-        request=request, title=_("ورود به سئوز"), error=_("ایمیل یا رمز عبور اشتباه است")
+        request=request, title="ورود به سئوز", error="ایمیل یا رمز عبور اشتباه است"
     )
     return HTMLResponse(html)
 
 
 @router.post("/logout")
 def logout(request: Request):
-    response = ok_with_redirect(_("خارج شدید"), "/login", type="info")
+    response = ok_with_redirect("خارج شدید", "/login", type="info")
     response.delete_cookie("pb_auth")
     return response

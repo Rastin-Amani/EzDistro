@@ -5,7 +5,7 @@
 
 <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
     <div class="flex items-center gap-2.5 min-w-0">
-        <a href="/jobs" class="btn btn-ghost btn-circle btn-sm shrink-0" aria-label="{{ _('بازگشت') }}">
+        <a href="/jobs" class="btn btn-ghost btn-circle btn-sm shrink-0" aria-label="بازگشت">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
         </a>
         <div class="min-w-0">
@@ -19,9 +19,9 @@
     </div>
     <div class="flex items-center gap-2">
         {% if job.status in ['pending', 'retrying', 'running'] %}
-        <button class="btn btn-ghost btn-sm text-warning" hx-post="/jobs/{{ job.id }}/cancel" hx-swap="none" hx-confirm="لغو این وظیفه؟">{{ _('لغو') }}</button>
+        <button class="btn btn-ghost btn-sm text-warning" hx-post="/jobs/{{ job.id }}/cancel" hx-swap="none" hx-confirm="لغو این وظیفه؟">لغو</button>
         {% elif job.status == 'failed' %}
-        <button class="btn btn-primary btn-sm" hx-post="/jobs/{{ job.id }}/retry" hx-swap="none">{{ _('تلاش مجدد') }}</button>
+        <button class="btn btn-primary btn-sm" hx-post="/jobs/{{ job.id }}/retry" hx-swap="none">تلاش مجدد</button>
         {% endif %}
     </div>
 </div>
@@ -30,58 +30,58 @@
     <!-- Meta -->
     <aside class="flex flex-col gap-4">
         <div class="seoz-panel">
-            <div class="seoz-panel-head"><h2 class="seoz-panel-title">{{ _('مشخصات') }}</h2></div>
+            <div class="seoz-panel-head"><h2 class="seoz-panel-title">مشخصات</h2></div>
             <div class="p-4 text-xs flex flex-col gap-1.5">
-                <div class="flex justify-between gap-2"><span class="opacity-50">{{ _('شناسه') }}</span><span class="font-mono truncate" dir="ltr">{{ job.id }}</span></div>
-                <div class="flex justify-between"><span class="opacity-50">{{ _('نوع') }}</span><span>{{ job.type }}</span></div>
-                <div class="flex justify-between gap-2"><span class="opacity-50">{{ _('موجودیت') }}</span><span class="truncate"><span class="opacity-60">{{ job.entityType or '—' }}</span> <code class="font-mono">{{ job.entityId or '—' }}</code></span></div>
-                <div class="flex justify-between"><span class="opacity-50">{{ _('پروژه') }}</span><span class="font-mono">{{ job.project[:8] }}{% if project %} — {{ project.name }}{% endif %}</span></div>
-                <div class="flex justify-between"><span class="opacity-50">{{ _('وضعیت') }}</span><span>{{ job.status|status_label }}</span></div>
-                <div class="flex justify-between"><span class="opacity-50">{{ _('تلاش‌ها') }}</span><span class="tabular">{{ job.attempts or 0 }}/{{ job.maxAttempts or 3 }}</span></div>
-                <div class="flex justify-between"><span class="opacity-50">{{ _('اولویت') }}</span><span class="tabular">{{ job.priority or 0 }}</span></div>
+                <div class="flex justify-between gap-2"><span class="opacity-50">شناسه</span><span class="font-mono truncate" dir="ltr">{{ job.id }}</span></div>
+                <div class="flex justify-between"><span class="opacity-50">نوع</span><span>{{ job.type }}</span></div>
+                <div class="flex justify-between gap-2"><span class="opacity-50">موجودیت</span><span class="truncate"><span class="opacity-60">{{ job.entityType or '—' }}</span> <code class="font-mono">{{ job.entityId or '—' }}</code></span></div>
+                <div class="flex justify-between"><span class="opacity-50">پروژه</span><span class="font-mono">{{ job.project[:8] }}{% if project %} — {{ project.name }}{% endif %}</span></div>
+                <div class="flex justify-between"><span class="opacity-50">وضعیت</span><span>{{ job.status|status_label }}</span></div>
+                <div class="flex justify-between"><span class="opacity-50">تلاش‌ها</span><span class="tabular">{{ job.attempts or 0 }}/{{ job.maxAttempts or 3 }}</span></div>
+                <div class="flex justify-between"><span class="opacity-50">اولویت</span><span class="tabular">{{ job.priority or 0 }}</span></div>
             </div>
         </div>
 
         <div class="seoz-panel">
-            <div class="seoz-panel-head"><h2 class="seoz-panel-title">{{ _('زمان‌بندی') }}</h2></div>
+            <div class="seoz-panel-head"><h2 class="seoz-panel-title">زمان‌بندی</h2></div>
             <div class="p-4 text-xs flex flex-col gap-1.5">
-                <div class="flex justify-between"><span class="opacity-50">{{ _('ایجاد') }}</span><span>{{ job.created|loc_dt }}</span></div>
-                <div class="flex justify-between"><span class="opacity-50">{{ _('شروع') }}</span><span>{{ job.startedAt|loc_dt if job.startedAt else '—' }}</span></div>
-                <div class="flex justify-between"><span class="opacity-50">{{ _('پایان') }}</span><span>{{ job.finishedAt|loc_dt if job.finishedAt else '—' }}</span></div>
-                <div class="flex justify-between"><span class="opacity-50">{{ _('آماده از') }}</span><span>{{ job.availableAt|loc_dt if job.availableAt else '—' }}</span></div>
-                {% if job.nextRetryAt %}<div class="flex justify-between"><span class="opacity-50">{{ _('تلاش بعدی') }}</span><span>{{ job.nextRetryAt|loc_dt }}</span></div>{% endif %}
+                <div class="flex justify-between"><span class="opacity-50">ایجاد</span><span>{{ job.created|jalali_dt }}</span></div>
+                <div class="flex justify-between"><span class="opacity-50">شروع</span><span>{{ job.startedAt|jalali_dt if job.startedAt else '—' }}</span></div>
+                <div class="flex justify-between"><span class="opacity-50">پایان</span><span>{{ job.finishedAt|jalali_dt if job.finishedAt else '—' }}</span></div>
+                <div class="flex justify-between"><span class="opacity-50">آماده از</span><span>{{ job.availableAt|jalali_dt if job.availableAt else '—' }}</span></div>
+                {% if job.nextRetryAt %}<div class="flex justify-between"><span class="opacity-50">تلاش بعدی</span><span>{{ job.nextRetryAt|jalali_dt }}</span></div>{% endif %}
             </div>
         </div>
 
         <div class="seoz-panel">
-            <div class="seoz-panel-head"><h2 class="seoz-panel-title">{{ _('پیشرفت') }}</h2></div>
+            <div class="seoz-panel-head"><h2 class="seoz-panel-title">پیشرفت</h2></div>
             <div class="p-4 text-xs flex flex-col gap-2">
                 <progress class="progress progress-primary w-full" value="{{ job.progress or 0 }}" max="100"></progress>
-                <p class="text-center font-bold tabular">{{ _('%(n)s٪') % {'n': job.progress or 0} }}</p>
+                <p class="text-center font-bold tabular">{{ job.progress or 0 }}٪</p>
                 {% if job.stage %}<p class="opacity-60" dir="ltr">{{ job.stage }}</p>{% endif %}
                 {% if job.progressMessage %}<p class="opacity-70">{{ job.progressMessage }}</p>{% endif %}
             </div>
         </div>
 
         <div class="seoz-panel">
-            <div class="seoz-panel-head"><h2 class="seoz-panel-title">{{ _('اجرا') }}</h2></div>
+            <div class="seoz-panel-head"><h2 class="seoz-panel-title">اجرا</h2></div>
             <div class="p-4 text-xs flex flex-col gap-1.5">
-                <div class="flex justify-between gap-2"><span class="opacity-50">{{ _('کارگر') }}</span><span class="font-mono" dir="ltr">{{ job.lockedBy or '—' }}</span></div>
-                <div class="flex justify-between"><span class="opacity-50">{{ _('قفل از') }}</span><span>{{ job.lockedAt|loc_dt if job.lockedAt else '—' }}</span></div>
-                <div class="flex justify-between"><span class="opacity-50">{{ _('انقضای اجاره') }}</span><span>{{ job.leaseExpiresAt|loc_dt if job.leaseExpiresAt else '—' }}</span></div>
-                <div class="flex justify-between"><span class="opacity-50">{{ _('ضربان قلب') }}</span><span>{{ job.heartbeatAt|loc_dt if job.heartbeatAt else '—' }}</span></div>
+                <div class="flex justify-between gap-2"><span class="opacity-50">کارگر</span><span class="font-mono" dir="ltr">{{ job.lockedBy or '—' }}</span></div>
+                <div class="flex justify-between"><span class="opacity-50">قفل از</span><span>{{ job.lockedAt|jalali_dt if job.lockedAt else '—' }}</span></div>
+                <div class="flex justify-between"><span class="opacity-50">انقضای اجاره</span><span>{{ job.leaseExpiresAt|jalali_dt if job.leaseExpiresAt else '—' }}</span></div>
+                <div class="flex justify-between"><span class="opacity-50">ضربان قلب</span><span>{{ job.heartbeatAt|jalali_dt if job.heartbeatAt else '—' }}</span></div>
             </div>
         </div>
 
         {% if job.errorCode %}
         <div class="seoz-panel border-error/40">
-            <div class="seoz-panel-head"><h2 class="seoz-panel-title text-error">{{ _('خطا') }}</h2></div>
+            <div class="seoz-panel-head"><h2 class="seoz-panel-title text-error">خطا</h2></div>
             <div class="p-4 text-xs flex flex-col gap-2">
                 <p><span class="font-mono text-error" dir="ltr">{{ job.errorCode }}</span></p>
                 <p class="opacity-80">{{ job.errorMessage }}</p>
                 {% if is_admin and job.errorDetails %}
                 <details>
-                    <summary class="text-xs text-error cursor-pointer select-none">{{ _('جزئیات فنی (مدیر)') }}</summary>
+                    <summary class="text-xs text-error cursor-pointer select-none">جزئیات فنی (مدیر)</summary>
                     <pre class="bg-error/5 border border-error/20 rounded-lg p-2 font-mono overflow-auto max-h-60" dir="ltr">{{ job.errorDetails|tojson(indent=2) }}</pre>
                 </details>
                 {% endif %}
@@ -93,7 +93,7 @@
     <!-- Timeline -->
     <section class="seoz-panel"
              {% if active %}hx-get="/jobs/{{ job.id }}/events" hx-trigger="every 5s" hx-swap="outerHTML"{% endif %}>
-        <div class="seoz-panel-head"><h2 class="seoz-panel-title">{{ _('خط زمانی') }}</h2></div>
+        <div class="seoz-panel-head"><h2 class="seoz-panel-title">خط زمانی</h2></div>
         <div class="p-4">
             {% include "pages/jobs/_timeline.html" %}
         </div>

@@ -121,33 +121,6 @@ make typecheck     # mypy app/
 make check         # all three
 ```
 
-## Internationalization (i18n)
-
-The UI is multilingual: Persian (`fa`, RTL, source language) and English (`en`, LTR) are enabled;
-more locales are pre-registered but disabled in `app/i18n.py`.
-
-- **Resolution**: the `locale` cookie (allowlisted against enabled locales) is read by
-  `AuthMiddleware` → contextvar → available to templates as `locale` (code/direction) and `_()`.
-  Default is `fa`. Missing translations fall back to the Persian source string.
-- **Switching**: the globe switcher (sidebar + mobile header) links to `/locale/{code}?next=...`
-  which sets the cookie for 1 year and redirects back (open-redirect guarded).
-- **Dates/numbers**: `loc_year` / `loc_date` / `loc_dt` / `rel_time` filters render Jalali for `fa`
-  and Gregorian (via Babel) for other locales.
-
-Workflow (requires `pybabel`, installed with the venv):
-
-```bash
-make i18n-extract              # app/locales/messages.pot from code + templates
-make i18n-add LOCALE=de        # new catalog from the pot
-make i18n-update               # merge new strings into existing catalogs
-make i18n-compile              # .po → .mo (run after every catalog edit)
-```
-
-To add a language: enable it in `LOCALES` (`app/i18n.py`) → `make i18n-add LOCALE=xx` → translate
-`app/locales/xx/LC_MESSAGES/messages.po` → `make i18n-compile` → tests (`tests/test_i18n.py`).
-No route/template/database changes required. Machine-readable enum values stay untranslated;
-display labels go through `_()` (e.g. `status_label`).
-
 ## Process model
 
 ```

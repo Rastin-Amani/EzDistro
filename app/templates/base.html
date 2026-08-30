@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="{{ locale.code }}" dir="{{ locale.direction }}">
+<html lang="fa" dir="rtl">
     <head>
         <meta charset="UTF-8" />
         <script>
@@ -50,13 +50,13 @@
             crossorigin
         />
 
-        <title>{{ title or _('سئوز') }}</title>
+        <title>{{ title or 'سئوز' }}</title>
         <link rel="stylesheet" href="{{ url_for('static', path='/app.css') }}" />
 
         <script>
             (function() {
                 var BANNER_ID = 'offline-banner';
-                var BANNER_TEXT = {{ _('⚠️ شما آفلاین هستید — داده‌های ذخیره‌شده نمایش داده می‌شود') | tojson }};
+                var BANNER_TEXT = '\u26A0\uFE0F \u0634\u0645\u0627 \u0622\u0641\u0644\u0627\u06CC\u0646 \u0647\u0633\u062A\u06CC\u062F \u2014 \u062F\u0627\u062F\u0647\u200C\u0647\u0627\u06CC \u0630\u062E\u06CC\u0631\u0647\u200C\u0634\u062F\u0647 \u0646\u0645\u0627\u06CC\u0634 \u062F\u0627\u062F\u0647 \u0645\u06CC\u200C\u0634\u0648\u062F';
                 function createBanner() {
                     var el = document.createElement('div');
                     el.id = BANNER_ID;
@@ -129,13 +129,13 @@
                         </svg>
                     </div>
                     <div class="min-w-0">
-                        <h3 class="font-bold text-lg">{{ _('تأیید عملیات') }}</h3>
+                        <h3 class="font-bold text-lg">تأیید عملیات</h3>
                         <p class="py-2 text-sm opacity-70 leading-relaxed" data-confirm-text></p>
                     </div>
                 </div>
                 <div class="modal-action flex gap-3">
-                    <button type="button" class="btn btn-ghost flex-1" data-confirm-cancel>{{ _('انصراف') }}</button>
-                    <button type="button" class="btn btn-error flex-1" data-confirm-ok>{{ _('تأیید') }}</button>
+                    <button type="button" class="btn btn-ghost flex-1" data-confirm-cancel>انصراف</button>
+                    <button type="button" class="btn btn-error flex-1" data-confirm-ok>تأیید</button>
                 </div>
             </div>
             <div class="modal-backdrop bg-black/40 backdrop-blur-sm cursor-pointer" data-confirm-backdrop></div>
@@ -228,12 +228,12 @@
                 // HTMX failure feedback — network errors and 4xx/5xx must never fail silently
                 document.addEventListener('htmx:sendError', function () {
                     document.dispatchEvent(new CustomEvent('show-toast', {
-                        detail: { message: {{ _('اتصال به سرور برقرار نشد. دوباره تلاش کنید.') | tojson }}, type: 'error' },
+                        detail: { message: 'اتصال به سرور برقرار نشد. دوباره تلاش کنید.', type: 'error' },
                     }));
                 });
                 document.addEventListener('htmx:responseError', function () {
                     document.dispatchEvent(new CustomEvent('show-toast', {
-                        detail: { message: {{ _('مشکلی پیش آمد؛ دوباره تلاش کنید.') | tojson }}, type: 'error' },
+                        detail: { message: 'مشکلی پیش آمد؛ دوباره تلاش کنید.', type: 'error' },
                     }));
                 });
 
@@ -252,7 +252,7 @@
                             newSW.addEventListener('statechange', () => {
                                 if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
                                     document.dispatchEvent(new CustomEvent('show-toast', {
-                                        detail: { message: {{ _('نسخه جدید در دسترس است.') | tojson }}, type: 'info' },
+                                        detail: { message: 'نسخه جدید در دسترس است.', type: 'info' },
                                     }));
                                 }
                             });

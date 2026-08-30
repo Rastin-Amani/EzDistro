@@ -6,7 +6,6 @@ from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 
 from app.api.deps import project_scope
-from app.i18n import _
 from app.repositories.jobs import JobEventRepo
 from app.templates import templates
 
@@ -31,5 +30,5 @@ def logs_page(request: Request, level: str = ""):
     return templates.TemplateResponse(
         request,
         "pages/logs/feed.html",
-        {"title": _("رویدادها"), "events": events, "level_filter": level},
+        {"title": "رویدادها", "events": events, "level_filter": level},
     )

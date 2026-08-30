@@ -1,397 +1,199 @@
 {% extends "layouts/platform.html" %}
-
 {% block dashboard_content %}
-
 {% import 'macros/forms.html' as f %}
 
-
-
 <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-
     <div class="flex items-center gap-2.5 min-w-0">
-
-        <a href="/projects/{{ project.id }}/articles/{{ article.id }}/workspace" class="btn btn-ghost btn-circle btn-sm shrink-0" aria-label="{{ _('بازگشت به کارگاه') }}">
-
+        <a href="/projects/{{ project.id }}/articles/{{ article.id }}/workspace" class="btn btn-ghost btn-circle btn-sm shrink-0" aria-label="بازگشت به کارگاه">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
-
         </a>
-
         <div class="min-w-0">
-
-            <h1 class="font-extrabold text-base truncate">{{ _('بازبینی: %(v)s') % {'v': article.title} }}</h1>
-
+            <h1 class="font-extrabold text-base truncate">بازبینی: {{ article.title }}</h1>
             <div class="flex items-center gap-2 text-xs opacity-50 flex-wrap">
-
                 <span class="badge badge-sm {{ article.status|status_badge }}">{{ article.status|status_label }}</span>
-
-                <span class="tabular">{{ _('%(n)s کلمه') % {'n': article.wordCount or 0} }}</span>
-
-                <span>{{ _('رئوس v%(n)s') % {'n': article.outlineVersion or 0} }}</span>
-
-                {% if article.generatedAt %}<span>{{ _('تولید: %(v)s') % {'v': article.generatedAt|loc_dt} }}</span>{% endif %}
-
+                <span class="tabular">{{ article.wordCount or 0 }} کلمه</span>
+                <span>رئوس v{{ article.outlineVersion or 0 }}</span>
+                {% if article.generatedAt %}<span>تولید: {{ article.generatedAt|jalali_dt }}</span>{% endif %}
             </div>
-
         </div>
-
     </div>
-
     <div class="flex items-center gap-2 flex-wrap">
-
         {% if article.status == 'review' %}
-
         <button class="btn btn-ghost btn-sm text-warning"
-
                 hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/send-back" hx-swap="none"
-
-                onclick="document.getElementById('sendback-note').showModal()">{{ _('بازگرداندن') }}</button>
-
+                onclick="document.getElementById('sendback-note').showModal()">بازگرداندن</button>
         <button class="btn btn-primary btn-sm" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/approve" hx-swap="none">
-
             <span class="loading loading-spinner loading-xs htmx-indicator"></span>
-
-            {{ _('تأیید') }}
-
+            تأیید
         </button>
-
         {% elif article.status == 'approved' %}
-
-        <span class="badge badge-soft badge-success">{{ _('تأیید شده — انتشار فعال') }}</span>
-
+        <span class="badge badge-soft badge-success">تأیید شده — انتشار فعال</span>
         <button class="btn btn-primary btn-sm" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/publish"
-
-                hx-swap="none" hx-confirm="مقاله به وردپرس ارسال شود؟">{{ _('انتشار') }}</button>
-
+                hx-swap="none" hx-confirm="مقاله به وردپرس ارسال شود؟">انتشار</button>
         {% elif article.status == 'sent_back' %}
-
-        <span class="badge badge-soft badge-warning">{{ _('بازگردانده شده') }}</span>
-
-        <button class="btn btn-primary btn-sm" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/regenerate" hx-swap="none">{{ _('بازتولید مقاله') }}</button>
-
+        <span class="badge badge-soft badge-warning">بازگردانده شده</span>
+        <button class="btn btn-primary btn-sm" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/regenerate" hx-swap="none">بازتولید مقاله</button>
         {% endif %}
-
         {% if article.status in ['review', 'approved', 'sent_back', 'failed'] %}
-
         <button class="btn btn-ghost btn-sm" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/regenerate"
-
-                hx-swap="none" hx-confirm="نسخه فعلی در تاریخچه ذخیره می‌شود؛ بازتولید ادامه یابد؟">{{ _('بازتولید کامل') }}</button>
-
+                hx-swap="none" hx-confirm="نسخه فعلی در تاریخچه ذخیره می‌شود؛ بازتولید ادامه یابد؟">بازتولید کامل</button>
         {% endif %}
-
     </div>
-
 </div>
-
-
 
 <!-- Send back note modal -->
-
 <dialog id="sendback-note" class="modal modal-bottom sm:modal-middle">
-
     <div class="modal-box bg-base-100">
-
         <div class="flex items-center gap-3 mb-3">
-
             <div class="grid size-11 place-items-center rounded-2xl bg-warning/15 text-warning">
-
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" /></svg>
-
             </div>
-
-            <h3 class="font-bold text-lg">{{ _('بازگرداندن مقاله') }}</h3>
-
+            <h3 class="font-bold text-lg">بازگرداندن مقاله</h3>
         </div>
-
         <form hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/send-back" hx-swap="none" class="flex flex-col gap-3">
-
-            <textarea name="note" class="textarea textarea-sm w-full" rows="3" placeholder="{{ _('دلیل بازگرداندن (برای تاریخچه ثبت می‌شود)…') }}"></textarea>
-
+            <textarea name="note" class="textarea textarea-sm w-full" rows="3" placeholder="دلیل بازگرداندن (برای تاریخچه ثبت می‌شود)…"></textarea>
             <div class="flex gap-3">
-
-                <button type="submit" class="btn btn-warning flex-1">{{ _('بازگرداندن') }}</button>
-
-                <button type="button" class="btn btn-ghost" onclick="document.getElementById('sendback-note').close()">{{ _('انصراف') }}</button>
-
+                <button type="submit" class="btn btn-warning flex-1">بازگرداندن</button>
+                <button type="button" class="btn btn-ghost" onclick="document.getElementById('sendback-note').close()">انصراف</button>
             </div>
-
         </form>
-
     </div>
-
 </dialog>
 
-
-
 <div class="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4 items-start">
-
     <!-- Left: validation + metadata -->
-
     <aside class="flex flex-col gap-4">
-
         <div class="seoz-panel {{ 'border-success/40' if report.ok else 'border-error/40' }}">
-
             <div class="seoz-panel-head">
-
-                <h2 class="seoz-panel-title">{{ _('پنل اعتبارسنجی') }}</h2>
-
+                <h2 class="seoz-panel-title">پنل اعتبارسنجی</h2>
                 <span class="badge badge-sm {{ 'badge-soft badge-success' if report.ok else 'badge-soft badge-error' }}">
-
-                    {{ _('گذشت') if report.ok else _('خطا') }}
-
+                    {{ 'گذشت' if report.ok else 'خطا' }}
                 </span>
-
             </div>
-
             <div class="p-4 flex flex-col gap-2 text-xs">
-
                 {% if report.ok %}
-
-                <p class="opacity-60">{{ _('همه بررسی‌ها موفق بودند — مقاله قابل تأیید است.') }}</p>
-
+                <p class="opacity-60">همه بررسی‌ها موفق بودند — مقاله قابل تأیید است.</p>
                 {% else %}
-
                 <ul class="flex flex-col gap-1">
-
                     {% for issue in report.issues %}
-
                     <li class="flex items-start gap-2 border border-error/20 bg-error/5 rounded-lg px-2 py-1">
-
                         <span class="badge badge-xs badge-soft badge-error shrink-0">{{ issue.code }}</span>
-
                         <span class="text-error">{{ issue.message }}</span>
-
                     </li>
-
                     {% endfor %}
-
                 </ul>
-
                 {% endif %}
-
                 <div class="grid grid-cols-3 gap-1 opacity-60 border-t border-base-300/70 pt-2">
-
-                    <span>{{ _('%(n)s کلمه') % {'n': report.stats.words} }}</span>
-
-                    <span>{{ _('%(n)s بخش') % {'n': report.stats.sections} }}</span>
-
-                    <span>{{ _('حداقل %(n)s') % {'n': report.stats.min_words} }}</span>
-
+                    <span>{{ report.stats.words }} کلمه</span>
+                    <span>{{ report.stats.sections }} بخش</span>
+                    <span>حداقل {{ report.stats.min_words }}</span>
                 </div>
-
             </div>
-
         </div>
 
-
-
         <div class="seoz-panel">
-
-            <div class="seoz-panel-head"><h2 class="seoz-panel-title">{{ _('اطلاعات تولید') }}</h2></div>
-
+            <div class="seoz-panel-head"><h2 class="seoz-panel-title">اطلاعات تولید</h2></div>
             <div class="p-4 text-xs flex flex-col gap-1.5">
-
-                <div class="flex justify-between"><span class="opacity-50">{{ _('نسخه آخرین تولید') }}</span><span class="font-mono">v{{ article.lastGeneratedRevision or '—' }}</span></div>
-
-                <div class="flex justify-between"><span class="opacity-50">{{ _('زمان تولید') }}</span><span>{{ article.generatedAt|loc_dt if article.generatedAt else '—' }}</span></div>
-
-                <div class="flex justify-between"><span class="opacity-50">{{ _('امتیاز سئو') }}</span><span class="font-bold text-primary">{{ article.seoScore or 0 }}/۱۰۰</span></div>
-
-                {% if topic %}<div class="flex justify-between"><span class="opacity-50">{{ _('کلمه کلیدی') }}</span><span>{{ topic.keyword or '—' }}</span></div>{% endif %}
-
-                <h3 class="font-bold text-xs mt-2 opacity-60">{{ _('بخش‌ها (مدل/نسخه پرامپت)') }}</h3>
-
+                <div class="flex justify-between"><span class="opacity-50">نسخه آخرین تولید</span><span class="font-mono">v{{ article.lastGeneratedRevision or '—' }}</span></div>
+                <div class="flex justify-between"><span class="opacity-50">زمان تولید</span><span>{{ article.generatedAt|jalali_dt if article.generatedAt else '—' }}</span></div>
+                <div class="flex justify-between"><span class="opacity-50">امتیاز سئو</span><span class="font-bold text-primary">{{ article.seoScore or 0 }}/۱۰۰</span></div>
+                {% if topic %}<div class="flex justify-between"><span class="opacity-50">کلمه کلیدی</span><span>{{ topic.keyword or '—' }}</span></div>{% endif %}
+                <h3 class="font-bold text-xs mt-2 opacity-60">بخش‌ها (مدل/نسخه پرامپت)</h3>
                 <ul class="flex flex-col gap-1">
-
                     {% for s in sections %}
-
                     <li class="flex items-center justify-between border border-base-300/70 rounded-lg px-2 py-1">
-
                         <span class="truncate opacity-70">{{ loop.index }}. {{ s.heading }}</span>
-
                         <span class="shrink-0 flex items-center gap-1">
-
                             {% if s.model %}<span class="font-mono opacity-60 hidden sm:inline" dir="ltr">{{ s.provider }}/{{ s.model }}</span>{% endif %}
-
                             {% if s.promptVersion %}<span class="badge badge-soft badge-info badge-xs">v{{ s.promptVersion }}</span>{% endif %}
-
                             {% if s.generationLatency %}<span class="opacity-40">{{ s.generationLatency }}ms</span>{% endif %}
-
                         </span>
-
                     </li>
-
                     {% endfor %}
-
                 </ul>
-
-                <h3 class="font-bold text-xs mt-2 opacity-60">{{ _('لینک‌های داخلی') }}</h3>
-
+                <h3 class="font-bold text-xs mt-2 opacity-60">لینک‌های داخلی</h3>
                 <ul class="flex flex-col gap-1">
-
                     {% for link in internal_links %}
-
                     <li class="truncate"><a href="{{ link.url }}" target="_blank" rel="noopener" class="link link-primary" dir="ltr">{{ link.title }}</a></li>
-
                     {% endfor %}
-
                 </ul>
-
             </div>
-
         </div>
-
-
 
         <div class="seoz-panel">
-
-            <div class="seoz-panel-head"><h2 class="seoz-panel-title">{{ _('تاریخچه نسخه‌ها') }}</h2></div>
-
+            <div class="seoz-panel-head"><h2 class="seoz-panel-title">تاریخچه نسخه‌ها</h2></div>
             <div class="p-4">
-
                 {% if revisions %}
-
                 <ul class="flex flex-col gap-1">
-
                     {% for r in revisions %}
-
                     <li class="text-xs border border-base-300/70 rounded-lg px-2 py-1 flex items-center justify-between gap-2">
-
                         <span class="flex items-center gap-1.5 min-w-0">
-
                             <span class="badge badge-soft badge-neutral badge-xs shrink-0">v{{ r.revision }}</span>
-
                             <span class="badge badge-soft badge-info badge-xs shrink-0">{{ r.kind }}</span>
-
-                            <span class="truncate opacity-60">{{ r.note or r.created|loc_dt }}</span>
-
+                            <span class="truncate opacity-60">{{ r.note or r.created|jalali_dt }}</span>
                         </span>
-
                         {% if r.revision != article.lastGeneratedRevision %}
-
                         <button class="btn btn-ghost btn-xs shrink-0"
-
                                 hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/revisions/{{ r.id }}/rollback"
-
                                 hx-swap="none"
-
-                                hx-confirm="بازگشت به نسخه v{{ r.revision }}؟ نسخه فعلی در تاریخچه ذخیره می‌شود.">{{ _('بازگشت') }}</button>
-
+                                hx-confirm="بازگشت به نسخه v{{ r.revision }}؟ نسخه فعلی در تاریخچه ذخیره می‌شود.">بازگشت</button>
                         {% endif %}
-
                     </li>
-
                     {% endfor %}
-
                 </ul>
-
                 {% else %}
-
-                <p class="text-xs opacity-50">{{ _('تاریخچه‌ای ثبت نشده است.') }}</p>
-
+                <p class="text-xs opacity-50">تاریخچه‌ای ثبت نشده است.</p>
                 {% endif %}
-
             </div>
-
         </div>
-
     </aside>
 
-
-
     <!-- Right: the article -->
-
     <section class="flex flex-col gap-4 min-w-0">
-
         <div class="seoz-panel">
-
-            <div class="seoz-panel-head"><h2 class="seoz-panel-title">{{ _('عنوان و اسلاگ') }}</h2></div>
-
+            <div class="seoz-panel-head"><h2 class="seoz-panel-title">عنوان و اسلاگ</h2></div>
             <div class="p-4 flex flex-col gap-2">
-
                 <h1 class="text-xl font-bold">{{ article.title }}</h1>
-
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-
-                    <div><span class="opacity-50 block">{{ _('اسلاگ') }}</span><code class="font-mono" dir="ltr">{{ article.slug or '—' }}</code></div>
-
-                    <div><span class="opacity-50 block">{{ _('متا توضیحات') }}</span><p class="opacity-80">{{ article.metaDescription or '—' }}</p></div>
-
+                    <div><span class="opacity-50 block">اسلاگ</span><code class="font-mono" dir="ltr">{{ article.slug or '—' }}</code></div>
+                    <div><span class="opacity-50 block">متا توضیحات</span><p class="opacity-80">{{ article.metaDescription or '—' }}</p></div>
                 </div>
-
             </div>
-
         </div>
 
-
-
         <div class="seoz-panel">
-
-            <div class="seoz-panel-head"><h2 class="seoz-panel-title">{{ _('رئوس مطالب') }}</h2></div>
-
+            <div class="seoz-panel-head"><h2 class="seoz-panel-title">رئوس مطالب</h2></div>
             <div class="p-4">
-
                 <ol class="flex flex-col gap-1.5">
-
                     {% for plan in (article.outline.sections if article.outline else []) %}
-
                     <li class="text-sm border border-base-300/70 rounded-lg px-3 py-1.5">
-
                         <span class="font-semibold">{{ loop.index }}. {{ plan.heading }}</span>
-
                         {% if plan.content_brief %}<p class="text-xs opacity-50 mt-0.5">{{ plan.content_brief }}</p>{% endif %}
-
                     </li>
-
                     {% endfor %}
-
                 </ol>
-
             </div>
-
         </div>
-
-
 
         <div class="seoz-panel">
-
-            <div class="seoz-panel-head"><h2 class="seoz-panel-title">{{ _('بدنه مقاله') }}</h2></div>
-
+            <div class="seoz-panel-head"><h2 class="seoz-panel-title">بدنه مقاله</h2></div>
             <div class="p-4">
-
                 {% if article.finalHtml %}
-
                 <article class="prose-sm max-w-none" dir="auto">{{ article.finalHtml|safe }}</article>
-
                 {% else %}
-
-                <p class="text-sm opacity-50 py-6 text-center">{{ _('محتوایی تولید نشده است.') }}</p>
-
+                <p class="text-sm opacity-50 py-6 text-center">محتوایی تولید نشده است.</p>
                 {% endif %}
-
             </div>
-
         </div>
-
-
 
         {% if article.generatedContent and article.generatedContent != article.finalHtml %}
-
         <div class="seoz-panel">
-
-            <div class="seoz-panel-head"><h2 class="seoz-panel-title">{{ _('نسخه تولیدشده (v%(n)s)') % {'n': article.lastGeneratedRevision} }}</h2></div>
-
+            <div class="seoz-panel-head"><h2 class="seoz-panel-title">نسخه تولیدشده (v{{ article.lastGeneratedRevision }})</h2></div>
             <div class="p-4 text-xs opacity-60">
-
-                {{ _('متفاوت از نسخه فعلی — برای بازگشت از تاریخچه استفاده کنید.') }}
-
+                متفاوت از نسخه فعلی — برای بازگشت از تاریخچه استفاده کنید.
             </div>
-
         </div>
-
         {% endif %}
-
     </section>
-
 </div>
-
 {% endblock %}

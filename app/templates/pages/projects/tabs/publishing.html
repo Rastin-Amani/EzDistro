@@ -1,20 +1,20 @@
 {% import 'macros/forms.html' as f %}
-{{ f.page_header(_('انتشار'), _('تاریخچه انتشار مقاله‌ها در وردپرس.'), eyebrow=_('پروژه')) }}
+{{ f.page_header('انتشار', 'تاریخچه انتشار مقاله‌ها در وردپرس.', eyebrow='پروژه') }}
 <div id="publishing-tab">
     {% if records %}
     <div class="seoz-panel">
-        <div class="seoz-panel-head"><h2 class="seoz-panel-title">{{ _('تاریخچه انتشار') }}</h2></div>
+        <div class="seoz-panel-head"><h2 class="seoz-panel-title">تاریخچه انتشار</h2></div>
         <div class="overflow-x-auto">
             <table class="table table-sm">
                 <thead>
                     <tr class="text-xs opacity-60">
-                        <th>{{ _('مقاله') }}</th>
-                        <th>{{ _('تلاش') }}</th>
-                        <th>{{ _('حالت') }}</th>
-                        <th>{{ _('وضعیت') }}</th>
-                        <th>{{ _('شناسه پست') }}</th>
-                        <th>{{ _('آدرس') }}</th>
-                        <th>{{ _('زمان') }}</th>
+                        <th>مقاله</th>
+                        <th>تلاش</th>
+                        <th>حالت</th>
+                        <th>وضعیت</th>
+                        <th>شناسه پست</th>
+                        <th>آدرس</th>
+                        <th>زمان</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -28,7 +28,7 @@
                         <td class="text-xs max-w-40">
                             {% if r.wordpressUrl %}<a href="{{ r.wordpressUrl }}" target="_blank" rel="noopener" class="link link-primary truncate block" dir="ltr">{{ r.wordpressUrl }}</a>{% else %}—{% endif %}
                         </td>
-                        <td class="text-xs opacity-50 whitespace-nowrap">{{ r.created|loc_dt }}</td>
+                        <td class="text-xs opacity-50 whitespace-nowrap">{{ r.created|jalali_dt }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -38,7 +38,7 @@
     {% else %}
     <div class="seoz-panel">
         <div class="p-4 flex flex-col items-center gap-3 py-8 text-center">
-            <p class="text-sm opacity-50">{{ _('هنوز انتشاراتی ثبت نشده است.') }}</p>
+            <p class="text-sm opacity-50">هنوز انتشاراتی ثبت نشده است.</p>
         </div>
     </div>
     {% endif %}

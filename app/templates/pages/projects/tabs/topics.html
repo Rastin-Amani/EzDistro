@@ -1,259 +1,130 @@
 {% import 'macros/forms.html' as f %}
-
 <div id="topics-tab"
-
      hx-get="/projects/{{ project.id }}/tabs/topics"
-
      hx-trigger="refreshTopics from:body"
-
      hx-swap="outerHTML">
-
-{{ f.page_header(_('موضوع‌ها'), _('مدیریت موضوعات و تولید مقاله.'), eyebrow=_('پروژه')) }}
-
+{{ f.page_header('موضوع‌ها', 'مدیریت موضوعات و تولید مقاله.', eyebrow='پروژه') }}
     <div class="flex flex-col gap-3">
-
         <div class="flex flex-wrap items-center justify-between gap-2">
-
             <div class="join join-sm overflow-x-auto">
-
                 <a class="join-item btn btn-xs {{ 'btn-primary' if not status_filter }}"
-
-                   hx-get="/projects/{{ project.id }}/tabs/topics?q={{ q }}" hx-target="#tab-content">{{ _('همه') }}</a>
-
+                   hx-get="/projects/{{ project.id }}/tabs/topics?q={{ q }}" hx-target="#tab-content">همه</a>
                 {% for s in ['planned', 'queued', 'planning', 'outline_ready', 'writing', 'review', 'publishing', 'published', 'failed', 'cancelled'] %}
-
                 <a class="join-item btn btn-xs {{ 'btn-primary' if status_filter == s }}"
-
                    hx-get="/projects/{{ project.id }}/tabs/topics?status={{ s }}&q={{ q }}" hx-target="#tab-content">{{ s|status_label }}</a>
-
                 {% endfor %}
-
             </div>
-
             <div class="flex items-center gap-2">
-
-                <a href="/projects/{{ project.id }}/topics" class="btn btn-ghost btn-xs">{{ _('نمای کامل') }}</a>
-
+                <a href="/projects/{{ project.id }}/topics" class="btn btn-ghost btn-xs">نمای کامل</a>
                 <button class="btn btn-ghost btn-xs" onclick="document.getElementById('topic-import-modal').showModal()">
-
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" /></svg>
-
-                    {{ _('CSV / گروهی') }}
-
+                    CSV / گروهی
                 </button>
-
-                <button class="btn btn-primary btn-xs" onclick="document.getElementById('new-topic-modal').showModal()">{{ _('+ موضوع') }}</button>
-
+                <button class="btn btn-primary btn-xs" onclick="document.getElementById('new-topic-modal').showModal()">+ موضوع</button>
             </div>
-
         </div>
-
-
 
         <form class="flex items-center gap-2" hx-get="/projects/{{ project.id }}/tabs/topics" hx-target="#tab-content"
-
               hx-trigger="submit" hx-swap="innerHTML">
-
             <input id="topics-tab-search" name="q" type="search" value="{{ q }}" class="input input-sm w-full max-w-64"
-
-                   placeholder="{{ _('جستجو در عنوان یا کلمه کلیدی…') }}" />
-
+                   placeholder="جستجو در عنوان یا کلمه کلیدی…" />
             <input type="hidden" name="status" value="{{ status_filter }}" />
-
             {% if q %}
-
-            <a class="btn btn-ghost btn-xs text-error" href="/projects/{{ project.id }}?tab=topics">{{ _('پاک‌کردن') }}</a>
-
+            <a class="btn btn-ghost btn-xs text-error" href="/projects/{{ project.id }}?tab=topics">پاک‌کردن</a>
             {% endif %}
-
         </form>
 
-
-
         {% if topics %}
-
         <div class="seoz-panel">
-
-            <div class="seoz-panel-head"><h2 class="seoz-panel-title">{{ _('موضوع‌ها') }}</h2></div>
-
+            <div class="seoz-panel-head"><h2 class="seoz-panel-title">موضوع‌ها</h2></div>
             <div class="overflow-x-auto">
-
                 <table class="table table-sm">
-
                     <thead>
-
                         <tr class="text-xs opacity-60">
-
-                            <th>{{ _('عنوان') }}</th>
-
-                            <th>{{ _('کلمه کلیدی') }}</th>
-
-                            <th>{{ _('ستون/خوشه') }}</th>
-
-                            <th>{{ _('وضعیت') }}</th>
-
-                            <th>{{ _('اولویت') }}</th>
-
+                            <th>عنوان</th>
+                            <th>کلمه کلیدی</th>
+                            <th>ستون/خوشه</th>
+                            <th>وضعیت</th>
+                            <th>اولویت</th>
                             <th></th>
-
                         </tr>
-
                     </thead>
-
                     <tbody>
-
                         {% for t in topics %}
-
                         <tr>
-
                             <td class="text-xs max-w-50">
-
                                 <p class="truncate">{{ t.title }}</p>
-
                                 {% if t.type %}<span class="badge badge-soft badge-neutral badge-xs">{{ t.type }}</span>{% endif %}
-
                             </td>
-
                             <td class="text-xs">{{ t.keyword or '—' }}</td>
-
                             <td class="text-xs max-w-32">
-
                                 <p class="truncate">{{ t.pillar or '—' }}{% if t.cluster %} / {{ t.cluster }}{% endif %}</p>
-
                             </td>
-
                             <td><span class="badge badge-sm {{ t.status|status_badge }}">{{ t.status|status_label }}</span></td>
-
                             <td class="text-xs">{{ t.priority or 0 }}</td>
-
                             <td class="whitespace-nowrap">
-
                                 {% if t.status in ['planned', 'failed', 'cancelled'] %}
-
                                 <button class="btn btn-ghost btn-xs text-primary"
-
-                                        hx-post="/projects/{{ project.id }}/topics/{{ t.id }}/write" hx-swap="none">{{ _('نوشتن مقاله') }}</button>
-
+                                        hx-post="/projects/{{ project.id }}/topics/{{ t.id }}/write" hx-swap="none">نوشتن مقاله</button>
                                 {% endif %}
-
                                 {% if t.articleId %}
-
-                                <a class="btn btn-ghost btn-xs" href="/projects/{{ project.id }}/articles/{{ t.articleId }}">{{ _('مقاله') }}</a>
-
+                                <a class="btn btn-ghost btn-xs" href="/projects/{{ project.id }}/articles/{{ t.articleId }}">مقاله</a>
                                 {% endif %}
-
                                 <button class="btn btn-ghost btn-xs text-error"
-
                                         hx-post="/projects/{{ project.id }}/topics/{{ t.id }}/delete" hx-swap="none"
-
-                                        hx-confirm="موضوع «{{ t.title }}» حذف شود؟ این عمل قابل بازگشت نیست.">{{ _('حذف') }}</button>
-
+                                        hx-confirm="موضوع «{{ t.title }}» حذف شود؟ این عمل قابل بازگشت نیست.">حذف</button>
                             </td>
-
                         </tr>
-
                         {% endfor %}
-
                     </tbody>
-
                 </table>
-
             </div>
-
         </div>
-
         {% else %}
-
         <div class="seoz-panel">
-
             <div class="p-4 flex flex-col items-center gap-3 py-8 text-center">
-
-                <p class="text-sm opacity-50">{{ _('موضوعی یافت نشد.') }}</p>
-
+                <p class="text-sm opacity-50">موضوعی یافت نشد.</p>
             </div>
-
         </div>
-
         {% endif %}
-
     </div>
 
-
-
     <!-- New topic modal -->
-
     <dialog id="new-topic-modal" class="modal modal-bottom sm:modal-middle">
-
         <div class="modal-box bg-base-100 border border-base-300">
-
             <div class="flex items-center justify-between mb-4">
-
-                <h3 class="font-bold text-lg">{{ _('موضوع جدید') }}</h3>
-
-                <button type="button" class="btn btn-ghost btn-circle btn-sm" onclick="document.getElementById('new-topic-modal').close()" aria-label="{{ _('بستن') }}">
-
+                <h3 class="font-bold text-lg">موضوع جدید</h3>
+                <button type="button" class="btn btn-ghost btn-circle btn-sm" onclick="document.getElementById('new-topic-modal').close()" aria-label="بستن">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
-
                 </button>
-
             </div>
-
             <form hx-post="/projects/{{ project.id }}/topics" hx-swap="none"
-
                   hx-on::after-request="if (event.detail.successful) document.getElementById('new-topic-modal').close()"
-
                   class="flex flex-col gap-4">
-
-                {{ f.text('title', _('عنوان موضوع'), '', _('عنوان مقاله‌ای که می‌خواهید درباره‌اش بنویسید — هرچه دقیق‌تر باشد خروجی بهتری می‌گیرید.'), _('مثلاً: بهترین روش‌های سئو در ۱۴۰۵'), true, hint=_('این عنوان به‌عنوان ورودی اصلی تولید مقاله استفاده می‌شود.')) }}
-
+                {{ f.text('title', 'عنوان موضوع', '', 'عنوان مقاله‌ای که می‌خواهید درباره‌اش بنویسید — هرچه دقیق‌تر باشد خروجی بهتری می‌گیرید.', 'مثلاً: بهترین روش‌های سئو در ۱۴۰۵', true, hint='این عنوان به‌عنوان ورودی اصلی تولید مقاله استفاده می‌شود.') }}
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-                    {{ f.text('keyword', _('کلمه کلیدی'), '', _('عبارت یا کلمه کلیدی اصلی این مقاله برای بهینه‌سازی سئو.'), _('مثلاً: آموزش سئو')) }}
-
-                    {{ f.select('type', _('نوع'), [('article', _('مقاله')), ('pillar_page', _('صفحه ستون')), ('guide', _('راهنما')), ('news', _('خبر'))], 'article', _('نوع محتوا — صفحه ستون پایه کل خوشه محتواست.')) }}
-
+                    {{ f.text('keyword', 'کلمه کلیدی', '', 'عبارت یا کلمه کلیدی اصلی این مقاله برای بهینه‌سازی سئو.', 'مثلاً: آموزش سئو') }}
+                    {{ f.select('type', 'نوع', [('article', 'مقاله'), ('pillar_page', 'صفحه ستون'), ('guide', 'راهنما'), ('news', 'خبر')], 'article', 'نوع محتوا — صفحه ستون پایه کل خوشه محتواست.') }}
                 </div>
-
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-                    {{ f.text('pillar', _('ستون (Pillar)'), '', _('مقاله ستون اصلی که این موضوع به آن مرتبط است (برای لینک‌سازی داخلی).')) }}
-
-                    {{ f.text('cluster', _('خوشه (Cluster)'), '', _('نام خوشه محتوایی برای گروه‌بندی موضوعات مرتبط.')) }}
-
+                    {{ f.text('pillar', 'ستون (Pillar)', '', 'مقاله ستون اصلی که این موضوع به آن مرتبط است (برای لینک‌سازی داخلی).') }}
+                    {{ f.text('cluster', 'خوشه (Cluster)', '', 'نام خوشه محتوایی برای گروه‌بندی موضوعات مرتبط.') }}
                 </div>
-
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-                    {{ f.number('priority', _('اولویت'), '0', _('هرچه بزرگ‌تر، زودتر در صف تولید قرار می‌گیرد.'), min='0') }}
-
-                    {{ f.number('week', _('هفته'), '', _('هفته تقویم تحریریه (اختیاری).')) }}
-
+                    {{ f.number('priority', 'اولویت', '0', 'هرچه بزرگ‌تر، زودتر در صف تولید قرار می‌گیرد.', min='0') }}
+                    {{ f.number('week', 'هفته', '', 'هفته تقویم تحریریه (اختیاری).') }}
                 </div>
-
-                {{ f.text('url', _('لینک مقاله'), '', _('آدرس منتشرشده (اختیاری).')) }}
-
+                {{ f.text('url', 'لینک مقاله', '', 'آدرس منتشرشده (اختیاری).') }}
                 <div class="flex gap-3 mt-2">
-
                     <button type="submit" class="btn btn-primary flex-1" hx-disabled-elt="this">
-
                         <span class="loading loading-spinner loading-xs htmx-indicator"></span>
-
-                        {{ _('افزودن') }}
-
+                        افزودن
                     </button>
-
-                    <button type="button" class="btn btn-ghost flex-1" onclick="document.getElementById('new-topic-modal').close()">{{ _('انصراف') }}</button>
-
+                    <button type="button" class="btn btn-ghost flex-1" onclick="document.getElementById('new-topic-modal').close()">انصراف</button>
                 </div>
-
             </form>
-
         </div>
-
     </dialog>
 
-
-
     {% include "components/topics/import_modal.html" %}
-
 </div>

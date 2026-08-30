@@ -1,19 +1,19 @@
 <dialog id="compare-dialog" class="modal modal-bottom sm:modal-middle modal-open">
     <div class="modal-box bg-base-100 max-w-3xl">
         <div class="flex items-center justify-between mb-3">
-            <h3 class="font-bold">{{ _('مقایسه نسخه‌ها — %(v)s') % {'v': ptype} }}</h3>
-            <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('compare-dialog').remove()">{{ _('بستن') }}</button>
+            <h3 class="font-bold">مقایسه نسخه‌ها — {{ ptype }}</h3>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('compare-dialog').remove()">بستن</button>
         </div>
         <div class="grid grid-cols-2 gap-3">
             <div class="seoz-panel">
                 <div class="p-3">
-                    <p class="text-xs font-bold mb-1">{{ _('نسخه v%(v)s') % {'v': va.version if va else '?'} }} <span class="opacity-50">{{ va.created|loc_dt if va else '' }}</span></p>
+                    <p class="text-xs font-bold mb-1">نسخه v{{ va.version if va else '?' }} <span class="opacity-50">{{ va.created|jalali_dt if va else '' }}</span></p>
                     <pre class="text-xs font-mono bg-base-200/60 rounded-xl p-3 max-h-96 overflow-auto whitespace-pre-wrap" dir="auto">{{ va.content if va else '—' }}</pre>
                 </div>
             </div>
             <div class="seoz-panel">
                 <div class="p-3">
-                    <p class="text-xs font-bold mb-1">{{ _('نسخه v%(v)s') % {'v': vb.version if vb else '?'} }} <span class="opacity-50">{{ vb.created|loc_dt if vb else '' }}</span></p>
+                    <p class="text-xs font-bold mb-1">نسخه v{{ vb.version if vb else '?' }} <span class="opacity-50">{{ vb.created|jalali_dt if vb else '' }}</span></p>
                     <pre class="text-xs font-mono bg-base-200/60 rounded-xl p-3 max-h-96 overflow-auto whitespace-pre-wrap" dir="auto">{{ vb.content if vb else '—' }}</pre>
                 </div>
             </div>

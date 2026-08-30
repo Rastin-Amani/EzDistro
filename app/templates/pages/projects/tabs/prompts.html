@@ -1,285 +1,143 @@
 {% import 'macros/forms.html' as f %}
-
 <div id="prompts-tab" class="flex flex-col gap-4"
-
      hx-get="/projects/{{ project.id }}/tabs/prompts"
-
      hx-trigger="refreshPrompts from:body"
-
      hx-swap="outerHTML">
-
-{{ f.page_header(_('پرامپت‌ها'), _('مدیریت نسخه‌های پرامپت و تست تعاملی.'), eyebrow=_('پروژه')) }}
-
+{{ f.page_header('پرامپت‌ها', 'مدیریت نسخه‌های پرامپت و تست تعاملی.', eyebrow='پروژه') }}
     <!-- Variables reference -->
-
     <details class="seoz-panel">
-
         <summary class="seoz-panel-head cursor-pointer">
-
-            <span class="seoz-panel-title">{{ _('متغیرهای قابل استفاده') }}</span>
-
+            <span class="seoz-panel-title">متغیرهای قابل استفاده</span>
         </summary>
-
         <div class="p-4 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs">
-
             {% for name, desc in variables.items() %}
-
             <code class="bg-base-200/60 rounded px-2 py-1 font-mono" dir="ltr">{{ '{{ ' ~ name ~ ' }}' }}</code>
-
             <span class="opacity-70 leading-relaxed">{{ desc }}</span>
-
             {% endfor %}
-
         </div>
-
     </details>
 
-
-
     {% for ptype, label in prompt_types.items() %}
-
     {% set active = prompts | selectattr('type', 'equalto', ptype) | selectattr('active', 'equalto', true) | first %}
-
     {% set versions = history.get(ptype, []) %}
-
     {% set next_ver = (active.version if active else 0) + 1 %}
-
     <section class="seoz-panel">
-
         <div class="seoz-panel-head">
-
             <h2 class="seoz-panel-title">{{ label }}</h2>
-
             {% if active %}
-
-            <span class="badge badge-soft badge-success badge-sm">{{ _('نسخه فعال: v%(n)s') % {'n': active.version} }}</span>
-
+            <span class="badge badge-soft badge-success badge-sm">نسخه فعال: v{{ active.version }}</span>
             {% else %}
-
-            <span class="badge badge-soft badge-warning badge-sm">{{ _('پیش‌فرض سراسری استفاده می‌شود') }}</span>
-
+            <span class="badge badge-soft badge-warning badge-sm">پیش‌فرض سراسری استفاده می‌شود</span>
             {% endif %}
-
         </div>
-
         <div class="p-4 flex flex-col gap-4">
-
             <form hx-post="/projects/{{ project.id }}/prompts" hx-swap="none" class="flex flex-col gap-2">
-
-                {{ f.textarea(ptype, _('متن پرامپت'), active.content if active else '', _('متن کامل این پرامپت. از متغیرهای فهرست بالا می‌توانید استفاده کنید.'), 5, false, '', _('ذخیره = نسخه جدید (v') ~ next_ver ~ ')') }}
-
+                {{ f.textarea(ptype, 'متن پرامپت', active.content if active else '', 'متن کامل این پرامپت. از متغیرهای فهرست بالا می‌توانید استفاده کنید.', 5, false, '', 'ذخیره = نسخه جدید (v' ~ next_ver ~ ')') }}
                 <div class="flex items-center justify-end">
-
                     <button type="submit" class="btn btn-primary btn-sm" hx-disabled-elt="this">
-
                         <span class="loading loading-spinner loading-xs htmx-indicator"></span>
-
-                        {{ _('ذخیره نسخه جدید') }}
-
+                        ذخیره نسخه جدید
                     </button>
-
                 </div>
-
             </form>
 
-
-
             <!-- Tester -->
-
             <details class="seoz-panel">
-
                 <summary class="seoz-panel-head cursor-pointer">
-
-                    <span class="seoz-panel-title text-xs">{{ _('تست تعاملی پرامپت (بدون تغییر نسخه‌ها)') }}</span>
-
+                    <span class="seoz-panel-title text-xs">تست تعاملی پرامپت (بدون تغییر نسخه‌ها)</span>
                 </summary>
-
                 <div class="p-4">
-
                 <form hx-post="/projects/{{ project.id }}/prompts/test" hx-target="#test-result-{{ ptype }}" hx-swap="innerHTML" class="grid grid-cols-1 sm:grid-cols-4 gap-4">
-
                     <input type="hidden" name="ptype" value="{{ ptype }}" />
-
                     <input type="hidden" name="content" value="{{ active.content if active else '' }}" />
-
                     <label class="form-control col-span-2">
-
                         <div class="label px-0 pb-1">
-
-                            <span class="label-text font-medium text-xs">{{ _('موضوع') }}</span>
-
-                            {{ f.tip(_('یک موضوع واقعی انتخاب کنید تا زمینه بازیابی واقعی ساخته شود.')) }}
-
+                            <span class="label-text font-medium text-xs">موضوع</span>
+                            {{ f.tip('یک موضوع واقعی انتخاب کنید تا زمینه بازیابی واقعی ساخته شود.') }}
                         </div>
-
                         <select name="topic_id" class="select select-bordered w-full select-sm">
-
-                            <option value="">{{ _('— بدون موضوع —') }}</option>
-
+                            <option value="">— بدون موضوع —</option>
                             {% for t in topics %}
-
                             <option value="{{ t.id }}">{{ t.title }}</option>
-
                             {% endfor %}
-
                         </select>
-
                     </label>
-
                     <label class="form-control">
-
                         <div class="label px-0 pb-1">
-
-                            <span class="label-text font-medium text-xs">{{ _('مدل') }}</span>
-
-                            {{ f.tip(_('نقش مدلی که پرامپت با آن اجرا می‌شود (Outline یا Section).')) }}
-
+                            <span class="label-text font-medium text-xs">مدل</span>
+                            {{ f.tip('نقش مدلی که پرامپت با آن اجرا می‌شود (Outline یا Section).') }}
                         </div>
-
                         <select name="model_role" class="select select-bordered w-full select-sm">
-
                             <option value="outline">Outline</option>
-
                             <option value="section">Section</option>
-
                         </select>
-
                     </label>
-
                     <div class="self-end">
-
                         <button type="submit" class="btn btn-primary btn-sm w-full" hx-disabled-elt="this">
-
                             <span class="loading loading-spinner loading-xs htmx-indicator"></span>
-
-                            {{ _('تست پرامپت') }}
-
+                            تست پرامپت
                         </button>
-
                     </div>
-
                 </form>
-
                 <div id="test-result-{{ ptype }}" class="mt-3"></div>
-
                 </div>
-
             </details>
 
-
-
             <!-- Version history -->
-
             {% if versions|length > 1 %}
-
             <div class="overflow-x-auto">
-
                 <table class="table table-sm">
-
                     <thead>
-
                         <tr class="text-xs opacity-60">
-
-                            <th>{{ _('نسخه') }}</th>
-
-                            <th>{{ _('نویسنده') }}</th>
-
-                            <th>{{ _('زمان') }}</th>
-
-                            <th>{{ _('وضعیت') }}</th>
-
-                            <th>{{ _('عملیات') }}</th>
-
+                            <th>نسخه</th>
+                            <th>نویسنده</th>
+                            <th>زمان</th>
+                            <th>وضعیت</th>
+                            <th>عملیات</th>
                         </tr>
-
                     </thead>
-
                     <tbody>
-
                         {% for v in versions %}
-
                         <tr class="{{ 'bg-primary/5' if v.active }}">
-
                             <td class="font-mono">v{{ v.version }}</td>
-
                             <td class="text-xs">{{ v.updatedBy or '—' }}</td>
-
-                            <td class="text-xs opacity-60 whitespace-nowrap">{{ v.created|loc_dt }}</td>
-
+                            <td class="text-xs opacity-60 whitespace-nowrap">{{ v.created|jalali_dt }}</td>
                             <td>
-
                                 {% if v.active %}
-
-                                <span class="badge badge-soft badge-success badge-xs">{{ _('فعال') }}</span>
-
+                                <span class="badge badge-soft badge-success badge-xs">فعال</span>
                                 {% else %}
-
-                                <span class="badge badge-soft badge-neutral badge-xs">{{ _('غیرفعال') }}</span>
-
+                                <span class="badge badge-soft badge-neutral badge-xs">غیرفعال</span>
                                 {% endif %}
-
                             </td>
-
                             <td class="whitespace-nowrap">
-
                                 {% if not v.active %}
-
                                 <button class="btn btn-ghost btn-xs text-primary"
-
                                         hx-post="/projects/{{ project.id }}/prompts/{{ ptype }}/activate"
-
                                         hx-vals='{"version_id": "{{ v.id }}"}'
-
                                         hx-swap="none"
-
-                                        hx-confirm="نسخه v{{ v.version }} فعال شود؟ نسخه قبلی غیرفعال می‌شود.">{{ _('فعال‌سازی') }}</button>
-
+                                        hx-confirm="نسخه v{{ v.version }} فعال شود؟ نسخه قبلی غیرفعال می‌شود.">فعال‌سازی</button>
                                 {% endif %}
-
                                 <button class="btn btn-ghost btn-xs"
-
                                         hx-post="/projects/{{ project.id }}/prompts/{{ ptype }}/duplicate"
-
                                         hx-vals='{"version_id": "{{ v.id }}"}'
-
                                         hx-swap="none"
-
-                                        title="{{ _('کپی به‌عنوان نسخه جدید (غیرفعال)') }}">{{ _('تکراری‌سازی') }}</button>
-
+                                        title="کپی به‌عنوان نسخه جدید (غیرفعال)">تکراری‌سازی</button>
                                 {% set other = versions | rejectattr('id', 'equalto', v.id) | first %}
-
                                 {% if other %}
-
                                 <button class="btn btn-ghost btn-xs"
-
                                         hx-get="/projects/{{ project.id }}/prompts/compare?ptype={{ ptype }}&a={{ v.id }}&b={{ other.id }}"
-
-                                        hx-target="#compare-modal" hx-swap="innerHTML">{{ _('مقایسه') }}</button>
-
+                                        hx-target="#compare-modal" hx-swap="innerHTML">مقایسه</button>
                                 {% endif %}
-
                             </td>
-
                         </tr>
-
                         {% endfor %}
-
                     </tbody>
-
                 </table>
-
             </div>
-
             {% endif %}
-
         </div>
-
     </section>
-
     {% endfor %}
 
-
-
     <div id="compare-modal"></div>
-
 </div>

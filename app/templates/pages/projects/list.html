@@ -1,193 +1,97 @@
 {% extends "layouts/platform.html" %}
-
 {% block dashboard_content %}
-
 {% import 'macros/forms.html' as f %}
 
-
-
 {{ f.page_header(
-
-    _( 'پروژه‌ها' ),
-
-    _( 'هر پروژه یک سایت وردپرس، مجموعه‌ای از مدل‌ها و پرامپت‌های اختصاصی دارد' ),
-
-    _( 'فضای کار' ),
-
-    '<button class="btn btn-primary btn-sm" onclick="document.getElementById(\'new-project-modal\').showModal()">' ~ _('پروژه جدید') ~ '</button>'
-
+    'پروژه‌ها',
+    'هر پروژه یک سایت وردپرس، مجموعه‌ای از مدل‌ها و پرامپت‌های اختصاصی دارد',
+    'فضای کار',
+    '<button class="btn btn-primary btn-sm" onclick="document.getElementById(\'new-project-modal\').showModal()">پروژه جدید</button>'
 ) }}
 
-
-
 {% if projects %}
-
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-
     {% for p in projects %}
-
     <a href="/projects/{{ p.id }}" class="seoz-panel group p-4 transition-colors hover:border-primary/40 hover:bg-base-200/40">
-
         <div class="flex items-center justify-between gap-2">
-
             <div class="flex items-center gap-3 min-w-0">
-
                 <span class="grid size-11 shrink-0 place-items-center rounded-2xl bg-primary/10 text-primary font-black text-lg">{{ p.name[:1] }}</span>
-
                 <div class="min-w-0">
-
                     <h2 class="font-bold truncate">{{ p.name }}</h2>
-
                     <p class="text-xs opacity-50 truncate" dir="ltr">{{ p.slug }}</p>
-
                 </div>
-
             </div>
-
             <span class="badge badge-soft badge-info badge-sm">{{ p.language or 'fa' }}</span>
-
         </div>
-
         {% if p.description %}
-
         <p class="text-sm opacity-60 line-clamp-2 mt-3 leading-relaxed">{{ p.description }}</p>
-
         {% endif %}
-
         <div class="mt-3 flex items-center gap-1.5 text-xs opacity-0 group-hover:opacity-100 transition-opacity text-primary font-medium">
-
-            {{ _('باز کردن پروژه') }}
-
+            باز کردن پروژه
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" /></svg>
-
         </div>
-
     </a>
-
     {% endfor %}
-
 </div>
-
 {% else %}
-
 <div class="seoz-panel">
-
     <div class="seoz-empty">
-
         <div class="seoz-empty-icon">
-
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" /></svg>
-
         </div>
-
-        <p class="font-bold text-base-content/75">{{ _('هنوز پروژه‌ای نساخته‌اید') }}</p>
-
-        <p class="text-sm text-base-content/50 max-w-xs">{{ _('پروژه اول را بسازید تا نمایه‌سازی و تولید مقاله را آغاز کنید.') }}</p>
-
-        <button class="btn btn-primary btn-sm mt-1" onclick="document.getElementById('new-project-modal').showModal()">{{ _('ساخت اولین پروژه') }}</button>
-
+        <p class="font-bold text-base-content/75">هنوز پروژه‌ای نساخته‌اید</p>
+        <p class="text-sm text-base-content/50 max-w-xs">پروژه اول را بسازید تا نمایه‌سازی و تولید مقاله را آغاز کنید.</p>
+        <button class="btn btn-primary btn-sm mt-1" onclick="document.getElementById('new-project-modal').showModal()">ساخت اولین پروژه</button>
     </div>
-
 </div>
-
 {% endif %}
 
-
-
 <!-- Create project modal -->
-
 <dialog id="new-project-modal" class="modal modal-bottom sm:modal-middle">
-
     <div class="modal-box bg-base-100">
-
         <div class="flex items-center justify-between mb-4">
-
-            <h3 class="font-bold text-lg">{{ _('پروژه جدید') }}</h3>
-
-            <button type="button" class="btn btn-ghost btn-sm btn-circle" onclick="document.getElementById('new-project-modal').close()" aria-label="{{ _('بستن') }}">✕</button>
-
+            <h3 class="font-bold text-lg">پروژه جدید</h3>
+            <button type="button" class="btn btn-ghost btn-sm btn-circle" onclick="document.getElementById('new-project-modal').close()" aria-label="بستن">✕</button>
         </div>
-
         <form hx-post="/projects" hx-swap="none" class="flex flex-col gap-4">
-
             <label class="floating-label">
-
-                <span>{{ _('نام پروژه') }}</span>
-
-                <input name="name" class="input validator" required placeholder="{{ _('مثلاً: مجله فناوری') }}" />
-
+                <span>نام پروژه</span>
+                <input name="name" class="input validator" required placeholder="مثلاً: مجله فناوری" />
             </label>
-
             <label class="floating-label">
-
-                <span>{{ _('شناسه (slug) — انگلیسی') }}</span>
-
+                <span>شناسه (slug) — انگلیسی</span>
                 <input name="slug" class="input" dir="ltr" placeholder="tech-magazine" />
-
-                <span class="text-xs opacity-50">{{ _('اگر خالی بماند از نام ساخته می‌شود') }}</span>
-
+                <span class="text-xs opacity-50">اگر خالی بماند از نام ساخته می‌شود</span>
             </label>
-
             <div class="grid grid-cols-2 gap-3">
-
                 <label class="floating-label">
-
-                    <span>{{ _('زبان') }}</span>
-
+                    <span>زبان</span>
                     <select name="language" class="select">
-
-                        <option value="fa">{{ _('فارسی') }}</option>
-
+                        <option value="fa">فارسی</option>
                         <option value="en">English</option>
-
-                        <option value="ar">{{ _('العربية') }}</option>
-
+                        <option value="ar">العربية</option>
                         <option value="tr">Türkçe</option>
-
                     </select>
-
                 </label>
-
                 <label class="floating-label">
-
-                    <span>{{ _('منطقه زمانی') }}</span>
-
+                    <span>منطقه زمانی</span>
                     <select name="timezone" class="select">
-
                         <option value="Asia/Tehran">Asia/Tehran</option>
-
                         <option value="UTC">UTC</option>
-
                         <option value="Europe/London">Europe/London</option>
-
                         <option value="America/New_York">America/New_York</option>
-
                     </select>
-
                 </label>
-
             </div>
-
             <label class="floating-label">
-
-                <span>{{ _('توضیحات') }}</span>
-
+                <span>توضیحات</span>
                 <textarea name="description" class="textarea" rows="2"></textarea>
-
             </label>
-
             <div class="flex gap-3 mt-1">
-
-                <button type="submit" class="btn btn-primary flex-1">{{ _('ساخت') }}</button>
-
-                <button type="button" class="btn btn-ghost" onclick="document.getElementById('new-project-modal').close()">{{ _('انصراف') }}</button>
-
+                <button type="submit" class="btn btn-primary flex-1">ساخت</button>
+                <button type="button" class="btn btn-ghost" onclick="document.getElementById('new-project-modal').close()">انصراف</button>
             </div>
-
         </form>
-
     </div>
-
 </dialog>
-
 {% endblock %}
