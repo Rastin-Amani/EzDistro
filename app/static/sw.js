@@ -15,12 +15,13 @@ const STATIC_CACHE = `${CACHE_PREFIX}-static`;
 const IMAGE_CACHE = `${CACHE_PREFIX}-images`;
 const OFFLINE_CACHE = `${CACHE_PREFIX}-offline`;
 
-// ---- Static assets (CSS, JS, fonts): StaleWhileRevalidate + expiry ----
-// StaleWhileRevalidate: serve cached instantly, fetch fresh in background.
-// Fixes "old CSS after deploy" — next page load gets updated styles.
+// ---- Static assets (CSS, JS, fonts, json): NetworkFirst + expiry ----
+// NetworkFirst: never run stale code after a deploy (SWR served old JS/CSS
+// against new HTML and broke the UI until a second reload). Cache still
+// covers offline; online loads revalidate via ETag (cheap 304s).
 workbox.routing.registerRoute(
     /\.(css|js|woff2?|json)(\?.*)?$/,
-    new workbox.strategies.StaleWhileRevalidate({
+    new workbox.strategies.NetworkFirst({
         cacheName: STATIC_CACHE,
         plugins: [
             new workbox.expiration.ExpirationPlugin({
