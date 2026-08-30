@@ -44,9 +44,9 @@
 
         <link
             rel="preload"
-            href="{{ url_for('static', path='/assets/Vazirmatn-RD[wght].ttf') }}"
+            href="{{ url_for('static', path='/assets/Arad-VF.woff2') }}"
             as="font"
-            type="font/ttf"
+            type="font/woff2"
             crossorigin
         />
 
@@ -100,8 +100,11 @@
     <body class="bg-base-200 font-sans antialiased" hx-boost="true">
         {% block body_start %}{% endblock %}
 
+        <!-- Top loading progress bar — HIDDEN for now (kept intact for easy
+             re-enable: just remove the `hidden` attribute below). -->
         <div
             id="top-progress-bar"
+            hidden
             class="fixed top-0 start-0 h-0.5 bg-primary z-[9999] transition-all duration-300 ease-out w-0 opacity-0 pointer-events-none"
         ></div>
 

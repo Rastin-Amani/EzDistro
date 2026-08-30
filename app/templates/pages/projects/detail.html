@@ -27,9 +27,10 @@
     </div>
 </div>
 
-<!-- Tabs — sticky, mobile-first scrollable pill bar -->
-<div id="project-tabs" role="tablist"
-     class="seoz-scroll-x sticky top-14 lg:top-0 z-20 -mx-4 px-4 py-2.5 mb-2 flex items-center gap-1.5 overflow-x-auto scroll-smooth snap-x bg-base-200/90 backdrop-blur border-b border-base-300/60">
+<!-- Tabs — daisyUI tabs, sticky + scrollable on small screens -->
+<div class="sticky top-14 md:top-0 z-20 -mx-4 px-4 py-2 mb-2 border-b border-base-300/60">
+    <div id="project-tabs" role="tablist"
+         class="tabs tabs-box tabs-sm seoz-scroll-x overflow-x-auto flex-nowrap">
     {% set labels = {
         'settings': 'تنظیمات', 'integrations': 'اتصالات', 'ai_models': 'مدل‌های AI', 'prompts': 'پرامپت‌ها',
         'topics': 'موضوع‌ها', 'articles': 'مقاله‌ها', 'retrieval': 'بازیابی', 'jobs': 'وظایف',
@@ -38,7 +39,7 @@
     {% for tab in tabs %}
     <a role="tab"
        data-tab="{{ tab }}"
-       class="snap-start shrink-0 cursor-pointer whitespace-nowrap rounded-xl border px-3.5 py-2 text-sm font-medium transition-colors {{ 'seoz-tab-active' if tab == active_tab else 'seoz-tab-idle' }}"
+       class="tab whitespace-nowrap {{ 'tab-active' if tab == active_tab }}"
        hx-get="/projects/{{ project.id }}/tabs/{{ tab }}"
        hx-target="#tab-content"
        hx-push-url="?tab={{ tab }}"
@@ -48,6 +49,7 @@
         {{ labels[tab] }}
     </a>
     {% endfor %}
+    </div>
 </div>
 
 <span id="tab-indicator" class="htmx-indicator text-xs opacity-60 block py-1">در حال بارگذاری…</span>
@@ -85,8 +87,7 @@
             var active = currentTab();
             document.querySelectorAll('#project-tabs [data-tab]').forEach(function (t) {
                 var on = t.getAttribute('data-tab') === active;
-                t.classList.toggle('seoz-tab-active', on);
-                t.classList.toggle('seoz-tab-idle', !on);
+                t.classList.toggle('tab-active', on);
                 t.setAttribute('aria-selected', on ? 'true' : 'false');
             });
         }

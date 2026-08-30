@@ -24,9 +24,9 @@
     <!-- Workers -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {% for w in workers %}
-        <section class="seoz-panel">
+        <section class="seoz-panel {% if workers|length == 1 %}lg:col-span-2{% endif %}">
             <div class="seoz-panel-head flex-wrap">
-                <h2 class="seoz-panel-title font-mono text-sm" dir="ltr">{{ w.workerId }}</h2>
+                <h2 class="seoz-panel-title font-mono text-sm min-w-0 truncate" dir="ltr" title="{{ w.workerId }}">{{ w.workerId }}</h2>
                 <div class="flex items-center gap-1.5 flex-wrap">
                     {% if w.status == 'active' %}
                     <span class="badge badge-sm badge-soft badge-success">فعال</span>
@@ -42,7 +42,7 @@
             </div>
             <div class="p-4 flex flex-col gap-3">
                 <div class="flex items-center justify-between text-xs opacity-60 flex-wrap gap-1">
-                    <span dir="ltr" class="font-mono">{{ w.hostname or '—' }}{% if w.pid %} · pid {{ w.pid }}{% endif %}</span>
+                    <span dir="ltr" class="font-mono min-w-0 max-w-full break-all">{{ w.hostname or '—' }}{% if w.pid %} · pid {{ w.pid }}{% endif %}</span>
                     <span>شروع: {{ w.startedAt|jalali_dt if w.startedAt else '—' }}</span>
                 </div>
 
@@ -60,7 +60,7 @@
                     {% if w.scheduleLastPollAt %}
                     <span>آخرین بررسی {{ w.scheduleLastPollAt|rel_time }}</span>
                     <span>ساخته‌شده: <b class="tabular {{ 'text-success' if (w.scheduleCreated or 0) > 0 }}">{{ w.scheduleCreated or 0 }}</b></span>
-                    {% if w.scheduleFailed %}<span class="text-error">خطا: {{ w.scheduleFailed }}</span>{% endif %}
+                    {% if w.scheduleFailed %}<span class="text-error break-words max-w-full">خطا: {{ w.scheduleFailed }}</span>{% endif %}
                     {% else %}
                     <span class="opacity-50">بررسی نشده</span>
                     {% endif %}
@@ -134,7 +134,7 @@
                  x-data="{copied: false}">
                 <div class="min-w-0">
                     <p class="text-xs font-semibold">{{ cmd.label }}</p>
-                    <code class="text-xs font-mono" dir="ltr">{{ cmd.command }}</code>
+                    <code class="text-xs font-mono break-all" dir="ltr">{{ cmd.command }}</code>
                     <p class="text-[11px] opacity-50 mt-0.5">{{ cmd.hint }}</p>
                 </div>
                 <button type="button" class="btn btn-ghost btn-xs shrink-0"

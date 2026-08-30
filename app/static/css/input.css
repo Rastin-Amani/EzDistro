@@ -5,8 +5,8 @@
 }
 
 @theme {
-    --font-sans: 'vazirmatn', ui-sans-serif, system-ui, sans-serif;
-    --font-brand: 'vazirmatn', ui-sans-serif, system-ui, sans-serif;
+    --font-sans: 'Arad', ui-sans-serif, system-ui, sans-serif;
+    --font-brand: 'Arad', ui-sans-serif, system-ui, sans-serif;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -98,8 +98,9 @@
 }
 
 @font-face {
-    font-family: 'vazirmatn';
-    src: url('./assets/Vazirmatn-RD[wght].ttf') format('truetype');
+    font-family: 'Arad';
+    src: url('./assets/Arad-VF.woff2') format('woff2-variations'),
+         url('./assets/Arad-VF.woff2') format('woff2');
     font-weight: 100 900;
     font-display: swap;
 }
@@ -286,7 +287,7 @@
 @layer components {
     /* Page frame + header ---------------------------------------------- */
     .seoz-page {
-        @apply mx-auto w-full max-w-300 px-4 pb-24 pt-5;
+        @apply mx-auto w-full max-w-300 px-4 md:px-6 pb-24 md:pb-10 pt-5;
     }
     .seoz-pagehead {
         @apply flex flex-wrap items-end justify-between gap-3 mb-5;
@@ -316,7 +317,7 @@
         @apply flex min-h-screen bg-base-200;
     }
     .seoz-sidebar {
-        @apply hidden border-l border-base-300/70 bg-base-100 lg:sticky lg:top-0 lg:h-screen lg:flex lg:w-64 lg:flex-none lg:flex-col;
+        @apply hidden border-l border-base-300/70 bg-base-100 md:sticky md:top-0 md:h-screen md:flex md:w-56 md:flex-none md:flex-col lg:w-64;
     }
     .seoz-sidebar-brand {
         @apply flex h-16 items-center gap-2.5 border-b border-base-300/70 px-4;
@@ -350,7 +351,7 @@
 
     /* Mobile dock ----------------------------------------------------- */
     .seoz-dock {
-        @apply fixed inset-x-0 bottom-0 z-40 flex h-16 items-stretch justify-around border-t border-base-300/70 bg-base-100/95 backdrop-blur lg:hidden;
+        @apply fixed inset-x-0 bottom-0 z-40 flex h-16 items-stretch justify-around border-t border-base-300/70 bg-base-100/95 backdrop-blur md:hidden;
         padding-bottom: env(safe-area-inset-bottom);
     }
     .seoz-dock a {
@@ -365,7 +366,10 @@
 
     /* Cards / panels -------------------------------------------------- */
     .seoz-panel {
-        @apply rounded-box border border-base-300/70 bg-base-100;
+        /* min-w-0: panels are grid/flex children — a long unbreakable value
+           (workerId, hostname, version) must never force the column wider
+           than the viewport (RTL blowout). */
+        @apply rounded-box border border-base-300/70 bg-base-100 min-w-0;
     }
     .seoz-panel-head {
         @apply flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3;
@@ -376,7 +380,7 @@
 
     /* Metrics / stats -------------------------------------------------- */
     .seoz-metric {
-        @apply rounded-box border border-base-300/70 bg-base-100 p-4 flex flex-col gap-1;
+        @apply rounded-box border border-base-300/70 bg-base-100 p-4 flex flex-col gap-1 min-w-0;
     }
     .seoz-metric-label {
         @apply text-xs font-medium text-base-content/55;
@@ -426,13 +430,13 @@
         @apply grid grid-cols-2 gap-2;
     }
     .seoz-kv > div {
-        @apply rounded-xl border border-base-300/70 bg-base-200/40 p-2.5;
+        @apply rounded-xl border border-base-300/70 bg-base-200/40 p-2.5 min-w-0;
     }
     .seoz-kv .k {
         @apply block text-[0.7rem] text-base-content/50;
     }
     .seoz-kv .v {
-        @apply block font-bold text-base-content;
+        @apply block font-bold text-base-content break-words;
     }
 
     /* Toast — paper card with a colored start accent (RTL → right) ----- */
