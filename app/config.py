@@ -12,7 +12,7 @@ class Settings(BaseSettings):
 
     # --- app ---
     env: str = "dev"  # dev | production
-    app_version: str = "0.1.0"
+    app_version: str = "0.2.0"
     app_name: str = "Seoz Platform"
 
     # --- PocketBase ---
