@@ -24,6 +24,7 @@ from typing import Any, TypeVar, cast
 from fastapi import Request
 from structlog import get_logger
 
+from app.i18n import _
 from app.utils import error_response
 
 logger = get_logger("app.api.errors")
@@ -47,7 +48,7 @@ def hx_error(fail: str) -> Callable[[F], F]:
                     return await fn(request, *args, **kwargs)
                 except Exception as exc:
                     logger.warning("route.error", route=fn.__name__, error=str(exc))
-                    return error_response(fail)
+                    return error_response(_(fail))
 
             return cast(F, async_wrapper)
 
@@ -57,7 +58,7 @@ def hx_error(fail: str) -> Callable[[F], F]:
                 return fn(request, *args, **kwargs)
             except Exception as exc:
                 logger.warning("route.error", route=fn.__name__, error=str(exc))
-                return error_response(fail)
+                return error_response(_(fail))
 
         return cast(F, wrapper)
 
@@ -86,7 +87,7 @@ def page_guard(fail: str) -> Callable[[F], F]:
         return templates.TemplateResponse(
             request,
             "pages/articles/render_error.html",
-            {"project": project or {"id": project_id or ""}, "message": message},
+            {"project": project or {"id": project_id or ""}, "message": _(message)},
         )
 
     def deco(fn: F) -> F:

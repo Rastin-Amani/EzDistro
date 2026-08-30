@@ -8,6 +8,7 @@ Jinja2>=3.1.6
 pydantic-settings>=2.2
 python-dotenv
 structlog>=24
+babel>=2.15
 
 # --- Data layer ---
 pocketbase>=0.17.1

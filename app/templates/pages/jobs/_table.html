@@ -8,13 +8,13 @@
             <table class="table table-sm">
                 <thead>
                     <tr>
-                        <th>نوع</th>
-                        <th>پروژه</th>
-                        <th>وضعیت</th>
-                        <th>پیشرفت</th>
-                        <th>پیام</th>
-                        <th>تلاش</th>
-                        <th>زمان</th>
+                        <th>{{ _('نوع') }}</th>
+                        <th>{{ _('پروژه') }}</th>
+                        <th>{{ _('وضعیت') }}</th>
+                        <th>{{ _('پیشرفت') }}</th>
+                        <th>{{ _('پیام') }}</th>
+                        <th>{{ _('تلاش') }}</th>
+                        <th>{{ _('زمان') }}</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -27,7 +27,7 @@
                         <td class="w-32">
                             <div class="flex items-center gap-2">
                                 <progress class="progress progress-primary w-16 h-1.5" value="{{ j.progress or 0 }}" max="100"></progress>
-                                <span class="text-xs tabular">{{ j.progress or 0 }}٪</span>
+                                <span class="text-xs tabular">{{ _('%(n)s٪') % {'n': j.progress or 0} }}</span>
                             </div>
                         </td>
                         <td class="text-xs max-w-48">
@@ -36,15 +36,15 @@
                             {% if j.currentItem and j.totalItems %}<p class="opacity-50">{{ j.currentItem }} / {{ j.totalItems }}</p>{% endif %}
                         </td>
                         <td class="text-xs tabular">{{ j.attempts or 0 }}/{{ j.maxAttempts or 3 }}</td>
-                        <td class="text-xs opacity-50 whitespace-nowrap">{{ j.created|jalali_dt }}</td>
+                        <td class="text-xs opacity-50 whitespace-nowrap">{{ j.created|loc_dt }}</td>
                         <td class="whitespace-nowrap">
                             {% if j.status in ['pending', 'retrying', 'running'] %}
                             <button class="btn btn-ghost btn-xs text-warning"
                                     hx-post="/jobs/{{ j.id }}/cancel" hx-swap="none"
-                                    hx-confirm="لغو این وظیفه؟">لغو</button>
+                                    hx-confirm="لغو این وظیفه؟">{{ _('لغو') }}</button>
                             {% elif j.status == 'failed' %}
                             <button class="btn btn-ghost btn-xs text-primary"
-                                    hx-post="/jobs/{{ j.id }}/retry" hx-swap="none">تلاش مجدد</button>
+                                    hx-post="/jobs/{{ j.id }}/retry" hx-swap="none">{{ _('تلاش مجدد') }}</button>
                             {% endif %}
                         </td>
                     </tr>
@@ -56,7 +56,7 @@
     {% else %}
     <div class="seoz-panel">
         <div class="seoz-empty py-8">
-            <p class="font-bold text-base-content/70">وظیفه‌ای وجود ندارد</p>
+            <p class="font-bold text-base-content/70">{{ _('وظیفه‌ای وجود ندارد') }}</p>
         </div>
     </div>
     {% endif %}

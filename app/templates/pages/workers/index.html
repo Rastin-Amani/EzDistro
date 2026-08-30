@@ -1,172 +1,343 @@
 {% extends "layouts/platform.html" %}
+
 {% block dashboard_content %}
+
 {% import 'macros/forms.html' as f %}
 
+
+
 <div id="workers-content" class="flex flex-col gap-4"
+
      hx-get="/workers"
+
      hx-trigger="every 5s"
+
      hx-swap="outerHTML"
+
      hx-select="#workers-content">
 
-    {{ f.page_header('کارگرها', 'وضعیت زندهٔ فرآیندهای کارگر، صف وظایف و سلامت زمان‌بندی خودکار.', 'اجرا و نظارت',
-        '<span class="badge badge-sm badge-soft badge-info"><span class="loading loading-spinner loading-xs me-1"></span>به‌روزرسانی خودکار هر ۵ ثانیه</span>') }}
+
+
+    {{ f.page_header(_('کارگرها'), _('وضعیت زندهٔ فرآیندهای کارگر، صف وظایف و سلامت زمان‌بندی خودکار.'), _('اجرا و نظارت'),
+
+        '<span class="badge badge-sm badge-soft badge-info"><span class="loading loading-spinner loading-xs me-1"></span>' ~ _('به‌روزرسانی خودکار هر ۵ ثانیه') ~ '</span>') }}
+
+
 
     <!-- Overview metrics -->
+
     <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
-        {{ f.stat('کارگر فعال', active_count, 'bg-success', 'ضربان قلب در ۴۵ ثانیهٔ اخیر') }}
-        {{ f.stat('وظایف در حال اجرا', queue.running, 'bg-warning', 'همه کارگرها') }}
-        {{ f.stat('در صف', queue.pending, 'bg-info', 'منتظر دریافت') }}
-        {{ f.stat('تلاش مجدد', queue.retrying, 'bg-warning', 'با تأخیر نمایی') }}
-        {{ f.stat('ناموفق', queue.failed, 'bg-error', 'نیاز به بررسی') }}
+
+        {{ f.stat(_('کارگر فعال'), active_count, 'bg-success', _('ضربان قلب در ۴۵ ثانیهٔ اخیر')) }}
+
+        {{ f.stat(_('وظایف در حال اجرا'), queue.running, 'bg-warning', _('همه کارگرها')) }}
+
+        {{ f.stat(_('در صف'), queue.pending, 'bg-info', _('منتظر دریافت')) }}
+
+        {{ f.stat(_('تلاش مجدد'), queue.retrying, 'bg-warning', _('با تأخیر نمایی')) }}
+
+        {{ f.stat(_('ناموفق'), queue.failed, 'bg-error', _('نیاز به بررسی')) }}
+
     </div>
+
+
 
     {% if workers %}
+
     <!-- Workers -->
+
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
         {% for w in workers %}
+
         <section class="seoz-panel {% if workers|length == 1 %}lg:col-span-2{% endif %}">
+
             <div class="seoz-panel-head flex-wrap">
+
                 <h2 class="seoz-panel-title font-mono text-sm min-w-0 truncate" dir="ltr" title="{{ w.workerId }}">{{ w.workerId }}</h2>
+
                 <div class="flex items-center gap-1.5 flex-wrap">
+
                     {% if w.status == 'active' %}
-                    <span class="badge badge-sm badge-soft badge-success">فعال</span>
+
+                    <span class="badge badge-sm badge-soft badge-success">{{ _('فعال') }}</span>
+
                     {% elif w.status == 'stale' %}
-                    <span class="badge badge-sm badge-soft badge-warning">نامشخص</span>
+
+                    <span class="badge badge-sm badge-soft badge-warning">{{ _('نامشخص') }}</span>
+
                     {% else %}
-                    <span class="badge badge-sm badge-soft badge-neutral">آفلاین</span>
+
+                    <span class="badge badge-sm badge-soft badge-neutral">{{ _('آفلاین') }}</span>
+
                     {% endif %}
+
                     {% if w.needs_restart %}
-                    <span class="badge badge-sm badge-soft badge-warning" title="نسخهٔ کارگر با نسخهٔ وب یکی نیست">نیاز به راه‌اندازی مجدد</span>
+
+                    <span class="badge badge-sm badge-soft badge-warning" title="{{ _('نسخهٔ کارگر با نسخهٔ وب یکی نیست') }}">{{ _('نیاز به راه‌اندازی مجدد') }}</span>
+
                     {% endif %}
+
                 </div>
+
             </div>
+
             <div class="p-4 flex flex-col gap-3">
+
                 <div class="flex items-center justify-between text-xs opacity-60 flex-wrap gap-1">
+
                     <span dir="ltr" class="font-mono min-w-0 max-w-full break-all">{{ w.hostname or '—' }}{% if w.pid %} · pid {{ w.pid }}{% endif %}</span>
-                    <span>شروع: {{ w.startedAt|jalali_dt if w.startedAt else '—' }}</span>
+
+                    <span>{{ _('شروع: %(v)s') % {'v': w.startedAt|loc_dt if w.startedAt else '—'} }}</span>
+
                 </div>
+
+
 
                 <div class="seoz-kv">
-                    <div><span class="k">آخرین ضربان</span><span class="v">{{ w.lastHeartbeatAt|rel_time if w.lastHeartbeatAt else 'هرگز' }}</span></div>
-                    <div><span class="k">در حال اجرا</span><span class="v tabular text-warning">{{ w.runningJobs or 0 }}</span></div>
-                    <div><span class="k">تکمیل‌شده</span><span class="v tabular text-success">{{ w.completedJobs or 0 }}</span></div>
-                    <div><span class="k">ناموفق</span><span class="v tabular {{ 'text-error' if (w.failedJobs or 0) > 0 else '' }}">{{ w.failedJobs or 0 }}</span></div>
-                    <div><span class="k">همزمانی</span><span class="v tabular">{{ w.maxConcurrentJobs or '—' }}</span></div>
-                    <div><span class="k">نسخه</span><span class="v font-mono" dir="ltr">{{ w.version or '—' }}</span></div>
+
+                    <div><span class="k">{{ _('آخرین ضربان') }}</span><span class="v">{{ w.lastHeartbeatAt|rel_time if w.lastHeartbeatAt else 'هرگز' }}</span></div>
+
+                    <div><span class="k">{{ _('در حال اجرا') }}</span><span class="v tabular text-warning">{{ w.runningJobs or 0 }}</span></div>
+
+                    <div><span class="k">{{ _('تکمیل‌شده') }}</span><span class="v tabular text-success">{{ w.completedJobs or 0 }}</span></div>
+
+                    <div><span class="k">{{ _('ناموفق') }}</span><span class="v tabular {{ 'text-error' if (w.failedJobs or 0) > 0 else '' }}">{{ w.failedJobs or 0 }}</span></div>
+
+                    <div><span class="k">{{ _('همزمانی') }}</span><span class="v tabular">{{ w.maxConcurrentJobs or '—' }}</span></div>
+
+                    <div><span class="k">{{ _('نسخه') }}</span><span class="v font-mono" dir="ltr">{{ w.version or '—' }}</span></div>
+
                 </div>
+
+
 
                 <div class="border-t border-base-300/60 pt-2 text-xs flex flex-wrap items-center gap-x-4 gap-y-1">
-                    <span class="opacity-60">زمان‌بندی:</span>
+
+                    <span class="opacity-60">{{ _('زمان‌بندی:') }}</span>
+
                     {% if w.scheduleLastPollAt %}
-                    <span>آخرین بررسی {{ w.scheduleLastPollAt|rel_time }}</span>
-                    <span>ساخته‌شده: <b class="tabular {{ 'text-success' if (w.scheduleCreated or 0) > 0 }}">{{ w.scheduleCreated or 0 }}</b></span>
-                    {% if w.scheduleFailed %}<span class="text-error break-words max-w-full">خطا: {{ w.scheduleFailed }}</span>{% endif %}
+
+                    <span>{{ _('آخرین بررسی %(v)s') % {'v': w.scheduleLastPollAt|rel_time} }}</span>
+
+                    <span>{{ _('ساخته‌شده:') }} <b class="tabular {{ 'text-success' if (w.scheduleCreated or 0) > 0 }}">{{ w.scheduleCreated or 0 }}</b></span>
+
+                    {% if w.scheduleFailed %}<span class="text-error break-words max-w-full">{{ _('خطا: %(v)s') % {'v': w.scheduleFailed} }}</span>{% endif %}
+
                     {% else %}
-                    <span class="opacity-50">بررسی نشده</span>
+
+                    <span class="opacity-50">{{ _('بررسی نشده') }}</span>
+
                     {% endif %}
+
                 </div>
+
             </div>
+
         </section>
+
         {% endfor %}
+
     </div>
+
     {% else %}
+
     <div class="seoz-panel border-error/40">
+
         <div class="seoz-empty py-10">
-            <p class="font-bold text-base-content/75">هیچ کارگری در حال اجرا نیست</p>
-            <p class="text-sm text-base-content/50">فرآیند کارگر را اجرا کنید تا وظایف و زمان‌بندی‌ها پردازش شوند.</p>
+
+            <p class="font-bold text-base-content/75">{{ _('هیچ کارگری در حال اجرا نیست') }}</p>
+
+            <p class="text-sm text-base-content/50">{{ _('فرآیند کارگر را اجرا کنید تا وظایف و زمان‌بندی‌ها پردازش شوند.') }}</p>
+
             <code class="mt-3 inline-block bg-base-200 rounded-lg px-3 py-1.5 font-mono text-sm" dir="ltr">make worker</code>
+
         </div>
+
     </div>
+
     {% endif %}
+
+
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+
         <!-- Scheduler status -->
+
         <section class="seoz-panel">
-            <div class="seoz-panel-head"><h2 class="seoz-panel-title">زمان‌بندی خودکار</h2></div>
+
+            <div class="seoz-panel-head"><h2 class="seoz-panel-title">{{ _('زمان‌بندی خودکار') }}</h2></div>
+
             <div class="p-4 text-xs flex flex-col gap-1.5">
+
                 {% if scheduler_heartbeat %}
-                <div class="flex justify-between"><span class="opacity-60">آخرین بررسی</span><span>{{ scheduler_heartbeat.lastPollAt|jalali_dt }}</span></div>
-                <div class="flex justify-between"><span class="opacity-60">زمان‌بندی آماده</span><span class="tabular">{{ scheduler_heartbeat.due or 0 }}</span></div>
-                <div class="flex justify-between"><span class="opacity-60">وظیفه ساخته‌شده</span><span class="tabular {{ 'text-success' if (scheduler_heartbeat.created or 0) > 0 }}">{{ scheduler_heartbeat.created or 0 }}</span></div>
+
+                <div class="flex justify-between"><span class="opacity-60">{{ _('آخرین بررسی') }}</span><span>{{ scheduler_heartbeat.lastPollAt|loc_dt }}</span></div>
+
+                <div class="flex justify-between"><span class="opacity-60">{{ _('زمان‌بندی آماده') }}</span><span class="tabular">{{ scheduler_heartbeat.due or 0 }}</span></div>
+
+                <div class="flex justify-between"><span class="opacity-60">{{ _('وظیفه ساخته‌شده') }}</span><span class="tabular {{ 'text-success' if (scheduler_heartbeat.created or 0) > 0 }}">{{ scheduler_heartbeat.created or 0 }}</span></div>
+
                 {% if scheduler_heartbeat.failed %}
-                <p class="text-error mt-1">در {{ scheduler_heartbeat.failed }} زمان‌بندی خطا رخ داد — گزارش کارگر را بررسی کنید.</p>
+
+                <p class="text-error mt-1">{{ _('در %(n)s زمان‌بندی خطا رخ داد — گزارش کارگر را بررسی کنید.') % {'n': scheduler_heartbeat.failed} }}</p>
+
                 {% endif %}
+
                 {% else %}
-                <p class="opacity-60">کارگر هنوز زمان‌بندی‌ها را بررسی نکرده است.</p>
+
+                <p class="opacity-60">{{ _('کارگر هنوز زمان‌بندی‌ها را بررسی نکرده است.') }}</p>
+
                 {% endif %}
-                <p class="opacity-40 border-t border-base-300/60 pt-2">کارگر هر ۶۰ ثانیه زمان‌بندی‌های آماده را بررسی و وظیفه می‌سازد.</p>
+
+                <p class="opacity-40 border-t border-base-300/60 pt-2">{{ _('کارگر هر ۶۰ ثانیه زمان‌بندی‌های آماده را بررسی و وظیفه می‌سازد.') }}</p>
+
             </div>
+
         </section>
+
+
 
         <!-- Queue -->
+
         <section class="seoz-panel">
+
             <div class="seoz-panel-head">
-                <h2 class="seoz-panel-title">صف وظایف</h2>
-                <a href="/jobs" class="btn btn-ghost btn-xs">همه وظایف</a>
+
+                <h2 class="seoz-panel-title">{{ _('صف وظایف') }}</h2>
+
+                <a href="/jobs" class="btn btn-ghost btn-xs">{{ _('همه وظایف') }}</a>
+
             </div>
+
             <div class="p-4 flex flex-col gap-1.5 text-xs">
+
                 <a href="/jobs?status=pending" class="flex items-center justify-between rounded-lg border border-base-300/70 px-3 py-2 hover:bg-base-200/50">
-                    <span>در صف (منتظر دریافت)</span><b class="tabular">{{ queue.pending }}</b>
+
+                    <span>{{ _('در صف (منتظر دریافت)') }}</span><b class="tabular">{{ queue.pending }}</b>
+
                 </a>
+
                 <a href="/jobs?status=retrying" class="flex items-center justify-between rounded-lg border border-base-300/70 px-3 py-2 hover:bg-base-200/50">
-                    <span>تلاش مجدد</span><b class="tabular">{{ queue.retrying }}</b>
+
+                    <span>{{ _('تلاش مجدد') }}</span><b class="tabular">{{ queue.retrying }}</b>
+
                 </a>
+
                 <a href="/jobs?status=running" class="flex items-center justify-between rounded-lg border border-base-300/70 px-3 py-2 hover:bg-base-200/50">
-                    <span>در حال اجرا</span><b class="tabular">{{ queue.running }}</b>
+
+                    <span>{{ _('در حال اجرا') }}</span><b class="tabular">{{ queue.running }}</b>
+
                 </a>
+
                 <a href="/jobs?status=failed" class="flex items-center justify-between rounded-lg border border-error/20 bg-error/5 px-3 py-2 hover:bg-error/10">
-                    <span class="text-error">ناموفق</span><b class="tabular text-error">{{ queue.failed }}</b>
+
+                    <span class="text-error">{{ _('ناموفق') }}</span><b class="tabular text-error">{{ queue.failed }}</b>
+
                 </a>
+
             </div>
+
         </section>
+
     </div>
 
+
+
     <!-- Restart guidance -->
+
     <section class="seoz-panel">
-        <div class="seoz-panel-head"><h2 class="seoz-panel-title">راه‌اندازی مجدد کارگر</h2></div>
+
+        <div class="seoz-panel-head"><h2 class="seoz-panel-title">{{ _('راه‌اندازی مجدد کارگر') }}</h2></div>
+
         <div class="p-4 flex flex-col gap-3">
+
             <p class="text-xs opacity-60 leading-relaxed">
-                پس از هر تغییر کد، کارگر باید دوباره راه‌اندازی شود تا نسخهٔ جدید را اجرا کند.
-                اگر نسخهٔ یک کارگر با نسخهٔ وب (v{{ app_version }}) فرق داشته باشد، نشان «نیاز به راه‌اندازی مجدد» می‌گیرد.
+
+                {{ _('پس از هر تغییر کد، کارگر باید دوباره راه‌اندازی شود تا نسخهٔ جدید را اجرا کند.') }}
+
+                {{ _('اگر نسخهٔ یک کارگر با نسخهٔ وب (v%(v)s) فرق داشته باشد، نشان «نیاز به راه‌اندازی مجدد» می‌گیرد.') % {'v': app_version} }}
+
             </p>
+
             {% for cmd in restart_commands %}
+
             <div class="flex items-center justify-between gap-3 border border-base-300/70 rounded-lg px-3 py-2"
+
                  x-data="{copied: false}">
+
                 <div class="min-w-0">
+
                     <p class="text-xs font-semibold">{{ cmd.label }}</p>
+
                     <code class="text-xs font-mono break-all" dir="ltr">{{ cmd.command }}</code>
+
                     <p class="text-[11px] opacity-50 mt-0.5">{{ cmd.hint }}</p>
+
                 </div>
+
                 <button type="button" class="btn btn-ghost btn-xs shrink-0"
+
                         @click="navigator.clipboard.writeText('{{ cmd.command }}'); copied = true; setTimeout(() => copied = false, 1600)"
-                        aria-label="کپی فرمان">
-                    <span x-show="!copied">کپی</span>
-                    <span x-show="copied" class="text-success">کپی شد ✓</span>
+
+                        aria-label="{{ _('کپی فرمان') }}">
+
+                    <span x-show="!copied">{{ _('کپی') }}</span>
+
+                    <span x-show="copied" class="text-success">{{ _('کپی شد ✓') }}</span>
+
                 </button>
+
             </div>
+
             {% endfor %}
+
         </div>
+
     </section>
 
+
+
     {% if recent_failed %}
+
     <!-- Recent failures -->
+
     <section class="seoz-panel">
+
         <div class="seoz-panel-head">
-            <h2 class="seoz-panel-title">ناموفق‌های اخیر</h2>
-            <a href="/failed" class="btn btn-ghost btn-xs">همه</a>
+
+            <h2 class="seoz-panel-title">{{ _('ناموفق‌های اخیر') }}</h2>
+
+            <a href="/failed" class="btn btn-ghost btn-xs">{{ _('همه') }}</a>
+
         </div>
+
         <div class="p-4 flex flex-col gap-1.5 text-xs">
+
             {% for j in recent_failed %}
+
             <a href="/jobs/{{ j.id }}" class="flex items-center justify-between gap-2 rounded-lg border border-error/20 bg-error/5 px-3 py-2 hover:bg-error/10">
+
                 <span class="flex items-center gap-2 min-w-0">
+
                     <span class="badge badge-xs badge-soft badge-error shrink-0 font-mono" dir="ltr">{{ j.type }}</span>
+
                     <span class="truncate opacity-70">{{ j.errorMessage or '—' }}</span>
+
                 </span>
+
                 <span class="opacity-40 whitespace-nowrap shrink-0">{{ j.created|rel_time }}</span>
+
             </a>
+
             {% endfor %}
+
         </div>
+
     </section>
+
     {% endif %}
+
 </div>
+
 {% endblock %}

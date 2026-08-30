@@ -16,6 +16,7 @@ from fastapi.responses import HTMLResponse
 
 from app.api.errors import page_guard
 from app.config import settings
+from app.i18n import _
 from app.repositories.jobs import JobEventRepo, JobRepo
 from app.repositories.worker_heartbeats import WorkerHeartbeatRepo
 from app.templates import templates
@@ -27,7 +28,7 @@ STALE_AFTER_S = 300  # 5 min without a beat → effectively offline
 
 
 @router.get("/workers", response_class=HTMLResponse)
-@page_guard("مشکلی در بارگذاری صفحه کارگرها پیش آمد — دوباره تلاش کنید.")
+@page_guard(_("مشکلی در بارگذاری صفحه کارگرها پیش آمد — دوباره تلاش کنید."))
 def workers_page(request: Request):
     pb = request.state.pb
     try:
@@ -63,7 +64,7 @@ def workers_page(request: Request):
         request,
         "pages/workers/index.html",
         {
-            "title": "کارگرها",
+            "title": _("کارگرها"),
             "workers": workers,
             "active_count": active,
             "queue": queue,
@@ -73,14 +74,14 @@ def workers_page(request: Request):
             "app_version": settings.app_version,
             "restart_commands": [
                 {
-                    "label": "راه‌اندازی کارگر (توسعه)",
+                    "label": _("راه‌اندازی کارگر (توسعه)"),
                     "command": "make worker",
-                    "hint": "پس از هر تغییر کد، کارگر را متوقف و دوباره اجرا کنید.",
+                    "hint": _("پس از هر تغییر کد، کارگر را متوقف و دوباره اجرا کنید."),
                 },
                 {
-                    "label": "راه‌اندازی کارگر (سرویس)",
+                    "label": _("راه‌اندازی کارگر (سرویس)"),
                     "command": "sudo systemctl restart seoz-worker",
-                    "hint": "اگر کارگر به‌صورت سرویس systemd اجرا می‌شود.",
+                    "hint": _("اگر کارگر به‌صورت سرویس systemd اجرا می‌شود."),
                 },
             ],
         },

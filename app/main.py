@@ -6,6 +6,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.api import articles, auth, dashboard, jobs, logs, projects, workers, workspace
 from app.config import settings
+from app.i18n import ENABLED_LOCALES, LOCALE_COOKIE
 from app.middleware import AuthMiddleware
 from app.routes import pwa
 from app.templates import templates
@@ -22,6 +23,31 @@ templates.env.globals["app_name"] = settings.app_name
 
 # static files
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
+
+@app.get("/locale/{code}", include_in_schema=False)
+def switch_locale(code: str, next_url: str = "/"):
+    """Persist an explicit language choice (allowlisted) and return to the page.
+
+    GET with a cookie side effect on purpose: a UI preference, not a data
+    mutation — keeps the switcher plain links (keyboard accessible, no JS).
+    """
+    from fastapi.responses import RedirectResponse
+
+    if code not in ENABLED_LOCALES:
+        return JSONResponse({"error": {"code": "unsupported_locale"}}, status_code=404)
+    if not next_url.startswith("/") or next_url.startswith("//"):
+        next_url = "/"  # open-redirect guard
+    response = RedirectResponse(next_url, status_code=303)
+    response.set_cookie(
+        LOCALE_COOKIE,
+        code,
+        max_age=365 * 24 * 3600,
+        samesite="lax",
+        path="/",
+    )
+    return response
+
 
 # auth + correlation middleware (was previously dead code)
 app.add_middleware(AuthMiddleware)

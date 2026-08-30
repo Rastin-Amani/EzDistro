@@ -24,21 +24,26 @@ import time
 import uuid
 from typing import Any
 
+from app.i18n import _
 from app.repositories.topics import TOPIC_TYPES, TopicRepo
 
 # --- column targets ---------------------------------------------------------
 IMPORT_FIELDS = ("title", "keyword", "pillar", "cluster", "type", "priority", "week", "url")
 
-FIELD_LABELS = {
-    "title": "عنوان (الزامی)",
-    "keyword": "کلمه کلیدی",
-    "pillar": "ستون (Pillar)",
-    "cluster": "خوشه (Cluster)",
-    "type": "نوع",
-    "priority": "اولویت",
-    "week": "هفته",
-    "url": "لینک",
-}
+
+def field_labels() -> dict[str, str]:
+    """Lazy (request-time) translations for import-mapping UI labels."""
+    return {
+        "title": _("عنوان (الزامی)"),
+        "keyword": _("کلمه کلیدی"),
+        "pillar": _("ستون (Pillar)"),
+        "cluster": _("خوشه (Cluster)"),
+        "type": _("نوع"),
+        "priority": _("اولویت"),
+        "week": _("هفته"),
+        "url": _("لینک"),
+    }
+
 
 HEADER_ALIASES: dict[str, set[str]] = {
     "title": {

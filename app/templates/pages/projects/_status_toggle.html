@@ -6,13 +6,13 @@
       hx-trigger="refreshProjectStatus from:body"
       hx-swap="outerHTML"
       class="tooltip tooltip-bottom inline-flex items-center gap-2 rounded-full border border-base-300 px-3 py-1.5"
-      data-tip="{{ 'پروژه فعال است؛ در فهرست پروژه‌ها نمایش داده می‌شود' if project.status == 'active' else 'پروژه غیرفعال است؛ از فهرست پروژه‌ها مخفی است' }}">
+      data-tip="{{ _('پروژه فعال است؛ در فهرست پروژه‌ها نمایش داده می‌شود') if project.status == 'active' else _('پروژه غیرفعال است؛ از فهرست پروژه‌ها مخفی است') }}">
     <input type="checkbox" class="toggle toggle-sm toggle-success" {% if project.status == 'active' %}checked{% endif %}
            hx-post="/projects/{{ project.id }}/toggle-status"
            hx-trigger="change"
            hx-swap="none"
-           aria-label="تغییر وضعیت پروژه" />
+           aria-label="{{ _('تغییر وضعیت پروژه') }}" />
     <span class="text-xs font-semibold {{ 'text-success' if project.status == 'active' else 'opacity-50' }}">
-        {{ 'فعال' if project.status == 'active' else 'غیرفعال' }}
+        {{ _('فعال') if project.status == 'active' else _('غیرفعال') }}
     </span>
 </span>

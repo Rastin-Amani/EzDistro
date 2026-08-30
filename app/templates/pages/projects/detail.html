@@ -1,104 +1,207 @@
 {% extends "layouts/platform.html" %}
+
 {% block dashboard_content %}
+
 {% import 'macros/forms.html' as f %}
 
+
+
 <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+
     <div class="flex items-center gap-2.5 min-w-0">
-        <a href="/projects" class="btn btn-ghost btn-circle btn-sm shrink-0" aria-label="بازگشت">
+
+        <a href="/projects" class="btn btn-ghost btn-circle btn-sm shrink-0" aria-label="{{ _('بازگشت') }}">
+
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+
         </a>
+
         <div class="min-w-0">
+
             <div class="flex items-center gap-2">
+
                 <h1 class="font-extrabold text-lg truncate">{{ project.name }}</h1>
+
                 <span class="badge badge-soft badge-info badge-sm">{{ project.language or 'fa' }}</span>
+
             </div>
+
             <p class="text-xs opacity-50 truncate" dir="ltr">{{ project.slug }}</p>
+
         </div>
+
     </div>
+
     <div class="flex items-center gap-2">
+
         {% include "pages/projects/_status_toggle.html" %}
-        <span class="tooltip tooltip-bottom" data-tip="فقط مستندات تغییر‌یافته را دوباره نمایه می‌کند">
+
+        <span class="tooltip tooltip-bottom" data-tip="{{ _(_( 'فقط مستندات تغییر‌یافته را دوباره نمایه می‌کند' )) }}">
+
             <button class="btn btn-primary btn-sm" hx-post="/projects/{{ project.id }}/run-index" hx-swap="none" hx-disabled-elt="this">
+
                 <span class="loading loading-spinner loading-xs htmx-indicator"></span>
-                نمایه‌سازی
+
+                {{ _('نمایه‌سازی') }}
+
             </button>
+
         </span>
-        <button class="btn btn-ghost btn-sm text-error" onclick="document.getElementById('delete-project-modal').showModal()">حذف</button>
+
+        <button class="btn btn-ghost btn-sm text-error" onclick="document.getElementById('delete-project-modal').showModal()">{{ _('حذف') }}</button>
+
     </div>
+
 </div>
+
+
 
 <!-- Tabs — daisyUI tabs, sticky + scrollable on small screens -->
+
 <div class="sticky top-14 md:top-0 z-20 -mx-4 px-4 py-2 mb-2 border-b border-base-300/60">
+
     <div id="project-tabs" role="tablist"
+
          class="tabs tabs-box tabs-sm seoz-scroll-x overflow-x-auto flex-nowrap">
+
     {% set labels = {
-        'settings': 'تنظیمات', 'integrations': 'اتصالات', 'ai_models': 'مدل‌های AI', 'prompts': 'پرامپت‌ها',
-        'topics': 'موضوع‌ها', 'articles': 'مقاله‌ها', 'retrieval': 'بازیابی', 'jobs': 'وظایف',
-        'indexing': 'نمایه‌سازی', 'publishing': 'انتشار', 'logs': 'رویدادها'
+
+        'settings': _( 'تنظیمات' ), 'integrations': _( 'اتصالات' ), 'ai_models': _( 'مدل‌های AI' ), 'prompts': _( 'پرامپت‌ها' ),
+
+        'topics': _( 'موضوع‌ها' ), 'articles': _( 'مقاله‌ها' ), 'retrieval': _( 'بازیابی' ), 'jobs': _( 'وظایف' ),
+
+        'indexing': _( 'نمایه‌سازی' ), 'publishing': _( 'انتشار' ), 'logs': _( 'رویدادها' )
+
     } %}
+
     {% for tab in tabs %}
+
     <a role="tab"
+
        data-tab="{{ tab }}"
+
        class="tab whitespace-nowrap {{ 'tab-active' if tab == active_tab }}"
+
        hx-get="/projects/{{ project.id }}/tabs/{{ tab }}"
+
        hx-target="#tab-content"
+
        hx-push-url="?tab={{ tab }}"
+
        hx-swap="innerHTML"
+
        hx-indicator="#tab-indicator"
+
        {% if tab == active_tab %}aria-selected="true"{% else %}aria-selected="false"{% endif %}>
+
         {{ labels[tab] }}
+
     </a>
+
     {% endfor %}
+
     </div>
+
 </div>
 
-<span id="tab-indicator" class="htmx-indicator text-xs opacity-60 block py-1">در حال بارگذاری…</span>
+
+
+<span id="tab-indicator" class="htmx-indicator text-xs opacity-60 block py-1">{{ _('در حال بارگذاری…') }}</span>
+
+
 
 <div id="tab-content" class="mt-2 w-full">
+
     {% include "pages/projects/tabs/" ~ active_tab ~ ".html" %}
+
 </div>
 
+
+
 <!-- Delete project modal -->
+
 <dialog id="delete-project-modal" class="modal modal-bottom sm:modal-middle">
+
     <div class="modal-box bg-base-100">
+
         <div class="flex items-center gap-3 mb-2">
+
             <div class="grid size-11 place-items-center rounded-2xl bg-error/15 text-error">
+
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg>
+
             </div>
-            <h3 class="font-bold text-lg">حذف پروژه</h3>
+
+            <h3 class="font-bold text-lg">{{ _('حذف پروژه') }}</h3>
+
         </div>
-        <p class="text-sm opacity-70 leading-relaxed">پروژه «{{ project.name }}» و همه داده‌های مرتبط حذف می‌شود. این عمل قابل بازگشت نیست.</p>
+
+        <p class="text-sm opacity-70 leading-relaxed">{{ _('پروژه «%(v)s» و همه داده‌های مرتبط حذف می‌شود. این عمل قابل بازگشت نیست.') % {'v': project.name} }}</p>
+
         <div class="flex gap-3 mt-6">
+
             <form hx-post="/projects/{{ project.id }}/delete" hx-swap="none" class="flex-1">
-                <button type="submit" class="btn btn-error w-full">حذف پروژه</button>
+
+                <button type="submit" class="btn btn-error w-full">{{ _('حذف پروژه') }}</button>
+
             </form>
-            <button type="button" class="btn btn-ghost" onclick="document.getElementById('delete-project-modal').close()">انصراف</button>
+
+            <button type="button" class="btn btn-ghost" onclick="document.getElementById('delete-project-modal').close()">{{ _('انصراف') }}</button>
+
         </div>
+
     </div>
+
 </dialog>
 
+
+
 <script>
+
     (function () {
+
         function currentTab() {
+
             var params = new URLSearchParams(window.location.search);
+
             return params.get('tab') || 'settings';
+
         }
+
         function syncProjectTabs() {
+
             var active = currentTab();
+
             document.querySelectorAll('#project-tabs [data-tab]').forEach(function (t) {
+
                 var on = t.getAttribute('data-tab') === active;
+
                 t.classList.toggle('tab-active', on);
+
                 t.setAttribute('aria-selected', on ? 'true' : 'false');
+
             });
+
         }
+
         function revealActiveTab() {
+
             var el = document.querySelector('#project-tabs [data-tab="' + currentTab() + '"]');
+
             if (el && el.scrollIntoView) el.scrollIntoView({ block: 'nearest', inline: 'center' });
+
         }
+
         document.addEventListener('htmx:afterSettle', syncProjectTabs);
+
         window.addEventListener('popstate', function () { syncProjectTabs(); revealActiveTab(); });
+
         syncProjectTabs();
+
         revealActiveTab();
+
     })();
+
 </script>
+
 {% endblock %}

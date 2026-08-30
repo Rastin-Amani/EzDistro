@@ -1,126 +1,126 @@
 {% import 'macros/forms.html' as f %}
-{{ f.page_header('تنظیمات پروژه', 'پیکربندی جاسازی، بازیابی، تولید و انتشار.', eyebrow='تنظیمات') }}
+{{ f.page_header(_('تنظیمات پروژه'), _('پیکربندی جاسازی، بازیابی، تولید و انتشار.'), eyebrow=_('تنظیمات')) }}
 <form hx-post="/projects/{{ project.id }}/settings" hx-swap="none" class="flex flex-col gap-5 w-full">
 
-    {{ f.section_open('جاسازی متن (Embedding)', 'تنظیم مدل جاسازی، انتخابگر متن به بردار. تغییر مدل، فضای بردار جدیدی در کیوردنت می‌سازد.', 'مدل جاسازی متن را به بردار تبدیل می‌کند؛ برای بازیابی معنایی استفاده می‌شود.') }}
+    {{ f.section_open(_('جاسازی متن (Embedding)'), _('تنظیم مدل جاسازی، انتخابگر متن به بردار. تغییر مدل، فضای بردار جدیدی در کیوردنت می‌سازد.'), _('مدل جاسازی متن را به بردار تبدیل می‌کند؛ برای بازیابی معنایی استفاده می‌شود.')) }}
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {{ f.select('embedding_provider', 'ارائه‌دهنده', embedding_providers, settings.embeddingProvider,
-                'ارائه‌دهنده سرویس جاسازی (مثلاً Cohere یا OpenAI). باید یک اتصال فعال در تب «اتصالات» داشته باشد.',
-                hint='باید با یک اتصال فعال هماهنگ باشد.') }}
-            {{ f.text('embedding_model', 'مدل', settings.embeddingModel,
-                'شناسه مدل جاسازی — برای Cohere معمولاً embed-v4.0 و برای OpenAI text-embedding-3-small.',
+            {{ f.select('embedding_provider', _('ارائه‌دهنده'), embedding_providers, settings.embeddingProvider,
+                _( 'ارائه‌دهنده سرویس جاسازی (مثلاً Cohere یا OpenAI). باید یک اتصال فعال در تب «اتصالات» داشته باشد.' ),
+                hint=_( 'باید با یک اتصال فعال هماهنگ باشد.' )) }}
+            {{ f.text('embedding_model', _('مدل'), settings.embeddingModel,
+                _( 'شناسه مدل جاسازی — برای Cohere معمولاً embed-v4.0 و برای OpenAI text-embedding-3-small.' ),
                 dir='ltr', placeholder='embed-v4.0') }}
-            {{ f.number('embedding_dimensions', 'ابعاد', settings.embeddingDimensions,
-                'تعداد ابعاد بردار خروجی — باید با مدل هماهنگ باشد (embed-v4.0 = 1024، text-embedding-3-small = 1536).',
-                hint='تغییر مدل یا ابعاد = فضای بردار جدید؛ نیاز به بازنمایه کامل دارد.') }}
+            {{ f.number('embedding_dimensions', _('ابعاد'), settings.embeddingDimensions,
+                _( 'تعداد ابعاد بردار خروجی — باید با مدل هماهنگ باشد (embed-v4.0 = 1024، text-embedding-3-small = 1536).' ),
+                hint=_( 'تغییر مدل یا ابعاد = فضای بردار جدید؛ نیاز به بازنمایه کامل دارد.' )) }}
         </div>
     {{ f.section_close() }}
 
-    {{ f.section_open('مدل‌های هوش مصنوعی', 'پیکربندی مدل‌های تولید محتوا در تب جداگانه.', 'ارائه‌دهنده، مدل، دما، توکن و تایم‌اوت هر نقش (رئوس / بخش‌ها) از اینجا قابل تنظیم است.') }}
+    {{ f.section_open(_('مدل‌های هوش مصنوعی'), _('پیکربندی مدل‌های تولید محتوا در تب جداگانه.'), _('ارائه‌دهنده، مدل، دما، توکن و تایم‌اوت هر نقش (رئوس / بخش‌ها) از اینجا قابل تنظیم است.')) }}
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <p class="text-xs opacity-60 leading-relaxed">تنظیم دقیق مدل‌های LLM برای رئوس‌سازی و نگارش بخش‌ها.</p>
+            <p class="text-xs opacity-60 leading-relaxed">{{ _('تنظیم دقیق مدل‌های LLM برای رئوس‌سازی و نگارش بخش‌ها.') }}</p>
             <a href="/projects/{{ project.id }}?tab=ai_models" class="btn btn-primary btn-sm shrink-0"
-               hx-get="/projects/{{ project.id }}/tabs/ai_models" hx-target="#tab-content">پیکربندی مدل‌ها</a>
+               hx-get="/projects/{{ project.id }}/tabs/ai_models" hx-target="#tab-content">{{ _('پیکربندی مدل‌ها') }}</a>
         </div>
     {{ f.section_close() }}
 
-    {{ f.section_open('تکه‌بندی (Chunking)', 'مستندات برای بازیابی به تکه‌های کوچک تقسیم می‌شوند.', 'متن فارسی ابتدا بر اساس مرز پاراگراف/جمله شکسته می‌شود و تنها در صورت نیاز به حد سخت کلمه می‌رسد — هیچ‌گاه در وسط کلمه.') }}
+    {{ f.section_open(_('تکه‌بندی (Chunking)'), _('مستندات برای بازیابی به تکه‌های کوچک تقسیم می‌شوند.'), _('متن فارسی ابتدا بر اساس مرز پاراگراف/جمله شکسته می‌شود و تنها در صورت نیاز به حد سخت کلمه می‌رسد — هیچ‌گاه در وسط کلمه.')) }}
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {{ f.number('chunk_size', 'اندازه تکه (کلمه)', settings.chunkSize,
-                'حد مطلوب کلمات در هر تکه برای بازیابی. مقادیر کوچکتر = دقت بیشتر، هزینه بالاتر.') }}
-            {{ f.number('chunk_overlap', 'همپوشانی', settings.chunkOverlap,
-                'تعداد کلمات مشترک بین تکه‌های مجاور تا زمینه از دست نرود. معمولاً ۱۵ تا ۲۰٪ اندازه تکه.') }}
-            {{ f.select('separator_strategy', 'استراتژی جداکننده',
-                [('auto', 'خودکار (پاراگراف→جمله)'), ('paragraph', 'پاراگراف'), ('sentence', 'جمله'), ('word', 'کلمه')],
+            {{ f.number('chunk_size', _('اندازه تکه (کلمه)'), settings.chunkSize,
+                _( 'حد مطلوب کلمات در هر تکه برای بازیابی. مقادیر کوچکتر = دقت بیشتر، هزینه بالاتر.' )) }}
+            {{ f.number('chunk_overlap', _('همپوشانی'), settings.chunkOverlap,
+                _( 'تعداد کلمات مشترک بین تکه‌های مجاور تا زمینه از دست نرود. معمولاً ۱۵ تا ۲۰٪ اندازه تکه.' )) }}
+            {{ f.select('separator_strategy', _('استراتژی جداکننده'),
+                [('auto', _( 'خودکار (پاراگراف→جمله)' )), ('paragraph', _( 'پاراگراف' )), ('sentence', _( 'جمله' )), ('word', _( 'کلمه' ))],
                 settings.separatorStrategy,
-                'مرز شکستن متن: خودکار ابتدا پاراگراف و سپس جمله را امتحان می‌کند.') }}
-            {{ f.number('max_chunk_count', 'حداکثر تکه (۰ = نامحدود)', settings.maxChunkCount or 0,
-                'سقف تعداد تکه‌های هر مستند؛ ۰ یعنی بدون محدودیت. برای کنترل هزینه مفید است.') }}
+                _( 'مرز شکستن متن: خودکار ابتدا پاراگراف و سپس جمله را امتحان می‌کند.' )) }}
+            {{ f.number('max_chunk_count', _('حداکثر تکه (۰ = نامحدود)'), settings.maxChunkCount or 0,
+                _( 'سقف تعداد تکه‌های هر مستند؛ ۰ یعنی بدون محدودیت. برای کنترل هزینه مفید است.' )) }}
         </div>
     {{ f.section_close() }}
 
-    {{ f.section_open('بازیابی (Retrieval)', 'جستجوی معنایی و مرتب‌سازی نتایج.', 'هنگام نوشتن مقاله، مرتبط‌ترین تکه‌های مستندات بازیابی و به مدل داده می‌شود.') }}
+    {{ f.section_open(_('بازیابی (Retrieval)'), _('جستجوی معنایی و مرتب‌سازی نتایج.'), _('هنگام نوشتن مقاله، مرتبط‌ترین تکه‌های مستندات بازیابی و به مدل داده می‌شود.')) }}
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {{ f.number('retrieval_top_k', 'تعداد کاندیدا (Top K)', settings.retrievalTopK,
-                'تعداد تکه‌های نامزد که از کیوردنت بازیابی می‌شوند قبل از بازچینش.') }}
-            {{ f.number('similarity_threshold', 'آستانه تشابه', settings.similarityThreshold,
-                'حداقل امتیاز شباهت برای قبول یک تکه (۰ تا ۱). بالاتر = نتایج محدودتر و دقیق‌تر.', step='0.05') }}
-            {{ f.select('reranking_enabled', 'بازچینش (Rerank)',
-                [('0', 'غیرفعال'), ('1', 'فعال')], '1' if settings.rerankingEnabled else '0',
-                'با یک مدل بازچینش، کاندیداها دوباره مرتب می‌شوند تا مرتبط‌ترین‌ها بالا بیایند.') }}
-            {{ f.number('reranker_top_n', 'نتایج پس از بازچینش', settings.rerankerTopN or 8,
-                'تعداد نهایی تکه‌هایی که پس از بازچینش به مدل داده می‌شود.') }}
-            {{ f.text('reranker_model', 'مدل بازچینش', settings.rerankerModel,
-                'شناسه مدل بازچینش (مثلاً rerank-v4.0 از Cohere).', dir='ltr', placeholder='rerank-v4.0') }}
-            {{ f.select('reranker_provider', 'ارائه‌دهنده بازچینش', reranker_providers, settings.rerankerProvider,
-                'ارائه‌دهنده سرویس بازچینش — باید اتصال فعال داشته باشد.') }}
+            {{ f.number('retrieval_top_k', _('تعداد کاندیدا (Top K)'), settings.retrievalTopK,
+                _( 'تعداد تکه‌های نامزد که از کیوردنت بازیابی می‌شوند قبل از بازچینش.' )) }}
+            {{ f.number('similarity_threshold', _('آستانه تشابه'), settings.similarityThreshold,
+                _( 'حداقل امتیاز شباهت برای قبول یک تکه (۰ تا ۱). بالاتر = نتایج محدودتر و دقیق‌تر.' ), step='0.05') }}
+            {{ f.select('reranking_enabled', _('بازچینش (Rerank)'),
+                [('0', _( 'غیرفعال' )), ('1', _( 'فعال' ))], '1' if settings.rerankingEnabled else '0',
+                _( 'با یک مدل بازچینش، کاندیداها دوباره مرتب می‌شوند تا مرتبط‌ترین‌ها بالا بیایند.' )) }}
+            {{ f.number('reranker_top_n', _('نتایج پس از بازچینش'), settings.rerankerTopN or 8,
+                _( 'تعداد نهایی تکه‌هایی که پس از بازچینش به مدل داده می‌شود.' )) }}
+            {{ f.text('reranker_model', _('مدل بازچینش'), settings.rerankerModel,
+                _( 'شناسه مدل بازچینش (مثلاً rerank-v4.0 از Cohere).' ), dir='ltr', placeholder='rerank-v4.0') }}
+            {{ f.select('reranker_provider', _('ارائه‌دهنده بازچینش'), reranker_providers, settings.rerankerProvider,
+                _( 'ارائه‌دهنده سرویس بازچینش — باید اتصال فعال داشته باشد.' )) }}
         </div>
     {{ f.section_close() }}
 
-    {{ f.section_open('بودجه زمینه پرامپت (Context)', 'سقف داده‌ای که به مدل داده می‌شود.', 'فقط همین مقدار از نتایج بازیابی به مدل زبانی داده می‌شود — نه کل مستندات.') }}
+    {{ f.section_open(_('بودجه زمینه پرامپت (Context)'), _('سقف داده‌ای که به مدل داده می‌شود.'), _('فقط همین مقدار از نتایج بازیابی به مدل زبانی داده می‌شود — نه کل مستندات.')) }}
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
-            {{ f.number('context_max_links', 'حداکثر لینک داخلی', settings.contextMaxLinks or 5,
-                'تعداد لینک‌های داخلی پیشنهادی که در هر بخش به مقاله اضافه می‌شود.') }}
-            {{ f.number('context_max_passages', 'حداکثر بخش مرتبط', settings.contextMaxPassages or 5,
-                'تعداد تکه‌های بازیابی‌شده‌ای که وارد زمینه پرامپت می‌شوند.') }}
-            {{ f.number('context_max_chars', 'حداکثر کاراکتر', settings.contextMaxChars or 4000,
-                'سقف کل کاراکترهای زمینه برای کنترل هزینه و طول پرامپت.') }}
+            {{ f.number('context_max_links', _('حداکثر لینک داخلی'), settings.contextMaxLinks or 5,
+                _( 'تعداد لینک‌های داخلی پیشنهادی که در هر بخش به مقاله اضافه می‌شود.' )) }}
+            {{ f.number('context_max_passages', _('حداکثر بخش مرتبط'), settings.contextMaxPassages or 5,
+                _( 'تعداد تکه‌های بازیابی‌شده‌ای که وارد زمینه پرامپت می‌شوند.' )) }}
+            {{ f.number('context_max_chars', _('حداکثر کاراکتر'), settings.contextMaxChars or 4000,
+                _( 'سقف کل کاراکترهای زمینه برای کنترل هزینه و طول پرامپت.' )) }}
         </div>
     {{ f.section_close() }}
 
-    {{ f.section_open('تولید و انتشار', 'تنظیم همزمانی، حداقل طول و حالت انتشار.', '') }}
+    {{ f.section_open(_('تولید و انتشار'), _('تنظیم همزمانی، حداقل طول و حالت انتشار.'), '') }}
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
-            {{ f.number('generation_concurrency', 'تولید هم‌زمان بخش‌ها', settings.generationConcurrency,
-                'تعداد بخش‌هایی که همزمان تولید می‌شوند. بالاتر = سریع‌تر ولی هزینه و محدودیت نرخ بیشتر.') }}
-            {{ f.number('min_article_words', 'حداقل کلمات مقاله', settings.minArticleWords or 300,
-                'حداقل کلمات کل مقاله برای قبولی در اعتبارسنجی.') }}
-            {{ f.select('publishing_mode', 'حالت انتشار',
-                [('draft', 'پیش‌نویس'), ('publish', 'انتشار زنده')], settings.publishingMode,
-                'پیش‌نویس: مقاله فقط ذخیره می‌شود. انتشار زنده: بلافاصله در وردپرس منتشر می‌شود.') }}
-            {{ f.select('autosave_enabled', 'ذخیره خودکار (Autosave)',
-                [('0', 'غیرفعال'), ('1', 'فعال')], '1' if settings.autosave.enabled else '0',
-                'ذخیره دوره‌ای خودکار ویرایش‌های workspace تا کار شما از بین نرود.') }}
-            {{ f.number('autosave_interval_minutes', 'بازه autosave (دقیقه)', settings.autosave.interval_minutes or 5,
-                'هر چند دقیقه یک‌بار تغییرات به‌صورت خودکار ذخیره شوند.') }}
-            {{ f.select('auto_publish_enabled', 'انتشار خودکار (Auto-publish)',
-                [('0', 'غیرفعال'), ('1', 'فعال')], '1' if settings.autoPublish.enabled else '0',
-                'مقاله‌های تولیدشده توسط زمان‌بندی خودکار، بدون بازبینی و مستقیم به وردپرس ارسال می‌شوند (طبق حالت انتشار پروژه).') }}
-            {{ f.number('auto_publish_min_score', 'حداقل امتیاز سئو', settings.autoPublish.min_score or 90,
-                'اگر امتیاز سئو به این حد نرسد، مقاله بازنویسی می‌شود تا برسد.') }}
-            {{ f.number('auto_publish_max_attempts', 'حداکثر بازنویسی', settings.autoPublish.max_attempts or 3,
-                'پس از این تعداد بازنویسی ناموفق، مقاله برای بازبینی انسانی رها می‌شود.') }}
+            {{ f.number('generation_concurrency', _('تولید هم‌زمان بخش‌ها'), settings.generationConcurrency,
+                _( 'تعداد بخش‌هایی که همزمان تولید می‌شوند. بالاتر = سریع‌تر ولی هزینه و محدودیت نرخ بیشتر.' )) }}
+            {{ f.number('min_article_words', _('حداقل کلمات مقاله'), settings.minArticleWords or 300,
+                _( 'حداقل کلمات کل مقاله برای قبولی در اعتبارسنجی.' )) }}
+            {{ f.select('publishing_mode', _('حالت انتشار'),
+                [('draft', _( 'پیش‌نویس' )), ('publish', _( 'انتشار زنده' ))], settings.publishingMode,
+                _( 'پیش‌نویس: مقاله فقط ذخیره می‌شود. انتشار زنده: بلافاصله در وردپرس منتشر می‌شود.' )) }}
+            {{ f.select('autosave_enabled', _('ذخیره خودکار (Autosave)'),
+                [('0', _( 'غیرفعال' )), ('1', _( 'فعال' ))], '1' if settings.autosave.enabled else '0',
+                _( 'ذخیره دوره‌ای خودکار ویرایش‌های workspace تا کار شما از بین نرود.' )) }}
+            {{ f.number('autosave_interval_minutes', _('بازه autosave (دقیقه)'), settings.autosave.interval_minutes or 5,
+                _( 'هر چند دقیقه یک‌بار تغییرات به‌صورت خودکار ذخیره شوند.' )) }}
+            {{ f.select('auto_publish_enabled', _('انتشار خودکار (Auto-publish)'),
+                [('0', _( 'غیرفعال' )), ('1', _( 'فعال' ))], '1' if settings.autoPublish.enabled else '0',
+                _( 'مقاله‌های تولیدشده توسط زمان‌بندی خودکار، بدون بازبینی و مستقیم به وردپرس ارسال می‌شوند (طبق حالت انتشار پروژه).' )) }}
+            {{ f.number('auto_publish_min_score', _('حداقل امتیاز سئو'), settings.autoPublish.min_score or 90,
+                _( 'اگر امتیاز سئو به این حد نرسد، مقاله بازنویسی می‌شود تا برسد.' )) }}
+            {{ f.number('auto_publish_max_attempts', _('حداکثر بازنویسی'), settings.autoPublish.max_attempts or 3,
+                _( 'پس از این تعداد بازنویسی ناموفق، مقاله برای بازبینی انسانی رها می‌شود.' )) }}
         </div>
     {{ f.section_close() }}
 
-    {{ f.section_open('تلاش مجدد (Retry)', 'رفتار خطاهای موقتی در تماس با ارائه‌دهنده‌ها.', 'هنگام خطای موقت (نرخ، شبکه، ۵xx) وظیفه با تأخیر نمایی دوباره تلاش می‌شود.') }}
+    {{ f.section_open(_('تلاش مجدد (Retry)'), _('رفتار خطاهای موقتی در تماس با ارائه‌دهنده‌ها.'), _('هنگام خطای موقت (نرخ، شبکه، ۵xx) وظیفه با تأخیر نمایی دوباره تلاش می‌شود.')) }}
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {{ f.number('retry_max_attempts', 'حداکثر تلاش', settings.retryPolicy.max_attempts,
-                'بیشترین تعداد تلاش برای هر وظیفه قبل از علامت‌گذاری به‌عنوان ناموفق.') }}
-            {{ f.number('retry_backoff_base', 'پایه تأخیر (ثانیه)', settings.retryPolicy.backoff_base,
-                'تأخیر اولیه قبل از اولین تلاش مجدد؛ با هر بار شکست به‌صورت نمایی رشد می‌کند.') }}
-            {{ f.number('retry_backoff_max', 'سقف تأخیر (ثانیه)', settings.retryPolicy.backoff_max,
-                'بیشترین تأخیر ممکن بین دو تلاش مجدد.') }}
+            {{ f.number('retry_max_attempts', _('حداکثر تلاش'), settings.retryPolicy.max_attempts,
+                _( 'بیشترین تعداد تلاش برای هر وظیفه قبل از علامت‌گذاری به‌عنوان ناموفق.' )) }}
+            {{ f.number('retry_backoff_base', _('پایه تأخیر (ثانیه)'), settings.retryPolicy.backoff_base,
+                _( 'تأخیر اولیه قبل از اولین تلاش مجدد؛ با هر بار شکست به‌صورت نمایی رشد می‌کند.' )) }}
+            {{ f.number('retry_backoff_max', _('سقف تأخیر (ثانیه)'), settings.retryPolicy.backoff_max,
+                _( 'بیشترین تأخیر ممکن بین دو تلاش مجدد.' )) }}
         </div>
     {{ f.section_close() }}
 
-    {{ f.section_open('زمان‌بندی وظایف', 'زمان‌بندی نمایه‌سازی و نویسندگی خودکار.', 'کارگر (worker) هر دقیقه زمان‌بندی‌ها را بررسی و در بازه تعیین‌شده وظیفه می‌سازد.') }}
+    {{ f.section_open(_('زمان‌بندی وظایف'), _('زمان‌بندی نمایه‌سازی و نویسندگی خودکار.'), _('کارگر (worker) هر دقیقه زمان‌بندی‌ها را بررسی و در بازه تعیین‌شده وظیفه می‌سازد.')) }}
         {% set sched_index = schedules | selectattr('kind', 'equalto', 'index') | first %}
         {% set sched_write = schedules | selectattr('kind', 'equalto', 'write') | first %}
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {{ f.select('schedule_index_enabled', 'نمایه‌سازی خودکار',
-                [('0', 'غیرفعال'), ('1', 'فعال')], '1' if sched_index and sched_index.enabled else '0',
-                'فعال‌سازی نمایه‌سازی خودکار در بازه تعیین‌شده.') }}
-            {{ f.number('schedule_index_interval', 'بازه نمایه‌سازی (دقیقه)',
+            {{ f.select('schedule_index_enabled', _('نمایه‌سازی خودکار'),
+                [('0', _( 'غیرفعال' )), ('1', _( 'فعال' ))], '1' if sched_index and sched_index.enabled else '0',
+                _( 'فعال‌سازی نمایه‌سازی خودکار در بازه تعیین‌شده.' )) }}
+            {{ f.number('schedule_index_interval', _('بازه نمایه‌سازی (دقیقه)'),
                 sched_index.intervalMinutes if sched_index else 1440,
-                'فاصله بین دو نمایه‌سازی خودکار.') }}
-            {{ f.select('schedule_write_enabled', 'نویسندگی خودکار',
-                [('0', 'غیرفعال'), ('1', 'فعال')], '1' if sched_write and sched_write.enabled else '0',
-                'نویسندگی خودکار برای اولین موضوع برنامه‌ریزی‌شدهٔ پروژه.') }}
-            {{ f.number('schedule_write_interval', 'بازه نویسندگی (دقیقه)',
+                _( 'فاصله بین دو نمایه‌سازی خودکار.' )) }}
+            {{ f.select('schedule_write_enabled', _('نویسندگی خودکار'),
+                [('0', _( 'غیرفعال' )), ('1', _( 'فعال' ))], '1' if sched_write and sched_write.enabled else '0',
+                _( 'نویسندگی خودکار برای اولین موضوع برنامه‌ریزی‌شدهٔ پروژه.' )) }}
+            {{ f.number('schedule_write_interval', _('بازه نویسندگی (دقیقه)'),
                 sched_write.intervalMinutes if sched_write else 1440,
-                'فاصله بین دو اجرای نویسندگی.') }}
+                _( 'فاصله بین دو اجرای نویسندگی.' )) }}
         </div>
     {{ f.section_close() }}
 
-    {{ f.sticky_save('ذخیره تنظیمات') }}
+    {{ f.sticky_save(_('ذخیره تنظیمات')) }}
 </form>

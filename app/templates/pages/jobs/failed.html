@@ -2,7 +2,7 @@
 {% block dashboard_content %}
 {% import 'macros/forms.html' as f %}
 
-{{ f.page_header('وظایف ناموفق', 'وظایفی که با خطا مواجه شده‌اند و نیاز به بررسی دارند', 'نظارت', '<a href="/jobs" class="btn btn-ghost btn-sm">همه وظایف</a>') }}
+{{ f.page_header(_('وظایف ناموفق'), _('وظایفی که با خطا مواجه شده‌اند و نیاز به بررسی دارند'), _('نظارت'), '<a href="/jobs" class="btn btn-ghost btn-sm">' ~ _('همه وظایف') ~ '</a>') }}
 
 {% if jobs %}
 <div class="flex flex-col gap-3" id="failed-list"
@@ -14,14 +14,14 @@
                 <div class="flex items-center gap-2 min-w-0">
                     <span class="badge badge-sm badge-soft badge-error">{{ j.type }}</span>
                     <span class="text-xs opacity-60">{{ j.project[:8] }}</span>
-                    <span class="text-xs opacity-40">{{ j.updated|jalali_dt }}</span>
+                    <span class="text-xs opacity-40">{{ j.updated|loc_dt }}</span>
                 </div>
-                <button class="btn btn-primary btn-xs" hx-post="/jobs/{{ j.id }}/retry" hx-swap="none">تلاش مجدد</button>
+                <button class="btn btn-primary btn-xs" hx-post="/jobs/{{ j.id }}/retry" hx-swap="none">{{ _('تلاش مجدد') }}</button>
             </div>
             {% if j.errorCode %}
             <div class="text-xs bg-error/5 border border-error/20 rounded-lg p-2 font-mono break-words" dir="ltr">
                 <span class="text-error">{{ j.errorCode }}:</span> {{ j.errorMessage }}
-                {% if j.errorDetails and j.errorDetails.attempts %}<span class="opacity-50">(تلاش {{ j.errorDetails.attempts }})</span>{% endif %}
+                {% if j.errorDetails and j.errorDetails.attempts %}<span class="opacity-50">{{ _('(تلاش %(n)s)') % {'n': j.errorDetails.attempts} }}</span>{% endif %}
             </div>
             {% endif %}
         </div>
@@ -34,8 +34,8 @@
         <div class="seoz-empty-icon">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
         </div>
-        <p class="font-bold text-base-content/75">وظیفه ناموفقی وجود ندارد</p>
-        <p class="text-sm text-base-content/50">همه چیز طبق برنامه پیش می‌رود.</p>
+        <p class="font-bold text-base-content/75">{{ _('وظیفه ناموفقی وجود ندارد') }}</p>
+        <p class="text-sm text-base-content/50">{{ _('همه چیز طبق برنامه پیش می‌رود.') }}</p>
     </div>
 </div>
 {% endif %}
