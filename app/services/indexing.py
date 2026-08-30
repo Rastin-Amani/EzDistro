@@ -35,7 +35,6 @@ from app.domain.chunker import chunk_text, strip_html
 from app.jobs.context import JobCancelled, JobContext
 from app.jobs.handlers import register_job
 from app.providers.base import PermanentError, VectorPoint, WPPost
-from app.providers.vector.qdrant_store import payload_safe, point_id
 from app.repositories.indexing import DocumentRepo, IndexRunRepo
 
 CHECKPOINT_EVERY = 10  # documents processed before persisting progress/counters
@@ -233,6 +232,10 @@ async def _process_post(
     totals: dict[str, int],
     seen_sources: set[str],
 ) -> None:
+    # Imported lazily: qdrant_store pulls in qdrant_client (heavy) and this
+    # module is loaded at worker/API startup even when no indexing runs.
+    from app.providers.vector.qdrant_store import payload_safe, point_id
+
     """Process one document. Never duplicates irreversible work.
 
     Freshness is decided by content hash (+ chunk-config guard), never by the
@@ -351,6 +354,8 @@ async def _update_metadata_only(
     run_id: str,
     doc_repo: DocumentRepo,
 ) -> None:
+    from app.providers.vector.qdrant_store import point_id
+
     """Metadata changed but content did not → update WITHOUT re-embedding."""
     doc_repo.update(
         existing["id"],
