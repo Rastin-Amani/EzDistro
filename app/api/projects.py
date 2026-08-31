@@ -63,6 +63,7 @@ TABS = [
     "settings",
     "integrations",
     "ai_models",
+    "images",
     "prompts",
     "topics",
     "articles",
@@ -82,6 +83,7 @@ def integration_categories() -> dict[str, str]:
         "reranker": _("بازچینش (Reranker)"),
         "vector_store": _("ذخیره‌سازی برداری (Qdrant)"),
         "publisher": _("انتشار (WordPress)"),
+        "image": _("تولید تصویر (AI Image)"),
     }
 
 
@@ -398,6 +400,14 @@ def _tab_context(
         ]
     elif tab == "retrieval":
         context["settings"] = ProjectSettingsRepo(pb).get_for_project(project_id)
+    elif tab == "images":
+        from app.providers.registry import ProviderRegistry
+
+        registry = ProviderRegistry(pb)
+        context["settings"] = ProjectSettingsRepo(pb).get_for_project(project_id)
+        providers = registry.available_providers("image")
+        context["image_provider_options"] = [(p, p) for p in providers]
+        context["image_fallback_options"] = [("", _("بدون جایگزین"))] + [(p, p) for p in providers]
     elif tab == "jobs":
         context["jobs"] = JobRepo(pb).list_for_project(project_id, per_page=30)
     elif tab == "indexing":
@@ -552,6 +562,71 @@ def save_settings(
         request.state.pb, project_id, "write", schedule_write_enabled, schedule_write_interval
     )
     return success_response(_("تنظیمات ذخیره شد"))
+
+
+@router.post("/projects/{project_id}/settings/images")
+@hx_error(_("ذخیره تنظیمات تصاویر ناموفق بود"))
+def save_image_settings(
+    request: Request,
+    project_id: str,
+    image_cover_provider: str = Form(""),
+    image_cover_model: str = Form(""),
+    image_interior_provider: str = Form(""),
+    image_interior_model: str = Form(""),
+    image_fallback_provider: str = Form(""),
+    image_fallback_model: str = Form(""),
+    image_cover_aspect_ratio: str = Form(""),
+    image_interior_aspect_ratio: str = Form(""),
+    image_cover_min_width: str = Form(""),
+    image_max_interior_images: str = Form(""),
+    image_max_retries: str = Form(""),
+    image_optimization_format: str = Form(""),
+    image_ai_qa_enabled: str = Form(""),
+    image_prompt_language: str = Form(""),
+    style_tone: str = Form(""),
+    style_palette: str = Form(""),
+    style_lighting: str = Form(""),
+    style_negative: str = Form(""),
+    style_prohibited: str = Form(""),
+):
+    """Project-level image config: providers/models per role, fallback, density,
+    style profile. Model IDs are data — the pipeline never hardcodes them."""
+    require_hx(request)
+    require_project_access(request, project_id)
+    require_project_role(request, project_id)
+    style: dict[str, str] = {}
+    for key, raw in (
+        ("tone", style_tone),
+        ("palette", style_palette),
+        ("lighting", style_lighting),
+        ("negative_prompt", style_negative),
+        ("prohibited", style_prohibited),
+    ):
+        value = safe_str(raw)
+        if value:
+            style[key] = value
+    data = {
+        "imageCoverProvider": safe_str(image_cover_provider, "gemini"),
+        "imageCoverModel": safe_str(image_cover_model, "gemini-3-pro-image"),
+        "imageInteriorProvider": safe_str(image_interior_provider, "bfl"),
+        "imageInteriorModel": safe_str(image_interior_model, "flux-2-klein-9b"),
+        "imageFallbackProvider": safe_str(image_fallback_provider),
+        "imageFallbackModel": safe_str(image_fallback_model),
+        "imageCoverAspectRatio": safe_str(image_cover_aspect_ratio, "16:9"),
+        "imageInteriorAspectRatio": safe_str(image_interior_aspect_ratio, "16:9"),
+        "imageCoverMinWidth": max(0, safe_int(image_cover_min_width, 1200)),
+        "imageMaxInteriorImages": max(0, safe_int(image_max_interior_images, 4)),
+        "imageMaxRetries": max(1, safe_int(image_max_retries, 3)),
+        "imageOptimizationFormat": safe_str(image_optimization_format, "webp"),
+        "imageAiQaEnabled": safe_bool(image_ai_qa_enabled),
+        "imagePromptLanguage": safe_str(image_prompt_language, "en"),
+        "imageStyle": style,
+    }
+    ProjectSettingsRepo(request.state.pb).upsert(project_id, data)
+    return success_response(
+        _("تنظیمات تصاویر ذخیره شد"),
+        extra_events={"refreshArticle": True},
+    )
 
 
 def _persist_schedule(pb: Any, project_id: str, kind: str, enabled: str, interval: str) -> None:

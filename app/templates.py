@@ -125,6 +125,9 @@ STATUS_STYLES = {
     # articles / sections
     "draft": "badge-soft badge-neutral",
     "generating": "badge-soft badge-warning",
+    "optimizing": "badge-soft badge-warning",
+    "ready": "badge-soft badge-success",
+    "uploading": "badge-soft badge-warning",
     "done": "badge-soft badge-success",
     "indexed": "badge-soft badge-success",
     "deleted": "badge-soft badge-neutral",
@@ -180,6 +183,10 @@ def status_label(status: str) -> str:
         "skipped_duplicate": _("تکراری"),
         "draft": _("پیش‌نویس"),
         "generating": _("در حال تولید"),
+        # images
+        "optimizing": _("در حال بهینه‌سازی"),
+        "ready": _("آماده"),
+        "uploading": _("در حال بارگذاری"),
         "done": _("انجام شد"),
         "indexed": _("نمایه شده"),
         "deleted": _("حذف شده"),
@@ -239,3 +246,21 @@ templates.env.filters["loc_dt"] = loc_datetime
 templates.env.filters["status_badge"] = status_badge
 templates.env.filters["status_label"] = status_label
 templates.env.filters["rel_time"] = to_rel_time
+
+
+def pb_file(record_id: object, filename: object) -> str:
+    """PocketBase file URL for article_images binaries.
+
+    File fields are public/unlisted (protected=False) — the admin UI points
+    <img> tags straight at PocketBase; no proxy route, same security posture.
+    """
+    rid = str(record_id or "")
+    name = str(filename or "")
+    if not rid or not name:
+        return ""
+    from app.config import settings
+
+    return f"{settings.pb_url.rstrip('/')}/api/files/article_images/{rid}/{name}"
+
+
+templates.env.filters["pb_file"] = pb_file

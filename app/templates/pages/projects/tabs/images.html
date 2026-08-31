@@ -1,0 +1,91 @@
+{% import 'macros/forms.html' as f %}
+
+{{ f.page_header(_('تصاویر'), _('تنظیمات تولید و انتشار تصاویر مقاله (کاور و تصاویر داخل متن).'), eyebrow=_('پروژه')) }}
+
+<div id="images-tab" class="flex flex-col gap-4 w-full">
+
+    <form hx-post="/projects/{{ project.id }}/settings/images" hx-swap="none" class="flex flex-col gap-4">
+
+        <div class="seoz-panel">
+
+            <div class="seoz-panel-head"><h2 class="seoz-panel-title">{{ _('مدل‌های تولید تصویر') }}</h2></div>
+
+            <div class="p-4 flex flex-col gap-4">
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                    {{ f.select('image_cover_provider', _('پروایدر کاور'), image_provider_options, settings.imageCoverProvider or 'gemini', _('پیش‌فرض: Gemini برای تصویر کاور مقاله.')) }}
+
+                    {{ f.text('image_cover_model', _('مدل کاور'), settings.imageCoverModel or 'gemini-3-pro-image', _('شناسهٔ مدل — داده‌محور است و در پایپ‌لاین هاردکد نمی‌شود.')) }}
+
+                    {{ f.select('image_interior_provider', _('پروایدر تصاویر داخل متن'), image_provider_options, settings.imageInteriorProvider or 'bfl', _('پیش‌فرض: Black Forest Labs (FLUX) برای تصاویر داخل متن.')) }}
+
+                    {{ f.text('image_interior_model', _('مدل تصاویر داخل متن'), settings.imageInteriorModel or 'flux-2-klein-9b', _('مثلاً FLUX.2 Klein 9B — قیمت‌گذاری مگاپیکسلی.')) }}
+
+                    {{ f.select('image_fallback_provider', _('پروایدر جایگزین (اختیاری)'), image_fallback_options, settings.imageFallbackProvider or '', _('اگر پروایدر اصلی شکست خورد، این پروایدر امتحان می‌شود.')) }}
+
+                    {{ f.text('image_fallback_model', _('مدل جایگزین'), settings.imageFallbackModel or '', _('خالی = بدون جایگزین.')) }}
+
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+
+                    {{ f.text('image_cover_aspect_ratio', _('نسبت کاور'), settings.imageCoverAspectRatio or '16:9', _('مثل 16:9')) }}
+
+                    {{ f.text('image_interior_aspect_ratio', _('نسبت تصاویر داخل متن'), settings.imageInteriorAspectRatio or '16:9', _('مثل 4:3')) }}
+
+                    {{ f.number('image_cover_min_width', _('حداقل عرض کاور (px)'), settings.imageCoverMinWidth or 1200, _('برای سئو و Google Discover دست‌کم ۱۲۰۰ توصیه می‌شود.')) }}
+
+                    {{ f.number('image_max_interior_images', _('حداکثر تصاویر داخل متن'), settings.imageMaxInteriorImages or 4, _('سقف نهایی تعداد؛ تراکم بر اساس طول مقاله تنظیم می‌شود.')) }}
+
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+
+                    {{ f.number('image_max_retries', _('حداکثر تلاش مجدد'), settings.imageMaxRetries or 3, _('تلاش‌های موتور جاب برای خطاهای گذرا.')) }}
+
+                    {{ f.select('image_optimization_format', _('فرمت بهینه‌سازی'), [('webp', 'WebP'), ('avif', 'AVIF'), ('jpeg', 'JPEG')], settings.imageOptimizationFormat or 'webp', _('AVIF در صورت پشتیبانی سرور؛ وگرنه WebP.')) }}
+
+                    {{ f.select('image_prompt_language', _('زبان پرامپت تصویر'), [('en', _('انگلیسی')), ('fa', _('فارسی'))], settings.imagePromptLanguage or 'en', _('مستقل از زبان مقاله — alt و توضیح همیشه به زبان مقاله تولید می‌شوند.')) }}
+
+                    {{ f.select('image_ai_qa_enabled', _('بازبینی بصری با هوش مصنوعی'), [('0', _('غیرفعال')), ('1', _('فعال'))], '1' if settings.imageAiQaEnabled else '0', _('اعتبارسنجی اختیاری خروجی تصویر با مدل بینایی — هزینهٔ اضافه دارد.')) }}
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="seoz-panel">
+
+            <div class="seoz-panel-head">
+
+                <h2 class="seoz-panel-title">{{ _('پروفایل سبک بصری') }}</h2>
+
+                {{ f.tip(_('سبک برند پروژه — به پرامپت همهٔ تصاویر اضافه می‌شود. «المان‌های ممنوع» به پرامپت منفی می‌رود.')) }}
+
+            </div>
+
+            {% set style = settings.imageStyle if settings.imageStyle is mapping else {} %}
+
+            <div class="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                {{ f.text('style_tone', _('لحن و حس کلی'), style.tone or '', _('مثلاً: مینیمال، حرفه‌ای، گرم')) }}
+
+                {{ f.text('style_palette', _('پالت رنگی'), style.palette or '', _('مثلاً: آبی تیره و سفید')) }}
+
+                {{ f.text('style_lighting', _('نورپردازی'), style.lighting or '', _('مثلاً: نرم و طبیعی')) }}
+
+                {{ f.text('style_negative', _('پرامپت منفی سراسری'), style.negative_prompt or '', _('به پیش‌فرض «بدون متن و واترمارک» اضافه می‌شود.')) }}
+
+                {{ f.text('style_prohibited', _('المان‌های ممنوع'), style.prohibited or '', _('مثلاً: لوگو، چهرهٔ افراد خاص')) }}
+
+            </div>
+
+        </div>
+
+        {{ f.sticky_save(_('ذخیره تنظیمات تصاویر')) }}
+
+    </form>
+
+</div>

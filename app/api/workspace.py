@@ -17,6 +17,7 @@ from app.api.deps import (
 from app.api.errors import hx_error, page_guard
 from app.domain.article_validation import ArticleValidator
 from app.i18n import _
+from app.repositories.article_images import ArticleImageRepo
 from app.repositories.articles import ArticleRepo, SectionRepo
 from app.repositories.jobs import JobRepo, now_utc
 from app.repositories.publishing_runs import PublishingRunRepo
@@ -44,6 +45,7 @@ def article_workspace(request: Request, project_id: str, article_id: str):
     topic = TopicRepo(request.state.pb).get(article.get("topicId") or "")
     runs = PublishingRunRepo(request.state.pb).list_for_article(article_id, per_page=10)
     internal_links = _collect_links(article)
+    images = ArticleImageRepo(request.state.pb).list_for_article(article_id)
     return templates.TemplateResponse(
         request,
         "pages/articles/workspace.html",
@@ -55,8 +57,63 @@ def article_workspace(request: Request, project_id: str, article_id: str):
             "topic": topic,
             "publish_runs": runs,
             "internal_links": internal_links,
+            "image_slots": _image_slots(article, images),
         },
     )
+
+
+def _image_slots(article: dict, images: list[dict]) -> list[dict]:
+    """View-model for the images pane: one slot per planned image (cover +
+    each interior) plus leftover versions whose slot vanished from the plan.
+
+    Versions stay grouped per slot so the UI can compare/roll back without
+    extra queries.
+    """
+    plan = article.get("imagePlan") or {}
+    specs = plan.get("images") if isinstance(plan, dict) else None
+    by_key: dict[str, list[dict]] = {}
+    for row in images:
+        by_key.setdefault(str(row.get("sectionKey") or ""), []).append(row)
+    for rows in by_key.values():
+        rows.sort(key=lambda r: int(r.get("version") or 0), reverse=True)
+
+    slots: list[dict] = []
+    seen: set[str] = set()
+    for spec in specs or []:
+        if not isinstance(spec, dict):
+            continue
+        role = str(spec.get("role") or "")
+        key = "cover" if role == "cover" else str(spec.get("section_key") or "")
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        versions = by_key.pop(key, [])
+        active = next((r for r in versions if r.get("active")), None)
+        if active is None and versions:
+            active = versions[0]
+        slots.append(
+            {
+                "key": key,
+                "role": role or "interior",
+                "spec": spec,
+                "versions": versions,
+                "active": active,
+            }
+        )
+    for key, versions in sorted(by_key.items()):
+        active = next((r for r in versions if r.get("active")), None)
+        if active is None and versions:
+            active = versions[0]
+        slots.append(
+            {
+                "key": key,
+                "role": str(versions[0].get("role") or "interior"),
+                "spec": None,
+                "versions": versions,
+                "active": active,
+            }
+        )
+    return slots
 
 
 def _collect_links(article: dict) -> list[dict]:

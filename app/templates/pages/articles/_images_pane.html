@@ -1,0 +1,272 @@
+{# Images area — editorial view of the image plan + generated versions.
+   Lives in the workspace center column; refreshes with the whole workspace
+   (refreshArticle polling every 4s) so status chips track live job stages. #}
+{% set plan = article.imagePlan if article.imagePlan is mapping else none %}
+{% set base = '/projects/' ~ project.id ~ '/articles/' ~ article.id ~ '/images' %}
+<div class="seoz-panel" id="images-pane">
+
+    <div class="seoz-panel-head">
+
+        <div class="flex items-center gap-2">
+
+            <h2 class="seoz-panel-title">{{ _('تصاویر مقاله') }}</h2>
+
+            {% if plan %}<span class="badge badge-ghost badge-sm">v{{ article.imagePlanVersion or 1 }}</span>{% endif %}
+
+        </div>
+
+        <button class="btn btn-outline btn-xs" hx-post="{{ base }}/plan" hx-swap="none"
+                hx-confirm="{{ _('برنامه تصاویر دوباره ساخته شود؟ پرامپت‌های فعلی جایگزین می‌شوند.') }}">
+            <span class="loading loading-spinner loading-xs htmx-indicator"></span>
+            {{ _('برنامه تصاویر') }}
+        </button>
+
+    </div>
+
+    <div class="p-4 flex flex-col gap-4">
+
+        {% if not plan %}
+
+            <div class="seoz-empty py-6">
+
+                <p class="font-bold text-base-content/75">{{ _('برنامه تصاویر ساخته نشده است') }}</p>
+
+                <p class="text-sm text-base-content/50">{{ _('برای تولید تصویر کاور و تصاویر داخل متن، ابتدا برنامه تصاویر را بسازید.') }}</p>
+
+            </div>
+
+        {% else %}
+
+            {% set interior_count = plan.images | selectattr('role', 'equalto', 'interior') | list | length %}
+            <p class="text-xs opacity-50 leading-relaxed">
+                {{ _('%(n)s تصویر در برنامه: ۱ کاور + %(m)s تصویر داخل متن. هر بازتولید یک نسخهٔ جدید می‌سازد؛ نسخه‌های موفق هرگز بازنویسی نمی‌شوند.') % {'n': plan.images | length, 'm': interior_count} }}
+            </p>
+
+        {% endif %}
+
+        {% for slot in image_slots %}
+
+        {% set row = slot.active %}
+        {% set spec = slot.spec %}
+        {% set is_cover = slot.role == 'cover' %}
+
+        <div class="rounded-box border border-base-300/60 p-3 flex flex-col gap-3" data-image-slot="{{ slot.key }}">
+
+            <div class="flex items-center justify-between gap-2">
+
+                <div class="flex items-center gap-2 min-w-0">
+
+                    <span class="badge badge-sm {{ 'badge-primary' if is_cover else 'badge-ghost' }}">
+                        {{ _('کاور مقاله') if is_cover else _('تصویر داخل متن') }}
+                    </span>
+
+                    {% if row %}<span class="badge badge-sm {{ row.status|status_badge }}">{{ row.status|status_label }}</span>{% endif %}
+
+                    {% if spec and spec.purpose %}<span class="text-xs opacity-60 truncate">{{ spec.purpose }}</span>{% endif %}
+
+                </div>
+
+                {% if row and row.estimatedCost %}
+                    <span class="text-xs tabular whitespace-nowrap" title="{{ _('هزینهٔ تخمینی تولید') }}">${{ '%.3f'|format(row.estimatedCost) }}</span>
+                {% elif row and row.status == 'ready' %}
+                    <span class="text-xs opacity-50 whitespace-nowrap">{{ _('هزینه: نامشخص') }}</span>
+                {% endif %}
+
+            </div>
+
+            {% if row and row.status == 'ready' and row.optimizedFile %}
+
+                <figure class="flex flex-col gap-1">
+
+                    <img src="{{ row.id|pb_file(row.optimizedFile) }}" alt="{{ row.altText or spec.alt_text or '' }}"
+                         width="{{ row.width or 0 }}" height="{{ row.height or 0 }}"
+                         class="rounded-lg w-full object-cover border border-base-300/50"
+                         {% if not is_cover %}loading="lazy"{% endif %} decoding="async">
+
+                    {% if row.caption %}<figcaption class="text-xs opacity-60">{{ row.caption }}</figcaption>{% endif %}
+
+                </figure>
+
+            {% elif row and row.status == 'failed' and row.error %}
+
+                <div class="text-xs text-error bg-error/10 rounded-lg p-2 leading-relaxed">
+
+                    <span class="font-bold">{{ _('خطا') }} ({{ row.error.category or 'unknown' }}):</span>
+                    {{ row.error.message or '—' }}
+
+                    {% if row.error.retryable %}<span class="opacity-70">— {{ _('قابل تلاش مجدد') }}</span>{% endif %}
+
+                </div>
+
+            {% endif %}
+
+            {% if spec %}
+
+                <div class="text-xs opacity-60 flex flex-wrap gap-x-4 gap-y-1">
+
+                    {% if spec.aspect_ratio %}<span>{{ _('نسبت') }}: {{ spec.aspect_ratio }}</span>{% endif %}
+
+                    {% if spec.suggested_size %}<span>{{ _('ابعاد') }}: {{ spec.suggested_size[0] }}×{{ spec.suggested_size[1] }}</span>{% endif %}
+
+                    {% if spec.semantic_role %}<span>{{ _('نقش معنایی') }}: {{ spec.semantic_role }}</span>{% endif %}
+
+                </div>
+
+                <details class="collapse collapse-arrow bg-base-200/40 rounded-lg">
+
+                    <summary class="collapse-title text-xs py-2 min-h-0">{{ _('پرامپت تصویر') }}</summary>
+
+                    <div class="collapse-content text-xs opacity-75 leading-relaxed">
+
+                        <p dir="auto" class="whitespace-pre-wrap">{{ spec.prompt }}</p>
+
+                        {% if spec.alt_text %}<p class="mt-2"><span class="font-bold">{{ _('متن جایگزین') }}:</span> {{ spec.alt_text }}</p>{% endif %}
+
+                        {% if spec.caption %}<p><span class="font-bold">{{ _('توضیح') }}:</span> {{ spec.caption }}</p>{% endif %}
+
+                    </div>
+
+                </details>
+
+            {% endif %}
+
+            {# actions #}
+            <div class="flex flex-wrap items-center gap-2">
+
+                {% if not row or row.status in ['failed'] %}
+
+                    <button class="btn btn-primary btn-xs"
+                            hx-post="{{ base }}/generate" hx-swap="none"
+                            hx-vals='{"role": "{{ slot.role }}", "section_key": "{{ slot.key }}"}'>
+                        <span class="loading loading-spinner loading-xs htmx-indicator"></span>
+                        {{ _('تولید تصویر') }}
+                    </button>
+
+                {% elif row.status in ['ready'] %}
+
+                    <button class="btn btn-outline btn-xs"
+                            hx-post="{{ base }}/{{ row.id }}/regenerate" hx-swap="none"
+                            hx-confirm="{{ _('نسخهٔ جدید ساخته شود؟ نسخهٔ فعلی حفظ می‌شود.') }}">
+                        <span class="loading loading-spinner loading-xs htmx-indicator"></span>
+                        {{ _('بازتولید') }}
+                    </button>
+
+                    <button class="btn btn-ghost btn-xs"
+                            hx-post="{{ base }}/{{ row.id }}/optimize" hx-swap="none"
+                            title="{{ _('بهینه‌سازی مجدد با تنظیمات فعلی (فرمت/ابعاد)') }}">
+                        <span class="loading loading-spinner loading-xs htmx-indicator"></span>
+                        {{ _('بهینه‌سازی مجدد') }}
+                    </button>
+
+                    <button class="btn btn-ghost btn-xs"
+                            hx-post="{{ base }}/{{ row.id }}/publish" hx-swap="none"
+                            hx-vals='{"featured": "{{ '1' if is_cover else '0' }}"}'
+                            title="{{ _('بارگذاری در وردپرس (در صورت تکرار، رسانهٔ موجود بازاستفاده می‌شود)') }}">
+                        <span class="loading loading-spinner loading-xs htmx-indicator"></span>
+                        {{ _('بارگذاری در وردپرس') }}
+                    </button>
+
+                {% else %}
+
+                    <span class="text-xs opacity-50">{{ _('در حال پردازش…') }}</span>
+
+                {% endif %}
+
+                {% if row and row.wordpressMediaId %}
+                    <span class="badge badge-ghost badge-sm" title="{{ row.wordpressUrl }}">WP #{{ row.wordpressMediaId }}</span>
+                {% endif %}
+
+            </div>
+
+            {# metadata editing for the active version #}
+            {% if row and row.status == 'ready' %}
+
+            <form hx-post="{{ base }}/{{ row.id }}/metadata" hx-swap="none" class="grid sm:grid-cols-2 gap-2 items-end">
+
+                <label class="form-control">
+
+                    <span class="label-text text-xs font-bold">{{ _('متن جایگزین (alt)') }}</span>
+
+                    <input type="text" name="alt_text" dir="auto" maxlength="300" value="{{ row.altText or spec.alt_text or '' }}"
+                           class="input input-bordered input-sm w-full" placeholder="{{ _('توضیح طبیعی تصویر برای موتورهای جستجو') }}">
+
+                </label>
+
+                <label class="form-control">
+
+                    <span class="label-text text-xs font-bold">{{ _('توضیح (caption) — اختیاری') }}</span>
+
+                    <input type="text" name="caption" dir="auto" maxlength="300" value="{{ row.caption or spec.caption or '' }}"
+                           class="input input-bordered input-sm w-full">
+
+                </label>
+
+                <div><button type="submit" class="btn btn-outline btn-xs">{{ _('ذخیره اطلاعات') }}</button></div>
+
+            </form>
+
+            {% endif %}
+
+            {# version history: compare + select + remove #}
+            {% if slot.versions | length > 1 %}
+
+            <details class="collapse collapse-arrow bg-base-200/30 rounded-lg">
+
+                <summary class="collapse-title text-xs py-2 min-h-0">
+                    {{ _('نسخه‌ها') }} ({{ slot.versions | length }})
+                </summary>
+
+                <div class="collapse-content flex flex-col gap-2">
+
+                    {% for v in slot.versions %}
+
+                    <div class="flex items-center gap-2 justify-between text-xs" data-image-version="{{ v.id }}">
+
+                        <div class="flex items-center gap-2 min-w-0">
+
+                            <span class="font-bold tabular">v{{ v.version }}</span>
+
+                            <span class="badge badge-ghost badge-xs {{ v.status|status_badge }}">{{ v.status|status_label }}</span>
+
+                            {% if v.provider %}<span class="opacity-50">{{ v.provider }}/{{ v.model }}</span>{% endif %}
+
+                            {% if v.optimizedFile %}<img src="{{ v.id|pb_file(v.optimizedFile) }}" alt="" class="h-8 w-14 object-cover rounded" loading="lazy">{% endif %}
+
+                        </div>
+
+                        <div class="flex items-center gap-1">
+
+                            {% if v.status == 'ready' and not v.active %}
+
+                                <button class="btn btn-ghost btn-xs" hx-post="{{ base }}/{{ v.id }}/select" hx-swap="none">
+                                    {{ _('استفاده از این تصویر') }}
+                                </button>
+
+                            {% endif %}
+
+                            {% if v.active %}<span class="badge badge-success badge-xs">{{ _('فعال') }}</span>{% endif %}
+
+                            <button class="btn btn-ghost btn-xs text-error" hx-post="{{ base }}/{{ v.id }}/remove" hx-swap="none"
+                                    hx-confirm="{{ _('این نسخه غیرفعال شود؟') }}">
+                                {{ _('حذف') }}
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                    {% endfor %}
+
+                </div>
+
+            </details>
+
+            {% endif %}
+
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+</div>

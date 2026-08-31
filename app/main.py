@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.api import articles, auth, dashboard, jobs, logs, projects, workers, workspace
+from app.api import articles, auth, dashboard, images, jobs, logs, projects, workers, workspace
 from app.config import settings
 from app.i18n import ENABLED_LOCALES, LOCALE_COOKIE
 from app.middleware import AuthMiddleware
@@ -58,6 +58,7 @@ app.include_router(dashboard.router)
 app.include_router(projects.router)
 app.include_router(articles.router)
 app.include_router(workspace.router)
+app.include_router(images.router)
 app.include_router(jobs.router)
 app.include_router(workers.router)
 app.include_router(logs.router)

@@ -32,6 +32,12 @@ JOB_TYPES = [
     "assemble_article",
     "publish_article",
     "retry_failed_job",
+    "plan_article_images",
+    "generate_article_image",
+    "generate_cover_image",
+    "generate_interior_image",
+    "optimize_article_image",
+    "publish_article_image",
 ]
 
 
