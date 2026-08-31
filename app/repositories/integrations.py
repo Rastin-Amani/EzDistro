@@ -11,7 +11,7 @@ from typing import Any
 
 from app.repositories.base import BaseRepo
 
-INTEGRATION_CATEGORIES = ("llm", "embedding", "reranker", "vector_store", "publisher")
+INTEGRATION_CATEGORIES = ("llm", "embedding", "reranker", "vector_store", "publisher", "image")
 HEALTH_STATUSES = ("unknown", "healthy", "degraded", "unhealthy")
 
 
