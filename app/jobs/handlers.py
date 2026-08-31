@@ -28,6 +28,12 @@ JOB_TYPES = (
     "assemble_article",
     "publish_article",
     "retry_failed_job",
+    "plan_article_images",
+    "generate_article_image",
+    "generate_cover_image",
+    "generate_interior_image",
+    "optimize_article_image",
+    "publish_article_image",
 )
 
 
@@ -63,6 +69,13 @@ def ensure_registered() -> None:
         if _loaded:
             return
         # Importing these modules triggers @register_job side effects.
-        from app.services import indexing, publishing_service, retry_service, writing  # noqa: F401
+        from app.services import (  # noqa: F401
+            image_planning,
+            images,
+            indexing,
+            publishing_service,
+            retry_service,
+            writing,
+        )
 
         _loaded = True

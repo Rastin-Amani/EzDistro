@@ -117,8 +117,21 @@ async def handle_publish_article(ctx: JobContext) -> dict[str, Any]:
 
     ctx.stage_started("publishing", "در حال ارسال به وردپرس…")
     ctx.progress(20, stage="publishing", message="در حال ارسال به وردپرس…")
-    publisher = ctx.registry.get_publisher_provider(ctx.config.project, ctx.config.settings)
     try:
+        publisher = ctx.registry.get_publisher_provider(ctx.config.project, ctx.config.settings)
+
+        # Images: pre-publish validation, idempotent WP media upload, placeholder
+        # resolution. Missing cover blocks publishing unless the user explicitly
+        # overrides (publishWithoutCover=true in the job payload).
+        from app.services.images import apply_images_to_html
+
+        html, featured_media_id = await apply_images_to_html(
+            ctx,
+            article,
+            html,
+            publisher,
+            allow_missing_cover=bool(ctx.payload().get("publishWithoutCover")),
+        )
         existing_wp_id = int(article.get("wordpressPostId") or 0)
         if existing_wp_id:
             # Safe publishing: UPDATE the existing post instead of creating a duplicate.
@@ -170,6 +183,9 @@ async def handle_publish_article(ctx: JobContext) -> dict[str, Any]:
                     meta={"seoz_article_id": article_id, "seoz_request_id": request_id},
                     excerpt=article.get("metaDescription") or "",
                 )
+        if featured_media_id:
+            # cover image → WP featured image (drives og:image in the theme)
+            await publisher.set_featured_media(result.post_id, featured_media_id)
     except Exception as exc:
         runs.mark_failed(
             record["id"], {"type": type(exc).__name__, "message": str(exc), "requestId": request_id}
