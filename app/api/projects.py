@@ -655,17 +655,30 @@ async def test_image_generation(request: Request, project_id: str):
             "pages/projects/tabs/_image_test_result.html",
             {"error": _("مدل تصویر کاور تنظیم نشده است — ابتدا مدل را ذخیره کنید")},
         )
-    from app.domain.images import classify_error
+    from app.domain.images import classify_error, dims_for_aspect
     from app.providers.base import ImageRequest, ProviderError
     from app.providers.registry import ProviderRegistry
 
+    # Replicate the REAL cover request (same dims the article pipeline sends) —
+    # some gateways reject sizes the pipeline would never use (e.g. square on
+    # AvalAI's gemini-3-pro-image).
+    width, height = dims_for_aspect(
+        safe_str(settings.get("imageCoverAspectRatio"), "16:9") or "16:9",
+        role="cover",
+        min_width=safe_int(settings.get("imageCoverMinWidth"), 1200),
+    )
     try:
         provider = ProviderRegistry(request.state.pb).get_image_provider(
             project, settings, role_config={"provider": provider_name, "model": model}
         )
         started = time.monotonic()
         result = await provider.generate_image(
-            ImageRequest(prompt=_TEST_IMAGE_PROMPT, width=512, height=512, aspect_ratio="1:1")
+            ImageRequest(
+                prompt=_TEST_IMAGE_PROMPT,
+                width=width,
+                height=height,
+                aspect_ratio=safe_str(settings.get("imageCoverAspectRatio"), "16:9") or "16:9",
+            )
         )
         await provider.aclose()
     except ProviderError as exc:
@@ -675,6 +688,15 @@ async def test_image_generation(request: Request, project_id: str):
             "pages/projects/tabs/_image_test_result.html",
             {"error": str(exc), "category": category},
         )
+    # Gateways that pick their own output size report 0x0 — read actual dims.
+    out_w, out_h = result.width, result.height
+    if not (out_w and out_h):
+        import io
+
+        from PIL import Image
+
+        with Image.open(io.BytesIO(result.data)) as img:
+            out_w, out_h = img.size
     return templates.TemplateResponse(
         request,
         "pages/projects/tabs/_image_test_result.html",
@@ -685,8 +707,8 @@ async def test_image_generation(request: Request, project_id: str):
             "model": model,
             "bytes": len(result.data),
             "latency": int((time.monotonic() - started) * 1000),
-            "width": result.width,
-            "height": result.height,
+            "width": out_w,
+            "height": out_h,
         },
     )
 
