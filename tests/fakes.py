@@ -13,6 +13,7 @@ import uuid
 from typing import Any
 
 from pocketbase.errors import ClientResponseError
+from pocketbase.models.file_upload import FileUpload
 
 
 def _now() -> str:
@@ -199,8 +200,30 @@ class FakeStorage:
     def __init__(self, unique_fields: dict[str, list[str]] | None = None) -> None:
         self._records: dict[str, dict[str, dict]] = {}
         self.unique_fields: dict[str, list[str]] = unique_fields or {}
+        self.files: dict[tuple[str, str, str], bytes] = {}  # (collection, id, field) → bytes
         self.query_count: int = 0  # reads (list/get/first)
         self.write_count: int = 0  # creates/updates/deletes
+
+    @staticmethod
+    def _split_files(data: dict) -> tuple[dict, list[tuple[str, object]]]:
+        """Separate FileUpload values from plain fields (mirrors PB multipart)."""
+        plain: dict = {}
+        uploads: list[tuple[str, object]] = []
+        for key, value in data.items():
+            if isinstance(value, FileUpload):
+                for item in value.files:
+                    uploads.append((key, item))
+            else:
+                plain[key] = value
+        return plain, uploads
+
+    @staticmethod
+    def _upload_parts(item: object) -> tuple[str, bytes]:
+        # FileUpload entries are (filename, bytes|fileobj) tuples
+        filename, content = item  # type: ignore[misc]
+        if hasattr(content, "read"):
+            content = content.read()
+        return str(filename), bytes(content)
 
     def _bump_read(self) -> None:
         self.query_count += 1
@@ -221,15 +244,20 @@ class FakeStorage:
 
     def create(self, name: str, data: dict) -> dict:
         self._bump_write()
+        plain, uploads = self._split_files(data)
         for field in self.unique_fields.get(name, []):
-            value = data.get(field)
+            value = plain.get(field)
             if value is None or value == "":
                 continue
             for other in self._records.get(name, {}).values():
                 if other.get(field) == value and other.get(field) != "":
                     raise ClientResponseError("unique constraint violated", status=400)
-        record = {"id": uuid.uuid4().hex, "created": _now(), "updated": _now(), **data}
+        record = {"id": uuid.uuid4().hex, "created": _now(), "updated": _now(), **plain}
         self._records.setdefault(name, {})[record["id"]] = record
+        for key, item in uploads:
+            filename, content = self._upload_parts(item)
+            record[key] = filename
+            self.files[(name, record["id"], key)] = content
         return dict(record)
 
     def update(self, name: str, record_id: str, data: dict) -> dict:
@@ -237,14 +265,22 @@ class FakeStorage:
         record = self._records.get(name, {}).get(record_id)
         if record is None:
             raise ClientResponseError("not found", status=404)
+        plain, uploads = self._split_files(data)
         for field in self.unique_fields.get(name, []):
-            if field in data and data[field]:
+            if field in plain and plain[field]:
                 for other in self._records[name].values():
-                    if other["id"] != record_id and other.get(field) == data[field]:
+                    if other["id"] != record_id and other.get(field) == plain[field]:
                         raise ClientResponseError("unique constraint violated", status=400)
-        record.update(data)
+        record.update(plain)
         record["updated"] = _now()
+        for key, item in uploads:
+            filename, content = self._upload_parts(item)
+            record[key] = filename
+            self.files[(name, record_id, key)] = content
         return dict(record)
+
+    def file_bytes(self, name: str, record_id: str, field: str) -> bytes | None:
+        return self.files.get((name, record_id, field))
 
     def delete(self, name: str, record_id: str) -> None:
         self._bump_write()

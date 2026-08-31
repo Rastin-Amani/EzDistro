@@ -9,8 +9,11 @@ import asyncio
 from typing import Any
 
 from app.providers.base import (
+    ImageRequest,
+    ImageResult,
     LLMResult,
     ModelInfo,
+    PermanentError,
     PublishResult,
     RerankResult,
     SearchHit,
@@ -235,6 +238,60 @@ class FakeReranker:
         await self.rerank(query="ping", documents=["ping"], top_n=1)
 
 
+class FakeImageProvider:
+    """Scriptable image provider: queue ImageResult/exceptions, else auto PNG."""
+
+    category = "image"
+    model_name = "fake-image-1"
+    model_info = ModelInfo(provider="fakeimg", name="fake-image-1")
+    timeout = 30.0
+
+    def __init__(self, provider_name: str = "fakeimg") -> None:
+        self.provider_name = provider_name
+        self.calls: list[ImageRequest] = []
+        self.results: list[Any] = []  # ImageResult | Exception (scripted, FIFO)
+        self.ping_calls = 0
+
+    def queue(self, *items: Any) -> FakeImageProvider:
+        self.results.extend(items)
+        return self
+
+    def _render_png(self, width: int, height: int) -> bytes:
+        import io
+        import random
+
+        from PIL import Image
+
+        # noise, not flat colour: realistic PNG size (> quality-gate minimum)
+        rng = random.Random(42)
+        w, h = max(1, int(width)), max(1, int(height))
+        img = Image.frombytes("RGB", (w, h), bytes(rng.randrange(256) for _ in range(w * h * 3)))
+        buf = io.BytesIO()
+        img.save(buf, format="PNG")
+        return buf.getvalue()
+
+    async def generate_image(self, request: ImageRequest) -> ImageResult:
+        self.calls.append(request)
+        if self.results:
+            item = self.results.pop(0)
+            if isinstance(item, Exception):
+                raise item
+            return item
+        return ImageResult(
+            data=self._render_png(request.width, request.height),
+            mime_type="image/png",
+            width=request.width,
+            height=request.height,
+            provider=self.provider_name,
+            model=self.model_name,
+            usage={},
+            latency_ms=55,
+        )
+
+    async def ping(self) -> None:
+        self.ping_calls += 1
+
+
 class FakePublisher:
     def __init__(self, posts: list[WPPost] | None = None) -> None:
         self.posts = posts or []
@@ -246,6 +303,11 @@ class FakePublisher:
         self.post_meta: dict[int, dict[str, str]] = {}
         # optional scripted failure for crash simulation
         self.crash_after_create: bool = False
+        # media library (upload_media / set_featured_media)
+        self.media: list[dict[str, Any]] = []
+        self.next_media_id = 5000
+        self.featured_calls: list[tuple[int, int]] = []
+        self.upload_media_error: Exception | None = None
 
     async def list_posts(
         self, *, per_page=100, after_id=None, status="publish", fields=None
@@ -310,6 +372,43 @@ class FakePublisher:
     async def ping(self) -> None:
         pass
 
+    async def upload_media(
+        self,
+        *,
+        data: bytes,
+        filename: str,
+        title: str = "",
+        alt_text: str = "",
+        caption: str = "",
+        post_id: int | None = None,
+    ) -> dict[str, Any]:
+        if self.upload_media_error is not None:
+            raise self.upload_media_error
+        self.next_media_id += 1
+        media_id = self.next_media_id
+        record = {
+            "id": media_id,
+            "filename": filename,
+            "title": title,
+            "alt_text": alt_text,
+            "caption": caption,
+            "post_id": post_id,
+            "size": len(data),
+        }
+        self.media.append(record)
+        return {
+            "id": media_id,
+            "url": f"https://site.test/wp-content/uploads/{filename}",
+            "mime_type": "image/webp",
+        }
+
+    async def set_featured_media(self, post_id: int, media_id: int) -> PublishResult:
+        self.featured_calls.append((post_id, media_id))
+        return PublishResult(post_id=post_id, link=f"https://site.test/?p={post_id}")
+
+    def media_uploads_of(self, filename_substring: str) -> list[dict[str, Any]]:
+        return [m for m in self.media if filename_substring in m["filename"]]
+
 
 class FakeRegistry:
     """Returns fakes for every provider; replace attributes to customize."""
@@ -320,6 +419,8 @@ class FakeRegistry:
         self.vector = FakeVectorStore()
         self.reranker: FakeReranker | None = FakeReranker()
         self.publisher = FakePublisher()
+        self.image = FakeImageProvider()
+        self.images: dict[str, FakeImageProvider] = {"primary": self.image}
 
     def get_llm_provider(
         self, project, settings, observer=None, integration=None, role="outline", role_config=None
@@ -345,6 +446,14 @@ class FakeRegistry:
         self, project, settings, observer=None, integration=None
     ) -> FakePublisher:
         return self.publisher
+
+    def get_image_provider(
+        self, project, settings, observer=None, integration=None, role_config=None
+    ) -> FakeImageProvider:
+        name = str((role_config or {}).get("provider") or "primary")
+        if name not in self.images:
+            self.images[name] = FakeImageProvider(provider_name=name)
+        return self.images[name]
 
 
 class _suppress:
