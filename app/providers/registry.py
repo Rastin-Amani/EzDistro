@@ -88,6 +88,7 @@ class ProviderRegistry:
         from app.providers.embedding.openai_compat import OpenAICompatEmbedding
         from app.providers.image.flux import FluxImage
         from app.providers.image.gemini import GeminiImage
+        from app.providers.image.openai_compat import OpenAICompatImage
         from app.providers.llm.gemini import GeminiLLM
         from app.providers.llm.openai_compat import OpenAICompatLLM
         from app.providers.publish.wordpress import WordPressPublisher
@@ -104,6 +105,7 @@ class ProviderRegistry:
             WordPressPublisher,
             GeminiImage,
             FluxImage,
+            OpenAICompatImage,
         ):
             self._table[(cls.category, cls.provider_name)] = cls
         # provider aliases with the same adapter but different UI metadata
@@ -492,11 +494,10 @@ class ProviderRegistry:
         role_config: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         integration = self._integration_or_error(integration, CATEGORY_IMAGE)
-        base = (
-            "https://api.bfl.ai"
-            if provider_name == "bfl"
-            else "https://generativelanguage.googleapis.com/v1beta"
-        )
+        base = {
+            "bfl": "https://api.bfl.ai",
+            "openai_compat": "https://api.openai.com/v1",
+        }.get(provider_name, "https://generativelanguage.googleapis.com/v1beta")
         model = (
             (role_config or {}).get("model")
             or (integration.get("configuration") or {}).get("model")

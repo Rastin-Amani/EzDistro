@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import base64
 import io
+import json
 
 import httpx
 import pytest
@@ -316,6 +317,189 @@ async def test_flux_ping_auth_gate():
     bad = FluxImage(
         model="m",
         api_key="k",
+        attempts=1,
+        transport=httpx.MockTransport(lambda r: httpx.Response(401, json={})),
+    )
+    with pytest.raises(PermanentError):
+        await bad.ping()
+
+
+# ---------------------------------------------------------------------------
+# OpenAI-compatible image gateway (AvalAI, OpenAI, ...)
+# ---------------------------------------------------------------------------
+from app.providers.image.openai_compat import OpenAICompatImage  # noqa: E402
+
+
+def _openai_b64_response() -> dict:
+    return {"data": [{"b64_json": _png_b64()}], "usage": {"input_tokens": 5, "total_tokens": 100}}
+
+
+def _transport(routes: list[tuple[str, int, dict | bytes]]) -> httpx.MockTransport:
+    calls = {"n": 0}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        idx = min(calls["n"], len(routes) - 1)
+        calls["n"] += 1
+        _, status, payload = routes[idx]
+        if isinstance(payload, bytes):
+            return httpx.Response(status, content=payload)
+        return httpx.Response(status, json=payload)
+
+    return httpx.MockTransport(handler)
+
+
+async def test_openai_compat_b64_success():
+    seen: dict = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen["url"] = str(request.url)
+        seen["auth"] = request.headers.get("Authorization")
+        seen["body"] = request.read()
+        return httpx.Response(200, json=_openai_b64_response())
+
+    adapter = OpenAICompatImage(
+        base_url="https://gw.test/v1",
+        model="gemini-3-pro-image",
+        api_key="aa-x",
+        attempts=1,
+        transport=httpx.MockTransport(handler),
+    )
+    result = await adapter.generate_image(_req(width=64, height=32))
+    assert result.mime_type == "image/png"
+    assert result.data.startswith(b"\x89PNG")
+    assert result.provider == "openai_compat"
+    assert result.model == "gemini-3-pro-image"
+    assert result.usage["total_tokens"] == 100
+    assert seen["auth"] == "Bearer aa-x"
+    assert seen["url"].endswith("/v1/images/generations")
+    body = json.loads(seen["body"])
+    assert body["size"] == "64x32"
+    assert body["model"] == "gemini-3-pro-image"
+
+
+async def test_openai_compat_negative_prompt_appended():
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert "Avoid in the image: watermark" in json.loads(request.read())["prompt"]
+        return httpx.Response(200, json=_openai_b64_response())
+
+    adapter = OpenAICompatImage(
+        base_url="https://gw.test",
+        model="m",
+        api_key="k",
+        attempts=1,
+        transport=httpx.MockTransport(handler),
+    )
+    await adapter.generate_image(_req(negative_prompt="watermark"))
+
+
+async def test_openai_compat_url_result_downloads_https():
+    png = _png()
+    routes = [
+        ("images/generations", 200, {"data": [{"url": "https://cdn.test/img.png"}]}),
+        ("download", 200, png),
+    ]
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        _, status, payload = routes[min(len(routes) - 1, _calls["n"])]
+        _calls["n"] += 1
+        return (
+            httpx.Response(status, json=payload)
+            if isinstance(payload, dict)
+            else httpx.Response(status, content=payload)
+        )
+
+    _calls = {"n": 0}
+    adapter = OpenAICompatImage(
+        base_url="https://gw.test",
+        model="m",
+        api_key="k",
+        attempts=1,
+        transport=httpx.MockTransport(handler),
+    )
+    result = await adapter.generate_image(_req())
+    assert result.data == png
+
+
+async def test_openai_compat_rejects_non_https_url():
+    adapter = OpenAICompatImage(
+        base_url="https://gw.test",
+        model="m",
+        api_key="k",
+        attempts=1,
+        transport=httpx.MockTransport(
+            lambda r: httpx.Response(200, json={"data": [{"url": "http://insecure/x"}]})
+        ),
+    )
+    with pytest.raises(PermanentError, match="non-https"):
+        await adapter.generate_image(_req())
+
+
+async def test_openai_compat_auth_and_malformed():
+    auth = OpenAICompatImage(
+        base_url="https://gw.test",
+        model="m",
+        api_key="bad",
+        attempts=1,
+        transport=httpx.MockTransport(
+            lambda r: httpx.Response(401, json={"error": {"message": "bad key"}})
+        ),
+    )
+    with pytest.raises(PermanentError):
+        await auth.generate_image(_req())
+
+    malformed = OpenAICompatImage(
+        base_url="https://gw.test",
+        model="m",
+        api_key="k",
+        attempts=1,
+        transport=httpx.MockTransport(lambda r: httpx.Response(200, json={"data": []})),
+    )
+    with pytest.raises(PermanentError, match="malformed"):
+        await malformed.generate_image(_req())
+
+
+async def test_openai_compat_rate_limited_is_transient():
+    adapter = OpenAICompatImage(
+        base_url="https://gw.test",
+        model="m",
+        api_key="k",
+        attempts=1,
+        transport=httpx.MockTransport(lambda r: httpx.Response(429, json={})),
+    )
+    with pytest.raises(TransientError):
+        await adapter.generate_image(_req())
+
+
+async def test_openai_compat_ping_and_list_models_filter():
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path.endswith("/models"):
+            return httpx.Response(
+                200,
+                json={
+                    "data": [
+                        {"id": "gemini-3-pro-image", "mode": "image_generation"},
+                        {"id": "gpt-4o", "mode": "chat"},
+                        {"id": "flux.2-pro", "mode": "image_generation"},
+                    ]
+                },
+            )
+        return httpx.Response(500)
+
+    ok = OpenAICompatImage(
+        base_url="https://gw.test",
+        model="m",
+        api_key="k",
+        attempts=1,
+        transport=httpx.MockTransport(handler),
+    )
+    await ok.ping()
+    models = await ok.list_models()
+    assert models == ["flux.2-pro", "gemini-3-pro-image"]
+
+    bad = OpenAICompatImage(
+        base_url="https://gw.test",
+        model="m",
+        api_key="bad",
         attempts=1,
         transport=httpx.MockTransport(lambda r: httpx.Response(401, json={})),
     )
