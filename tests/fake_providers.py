@@ -288,6 +288,9 @@ class FakeImageProvider:
             latency_ms=55,
         )
 
+    async def aclose(self) -> None:
+        return None
+
     async def ping(self) -> None:
         self.ping_calls += 1
 

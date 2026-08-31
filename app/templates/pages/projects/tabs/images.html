@@ -88,4 +88,23 @@
 
     </form>
 
+    <div class="seoz-panel mt-4" x-data>
+        <div class="seoz-panel-head">
+            <h2 class="seoz-panel-title">{{ _('تست تولید تصویر') }}</h2>
+        </div>
+        <p class="text-sm opacity-70 mb-2">
+            {{ _('یک تصویر آزمایشی کوچک با تنظیمات ذخیره‌شدهٔ کاور تولید می‌کند (هر کلیک هزینه دارد).') }}
+        </p>
+        <button type="button"
+                class="btn btn-sm btn-outline"
+                hx-post="/projects/{{ project.id }}/settings/images/test"
+                hx-target="#image-test-result"
+                hx-swap="innerHTML"
+                hx-indicator="#image-test-indicator">
+            {{ _('تست تولید تصویر') }}
+        </button>
+        <span id="image-test-indicator" class="htmx-indicator loading loading-spinner loading-sm ms-2 align-middle"></span>
+        <div id="image-test-result" class="mt-1"></div>
+    </div>
+
 </div>

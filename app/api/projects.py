@@ -6,6 +6,7 @@ repositories, job creation through JobRepo.
 
 from __future__ import annotations
 
+import base64
 import re
 import time
 from typing import Any
@@ -626,6 +627,67 @@ def save_image_settings(
     return success_response(
         _("تنظیمات تصاویر ذخیره شد"),
         extra_events={"refreshArticle": True},
+    )
+
+
+_TEST_IMAGE_PROMPT = (
+    "A simple flat test illustration: a single red circle centered on a plain white background"
+)
+
+
+@router.post("/projects/{project_id}/settings/images/test")
+@hx_error(_("تست تولید تصویر ناموفق بود"))
+async def test_image_generation(request: Request, project_id: str):
+    """One-off diagnostic: generate a tiny fixed-prompt image with the SAVED
+    cover provider/model and show the result inline (like test_integration).
+    Uses the article pipeline's provider resolution — configuration problems
+    surface here, not on a real article."""
+    require_hx(request)
+    require_project_access(request, project_id)
+    require_project_role(request, project_id)
+    project = require_project_access(request, project_id)
+    settings = ProjectSettingsRepo(request.state.pb).get_for_project(project_id)
+    provider_name = safe_str(settings.get("imageCoverProvider") or "gemini")
+    model = safe_str(settings.get("imageCoverModel") or "")
+    if not model:
+        return templates.TemplateResponse(
+            request,
+            "pages/projects/tabs/_image_test_result.html",
+            {"error": _("مدل تصویر کاور تنظیم نشده است — ابتدا مدل را ذخیره کنید")},
+        )
+    from app.domain.images import classify_error
+    from app.providers.base import ImageRequest, ProviderError
+    from app.providers.registry import ProviderRegistry
+
+    try:
+        provider = ProviderRegistry(request.state.pb).get_image_provider(
+            project, settings, role_config={"provider": provider_name, "model": model}
+        )
+        started = time.monotonic()
+        result = await provider.generate_image(
+            ImageRequest(prompt=_TEST_IMAGE_PROMPT, width=512, height=512, aspect_ratio="1:1")
+        )
+        await provider.aclose()
+    except ProviderError as exc:
+        category = str((exc.details or {}).get("category") or classify_error(str(exc)))
+        return templates.TemplateResponse(
+            request,
+            "pages/projects/tabs/_image_test_result.html",
+            {"error": str(exc), "category": category},
+        )
+    return templates.TemplateResponse(
+        request,
+        "pages/projects/tabs/_image_test_result.html",
+        {
+            "data_uri": f"data:{result.mime_type};base64,"
+            + base64.b64encode(result.data).decode("ascii"),
+            "provider": provider_name,
+            "model": model,
+            "bytes": len(result.data),
+            "latency": int((time.monotonic() - started) * 1000),
+            "width": result.width,
+            "height": result.height,
+        },
     )
 
 

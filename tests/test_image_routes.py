@@ -11,6 +11,8 @@ from app.api.images import (
     select_image_version,
     update_image_metadata,
 )
+from app.api.projects import test_image_generation as run_image_test_route
+from app.providers.base import PermanentError
 from app.repositories.article_images import ArticleImageRepo
 from tests.fake_providers import FakeRegistry
 from tests.helpers import (
@@ -201,3 +203,88 @@ def test_workspace_renders_populated_images_pane(monkeypatch):
     assert ready_row["filename"] in html  # preview src uses the optimized file
     assert "آماده" in html  # ready badge
     assert ready_row["altText"] in html  # alt text prefilled in the metadata form
+
+
+def test_image_test_route_success(monkeypatch):
+    import asyncio
+    import base64 as b64
+    import io
+
+    from PIL import Image
+
+    from app.repositories.projects import ProjectSettingsRepo
+    from tests.test_image_jobs import img_provider  # registry fixture pattern
+
+    pb = make_pb()
+    user = make_user()
+    project = make_project(pb)
+    make_member(pb, project["id"], user["id"])
+    ProjectSettingsRepo(pb).upsert(
+        project["id"], {"imageCoverProvider": "fakeimg", "imageCoverModel": "fake-image-1"}
+    )
+    registry = FakeRegistry()
+    provider = img_provider(registry, "fakeimg")
+
+    class _FixedRegistry:
+        def get_image_provider(self, *a, **k):
+            return provider
+
+    monkeypatch.setattr("app.providers.registry.ProviderRegistry", lambda pb_: _FixedRegistry())
+    request = make_req(pb, user, project["id"])
+    response = asyncio.run(call_route(run_image_test_route, request, project_id=project["id"]))
+    html = response.body.decode()
+    buf = io.BytesIO()
+    Image.new("RGB", (8, 8), (200, 30, 30)).save(buf, format="PNG")
+    assert f"data:image/png;base64,{b64.b64encode(buf.getvalue()).decode('ascii')[:20]}" in html
+    assert provider.calls, "test route should call the provider"
+    assert "fakeimg" in html and "fake-image-1" in html
+
+
+def test_image_test_route_error_shows_category(monkeypatch):
+    import asyncio
+
+    from app.repositories.projects import ProjectSettingsRepo
+
+    pb = make_pb()
+    user = make_user()
+    project = make_project(pb)
+    make_member(pb, project["id"], user["id"])
+    ProjectSettingsRepo(pb).upsert(
+        project["id"], {"imageCoverProvider": "fakeimg", "imageCoverModel": "fake-image-1"}
+    )
+
+    class _FailingProvider:
+        async def generate_image(self, req):
+            raise PermanentError(
+                "bfl.submit failed with HTTP 404: an HTML web page, not an API response",
+                details={"category": "invalid_request"},
+            )
+
+        async def aclose(self):
+            return None
+
+    class _FixedRegistry:
+        def get_image_provider(self, *a, **k):
+            return _FailingProvider()
+
+    monkeypatch.setattr("app.providers.registry.ProviderRegistry", lambda pb_: _FixedRegistry())
+    request = make_req(pb, user, project["id"])
+    response = asyncio.run(call_route(run_image_test_route, request, project_id=project["id"]))
+    html = response.body.decode()
+    assert "invalid_request" in html
+    assert "HTML web page" in html
+
+
+def test_image_test_route_requires_model(monkeypatch):
+    import asyncio
+
+    from app.repositories.projects import ProjectSettingsRepo
+
+    pb = make_pb()
+    user = make_user()
+    project = make_project(pb)
+    make_member(pb, project["id"], user["id"])
+    ProjectSettingsRepo(pb).upsert(project["id"], {"imageCoverModel": ""})
+    request = make_req(pb, user, project["id"])
+    response = asyncio.run(call_route(run_image_test_route, request, project_id=project["id"]))
+    assert "مدل تصویر کاور" in response.body.decode()
