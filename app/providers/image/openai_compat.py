@@ -131,9 +131,7 @@ class OpenAICompatImage(MetricMixin):
                 retries=len(retry_counter),
             )
 
-        return await self._observed(
-            "image.generate", len(request.prompt), _run, retry_counter
-        )
+        return await self._observed("image.generate", len(request.prompt), _run, retry_counter)
 
     async def _download(self, url: str) -> bytes:
         """Fetch a url-style result; https only (never a caller-controlled URL)."""
