@@ -73,15 +73,19 @@ def make_publishable_article(pb: FakePocketBase, project_id: str) -> dict[str, A
 
 
 def make_images_ready(pb: FakePocketBase, project, article) -> None:
-    """Generate the cover + interior for real through the job handlers."""
+    """Generate the cover + every planned interior through the job handlers."""
     payload = {"projectId": project["id"], "articleId": article["id"]}
     run_job(pb, FakeRegistry(), "generate_cover_image", dict(payload))
-    run_job(
-        pb,
-        FakeRegistry(),
-        "generate_interior_image",
-        {**payload, "sectionKey": "section-1"},
-    )
+    refreshed = pb.collection("articles").get_one(article["id"])
+    for spec in (refreshed.get("imagePlan") or {}).get("images", []):
+        if spec.get("role") != "interior":
+            continue
+        run_job(
+            pb,
+            FakeRegistry(),
+            "generate_interior_image",
+            {**payload, "sectionKey": spec.get("section_key")},
+        )
 
 
 def patch_download(monkeypatch, pb: FakePocketBase) -> None:
@@ -272,3 +276,61 @@ def test_full_e2e_scenario(monkeypatch):
     )
     assert len(registry.publisher.media_uploads_of("")) == 3
     assert registry.publisher.featured_calls[-1] == registry.publisher.featured_calls[0]
+
+
+def test_interiors_inserted_without_placeholders(monkeypatch):
+    """Real LLM articles have no {{IMAGE:section-N}} markers — figures must be
+    placed right after the matching section <h2> anyway."""
+    pb = make_pb()
+    project = make_project(pb)
+    article = make_plan_article(pb, project["id"])
+    from app.repositories.articles import ArticleRepo
+
+    ArticleRepo(pb).update(
+        article["id"],
+        {
+            "finalHtml": (
+                "<h1>عنوان</h1><p>مقدمه.</p>"
+                "<h2>بخش اول</h2><p>متن اول.</p>"
+                "<h2>بخش دوم</h2><p>متن دوم.</p>"
+            ),
+            "status": "approved",
+        },
+    )
+    set_plan(pb, article["id"], ["section-1", "section-2"])
+    article = pb.collection("articles").get_one(article["id"])
+    make_images_ready(pb, project, article)
+    patch_download(monkeypatch, pb)
+
+    registry = FakeRegistry()
+    run_publish(pb, registry, article["id"], project["id"], key="nip1")
+    content = registry.publisher.created[-1]["html"]
+    first_h2_end = content.index("</h2>") + len("</h2>")
+    second_h2_end = content.index("</h2>", first_h2_end) + len("</h2>")
+    figs = [i for i, ch in enumerate(content) if content.startswith("<img", i)]
+    assert len(figs) == 2
+    assert first_h2_end <= figs[0] < content.index("بخش دوم")
+    assert second_h2_end <= figs[1]
+    assert 'loading="lazy"' in content
+
+
+def test_interior_beyond_sections_appended(monkeypatch):
+    """Section key with no matching <h2> → figure still lands (end of body)."""
+    pb = make_pb()
+    project = make_project(pb)
+    article = make_plan_article(pb, project["id"])
+    from app.repositories.articles import ArticleRepo
+
+    ArticleRepo(pb).update(
+        article["id"],
+        {"finalHtml": "<h1>عنوان</h1><p>متن.</p>", "status": "approved"},
+    )
+    set_plan(pb, article["id"], ["section-3"])
+    article = pb.collection("articles").get_one(article["id"])
+    make_images_ready(pb, project, article)
+    patch_download(monkeypatch, pb)
+
+    registry = FakeRegistry()
+    run_publish(pb, registry, article["id"], project["id"], key="nip2")
+    content = registry.publisher.created[-1]["html"]
+    assert "<img" in content and content.rstrip().endswith('decoding="async">')

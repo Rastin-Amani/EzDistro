@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import hashlib
 import io
+import re
 import time
 from typing import Any
 
@@ -666,6 +667,19 @@ async def handle_publish_article_image(ctx: JobContext) -> dict[str, Any]:
     return {"imageId": image_id, "mediaId": media_id, "url": url, "featured": featured}
 
 
+_H2_RE = re.compile(r"<h2[^>]*>.*?</h2>", re.IGNORECASE | re.DOTALL)
+
+
+def _insert_after_section_heading(html: str, position: int, figure: str) -> str:
+    """Insert a figure right after the position-th <h2> (1-based). Missing
+    section → figure appended at the end of the body so it is never lost."""
+    matches = list(_H2_RE.finditer(html))
+    if 0 < position <= len(matches):
+        m = matches[position - 1]
+        return html[: m.end()] + figure + html[m.end() :]
+    return html + figure
+
+
 async def apply_images_to_html(
     ctx: JobContext,
     article: dict[str, Any],
@@ -716,14 +730,24 @@ async def apply_images_to_html(
                 )
         else:
             key = row.get("sectionKey") or ""
+            figure = figure_html(
+                src=url,
+                alt=row.get("altText") or "",
+                width=int(row.get("width") or 0),
+                height=int(row.get("height") or 0),
+                caption=row.get("caption") or "",
+            )
             if f"{{{{IMAGE:{key}}}}}" in html:
-                replacements[key] = figure_html(
-                    src=url,
-                    alt=row.get("altText") or "",
-                    width=int(row.get("width") or 0),
-                    height=int(row.get("height") or 0),
-                    caption=row.get("caption") or "",
-                )
+                replacements[key] = figure
+            else:
+                # Real articles don't contain {{IMAGE:section-N}} placeholders —
+                # place the figure after the section's <h2> instead (section keys
+                # are 1-based positions in document order).
+                try:
+                    position = int(key.rsplit("-", 1)[-1])
+                except ValueError:
+                    position = 0
+                html = _insert_after_section_heading(html, position, figure)
     if replacements:
         html = resolve_image_placeholders(html, replacements)
     return html, featured_media_id
