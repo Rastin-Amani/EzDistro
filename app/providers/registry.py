@@ -41,12 +41,14 @@ CATEGORY_EMBEDDING = "embedding"
 CATEGORY_RERANKER = "reranker"
 CATEGORY_VECTOR = "vector_store"
 CATEGORY_PUBLISHER = "publisher"
+CATEGORY_IMAGE = "image"
 CATEGORIES = (
     CATEGORY_LLM,
     CATEGORY_EMBEDDING,
     CATEGORY_RERANKER,
     CATEGORY_VECTOR,
     CATEGORY_PUBLISHER,
+    CATEGORY_IMAGE,
 )
 
 DEFAULT_PROVIDER: dict[str, str] = {
@@ -55,12 +57,14 @@ DEFAULT_PROVIDER: dict[str, str] = {
     CATEGORY_RERANKER: "cohere_compat",
     CATEGORY_VECTOR: "qdrant",
     CATEGORY_PUBLISHER: "wordpress",
+    CATEGORY_IMAGE: "gemini",
 }
 
 SETTINGS_KEY: dict[str, str] = {
     CATEGORY_LLM: "defaultLlmProvider",
     CATEGORY_EMBEDDING: "embeddingProvider",
     CATEGORY_RERANKER: "rerankerProvider",
+    CATEGORY_IMAGE: "imageProvider",
 }
 
 # model listing cache: integration_id → (fetched_at, models)
@@ -82,6 +86,8 @@ class ProviderRegistry:
     def _load_adapters(self) -> None:
         from app.providers.embedding.cohere import CohereEmbedding
         from app.providers.embedding.openai_compat import OpenAICompatEmbedding
+        from app.providers.image.flux import FluxImage
+        from app.providers.image.gemini import GeminiImage
         from app.providers.llm.gemini import GeminiLLM
         from app.providers.llm.openai_compat import OpenAICompatLLM
         from app.providers.publish.wordpress import WordPressPublisher
@@ -96,6 +102,8 @@ class ProviderRegistry:
             CohereCompatReranker,
             QdrantStore,
             WordPressPublisher,
+            GeminiImage,
+            FluxImage,
         ):
             self._table[(cls.category, cls.provider_name)] = cls
         # provider aliases with the same adapter but different UI metadata
@@ -181,6 +189,24 @@ class ProviderRegistry:
     ) -> PublisherProvider:
         return self._resolve(CATEGORY_PUBLISHER, project, settings, observer, integration)
 
+    def get_image_provider(
+        self,
+        project: dict[str, Any],
+        settings: dict[str, Any],
+        observer: CallObserver | None = None,
+        integration: dict[str, Any] | None = None,
+        role_config: dict[str, Any] | None = None,
+    ) -> Any:
+        """Image-generation provider; role_config carries {provider, model}."""
+        return self._resolve(
+            CATEGORY_IMAGE,
+            project,
+            settings,
+            observer,
+            integration,
+            role_config=role_config,
+        )
+
     def active_integration_for_provider(
         self, project_id: str, category: str, provider_name: str
     ) -> dict[str, Any] | None:
@@ -210,6 +236,12 @@ class ProviderRegistry:
             provider_name = str(
                 (role_config or {}).get("provider")
                 or settings.get("defaultLlmProvider")
+                or DEFAULT_PROVIDER[category]
+            )
+        elif category == CATEGORY_IMAGE:
+            provider_name = str(
+                (role_config or {}).get("provider")
+                or settings.get("imageProvider")
                 or DEFAULT_PROVIDER[category]
             )
         else:
@@ -263,11 +295,12 @@ class ProviderRegistry:
             CATEGORY_RERANKER: self._config_reranker,
             CATEGORY_VECTOR: self._config_vector,
             CATEGORY_PUBLISHER: self._config_publisher,
+            CATEGORY_IMAGE: self._config_image,
         }
         builder = builders.get(category)
         if builder is None:
             raise PermanentError(f"no config builder for category {category!r}")
-        if category == CATEGORY_LLM:
+        if category in (CATEGORY_LLM, CATEGORY_IMAGE):
             return builder(
                 project, integration, settings, provider_name, role=role, role_config=role_config
             )
@@ -448,6 +481,39 @@ class ProviderRegistry:
             "timeout": 60.0,
         }
 
+    # -- image generation ------------------------------------------------------------
+    def _config_image(
+        self,
+        project: dict[str, Any],
+        integration: dict[str, Any] | None,
+        settings: dict[str, Any],
+        provider_name: str,
+        role: str = "cover",
+        role_config: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        integration = self._integration_or_error(integration, CATEGORY_IMAGE)
+        base = (
+            "https://api.bfl.ai"
+            if provider_name == "bfl"
+            else "https://generativelanguage.googleapis.com/v1beta"
+        )
+        model = (
+            (role_config or {}).get("model")
+            or (integration.get("configuration") or {}).get("model")
+            or ""
+        )
+        if not model:
+            raise PermanentError(
+                f"no image model configured for {role} — set it in project settings"
+            )
+        return {
+            "base_url": self._safe_url(integration, base),
+            "model": str(model),
+            "api_key": self._api_key(integration),
+            "attempts": self._retries(settings),
+            "timeout": 180.0,
+        }
+
     # ---------------------------------------------------------------------------
     # Model discovery (cached)
     # ---------------------------------------------------------------------------
@@ -510,6 +576,7 @@ class ProviderRegistry:
             CATEGORY_RERANKER: self.get_reranker_provider,
             CATEGORY_VECTOR: self.get_vector_provider,
             CATEGORY_PUBLISHER: self.get_publisher_provider,
+            CATEGORY_IMAGE: self.get_image_provider,
         }
         getter = getters.get(category)  # type: ignore[assignment]
         if getter is None:
@@ -533,6 +600,8 @@ class ProviderRegistry:
             ) or "embed-v4.0"
         elif category == CATEGORY_RERANKER:
             settings["rerankerProvider"] = integration.get("provider") or DEFAULT_PROVIDER[category]
+        elif category == CATEGORY_IMAGE:
+            settings["imageProvider"] = integration.get("provider") or DEFAULT_PROVIDER[category]
 
         started = time.monotonic()
         models: list[str] = []

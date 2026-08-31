@@ -127,6 +127,34 @@ class PublishResult:
     status_code: int = 200
 
 
+@dataclass
+class ImageRequest:
+    """Normalized image-generation request (validated upstream in the domain)."""
+
+    prompt: str
+    negative_prompt: str = ""
+    width: int = 1280
+    height: int = 720
+    aspect_ratio: str = "16:9"
+    output_format: str = "png"  # png | jpeg | webp
+    seed: int | None = None
+    reference_images: list[bytes] = field(default_factory=list)  # untrusted bytes
+    quality: str = "standard"
+
+
+@dataclass
+class ImageResult:
+    data: bytes
+    mime_type: str
+    width: int = 0  # 0 = unknown; the quality gate decodes and fills actuals
+    height: int = 0
+    provider: str = ""
+    model: str = ""
+    usage: dict[str, Any] = field(default_factory=dict)  # provider-native usage
+    latency_ms: int = 0
+    retries: int = 0
+
+
 # ---------------------------------------------------------------------------
 # Provider protocols
 # ---------------------------------------------------------------------------
@@ -241,6 +269,19 @@ class VectorStoreProvider(Protocol):
     async def ping(self) -> None: ...
 
 
+class ImageGenerationProvider(Protocol):
+    """Text-to-image adapters (Gemini image, BFL FLUX, …)."""
+
+    provider_name: str
+    model_name: str
+    model_info: ModelInfo
+    timeout: float
+
+    async def generate_image(self, request: ImageRequest) -> ImageResult: ...
+
+    async def ping(self) -> None: ...
+
+
 class PublisherProvider(Protocol):
     provider_name: str
 
@@ -280,4 +321,23 @@ class PublisherProvider(Protocol):
 
     async def list_categories(self) -> list[dict[str, Any]]: ...
     async def list_tags(self) -> list[dict[str, Any]]: ...
+
+    async def upload_media(
+        self,
+        *,
+        data: bytes,
+        filename: str,
+        title: str = "",
+        alt_text: str = "",
+        caption: str = "",
+        post_id: int | None = None,
+    ) -> dict[str, Any]:
+        """Upload binary media; returns {id, url, mime_type}. Idempotency
+        (dedupe on retry) is the caller's job via a stored media id."""
+        ...
+
+    async def set_featured_media(self, post_id: int, media_id: int) -> PublishResult:
+        """Attach media as the post featured image (WP featured_media)."""
+        ...
+
     async def ping(self) -> None: ...

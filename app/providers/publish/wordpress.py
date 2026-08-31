@@ -276,6 +276,63 @@ class WordPressPublisher:
         (reversible via update_post)."""
         return await self.update_post(post_id, status="private")
 
+    # -- media -----------------------------------------------------------------------
+    async def upload_media(
+        self,
+        *,
+        data: bytes,
+        filename: str,
+        title: str = "",
+        alt_text: str = "",
+        caption: str = "",
+        post_id: int | None = None,
+    ) -> dict[str, Any]:
+        """POST /wp-json/wp/v2/media (multipart). Metadata fields localize the
+        attachment (alt/title/caption). Caller dedupes via stored media id."""
+        files = {"file": (filename, data, _guess_mime(filename))}
+        fields: dict[str, Any] = {}
+        if title:
+            fields["title"] = title
+        if alt_text:
+            fields["alt_text"] = alt_text
+        if caption:
+            fields["caption"] = caption
+        if post_id:
+            fields["post"] = str(post_id)
+
+        async def _call() -> httpx.Response:
+            return await self._client.post("/wp-json/wp/v2/media", files=files, data=fields)
+
+        response = await with_retry(_call, attempts=3, what="wp.upload_media", logger_name="wp")
+        raise_for_provider(response, what="wp.upload_media")
+        payload = response.json()
+        if not isinstance(payload, dict) or not payload.get("id"):
+            raise PermanentError("wp.upload_media: response missing media id")
+        return {
+            "id": int(payload["id"]),
+            "url": str(payload.get("source_url") or ""),
+            "mime_type": str(payload.get("mime_type") or ""),
+        }
+
+    async def set_featured_media(self, post_id: int, media_id: int) -> PublishResult:
+        async def _call() -> httpx.Response:
+            return await self._client.post(
+                f"/wp-json/wp/v2/posts/{post_id}", json={"featured_media": int(media_id)}
+            )
+
+        response = await with_retry(
+            _call, attempts=3, what="wp.set_featured_media", logger_name="wp"
+        )
+        raise_for_provider(response, what="wp.set_featured_media")
+        payload = response.json()
+        if not isinstance(payload, dict) or not payload.get("id"):
+            raise PermanentError("wp.set_featured_media: response missing post id")
+        return PublishResult(
+            post_id=int(payload["id"]),
+            link=str(payload.get("link") or ""),
+            status_code=response.status_code,
+        )
+
     async def _list_taxonomy(
         self, endpoint: str, per_page: int = 100, max_pages: int = 50
     ) -> list[dict[str, Any]]:
@@ -313,6 +370,18 @@ class WordPressPublisher:
 def _validate_status(status: str) -> None:
     if status not in ("draft", "publish", "pending", "private"):
         raise PermanentError(f"wp: invalid status {status!r}")
+
+
+def _guess_mime(filename: str) -> str:
+    ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+    return {
+        "webp": "image/webp",
+        "png": "image/png",
+        "jpg": "image/jpeg",
+        "jpeg": "image/jpeg",
+        "avif": "image/avif",
+        "gif": "image/gif",
+    }.get(ext, "application/octet-stream")
 
 
 def _rendered(field: object) -> str:
