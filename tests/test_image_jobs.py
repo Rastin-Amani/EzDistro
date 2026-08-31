@@ -436,3 +436,65 @@ def test_project_config_images_defaults():
     assert imgs["interior_provider"] == "bfl"
     assert imgs["max_interior_images"] == 4
     assert imgs["optimization_format"] == "webp"
+
+
+def test_auto_pipeline_writes_article_then_plans_then_generates():
+    """write_article completion chains plan_article_images; the plan chains
+    cover + interior generation automatically."""
+    pb = make_pb()
+    project = make_project(pb)
+    article = make_plan_article(pb, project["id"])
+    make_prompt(pb, project["id"], "image_plan_user")
+    make_prompt(pb, project["id"], "image_plan_system")
+    # active image integration (guard for auto-generation)
+    pb.collection("integrations").create(
+        {
+            "project": project["id"],
+            "category": "image",
+            "provider": "fakeimg",
+            "displayName": "img",
+            "configuration": {},
+            "secretsEnc": "",
+            "enabled": True,
+        }
+    )
+    registry = FakeRegistry()
+    registry.llm = FakeLLM([PLAN_JSON])
+
+    run_job(
+        pb,
+        registry,
+        "plan_article_images",
+        {"projectId": project["id"], "articleId": article["id"]},
+    )
+
+    types = sorted(
+        j["type"]
+        for j in pb.collection("jobs").get_full_list()
+        if j["type"] != "plan_article_images"
+    )
+    assert types == ["generate_cover_image", "generate_interior_image"], types
+    for j in pb.collection("jobs").get_full_list():
+        if j["type"].startswith("generate_"):
+            assert j["payload"]["version"] == 1
+            assert j["idempotencyKey"].endswith(":v1")
+
+
+def test_auto_generation_skipped_without_image_integration():
+    pb = make_pb()
+    project = make_project(pb)
+    article = make_plan_article(pb, project["id"])
+    make_prompt(pb, project["id"], "image_plan_user")
+    make_prompt(pb, project["id"], "image_plan_system")
+    registry = FakeRegistry()
+    registry.llm = FakeLLM([PLAN_JSON])
+
+    run_job(
+        pb,
+        registry,
+        "plan_article_images",
+        {"projectId": project["id"], "articleId": article["id"]},
+    )
+
+    types = [j["type"] for j in pb.collection("jobs").get_full_list()]
+    assert "generate_cover_image" not in types

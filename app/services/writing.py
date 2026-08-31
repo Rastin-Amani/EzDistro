@@ -33,6 +33,7 @@ from app.jobs.handlers import register_job
 from app.providers.base import GenerationParams, ProviderError, TransientError
 from app.repositories.articles import ArticleRepo, SectionRepo
 from app.repositories.jobs import JobRepo
+from app.repositories.prompts import PromptRepo
 from app.repositories.topics import TopicRepo
 from app.schemas.llm import SectionContent
 
@@ -433,6 +434,22 @@ async def handle_assemble_article(ctx: JobContext) -> dict[str, Any]:
     articles.record_generated(article_id, html, int(revision.get("revision") or 0))
     if topic:
         TopicRepo(ctx.pb).set_status(topic["id"], "review")
+
+    # Images are part of the article pipeline: plan (and then generate) them
+    # automatically as soon as content exists. The plan job is cheap (one LLM
+    # call); generation jobs are chained from the plan itself. Gated on the
+    # image-plan prompt actually being resolvable — projects without image
+    # setup (prompt seeded) behave exactly as before.
+    if PromptRepo(ctx.pb).resolve(ctx.project_id, "image_plan_user"):
+        JobRepo(ctx.pb).create(
+            project=ctx.project_id,
+            type="plan_article_images",
+            payload={"articleId": article_id},
+            idempotency_key=f"image:plan:{article_id}:auto:{int(time.time())}",
+            max_attempts=3,
+            entity_type="article",
+            entity_id=article_id,
+        )
 
     # Auto-publish: schedule-generated articles skip review entirely. When the
     # SEO score reaches the threshold → publish straight to WordPress; when it

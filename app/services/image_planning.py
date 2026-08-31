@@ -41,6 +41,50 @@ def recommended_interiors(word_count: int, config_cap: int) -> int:
     return min(4, config_cap)
 
 
+def _queue_generation_jobs(
+    ctx: JobContext, article_id: str, plan: ArticleImagePlan, version: int
+) -> None:
+    """Chain cover + interior generation right after a fresh plan (auto pipeline).
+
+    Skipped when no active image integration exists — the plan itself is still
+    stored, and the Images pane keeps manual generation buttons.
+    """
+    from app.repositories.article_images import ArticleImageRepo
+    from app.repositories.integrations import IntegrationRepo
+    from app.repositories.jobs import JobRepo
+
+    if IntegrationRepo(ctx.pb).get_active(ctx.project_id, "image") is None:
+        ctx.warning("no active image integration — skipping automatic generation")
+        return
+    imgs = ctx.config.images
+    jobs = JobRepo(ctx.pb)
+    repo = ArticleImageRepo(ctx.pb)
+    max_attempts = max(2, int(imgs["max_retries"] or 3))
+    queued: list[str] = []
+    for spec in plan.images:
+        section_key = "cover" if spec.role == "cover" else (spec.section_key or "")
+        job_type = "generate_cover_image" if spec.role == "cover" else "generate_interior_image"
+        v = repo.next_version(article_id, spec.role, section_key)
+        jobs.create(
+            project=ctx.project_id,
+            type=job_type,
+            payload={
+                "articleId": article_id,
+                "role": spec.role,
+                "sectionKey": section_key,
+                "version": v,
+            },
+            idempotency_key=f"image:{spec.role}:{section_key}:{article_id}:v{v}",
+            max_attempts=max_attempts,
+            entity_type="article",
+            entity_id=article_id,
+        )
+        queued.append(f"{spec.role}:{section_key}")
+    ctx.info(
+        "image generation queued", {"count": len(queued), "images": queued, "planVersion": version}
+    )
+
+
 @register_job("plan_article_images")
 async def handle_plan_article_images(ctx: JobContext) -> dict[str, Any]:
     from app.services.prompt_service import PromptService
@@ -124,6 +168,7 @@ async def handle_plan_article_images(ctx: JobContext) -> dict[str, Any]:
         spec.prompt = build_visual_prompt(spec.prompt, imgs["style"])
 
     articles.set_image_plan(article_id, plan.to_dict(), version)
+    _queue_generation_jobs(ctx, article_id, plan, version)
     elapsed = int((time.monotonic() - started) * 1000)
     ctx.stage_completed(
         "planning",
