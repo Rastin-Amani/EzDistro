@@ -371,6 +371,10 @@ def classify_error(message: str, retryable: bool = False) -> str:
         return "wordpress_upload_failure"
     if "unavailable" in msg or "connection" in msg or "5xx" in msg:
         return "provider_unavailable"
+    # "HTTP 404: an HTML web page, not an API response" — wrong base URL /
+    # provider mismatch; a config error, retrying will never fix it.
+    if "html web page" in msg or "not an api response" in msg:
+        return "invalid_request"
     if "invalid" in msg or "malformed" in msg or "unexpected" in msg or "schema" in msg:
         return "invalid_request" if not retryable else "invalid_response"
     return "unknown"

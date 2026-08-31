@@ -238,6 +238,10 @@ class TestErrorClassification:
             ("wordpress upload error", "wordpress_upload_failure"),
             ("connection refused", "provider_unavailable"),
             ("malformed response", "invalid_request"),
+            (
+                "bfl.submit failed with HTTP 404: an HTML web page, not an API response",
+                "invalid_request",
+            ),
             ("weird thing happened", "unknown"),
         ],
     )

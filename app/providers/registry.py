@@ -494,6 +494,18 @@ class ProviderRegistry:
         role_config: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         integration = self._integration_or_error(integration, CATEGORY_IMAGE)
+        # Image adapters speak incompatible protocols (Gemini-native vs OpenAI
+        # gateway vs BFL). Falling back to a *different* provider's integration
+        # silently produces garbage (e.g. BFL paths on an OpenAI gateway → HTML
+        # 404), so fail fast with an actionable message instead.
+        integration_provider = str(integration.get("provider") or "")
+        if provider_name and integration_provider and integration_provider != provider_name:
+            raise PermanentError(
+                f"image provider '{provider_name}' is configured for this role, but the "
+                f"active image integration is '{integration_provider}' — set the role's "
+                f"provider to '{integration_provider}' in project image settings (or add a "
+                f"'{provider_name}' integration)"
+            )
         base = {
             "bfl": "https://api.bfl.ai",
             "openai_compat": "https://api.openai.com/v1",

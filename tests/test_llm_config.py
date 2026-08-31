@@ -374,3 +374,35 @@ def test_provider_metadata_capabilities():
         assert "ollama" in meta2
     finally:
         cfg.ollama_enabled = False
+
+
+def test_image_provider_mismatch_fails_fast():
+    """Role says bfl but the only active image integration is openai_compat →
+    clear permanent error instead of BFL paths against an OpenAI gateway."""
+    pb = make_pb()
+    project = make_project(pb, imageInteriorProvider="bfl", imageInteriorModel="flux-2-klein-9b")
+    IntegrationRepo(pb).create(
+        project=project["id"],
+        category="image",
+        provider="openai_compat",
+        display_name="AvalAI",
+        configuration={"base_url": "https://api.avalai.ir/v1", "model": "gemini-3-pro-image"},
+        secrets_enc="",
+        enabled=True,
+        created_by="u1",
+    )
+    registry = ProviderRegistry(pb, secrets=SecretsService(b"0123456789abcdef0123456789abcdef"))
+    config = ProjectConfig.load(pb, project["id"])
+    with pytest.raises(PermanentError, match="active image integration is 'openai_compat'"):
+        registry.get_image_provider(
+            project, config.settings, role_config={"provider": "bfl", "model": "flux-2-klein-9b"}
+        )
+
+    # matching provider → builds fine
+    ok = registry.get_image_provider(
+        project,
+        config.settings,
+        role_config={"provider": "openai_compat", "model": "gemini-3-pro-image"},
+    )
+    assert ok.model_name == "gemini-3-pro-image"
+    assert ok._base_url == "https://api.avalai.ir/v1"
