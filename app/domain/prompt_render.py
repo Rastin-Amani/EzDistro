@@ -39,6 +39,11 @@ VARIABLE_REGISTRY: dict[str, str] = {
     "internal_linking_rules": "قوانین لینک‌سازی داخلی حل‌شده پروژه",
     "language": "زبان نگارش",
     "raw_output": "خروجی خام مدل (فقط در پرامپت اعتبارسنجی)",
+    # image planning prompts
+    "prompt_language": "زبان پرامپت تصویری (مستقل از زبان مقاله)",
+    "sections": "فهرست بخش‌های مقاله برای برنامه‌ریزی تصویر",
+    "style_profile": "پروفایل سبک بصری پروژه (tone/palette/lighting)",
+    "max_interior_images": "حداکثر تعداد تصویر داخلی مجاز",
 }
 
 

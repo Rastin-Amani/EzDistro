@@ -125,6 +125,27 @@ def rel(
     return field
 
 
+def file_field(
+    name: str,
+    *,
+    required: bool = False,
+    max_size: int = 10 * 1024 * 1024,
+    mime_types: list[str] | None = None,
+) -> dict[str, Any]:
+    """PocketBase file field (single file)."""
+    field = _base_field(name, "file", required=required)
+    field.update(
+        {
+            "maxSelect": 1,
+            "maxSize": max_size,
+            "mimeTypes": mime_types or [],
+            "thumbs": [],
+            "protected": False,
+        }
+    )
+    return field
+
+
 # ---------------------------------------------------------------------------
 # Collections (PocketBase >= 0.23 schema shape; name-based relation refs)
 # ---------------------------------------------------------------------------
@@ -193,6 +214,22 @@ COLLECTIONS: list[dict[str, Any]] = [
             json_field("autosave"),
             json_field("autoPublish"),
             json_field("indexing"),
+            # --- image generation subsystem (models are data, never code) ---
+            t("imageCoverProvider"),
+            t("imageCoverModel"),
+            t("imageInteriorProvider"),
+            t("imageInteriorModel"),
+            t("imageFallbackProvider"),
+            t("imageFallbackModel"),
+            t("imageCoverAspectRatio"),
+            t("imageInteriorAspectRatio"),
+            num("imageCoverMinWidth"),
+            num("imageMaxInteriorImages"),
+            num("imageMaxRetries"),
+            select("imageOptimizationFormat", ["webp", "avif", "jpeg"]),
+            boolean("imageAiQaEnabled"),
+            t("imagePromptLanguage"),
+            json_field("imageStyle"),
         ],
         indexes=["CREATE UNIQUE INDEX idx_settings_project ON project_settings (project)"],
     ),
@@ -203,7 +240,7 @@ COLLECTIONS: list[dict[str, Any]] = [
             rel("project", "projects", required=True, cascade=True),
             select(
                 "category",
-                ["llm", "embedding", "reranker", "vector_store", "publisher"],
+                ["llm", "embedding", "reranker", "vector_store", "publisher", "image"],
                 required=True,
             ),
             t("provider", required=True),
@@ -236,6 +273,8 @@ COLLECTIONS: list[dict[str, Any]] = [
                     "internal_linking",
                     "brand_voice",
                     "validation",
+                    "image_plan_system",
+                    "image_plan_user",
                 ],
                 required=True,
             ),
@@ -327,6 +366,8 @@ COLLECTIONS: list[dict[str, Any]] = [
             date("publishedAt"),
             num("wordpressPostId"),
             t("wordpressUrl"),
+            json_field("imagePlan"),  # latest ArticleImagePlan snapshot
+            num("imagePlanVersion"),
             rel("lastJob", "jobs"),  # no cascade; audit pointer
         ],
         indexes=[
@@ -374,6 +415,57 @@ COLLECTIONS: list[dict[str, Any]] = [
         indexes=[
             "CREATE UNIQUE INDEX idx_revisions_article_rev ON article_revisions (article, revision)",
             "CREATE INDEX idx_revisions_article_created ON article_revisions (article, created)",
+        ],
+    ),
+    # ------------------------------------------------------- article_images
+    col(
+        "article_images",
+        [
+            rel("project", "projects", required=True, cascade=True),
+            rel("article", "articles", required=True, cascade=True),
+            # Versions: one row per generation; active=true marks the selected
+            # one. Successful rows are never overwritten — regenerate creates
+            # version+1, rollback just flips active.
+            select("role", ["cover", "interior"], required=True),
+            t("sectionKey"),  # "section-N" for interiors, "" for cover
+            num("version", required=True),
+            boolean("active"),
+            select(
+                "status",
+                ["planned", "generating", "optimizing", "ready", "failed"],
+                required=True,
+            ),
+            t("provider"),
+            t("model"),
+            t("prompt", max_len=8000),
+            t("promptHash"),
+            t("negativePrompt", max_len=5000),
+            t("styleHash"),
+            num("width"),
+            num("height"),
+            t("aspectRatio"),
+            t("format"),
+            num("fileSize"),
+            file_field("sourceFile", mime_types=["image/png", "image/jpeg", "image/webp"]),
+            file_field("optimizedFile", mime_types=["image/webp", "image/avif", "image/jpeg"]),
+            file_field("smallFile", mime_types=["image/webp", "image/avif", "image/jpeg"]),
+            num("wordpressMediaId"),
+            t("wordpressUrl"),
+            t("altText", max_len=500),
+            t("caption", max_len=500),
+            t("filename"),
+            num("generationLatency"),
+            num("estimatedCost"),
+            num("attempts"),
+            num("seed"),
+            t("fingerprint"),
+            json_field("error"),
+            t("createdBy"),
+        ],
+        indexes=[
+            "CREATE UNIQUE INDEX idx_images_article_role_section_version ON article_images (article, role, sectionKey, version)",
+            "CREATE INDEX idx_images_article_active ON article_images (article, active)",
+            "CREATE INDEX idx_images_fingerprint ON article_images (fingerprint)",
         ],
     ),
     # -------------------------------------------------------------- documents
@@ -693,6 +785,38 @@ DEFAULT_PROMPTS: dict[str, str] = {
         '{"title": string, "slug": string, "sections": [{"heading": string, "content_brief": string, "internal_links": [{"title": string, "url": string, "anchor_text": string}]}]}\n'
         "خروجی معیوب:\n"
         "{{ raw_output }}"
+    ),
+    "image_plan_system": (
+        "تو یک کارگردان هنری محتوای سئو هستی. برای هر مقاله یک برنامه تصویر (image plan) "
+        "حرفه‌ای تولید می‌کنی: یک تصویر کاور و در صورت نیاز چند تصویر داخلی هدفمند. "
+        "خروجی تو همیشه JSON معتبر است و هیچ چیز خارج از JSON نمی‌نویسی.\n"
+        "اصول: تصاویر باید ارزش اطلاعاتی داشته باشند (نمایش مفهوم، نمودار، مقایسه، صحنه واقعی) "
+        "و هرگز تزئینی یا تکراری نباشند. alt_text و caption همیشه به زبان مقاله نوشته می‌شوند، "
+        "اما visual prompt باید به زبان {{ prompt_language }} باشد. در تصویر هیچ متنی ترسیم نمی‌شود."
+    ),
+    "image_plan_user": (
+        "برای مقاله زیر برنامه تصویر تولید کن.\n"
+        "## عنوان مقاله\n{{ article.title }}\n"
+        "## کلمه کلیدی\n{{ topic.keyword }}\n"
+        "## زبان مقاله\n{{ language }}\n"
+        "## زبان پرامپت تصویر\n{{ prompt_language }}\n"
+        "## بخش‌های مقاله\n{{ sections }}\n"
+        "## پروفایل سبک تصویر\n{{ style_profile }}\n\n"
+        "خروجی باید فقط یک JSON معتبر با این ساختار باشد:\n"
+        "{\n"
+        '  "images": [\n'
+        '    {"role": "cover", "purpose": "نمایش مفهوم اصلی مقاله", "prompt": "visual prompt ({{ prompt_language }})", '
+        '"aspect_ratio": "16:9", "alt_text": "توضیح alt فارسی طبیعی و غیرکلیشه‌ای", "caption": "بریده‌ای توصیفی یا خالی"},\n'
+        '    {"role": "interior", "section_key": "section-1", "purpose": "چرا این بخش به تصویر نیاز دارد", '
+        '"prompt": "visual prompt ({{ prompt_language }})", "aspect_ratio": "16:9", '
+        '"alt_text": "توضیح alt فارسی", "caption": "بریده‌ای توصیفی یا خالی"}\n'
+        "  ]\n"
+        "}\n"
+        "قوانین: دقیقاً یک cover الزامی است (نسبت ۱۶:۹). حداکثر {{ max_interior_images }} تصویر داخلی — "
+        "فقط برای بخش‌هایی که مفهوم بصری مهمی دارند (نمودار، مراحل، مقایسه، ساختار). تصاویر تزئینی و تکراری ممنوع. "
+        "spacing: تصاویر داخلی نباید در بخش‌های متوالی پشت‌سرهم بیایند مگر اینکه واقعاً لازم باشند. "
+        "alt_text توصیف طبیعی صحنه است (تکرار عنوان مقاله یا پر کردن کلمه کلیدی ممنوع) و هیچ‌گاه متن پرامپت را لو نمی‌دهد. "
+        "در پرامپت تصویری هیچ نوشته/حروف/کلمه‌ای داخل تصویر نمی‌خواهیم. هیچ توضیحی خارج از JSON ننویس."
     ),
 }
 

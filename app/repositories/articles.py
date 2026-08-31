@@ -145,6 +145,10 @@ class ArticleRepo(BaseRepo):
             },
         )
 
+    def set_image_plan(self, article_id: str, plan: dict[str, Any], version: int) -> dict[str, Any]:
+        """Persist the validated image plan (immutable snapshot per version)."""
+        return self.update(article_id, {"imagePlan": plan, "imagePlanVersion": version})
+
 
 class SectionRepo(BaseRepo):
     collection = "article_sections"

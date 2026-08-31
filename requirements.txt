@@ -21,6 +21,9 @@ httpx>=0.27
 cryptography>=42
 bleach>=6
 
+# --- Images ---
+Pillow>=10
+
 # --- UI dates ---
 jdatetime>=4
 

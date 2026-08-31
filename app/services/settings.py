@@ -9,20 +9,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from app.repositories.projects import ProjectRepo, ProjectSettingsRepo
-from app.repositories.prompts import PromptRepo
-
-# Prompt types consumed by the writer pipeline (project row → global default).
-PROMPT_TYPES = (
-    "outline_system",
-    "outline_user",
-    "section_system",
-    "section_user",
-    "seo_rules",
-    "internal_linking",
-    "brand_voice",
-    "validation",
-)
-
+from app.repositories.prompts import PROMPT_TYPES, PromptRepo  # noqa: F401  (single source)
 
 LLM_ROLES = ("outline", "section", "meta", "review")
 
@@ -185,6 +172,29 @@ class ProjectConfig:
     @property
     def indexing(self) -> dict[str, Any]:
         return self.settings.get("indexing") or {}
+
+    @property
+    def images(self) -> dict[str, Any]:
+        """Image-generation config. Model IDs are DATA (persisted here), never
+        hardcoded in the pipeline — empty fallback means "no fallback"."""
+        style = self.settings.get("imageStyle") or {}
+        return {
+            "cover_provider": str(self.settings.get("imageCoverProvider") or "gemini"),
+            "cover_model": str(self.settings.get("imageCoverModel") or "gemini-3-pro-image"),
+            "interior_provider": str(self.settings.get("imageInteriorProvider") or "bfl"),
+            "interior_model": str(self.settings.get("imageInteriorModel") or "flux-2-klein-9b"),
+            "fallback_provider": str(self.settings.get("imageFallbackProvider") or ""),
+            "fallback_model": str(self.settings.get("imageFallbackModel") or ""),
+            "cover_aspect_ratio": str(self.settings.get("imageCoverAspectRatio") or "16:9"),
+            "interior_aspect_ratio": str(self.settings.get("imageInteriorAspectRatio") or "16:9"),
+            "cover_min_width": int(self.settings.get("imageCoverMinWidth") or 1200),
+            "max_interior_images": int(self.settings.get("imageMaxInteriorImages") or 4),
+            "max_retries": int(self.settings.get("imageMaxRetries") or 3),
+            "optimization_format": str(self.settings.get("imageOptimizationFormat") or "webp"),
+            "ai_qa_enabled": bool(self.settings.get("imageAiQaEnabled")),
+            "prompt_language": str(self.settings.get("imagePromptLanguage") or "en"),
+            "style": style,
+        }
 
     # -- prompts --------------------------------------------------------------------
     def prompt(self, ptype: str, fallback: str = "") -> str:

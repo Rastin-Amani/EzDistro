@@ -85,6 +85,22 @@ DEFAULT_SETTINGS: dict[str, Any] = {
     "minArticleWords": 300,
     "retryPolicy": {"max_attempts": 3, "backoff_base": 30, "backoff_max": 3600},
     "publishingMode": "publish",
+    # image subsystem defaults (mirror bootstrap_pb project_settings fields)
+    "imageCoverProvider": "gemini",
+    "imageCoverModel": "gemini-3-pro-image",
+    "imageInteriorProvider": "bfl",
+    "imageInteriorModel": "flux-2-klein-9b",
+    "imageFallbackProvider": "",
+    "imageFallbackModel": "",
+    "imageCoverAspectRatio": "16:9",
+    "imageInteriorAspectRatio": "16:9",
+    "imageCoverMinWidth": 1200,
+    "imageMaxInteriorImages": 4,
+    "imageMaxRetries": 3,
+    "imageOptimizationFormat": "webp",
+    "imageAiQaEnabled": False,
+    "imagePromptLanguage": "en",
+    "imageStyle": {},
     "autosave": {"enabled": False, "interval_minutes": 5},
     # auto-publish: schedule-generated articles publish straight to WordPress
     # when the SEO score reaches the threshold; otherwise they rewrite and

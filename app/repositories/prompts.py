@@ -20,6 +20,8 @@ PROMPT_TYPES = (
     "internal_linking",
     "brand_voice",
     "validation",
+    "image_plan_system",
+    "image_plan_user",
 )
 
 

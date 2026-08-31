@@ -33,12 +33,28 @@ _ALLOWED_TAGS = [
     "tr",
     "th",
     "td",
+    # image subsystem: figures are inserted only by publish-time resolution of
+    # {{IMAGE:key}} placeholders (never by raw LLM output — src comes from WP)
+    "img",
+    "figure",
+    "figcaption",
 ]
 
 _ALLOWED_ATTRS = {
     "a": ["href", "title", "rel", "target"],
     "th": ["colspan", "rowspan"],
     "td": ["colspan", "rowspan"],
+    "img": [
+        "src",
+        "alt",
+        "width",
+        "height",
+        "loading",
+        "srcset",
+        "sizes",
+        "decoding",
+        "fetchpriority",
+    ],
 }
 
 _ALLOWED_PROTOCOLS = {"http", "https", "mailto"}
