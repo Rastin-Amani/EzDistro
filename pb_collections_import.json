@@ -108,11 +108,11 @@
       "CREATE UNIQUE INDEX idx_projects_slug ON projects (slug)",
       "CREATE INDEX idx_projects_status ON projects (status)"
     ],
-    "listRule": "@request.auth.id != ''",
-    "viewRule": "@request.auth.id != ''",
-    "createRule": "@request.auth.id != ''",
-    "updateRule": "@request.auth.id != ''",
-    "deleteRule": "@request.auth.id != ''"
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "",
+    "updateRule": "",
+    "deleteRule": ""
   },
   {
     "name": "project_settings",
@@ -634,11 +634,11 @@
     "indexes": [
       "CREATE UNIQUE INDEX idx_settings_project ON project_settings (project)"
     ],
-    "listRule": "@request.auth.id != ''",
-    "viewRule": "@request.auth.id != ''",
-    "createRule": "@request.auth.id != ''",
-    "updateRule": "@request.auth.id != ''",
-    "deleteRule": "@request.auth.id != ''"
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "",
+    "updateRule": "",
+    "deleteRule": ""
   },
   {
     "name": "integrations",
@@ -781,11 +781,11 @@
       "CREATE INDEX idx_integrations_project_category ON integrations (project, category)",
       "CREATE UNIQUE INDEX idx_integrations_proj_cat_provider_name ON integrations (project, category, provider, displayName)"
     ],
-    "listRule": "@request.auth.id != ''",
-    "viewRule": "@request.auth.id != ''",
-    "createRule": "@request.auth.id != ''",
-    "updateRule": "@request.auth.id != ''",
-    "deleteRule": "@request.auth.id != ''"
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "",
+    "updateRule": "",
+    "deleteRule": ""
   },
   {
     "name": "prompts",
@@ -902,11 +902,11 @@
       "CREATE INDEX idx_prompts_project_type_active ON prompts (project, type, active)",
       "CREATE UNIQUE INDEX idx_prompts_proj_type_name_version ON prompts (project, type, name, version)"
     ],
-    "listRule": "@request.auth.id != ''",
-    "viewRule": "@request.auth.id != ''",
-    "createRule": "@request.auth.id != ''",
-    "updateRule": "@request.auth.id != ''",
-    "deleteRule": "@request.auth.id != ''"
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "",
+    "updateRule": "",
+    "deleteRule": ""
   },
   {
     "name": "topics",
@@ -1077,11 +1077,11 @@
       "CREATE INDEX idx_topics_project_status ON topics (project, status)",
       "CREATE INDEX idx_topics_project_week ON topics (project, week)"
     ],
-    "listRule": "@request.auth.id != ''",
-    "viewRule": "@request.auth.id != ''",
-    "createRule": "@request.auth.id != ''",
-    "updateRule": "@request.auth.id != ''",
-    "deleteRule": "@request.auth.id != ''"
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "",
+    "updateRule": "",
+    "deleteRule": ""
   },
   {
     "name": "articles",
@@ -1353,11 +1353,11 @@
       "CREATE INDEX idx_articles_project_status ON articles (project, status)",
       "CREATE UNIQUE INDEX idx_articles_topic ON articles (topicId)"
     ],
-    "listRule": "@request.auth.id != ''",
-    "viewRule": "@request.auth.id != ''",
-    "createRule": "@request.auth.id != ''",
-    "updateRule": "@request.auth.id != ''",
-    "deleteRule": "@request.auth.id != ''"
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "",
+    "updateRule": "",
+    "deleteRule": ""
   },
   {
     "name": "article_sections",
@@ -1555,11 +1555,11 @@
     "indexes": [
       "CREATE UNIQUE INDEX idx_sections_article_position ON article_sections (article, position)"
     ],
-    "listRule": "@request.auth.id != ''",
-    "viewRule": "@request.auth.id != ''",
-    "createRule": "@request.auth.id != ''",
-    "updateRule": "@request.auth.id != ''",
-    "deleteRule": "@request.auth.id != ''"
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "",
+    "updateRule": "",
+    "deleteRule": ""
   },
   {
     "name": "article_revisions",
@@ -1649,11 +1649,11 @@
       "CREATE UNIQUE INDEX idx_revisions_article_rev ON article_revisions (article, revision)",
       "CREATE INDEX idx_revisions_article_created ON article_revisions (article, created)"
     ],
-    "listRule": "@request.auth.id != ''",
-    "viewRule": "@request.auth.id != ''",
-    "createRule": "@request.auth.id != ''",
-    "updateRule": "@request.auth.id != ''",
-    "deleteRule": "@request.auth.id != ''"
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "",
+    "updateRule": "",
+    "deleteRule": ""
   },
   {
     "name": "documents",
@@ -1840,11 +1840,11 @@
       "CREATE UNIQUE INDEX idx_documents_project_source ON documents (project, sourceType, sourceId)",
       "CREATE INDEX idx_documents_project_status ON documents (project, indexStatus)"
     ],
-    "listRule": "@request.auth.id != ''",
-    "viewRule": "@request.auth.id != ''",
-    "createRule": "@request.auth.id != ''",
-    "updateRule": "@request.auth.id != ''",
-    "deleteRule": "@request.auth.id != ''"
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "",
+    "updateRule": "",
+    "deleteRule": ""
   },
   {
     "name": "index_runs",
@@ -2052,11 +2052,11 @@
     "indexes": [
       "CREATE INDEX idx_index_runs_project_created ON index_runs (project, created)"
     ],
-    "listRule": "@request.auth.id != ''",
-    "viewRule": "@request.auth.id != ''",
-    "createRule": "@request.auth.id != ''",
-    "updateRule": "@request.auth.id != ''",
-    "deleteRule": "@request.auth.id != ''"
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "",
+    "updateRule": "",
+    "deleteRule": ""
   },
   {
     "name": "jobs",
@@ -2417,11 +2417,11 @@
       "CREATE INDEX idx_jobs_entity ON jobs (entityType, entityId)",
       "CREATE INDEX idx_jobs_type_status ON jobs (type, status)"
     ],
-    "listRule": "@request.auth.id != ''",
-    "viewRule": "@request.auth.id != ''",
-    "createRule": "@request.auth.id != ''",
-    "updateRule": "@request.auth.id != ''",
-    "deleteRule": "@request.auth.id != ''"
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "",
+    "updateRule": "",
+    "deleteRule": ""
   },
   {
     "name": "job_leases",
@@ -2470,11 +2470,11 @@
       "CREATE UNIQUE INDEX idx_job_leases_job ON job_leases (job)",
       "CREATE INDEX idx_job_leases_expires ON job_leases (expiresAt)"
     ],
-    "listRule": "@request.auth.id != ''",
-    "viewRule": "@request.auth.id != ''",
-    "createRule": "@request.auth.id != ''",
-    "updateRule": "@request.auth.id != ''",
-    "deleteRule": "@request.auth.id != ''"
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "",
+    "updateRule": "",
+    "deleteRule": ""
   },
   {
     "name": "job_events",
@@ -2549,11 +2549,11 @@
       "CREATE INDEX idx_job_events_job_created ON job_events (job, created)",
       "CREATE INDEX idx_job_events_project_created ON job_events (project, created)"
     ],
-    "listRule": "@request.auth.id != ''",
-    "viewRule": "@request.auth.id != ''",
-    "createRule": "@request.auth.id != ''",
-    "updateRule": "@request.auth.id != ''",
-    "deleteRule": "@request.auth.id != ''"
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "",
+    "updateRule": "",
+    "deleteRule": ""
   },
   {
     "name": "publishing_runs",
@@ -2713,11 +2713,11 @@
       "CREATE INDEX idx_publishing_project_created ON publishing_runs (project, created)",
       "CREATE INDEX idx_publishing_article_created ON publishing_runs (article, created)"
     ],
-    "listRule": "@request.auth.id != ''",
-    "viewRule": "@request.auth.id != ''",
-    "createRule": "@request.auth.id != ''",
-    "updateRule": "@request.auth.id != ''",
-    "deleteRule": "@request.auth.id != ''"
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "",
+    "updateRule": "",
+    "deleteRule": ""
   },
   {
     "name": "provider_metrics",
@@ -2891,11 +2891,11 @@
       "CREATE UNIQUE INDEX idx_provider_metrics_key ON provider_metrics (project, provider, model, operation, day)",
       "CREATE INDEX idx_provider_metrics_project_day ON provider_metrics (project, day)"
     ],
-    "listRule": "@request.auth.id != ''",
-    "viewRule": "@request.auth.id != ''",
-    "createRule": "@request.auth.id != ''",
-    "updateRule": "@request.auth.id != ''",
-    "deleteRule": "@request.auth.id != ''"
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "",
+    "updateRule": "",
+    "deleteRule": ""
   },
   {
     "name": "schedules",
@@ -2999,11 +2999,11 @@
     "indexes": [
       "CREATE INDEX idx_schedules_next_run ON schedules (enabled, nextRunAt)"
     ],
-    "listRule": "@request.auth.id != ''",
-    "viewRule": "@request.auth.id != ''",
-    "createRule": "@request.auth.id != ''",
-    "updateRule": "@request.auth.id != ''",
-    "deleteRule": "@request.auth.id != ''"
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "",
+    "updateRule": "",
+    "deleteRule": ""
   },
   {
     "name": "app_settings",
@@ -3037,11 +3037,11 @@
     "indexes": [
       "CREATE UNIQUE INDEX idx_app_settings_key ON app_settings (key)"
     ],
-    "listRule": "@request.auth.id != ''",
-    "viewRule": "@request.auth.id != ''",
-    "createRule": "@request.auth.id != ''",
-    "updateRule": "@request.auth.id != ''",
-    "deleteRule": "@request.auth.id != ''"
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "",
+    "updateRule": "",
+    "deleteRule": ""
   },
   {
     "name": "project_members",
@@ -3094,10 +3094,10 @@
       "CREATE UNIQUE INDEX idx_members_project_user ON project_members (project, user)",
       "CREATE INDEX idx_members_user ON project_members (user)"
     ],
-    "listRule": "@request.auth.id != ''",
-    "viewRule": "@request.auth.id != ''",
-    "createRule": "@request.auth.id != ''",
-    "updateRule": "@request.auth.id != ''",
-    "deleteRule": "@request.auth.id != ''"
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "",
+    "updateRule": "",
+    "deleteRule": ""
   }
 ]

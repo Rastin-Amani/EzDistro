@@ -25,18 +25,22 @@ from app.config import settings  # noqa: E402
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
-AUTH_RULE = "@request.auth.id != ''"
 
 
 def col(
     name: str,
     fields: list[dict[str, Any]],
     indexes: list[str] | None = None,
-    list_rule: str = AUTH_RULE,
-    view_rule: str = AUTH_RULE,
-    create_rule: str = AUTH_RULE,
-    update_rule: str = AUTH_RULE,
-    delete_rule: str = AUTH_RULE,
+    # Superuser-only API rules (18-A): authorization lives in the app layer
+    # (app/api/deps.py) — PocketBase must never be a weaker second layer that
+    # lets any logged-in user CRUD records (e.g. project_members) directly.
+    # "" = only superusers can call the REST API; the app always goes through
+    # get_admin_pb()/get_data_pb().
+    list_rule: str = "",
+    view_rule: str = "",
+    create_rule: str = "",
+    update_rule: str = "",
+    delete_rule: str = "",
 ) -> dict[str, Any]:
     return {
         "name": name,
@@ -947,6 +951,32 @@ def ensure_users_fields(pb: PocketBase) -> None:
         print("users collection: added", [f["name"] for f in added])
 
 
+def ensure_users_rules(pb: PocketBase) -> None:
+    """Lock the built-in users collection to superuser-only API access (18-A).
+
+    Only rule keys are sent (never ``fields`` — the SDK snake-cases field
+    metadata on read, so round-tripping fields would corrupt them). Login and
+    auth_refresh use PocketBase auth endpoints, which are not gated by these
+    rules; the app reads/writes users through the superuser client. Verify
+    against a live instance after bootstrap.
+    """
+    users = pb.collections.get_one("users")
+    rules = {
+        "listRule": users.list_rule,
+        "viewRule": users.view_rule,
+        "createRule": users.create_rule,
+        "updateRule": users.update_rule,
+        "deleteRule": users.delete_rule,
+    }
+    # None means "no rule" (public in PocketBase); "" means superuser-only.
+    if any(v != "" for v in rules.values()):
+        pb.collections.update(
+            "users",
+            {"listRule": "", "viewRule": "", "createRule": "", "updateRule": "", "deleteRule": ""},
+        )
+        print("users collection: API rules locked to superuser-only")
+
+
 def seed_defaults(pb: PocketBase) -> None:
     # app_settings singleton
     try:
@@ -1077,6 +1107,7 @@ def main() -> None:
     import_collections(pb)
     time.sleep(0.5)
     ensure_users_fields(pb)
+    ensure_users_rules(pb)
     seed_defaults(pb)
     seed_admin_user(pb)
     print("✓ bootstrap complete")
