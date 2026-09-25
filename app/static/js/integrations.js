@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════════
-   Seoz — integrations editor (shared add/edit bottomsheet)
+   EzDistro — integrations editor (shared add/edit bottomsheet)
    -----------------------------------------------------------------------
    A single DaisyUI modal (#int-editor) is reused for creating AND editing
    every connection. Edit buttons carry a JSON payload (safe fields only —

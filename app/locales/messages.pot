@@ -342,7 +342,7 @@ msgid "تلاش مجدد برنامه‌ریزی شد"
 msgstr ""
 
 #: app/api/auth.py:28 app/api/auth.py:76
-msgid "ورود به سئوز"
+msgid "ورود به EzDistro"
 msgstr ""
 
 #: app/api/auth.py:45 app/api/auth.py:76
@@ -969,7 +969,7 @@ msgid "لینک"
 msgstr ""
 
 #: app/templates/base.html:53
-msgid "سئوز"
+msgid "EzDistro"
 msgstr ""
 
 #: app/templates/base.html:59
@@ -1236,7 +1236,7 @@ msgstr ""
 
 #: app/templates/layouts/platform.html:13
 #: app/templates/layouts/platform.html:109
-msgid "سئوز — خانه"
+msgid "EzDistro — خانه"
 msgstr ""
 
 #: app/templates/layouts/platform.html:25

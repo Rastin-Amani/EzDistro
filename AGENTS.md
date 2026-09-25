@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Seoz Platform: FastAPI + HTMX (Jinja2/DaisyUI) SEO automation platform (WordPress indexer + LLM article writer). Modular monolith over PocketBase (source of truth) + Qdrant (vectors). **No Redis/Celery/n8n.**
+EzDistro Platform: FastAPI + HTMX (Jinja2/DaisyUI) SEO automation platform (WordPress indexer + LLM article writer). Modular monolith over PocketBase (source of truth) + Qdrant (vectors). **No Redis/Celery/n8n.**
 
 ## Two independent processes (both need a running PocketBase)
 

@@ -142,7 +142,7 @@ class FakeVectorStore:
         self.ensure_calls: list[int] = []
         self.upsert_calls: list[list[VectorPoint]] = []
         self.deleted_ids: list[str] = []
-        self.namespace = "seoz-test-model"
+        self.namespace = "ezdistro-test-model"
         self.provider_name = "fake"
 
     async def ensure_collection(self, dimensions: int) -> None:

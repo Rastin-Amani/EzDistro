@@ -97,19 +97,19 @@ def acquire_async_client(
         if entry is not None:
             _CLIENT_POOL[key] = (now, entry[1])
             client = entry[1]
-            client._seoz_pooled = True  # type: ignore[attr-defined]
+            client._ezdistro_pooled = True  # type: ignore[attr-defined]
             return client
         client = build_async_client(
             base_url, api_key=api_key, auth_header=auth_header, timeout=timeout
         )
-        client._seoz_pooled = True  # type: ignore[attr-defined]
+        client._ezdistro_pooled = True  # type: ignore[attr-defined]
         _CLIENT_POOL[key] = (now, client)
         return client
 
 
 def release_async_client(client: httpx.AsyncClient) -> None:
     """Close non-pooled clients; pooled ones stay for reuse."""
-    if not getattr(client, "_seoz_pooled", False):
+    if not getattr(client, "_ezdistro_pooled", False):
         with contextlib.suppress(RuntimeError):
             loop = asyncio.get_running_loop()
             loop.create_task(_aclose(client))

@@ -71,7 +71,7 @@ async def handle_publish_article(ctx: JobContext) -> dict[str, Any]:
     elif article.get("status") == "publishing" and not runs.already_published(article_id):
         # Crash-recovery: a previous attempt of THIS job died mid-publish and
         # left the article stuck in "publishing". Retrying the same job is
-        # safe: publishing runs are idempotent and the WP seoz_article_id meta
+        # safe: publishing runs are idempotent and the WP ezdistro_article_id meta
         # lookup prevents duplicate posts. Other jobs are still refused.
         if not runs.first(filter=f'article="{article_id}" && job="{ctx.job_id}"'):
             raise ProviderError(
@@ -180,7 +180,7 @@ async def handle_publish_article(ctx: JobContext) -> dict[str, Any]:
                     html=html,
                     status=mode,
                     slug=article.get("slug") or slugify(article.get("title") or "post"),
-                    meta={"seoz_article_id": article_id, "seoz_request_id": request_id},
+                    meta={"ezdistro_article_id": article_id, "ezdistro_request_id": request_id},
                     excerpt=article.get("metaDescription") or "",
                 )
         if featured_media_id:

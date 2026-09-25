@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════════
-   Seoz — custom confirmation dialog (replaces the native browser confirm())
+   EzDistro — custom confirmation dialog (replaces the native browser confirm())
    -----------------------------------------------------------------------
    htmx 2 fires `htmx:confirm` on every request that carries `hx-confirm`.
    We intercept it (preventDefault → the native confirm() is never shown),

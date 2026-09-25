@@ -50,11 +50,11 @@
 
         {% for w in workers %}
 
-        <section class="seoz-panel {% if workers|length == 1 %}lg:col-span-2{% endif %}">
+        <section class="ezdistro-panel {% if workers|length == 1 %}lg:col-span-2{% endif %}">
 
-            <div class="seoz-panel-head flex-wrap">
+            <div class="ezdistro-panel-head flex-wrap">
 
-                <h2 class="seoz-panel-title font-mono text-sm min-w-0 truncate" dir="ltr" title="{{ w.workerId }}">{{ w.workerId }}</h2>
+                <h2 class="ezdistro-panel-title font-mono text-sm min-w-0 truncate" dir="ltr" title="{{ w.workerId }}">{{ w.workerId }}</h2>
 
                 <div class="flex items-center gap-1.5 flex-wrap">
 
@@ -94,7 +94,7 @@
 
 
 
-                <div class="seoz-kv">
+                <div class="ezdistro-kv">
 
                     <div><span class="k">{{ _('آخرین ضربان') }}</span><span class="v">{{ w.lastHeartbeatAt|rel_time if w.lastHeartbeatAt else 'هرگز' }}</span></div>
 
@@ -142,9 +142,9 @@
 
     {% else %}
 
-    <div class="seoz-panel border-error/40">
+    <div class="ezdistro-panel border-error/40">
 
-        <div class="seoz-empty py-10">
+        <div class="ezdistro-empty py-10">
 
             <p class="font-bold text-base-content/75">{{ _('هیچ کارگری در حال اجرا نیست') }}</p>
 
@@ -164,9 +164,9 @@
 
         <!-- Scheduler status -->
 
-        <section class="seoz-panel">
+        <section class="ezdistro-panel">
 
-            <div class="seoz-panel-head"><h2 class="seoz-panel-title">{{ _('زمان‌بندی خودکار') }}</h2></div>
+            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('زمان‌بندی خودکار') }}</h2></div>
 
             <div class="p-4 text-xs flex flex-col gap-1.5">
 
@@ -200,11 +200,11 @@
 
         <!-- Queue -->
 
-        <section class="seoz-panel">
+        <section class="ezdistro-panel">
 
-            <div class="seoz-panel-head">
+            <div class="ezdistro-panel-head">
 
-                <h2 class="seoz-panel-title">{{ _('صف وظایف') }}</h2>
+                <h2 class="ezdistro-panel-title">{{ _('صف وظایف') }}</h2>
 
                 <a href="/jobs" class="btn btn-ghost btn-xs">{{ _('همه وظایف') }}</a>
 
@@ -246,9 +246,9 @@
 
     <!-- Restart guidance -->
 
-    <section class="seoz-panel">
+    <section class="ezdistro-panel">
 
-        <div class="seoz-panel-head"><h2 class="seoz-panel-title">{{ _('راه‌اندازی مجدد کارگر') }}</h2></div>
+        <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('راه‌اندازی مجدد کارگر') }}</h2></div>
 
         <div class="p-4 flex flex-col gap-3">
 
@@ -302,11 +302,11 @@
 
     <!-- Recent failures -->
 
-    <section class="seoz-panel">
+    <section class="ezdistro-panel">
 
-        <div class="seoz-panel-head">
+        <div class="ezdistro-panel-head">
 
-            <h2 class="seoz-panel-title">{{ _('ناموفق‌های اخیر') }}</h2>
+            <h2 class="ezdistro-panel-title">{{ _('ناموفق‌های اخیر') }}</h2>
 
             <a href="/failed" class="btn btn-ghost btn-xs">{{ _('همه') }}</a>
 

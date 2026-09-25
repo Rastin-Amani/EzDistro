@@ -1,4 +1,4 @@
-# Seoz Platform — SEO Automation (Indexer + Writer)
+# EzDistro Platform — SEO Automation (Indexer + Writer)
 
 Production-grade, reusable SEO automation platform: fetches WordPress posts, chunks and
 embeds them into Qdrant (Indexer), and generates fully-formed articles from topics that
@@ -18,7 +18,7 @@ Architecture, data model, job-state design and provider interfaces: see [docs/AR
   content+section editor / metadata+SEO+links+status), live section-generation
   progress with elapsed time, versioned outline editing (move/add/delete/brief),
   bulk topic management with search/filter/sort/pagination, pipeline dashboard
-  with indexing + provider health, custom `seoz` DaisyUI theme.
+  with indexing + provider health, custom `ezdistro` DaisyUI theme.
 
 - **Multi-project**: every project has its own WordPress config, Qdrant namespace,
   embedding provider/model/dimensions, LLM provider/model, prompts, SEO rules, writing

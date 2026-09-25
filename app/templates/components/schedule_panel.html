@@ -1,5 +1,5 @@
 {# One schedule row — a standalone form (never nested inside another form) #}
-<form class="seoz-panel p-4 flex flex-wrap items-end gap-4" id="sched-{{ kind }}"
+<form class="ezdistro-panel p-4 flex flex-wrap items-end gap-4" id="sched-{{ kind }}"
       hx-post="/projects/{{ project.id }}/schedules"
       hx-target="#sched-{{ kind }}"
       hx-swap="outerHTML">

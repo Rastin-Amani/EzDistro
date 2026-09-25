@@ -1,4 +1,4 @@
-# Seoz Team Features — Product Requirements & Implementation Brief
+# EzDistro Team Features — Product Requirements & Implementation Brief
 
 ```text
 Status:        Draft for implementation
@@ -15,7 +15,7 @@ Decisions:     (1) Invitations are LINK-ONLY — no email is ever sent by the ap
 
 ## 1. Objective
 
-Build team capabilities for Seoz: the ability to create and administer platform
+Build team capabilities for EzDistro: the ability to create and administer platform
 users, invite teammates into projects with explicit roles, and manage
 memberships (roles, removal, ownership transfer) — all through the existing
 FastAPI + HTMX + Jinja2 + DaisyUI stack, with PocketBase remaining the sole
@@ -601,7 +601,7 @@ provider-registry changes. Invite delivery is "human copies a link".
    and read every project's records — bypassing `require_project_role`
    entirely.
 4. Exploitability depends on network exposure of the PocketBase HTTP API
-   (UNVERIFIED for production: `PB_URL=https://db.seoz.rastin.cloud` in
+   (UNVERIFIED for production: `PB_URL=https://db.ezdistro.rastin.cloud` in
    `.env.example:17` suggests it *is* internet-reachable — Phase 0 must
    confirm).
 
@@ -649,7 +649,7 @@ Findings:
    `listRule = createRule = "@request.auth.id != ''"` (same pattern for
    view/update/delete). Confirms any logged-in user can CRUD every
    collection via PB REST.
-3. **PB network exposure (evidence 4)**: `PB_URL=https://db.seoz.rastin.cloud`
+3. **PB network exposure (evidence 4)**: `PB_URL=https://db.ezdistro.rastin.cloud`
    is internet-routed (front proxy answers), but the backend was
    **unreachable during inspection**: initial probe returned 200, all
    subsequent probes returned Go `404 page not found` for every path and

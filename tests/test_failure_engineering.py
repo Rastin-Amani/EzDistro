@@ -191,7 +191,7 @@ class FailingQdrant:
 async def qdrant_store(scenario: str, monkeypatch: pytest.MonkeyPatch):
     from app.providers.vector.qdrant_store import QdrantStore
 
-    store = QdrantStore(url="http://localhost:6333", namespace="seoz-test", api_key=None)
+    store = QdrantStore(url="http://localhost:6333", namespace="ezdistro-test", api_key=None)
 
     async def fake_get_client():
         return FailingQdrant(scenario)
@@ -311,7 +311,7 @@ async def test_wp_invalid_content_is_permanent():
 @pytest.mark.asyncio
 async def test_wp_duplicate_post_recovery_updates_orphan():
     """Crash window: WP created the post, the worker died before storing the
-    id. The retry finds it via seoz_article_id meta and UPDATEs it — never a
+    id. The retry finds it via ezdistro_article_id meta and UPDATEs it — never a
     second CREATE."""
     from app.services.publishing_service import handle_publish_article
 
@@ -746,7 +746,7 @@ async def test_crash_during_section_generation_no_duplicate_sections():
 async def test_crash_before_publish_completion_no_duplicate_posts():
     """The dangerous window: WP accepted the post, the worker died before the
     id was stored. Restart → retried publish finds the orphan via its
-    seoz_article_id meta and UPDATEs it — exactly one post exists on WP."""
+    ezdistro_article_id meta and UPDATEs it — exactly one post exists on WP."""
     from tests.failure_helpers import make_ctx
 
     ensure_registered()

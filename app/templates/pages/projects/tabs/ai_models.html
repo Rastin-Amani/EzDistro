@@ -12,13 +12,13 @@
 
         {% set sel_model = settings[role ~ 'Model'] or '' %}
 
-        <section class="seoz-panel" x-data="{ provider: '{{ sel_provider }}' }">
+        <section class="ezdistro-panel" x-data="{ provider: '{{ sel_provider }}' }">
 
-            <div class="seoz-panel-head">
+            <div class="ezdistro-panel-head">
 
                 <div class="flex items-center gap-2">
 
-                    <h3 class="seoz-panel-title">{{ label }}</h3>
+                    <h3 class="ezdistro-panel-title">{{ label }}</h3>
 
                     {{ f.tip(_('نقش‌ها: Outline رئوس را می‌سازد، Section بخش‌ها را می‌نویسد، Meta و Review اختیاری‌اند. اگر خالی بماند از پیش‌فرض سراسری استفاده می‌شود.')) }}
 
@@ -248,13 +248,13 @@
 
     {% if user and user.role == 'admin' %}
 
-    <section class="seoz-panel">
+    <section class="ezdistro-panel">
 
-        <div class="seoz-panel-head">
+        <div class="ezdistro-panel-head">
 
             <div class="flex items-center gap-2">
 
-                <h3 class="seoz-panel-title">{{ _('پیش‌فرض‌های سراسری (فقط مدیر)') }}</h3>
+                <h3 class="ezdistro-panel-title">{{ _('پیش‌فرض‌های سراسری (فقط مدیر)') }}</h3>
 
                 {{ f.tip(_('مقادیری که همه پروژه‌های جدید به‌عنوان پیش‌فرض استفاده می‌کنند؛ تنظیم پروژه همیشه بر این مقادیر اولویت دارد.')) }}
 

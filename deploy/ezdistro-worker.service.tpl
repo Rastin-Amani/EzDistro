@@ -1,5 +1,5 @@
 [Unit]
-Description=Seoz Platform — Worker process (job engine + scheduler)
+Description=EzDistro Platform — Worker process (job engine + scheduler)
 After=network-online.target
 Wants=network-online.target
 

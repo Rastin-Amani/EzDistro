@@ -4,7 +4,7 @@
     {% if articles %}
     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
         {% for a in articles %}
-        <a href="/projects/{{ project.id }}/articles/{{ a.id }}/workspace" class="seoz-panel hover:border-primary/40 transition-colors block">
+        <a href="/projects/{{ project.id }}/articles/{{ a.id }}/workspace" class="ezdistro-panel hover:border-primary/40 transition-colors block">
             <div class="p-4 flex flex-col gap-2">
                 <div class="flex items-center justify-between gap-2">
                     <h3 class="font-bold text-sm truncate">{{ a.title }}</h3>
@@ -20,7 +20,7 @@
         {% endfor %}
     </div>
     {% else %}
-    <div class="seoz-panel">
+    <div class="ezdistro-panel">
         <div class="p-4 flex flex-col items-center gap-3 py-8 text-center">
             <p class="text-sm opacity-50">{{ _('هنوز مقاله‌ای تولید نشده است. از تب «موضوع‌ها» یک موضوع انتخاب کنید.') }}</p>
         </div>

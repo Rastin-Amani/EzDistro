@@ -1,4 +1,4 @@
-"""Load-test scenario for the Seoz worker + pipelines (fake providers).
+"""Load-test scenario for the EzDistro worker + pipelines (fake providers).
 
 Scenario:
 - 1 project
@@ -237,7 +237,7 @@ def main() -> None:
             llm_concurrency=args.concurrency,
         )
     )
-    print("\n=== Seoz load-test report ===")
+    print("\n=== EzDistro load-test report ===")
     for key, value in result.items():
         print(f"  {key}: {value}")
 

@@ -76,7 +76,7 @@ if not settings.is_prod:
             <!DOCTYPE html>
             <html>
             <head>
-                <title>Seoz Platform API Docs</title>
+                <title>EzDistro Platform API Docs</title>
                 <link rel="stylesheet" type="text/css" href="/static/swagger/swagger-ui.css">
             </head>
             <body>

@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════════════
-   Seoz — adaptive light/dark theme system
+   EzDistro — adaptive light/dark theme system
    -----------------------------------------------------------------------
-   * Preference persisted in localStorage key `seoz-theme`
+   * Preference persisted in localStorage key `ezdistro-theme`
      (system | light | dark). First visit / no value → follows OS.
    * The no-flash initial paint is handled by the tiny inline script in
      base.html <head>; this file wires the switcher UI + live OS updates.
@@ -10,8 +10,8 @@
 (function () {
     'use strict';
 
-    var STORAGE_KEY = 'seoz-theme';
-    var THEMES = { light: 'seoz', dark: 'seoz-dark' };
+    var STORAGE_KEY = 'ezdistro-theme';
+    var THEMES = { light: 'ezdistro', dark: 'ezdistro-dark' };
     var CHROME_COLORS = { light: '#f4f2ec', dark: '#2a2820' };
     var mqDark = window.matchMedia('(prefers-color-scheme: dark)');
 

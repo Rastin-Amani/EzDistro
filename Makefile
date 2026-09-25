@@ -55,15 +55,15 @@ check: lint typecheck test
 
 # systemd services (runs both processes as managed services on this host)
 install-worker-service:
-	@echo "Installing seoz-worker.service for user $(USER)…"
-	@sed -e "s/__USER__/$(USER)/g" -e "s|__ROOT__|$(CURDIR)|g" deploy/seoz-worker.service.tpl | sudo tee /etc/systemd/system/seoz-worker.service > /dev/null
+	@echo "Installing ezdistro-worker.service for user $(USER)…"
+	@sed -e "s/__USER__/$(USER)/g" -e "s|__ROOT__|$(CURDIR)|g" deploy/ezdistro-worker.service.tpl | sudo tee /etc/systemd/system/ezdistro-worker.service > /dev/null
 	sudo systemctl daemon-reload
-	sudo systemctl enable --now seoz-worker
-	@echo "seoz-worker installed. Logs: journalctl -u seoz-worker -f"
+	sudo systemctl enable --now ezdistro-worker
+	@echo "ezdistro-worker installed. Logs: journalctl -u ezdistro-worker -f"
 
 install-web-service:
-	@echo "Installing seoz-web.service for user $(USER)…"
-	@sed -e "s/__USER__/$(USER)/g" -e "s|__ROOT__|$(CURDIR)|g" deploy/seoz-web.service.tpl | sudo tee /etc/systemd/system/seoz-web.service > /dev/null
+	@echo "Installing ezdistro-web.service for user $(USER)…"
+	@sed -e "s/__USER__/$(USER)/g" -e "s|__ROOT__|$(CURDIR)|g" deploy/ezdistro-web.service.tpl | sudo tee /etc/systemd/system/ezdistro-web.service > /dev/null
 	sudo systemctl daemon-reload
-	sudo systemctl enable --now seoz-web
-	@echo "seoz-web installed. Logs: journalctl -u seoz-web -f"
+	sudo systemctl enable --now ezdistro-web
+	@echo "ezdistro-web installed. Logs: journalctl -u ezdistro-web -f"

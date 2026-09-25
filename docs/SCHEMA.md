@@ -1,4 +1,4 @@
-# Seoz Platform — PocketBase Schema Reference
+# EzDistro Platform — PocketBase Schema Reference
 
 This is a **reference** of the live schema. The source of truth is code:
 `app/scripts/bootstrap_pb.py` (idempotent bootstrap; `pb_collections_import.json` in
@@ -477,7 +477,7 @@ Added by bootstrap if missing: `role` (sel: `admin` \| `member`) and `displayNam
 
 ## 4. Vector payload contract (Qdrant)
 
-Collection naming: `seoz-{project_slug}-{model_slug}`, sanitized and truncated to
+Collection naming: `ezdistro-{project_slug}-{model_slug}`, sanitized and truncated to
 63 chars — namespaced per project AND embedding model so switching models never mixes
 vectors. Point ids are stable strings `{slug}:{wp_post_id}:{chunk_index}` → idempotent
 upserts.

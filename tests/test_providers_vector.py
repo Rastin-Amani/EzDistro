@@ -12,12 +12,12 @@ from app.providers.vector.qdrant_store import QdrantStore, payload_safe, point_i
 
 
 def make_store(**kwargs) -> QdrantStore:
-    return QdrantStore(url="http://qdrant.test:6333", namespace="seoz-proj-model", **kwargs)
+    return QdrantStore(url="http://qdrant.test:6333", namespace="ezdistro-proj-model", **kwargs)
 
 
 def test_project_key_namespacing():
-    assert project_key("My Project", "embed-v4.0") == "seoz-my-project-embed-v4-0"
-    assert project_key("پروژه", "مدل") == "seoz-project-model"
+    assert project_key("My Project", "embed-v4.0") == "ezdistro-my-project-embed-v4-0"
+    assert project_key("پروژه", "مدل") == "ezdistro-project-model"
     assert len(project_key("a" * 100, "b" * 100)) <= 63
 
 
@@ -66,20 +66,22 @@ def test_upsert_and_delete_and_query():
     hit = MagicMock()
     hit.id = "abc"
     hit.score = 0.9
-    hit.payload = {"title": "t", "project": "seoz-proj-model"}
+    hit.payload = {"title": "t", "project": "ezdistro-proj-model"}
     response = MagicMock()
     response.points = [hit]
     client.query_points.return_value = response
     store._client = client
 
-    points = [VectorPoint(id="proj:1:0", vector=[0.1] * 4, payload={"project": "seoz-proj-model"})]
+    points = [
+        VectorPoint(id="proj:1:0", vector=[0.1] * 4, payload={"project": "ezdistro-proj-model"})
+    ]
     asyncio.run(store.upsert(points))
     assert client.upsert.await_count == 1
     sent = client.upsert.await_args.kwargs["points"]
     assert len(sent) == 1
 
     results = asyncio.run(
-        store.query([0.1] * 4, top_k=5, threshold=0.5, filters={"project": "seoz-proj-model"})
+        store.query([0.1] * 4, top_k=5, threshold=0.5, filters={"project": "ezdistro-proj-model"})
     )
     assert len(results) == 1
     assert results[0].score == 0.9
@@ -101,7 +103,7 @@ def test_count_uses_filter():
     client.count.return_value = count
     store._client = client
 
-    assert asyncio.run(store.count(filters={"project": "seoz-proj-model"})) == 7
+    assert asyncio.run(store.count(filters={"project": "ezdistro-proj-model"})) == 7
     assert client.count.await_args.kwargs["count_filter"] is not None
 
 

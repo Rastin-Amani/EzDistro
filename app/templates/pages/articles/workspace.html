@@ -158,11 +158,11 @@
 
     <!-- Left: outline navigation -->
 
-    <aside class="seoz-panel lg:sticky lg:top-16">
+    <aside class="ezdistro-panel lg:sticky lg:top-16">
 
-        <div class="seoz-panel-head">
+        <div class="ezdistro-panel-head">
 
-            <h2 class="seoz-panel-title">{{ _('رئوس مقاله') }}</h2>
+            <h2 class="ezdistro-panel-title">{{ _('رئوس مقاله') }}</h2>
 
             <span class="text-xs opacity-50">{{ _('%(n)s بخش') % {'n': sections|length} }}</span>
 
@@ -184,9 +184,9 @@
 
         <!-- Title / meta -->
 
-        <div class="seoz-panel">
+        <div class="ezdistro-panel">
 
-            <div class="seoz-panel-head"><h2 class="seoz-panel-title">{{ _('عنوان و متا') }}</h2></div>
+            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('عنوان و متا') }}</h2></div>
 
             <div class="p-4">
 
@@ -234,7 +234,7 @@
 
         {% set section = s %}{# _section_status.html expects `section` #}
 
-        <div class="seoz-panel" id="section-{{ s.id }}">
+        <div class="ezdistro-panel" id="section-{{ s.id }}">
 
             <div class="p-4">
 
@@ -352,9 +352,9 @@
 
         {% else %}
 
-        <div class="seoz-panel">
+        <div class="ezdistro-panel">
 
-            <div class="seoz-empty py-8">
+            <div class="ezdistro-empty py-8">
 
                 <p class="font-bold text-base-content/75">{{ _('بخشی وجود ندارد') }}</p>
 
@@ -376,9 +376,9 @@
 
     <aside class="flex flex-col gap-4 lg:sticky lg:top-16">
 
-        <div class="seoz-panel">
+        <div class="ezdistro-panel">
 
-            <div class="seoz-panel-head"><h2 class="seoz-panel-title">{{ _('وضعیت') }}</h2></div>
+            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('وضعیت') }}</h2></div>
 
             <div class="p-4 flex flex-col gap-3">
 
@@ -390,7 +390,7 @@
 
                 </div>
 
-                <div class="seoz-kv">
+                <div class="ezdistro-kv">
 
                     <div><span class="k">{{ _('امتیاز سئو') }}</span><span class="v text-primary">{{ article.seoScore or 0 }}/۱۰۰</span></div>
 
@@ -410,9 +410,9 @@
 
         {% if article.validation %}
 
-        <div class="seoz-panel {{ 'border-success/40' if article.validation.ok else 'border-error/40' }}">
+        <div class="ezdistro-panel {{ 'border-success/40' if article.validation.ok else 'border-error/40' }}">
 
-            <div class="seoz-panel-head"><h2 class="seoz-panel-title">{{ _('اعتبارسنجی') }}</h2></div>
+            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('اعتبارسنجی') }}</h2></div>
 
             <div class="p-4 flex flex-col gap-2">
 
@@ -436,9 +436,9 @@
 
 
 
-        <div class="seoz-panel">
+        <div class="ezdistro-panel">
 
-            <div class="seoz-panel-head"><h2 class="seoz-panel-title">{{ _('تولید بخش‌ها') }}</h2></div>
+            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('تولید بخش‌ها') }}</h2></div>
 
             <div class="p-4">
 
@@ -472,9 +472,9 @@
 
 
 
-        <div class="seoz-panel">
+        <div class="ezdistro-panel">
 
-            <div class="seoz-panel-head"><h2 class="seoz-panel-title">{{ _('لینک‌های داخلی') }}</h2></div>
+            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('لینک‌های داخلی') }}</h2></div>
 
             <div class="p-4">
 
@@ -500,9 +500,9 @@
 
         {% if publish_runs %}
 
-        <div class="seoz-panel">
+        <div class="ezdistro-panel">
 
-            <div class="seoz-panel-head"><h2 class="seoz-panel-title">{{ _('تاریخچه انتشار') }}</h2></div>
+            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('تاریخچه انتشار') }}</h2></div>
 
             <div class="p-4 flex flex-col gap-2">
 

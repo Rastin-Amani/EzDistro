@@ -1,4 +1,4 @@
-// Seoz Service Worker — Workbox 5.1.2, local modules
+// EzDistro Service Worker — Workbox 5.1.2, local modules
 importScripts('/static/js/workbox-sw.js');
 
 workbox.setConfig({
@@ -9,7 +9,7 @@ workbox.setConfig({
 // ---- Cache names (bumped on app version change) ----
 // __CACHE_VERSION__ is replaced at runtime by app/routes/pwa.py with APP_VERSION from main.py
 const CACHE_VERSION = '__CACHE_VERSION__';
-const CACHE_PREFIX = `seoz-${CACHE_VERSION}`;
+const CACHE_PREFIX = `ezdistro-${CACHE_VERSION}`;
 const PAGE_CACHE = `${CACHE_PREFIX}-pages`;
 const STATIC_CACHE = `${CACHE_PREFIX}-static`;
 const IMAGE_CACHE = `${CACHE_PREFIX}-images`;

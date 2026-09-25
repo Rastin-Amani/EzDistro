@@ -1,6 +1,6 @@
-# Seoz Platform — Operations Runbook
+# EzDistro Platform — Operations Runbook
 
-Operational procedures for deploying, running, monitoring and recovering the Seoz
+Operational procedures for deploying, running, monitoring and recovering the EzDistro
 platform. Audience: engineers or operators responsible for a running deployment.
 
 ```text
@@ -70,18 +70,18 @@ all durable state lives in PocketBase/Qdrant.
 Example systemd unit skeletons (adapt paths/user):
 
 ```ini
-# seoz-web.service
+# ezdistro-web.service
 [Service]
-WorkingDirectory=/srv/seoz
+WorkingDirectory=/srv/ezdistro
 Environment=ENV=production
-ExecStart=/srv/seoz/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips "*"
+ExecStart=/srv/ezdistro/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips "*"
 Restart=always
 
-# seoz-worker.service
+# ezdistro-worker.service
 [Service]
-WorkingDirectory=/srv/seoz
+WorkingDirectory=/srv/ezdistro
 Environment=ENV=production
-ExecStart=/srv/seoz/.venv/bin/python -m app.workers.worker
+ExecStart=/srv/ezdistro/.venv/bin/python -m app.workers.worker
 Restart=always
 ```
 
@@ -92,10 +92,10 @@ Restart=always
 The included `Dockerfile` ships the web process by default:
 
 ```bash
-docker build -t seoz .
-docker run --env-file .env -p 8000:8000 seoz
+docker build -t ezdistro .
+docker run --env-file .env -p 8000:8000 ezdistro
 # worker:
-docker run --env-file .env seoz python -m app.workers.worker
+docker run --env-file .env ezdistro python -m app.workers.worker
 ```
 
 Note the image copies only `requirements.txt`, `app/` and `docs/` — `.env` must come

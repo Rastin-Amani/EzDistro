@@ -7,14 +7,14 @@
 
     <div class="w-full max-w-sm">
         <div class="text-center mb-7">
-            <span class="seoz-logo size-16 text-3xl mx-auto mb-4">{{ _('س') }}</span>
+            <span class="ezdistro-logo size-16 text-3xl mx-auto mb-4">{{ _('س') }}</span>
             <h1 class="text-2xl font-extrabold tracking-tight">{{ _('ورود به %(v)s') % {'v': app_name} }}</h1>
             <p class="text-sm opacity-55 mt-1">{{ _('پلتفرم اتوماسیون سئو و تولید محتوا') }}</p>
         </div>
 
         <!-- Native POST (hx-boost disabled): the session cookie is set on a
              full-page 303 redirect so mobile browsers (iOS ITP) keep it. -->
-        <form method="post" action="/login" hx-boost="false" class="seoz-panel">
+        <form method="post" action="/login" hx-boost="false" class="ezdistro-panel">
             <div class="p-5 flex flex-col gap-4">
                 {% if error %}
                 <div class="alert alert-soft alert-error text-sm" id="login-error">{{ error }}</div>

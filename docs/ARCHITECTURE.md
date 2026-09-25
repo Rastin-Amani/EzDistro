@@ -1,4 +1,4 @@
-# Seoz Platform — Architecture
+# EzDistro Platform — Architecture
 
 A production SEO-automation platform: it **indexes** WordPress content into a vector
 database and **writes** complete, SEO-scored articles from topics with an LLM, then
@@ -367,7 +367,7 @@ Safe publishing (`app/services/publishing_service.py`):
 4. If the article already has a `wordpressPostId` → **UPDATE** that post (never
    duplicate). Otherwise the adapter looks up an orphaned post by slug (recovery from
    a crash between WP create and storing the id) and updates it; only if none exists
-   is a new post created, tagged with `seoz_article_id` / `seoz_request_id` meta.
+   is a new post created, tagged with `ezdistro_article_id` / `ezdistro_request_id` meta.
 5. Success records post id + URL on the article; topic → `published`.
 6. Unpublish sets the WordPress post to **private** (WP has no true unpublish) —
    requires a stored WP post id. ⚠️ See §11: the unpublish path currently writes enum
@@ -397,7 +397,7 @@ load settings → resolve WP publisher → ensure Qdrant collection (dimension c
 - **Full reindexes** (`payload.full=true`) additionally delete stale vectors: points
   whose `source_id` was not seen during the run (document replacement), deleted in
   batches of 100. Incremental runs never delete.
-- Qdrant collections are namespaced per project+model: `seoz-{slug}-{model}`
+- Qdrant collections are namespaced per project+model: `ezdistro-{slug}-{model}`
   (sanitized, ≤63 chars). Point ids are stable `{slug}:{wp_post_id}:{chunk_index}` →
   idempotent upserts. Dimension mismatches fail fast as permanent errors.
 - Run counters (discovered / unchanged / changed / indexed / skipped / failed /

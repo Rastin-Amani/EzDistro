@@ -68,9 +68,9 @@
 
     <!-- Title / meta editor -->
 
-    <div class="seoz-panel">
+    <div class="ezdistro-panel">
 
-        <div class="seoz-panel-head"><h2 class="seoz-panel-title">{{ _('عنوان و متا') }}</h2></div>
+        <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('عنوان و متا') }}</h2></div>
 
         <div class="p-4">
 
@@ -116,11 +116,11 @@
 
     {% if article.validation %}
 
-    <div class="seoz-panel {{ 'border-success/40' if article.validation.ok else 'border-error/40' }}">
+    <div class="ezdistro-panel {{ 'border-success/40' if article.validation.ok else 'border-error/40' }}">
 
-        <div class="seoz-panel-head">
+        <div class="ezdistro-panel-head">
 
-            <h2 class="seoz-panel-title">{{ _('اعتبارسنجی مقاله') }}</h2>
+            <h2 class="ezdistro-panel-title">{{ _('اعتبارسنجی مقاله') }}</h2>
 
             <span class="badge badge-sm {{ 'badge-soft badge-success' if article.validation.ok else 'badge-soft badge-error' }}">
 
@@ -176,9 +176,9 @@
 
     <!-- Sections (the article outline) -->
 
-    <div class="seoz-panel">
+    <div class="ezdistro-panel">
 
-        <div class="seoz-panel-head"><h2 class="seoz-panel-title">{{ _('بخش‌ها — رئوس مقاله (%(n)s)') % {'n': sections|length} }}</h2></div>
+        <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('بخش‌ها — رئوس مقاله (%(n)s)') % {'n': sections|length} }}</h2></div>
 
         <div class="p-4 flex flex-col gap-3">
 
@@ -274,9 +274,9 @@
 
     {% if publish_runs %}
 
-    <div class="seoz-panel">
+    <div class="ezdistro-panel">
 
-        <div class="seoz-panel-head"><h2 class="seoz-panel-title">{{ _('تاریخچه انتشار') }}</h2></div>
+        <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('تاریخچه انتشار') }}</h2></div>
 
         <div class="p-4">
 
@@ -348,9 +348,9 @@
 
     {% if article.finalHtml %}
 
-    <div class="seoz-panel">
+    <div class="ezdistro-panel">
 
-        <div class="seoz-panel-head"><h2 class="seoz-panel-title">{{ _('پیش‌نمایش (امن‌سازی‌شده)') }}</h2></div>
+        <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('پیش‌نمایش (امن‌سازی‌شده)') }}</h2></div>
 
         <div class="p-4">
 

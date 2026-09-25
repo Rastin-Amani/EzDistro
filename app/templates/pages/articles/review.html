@@ -128,11 +128,11 @@
 
     <aside class="flex flex-col gap-4">
 
-        <div class="seoz-panel {{ 'border-success/40' if report.ok else 'border-error/40' }}">
+        <div class="ezdistro-panel {{ 'border-success/40' if report.ok else 'border-error/40' }}">
 
-            <div class="seoz-panel-head">
+            <div class="ezdistro-panel-head">
 
-                <h2 class="seoz-panel-title">{{ _('پنل اعتبارسنجی') }}</h2>
+                <h2 class="ezdistro-panel-title">{{ _('پنل اعتبارسنجی') }}</h2>
 
                 <span class="badge badge-sm {{ 'badge-soft badge-success' if report.ok else 'badge-soft badge-error' }}">
 
@@ -184,9 +184,9 @@
 
 
 
-        <div class="seoz-panel">
+        <div class="ezdistro-panel">
 
-            <div class="seoz-panel-head"><h2 class="seoz-panel-title">{{ _('اطلاعات تولید') }}</h2></div>
+            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('اطلاعات تولید') }}</h2></div>
 
             <div class="p-4 text-xs flex flex-col gap-1.5">
 
@@ -242,9 +242,9 @@
 
 
 
-        <div class="seoz-panel">
+        <div class="ezdistro-panel">
 
-            <div class="seoz-panel-head"><h2 class="seoz-panel-title">{{ _('تاریخچه نسخه‌ها') }}</h2></div>
+            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('تاریخچه نسخه‌ها') }}</h2></div>
 
             <div class="p-4">
 
@@ -302,9 +302,9 @@
 
     <section class="flex flex-col gap-4 min-w-0">
 
-        <div class="seoz-panel">
+        <div class="ezdistro-panel">
 
-            <div class="seoz-panel-head"><h2 class="seoz-panel-title">{{ _('عنوان و اسلاگ') }}</h2></div>
+            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('عنوان و اسلاگ') }}</h2></div>
 
             <div class="p-4 flex flex-col gap-2">
 
@@ -324,9 +324,9 @@
 
 
 
-        <div class="seoz-panel">
+        <div class="ezdistro-panel">
 
-            <div class="seoz-panel-head"><h2 class="seoz-panel-title">{{ _('رئوس مطالب') }}</h2></div>
+            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('رئوس مطالب') }}</h2></div>
 
             <div class="p-4">
 
@@ -352,9 +352,9 @@
 
 
 
-        <div class="seoz-panel">
+        <div class="ezdistro-panel">
 
-            <div class="seoz-panel-head"><h2 class="seoz-panel-title">{{ _('بدنه مقاله') }}</h2></div>
+            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('بدنه مقاله') }}</h2></div>
 
             <div class="p-4">
 
@@ -376,9 +376,9 @@
 
         {% if article.generatedContent and article.generatedContent != article.finalHtml %}
 
-        <div class="seoz-panel">
+        <div class="ezdistro-panel">
 
-            <div class="seoz-panel-head"><h2 class="seoz-panel-title">{{ _('نسخه تولیدشده (v%(n)s)') % {'n': article.lastGeneratedRevision} }}</h2></div>
+            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('نسخه تولیدشده (v%(n)s)') % {'n': article.lastGeneratedRevision} }}</h2></div>
 
             <div class="p-4 text-xs opacity-60">
 

@@ -1,7 +1,7 @@
 @import 'tailwindcss';
 
 @plugin "daisyui" {
-    themes: seoz --default, seoz-dark;
+    themes: ezdistro --default, ezdistro-dark;
 }
 
 @theme {
@@ -10,13 +10,13 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   "seoz" — warm editorial paper & ink & clay.
+   "ezdistro" — warm editorial paper & ink & clay.
    A calm, substantial workspace: warm paper surfaces, clay/terracotta brand,
    forest accent, deep ink. Flat by design (borders + surface contrast, no
-   shadows). Applied via data-theme="seoz".
+   shadows). Applied via data-theme="ezdistro".
    ═══════════════════════════════════════════════════════════════════════ */
 @plugin "daisyui/theme" {
-    name: "seoz";
+    name: "ezdistro";
     default: true;
     prefersdark: false;
     color-scheme: light;
@@ -55,11 +55,11 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   "seoz-dark" — paper & ink & clay, after dark.
+   "ezdistro-dark" — paper & ink & clay, after dark.
    Same brand soul, warm near-black environment.
    ═══════════════════════════════════════════════════════════════════════ */
 @plugin "daisyui/theme" {
-    name: "seoz-dark";
+    name: "ezdistro-dark";
     default: false;
     prefersdark: true;
     color-scheme: dark;
@@ -185,7 +185,7 @@ html[dir='ltr'] {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   Component layer — refine DaisyUI primitives into the seoz voice
+   Component layer — refine DaisyUI primitives into the ezdistro voice
    (flat: hierarchy via borders, surface contrast, type — never shadows)
    ═══════════════════════════════════════════════════════════════════════ */
 @layer components {
@@ -306,175 +306,175 @@ html[dir='ltr'] {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   Seoz design vocabulary — shared, reusable building blocks
+   EzDistro design vocabulary — shared, reusable building blocks
    ═══════════════════════════════════════════════════════════════════════ */
 @layer components {
     /* Page frame + header ---------------------------------------------- */
-    .seoz-page {
+    .ezdistro-page {
         @apply mx-auto w-full max-w-300 px-4 md:px-6 pb-24 md:pb-10 pt-5;
     }
-    .seoz-pagehead {
+    .ezdistro-pagehead {
         @apply flex flex-wrap items-end justify-between gap-3 mb-5;
     }
-    .seoz-eyebrow {
+    .ezdistro-eyebrow {
         @apply inline-flex items-center gap-1.5 text-xs font-bold text-primary;
     }
-    .seoz-title {
+    .ezdistro-title {
         @apply text-xl font-extrabold tracking-tight text-base-content;
     }
-    .seoz-subtitle {
+    .ezdistro-subtitle {
         @apply text-sm text-base-content/55 mt-0.5;
     }
-    .seoz-actions {
+    .ezdistro-actions {
         @apply flex items-center gap-2 flex-wrap;
     }
 
     /* Brand mark — the one deliberate signature (flat, ink + clay) ------ */
-    .seoz-logo {
+    .ezdistro-logo {
         @apply grid place-items-center rounded-2xl bg-gradient-to-br from-primary to-secondary text-primary-content font-black;
         box-shadow: none;
     }
 
     /* App shell — robust flex: sidebar is a normal sticky flow child so RTL
        offset hacks (and the bugs they cause) are unnecessary. */
-    .seoz-shell {
+    .ezdistro-shell {
         @apply flex min-h-screen bg-base-200;
     }
-    .seoz-sidebar {
+    .ezdistro-sidebar {
         @apply hidden border-e border-base-300/70 bg-base-100 md:sticky md:top-0 md:h-screen md:flex md:w-56 md:flex-none md:flex-col lg:w-64;
     }
-    .seoz-sidebar-brand {
+    .ezdistro-sidebar-brand {
         @apply flex h-16 items-center gap-2.5 border-b border-base-300/70 px-4;
     }
-    .seoz-nav {
+    .ezdistro-nav {
         @apply flex-1 overflow-y-auto px-3 py-4 flex flex-col gap-1;
     }
-    .seoz-nav-group {
+    .ezdistro-nav-group {
         @apply px-2 pb-1 pt-4 text-[0.65rem] font-bold uppercase tracking-wider text-base-content/40;
     }
-    .seoz-navlink {
+    .ezdistro-navlink {
         @apply relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-base-content/70 transition-colors hover:bg-base-200 hover:text-base-content;
     }
-    .seoz-navlink svg {
+    .ezdistro-navlink svg {
         @apply size-5 opacity-70;
     }
-    .seoz-navlink-active {
+    .ezdistro-navlink-active {
         @apply bg-primary/10 text-primary hover:bg-primary/10 hover:text-primary;
     }
-    .seoz-navlink-active svg {
+    .ezdistro-navlink-active svg {
         @apply opacity-100;
     }
     /* The active rail — a thin clay bar on the inner edge (logical inline-end:
        right side in RTL, left side in LTR — always toward the content) */
-    .seoz-navlink-active::before {
+    .ezdistro-navlink-active::before {
         content: "";
         @apply absolute inset-y-1.5 end-0 w-1 rounded-full bg-primary;
     }
-    .seoz-sidefoot {
+    .ezdistro-sidefoot {
         @apply border-t border-base-300/70 p-3;
     }
 
     /* Mobile dock ----------------------------------------------------- */
-    .seoz-dock {
+    .ezdistro-dock {
         @apply fixed inset-x-0 bottom-0 z-40 flex h-16 items-stretch justify-around border-t border-base-300/70 bg-base-100/95 backdrop-blur md:hidden;
         padding-bottom: env(safe-area-inset-bottom);
     }
-    .seoz-dock a {
+    .ezdistro-dock a {
         @apply flex flex-1 flex-col items-center justify-center gap-0.5 text-[0.65rem] font-medium text-base-content/55 transition-colors;
     }
-    .seoz-dock a svg {
+    .ezdistro-dock a svg {
         @apply size-5;
     }
-    .seoz-dock a.seoz-dock-active {
+    .ezdistro-dock a.ezdistro-dock-active {
         @apply text-primary;
     }
 
     /* Cards / panels -------------------------------------------------- */
-    .seoz-panel {
+    .ezdistro-panel {
         /* min-w-0: panels are grid/flex children — a long unbreakable value
            (workerId, hostname, version) must never force the column wider
            than the viewport (RTL blowout). */
         @apply rounded-box border border-base-300/70 bg-base-100 min-w-0;
     }
-    .seoz-panel-head {
+    .ezdistro-panel-head {
         @apply flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3;
     }
-    .seoz-panel-title {
+    .ezdistro-panel-title {
         @apply font-bold text-sm;
     }
 
     /* Metrics / stats -------------------------------------------------- */
-    .seoz-metric {
+    .ezdistro-metric {
         @apply rounded-box border border-base-300/70 bg-base-100 p-4 flex flex-col gap-1 min-w-0;
     }
-    .seoz-metric-label {
+    .ezdistro-metric-label {
         @apply text-xs font-medium text-base-content/55;
     }
-    .seoz-metric-value {
+    .ezdistro-metric-value {
         @apply text-2xl font-extrabold leading-none text-base-content tabular-nums;
     }
-    .seoz-metric-swatch {
+    .ezdistro-metric-swatch {
         @apply size-2.5 rounded-full;
     }
 
     /* Empty / placeholder states -------------------------------------- */
-    .seoz-empty {
+    .ezdistro-empty {
         @apply flex flex-col items-center justify-center gap-3 py-12 text-center;
     }
-    .seoz-empty-icon {
+    .ezdistro-empty-icon {
         @apply grid size-14 place-items-center rounded-2xl bg-base-200 text-base-content/40;
     }
 
     /* Status pills (used alongside daisyui badge-soft) ----------------- */
-    .seoz-pill {
+    .ezdistro-pill {
         @apply inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-medium;
     }
 
     /* Project tab bar — mobile-first scrollable pills ------------------ */
-    .seoz-tab-active {
+    .ezdistro-tab-active {
         @apply bg-primary/10 text-primary border-primary/30 font-semibold;
     }
-    .seoz-tab-idle {
+    .ezdistro-tab-idle {
         @apply border-transparent text-base-content/55 hover:text-base-content hover:bg-base-100;
     }
-    .seoz-scroll-x {
+    .ezdistro-scroll-x {
         scrollbar-width: none;
         -ms-overflow-style: none;
     }
-    .seoz-scroll-x::-webkit-scrollbar {
+    .ezdistro-scroll-x::-webkit-scrollbar {
         display: none;
     }
 
     /* Divider with breathing room ------------------------------------- */
-    .seoz-rule {
+    .ezdistro-rule {
         @apply my-4 border-0 border-t border-base-300/70;
     }
 
     /* Inline key/value grid for metadata ------------------------------ */
-    .seoz-kv {
+    .ezdistro-kv {
         @apply grid grid-cols-2 gap-2;
     }
-    .seoz-kv > div {
+    .ezdistro-kv > div {
         @apply rounded-xl border border-base-300/70 bg-base-200/40 p-2.5 min-w-0;
     }
-    .seoz-kv .k {
+    .ezdistro-kv .k {
         @apply block text-[0.7rem] text-base-content/50;
     }
-    .seoz-kv .v {
+    .ezdistro-kv .v {
         @apply block font-bold text-base-content break-words;
     }
 
     /* Toast — paper card with a colored start accent (RTL → right) ----- */
-    .seoz-toast {
+    .ezdistro-toast {
         @apply flex items-center gap-3 rounded-xl border border-base-300/70 bg-base-100 px-4 py-3 text-sm font-medium text-base-content shadow-none max-w-sm w-full;
     }
-    .seoz-toast .seoz-toast-ico {
+    .ezdistro-toast .ezdistro-toast-ico {
         @apply grid size-7 shrink-0 place-items-center rounded-lg;
     }
-    .seoz-toast-info .seoz-toast-ico { @apply bg-info/15 text-info; }
-    .seoz-toast-success .seoz-toast-ico { @apply bg-success/15 text-success; }
-    .seoz-toast-error .seoz-toast-ico { @apply bg-error/15 text-error; }
-    .seoz-toast-warning .seoz-toast-ico { @apply bg-warning/15 text-warning; }
+    .ezdistro-toast-info .ezdistro-toast-ico { @apply bg-info/15 text-info; }
+    .ezdistro-toast-success .ezdistro-toast-ico { @apply bg-success/15 text-success; }
+    .ezdistro-toast-error .ezdistro-toast-ico { @apply bg-error/15 text-error; }
+    .ezdistro-toast-warning .ezdistro-toast-ico { @apply bg-warning/15 text-warning; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════

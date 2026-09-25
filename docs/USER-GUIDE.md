@@ -1,6 +1,6 @@
-# Seoz Platform — User Guide
+# EzDistro Platform — User Guide
 
-A practical, task-oriented guide to operating Seoz through its web interface.
+A practical, task-oriented guide to operating EzDistro through its web interface.
 The UI itself is Persian (RTL); this guide gives English translations of all
 labels in **bold** so you can match them on screen. No technical background is
 required, although the final sections touch on monitoring tools that power
@@ -19,7 +19,7 @@ UI language:           Persian (RTL) · English available via the globe
 ## 1. Sign in and get oriented
 
 1. Open the platform URL (development default: `http://localhost:8000`).
-2. You are redirected to **Login to Seoz** (the login page). Enter your email and
+2. You are redirected to **Login to EzDistro** (the login page). Enter your email and
    password → you land on **Dashboard**.
 3. The top navigation has five areas:
    - **Dashboard** (`/dashboard`) — pipeline overview,
@@ -72,7 +72,7 @@ platform admin.
 
 ## 3. Connect integrations (**Connections**)
 
-Seoz needs credentials before it can talk to your site and AI providers. Add one row
+EzDistro needs credentials before it can talk to your site and AI providers. Add one row
 per category; mark it **enabled**. Secrets (API keys, application passwords)
 are stored encrypted — after saving you only ever see a masked preview like
 `sk-1…abcd`.

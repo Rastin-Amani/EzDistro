@@ -18,13 +18,13 @@
 
         {% set integs = integrations | selectattr('category', 'equalto', category) | list %}
 
-        <section class="seoz-panel">
+        <section class="ezdistro-panel">
 
-            <div class="seoz-panel-head">
+            <div class="ezdistro-panel-head">
 
                 <div class="flex items-center gap-2">
 
-                    <h2 class="seoz-panel-title">{{ label }}</h2>
+                    <h2 class="ezdistro-panel-title">{{ label }}</h2>
 
                     <span class="tooltip tooltip-right" data-tip="{{ _(_( 'اتصالات فعال در این دسته — برای هر ارائه‌دهنده یک اتصال بسازید و در تنظیمات پروژه از آن استفاده کنید.' )) }}">
 
@@ -158,7 +158,7 @@
 
                 {% else %}
 
-                <div class="seoz-empty">
+                <div class="ezdistro-empty">
 
                     <p class="font-bold text-base-content/75">{{ _('اتصالی در این دسته ثبت نشده است.') }}</p>
 

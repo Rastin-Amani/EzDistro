@@ -14,12 +14,12 @@
         {{ f.stat(_('نرخ شکست / میانگین (ثانیه)'), (stats.failure_rate * 100)|round(1) ~ _('٪ / ') ~ stats.average_duration_s, 'bg-error') }}
         {{ f.stat(_('سلامت نمایه‌سازی'), stats.indexing_ok ~ _(' سالم'), 'bg-success', stats.indexing_failed ~ _(' مشکل‌دار')) }}
         {{ f.stat(_('سلامت ارائه‌دهنده‌ها'), stats.provider_healthy ~ _(' سالم'), 'bg-success', stats.provider_unhealthy ~ _(' ناسالم · ') ~ stats.provider_latency_ms ~ 'ms') }}
-        <a href="/workers" class="seoz-metric hover:bg-base-200/60 transition-colors rounded-box">
+        <a href="/workers" class="ezdistro-metric hover:bg-base-200/60 transition-colors rounded-box">
             <div class="flex items-center gap-2">
-                <span class="seoz-metric-swatch bg-info"></span>
-                <span class="seoz-metric-label">{{ _('کارگر فعال') }}</span>
+                <span class="ezdistro-metric-swatch bg-info"></span>
+                <span class="ezdistro-metric-label">{{ _('کارگر فعال') }}</span>
             </div>
-            <span class="seoz-metric-value">{{ stats.workers_active }}</span>
+            <span class="ezdistro-metric-value">{{ stats.workers_active }}</span>
             <span class="text-xs text-base-content/50">{{ _('مشاهده وضعیت کارگرها ←') }}</span>
         </a>
     </div>

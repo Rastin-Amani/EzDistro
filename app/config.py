@@ -13,10 +13,10 @@ class Settings(BaseSettings):
     # --- app ---
     env: str = "dev"  # dev | production
     app_version: str = "0.2.0"
-    app_name: str = "Seoz Platform"
+    app_name: str = "EzDistro Platform"
 
     # --- PocketBase ---
-    pb_url: str = "https://db.seoz.rastin.cloud"
+    pb_url: str = "https://db.ezdistro.rastin.cloud"
     pb_admin_email: str = ""
     pb_admin_password: str = ""
 
@@ -78,7 +78,7 @@ class Settings(BaseSettings):
                 "SECRETS_KEY must be set in production (32 bytes, url-safe base64) — "
                 "provider credentials are encrypted with it at rest."
             )
-        digest = hashlib.sha256(f"seoz-dev-key::{self.pb_url}::{self.env}".encode()).digest()
+        digest = hashlib.sha256(f"ezdistro-dev-key::{self.pb_url}::{self.env}".encode()).digest()
         import base64
 
         return base64.urlsafe_b64encode(digest)

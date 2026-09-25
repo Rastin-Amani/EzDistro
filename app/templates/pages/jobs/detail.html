@@ -29,8 +29,8 @@
 <div class="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-4 items-start">
     <!-- Meta -->
     <aside class="flex flex-col gap-4">
-        <div class="seoz-panel">
-            <div class="seoz-panel-head"><h2 class="seoz-panel-title">{{ _('مشخصات') }}</h2></div>
+        <div class="ezdistro-panel">
+            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('مشخصات') }}</h2></div>
             <div class="p-4 text-xs flex flex-col gap-1.5">
                 <div class="flex justify-between gap-2"><span class="opacity-50">{{ _('شناسه') }}</span><span class="font-mono truncate" dir="ltr">{{ job.id }}</span></div>
                 <div class="flex justify-between"><span class="opacity-50">{{ _('نوع') }}</span><span>{{ job.type }}</span></div>
@@ -42,8 +42,8 @@
             </div>
         </div>
 
-        <div class="seoz-panel">
-            <div class="seoz-panel-head"><h2 class="seoz-panel-title">{{ _('زمان‌بندی') }}</h2></div>
+        <div class="ezdistro-panel">
+            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('زمان‌بندی') }}</h2></div>
             <div class="p-4 text-xs flex flex-col gap-1.5">
                 <div class="flex justify-between"><span class="opacity-50">{{ _('ایجاد') }}</span><span>{{ job.created|loc_dt }}</span></div>
                 <div class="flex justify-between"><span class="opacity-50">{{ _('شروع') }}</span><span>{{ job.startedAt|loc_dt if job.startedAt else '—' }}</span></div>
@@ -53,8 +53,8 @@
             </div>
         </div>
 
-        <div class="seoz-panel">
-            <div class="seoz-panel-head"><h2 class="seoz-panel-title">{{ _('پیشرفت') }}</h2></div>
+        <div class="ezdistro-panel">
+            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('پیشرفت') }}</h2></div>
             <div class="p-4 text-xs flex flex-col gap-2">
                 <progress class="progress progress-primary w-full" value="{{ job.progress or 0 }}" max="100"></progress>
                 <p class="text-center font-bold tabular">{{ _('%(n)s٪') % {'n': job.progress or 0} }}</p>
@@ -63,8 +63,8 @@
             </div>
         </div>
 
-        <div class="seoz-panel">
-            <div class="seoz-panel-head"><h2 class="seoz-panel-title">{{ _('اجرا') }}</h2></div>
+        <div class="ezdistro-panel">
+            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('اجرا') }}</h2></div>
             <div class="p-4 text-xs flex flex-col gap-1.5">
                 <div class="flex justify-between gap-2"><span class="opacity-50">{{ _('کارگر') }}</span><span class="font-mono" dir="ltr">{{ job.lockedBy or '—' }}</span></div>
                 <div class="flex justify-between"><span class="opacity-50">{{ _('قفل از') }}</span><span>{{ job.lockedAt|loc_dt if job.lockedAt else '—' }}</span></div>
@@ -74,8 +74,8 @@
         </div>
 
         {% if job.errorCode %}
-        <div class="seoz-panel border-error/40">
-            <div class="seoz-panel-head"><h2 class="seoz-panel-title text-error">{{ _('خطا') }}</h2></div>
+        <div class="ezdistro-panel border-error/40">
+            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title text-error">{{ _('خطا') }}</h2></div>
             <div class="p-4 text-xs flex flex-col gap-2">
                 <p><span class="font-mono text-error" dir="ltr">{{ job.errorCode }}</span></p>
                 <p class="opacity-80">{{ job.errorMessage }}</p>
@@ -91,9 +91,9 @@
     </aside>
 
     <!-- Timeline -->
-    <section class="seoz-panel"
+    <section class="ezdistro-panel"
              {% if active %}hx-get="/jobs/{{ job.id }}/events" hx-trigger="every 5s" hx-swap="outerHTML"{% endif %}>
-        <div class="seoz-panel-head"><h2 class="seoz-panel-title">{{ _('خط زمانی') }}</h2></div>
+        <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('خط زمانی') }}</h2></div>
         <div class="p-4">
             {% include "pages/jobs/_timeline.html" %}
         </div>

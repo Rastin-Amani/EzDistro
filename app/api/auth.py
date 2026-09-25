@@ -29,7 +29,7 @@ def login_page(request: Request):
         request,
         "auth/login.html",
         {
-            "title": _("ورود به سئوز"),
+            "title": _("ورود به EzDistro"),
             "error": None,
             # Middleware sends disabled accounts here (18-A(c)).
             "disabled": request.query_params.get("disabled") == "1",
@@ -94,7 +94,7 @@ def login(
 def _login_error(request: Request, message: str | None = None) -> Response:
     html = templates.get_template("auth/login.html").render(
         request=request,
-        title=_("ورود به سئوز"),
+        title=_("ورود به EzDistro"),
         error=message or _("ایمیل یا رمز عبور اشتباه است"),
         disabled=False,
     )

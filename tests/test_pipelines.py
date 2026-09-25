@@ -145,7 +145,9 @@ async def test_index_run_resumes_from_checkpoint_after_crash():
     # simulate a crash AFTER post 1 was fully indexed (Qdrant + document record)
     # but BEFORE the checkpoint persisted: run record has lastSourceId=1, job failed
     registry.vector.points["proj-a:1:0"] = VectorPoint(
-        id="proj-a:1:0", vector=[0.1] * 8, payload={"project": "seoz-proj-a-model", "wp_post_id": 1}
+        id="proj-a:1:0",
+        vector=[0.1] * 8,
+        payload={"project": "ezdistro-proj-a-model", "wp_post_id": 1},
     )
     pb.collection("documents").create(
         {

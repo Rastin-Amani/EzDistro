@@ -1,5 +1,5 @@
 [Unit]
-Description=Seoz Platform — Web process (FastAPI + HTMX)
+Description=EzDistro Platform — Web process (FastAPI + HTMX)
 After=network-online.target
 Wants=network-online.target
 

@@ -181,7 +181,7 @@ def test_registry_vector_uses_env_fallback_without_integration():
         project, {"embeddingModel": "embed-v4.0", "retryPolicy": {}}
     )
     assert isinstance(vector, QdrantStore)
-    assert "seoz-proj-" in vector._namespace  # namespaced per project+model
+    assert "ezdistro-proj-" in vector._namespace  # namespaced per project+model
 
 
 # ---------------------------------------------------------------------------

@@ -1,5 +1,5 @@
 {# ═══════════════════════════════════════════════════════════════════════
-   Shared building blocks — seoz design vocabulary.
+   Shared building blocks — ezdistro design vocabulary.
    Usage: {% import 'macros/forms.html' as f %}
    Layout helpers (page_header / panel / empty / stat) sit alongside the
    field macros so every page can stay consistent with one import.
@@ -114,21 +114,21 @@
 {# actions / icon / action are HTML content slots — callers pass trusted,
    static template markup only (never user input). Marked safe on purpose. #}
 {% macro page_header(title, subtitle='', eyebrow='', actions='') -%}
-<header class="seoz-pagehead">
+<header class="ezdistro-pagehead">
     <div class="min-w-0">
-        {% if eyebrow %}<span class="seoz-eyebrow">{{ eyebrow }}</span>{% endif %}
-        <h1 class="seoz-title">{{ title }}</h1>
-        {% if subtitle %}<p class="seoz-subtitle">{{ subtitle }}</p>{% endif %}
+        {% if eyebrow %}<span class="ezdistro-eyebrow">{{ eyebrow }}</span>{% endif %}
+        <h1 class="ezdistro-title">{{ title }}</h1>
+        {% if subtitle %}<p class="ezdistro-subtitle">{{ subtitle }}</p>{% endif %}
     </div>
-    {% if actions %}<div class="seoz-actions">{{ actions|safe }}</div>{% endif %}
+    {% if actions %}<div class="ezdistro-actions">{{ actions|safe }}</div>{% endif %}
 </header>
 {%- endmacro %}
 
 {% macro panel(title='', actions='', id='', body_class='p-4') -%}
-<section class="seoz-panel" {% if id %}id="{{ id }}"{% endif %}>
+<section class="ezdistro-panel" {% if id %}id="{{ id }}"{% endif %}>
     {% if title or actions %}
-    <div class="seoz-panel-head">
-        {% if title %}<h2 class="seoz-panel-title">{{ title }}</h2>{% endif %}
+    <div class="ezdistro-panel-head">
+        {% if title %}<h2 class="ezdistro-panel-title">{{ title }}</h2>{% endif %}
         {% if actions %}<div class="flex items-center gap-2">{{ actions|safe }}</div>{% endif %}
     </div>
     {% endif %}
@@ -141,8 +141,8 @@
 {%- endmacro %}
 
 {% macro empty(title, hint='', icon='', action='') -%}
-<div class="seoz-empty">
-    {% if icon %}<div class="seoz-empty-icon">{{ icon|safe }}</div>{% endif %}
+<div class="ezdistro-empty">
+    {% if icon %}<div class="ezdistro-empty-icon">{{ icon|safe }}</div>{% endif %}
     <p class="font-bold text-base-content/75">{{ title }}</p>
     {% if hint %}<p class="text-sm text-base-content/50 max-w-sm leading-relaxed">{{ hint }}</p>{% endif %}
     {% if action %}<div class="mt-1">{{ action|safe }}</div>{% endif %}
@@ -150,12 +150,12 @@
 {%- endmacro %}
 
 {% macro stat(label, value, swatch='', sub='') -%}
-<div class="seoz-metric">
+<div class="ezdistro-metric">
     <div class="flex items-center gap-2">
-        {% if swatch %}<span class="seoz-metric-swatch {{ swatch }}"></span>{% endif %}
-        <span class="seoz-metric-label">{{ label }}</span>
+        {% if swatch %}<span class="ezdistro-metric-swatch {{ swatch }}"></span>{% endif %}
+        <span class="ezdistro-metric-label">{{ label }}</span>
     </div>
-    <span class="seoz-metric-value">{{ value }}</span>
+    <span class="ezdistro-metric-value">{{ value }}</span>
     {% if sub %}<span class="text-xs text-base-content/50">{{ sub }}</span>{% endif %}
 </div>
 {%- endmacro %}

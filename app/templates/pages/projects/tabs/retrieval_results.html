@@ -1,7 +1,7 @@
 <div class="flex flex-col gap-4">
-    <div class="seoz-panel">
-        <div class="seoz-panel-head">
-            <h2 class="seoz-panel-title">{{ _('نتایج برای: «%(v)s»') % {'v': query} }}</h2>
+    <div class="ezdistro-panel">
+        <div class="ezdistro-panel-head">
+            <h2 class="ezdistro-panel-title">{{ _('نتایج برای: «%(v)s»') % {'v': query} }}</h2>
         </div>
         <div class="p-4 flex flex-col gap-2">
             <p class="text-xs opacity-50">
@@ -48,9 +48,9 @@
     </div>
 
     {% if context.links %}
-    <div class="seoz-panel">
-        <div class="seoz-panel-head">
-            <h2 class="seoz-panel-title">{{ _('کاندیداهای لینک داخلی (%(n)s)') % {'n': context.links|length} }}</h2>
+    <div class="ezdistro-panel">
+        <div class="ezdistro-panel-head">
+            <h2 class="ezdistro-panel-title">{{ _('کاندیداهای لینک داخلی (%(n)s)') % {'n': context.links|length} }}</h2>
         </div>
         <div class="p-4">
             <ul class="flex flex-col gap-1">
@@ -67,9 +67,9 @@
     {% endif %}
 
     {% if context.passages %}
-    <div class="seoz-panel">
-        <div class="seoz-panel-head">
-            <h2 class="seoz-panel-title">{{ _('زمینه پرامپت (%(a)s بخش — %(b)s کاراکتر)') % {'a': context.passages|length, 'b': context.used_chars} }}</h2>
+    <div class="ezdistro-panel">
+        <div class="ezdistro-panel-head">
+            <h2 class="ezdistro-panel-title">{{ _('زمینه پرامپت (%(a)s بخش — %(b)s کاراکتر)') % {'a': context.passages|length, 'b': context.used_chars} }}</h2>
         </div>
         <div class="p-4">
             <pre class="text-xs bg-base-200/60 rounded-xl p-3 whitespace-pre-wrap max-h-72 overflow-auto">{{ context.format_for_prompt }}</pre>

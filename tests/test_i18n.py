@@ -54,20 +54,20 @@ def test_default_is_fa_and_unknown_collapses_to_default():
 def test_middleware_sets_locale_from_cookie():
     resp = client.get("/login", follow_redirects=False)
     assert 'lang="fa"' in resp.text and 'dir="rtl"' in resp.text
-    assert "ورود به سئوز" in resp.text
+    assert "ورود به EzDistro" in resp.text
 
     resp = client.get("/login", cookies={"locale": "en"})
     assert 'lang="en"' in resp.text and 'dir="ltr"' in resp.text
-    assert "Sign in to Seoz" in resp.text
+    assert "Sign in to EzDistro" in resp.text
 
     resp = client.get("/login", cookies={"locale": "zz"})
-    assert 'dir="rtl"' in resp.text and "ورود به سئوز" in resp.text
+    assert 'dir="rtl"' in resp.text and "ورود به EzDistro" in resp.text
 
 
 def test_htmx_partial_renders_in_request_locale():
     resp = client.get("/login", headers={"HX-Request": "true"}, cookies={"locale": "en"})
     assert resp.status_code == 200
-    assert "Sign in to Seoz" in resp.text
+    assert "Sign in to EzDistro" in resp.text
 
 
 # ---------------------------------------------------------------------------
@@ -75,9 +75,9 @@ def test_htmx_partial_renders_in_request_locale():
 # ---------------------------------------------------------------------------
 def test_translation_and_fallback():
     _use("fa")
-    assert _("ورود به سئوز") == "ورود به سئوز"  # source language
+    assert _("ورود به EzDistro") == "ورود به EzDistro"  # source language
     _use("en")
-    assert _("ورود به سئوز") == "Sign in to Seoz"
+    assert _("ورود به EzDistro") == "Sign in to EzDistro"
     assert _("__msgid_missing_from_catalog__") == "__msgid_missing_from_catalog__"  # fails safe
 
 

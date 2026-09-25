@@ -1,6 +1,6 @@
 """Qdrant vector store adapter — full VectorStoreProvider protocol.
 
-Collection naming: `seoz_{project_slug}_{model_slug}` — namespaced per project
+Collection naming: `ezdistro_{project_slug}_{model_slug}` — namespaced per project
 AND per embedding model, so switching models never corrupts an existing index.
 Point ids are stable UUIDs derived from `{project_slug}:{wp_post_id}:{chunk_index}`
 → idempotent upserts (same id overwrites the vector, never duplicates).
@@ -24,7 +24,7 @@ def project_key(project_slug: str, model: str) -> str:
     """Stable, URL-safe namespace key for a project+model index."""
     slug = re.sub(r"[^a-z0-9_-]+", "-", project_slug.lower()).strip("-") or "project"
     model_part = re.sub(r"[^a-z0-9_-]+", "-", model.lower()).strip("-") or "model"
-    return f"seoz-{slug}-{model_part}"[:63]
+    return f"ezdistro-{slug}-{model_part}"[:63]
 
 
 def point_id(project_slug: str, wp_post_id: int, chunk_index: int) -> str:

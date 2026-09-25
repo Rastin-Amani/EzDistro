@@ -330,8 +330,8 @@ msgid "تلاش مجدد برنامه‌ریزی شد"
 msgstr "Retry scheduled"
 
 #: app/api/auth.py:28 app/api/auth.py:76
-msgid "ورود به سئوز"
-msgstr "Sign in to Seoz"
+msgid "ورود به EzDistro"
+msgstr "Sign in to EzDistro"
 
 #: app/api/auth.py:45 app/api/auth.py:76
 msgid "ایمیل یا رمز عبور اشتباه است"
@@ -929,8 +929,8 @@ msgid "لینک"
 msgstr "Link"
 
 #: app/templates/base.html:53
-msgid "سئوز"
-msgstr "Seoz"
+msgid "EzDistro"
+msgstr "EzDistro"
 
 #: app/templates/base.html:59
 msgid "⚠️ شما آفلاین هستید — داده‌های ذخیره‌شده نمایش داده می‌شود"
@@ -1173,8 +1173,8 @@ msgid "پیش‌نمایش و تنظیم ستون‌ها"
 msgstr "Preview and map columns"
 
 #: app/templates/layouts/platform.html:13 app/templates/layouts/platform.html:109
-msgid "سئوز — خانه"
-msgstr "Seoz — Home"
+msgid "EzDistro — خانه"
+msgstr "EzDistro — Home"
 
 #: app/templates/layouts/platform.html:25 app/templates/layouts/platform.html:27 app/templates/layouts/platform.html:137
 msgid "منوی اصلی"

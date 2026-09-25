@@ -32,7 +32,7 @@ def test_unauthenticated_redirects_to_login():
 def test_login_page_renders():
     resp = client.get("/login")
     assert resp.status_code == 200
-    assert "ورود به سئوز" in resp.text
+    assert "ورود به EzDistro" in resp.text
 
 
 def test_login_page_redirects_when_authenticated():

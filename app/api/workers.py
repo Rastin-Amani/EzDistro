@@ -80,7 +80,7 @@ def workers_page(request: Request):
                 },
                 {
                     "label": _("راه‌اندازی کارگر (سرویس)"),
-                    "command": "sudo systemctl restart seoz-worker",
+                    "command": "sudo systemctl restart ezdistro-worker",
                     "hint": _("اگر کارگر به‌صورت سرویس systemd اجرا می‌شود."),
                 },
             ],

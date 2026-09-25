@@ -1,4 +1,4 @@
-# Seoz Platform — Troubleshooting Guide
+# EzDistro Platform — Troubleshooting Guide
 
 Symptom-driven diagnostics. Every entry states how to **verify** the cause before
 changing anything. Deeper background: FAILURES.md (failure-mode matrix),
@@ -119,7 +119,7 @@ Checklist, in order:
 - **Cause:** embedding model/dimensions changed while an old collection exists; upserts
   would mix incompatible vectors, so this fails as permanent by design.
 - **Verify:** project settings embedding model/dims vs documents' recorded values;
-  Qdrant collection name embeds the model slug (`seoz-{slug}-{model}`).
+  Qdrant collection name embeds the model slug (`ezdistro-{slug}-{model}`).
 - **Recovery:** set the intended model/dimensions and trigger **Full re-index** — new
   namespace, nothing mixed. Old collections can be dropped manually when unused.
 
@@ -180,7 +180,7 @@ Checklist, in order:
 
 - **Guards exist at three layers:** stored `wordpressPostId` forces update-not-create;
   before creating, orphan lookup by slug finds a post created during a crashed attempt
-  and updates it; created posts carry `seoz_article_id` meta. Exactly one create ever.
+  and updates it; created posts carry `ezdistro_article_id` meta. Exactly one create ever.
 - **Verify:** publishing tab shows one `published` run per successful attempt with the
   final post id/URL.
 
@@ -193,7 +193,7 @@ Checklist, in order:
 > should be expected to fail. Verify on your deployment before relying on unpublish;
 > the fix requires either a schema migration adding those enum values or a code
 > change. As a workaround, set the post to private directly in WordPress; the article
-> stays intact in Seoz.
+> stays intact in EzDistro.
 
 ### Symptom: published article shows duplicated title heading
 

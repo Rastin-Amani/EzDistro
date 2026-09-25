@@ -1066,7 +1066,7 @@ def _upsert_prompt(
 
 
 def seed_admin_user(pb: PocketBase) -> None:
-    email = os.getenv("SEED_ADMIN_EMAIL", "admin@seoz.local")
+    email = os.getenv("SEED_ADMIN_EMAIL", "admin@ezdistro.local")
     password = os.getenv("SEED_ADMIN_PASSWORD", "")
     if not password:
         print("SKIP: SEED_ADMIN_PASSWORD not set — no seed admin user created.")
@@ -1083,7 +1083,7 @@ def seed_admin_user(pb: PocketBase) -> None:
             "password": password,
             "passwordConfirm": password,
             "role": "admin",
-            "displayName": "مدیر سئوز",
+            "displayName": "مدیر EzDistro",
             "verified": True,
         }
     )

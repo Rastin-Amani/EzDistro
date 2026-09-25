@@ -1,6 +1,6 @@
-# Seoz Platform — Documentation
+# EzDistro Platform — Documentation
 
-This folder is the documentation set for the Seoz SEO-automation platform
+This folder is the documentation set for the EzDistro SEO-automation platform
 (WordPress indexer + LLM article writer). It is **tracked** in the repository, so
 these files ship with the codebase and are copied into the Docker image
 (`COPY docs ./docs` in the Dockerfile).

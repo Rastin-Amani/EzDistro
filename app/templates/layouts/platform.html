@@ -2,17 +2,17 @@
 
 {% block content %}
 
-<div class="seoz-shell">
+<div class="ezdistro-shell">
 
     <!-- ════════════ Desktop sidebar (sticky flow child in RTL flex) ════════════ -->
 
-    <aside class="seoz-sidebar">
+    <aside class="ezdistro-sidebar">
 
-        <div class="seoz-sidebar-brand">
+        <div class="ezdistro-sidebar-brand">
 
-            <a href="/dashboard" class="flex items-center gap-2.5" aria-label="{{ _('سئوز — خانه') }}">
+            <a href="/dashboard" class="flex items-center gap-2.5" aria-label="{{ _('EzDistro — خانه') }}">
 
-                <span class="seoz-logo size-9 text-lg">{{ _('س') }}</span>
+                <span class="ezdistro-logo size-9 text-lg">{{ _('س') }}</span>
 
                 <span class="font-extrabold text-base tracking-tight">{{ app_name }}</span>
 
@@ -22,9 +22,9 @@
 
 
 
-        <nav class="seoz-nav" aria-label="{{ _('منوی اصلی') }}">
+        <nav class="ezdistro-nav" aria-label="{{ _('منوی اصلی') }}">
 
-            <p class="seoz-nav-group">{{ _('منوی اصلی') }}</p>
+            <p class="ezdistro-nav-group">{{ _('منوی اصلی') }}</p>
 
             {% set nav = [
 
@@ -44,7 +44,7 @@
 
             {% for href, label, icon in nav %}
 
-            <a href="{{ href }}" class="seoz-navlink" data-nav="{{ href }}">
+            <a href="{{ href }}" class="ezdistro-navlink" data-nav="{{ href }}">
 
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor">{{ icon }}</svg>
 
@@ -58,7 +58,7 @@
 
 
 
-        <div class="seoz-sidefoot">
+        <div class="ezdistro-sidefoot">
 
             <div class="flex items-center gap-2">
 
@@ -108,9 +108,9 @@
 
         <header class="md:hidden sticky top-0 z-30 flex h-14 items-center justify-between border-b border-base-300/70 bg-base-100/90 px-4 backdrop-blur">
 
-            <a href="/dashboard" class="flex items-center gap-2" aria-label="{{ _('سئوز — خانه') }}">
+            <a href="/dashboard" class="flex items-center gap-2" aria-label="{{ _('EzDistro — خانه') }}">
 
-                <span class="seoz-logo size-8 text-base">{{ _('س') }}</span>
+                <span class="ezdistro-logo size-8 text-base">{{ _('س') }}</span>
 
                 <span class="font-extrabold">{{ app_name }}</span>
 
@@ -128,7 +128,7 @@
 
 
 
-        <main class="seoz-page">
+        <main class="ezdistro-page">
 
             {% block dashboard_content %}{% endblock %}
 
@@ -140,7 +140,7 @@
 
     <!-- ════════════ Mobile bottom dock ════════════ -->
 
-    <nav class="seoz-dock" aria-label="{{ _('منوی اصلی') }}">
+    <nav class="ezdistro-dock" aria-label="{{ _('منوی اصلی') }}">
 
         <a href="/dashboard" data-nav="/dashboard">
 
@@ -210,15 +210,15 @@
 
         function setActive() {
 
-            document.querySelectorAll('.seoz-navlink').forEach(function (link) {
+            document.querySelectorAll('.ezdistro-navlink').forEach(function (link) {
 
-                link.classList.toggle('seoz-navlink-active', isActive(link));
+                link.classList.toggle('ezdistro-navlink-active', isActive(link));
 
             });
 
-            document.querySelectorAll('.seoz-dock a').forEach(function (link) {
+            document.querySelectorAll('.ezdistro-dock a').forEach(function (link) {
 
-                link.classList.toggle('seoz-dock-active', isActive(link));
+                link.classList.toggle('ezdistro-dock-active', isActive(link));
 
             });
 

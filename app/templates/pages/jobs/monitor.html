@@ -6,8 +6,8 @@
 
 <!-- Worker scheduler status -->
 {% if scheduler_heartbeat %}
-<div class="seoz-panel border-base-300/70">
-    <div class="seoz-panel-head"><h2 class="seoz-panel-title">{{ _('زمان‌بندی خودکار (کارگر)') }}</h2></div>
+<div class="ezdistro-panel border-base-300/70">
+    <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('زمان‌بندی خودکار (کارگر)') }}</h2></div>
     <div class="p-4 text-xs flex flex-wrap items-center gap-x-6 gap-y-2">
         <span>{{ _('آخرین بررسی:') }} <span class="font-bold">{{ scheduler_heartbeat.lastPollAt|loc_dt }}</span></span>
         <span>{{ _('زمان‌بندی آماده:') }} <span class="font-bold tabular">{{ scheduler_heartbeat.due or 0 }}</span></span>
@@ -21,8 +21,8 @@
     </div>
 </div>
 {% else %}
-<div class="seoz-panel border-error/40">
-    <div class="seoz-panel-head"><h2 class="seoz-panel-title text-error">{{ _('زمان‌بندی خودکار (کارگر)') }}</h2></div>
+<div class="ezdistro-panel border-error/40">
+    <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title text-error">{{ _('زمان‌بندی خودکار (کارگر)') }}</h2></div>
     <div class="p-4 text-xs">
         <span class="text-error font-bold">{{ _('کارگر هنوز زمان‌بندی‌ها را بررسی نکرده است.') }}</span>
         <span class="opacity-70"> {{ _('— مطمئن شوید فرآیند') }} <code class="font-mono" dir="ltr">make worker</code> {{ _('در حال اجراست (و پس از آخرین تغییر کد راه‌اندازی مجدد شده).') }}</span>
@@ -91,7 +91,7 @@
 {{ f.panel_close() }}
 
 <!-- Table -->
-<div id="jobs-table" class="seoz-panel mt-4">
+<div id="jobs-table" class="ezdistro-panel mt-4">
     <div class="overflow-x-auto">
         <table class="table table-sm">
             <thead>
@@ -136,7 +136,7 @@
                     </td>
                 </tr>
                 {% else %}
-                <tr><td colspan="8"><div class="seoz-empty py-8"><p class="font-bold text-base-content/70">{{ _('وظیفه‌ای با این فیلترها یافت نشد') }}</p></div></td></tr>
+                <tr><td colspan="8"><div class="ezdistro-empty py-8"><p class="font-bold text-base-content/70">{{ _('وظیفه‌ای با این فیلترها یافت نشد') }}</p></div></td></tr>
                 {% endfor %}
             </tbody>
         </table>
@@ -144,8 +144,8 @@
 </div>
 
 {% if provider_metrics %}
-<details class="seoz-panel mt-4" open>
-    <summary class="seoz-panel-head cursor-pointer text-sm font-bold select-none">{{ _('متریک‌های ارائه‌دهنده (۷ روز اخیر)') }}</summary>
+<details class="ezdistro-panel mt-4" open>
+    <summary class="ezdistro-panel-head cursor-pointer text-sm font-bold select-none">{{ _('متریک‌های ارائه‌دهنده (۷ روز اخیر)') }}</summary>
     <div class="overflow-x-auto p-4">
         <table class="table table-sm">
             <thead>

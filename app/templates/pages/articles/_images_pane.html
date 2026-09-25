@@ -3,13 +3,13 @@
    (refreshArticle polling every 4s) so status chips track live job stages. #}
 {% set plan = article.imagePlan if article.imagePlan is mapping else none %}
 {% set base = '/projects/' ~ project.id ~ '/articles/' ~ article.id ~ '/images' %}
-<div class="seoz-panel" id="images-pane">
+<div class="ezdistro-panel" id="images-pane">
 
-    <div class="seoz-panel-head">
+    <div class="ezdistro-panel-head">
 
         <div class="flex items-center gap-2">
 
-            <h2 class="seoz-panel-title">{{ _('تصاویر مقاله') }}</h2>
+            <h2 class="ezdistro-panel-title">{{ _('تصاویر مقاله') }}</h2>
 
             {% if plan %}<span class="badge badge-ghost badge-sm">v{{ article.imagePlanVersion or 1 }}</span>{% endif %}
 
@@ -27,7 +27,7 @@
 
         {% if not plan %}
 
-            <div class="seoz-empty py-6">
+            <div class="ezdistro-empty py-6">
 
                 <p class="font-bold text-base-content/75">{{ _('برنامه تصاویر ساخته نشده است') }}</p>
 

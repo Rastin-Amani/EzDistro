@@ -66,7 +66,7 @@ mark that document `failed`, and the run continues.
 | timeout | adapter + job | 3 + 3 | exp 2 s; jittered | "WordPress timeout" | no | none (auto) |
 | 401 auth error | **no** | — | — | "WordPress authentication failed" | **yes** | fix application password in Integrations; re-dispatch |
 | invalid content (400) | **no** | — | — | "Content rejected by WordPress" | **yes** | fix content/template; re-dispatch |
-| duplicate post (crash between `create_post` and storing the id) | job (safe retry) | up to max_attempts | jittered | recovery is silent — "Article published" | no | none — the retry looks up the orphaned post **by slug** (`find_post_by_slug`, WP REST slug filter) and UPDATEs it; created posts also carry `seoz_article_id` meta |
+| duplicate post (crash between `create_post` and storing the id) | job (safe retry) | up to max_attempts | jittered | recovery is silent — "Article published" | no | none — the retry looks up the orphaned post **by slug** (`find_post_by_slug`, WP REST slug filter) and UPDATEs it; created posts also carry `ezdistro_article_id` meta |
 
 Workflow-gate refusals ("article is not approved for publishing…") are permanent,
 non-retried errors — approval state is enforced in the handler, not just the UI.

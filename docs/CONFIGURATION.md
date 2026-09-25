@@ -1,4 +1,4 @@
-# Seoz Platform — Configuration Reference
+# EzDistro Platform — Configuration Reference
 
 All configuration is environment-driven (`pydantic-settings`, `app/config.py`) plus
 per-project settings stored in PocketBase and editable in the UI. This document
@@ -29,9 +29,9 @@ whitespace/comments after empty values (pydantic-settings captures everything af
 
 | Variable | Default | Effect |
 |---|---|---|
-| `PB_URL` | `https://db.seoz.rastin.cloud` | Source-of-truth server; both processes need it |
+| `PB_URL` | `https://db.ezdistro.rastin.cloud` | Source-of-truth server; both processes need it |
 | `PB_ADMIN_EMAIL` / `PB_ADMIN_PASSWORD` | *(empty)* | Superuser auth for worker + bootstrap (auth falls back `_superusers` → `_admins` for PB < 0.23) |
-| `SEED_ADMIN_EMAIL` | `admin@seoz.local` | Platform admin user created by bootstrap when password set |
+| `SEED_ADMIN_EMAIL` | `admin@ezdistro.local` | Platform admin user created by bootstrap when password set |
 | `SEED_ADMIN_PASSWORD` | *(empty)* | Empty ⇒ no seed user is created |
 
 ### Qdrant (defaults)
