@@ -291,12 +291,34 @@ class FakeStorage:
         return self.create(name, data)
 
 
+class FakeAuthStore:
+    """Minimal duck-type of the SDK's auth store (save/clear + token/model).
+
+    The plain fake has no auth endpoints — `auth_refresh` raises, which the
+    middleware treats as an invalid session — but the store must exist so the
+    failure path can call `clear()`.
+    """
+
+    def __init__(self) -> None:
+        self.token = ""
+        self.model: Any = None
+
+    def save(self, token: str, model: Any) -> None:
+        self.token = token
+        self.model = model
+
+    def clear(self) -> None:
+        self.token = ""
+        self.model = None
+
+
 class FakePocketBase:
     """Duck-typed PocketBase replacement: `.collection(name)` → FakeRecordService."""
 
     def __init__(self, unique_fields: dict[str, list[str]] | None = None) -> None:
         self.storage = FakeStorage(unique_fields)
         self.base_url = "http://fake.local"
+        self.auth_store = FakeAuthStore()
 
     def collection(self, name: str) -> FakeRecordService:
         return FakeRecordService(self.storage, name)

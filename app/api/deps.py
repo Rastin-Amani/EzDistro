@@ -49,6 +49,19 @@ def require_admin(request: Request) -> dict[str, Any]:
     return user
 
 
+def is_disabled(user: Any) -> bool:
+    """True when the users.disabled flag is set (18-A(c)).
+
+    Accepts both a pocketbase ``Record`` (``auth_store.model``) and a plain
+    dict (``record_to_dict`` output / test fakes).
+    """
+    if user is None:
+        return False
+    if isinstance(user, dict):
+        return bool(user.get("disabled"))
+    return bool(getattr(user, "disabled", False))
+
+
 def project_scope(request: Request) -> list[str] | None:
     """Project ids visible to the current user.
 
@@ -166,6 +179,7 @@ __all__ = [
     "current_user",
     "require_user",
     "require_admin",
+    "is_disabled",
     "project_scope",
     "can_access_project",
     "require_project_access",

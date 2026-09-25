@@ -1,8 +1,10 @@
 """HTTP-level auth tests via TestClient (real middleware + cookies).
 
-The PocketBase client is replaced at the module boundary (app.middleware.get_pb)
-with an in-memory fake that supports the auth flows the middleware and login
-route exercise: auth_with_password, auth_refresh, auth_store.
+The PocketBase client is replaced at module boundaries (app.middleware.get_pb,
+app.middleware.get_data_pb, app.api.auth.get_pb) with an in-memory fake that
+supports the auth flows the middleware and login route exercise:
+auth_with_password, auth_refresh, auth_store. The login route uses its own
+client (never the shared superuser data client) — hence the third patch.
 """
 
 from __future__ import annotations
@@ -99,6 +101,8 @@ def fake_pb(monkeypatch):
         }
     )
     monkeypatch.setattr("app.middleware.get_pb", lambda: pb)
+    monkeypatch.setattr("app.middleware.get_data_pb", lambda: pb)
+    monkeypatch.setattr("app.api.auth.get_pb", lambda: pb)
     return pb
 
 
@@ -118,7 +122,9 @@ def test_anonymous_cannot_reach_dashboard(fake_pb):
 
 def test_public_pages_reachable_anonymously(fake_pb):
     with TestClient(app) as client:
-        assert client.get("/health").status_code == 200
+        # /health probes the live PocketBase: 200 when reachable, 503
+        # "degraded" when not — tests must not require live services.
+        assert client.get("/health").status_code in (200, 503)
         assert client.get("/login").status_code == 200
         assert client.get("/manifest.json").status_code == 200
 

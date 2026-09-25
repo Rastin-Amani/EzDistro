@@ -19,6 +19,9 @@
                 {% if error %}
                 <div class="alert alert-soft alert-error text-sm" id="login-error">{{ error }}</div>
                 {% endif %}
+                {% if disabled %}
+                <div class="alert alert-soft alert-warning text-sm" id="login-disabled">{{ _('حساب شما غیرفعال شده است. برای فعال‌سازی با مدیر تماس بگیرید.') }}</div>
+                {% endif %}
 
                 <label class="floating-label">
                     <span>{{ _('ایمیل') }}</span>
