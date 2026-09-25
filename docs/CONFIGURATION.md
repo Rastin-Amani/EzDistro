@@ -7,7 +7,8 @@ lists every knob, its default, and where it takes effect.
 ```text
 Documentation status:  Verified against app/config.py, .env.example,
                        app/services/settings.py, app/scripts/bootstrap_pb.py
-Last verified:         2026-08-22
+                       (post-v1.3.0, images pipeline)
+Last verified:         2026-09-12
 ```
 
 ## 1. Environment variables
@@ -21,7 +22,7 @@ whitespace/comments after empty values (pydantic-settings captures everything af
 | Variable | Default | Effect |
 |---|---|---|
 | `ENV` | `dev` | `dev` \| `production`. Production: JSON logs, requires `SECRETS_KEY`, hides `/docs` + `/openapi.json` + debug router |
-| `APP_VERSION` | `0.1.0` | Shown in UI footer / `/health` |
+| `APP_VERSION` | `0.2.0` | Shown in UI footer / `/health` |
 | `SECRETS_KEY` | *(empty)* | Fernet key (32-byte urlsafe base64). **Required in production** — startup fails without it. Dev derives a deterministic key from `pb_url`+env. Generate: `python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"`. ⚠️ Rotating it invalidates all stored integration secrets (they must be re-entered) |
 
 ### PocketBase
@@ -142,6 +143,27 @@ always wins as a lower bound.
 | publishingMode | `draft` (default) \| `publish` | Status used when creating/updating WP posts |
 | autosave | `{enabled, interval_minutes}` | Draft autosave descriptor |
 
+### Image generation (v1.3.0 — project **Images** tab)
+
+Model ids are data (persisted here), never hardcoded in the pipeline.
+
+| Setting | Runtime default | Notes |
+|---|---|---|
+| imageCoverProvider / imageCoverModel | `gemini` / `gemini-3-pro-image` | cover slot |
+| imageInteriorProvider / imageInteriorModel | `bfl` / `flux-2-klein-9b` | interior slots |
+| imageFallbackProvider / imageFallbackModel | empty | empty = no fallback |
+| imageCoverAspectRatio / imageInteriorAspectRatio | `16:9` | e.g. `4:3` |
+| imageCoverMinWidth | `1200` | SEO/Google Discover floor |
+| imageMaxInteriorImages | `4` | hard cap; word-count density further limits (0/1/2/3/4) |
+| imageMaxRetries | `3` | generation job attempts = `max(2, this)` |
+| imageOptimizationFormat | `webp` | `webp` \| `avif` \| `jpeg` |
+| imageAiQaEnabled | off | optional vision QA (extra model cost) |
+| imagePromptLanguage | `en` | visual-prompt language; alt/caption always use the article language |
+| imageStyle | `{}` | style profile injected into the plan prompt |
+
+The tab also has a one-click generation test (`…/settings/images/test`) that
+replicates real cover-request dimensions.
+
 ## 3. Integrations (credentials)
 
 Managed in the project **Integrations** tab; one row per `(category, provider, name)`:
@@ -153,6 +175,7 @@ Managed in the project **Integrations** tab; one row per `(category, provider, n
 | reranker | `cohere_compat` | API key |
 | vector_store | `qdrant` | optional API key |
 | publisher | `wordpress` | application password |
+| image (v1.3.0) | `gemini`, `bfl`, `openai_compat` | API key |
 
 Non-secret config (base URL, username, model id…) lives in the plain `configuration`
 JSON; secrets are Fernet-encrypted into `secretsEnc` and never rendered beyond a
@@ -184,9 +207,13 @@ Editable via the AI Models tab's global-defaults form.
 
 ## 5. Prompts
 
-Eight prompt types per project (falling back to global rows):
+Ten prompt types per project (falling back to global rows):
 `outline_system`, `outline_user`, `section_system`, `section_user`, `seo_rules`,
-`internal_linking`, `brand_voice`, `validation`.
+`internal_linking`, `brand_voice`, `validation`, `image_plan_system`,
+`image_plan_user` (v1.3.0). The image-plan prompts accept `{{ article.title }}`,
+`{{ topic.keyword }}`, `{{ language }}`, `{{ prompt_language }}`,
+`{{ sections }}`, `{{ style_profile }}`, `{{ max_interior_images }}`,
+`{{ raw_output }}` (repair pass).
 
 Variables usable inside prompts (unknown names are rejected before any LLM call):
 

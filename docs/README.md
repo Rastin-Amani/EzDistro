@@ -6,10 +6,10 @@ these files ship with the codebase and are copied into the Docker image
 (`COPY docs ./docs` in the Dockerfile).
 
 ```text
-All documents verified against the working tree (post-commit 73e8d31), 2026-08-22.
-Each file carries its own "Documentation status" block. Conflict findings discovered
-during the audit are recorded honestly in ARCHITECTURE §11, SCHEMA §5, and
-TROUBLESHOOTING §8.
+All documents verified against the working tree (post-v1.3.0, images pipeline),
+2026-09-12. Each file carries its own "Documentation status" block.
+Conflict findings discovered during earlier audits are recorded honestly in
+ARCHITECTURE §11, SCHEMA §5, and TROUBLESHOOTING §8.
 ```
 
 ## Which document should I read?
@@ -28,20 +28,19 @@ TROUBLESHOOTING §8.
 
 | Document | Audience | Purpose | Status |
 |---|---|---|---|
-| **ARCHITECTURE.md** | Engineers, operators | System context, process model, job engine deep dive, all pipelines, provider layer, security, known drift | Verified · rewritten |
-| **SCHEMA.md** | Engineers, integrators | 18-collection PocketBase reference, fields, enums, indexes, cascades, vector payload contract | Verified · rewritten |
-| **CONFIGURATION.md** | DevOps, operators | Every env var + per-project setting + integration/prompt variables | Verified |
-| **USER-GUIDE.md** | Product operators | Task-oriented walkthrough of the Persian UI with exact on-screen labels | Verified |
+| **ARCHITECTURE.md** | Engineers, operators | System context, process model, job engine deep dive, all pipelines (writer, indexer, images), provider layer, security, known drift | Verified · covers v1.3.0 images pipeline |
+| **SCHEMA.md** | Engineers, integrators | 20-collection PocketBase reference, fields, enums, indexes, cascades, vector payload contract | Verified · covers v1.3.0 images pipeline |
+| **CONFIGURATION.md** | DevOps, operators | Every env var + per-project setting (incl. image generation) + integration/prompt variables | Verified · covers v1.3.0 images pipeline |
+| **USER-GUIDE.md** | Product operators | Task-oriented walkthrough of the Persian UI with English translations of on-screen labels (incl. **Images** tab + images pane) | Verified · covers v1.3.0 images pipeline |
 | **OPERATIONS.md** | DevOps, SRE | Deployment, runbook, health, scaling, backups/DR, upgrades | Verified |
-| **TROUBLESHOOTING.md** | Operators, on-call | Symptom → verify → resolution per area | Verified |
-| **FAILURES.md** | Engineers, on-call | Per-dependency failure matrix + crash-simulation guarantees | Verified · refreshed |
+| **TROUBLESHOOTING.md** | Operators, on-call | Symptom → verify → resolution per area (incl. images) | Verified · covers v1.3.0 images pipeline |
+| **FAILURES.md** | Engineers, on-call | Per-dependency failure matrix + crash-simulation guarantees (incl. images) | Verified · refreshed |
 
 ## Conventions used across the set
 
 - **Terminology is consistent**: project, topic, article, section, job, integration,
   prompt, index run, publishing run, schedule, worker, provider.
-- **Persian UI labels are quoted verbatim** (e.g. `نوشتن مقاله`, `تأیید`) so the guide
-  maps to the actual screen.
+- **UI labels use English translations** of the Persian UI labels (e.g. **Write article**, **Approve**); the UI itself remains Persian RTL.
 - **Verified vs inferred**: claims come from code/schema/tests/config. Where the docs
   and code disagree, the code wins and the discrepancy is noted rather than hidden.
 - **camelCase field names** are intentional (PocketBase clients run with

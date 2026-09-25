@@ -18,31 +18,32 @@ Two retry layers exist:
    30 s, cap 3600 s. After the last attempt → `failed` (permanent).
 
 Transient ⇒ retryable. Permanent ⇒ job fails; the UI shows the error and the job can
-be re-dispatched manually (**تلاش مجدد**).
+be re-dispatched manually (**Retry**).
 
 ```text
 Documentation status:  Refreshed & verified against current code
-Last verified:         2026-08-22
+                       (post-v1.3.0, images pipeline)
+Last verified:         2026-09-12
 ```
 
 ## Cohere / embeddings
 
 | Failure | Retry? | Attempts | Backoff | User-visible | Permanent? | Manual recovery |
 |---|---|---|---|---|---|---|
-| timeout (read/connect) | adapter + job | 3 + 3 | exp 2 s; jittered job backoff | «محدودیت زمانی تأمینکننده» on job failure | no | re-dispatch the job |
-| 429 rate limit | adapter + job | 3 + 3 | honors `Retry-After` | «محدودیت نرخ تأمینکننده» | no | none (auto) |
-| 500 / 5xx | adapter + job | 3 + 3 | exp | «خطای موقت تأمینکننده» | no | none (auto) |
-| malformed response (wrong shape / fewer embeddings than requested) | **no** | — | — | «پاسخ نامعتبر از تأمینکننده» | **yes** | check provider/model config; re-dispatch |
+| timeout (read/connect) | adapter + job | 3 + 3 | exp 2 s; jittered job backoff | "Provider timeout" on job failure | no | re-dispatch the job |
+| 429 rate limit | adapter + job | 3 + 3 | honors `Retry-After` | "Provider rate limit" | no | none (auto) |
+| 500 / 5xx | adapter + job | 3 + 3 | exp | "Temporary provider error" | no | none (auto) |
+| malformed response (wrong shape / fewer embeddings than requested) | **no** | — | — | "Invalid provider response" | **yes** | check provider/model config; re-dispatch |
 
 ## LLM (OpenAI-compatible / Gemini)
 
 | Failure | Retry? | Attempts | Backoff | User-visible | Permanent? | Manual recovery |
 |---|---|---|---|---|---|---|
-| timeout | adapter + job | 3 + 3 | exp 2 s; jittered | «محدودیت زمانی مدل زبانی» | no | none (auto) |
-| 429 | adapter + job | 3 + 3 | honors `Retry-After` | «محدودیت نرخ مدل زبانی» | no | none (auto) |
-| invalid JSON output | **job only** (ValueError ⇒ transient) | 3 | jittered | «خروجی مدل قابل تحلیل نبود» | no | none (auto) |
-| truncated response (missing content) | **no** | — | — | «پاسخ مدل ناقص بود» | **yes** | re-dispatch |
-| empty response | **no** | — | — | «پاسخ مدل خالی بود» | **yes** | re-dispatch |
+| timeout | adapter + job | 3 + 3 | exp 2 s; jittered | "Language model timeout" | no | none (auto) |
+| 429 | adapter + job | 3 + 3 | honors `Retry-After` | "Language model rate limit" | no | none (auto) |
+| invalid JSON output | **job only** (ValueError ⇒ transient) | 3 | jittered | "Model output could not be parsed" | no | none (auto) |
+| truncated response (missing content) | **no** | — | — | "Incomplete model response" | **yes** | re-dispatch |
+| empty response | **no** | — | — | "Empty model response" | **yes** | re-dispatch |
 
 Note: outline JSON additionally gets **one deterministic repair pass** through the
 `validation` prompt before the error is raised.
@@ -51,9 +52,9 @@ Note: outline JSON additionally gets **one deterministic repair pass** through t
 
 | Failure | Retry? | Attempts | Backoff | User-visible | Permanent? | Manual recovery |
 |---|---|---|---|---|---|---|
-| timeout | job layer (raw `TimeoutError` ⇒ transient) | 3 | jittered | «محدودیت زمانی کیوذرنت» | no | none (auto) |
-| connection failure | job layer (raw `ConnectionError` ⇒ transient) | 3 | jittered | «اتصال به کیوذرنت برقرار نشد» | no | check Qdrant is up; auto |
-| dimension mismatch (`ensure_collection` ValueError) | **no** — classified `PermanentError` by the indexing handlers | — | — | «ابعاد برداری با مدل جاسازی ناسازگار است» | **yes** | fix embedding model/dimensions; full reindex into the new namespace |
+| timeout | job layer (raw `TimeoutError` ⇒ transient) | 3 | jittered | "Qdrant timeout" | no | none (auto) |
+| connection failure | job layer (raw `ConnectionError` ⇒ transient) | 3 | jittered | "Could not connect to Qdrant" | no | check Qdrant is up; auto |
+| dimension mismatch (`ensure_collection` ValueError) | **no** — classified `PermanentError` by the indexing handlers | — | — | "Vector dimensions are incompatible with the embedding model" | **yes** | fix embedding model/dimensions; full reindex into the new namespace |
 
 Per-post indexing failures never abort the run: they increment `failedDocuments`,
 mark that document `failed`, and the run continues.
@@ -62,10 +63,10 @@ mark that document `failed`, and the run continues.
 
 | Failure | Retry? | Attempts | Backoff | User-visible | Permanent? | Manual recovery |
 |---|---|---|---|---|---|---|
-| timeout | adapter + job | 3 + 3 | exp 2 s; jittered | «محدودیت زمانی وردپرس» | no | none (auto) |
-| 401 auth error | **no** | — | — | «احراز هویت وردپرس ناموفق بود» | **yes** | fix application password in Integrations; re-dispatch |
-| invalid content (400) | **no** | — | — | «محتوا توسط وردپرس رد شد» | **yes** | fix content/template; re-dispatch |
-| duplicate post (crash between `create_post` and storing the id) | job (safe retry) | up to max_attempts | jittered | recovery is silent — «مقاله منتشر شد» | no | none — the retry looks up the orphaned post **by slug** (`find_post_by_slug`, WP REST slug filter) and UPDATEs it; created posts also carry `seoz_article_id` meta |
+| timeout | adapter + job | 3 + 3 | exp 2 s; jittered | "WordPress timeout" | no | none (auto) |
+| 401 auth error | **no** | — | — | "WordPress authentication failed" | **yes** | fix application password in Integrations; re-dispatch |
+| invalid content (400) | **no** | — | — | "Content rejected by WordPress" | **yes** | fix content/template; re-dispatch |
+| duplicate post (crash between `create_post` and storing the id) | job (safe retry) | up to max_attempts | jittered | recovery is silent — "Article published" | no | none — the retry looks up the orphaned post **by slug** (`find_post_by_slug`, WP REST slug filter) and UPDATEs it; created posts also carry `seoz_article_id` meta |
 
 Workflow-gate refusals ("article is not approved for publishing…") are permanent,
 non-retried errors — approval state is enforced in the handler, not just the UI.
@@ -74,13 +75,32 @@ non-retried errors — approval state is enforced in the handler, not just the U
 > `status="unpublished"` values that the bootstrapped `publishing_runs` select enums
 > do not include (`mode`: draft\|publish; `status`: pending\|published\|failed\|
 > skipped_duplicate). Expect schema-validation failure until either the schema or the
-> code is fixed. See SCHEMA.md §3.14 and TROUBLESHOOTING.md §8.
+> code is fixed. See SCHEMA.md §3.15 and TROUBLESHOOTING.md §8.
+
+## Image generation (v1.3.0: gemini / bfl FLUX / openai_compat)
+
+| Failure | Retry? | Attempts | Backoff | User-visible | Permanent? | Manual recovery |
+|---|---|---|---|---|---|---|
+| transient provider error (timeout, 429, 5xx) | job layer | `max(2, imageMaxRetries)` | jittered (+ Retry-After floor) | provider message (Persian wrapper) | no | none (auto); fallback provider tried when configured |
+| permanent provider error (auth, 4xx, bad request) | fallback only | — | — | provider message | **yes** (if fallback also fails) | fix key/model in Integrations or **Images** tab; re-dispatch |
+| provider/integration mismatch (slot provider has no active integration) | **no** — fail fast | — | — | mismatch message | **yes** | fix the **Images** tab mapping |
+| quality-gate rejection (bad dimensions/format) | **no** (`PermanentError`) | — | — | validation message | **yes** | adjust prompt/size config; regenerate |
+| oversized file (>10 MB / size limit) | **no** (`PermanentError`) | — | — | size message | **yes** | regenerate at smaller dims |
+| missing source file on re-optimize | **no** (`PermanentError`) | — | — | "Missing source file — regenerate" | **yes** | regenerate the image first |
+| WordPress media upload failure | **no** (`PermanentError`) | — | — | "Image upload to WordPress failed" | **yes** | check WP connectivity/credentials; re-dispatch |
+| no active image integration at plan time | chain skipped (warning event), plan still stored | — | — | warning in timeline | n/a | enable integration; re-plan or generate per slot |
+
+Idempotency: `image:{role}:{sectionKey}:{articleId}:v{version}` keys +
+`(article, role, sectionKey, version)` uniqueness make regeneration safe;
+`ensure_wp_media` reuses stored `wordpressMediaId` so retries never duplicate
+media. Missing cover blocks `publish_article` (permanent) unless
+`publishWithoutCover=true`.
 
 ## PocketBase
 
 | Failure | Retry? | Attempts | Backoff | User-visible | Permanent? | Manual recovery |
 |---|---|---|---|---|---|---|
-| temporary unavailability during a job (incl. config load) | job layer (network errors ⇒ transient) | 3 | jittered | «خطای موقت پایگاه داده» | no | none (auto) |
+| temporary unavailability during a job (incl. config load) | job layer (network errors ⇒ transient) | 3 | jittered | "Temporary database error" | no | none (auto) |
 | temporary unavailability during polling | worker loop catches; polls again next cycle | ∞ (until recovery) | poll interval | none | no | none (auto) |
 | stale job (worker died mid-flight; lease expired) | reclaimed by any worker once `leaseExpiresAt` passes | 1 (re-execution) | n/a | none | no | none (auto) |
 

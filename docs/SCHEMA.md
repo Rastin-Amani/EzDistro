@@ -6,8 +6,8 @@ the repo root mirrors it for manual import). If this document and the code disag
 the code wins — please fix the doc.
 
 ```text
-Documentation status:  Verified against app/scripts/bootstrap_pb.py
-Last verified:         2026-08-22
+Documentation status:  Verified against app/scripts/bootstrap_pb.py (post-v1.3.0)
+Last verified:         2026-09-12
 Requires:              PocketBase ≥ 0.23
 ```
 
@@ -28,7 +28,7 @@ Requires:              PocketBase ≥ 0.23
 
 ## 2. Collections overview
 
-18 base collections (+ built-in `users`, extended with `role` / `displayName`):
+20 base collections (+ built-in `users`, extended with `role` / `displayName`):
 
 | Collection | Purpose | Key uniqueness |
 |---|---|---|
@@ -40,6 +40,7 @@ Requires:              PocketBase ≥ 0.23
 | `articles` | Generated article aggregate | unique `topicId` (1:1 topic) |
 | `article_sections` | Ordered section rows — the outline IS these rows | unique `(article, position)` |
 | `article_revisions` | Append-only full snapshots | unique `(article, revision)` |
+| `article_images` | Versioned generated images + optimized files (v1.3.0) | unique `(article, role, sectionKey, version)` |
 | `documents` | Indexed source documents (metadata) | unique `(project, sourceType, sourceId)` |
 | `index_runs` | One row per indexing run | — |
 | `jobs` | Persistent async jobs | unique `idempotencyKey` |
@@ -48,6 +49,7 @@ Requires:              PocketBase ≥ 0.23
 | `publishing_runs` | Append-only publish attempts | — |
 | `provider_metrics` | Daily per-provider aggregates | unique `(project, provider, model, operation, day)` |
 | `schedules` | Interval schedules (`index` \| `write`) | — |
+| `worker_heartbeats` | Worker liveness beacons (v1.1.0) | unique `workerId` |
 | `app_settings` | Global defaults singleton | unique `key` (`default`) |
 | `project_members` | Authorization | unique `(project, user)` |
 
@@ -60,7 +62,7 @@ users ──< project_members >── projects
                                 │      documents · index_runs · jobs · job_events
                                 │      publishing_runs · provider_metrics · schedules
 topics ──1:1── articles ──1:N── article_sections
-                    │─────── 1:N article_revisions · publishing_runs
+                    │─────── 1:N article_revisions · publishing_runs · article_images
 jobs ──1:1(unique)── job_leases        jobs ──1:N── job_events
 jobs.parent ──▶ jobs (chained jobs, e.g. publish chained from write)
 ```
@@ -119,6 +121,17 @@ Indexes: UNIQUE slug; status.
 | publishingMode | sel | `draft` \| `publish` |
 | autosave | json | `{enabled, interval_minutes}` |
 | indexing | json | `{schedule_enabled, schedule_interval_minutes, wp_status}` |
+| imageCoverProvider / imageCoverModel | text | defaults `gemini` / `gemini-3-pro-image` |
+| imageInteriorProvider / imageInteriorModel | text | defaults `bfl` / `flux-2-klein-9b` |
+| imageFallbackProvider / imageFallbackModel | text | empty = no fallback |
+| imageCoverAspectRatio / imageInteriorAspectRatio | text | default `16:9` |
+| imageCoverMinWidth | num | default 1200 (SEO/Discover floor) |
+| imageMaxInteriorImages | num | default 4 (hard cap; density further limits) |
+| imageMaxRetries | num | default 3 |
+| imageOptimizationFormat | sel | `webp` \| `avif` \| `jpeg` (default `webp`) |
+| imageAiQaEnabled | bool | optional vision QA (extra cost) |
+| imagePromptLanguage | text | visual-prompt language, default `en` |
+| imageStyle | json | style profile passed to the plan prompt |
 
 Note: there is no seeding of default values for new settings rows; runtime fallbacks
 live in `ProjectConfig` (`app/services/settings.py`) and the API form casts. Embedding
@@ -129,8 +142,8 @@ fallback differs from the global seed — see ARCHITECTURE §11.4.
 | field | type | notes |
 |---|---|---|
 | project* R | projects | cascade |
-| category* | sel | `llm` \| `embedding` \| `reranker` \| `vector_store` \| `publisher` |
-| provider* | text | e.g. `openai_compat`, `gemini`, `cohere`, `cohere_compat`, `qdrant`, `wordpress` |
+| category* | sel | `llm` \| `embedding` \| `reranker` \| `vector_store` \| `publisher` \| `image` (v1.3.0) |
+| provider* | text | e.g. `openai_compat`, `gemini`, `cohere`, `cohere_compat`, `qdrant`, `wordpress`, `bfl` |
 | displayName* | text | part of uniqueness |
 | configuration | json | non-secret config only (base_url, username, model, …) |
 | secretsEnc | text | Fernet ciphertext of the secret JSON — never rendered or logged |
@@ -146,7 +159,7 @@ Indexes: (project, category); UNIQUE (project, category, provider, displayName).
 | field | type | notes |
 |---|---|---|
 | project R | projects | empty ⇒ **global default**; project row wins resolution |
-| type* | sel | `outline_system` \| `outline_user` \| `section_system` \| `section_user` \| `seo_rules` \| `internal_linking` \| `brand_voice` \| `validation` |
+| type* | sel | `outline_system` \| `outline_user` \| `section_system` \| `section_user` \| `seo_rules` \| `internal_linking` \| `brand_voice` \| `validation` \| `image_plan_system` \| `image_plan_user` (v1.3.0) |
 | name* | text | typically `default` |
 | content* | text | may contain `{{ variable }}` tokens (validated registry) |
 | version* | num | 1-based; each save inserts a NEW row |
@@ -156,9 +169,11 @@ Indexes: (project, category); UNIQUE (project, category, provider, displayName).
 
 Indexes: (project, type, active); UNIQUE (project, type, name, version).
 
-Bootstrap seeds eight global prompts (`brand_voice`, `outline_system`, `outline_user`,
-`section_system`, `section_user`, `seo_rules`, `internal_linking`, `validation`) with
-Persian content — see `DEFAULT_PROMPTS` in `bootstrap_pb.py`.
+Bootstrap seeds ten global prompts (`brand_voice`, `outline_system`, `outline_user`,
+`section_system`, `section_user`, `seo_rules`, `internal_linking`, `validation`,
+`image_plan_system`, `image_plan_user`) with Persian content — see
+`DEFAULT_PROMPTS` in `bootstrap_pb.py`. The single source of the type list is
+`PROMPT_TYPES` in `app/repositories/prompts.py`.
 
 ### 3.5 topics
 
@@ -199,6 +214,8 @@ Indexes: (project, status, priority); (project, status); (project, week).
 | generatedAt / publishedAt | date | |
 | wordpressPostId | num | set on first successful publish |
 | wordpressUrl | text | |
+| imagePlan | json | latest `ArticleImagePlan` snapshot (v1.3.0) |
+| imagePlanVersion | num | |
 | lastJob R | jobs | audit pointer, no cascade |
 
 Indexes: (project, status); UNIQUE topicId.
@@ -239,7 +256,44 @@ Index: UNIQUE (article, position).
 
 Indexes: UNIQUE (article, revision); (article, created).
 
-### 3.9 documents
+### 3.9 article_images (v1.3.0)
+
+One row per generation; `active` marks the selected version. Successful rows are
+never overwritten — regenerate creates version+1, rollback flips `active`.
+
+| field | type | notes |
+|---|---|---|
+| project* R | projects | cascade |
+| article* R | articles | cascade |
+| role* | sel | `cover` \| `interior` |
+| sectionKey | text | `section-N` for interiors, empty for cover |
+| version* | num | 1-based per (article, role, sectionKey) |
+| active | bool | selected version |
+| status* | sel | `planned` \| `generating` \| `optimizing` \| `ready` \| `failed` |
+| provider / model | text | provenance |
+| prompt | text (≤8000) | visual prompt |
+| promptHash / styleHash / fingerprint | text | dedup / style identity |
+| negativePrompt | text (≤5000) | |
+| width / height | num | decoded actuals (quality gate fills them) |
+| aspectRatio / format | text | e.g. `16:9`, `image/webp` |
+| fileSize | num | optimized bytes |
+| sourceFile | file | original generation (png/jpeg/webp, ≤10 MB) |
+| optimizedFile | file | re-encoded target format |
+| smallFile | file | `-640` small variant |
+| wordpressMediaId | num | idempotent WP upload pointer (reuse forever) |
+| wordpressUrl | text | |
+| altText / caption | text (≤500) | article-language SEO text |
+| filename | text | |
+| generationLatency | num | ms |
+| estimatedCost | num | |
+| attempts / seed | num | |
+| error | json | structured failure |
+| createdBy | text | audit |
+
+Indexes: UNIQUE (article, role, sectionKey, version); (article, active);
+(fingerprint).
+
+### 3.10 documents
 
 | field | type | notes |
 |---|---|---|
@@ -256,7 +310,7 @@ Indexes: UNIQUE (article, revision); (article, created).
 
 Indexes: UNIQUE (project, sourceType, sourceId); (project, indexStatus).
 
-### 3.10 index_runs
+### 3.11 index_runs
 
 | field | type | notes |
 |---|---|---|
@@ -273,12 +327,12 @@ Indexes: UNIQUE (project, sourceType, sourceId); (project, indexStatus).
 
 Index: (project, created).
 
-### 3.11 jobs
+### 3.12 jobs
 
 | field | type | notes |
 |---|---|---|
 | project* R | projects | cascade |
-| type* | text | one of the 8 registered types (see ARCHITECTURE §5.8) |
+| type* | text | one of the 14 registered types (see ARCHITECTURE §5.8) |
 | entityType / entityId | text | polymorphic ref: project \| topic \| article \| section \| document |
 | status* | sel | `pending` \| `running` \| `completed` \| `failed` \| `cancelled` \| `retrying` — **there is no `claimed` value** |
 | priority | num | poll order desc |
@@ -305,7 +359,7 @@ Worker poll query: fresh `(pending || retrying) && availableAt <= now`
 (order priority DESC, created ASC) plus stale recovery
 `running && leaseExpiresAt < now`.
 
-### 3.12 job_leases
+### 3.13 job_leases
 
 | field | type | notes |
 |---|---|---|
@@ -315,7 +369,7 @@ Worker poll query: fresh `(pending || retrying) && availableAt <= now`
 
 Index: UNIQUE job; (expiresAt).
 
-### 3.13 job_events (append-only)
+### 3.14 job_events (append-only)
 
 | field | type | notes |
 |---|---|---|
@@ -327,7 +381,7 @@ Index: UNIQUE job; (expiresAt).
 
 Indexes: (job, created); (project, created).
 
-### 3.14 publishing_runs (append-only)
+### 3.15 publishing_runs (append-only)
 
 | field | type | notes |
 |---|---|---|
@@ -349,7 +403,7 @@ Indexes: (project, created); (article, created).
 > no such field — PocketBase drops it; the request id persists via
 > `responseMetadata.requestId`. Documented as-is to match reality.
 
-### 3.15 provider_metrics
+### 3.16 provider_metrics
 
 | field | type | notes |
 |---|---|---|
@@ -363,7 +417,7 @@ Indexes: (project, created); (article, created).
 Indexes: UNIQUE (project, provider, model, operation, day); (project, day).
 Accumulated in memory per worker; flushed every 30 s and at shutdown.
 
-### 3.16 schedules
+### 3.17 schedules
 
 | field | type | notes |
 |---|---|---|
@@ -377,14 +431,32 @@ Accumulated in memory per worker; flushed every 30 s and at shutdown.
 
 Index: (enabled, nextRunAt).
 
-### 3.17 app_settings (singleton)
+### 3.18 worker_heartbeats (v1.1.0)
+
+Worker liveness registry: each worker process upserts ONE row (unique
+`workerId`) every heartbeat interval; the web reads the rows for the workers
+dashboard (active/stale/offline + per-session job counts).
+
+| field | type | notes |
+|---|---|---|
+| workerId* U | text | unique per worker process |
+| hostname / version | text | |
+| pid / maxConcurrentJobs | num | |
+| startedAt / lastHeartbeatAt | date | beacon timestamp |
+| runningJobs / completedJobs / failedJobs | num | per-session engine counters |
+| scheduleLastPollAt | date | scheduler loop beacon |
+| scheduleDue / scheduleCreated / scheduleFailed | num | scheduler counters |
+
+Index: UNIQUE workerId.
+
+### 3.19 app_settings (singleton)
 
 | field | type | notes |
 |---|---|---|
 | key* U | text | `default` |
 | value | json | seeded global defaults: `default_llm_provider=openai_compat`, embedding seed `cohere` / `embed-v4.0` / 1024, `heartbeat_interval=15`, `llm.{outline|section|meta|review}` role configs (`gpt-4o-mini`, temp 0.7, max_tokens 4096, timeout 120; meta/review empty) |
 
-### 3.18 project_members
+### 3.20 project_members
 
 | field | type | notes |
 |---|---|---|
@@ -396,7 +468,7 @@ Indexes: UNIQUE (project, user); (user).
 Role semantics: owner/admin/editor may mutate; owner/admin for destructive ops;
 platform admins bypass membership checks entirely.
 
-### 3.19 users (built-in, extended)
+### 3.21 users (built-in, extended)
 
 Added by bootstrap if missing: `role` (sel: `admin` \| `member`) and `displayName`
 (text). Seeded admin account comes from `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD`.
@@ -437,6 +509,7 @@ deletion happens only on explicit full reindexes.
 ## 5. Known drift vs older revisions of this document
 
 - The old document described `publishing_runs.request_id` / `response_status` columns
-  and a `claimed` job status; none exist (see §3.14 note and ARCHITECTURE §11).
+  and a `claimed` job status; none exist (see §3.15 note and ARCHITECTURE §11).
 - Section numbering duplication (two “3.7b”/“3.15” blocks) fixed here.
-- Collection count corrected to 18 (was stated as 17 in README).
+- Collection count corrected to 20 (was stated as 17/18 in older revisions;
+  `article_images` added in v1.3.0, `worker_heartbeats` in v1.1.0).

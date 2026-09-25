@@ -6,11 +6,12 @@ ARCHITECTURE.md (how the engine works).
 
 ```text
 Documentation status:  Verified against code & failure handling paths
-Last verified:         2026-08-22
+                       (post-v1.3.0, images pipeline)
+Last verified:         2026-09-12
 ```
 
 How to read a job's history first (applies everywhere below):
-**وظایف → job detail → event timeline.** The timeline names the failing stage, the
+**Jobs** → job detail → event timeline. The timeline names the failing stage, the
 provider, the error category, and whether the error was classified *retryable*
 (auto-retries with backoff) or *permanent* (needs human action). Admins additionally
 see structured `errorDetails` including the traceback tail for unexpected crashes.
@@ -34,7 +35,7 @@ see structured `errorDetails` including the traceback tail for unexpected crashe
 - **Resolution:** ask an owner/admin to add you under **project_members** with the
   right role.
 
-## 2. Integrations (اتصالات)
+## 2. Integrations (**Connections**)
 
 ### Symptom: connection test fails with a private-address/network error
 
@@ -48,8 +49,8 @@ see structured `errorDetails` including the traceback tail for unexpected crashe
 - **Verify:** application passwords enabled for the WP account (WP Admin → Users →
   Profile → Application Passwords); username matches; URL includes the full site path
   and scheme.
-- **Resolution:** fix credentials in اتصالات, re-run **تست**, then re-dispatch the
-  failed publish job from وظایف ناموفق (**تلاش مجدد**). WordPress 401s are permanent
+- **Resolution:** fix credentials in **Connections**, re-run **Test**, then re-dispatch the
+  failed publish job from **Failed jobs** (**Retry**). WordPress 401s are permanent
   errors — jobs do not auto-retry them.
 
 ## 3. Bootstrap / schema
@@ -109,9 +110,9 @@ Checklist, in order:
   validation, config errors, missing entities.
 - **Verify:** `errorCode`/`errorMessage` + details on the job record.
 - **Resolution:** fix the root cause (key, config, prompt variables…), then
-  **تلاش مجدد**. Manual retry resets attempts and makes the job immediately claimable.
+  **Retry**. Manual retry resets attempts and makes the job immediately claimable.
 
-## 6. Indexing (نمایه‌سازی)
+## 6. Indexing
 
 ### Symptom: run fails fast with "qdrant dimension mismatch"
 
@@ -119,7 +120,7 @@ Checklist, in order:
   would mix incompatible vectors, so this fails as permanent by design.
 - **Verify:** project settings embedding model/dims vs documents' recorded values;
   Qdrant collection name embeds the model slug (`seoz-{slug}-{model}`).
-- **Recovery:** set the intended model/dimensions and trigger **بازنمایه کامل** — new
+- **Recovery:** set the intended model/dimensions and trigger **Full re-index** — new
   namespace, nothing mixed. Old collections can be dropped manually when unused.
 
 ### Symptom: index run interrupted (worker restart, cancel)
@@ -133,16 +134,16 @@ Checklist, in order:
 ### Symptom: deleted WP posts still retrievable
 
 - **Cause:** stale vectors are only pruned during **full** reindexes.
-- **Resolution:** run **بازنمایه کامل** — sources absent from the sweep are deleted in
+- **Resolution:** run **Full re-index** — sources absent from the sweep are deleted in
   batches. Incremental runs never delete by design.
 
-## 7. Writing pipeline (موضوع‌ها / مقاله‌ها)
+## 7. Writing pipeline (**Topics** / **Articles**)
 
 ### Symptom: article stuck with sections `pending`/`generating`
 
 - **Normal transient state:** section jobs run independently; the assembler polls
   (20 s retry-after) until all are done. Watch the workspace (~2.5 s refresh).
-- **If permanently stuck:** inspect each section job in وظایف. Failed sections show a
+- **If permanently stuck:** inspect each section job in **Jobs**. Failed sections show a
   human-readable error in the workspace plus technical detail for admins. Retry the
   failed section job; the assembler will complete afterwards.
 
@@ -152,13 +153,13 @@ Checklist, in order:
   `javascript:` URLs, markdown fences, H1, unbalanced HTML, too-short output). This is
   a deliberate gate — garbage is never stored silently.
 - **Resolution:** regenerate the section (or the article). If a specific prompt keeps
-  producing violations, tighten the section prompts in پرامپت‌ها.
+  producing violations, tighten the section prompts in **Prompts**.
 
 ### Symptom: write job failed with "prompt rendering failed (unknown variables…)"
 
 - **Cause:** a prompt contains `{{ variable }}` names outside the registry, or an
   unclosed `{{`. Caught before any LLM call.
-- **Resolution:** edit the prompt in پرامپت‌ها using only listed variables; save
+- **Resolution:** edit the prompt in **Prompts** using only listed variables; save
   creates a new version; reactivate the previous version to roll back instantly.
 
 ### Symptom: topic stuck in `planning`
@@ -166,14 +167,14 @@ Checklist, in order:
 - **Behavior:** this indicates a crashed earlier attempt. Re-running writing detects
   it, resets to `planned` and resumes (saved outline reused when valid).
 
-## 8. Publishing (انتشار)
+## 8. Publishing
 
 ### Symptom: publish refused: "article is not approved for publishing"
 
 - **By design.** Publishing requires status `approved` (or documented exceptions:
   updates to already-published articles, retries of never-published failures,
   same-job crash recovery).
-- **Resolution:** review screen → **تأیید** → **انتشار** again.
+- **Resolution:** review screen → **Approve** → **Publish** again.
 
 ### Symptom: duplicate-looking posts on WordPress?
 
@@ -200,7 +201,50 @@ Fixed behavior: the leading `<h1>` is stripped before sending (WP themes render 
 own). If you see duplicates, check whether the theme also injects the title inside the
 content area — that's a theme setting, not a platform bug.
 
-## 9. Data stores
+### Symptom: publish refused because the cover image is missing
+
+- **By design.** `publish_article` blocks when no ready cover exists, unless the job
+  payload sets `publishWithoutCover=true`.
+- **Verify:** workspace images pane — is there a `ready` + active cover version?
+- **Resolution:** generate/activate the cover (**Generate image** / **Use this image**),
+  then publish again. If the image provider is down, publishing text-only requires
+  the explicit override path.
+
+## 9. Images (v1.3.0)
+
+### Symptom: plan job fails with "article has no content yet"
+
+- **Cause:** `plan_article_images` requires `finalHtml`/`generatedContent`.
+- **Resolution:** complete the write pipeline (assemble) first, then plan.
+
+### Symptom: "no active image integration — skipping automatic generation"
+
+- **Cause:** the plan was stored, but no *enabled* `image`-category integration
+  exists, so generation jobs were never queued.
+- **Resolution:** **Connections** → add/enable an image integration (`gemini`/`bfl`/
+  `openai_compat`) → re-plan (**Image plan**) or generate per slot manually.
+
+### Symptom: generation fails fast on provider/integration mismatch
+
+- Handlers fail fast (permanent) when the slot's configured provider has no
+  matching active integration — fix the **Images** tab mapping instead of retrying.
+  An HTML error page from the provider endpoint is classified distinctly from a
+  real generation failure; check the job's error details.
+
+### Symptom: image stuck `generating`/`optimizing`
+
+- Like all jobs, image jobs checkpoint via leases: a crashed worker's job is
+  reclaimed after lease expiry and retried per `imageMaxRetries`
+  (`max(2, value)` attempts). Inspect the job event timeline for the provider
+  error category (transient → auto-retry; permanent → fix config, then retry).
+
+### Symptom: WordPress shows the pre-re-optimization image
+
+- **Known behavior (documented in code):** a re-optimized image keeps its old
+  `wordpressMediaId` — WordPress serves the previous file until the next publish
+  re-attaches. Re-publish the article to refresh media.
+
+## 10. Data stores
 
 ### Symptom: "credential cannot be decrypted — SECRETS_KEY changed?"
 
@@ -213,17 +257,17 @@ content area — that's a theme setting, not a platform bug.
 
 Checklist:
 
-1. Indexing actually ran? نمایه‌سازی tab shows indexed counts > 0.
+1. Indexing actually ran? **Indexing** tab shows indexed counts > 0.
 2. Project has top-k > 0 and (optionally) threshold not filtering everything
    (runtime default threshold is 0 = disabled).
-3. Use the بازیابی diagnostics tab with the topic's query — it shows raw hits,
+3. Use the **Retrieval** diagnostics tab with the topic's query — it shows raw hits,
    rerank scores, surviving link candidates and the exact prompt context.
 4. Reranker enabled but its integration missing/unhealthy? Retrieval falls back to
    vector order (never blocks writing).
 
-## 10. UI oddities
+## 11. UI oddities
 
-### Toast says "پروژه یافت نشد یا دسترسی ندارید"
+### Toast says "Project not found or no access"
 
 Either the id doesn't exist or it belongs to a project outside your scope
 (cross-project ids are deliberately indistinguishable from missing ones).
@@ -241,4 +285,4 @@ or was rejected pre-handler.
 
 - Failure semantics per dependency: FAILURES.md
 - Engine internals (leases, backoff math, idempotency): ARCHITECTURE.md §5
-- Schema/enum reference: SCHEMA.md §3.14 (publishing_runs caveat lives here too)
+- Schema/enum reference: SCHEMA.md §3.15 (publishing_runs caveat lives here too)

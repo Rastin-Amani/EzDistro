@@ -9,8 +9,8 @@ one standalone asyncio worker process, PocketBase as the source of truth, Qdrant
 vectors. No Redis, no Celery, no n8n.
 
 ```text
-Documentation status:  Verified against the working tree (post-commit 73e8d31)
-Last verified:         2026-08-22
+Documentation status:  Verified against the working tree (post-v1.3.0, images pipeline)
+Last verified:         2026-09-12
 Companion documents:   SCHEMA.md · CONFIGURATION.md · OPERATIONS.md · TROUBLESHOOTING.md
                        USER-GUIDE.md · FAILURES.md
 ```
@@ -46,7 +46,7 @@ Companion documents:   SCHEMA.md · CONFIGURATION.md · OPERATIONS.md · TROUBLE
 
 | Store | Owns |
 |---|---|
-| **PocketBase** | Everything relational: projects, settings, integrations (encrypted secrets), prompts, topics, articles, sections, revisions, documents metadata, index runs, jobs / leases / job events, publishing runs, provider metrics, schedules, app settings, project members |
+| **PocketBase** | Everything relational: projects, settings (incl. image-generation config), integrations (encrypted secrets, incl. `image` category), prompts (incl. `image_plan_*`), topics, articles, sections, revisions, article images, documents metadata, index runs, jobs / leases / job events, publishing runs, provider metrics, schedules, worker heartbeats, app settings, project members |
 | **Qdrant** | Vectors + payload (chunk text, source URL, title, ids). No vector data is duplicated into PocketBase; no secrets live in Qdrant payloads |
 | **External providers** | LLM generations, embeddings, reranking, WordPress posts |
 
@@ -87,7 +87,7 @@ app/
   domain/            Pure logic, zero I/O: chunker, parsing, prompt_render,
                      article_html, sanitize, seo_score, validation, article_validation
   schemas/           Pydantic models for LLM outputs & retrieval results
-  repositories/      The ONLY code that talks to PocketBase (18 collections)
+  repositories/      The ONLY code that talks to PocketBase (20 collections)
   providers/         External adapters behind protocols + table-driven registry
   services/          Orchestration: indexing, writing, publishing_service,
                      retrieval, internal_linking, scheduler, secrets, settings,
@@ -270,7 +270,7 @@ Append-only `job_events` rows (never updated) form the audit trail shown in the 
 
 ### 5.8 Registered job types
 
-Eight types, whitelisted in `app/workers/worker.py` and self-registered via
+Fourteen types, whitelisted in `app/workers/worker.py` and self-registered via
 `@register_job(...)` (imports triggered by `ensure_registered()`):
 
 | Type | Purpose |
@@ -280,9 +280,15 @@ Eight types, whitelisted in `app/workers/worker.py` and self-registered via
 | `write_article` | Orchestrator: topic → outline → section jobs → assembler |
 | `generate_outline` | Outline-only granular job |
 | `generate_section` | One independent job per article section |
-| `assemble_article` | Wait for sections, assemble, validate → review |
-| `publish_article` | WordPress publish/update/unpublish (idempotent, audited) |
+| `assemble_article` | Wait for sections, assemble, validate → review (auto-chains `plan_article_images`) |
+| `publish_article` | WordPress publish/update/unpublish (idempotent, audited; uploads images, sets featured media) |
 | `retry_failed_job` | Human retry: resets a failed target job to `retrying` |
+| `plan_article_images` | LLM image plan: exactly one cover + ≤ `imageMaxInteriorImages` interiors (§6.6) |
+| `generate_cover_image` | Generate the cover slot (role-scoped provider/model, fallback on failure) |
+| `generate_interior_image` | Generate one interior slot (`sectionKey` bound) |
+| `generate_article_image` | Generic single-image generation entry point (same pipeline as role jobs) |
+| `optimize_article_image` | Decode + quality-gate + re-encode to WebP/AVIF/JPEG + small variant |
+| `publish_article_image` | Upload one image to the WP media library (idempotent via stored media id) |
 
 Adding a type = implement a handler, decorate it, and add it to the worker whitelist.
 
@@ -410,6 +416,57 @@ interval. Cron expressions are not supported (deliberate non-goal).
 target to `retrying` (immediately claimable). It is a no-op unless the target is
 actually `failed`.
 
+### 6.6 Image pipeline (`plan_article_images` → generate → optimize → publish)
+
+Article imagery is data-driven: model ids live in `project_settings`
+(`imageCoverProvider/Model`, `imageInteriorProvider/Model`,
+`imageFallbackProvider/Model`), never hardcoded in the pipeline.
+
+```
+assemble_article (auto-chain) → plan_article_images (1 LLM call)
+  → per slot: generate_cover_image / generate_interior_image
+      → optimize_article_image → ready
+publish_article → ensure_wp_media per image → placeholder resolution
+  → WP create/update → set_featured_media (cover)
+```
+
+Details verified in `app/services/image_planning.py` + `app/services/images.py`:
+
+- **Planning**: requires article content (`finalHtml`/`generatedContent`), else a
+  permanent error. Builds prompt context (title, keyword, language, section
+  headings, style profile, density cap from `recommended_interiors`: <400 words →
+  0, <900 → 1, <1800 → 2, <3200 → 3, else 4, clamped by `imageMaxInteriorImages`
+  default 4). The LLM returns strict JSON (exactly one `cover`, purposeful
+  interiors only — decorative/repetitive images forbidden by the seeded
+  `image_plan_*` prompts and `validate_plan`). The snapshot persists on
+  `articles.imagePlan` (+ `imagePlanVersion`). Visual prompts use
+  `imagePromptLanguage` (default `en`); `alt_text`/`caption` always use the
+  article language; no text is ever rendered inside images.
+- **Generation chaining**: the plan handler queues one generation job per slot
+  (idempotency `image:{role}:{sectionKey}:{articleId}:v{version}`,
+  `max_attempts = max(2, imageMaxRetries)`), skipped with a warning when no
+  active `image` integration exists. Role jobs resolve provider/model from the
+  slot role (cover vs interior) with configured fallback on failure.
+- **Versioning**: `article_images` holds one row per generation
+  (`(article, role, sectionKey, version)` unique); `active` marks the selected
+  one. Regenerate creates version+1; rollback flips `active`. Successful rows
+  are never overwritten.
+- **Quality gate + optimization**: bytes are decoded and validated *before*
+  storage (dimensions, format); `optimize_article_image` re-encodes to
+  `imageOptimizationFormat` (default `webp`, `avif`/`jpeg` supported) plus a
+  `-640` small variant. A re-optimized image keeps its old `wordpressMediaId` —
+  WordPress serves the previous file until the next publish re-attaches.
+- **Publish integration**: `publish_article` calls `apply_images_to_html`
+  (pre-publish validation, idempotent media upload via stored media id,
+  placeholder resolution), then `set_featured_media` for the cover (drives
+  `og:image`). A missing cover blocks publishing unless the payload sets
+  `publishWithoutCover=true`.
+- **Management**: the article workspace **images pane** (`_images_pane.html`)
+  shows plan version, per-slot versions, prompts, and regenerate/use actions;
+   the project **Images** settings tab (`tabs/images.html`) edits all
+  `image*` settings plus a one-click generation test that replicates real
+  cover-request dimensions.
+
 ## 7. Retrieval subsystem
 
 Used by the writer and exposed as a diagnostics tab in the project UI:
@@ -431,9 +488,9 @@ Used by the writer and exposed as a diagnostics tab in the project UI:
 
 ## 8. Provider layer
 
-All external access goes through five protocols in `app/providers/base.py` —
+All external access goes through six protocols in `app/providers/base.py` —
 `LLMProvider`, `EmbeddingProvider`, `RerankerProvider`, `VectorStoreProvider`,
-`PublisherProvider` — resolved by a **table-driven registry**
+`ImageGenerationProvider`, `PublisherProvider` — resolved by a **table-driven registry**
 (`app/providers/registry.py`). There are no provider-specific branches in application
 code; adding a provider = subclass a protocol and register the class.
 
@@ -447,7 +504,10 @@ code; adding a provider = subclass a protocol and register the class.
 | embedding | `openai_compat` | OpenAI-compatible `/embeddings` | |
 | reranker | `cohere_compat` | Cohere-compatible rerank | scores + metadata preserved |
 | vector_store | `qdrant` | Qdrant HTTP (async client) | namespaced per project+model |
-| publisher | `wordpress` | WordPress REST | application-password auth; list/get/create/update/unpublish, taxonomy fetch, find-by-slug |
+| image | `gemini` | Gemini native image generation | default for cover (`gemini-3-pro-image`) |
+| image | `bfl` | Black Forest Labs FLUX | default for interiors (`flux-2-klein-9b`, megapixel pricing) |
+| image | `openai_compat` | OpenAI-compatible image endpoint | fallback / custom endpoints |
+| publisher | `wordpress` | WordPress REST | application-password auth; list/get/create/update/unpublish, taxonomy fetch, find-by-slug, media upload + featured-media attach |
 
 Resolution rules:
 
@@ -536,8 +596,10 @@ here honestly rather than papered over:
    drops it at rest. The request id survives only inside `responseMetadata.requestId`
    (which *is* written on completion). The older SCHEMA.md documented
    `request_id`/`response_status` columns that do not exist.
-3. **Collection count drift.** README said "17 collections"; the bootstrap defines
-   **18** base collections (plus the extended `users` collection).
+3. **Collection count drift (resolved).** Earlier revisions said "17"/"18
+   collections"; the bootstrap now defines **20** base collections
+   (`article_images` added in v1.3.0, `worker_heartbeats` in v1.1.0 — plus the
+   extended `users` collection).
 4. **Embedding defaults differ by path.** `ProjectConfig.embedding` falls back to
    `openai_compat` / `text-embedding-3-small` / 1536 dims, while the seeded global
    `app_settings` advertises Cohere `embed-v4.0` / 1024 dims. Unlike LLM roles,

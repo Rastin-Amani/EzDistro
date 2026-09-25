@@ -5,7 +5,8 @@ platform. Audience: engineers or operators responsible for a running deployment.
 
 ```text
 Documentation status:  Verified against Makefile, Dockerfile, config, worker code
-Last verified:         2026-08-22
+                       (post-v1.3.0, images pipeline)
+Last verified:         2026-09-12
 ```
 
 ---
@@ -44,7 +45,7 @@ export PB_ADMIN_EMAIL=… PB_ADMIN_PASSWORD=…   # or put them in .env
 make bootstrap        # python -m app.scripts.bootstrap_pb
 ```
 
-Bootstrap does, in order: import/patch all 18 collections (`delete_missing=False`),
+Bootstrap does, in order: import/patch all 20 collections (`delete_missing=False`),
 add `role`/`displayName` to `users`, seed the `app_settings` singleton + 8 global
 Persian prompts, and create the platform admin if `SEED_ADMIN_PASSWORD` is set.
 It prints explicit confirmation lines for each step; on failure it raises with a
@@ -148,14 +149,17 @@ with your normal collector; there is no in-app file logging or rotation.
   30 s per worker and at shutdown.
 
 **Retention gaps (no automated pruner exists):** `job_events`, `provider_metrics`,
-`publishing_runs`, `article_revisions` grow unbounded by design (append-only audit).
-Plan periodic archiving/pruning out-of-band if volume matters.
+`publishing_runs`, `article_revisions`, `article_images` file fields grow unbounded
+by design (append-only audit / versioned generations). Plan periodic
+archiving/pruning out-of-band if volume matters.
 
 ## 6. Scaling
 
 - **Workers:** run as many as you like on one or more machines. Atomic lease claims
   (unique `job_leases.job`) make double-execution impossible; crashed workers'
-  jobs are reclaimed after lease expiry.
+  jobs are reclaimed after lease expiry. Each worker upserts a `worker_heartbeats`
+  row (unique `workerId`: hostname, pid, session counters, scheduler stats) —
+  the web workers dashboard shows active/stale/offline from these beacons.
 - **Provider ceilings multiply per worker:** total concurrent LLM calls ≈
   `workers × LLM_CONCURRENCY`. Tune before scaling out against provider quotas.
 - **Web:** stateless — scale horizontally behind a load balancer; sessions live in
@@ -171,7 +175,7 @@ Plan periodic archiving/pruning out-of-band if volume matters.
    deleted from the database).
 3. Restart web + worker. In-flight jobs survive restarts (lease recovery).
 4. If embedding model/dimensions changed for a project, trigger a full reindex
-   (**بازنمایه کامل**) from the UI; collections are namespaced per model so nothing
+   (**Full re-index**) from the UI; collections are namespaced per model so nothing
    mixes.
 
 ## 8. Backups & disaster recovery
@@ -180,7 +184,7 @@ Plan periodic archiving/pruning out-of-band if volume matters.
 |---|---|---|
 | PocketBase | Built-in backups or filesystem snapshot of its data dir (SQLite). **Source of truth** — projects, articles, jobs history, secrets ciphertext | Restore file, restart processes |
 | `SECRETS_KEY` | Store separately from PB backups (e.g. secret manager) | Without it, encrypted credentials cannot be decrypted — re-entering them is the only recovery |
-| Qdrant | Optional snapshots | Or: full reindex from WordPress (**بازنمایه کامل**) rebuilds everything deterministically from source posts + PB document metadata |
+| Qdrant | Optional snapshots | Or: full reindex from WordPress (**Full re-index**) rebuilds everything deterministically from source posts + PB document metadata |
 | WordPress | Out of scope (your site's own backups) | Articles always remain in PB; republishing updates existing posts |
 
 DR drill sketch: restore PB snapshot → start web+worker with same env (incl.
@@ -191,12 +195,12 @@ full-reindex one project into a fresh Qdrant.
 
 | Task | Procedure |
 |---|---|
-| Rotate a provider API key | Project → اتصالات → edit connection → save new secret → تست |
+| Rotate a provider API key | Project → **Connections** → edit connection → save new secret → **Test** |
 | Change publishing mode | Project settings → publishingMode `draft`/`publish` |
 | Add/remove schedule | Project scheduling form (interval-based; kind index/write) — schedules only fire while the project is `active` and a worker's schedule loop runs |
-| Purge stale vectors for deleted posts | Full reindex (بازنمایه کامل) — the only path that deletes unseen sources' vectors |
-| Requeue stuck work | Inspect `/failed` → تلاش مجدد per job; running jobs self-heal via lease expiry |
-| Kill runaway generation | وظایف → job detail → لغو (cooperative; stops at next checkpoint) |
+| Purge stale vectors for deleted posts | Full reindex (**Full re-index**) — the only path that deletes unseen sources' vectors |
+| Requeue stuck work | Inspect `/failed` → **Retry** per job; running jobs self-heal via lease expiry |
+| Kill runaway generation | **Jobs** → job detail → **Cancel** (cooperative; stops at next checkpoint) |
 
 ## 10. Quick incident triage
 
