@@ -15,7 +15,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "text5e237e06"
       },
       {
         "name": "slug",
@@ -29,7 +30,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "text989d9b62"
       },
       {
         "name": "description",
@@ -43,7 +45,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "text6de44026"
       },
       {
         "name": "status",
@@ -57,7 +60,8 @@
         "values": [
           "active",
           "archived"
-        ]
+        ],
+        "id": "select7b00651c"
       },
       {
         "name": "language",
@@ -73,7 +77,8 @@
           "en",
           "ar",
           "tr"
-        ]
+        ],
+        "id": "selectd4db71b5"
       },
       {
         "name": "timezone",
@@ -87,7 +92,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "text3701b297"
       },
       {
         "name": "createdBy",
@@ -101,7 +107,42 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "textd3564642"
+      },
+      {
+        "name": "id",
+        "type": "text",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "primaryKey": true,
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "pattern": "",
+        "min": 0,
+        "max": 15,
+        "id": "textbf396750"
+      },
+      {
+        "name": "created",
+        "type": "date",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "onCreate": true,
+        "id": "dateb23db7b8"
+      },
+      {
+        "name": "updated",
+        "type": "date",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "onUpdate": true,
+        "id": "datec69b96f7"
       }
     ],
     "indexes": [
@@ -112,7 +153,9 @@
     "viewRule": "",
     "createRule": "",
     "updateRule": "",
-    "deleteRule": ""
+    "deleteRule": "",
+    "id": "pbc_1cddebbd",
+    "system": false
   },
   {
     "name": "project_settings",
@@ -126,10 +169,11 @@
         "hidden": false,
         "presentable": false,
         "help": "",
-        "collectionId": "projects",
+        "collectionId": "pbc_1cddebbd",
         "cascadeDelete": true,
         "minSelect": 0,
-        "maxSelect": 1
+        "maxSelect": 1,
+        "id": "relation2fb3d0ee"
       },
       {
         "name": "defaultLlmProvider",
@@ -143,7 +187,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "textf4dad271"
       },
       {
         "name": "defaultLlmModel",
@@ -157,7 +202,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "textb5d72826"
       },
       {
         "name": "outlineProvider",
@@ -171,7 +217,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "text046ff91c"
       },
       {
         "name": "outlineModel",
@@ -185,7 +232,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "text77f124f4"
       },
       {
         "name": "outlineTemperature",
@@ -197,7 +245,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "numberdf133bdb"
       },
       {
         "name": "outlineMaxTokens",
@@ -209,7 +258,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "number79f9d185"
       },
       {
         "name": "outlineTimeout",
@@ -221,7 +271,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "number23637bd8"
       },
       {
         "name": "outlineRetry",
@@ -231,7 +282,8 @@
         "hidden": false,
         "presentable": false,
         "help": "",
-        "maxSize": 0
+        "maxSize": 0,
+        "id": "json8e8407ce"
       },
       {
         "name": "sectionProvider",
@@ -245,7 +297,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "textcdbd3db8"
       },
       {
         "name": "sectionModel",
@@ -259,7 +312,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "textcecfc1cd"
       },
       {
         "name": "sectionTemperature",
@@ -271,7 +325,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "numberc6296f1c"
       },
       {
         "name": "sectionMaxTokens",
@@ -283,7 +338,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "numbera88b64b0"
       },
       {
         "name": "sectionTimeout",
@@ -295,7 +351,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "numberfd8759ab"
       },
       {
         "name": "sectionRetry",
@@ -305,7 +362,8 @@
         "hidden": false,
         "presentable": false,
         "help": "",
-        "maxSize": 0
+        "maxSize": 0,
+        "id": "json37bae2f7"
       },
       {
         "name": "metaProvider",
@@ -319,7 +377,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "text5681ef55"
       },
       {
         "name": "metaModel",
@@ -333,7 +392,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "textd8d75e85"
       },
       {
         "name": "reviewProvider",
@@ -347,7 +407,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "text84144440"
       },
       {
         "name": "reviewModel",
@@ -361,7 +422,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "texta9c560de"
       },
       {
         "name": "embeddingProvider",
@@ -375,7 +437,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "textab52c9d8"
       },
       {
         "name": "embeddingModel",
@@ -389,7 +452,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "text7dd987e6"
       },
       {
         "name": "embeddingDimensions",
@@ -401,7 +465,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "number5ddc62a0"
       },
       {
         "name": "chunkSize",
@@ -413,7 +478,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "number94139173"
       },
       {
         "name": "chunkOverlap",
@@ -425,7 +491,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "number55bcc515"
       },
       {
         "name": "separatorStrategy",
@@ -439,7 +506,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "textfb58048d"
       },
       {
         "name": "maxChunkCount",
@@ -451,7 +519,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "numberfcbb3bc2"
       },
       {
         "name": "retrievalTopK",
@@ -463,7 +532,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "number68a62f05"
       },
       {
         "name": "similarityThreshold",
@@ -475,7 +545,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "number295667be"
       },
       {
         "name": "rerankingEnabled",
@@ -484,7 +555,8 @@
         "system": false,
         "hidden": false,
         "presentable": false,
-        "help": ""
+        "help": "",
+        "id": "boolce637d56"
       },
       {
         "name": "rerankerProvider",
@@ -498,7 +570,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "text483d16da"
       },
       {
         "name": "rerankerModel",
@@ -512,7 +585,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "textab7493ba"
       },
       {
         "name": "rerankerTopN",
@@ -524,7 +598,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "number05c7a565"
       },
       {
         "name": "contextMaxLinks",
@@ -536,7 +611,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "number4a9b70c8"
       },
       {
         "name": "contextMaxPassages",
@@ -548,7 +624,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "numberb932774a"
       },
       {
         "name": "contextMaxChars",
@@ -560,7 +637,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "numbere02b6e59"
       },
       {
         "name": "generationConcurrency",
@@ -572,7 +650,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "number25fd3eef"
       },
       {
         "name": "minArticleWords",
@@ -584,7 +663,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "number8142498a"
       },
       {
         "name": "retryPolicy",
@@ -594,7 +674,8 @@
         "hidden": false,
         "presentable": false,
         "help": "",
-        "maxSize": 0
+        "maxSize": 0,
+        "id": "json86dea5a5"
       },
       {
         "name": "publishingMode",
@@ -608,7 +689,8 @@
         "values": [
           "draft",
           "publish"
-        ]
+        ],
+        "id": "selectf4046311"
       },
       {
         "name": "autosave",
@@ -618,7 +700,19 @@
         "hidden": false,
         "presentable": false,
         "help": "",
-        "maxSize": 0
+        "maxSize": 0,
+        "id": "json38c0ca49"
+      },
+      {
+        "name": "autoPublish",
+        "type": "json",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSize": 0,
+        "id": "jsona47cbca5"
       },
       {
         "name": "indexing",
@@ -628,7 +722,253 @@
         "hidden": false,
         "presentable": false,
         "help": "",
-        "maxSize": 0
+        "maxSize": 0,
+        "id": "json729d2c3e"
+      },
+      {
+        "name": "imageCoverProvider",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0,
+        "id": "textf4fd202f"
+      },
+      {
+        "name": "imageCoverModel",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0,
+        "id": "texta5ee1db6"
+      },
+      {
+        "name": "imageInteriorProvider",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0,
+        "id": "text93068f52"
+      },
+      {
+        "name": "imageInteriorModel",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0,
+        "id": "text273dfc92"
+      },
+      {
+        "name": "imageFallbackProvider",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0,
+        "id": "text379e1b5a"
+      },
+      {
+        "name": "imageFallbackModel",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0,
+        "id": "text06a5d871"
+      },
+      {
+        "name": "imageCoverAspectRatio",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0,
+        "id": "text57ee14fc"
+      },
+      {
+        "name": "imageInteriorAspectRatio",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0,
+        "id": "text0837642a"
+      },
+      {
+        "name": "imageCoverMinWidth",
+        "type": "number",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false,
+        "id": "numberefdcc39a"
+      },
+      {
+        "name": "imageMaxInteriorImages",
+        "type": "number",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false,
+        "id": "numbercd8b4e00"
+      },
+      {
+        "name": "imageMaxRetries",
+        "type": "number",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false,
+        "id": "number9eea8649"
+      },
+      {
+        "name": "imageOptimizationFormat",
+        "type": "select",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSelect": 1,
+        "values": [
+          "webp",
+          "avif",
+          "jpeg"
+        ],
+        "id": "select7624ab5d"
+      },
+      {
+        "name": "imageAiQaEnabled",
+        "type": "bool",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "id": "bool25661741"
+      },
+      {
+        "name": "imagePromptLanguage",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0,
+        "id": "text15492a3d"
+      },
+      {
+        "name": "imageStyle",
+        "type": "json",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSize": 0,
+        "id": "json5d630deb"
+      },
+      {
+        "name": "id",
+        "type": "text",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "primaryKey": true,
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "pattern": "",
+        "min": 0,
+        "max": 15,
+        "id": "textbf396750"
+      },
+      {
+        "name": "created",
+        "type": "date",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "onCreate": true,
+        "id": "dateb23db7b8"
+      },
+      {
+        "name": "updated",
+        "type": "date",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "onUpdate": true,
+        "id": "datec69b96f7"
       }
     ],
     "indexes": [
@@ -638,7 +978,9 @@
     "viewRule": "",
     "createRule": "",
     "updateRule": "",
-    "deleteRule": ""
+    "deleteRule": "",
+    "id": "pbc_c664959b",
+    "system": false
   },
   {
     "name": "integrations",
@@ -652,10 +994,11 @@
         "hidden": false,
         "presentable": false,
         "help": "",
-        "collectionId": "projects",
+        "collectionId": "pbc_1cddebbd",
         "cascadeDelete": true,
         "minSelect": 0,
-        "maxSelect": 1
+        "maxSelect": 1,
+        "id": "relation2fb3d0ee"
       },
       {
         "name": "category",
@@ -671,8 +1014,10 @@
           "embedding",
           "reranker",
           "vector_store",
-          "publisher"
-        ]
+          "publisher",
+          "image"
+        ],
+        "id": "select064c19c1"
       },
       {
         "name": "provider",
@@ -686,7 +1031,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "text92c4739c"
       },
       {
         "name": "displayName",
@@ -700,7 +1046,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "text672f6398"
       },
       {
         "name": "configuration",
@@ -710,7 +1057,8 @@
         "hidden": false,
         "presentable": false,
         "help": "",
-        "maxSize": 0
+        "maxSize": 0,
+        "id": "jsona5e2a5d7"
       },
       {
         "name": "secretsEnc",
@@ -724,7 +1072,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "textb9e61a28"
       },
       {
         "name": "enabled",
@@ -733,7 +1082,8 @@
         "system": false,
         "hidden": false,
         "presentable": false,
-        "help": ""
+        "help": "",
+        "id": "bool50f9bb84"
       },
       {
         "name": "healthStatus",
@@ -749,7 +1099,8 @@
           "healthy",
           "degraded",
           "unhealthy"
-        ]
+        ],
+        "id": "selectad57a77c"
       },
       {
         "name": "lastTestedAt",
@@ -760,7 +1111,8 @@
         "presentable": false,
         "help": "",
         "min": "",
-        "max": ""
+        "max": "",
+        "id": "date03cc0aee"
       },
       {
         "name": "createdBy",
@@ -774,7 +1126,42 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "textd3564642"
+      },
+      {
+        "name": "id",
+        "type": "text",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "primaryKey": true,
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "pattern": "",
+        "min": 0,
+        "max": 15,
+        "id": "textbf396750"
+      },
+      {
+        "name": "created",
+        "type": "date",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "onCreate": true,
+        "id": "dateb23db7b8"
+      },
+      {
+        "name": "updated",
+        "type": "date",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "onUpdate": true,
+        "id": "datec69b96f7"
       }
     ],
     "indexes": [
@@ -785,7 +1172,9 @@
     "viewRule": "",
     "createRule": "",
     "updateRule": "",
-    "deleteRule": ""
+    "deleteRule": "",
+    "id": "pbc_2bb628ac",
+    "system": false
   },
   {
     "name": "prompts",
@@ -799,10 +1188,11 @@
         "hidden": false,
         "presentable": false,
         "help": "",
-        "collectionId": "projects",
+        "collectionId": "pbc_1cddebbd",
         "cascadeDelete": false,
         "minSelect": 0,
-        "maxSelect": 1
+        "maxSelect": 1,
+        "id": "relation2fb3d0ee"
       },
       {
         "name": "type",
@@ -821,8 +1211,11 @@
           "seo_rules",
           "internal_linking",
           "brand_voice",
-          "validation"
-        ]
+          "validation",
+          "image_plan_system",
+          "image_plan_user"
+        ],
+        "id": "select8cde5729"
       },
       {
         "name": "name",
@@ -836,7 +1229,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "text5e237e06"
       },
       {
         "name": "content",
@@ -850,7 +1244,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "textfec530a9"
       },
       {
         "name": "version",
@@ -862,7 +1257,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "numberbf1cd3c3"
       },
       {
         "name": "active",
@@ -871,7 +1267,8 @@
         "system": false,
         "hidden": false,
         "presentable": false,
-        "help": ""
+        "help": "",
+        "id": "bool4b1efc02"
       },
       {
         "name": "variables",
@@ -881,7 +1278,8 @@
         "hidden": false,
         "presentable": false,
         "help": "",
-        "maxSize": 0
+        "maxSize": 0,
+        "id": "json88cb7d11"
       },
       {
         "name": "updatedBy",
@@ -895,7 +1293,42 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "texte8de7170"
+      },
+      {
+        "name": "id",
+        "type": "text",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "primaryKey": true,
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "pattern": "",
+        "min": 0,
+        "max": 15,
+        "id": "textbf396750"
+      },
+      {
+        "name": "created",
+        "type": "date",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "onCreate": true,
+        "id": "dateb23db7b8"
+      },
+      {
+        "name": "updated",
+        "type": "date",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "onUpdate": true,
+        "id": "datec69b96f7"
       }
     ],
     "indexes": [
@@ -906,7 +1339,9 @@
     "viewRule": "",
     "createRule": "",
     "updateRule": "",
-    "deleteRule": ""
+    "deleteRule": "",
+    "id": "pbc_a23de713",
+    "system": false
   },
   {
     "name": "topics",
@@ -920,10 +1355,11 @@
         "hidden": false,
         "presentable": false,
         "help": "",
-        "collectionId": "projects",
+        "collectionId": "pbc_1cddebbd",
         "cascadeDelete": true,
         "minSelect": 0,
-        "maxSelect": 1
+        "maxSelect": 1,
+        "id": "relation2fb3d0ee"
       },
       {
         "name": "title",
@@ -937,7 +1373,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "text2b36786b"
       },
       {
         "name": "keyword",
@@ -951,7 +1388,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "text5a93713b"
       },
       {
         "name": "pillar",
@@ -965,7 +1403,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "textdc128957"
       },
       {
         "name": "cluster",
@@ -979,7 +1418,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "texte5c56994"
       },
       {
         "name": "type",
@@ -995,7 +1435,8 @@
           "pillar_page",
           "guide",
           "news"
-        ]
+        ],
+        "id": "select8cde5729"
       },
       {
         "name": "status",
@@ -1018,7 +1459,8 @@
           "published",
           "failed",
           "cancelled"
-        ]
+        ],
+        "id": "select7b00651c"
       },
       {
         "name": "priority",
@@ -1030,7 +1472,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "number62a6dc27"
       },
       {
         "name": "week",
@@ -1042,7 +1485,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "number5b5a69c0"
       },
       {
         "name": "url",
@@ -1056,7 +1500,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "textf47645ae"
       },
       {
         "name": "articleId",
@@ -1066,10 +1511,45 @@
         "hidden": false,
         "presentable": false,
         "help": "",
-        "collectionId": "articles",
+        "collectionId": "pbc_ff936971",
         "cascadeDelete": false,
         "minSelect": 0,
-        "maxSelect": 1
+        "maxSelect": 1,
+        "id": "relationfea2a0ee"
+      },
+      {
+        "name": "id",
+        "type": "text",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "primaryKey": true,
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "pattern": "",
+        "min": 0,
+        "max": 15,
+        "id": "textbf396750"
+      },
+      {
+        "name": "created",
+        "type": "date",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "onCreate": true,
+        "id": "dateb23db7b8"
+      },
+      {
+        "name": "updated",
+        "type": "date",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "onUpdate": true,
+        "id": "datec69b96f7"
       }
     ],
     "indexes": [
@@ -1081,7 +1561,9 @@
     "viewRule": "",
     "createRule": "",
     "updateRule": "",
-    "deleteRule": ""
+    "deleteRule": "",
+    "id": "pbc_a6e53b77",
+    "system": false
   },
   {
     "name": "articles",
@@ -1095,10 +1577,11 @@
         "hidden": false,
         "presentable": false,
         "help": "",
-        "collectionId": "projects",
+        "collectionId": "pbc_1cddebbd",
         "cascadeDelete": true,
         "minSelect": 0,
-        "maxSelect": 1
+        "maxSelect": 1,
+        "id": "relation2fb3d0ee"
       },
       {
         "name": "topicId",
@@ -1108,10 +1591,11 @@
         "hidden": false,
         "presentable": false,
         "help": "",
-        "collectionId": "topics",
+        "collectionId": "pbc_a6e53b77",
         "cascadeDelete": true,
         "minSelect": 0,
-        "maxSelect": 1
+        "maxSelect": 1,
+        "id": "relatione2e0eafb"
       },
       {
         "name": "title",
@@ -1125,7 +1609,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "text2b36786b"
       },
       {
         "name": "slug",
@@ -1139,7 +1624,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "text989d9b62"
       },
       {
         "name": "status",
@@ -1161,7 +1647,8 @@
           "publishing",
           "published",
           "failed"
-        ]
+        ],
+        "id": "select7b00651c"
       },
       {
         "name": "outlineVersion",
@@ -1173,7 +1660,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "number1d3edd89"
       },
       {
         "name": "outline",
@@ -1183,7 +1671,8 @@
         "hidden": false,
         "presentable": false,
         "help": "",
-        "maxSize": 0
+        "maxSize": 0,
+        "id": "json477f52e5"
       },
       {
         "name": "validation",
@@ -1193,7 +1682,8 @@
         "hidden": false,
         "presentable": false,
         "help": "",
-        "maxSize": 0
+        "maxSize": 0,
+        "id": "json16ac5b6e"
       },
       {
         "name": "finalHtml",
@@ -1207,7 +1697,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 100000
+        "max": 100000,
+        "id": "textdb38aedc"
       },
       {
         "name": "generatedContent",
@@ -1221,7 +1712,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 100000
+        "max": 100000,
+        "id": "text45e8b9bb"
       },
       {
         "name": "lastGeneratedRevision",
@@ -1233,7 +1725,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "number3f3085af"
       },
       {
         "name": "reviewNote",
@@ -1247,7 +1740,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "text2ed34019"
       },
       {
         "name": "metaDescription",
@@ -1261,7 +1755,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "text28d89d24"
       },
       {
         "name": "seoScore",
@@ -1273,7 +1768,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "number52ab789f"
       },
       {
         "name": "wordCount",
@@ -1285,7 +1781,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "number11a81890"
       },
       {
         "name": "generatedAt",
@@ -1296,7 +1793,8 @@
         "presentable": false,
         "help": "",
         "min": "",
-        "max": ""
+        "max": "",
+        "id": "date602dfdd4"
       },
       {
         "name": "publishedAt",
@@ -1307,7 +1805,8 @@
         "presentable": false,
         "help": "",
         "min": "",
-        "max": ""
+        "max": "",
+        "id": "dateb7e2546c"
       },
       {
         "name": "wordpressPostId",
@@ -1319,7 +1818,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "numberd2f49ad6"
       },
       {
         "name": "wordpressUrl",
@@ -1333,7 +1833,32 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "text6004c8ad"
+      },
+      {
+        "name": "imagePlan",
+        "type": "json",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSize": 0,
+        "id": "json68e93dea"
+      },
+      {
+        "name": "imagePlanVersion",
+        "type": "number",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false,
+        "id": "numberb4c37d37"
       },
       {
         "name": "lastJob",
@@ -1343,10 +1868,45 @@
         "hidden": false,
         "presentable": false,
         "help": "",
-        "collectionId": "jobs",
+        "collectionId": "pbc_8f9e0a75",
         "cascadeDelete": false,
         "minSelect": 0,
-        "maxSelect": 1
+        "maxSelect": 1,
+        "id": "relation7429f7ce"
+      },
+      {
+        "name": "id",
+        "type": "text",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "primaryKey": true,
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "pattern": "",
+        "min": 0,
+        "max": 15,
+        "id": "textbf396750"
+      },
+      {
+        "name": "created",
+        "type": "date",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "onCreate": true,
+        "id": "dateb23db7b8"
+      },
+      {
+        "name": "updated",
+        "type": "date",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "onUpdate": true,
+        "id": "datec69b96f7"
       }
     ],
     "indexes": [
@@ -1357,7 +1917,9 @@
     "viewRule": "",
     "createRule": "",
     "updateRule": "",
-    "deleteRule": ""
+    "deleteRule": "",
+    "id": "pbc_ff936971",
+    "system": false
   },
   {
     "name": "article_sections",
@@ -1371,10 +1933,11 @@
         "hidden": false,
         "presentable": false,
         "help": "",
-        "collectionId": "articles",
+        "collectionId": "pbc_ff936971",
         "cascadeDelete": true,
         "minSelect": 0,
-        "maxSelect": 1
+        "maxSelect": 1,
+        "id": "relation023a0e66"
       },
       {
         "name": "position",
@@ -1386,7 +1949,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "number462ce4f5"
       },
       {
         "name": "heading",
@@ -1400,7 +1964,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "text02b43fc1"
       },
       {
         "name": "contentBrief",
@@ -1414,7 +1979,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "text4e3da2dd"
       },
       {
         "name": "internalLinks",
@@ -1424,7 +1990,8 @@
         "hidden": false,
         "presentable": false,
         "help": "",
-        "maxSize": 0
+        "maxSize": 0,
+        "id": "jsona1e66fcc"
       },
       {
         "name": "content",
@@ -1438,7 +2005,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 100000
+        "max": 100000,
+        "id": "textfec530a9"
       },
       {
         "name": "status",
@@ -1454,7 +2022,8 @@
           "generating",
           "done",
           "failed"
-        ]
+        ],
+        "id": "select7b00651c"
       },
       {
         "name": "generationAttempts",
@@ -1466,7 +2035,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "numbercda00f2a"
       },
       {
         "name": "promptVersion",
@@ -1478,7 +2048,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "numberafb0a1cd"
       },
       {
         "name": "generationStartedAt",
@@ -1489,7 +2060,8 @@
         "presentable": false,
         "help": "",
         "min": "",
-        "max": ""
+        "max": "",
+        "id": "date0c7e7d93"
       },
       {
         "name": "provider",
@@ -1503,7 +2075,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "text92c4739c"
       },
       {
         "name": "model",
@@ -1517,7 +2090,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "textd79572d9"
       },
       {
         "name": "tokenUsage",
@@ -1527,7 +2101,8 @@
         "hidden": false,
         "presentable": false,
         "help": "",
-        "maxSize": 0
+        "maxSize": 0,
+        "id": "json2e0b340d"
       },
       {
         "name": "generationLatency",
@@ -1539,7 +2114,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "number57b7b83e"
       },
       {
         "name": "error",
@@ -1549,7 +2125,42 @@
         "hidden": false,
         "presentable": false,
         "help": "",
-        "maxSize": 0
+        "maxSize": 0,
+        "id": "json5dddbc71"
+      },
+      {
+        "name": "id",
+        "type": "text",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "primaryKey": true,
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "pattern": "",
+        "min": 0,
+        "max": 15,
+        "id": "textbf396750"
+      },
+      {
+        "name": "created",
+        "type": "date",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "onCreate": true,
+        "id": "dateb23db7b8"
+      },
+      {
+        "name": "updated",
+        "type": "date",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "onUpdate": true,
+        "id": "datec69b96f7"
       }
     ],
     "indexes": [
@@ -1559,7 +2170,9 @@
     "viewRule": "",
     "createRule": "",
     "updateRule": "",
-    "deleteRule": ""
+    "deleteRule": "",
+    "id": "pbc_60110976",
+    "system": false
   },
   {
     "name": "article_revisions",
@@ -1573,10 +2186,11 @@
         "hidden": false,
         "presentable": false,
         "help": "",
-        "collectionId": "articles",
+        "collectionId": "pbc_ff936971",
         "cascadeDelete": true,
         "minSelect": 0,
-        "maxSelect": 1
+        "maxSelect": 1,
+        "id": "relation023a0e66"
       },
       {
         "name": "revision",
@@ -1588,7 +2202,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "number6d6315cc"
       },
       {
         "name": "kind",
@@ -1604,7 +2219,8 @@
           "manual",
           "checkpoint",
           "rollback"
-        ]
+        ],
+        "id": "select3bc4bcd9"
       },
       {
         "name": "snapshot",
@@ -1614,7 +2230,8 @@
         "hidden": false,
         "presentable": false,
         "help": "",
-        "maxSize": 0
+        "maxSize": 0,
+        "id": "json2c4d1535"
       },
       {
         "name": "note",
@@ -1628,7 +2245,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "textcfbdfa14"
       },
       {
         "name": "createdBy",
@@ -1642,7 +2260,42 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "textd3564642"
+      },
+      {
+        "name": "id",
+        "type": "text",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "primaryKey": true,
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "pattern": "",
+        "min": 0,
+        "max": 15,
+        "id": "textbf396750"
+      },
+      {
+        "name": "created",
+        "type": "date",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "onCreate": true,
+        "id": "dateb23db7b8"
+      },
+      {
+        "name": "updated",
+        "type": "date",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "onUpdate": true,
+        "id": "datec69b96f7"
       }
     ],
     "indexes": [
@@ -1653,7 +2306,542 @@
     "viewRule": "",
     "createRule": "",
     "updateRule": "",
-    "deleteRule": ""
+    "deleteRule": "",
+    "id": "pbc_ce486ab0",
+    "system": false
+  },
+  {
+    "name": "article_images",
+    "type": "base",
+    "fields": [
+      {
+        "name": "project",
+        "type": "relation",
+        "required": true,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "collectionId": "pbc_1cddebbd",
+        "cascadeDelete": true,
+        "minSelect": 0,
+        "maxSelect": 1,
+        "id": "relation2fb3d0ee"
+      },
+      {
+        "name": "article",
+        "type": "relation",
+        "required": true,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "collectionId": "pbc_ff936971",
+        "cascadeDelete": true,
+        "minSelect": 0,
+        "maxSelect": 1,
+        "id": "relation023a0e66"
+      },
+      {
+        "name": "role",
+        "type": "select",
+        "required": true,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSelect": 1,
+        "values": [
+          "cover",
+          "interior"
+        ],
+        "id": "select57698a6a"
+      },
+      {
+        "name": "sectionKey",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0,
+        "id": "text0cbfcb03"
+      },
+      {
+        "name": "version",
+        "type": "number",
+        "required": true,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false,
+        "id": "numberbf1cd3c3"
+      },
+      {
+        "name": "active",
+        "type": "bool",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "id": "bool4b1efc02"
+      },
+      {
+        "name": "status",
+        "type": "select",
+        "required": true,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSelect": 1,
+        "values": [
+          "planned",
+          "generating",
+          "optimizing",
+          "ready",
+          "failed"
+        ],
+        "id": "select7b00651c"
+      },
+      {
+        "name": "provider",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0,
+        "id": "text92c4739c"
+      },
+      {
+        "name": "model",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0,
+        "id": "textd79572d9"
+      },
+      {
+        "name": "prompt",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 8000,
+        "id": "text62ef6c38"
+      },
+      {
+        "name": "promptHash",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0,
+        "id": "text7f82c0db"
+      },
+      {
+        "name": "negativePrompt",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 5000,
+        "id": "text20e327b9"
+      },
+      {
+        "name": "styleHash",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0,
+        "id": "text00e7c4aa"
+      },
+      {
+        "name": "width",
+        "type": "number",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false,
+        "id": "number8c1a452f"
+      },
+      {
+        "name": "height",
+        "type": "number",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false,
+        "id": "numberf54de50f"
+      },
+      {
+        "name": "aspectRatio",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0,
+        "id": "text5e65d24c"
+      },
+      {
+        "name": "format",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0,
+        "id": "textdeba72df"
+      },
+      {
+        "name": "fileSize",
+        "type": "number",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false,
+        "id": "number35da1c37"
+      },
+      {
+        "name": "sourceFile",
+        "type": "file",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSelect": 1,
+        "maxSize": 10485760,
+        "mimeTypes": [
+          "image/png",
+          "image/jpeg",
+          "image/webp"
+        ],
+        "thumbs": [],
+        "protected": false,
+        "id": "file30328595"
+      },
+      {
+        "name": "optimizedFile",
+        "type": "file",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSelect": 1,
+        "maxSize": 10485760,
+        "mimeTypes": [
+          "image/webp",
+          "image/avif",
+          "image/jpeg"
+        ],
+        "thumbs": [],
+        "protected": false,
+        "id": "file72469d86"
+      },
+      {
+        "name": "smallFile",
+        "type": "file",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSelect": 1,
+        "maxSize": 10485760,
+        "mimeTypes": [
+          "image/webp",
+          "image/avif",
+          "image/jpeg"
+        ],
+        "thumbs": [],
+        "protected": false,
+        "id": "file67150ada"
+      },
+      {
+        "name": "wordpressMediaId",
+        "type": "number",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false,
+        "id": "number36ea9eb8"
+      },
+      {
+        "name": "wordpressUrl",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0,
+        "id": "text6004c8ad"
+      },
+      {
+        "name": "altText",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 500,
+        "id": "text7934c6e4"
+      },
+      {
+        "name": "caption",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 500,
+        "id": "textf67c4965"
+      },
+      {
+        "name": "filename",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0,
+        "id": "text3c0be965"
+      },
+      {
+        "name": "generationLatency",
+        "type": "number",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false,
+        "id": "number57b7b83e"
+      },
+      {
+        "name": "estimatedCost",
+        "type": "number",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false,
+        "id": "number28e4eb54"
+      },
+      {
+        "name": "attempts",
+        "type": "number",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false,
+        "id": "numberbfc7e764"
+      },
+      {
+        "name": "seed",
+        "type": "number",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false,
+        "id": "number4487e306"
+      },
+      {
+        "name": "fingerprint",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0,
+        "id": "textfc0b754a"
+      },
+      {
+        "name": "error",
+        "type": "json",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSize": 0,
+        "id": "json5dddbc71"
+      },
+      {
+        "name": "createdBy",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0,
+        "id": "textd3564642"
+      },
+      {
+        "name": "id",
+        "type": "text",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "primaryKey": true,
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "pattern": "",
+        "min": 0,
+        "max": 15,
+        "id": "textbf396750"
+      },
+      {
+        "name": "created",
+        "type": "date",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "onCreate": true,
+        "id": "dateb23db7b8"
+      },
+      {
+        "name": "updated",
+        "type": "date",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "onUpdate": true,
+        "id": "datec69b96f7"
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX idx_images_article_role_section_version ON article_images (article, role, sectionKey, version)",
+      "CREATE INDEX idx_images_article_active ON article_images (article, active)",
+      "CREATE INDEX idx_images_fingerprint ON article_images (fingerprint)"
+    ],
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "",
+    "updateRule": "",
+    "deleteRule": "",
+    "id": "pbc_ad335c7d",
+    "system": false
   },
   {
     "name": "documents",
@@ -1667,10 +2855,11 @@
         "hidden": false,
         "presentable": false,
         "help": "",
-        "collectionId": "projects",
+        "collectionId": "pbc_1cddebbd",
         "cascadeDelete": true,
         "minSelect": 0,
-        "maxSelect": 1
+        "maxSelect": 1,
+        "id": "relation2fb3d0ee"
       },
       {
         "name": "sourceType",
@@ -1685,7 +2874,8 @@
           "wordpress",
           "url",
           "manual"
-        ]
+        ],
+        "id": "select3073e4ac"
       },
       {
         "name": "sourceId",
@@ -1699,7 +2889,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "textee155ae0"
       },
       {
         "name": "sourceUrl",
@@ -1713,7 +2904,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "text3f46da1f"
       },
       {
         "name": "title",
@@ -1727,7 +2919,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "text2b36786b"
       },
       {
         "name": "contentHash",
@@ -1741,7 +2934,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "text890a8289"
       },
       {
         "name": "embeddingProvider",
@@ -1755,7 +2949,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "textab52c9d8"
       },
       {
         "name": "embeddingModel",
@@ -1769,7 +2964,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "text7dd987e6"
       },
       {
         "name": "embeddingDimensions",
@@ -1781,7 +2977,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "number5ddc62a0"
       },
       {
         "name": "chunkCount",
@@ -1793,7 +2990,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "numbere1d13f17"
       },
       {
         "name": "indexStatus",
@@ -1809,7 +3007,8 @@
           "indexed",
           "failed",
           "deleted"
-        ]
+        ],
+        "id": "select045d0c20"
       },
       {
         "name": "indexedAt",
@@ -1820,7 +3019,8 @@
         "presentable": false,
         "help": "",
         "min": "",
-        "max": ""
+        "max": "",
+        "id": "datec0e66365"
       },
       {
         "name": "lastRun",
@@ -1830,10 +3030,45 @@
         "hidden": false,
         "presentable": false,
         "help": "",
-        "collectionId": "index_runs",
+        "collectionId": "pbc_d50a93dc",
         "cascadeDelete": false,
         "minSelect": 0,
-        "maxSelect": 1
+        "maxSelect": 1,
+        "id": "relationdf87b3f6"
+      },
+      {
+        "name": "id",
+        "type": "text",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "primaryKey": true,
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "pattern": "",
+        "min": 0,
+        "max": 15,
+        "id": "textbf396750"
+      },
+      {
+        "name": "created",
+        "type": "date",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "onCreate": true,
+        "id": "dateb23db7b8"
+      },
+      {
+        "name": "updated",
+        "type": "date",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "onUpdate": true,
+        "id": "datec69b96f7"
       }
     ],
     "indexes": [
@@ -1844,7 +3079,9 @@
     "viewRule": "",
     "createRule": "",
     "updateRule": "",
-    "deleteRule": ""
+    "deleteRule": "",
+    "id": "pbc_c69b9410",
+    "system": false
   },
   {
     "name": "index_runs",
@@ -1858,10 +3095,11 @@
         "hidden": false,
         "presentable": false,
         "help": "",
-        "collectionId": "projects",
+        "collectionId": "pbc_1cddebbd",
         "cascadeDelete": true,
         "minSelect": 0,
-        "maxSelect": 1
+        "maxSelect": 1,
+        "id": "relation2fb3d0ee"
       },
       {
         "name": "job",
@@ -1871,10 +3109,11 @@
         "hidden": false,
         "presentable": false,
         "help": "",
-        "collectionId": "jobs",
+        "collectionId": "pbc_8f9e0a75",
         "cascadeDelete": false,
         "minSelect": 0,
-        "maxSelect": 1
+        "maxSelect": 1,
+        "id": "relationfbd8e0f8"
       },
       {
         "name": "trigger",
@@ -1888,7 +3127,8 @@
         "values": [
           "manual",
           "schedule"
-        ]
+        ],
+        "id": "select1a6b0f5d"
       },
       {
         "name": "status",
@@ -1904,7 +3144,8 @@
           "succeeded",
           "failed",
           "cancelled"
-        ]
+        ],
+        "id": "select7b00651c"
       },
       {
         "name": "totalDocuments",
@@ -1916,7 +3157,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "numberb07eb9fa"
       },
       {
         "name": "processedDocuments",
@@ -1928,7 +3170,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "number99401869"
       },
       {
         "name": "unchangedDocuments",
@@ -1940,7 +3183,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "number63bc62a8"
       },
       {
         "name": "changedDocuments",
@@ -1952,7 +3196,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "numberf74fbc87"
       },
       {
         "name": "indexedDocuments",
@@ -1964,7 +3209,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "number3ce0711a"
       },
       {
         "name": "skippedDocuments",
@@ -1976,7 +3222,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "number052d584f"
       },
       {
         "name": "failedDocuments",
@@ -1988,7 +3235,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "number3d3c7763"
       },
       {
         "name": "elapsedSeconds",
@@ -2000,7 +3248,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "number22753287"
       },
       {
         "name": "lastSourceId",
@@ -2014,7 +3263,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "text05a7e583"
       },
       {
         "name": "startedAt",
@@ -2025,7 +3275,8 @@
         "presentable": false,
         "help": "",
         "min": "",
-        "max": ""
+        "max": "",
+        "id": "date9d6876ec"
       },
       {
         "name": "finishedAt",
@@ -2036,7 +3287,8 @@
         "presentable": false,
         "help": "",
         "min": "",
-        "max": ""
+        "max": "",
+        "id": "datecd247c4e"
       },
       {
         "name": "error",
@@ -2046,7 +3298,42 @@
         "hidden": false,
         "presentable": false,
         "help": "",
-        "maxSize": 0
+        "maxSize": 0,
+        "id": "json5dddbc71"
+      },
+      {
+        "name": "id",
+        "type": "text",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "primaryKey": true,
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "pattern": "",
+        "min": 0,
+        "max": 15,
+        "id": "textbf396750"
+      },
+      {
+        "name": "created",
+        "type": "date",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "onCreate": true,
+        "id": "dateb23db7b8"
+      },
+      {
+        "name": "updated",
+        "type": "date",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "onUpdate": true,
+        "id": "datec69b96f7"
       }
     ],
     "indexes": [
@@ -2056,7 +3343,9 @@
     "viewRule": "",
     "createRule": "",
     "updateRule": "",
-    "deleteRule": ""
+    "deleteRule": "",
+    "id": "pbc_d50a93dc",
+    "system": false
   },
   {
     "name": "jobs",
@@ -2070,10 +3359,11 @@
         "hidden": false,
         "presentable": false,
         "help": "",
-        "collectionId": "projects",
+        "collectionId": "pbc_1cddebbd",
         "cascadeDelete": true,
         "minSelect": 0,
-        "maxSelect": 1
+        "maxSelect": 1,
+        "id": "relation2fb3d0ee"
       },
       {
         "name": "type",
@@ -2087,7 +3377,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "text8cde5729"
       },
       {
         "name": "entityType",
@@ -2101,7 +3392,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "text1f08814a"
       },
       {
         "name": "entityId",
@@ -2115,7 +3407,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "textf62829fc"
       },
       {
         "name": "status",
@@ -2133,7 +3426,8 @@
           "failed",
           "cancelled",
           "retrying"
-        ]
+        ],
+        "id": "select7b00651c"
       },
       {
         "name": "priority",
@@ -2145,7 +3439,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "number62a6dc27"
       },
       {
         "name": "payload",
@@ -2155,7 +3450,8 @@
         "hidden": false,
         "presentable": false,
         "help": "",
-        "maxSize": 0
+        "maxSize": 0,
+        "id": "json422c6a15"
       },
       {
         "name": "progress",
@@ -2167,7 +3463,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "number2201f246"
       },
       {
         "name": "stage",
@@ -2181,7 +3478,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "textc27c9369"
       },
       {
         "name": "progressMessage",
@@ -2195,7 +3493,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "text31dabfb7"
       },
       {
         "name": "currentItem",
@@ -2207,7 +3506,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "numberfbbe6cec"
       },
       {
         "name": "totalItems",
@@ -2219,7 +3519,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "number03e225af"
       },
       {
         "name": "attempts",
@@ -2231,7 +3532,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "numberbfc7e764"
       },
       {
         "name": "maxAttempts",
@@ -2243,7 +3545,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "numbera60a3e0b"
       },
       {
         "name": "availableAt",
@@ -2254,7 +3557,8 @@
         "presentable": false,
         "help": "",
         "min": "",
-        "max": ""
+        "max": "",
+        "id": "date689c77ee"
       },
       {
         "name": "lockedAt",
@@ -2265,7 +3569,8 @@
         "presentable": false,
         "help": "",
         "min": "",
-        "max": ""
+        "max": "",
+        "id": "date0236c295"
       },
       {
         "name": "lockedBy",
@@ -2279,7 +3584,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "text57aaedeb"
       },
       {
         "name": "leaseExpiresAt",
@@ -2290,7 +3596,8 @@
         "presentable": false,
         "help": "",
         "min": "",
-        "max": ""
+        "max": "",
+        "id": "datec8c23e0d"
       },
       {
         "name": "heartbeatAt",
@@ -2301,7 +3608,8 @@
         "presentable": false,
         "help": "",
         "min": "",
-        "max": ""
+        "max": "",
+        "id": "date71923370"
       },
       {
         "name": "startedAt",
@@ -2312,7 +3620,8 @@
         "presentable": false,
         "help": "",
         "min": "",
-        "max": ""
+        "max": "",
+        "id": "date9d6876ec"
       },
       {
         "name": "finishedAt",
@@ -2323,7 +3632,8 @@
         "presentable": false,
         "help": "",
         "min": "",
-        "max": ""
+        "max": "",
+        "id": "datecd247c4e"
       },
       {
         "name": "errorCode",
@@ -2337,7 +3647,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "texte9acc930"
       },
       {
         "name": "errorMessage",
@@ -2351,7 +3662,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "text16156de5"
       },
       {
         "name": "errorDetails",
@@ -2361,7 +3673,8 @@
         "hidden": false,
         "presentable": false,
         "help": "",
-        "maxSize": 0
+        "maxSize": 0,
+        "id": "jsond28e5610"
       },
       {
         "name": "result",
@@ -2371,7 +3684,8 @@
         "hidden": false,
         "presentable": false,
         "help": "",
-        "maxSize": 0
+        "maxSize": 0,
+        "id": "json136ac113"
       },
       {
         "name": "idempotencyKey",
@@ -2385,7 +3699,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "text250bf67e"
       },
       {
         "name": "cancelRequested",
@@ -2394,7 +3709,8 @@
         "system": false,
         "hidden": false,
         "presentable": false,
-        "help": ""
+        "help": "",
+        "id": "bool28697912"
       },
       {
         "name": "parent",
@@ -2404,10 +3720,45 @@
         "hidden": false,
         "presentable": false,
         "help": "",
-        "collectionId": "jobs",
+        "collectionId": "pbc_8f9e0a75",
         "cascadeDelete": false,
         "minSelect": 0,
-        "maxSelect": 1
+        "maxSelect": 1,
+        "id": "relation3d8e604f"
+      },
+      {
+        "name": "id",
+        "type": "text",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "primaryKey": true,
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "pattern": "",
+        "min": 0,
+        "max": 15,
+        "id": "textbf396750"
+      },
+      {
+        "name": "created",
+        "type": "date",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "onCreate": true,
+        "id": "dateb23db7b8"
+      },
+      {
+        "name": "updated",
+        "type": "date",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "onUpdate": true,
+        "id": "datec69b96f7"
       }
     ],
     "indexes": [
@@ -2421,7 +3772,9 @@
     "viewRule": "",
     "createRule": "",
     "updateRule": "",
-    "deleteRule": ""
+    "deleteRule": "",
+    "id": "pbc_8f9e0a75",
+    "system": false
   },
   {
     "name": "job_leases",
@@ -2435,10 +3788,11 @@
         "hidden": false,
         "presentable": false,
         "help": "",
-        "collectionId": "jobs",
+        "collectionId": "pbc_8f9e0a75",
         "cascadeDelete": true,
         "minSelect": 0,
-        "maxSelect": 1
+        "maxSelect": 1,
+        "id": "relationfbd8e0f8"
       },
       {
         "name": "workerId",
@@ -2452,7 +3806,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "text26a87b78"
       },
       {
         "name": "expiresAt",
@@ -2463,7 +3818,42 @@
         "presentable": false,
         "help": "",
         "min": "",
-        "max": ""
+        "max": "",
+        "id": "date2b8c7d2f"
+      },
+      {
+        "name": "id",
+        "type": "text",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "primaryKey": true,
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "pattern": "",
+        "min": 0,
+        "max": 15,
+        "id": "textbf396750"
+      },
+      {
+        "name": "created",
+        "type": "date",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "onCreate": true,
+        "id": "dateb23db7b8"
+      },
+      {
+        "name": "updated",
+        "type": "date",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "onUpdate": true,
+        "id": "datec69b96f7"
       }
     ],
     "indexes": [
@@ -2474,7 +3864,9 @@
     "viewRule": "",
     "createRule": "",
     "updateRule": "",
-    "deleteRule": ""
+    "deleteRule": "",
+    "id": "pbc_353972a5",
+    "system": false
   },
   {
     "name": "job_events",
@@ -2488,10 +3880,11 @@
         "hidden": false,
         "presentable": false,
         "help": "",
-        "collectionId": "jobs",
+        "collectionId": "pbc_8f9e0a75",
         "cascadeDelete": false,
         "minSelect": 0,
-        "maxSelect": 1
+        "maxSelect": 1,
+        "id": "relationfbd8e0f8"
       },
       {
         "name": "project",
@@ -2501,10 +3894,11 @@
         "hidden": false,
         "presentable": false,
         "help": "",
-        "collectionId": "projects",
+        "collectionId": "pbc_1cddebbd",
         "cascadeDelete": true,
         "minSelect": 0,
-        "maxSelect": 1
+        "maxSelect": 1,
+        "id": "relation2fb3d0ee"
       },
       {
         "name": "eventType",
@@ -2518,7 +3912,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "text7048243e"
       },
       {
         "name": "message",
@@ -2532,7 +3927,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "textb6bd307f"
       },
       {
         "name": "metadata",
@@ -2542,7 +3938,42 @@
         "hidden": false,
         "presentable": false,
         "help": "",
-        "maxSize": 0
+        "maxSize": 0,
+        "id": "json4f143414"
+      },
+      {
+        "name": "id",
+        "type": "text",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "primaryKey": true,
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "pattern": "",
+        "min": 0,
+        "max": 15,
+        "id": "textbf396750"
+      },
+      {
+        "name": "created",
+        "type": "date",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "onCreate": true,
+        "id": "dateb23db7b8"
+      },
+      {
+        "name": "updated",
+        "type": "date",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "onUpdate": true,
+        "id": "datec69b96f7"
       }
     ],
     "indexes": [
@@ -2553,7 +3984,9 @@
     "viewRule": "",
     "createRule": "",
     "updateRule": "",
-    "deleteRule": ""
+    "deleteRule": "",
+    "id": "pbc_fd334a5b",
+    "system": false
   },
   {
     "name": "publishing_runs",
@@ -2567,10 +4000,11 @@
         "hidden": false,
         "presentable": false,
         "help": "",
-        "collectionId": "projects",
+        "collectionId": "pbc_1cddebbd",
         "cascadeDelete": true,
         "minSelect": 0,
-        "maxSelect": 1
+        "maxSelect": 1,
+        "id": "relation2fb3d0ee"
       },
       {
         "name": "article",
@@ -2580,10 +4014,11 @@
         "hidden": false,
         "presentable": false,
         "help": "",
-        "collectionId": "articles",
+        "collectionId": "pbc_ff936971",
         "cascadeDelete": true,
         "minSelect": 0,
-        "maxSelect": 1
+        "maxSelect": 1,
+        "id": "relation023a0e66"
       },
       {
         "name": "job",
@@ -2593,10 +4028,11 @@
         "hidden": false,
         "presentable": false,
         "help": "",
-        "collectionId": "jobs",
+        "collectionId": "pbc_8f9e0a75",
         "cascadeDelete": false,
         "minSelect": 0,
-        "maxSelect": 1
+        "maxSelect": 1,
+        "id": "relationfbd8e0f8"
       },
       {
         "name": "status",
@@ -2612,7 +4048,8 @@
           "published",
           "failed",
           "skipped_duplicate"
-        ]
+        ],
+        "id": "select7b00651c"
       },
       {
         "name": "attempt",
@@ -2624,7 +4061,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "number18ec0266"
       },
       {
         "name": "mode",
@@ -2638,7 +4076,8 @@
         "values": [
           "draft",
           "publish"
-        ]
+        ],
+        "id": "select97ca47ab"
       },
       {
         "name": "wordpressPostId",
@@ -2650,7 +4089,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "numberd2f49ad6"
       },
       {
         "name": "wordpressUrl",
@@ -2664,7 +4104,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "text6004c8ad"
       },
       {
         "name": "responseMetadata",
@@ -2674,7 +4115,8 @@
         "hidden": false,
         "presentable": false,
         "help": "",
-        "maxSize": 0
+        "maxSize": 0,
+        "id": "json6990f141"
       },
       {
         "name": "error",
@@ -2684,7 +4126,8 @@
         "hidden": false,
         "presentable": false,
         "help": "",
-        "maxSize": 0
+        "maxSize": 0,
+        "id": "json5dddbc71"
       },
       {
         "name": "startedAt",
@@ -2695,7 +4138,8 @@
         "presentable": false,
         "help": "",
         "min": "",
-        "max": ""
+        "max": "",
+        "id": "date9d6876ec"
       },
       {
         "name": "completedAt",
@@ -2706,7 +4150,42 @@
         "presentable": false,
         "help": "",
         "min": "",
-        "max": ""
+        "max": "",
+        "id": "date6670b890"
+      },
+      {
+        "name": "id",
+        "type": "text",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "primaryKey": true,
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "pattern": "",
+        "min": 0,
+        "max": 15,
+        "id": "textbf396750"
+      },
+      {
+        "name": "created",
+        "type": "date",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "onCreate": true,
+        "id": "dateb23db7b8"
+      },
+      {
+        "name": "updated",
+        "type": "date",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "onUpdate": true,
+        "id": "datec69b96f7"
       }
     ],
     "indexes": [
@@ -2717,7 +4196,9 @@
     "viewRule": "",
     "createRule": "",
     "updateRule": "",
-    "deleteRule": ""
+    "deleteRule": "",
+    "id": "pbc_59455d24",
+    "system": false
   },
   {
     "name": "provider_metrics",
@@ -2731,10 +4212,11 @@
         "hidden": false,
         "presentable": false,
         "help": "",
-        "collectionId": "projects",
+        "collectionId": "pbc_1cddebbd",
         "cascadeDelete": true,
         "minSelect": 0,
-        "maxSelect": 1
+        "maxSelect": 1,
+        "id": "relation2fb3d0ee"
       },
       {
         "name": "provider",
@@ -2748,7 +4230,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "text92c4739c"
       },
       {
         "name": "model",
@@ -2762,7 +4245,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "textd79572d9"
       },
       {
         "name": "operation",
@@ -2776,7 +4260,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "text1981a66d"
       },
       {
         "name": "day",
@@ -2790,7 +4275,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "texte5a02990"
       },
       {
         "name": "requestCount",
@@ -2802,7 +4288,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "number669a3c87"
       },
       {
         "name": "successCount",
@@ -2814,7 +4301,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "numberb24deeb5"
       },
       {
         "name": "failureCount",
@@ -2826,7 +4314,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "numberff014711"
       },
       {
         "name": "retryCount",
@@ -2838,7 +4327,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "numberfa386722"
       },
       {
         "name": "promptTokens",
@@ -2850,7 +4340,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "numberdc524514"
       },
       {
         "name": "completionTokens",
@@ -2862,7 +4353,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "numbera6984ef2"
       },
       {
         "name": "latencySum",
@@ -2874,7 +4366,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "number67376959"
       },
       {
         "name": "latencyBuckets",
@@ -2884,7 +4377,42 @@
         "hidden": false,
         "presentable": false,
         "help": "",
-        "maxSize": 0
+        "maxSize": 0,
+        "id": "jsoncd6bf7f2"
+      },
+      {
+        "name": "id",
+        "type": "text",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "primaryKey": true,
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "pattern": "",
+        "min": 0,
+        "max": 15,
+        "id": "textbf396750"
+      },
+      {
+        "name": "created",
+        "type": "date",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "onCreate": true,
+        "id": "dateb23db7b8"
+      },
+      {
+        "name": "updated",
+        "type": "date",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "onUpdate": true,
+        "id": "datec69b96f7"
       }
     ],
     "indexes": [
@@ -2895,7 +4423,9 @@
     "viewRule": "",
     "createRule": "",
     "updateRule": "",
-    "deleteRule": ""
+    "deleteRule": "",
+    "id": "pbc_ccbdb6c5",
+    "system": false
   },
   {
     "name": "schedules",
@@ -2909,10 +4439,11 @@
         "hidden": false,
         "presentable": false,
         "help": "",
-        "collectionId": "projects",
+        "collectionId": "pbc_1cddebbd",
         "cascadeDelete": true,
         "minSelect": 0,
-        "maxSelect": 1
+        "maxSelect": 1,
+        "id": "relation2fb3d0ee"
       },
       {
         "name": "name",
@@ -2926,7 +4457,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "text5e237e06"
       },
       {
         "name": "kind",
@@ -2940,7 +4472,8 @@
         "values": [
           "index",
           "write"
-        ]
+        ],
+        "id": "select3bc4bcd9"
       },
       {
         "name": "enabled",
@@ -2949,7 +4482,8 @@
         "system": false,
         "hidden": false,
         "presentable": false,
-        "help": ""
+        "help": "",
+        "id": "bool50f9bb84"
       },
       {
         "name": "intervalMinutes",
@@ -2961,7 +4495,8 @@
         "help": "",
         "min": null,
         "max": null,
-        "onlyInt": false
+        "onlyInt": false,
+        "id": "number0d9a1477"
       },
       {
         "name": "nextRunAt",
@@ -2972,7 +4507,8 @@
         "presentable": false,
         "help": "",
         "min": "",
-        "max": ""
+        "max": "",
+        "id": "date47e6d092"
       },
       {
         "name": "lastRunAt",
@@ -2983,7 +4519,8 @@
         "presentable": false,
         "help": "",
         "min": "",
-        "max": ""
+        "max": "",
+        "id": "dateef5da214"
       },
       {
         "name": "payload",
@@ -2993,7 +4530,42 @@
         "hidden": false,
         "presentable": false,
         "help": "",
-        "maxSize": 0
+        "maxSize": 0,
+        "id": "json422c6a15"
+      },
+      {
+        "name": "id",
+        "type": "text",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "primaryKey": true,
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "pattern": "",
+        "min": 0,
+        "max": 15,
+        "id": "textbf396750"
+      },
+      {
+        "name": "created",
+        "type": "date",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "onCreate": true,
+        "id": "dateb23db7b8"
+      },
+      {
+        "name": "updated",
+        "type": "date",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "onUpdate": true,
+        "id": "datec69b96f7"
       }
     ],
     "indexes": [
@@ -3003,7 +4575,244 @@
     "viewRule": "",
     "createRule": "",
     "updateRule": "",
-    "deleteRule": ""
+    "deleteRule": "",
+    "id": "pbc_55103a16",
+    "system": false
+  },
+  {
+    "name": "worker_heartbeats",
+    "type": "base",
+    "fields": [
+      {
+        "name": "workerId",
+        "type": "text",
+        "required": true,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0,
+        "id": "text26a87b78"
+      },
+      {
+        "name": "hostname",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0,
+        "id": "texte551c011"
+      },
+      {
+        "name": "version",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0,
+        "id": "textbf1cd3c3"
+      },
+      {
+        "name": "pid",
+        "type": "number",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false,
+        "id": "number5550c4ed"
+      },
+      {
+        "name": "startedAt",
+        "type": "date",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": "",
+        "max": "",
+        "id": "date9d6876ec"
+      },
+      {
+        "name": "lastHeartbeatAt",
+        "type": "date",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": "",
+        "max": "",
+        "id": "date7d312635"
+      },
+      {
+        "name": "runningJobs",
+        "type": "number",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false,
+        "id": "numbera24e2d1b"
+      },
+      {
+        "name": "completedJobs",
+        "type": "number",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false,
+        "id": "numberac972718"
+      },
+      {
+        "name": "failedJobs",
+        "type": "number",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false,
+        "id": "numbereab74624"
+      },
+      {
+        "name": "maxConcurrentJobs",
+        "type": "number",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false,
+        "id": "number04c1f810"
+      },
+      {
+        "name": "scheduleLastPollAt",
+        "type": "date",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": "",
+        "max": "",
+        "id": "date0dadfe6c"
+      },
+      {
+        "name": "scheduleDue",
+        "type": "number",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false,
+        "id": "number2508e38f"
+      },
+      {
+        "name": "scheduleCreated",
+        "type": "number",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false,
+        "id": "numbere6922db8"
+      },
+      {
+        "name": "scheduleFailed",
+        "type": "number",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false,
+        "id": "numberef468a81"
+      },
+      {
+        "name": "id",
+        "type": "text",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "primaryKey": true,
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "pattern": "",
+        "min": 0,
+        "max": 15,
+        "id": "textbf396750"
+      },
+      {
+        "name": "created",
+        "type": "date",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "onCreate": true,
+        "id": "dateb23db7b8"
+      },
+      {
+        "name": "updated",
+        "type": "date",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "onUpdate": true,
+        "id": "datec69b96f7"
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX idx_worker_heartbeats_worker ON worker_heartbeats (workerId)"
+    ],
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "",
+    "updateRule": "",
+    "deleteRule": "",
+    "id": "pbc_fdfb81f4",
+    "system": false
   },
   {
     "name": "app_settings",
@@ -3021,7 +4830,8 @@
         "autogeneratePattern": "",
         "pattern": "",
         "min": 0,
-        "max": 0
+        "max": 0,
+        "id": "text8a90aba9"
       },
       {
         "name": "value",
@@ -3031,7 +4841,42 @@
         "hidden": false,
         "presentable": false,
         "help": "",
-        "maxSize": 0
+        "maxSize": 0,
+        "id": "json1d775834"
+      },
+      {
+        "name": "id",
+        "type": "text",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "primaryKey": true,
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "pattern": "",
+        "min": 0,
+        "max": 15,
+        "id": "textbf396750"
+      },
+      {
+        "name": "created",
+        "type": "date",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "onCreate": true,
+        "id": "dateb23db7b8"
+      },
+      {
+        "name": "updated",
+        "type": "date",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "onUpdate": true,
+        "id": "datec69b96f7"
       }
     ],
     "indexes": [
@@ -3041,7 +4886,9 @@
     "viewRule": "",
     "createRule": "",
     "updateRule": "",
-    "deleteRule": ""
+    "deleteRule": "",
+    "id": "pbc_ba5d846e",
+    "system": false
   },
   {
     "name": "project_members",
@@ -3055,10 +4902,11 @@
         "hidden": false,
         "presentable": false,
         "help": "",
-        "collectionId": "projects",
+        "collectionId": "pbc_1cddebbd",
         "cascadeDelete": true,
         "minSelect": 0,
-        "maxSelect": 1
+        "maxSelect": 1,
+        "id": "relation2fb3d0ee"
       },
       {
         "name": "user",
@@ -3068,10 +4916,11 @@
         "hidden": false,
         "presentable": false,
         "help": "",
-        "collectionId": "users",
+        "collectionId": "_pb_users_auth_",
         "cascadeDelete": true,
         "minSelect": 0,
-        "maxSelect": 1
+        "maxSelect": 1,
+        "id": "relation8d93d649"
       },
       {
         "name": "role",
@@ -3087,7 +4936,42 @@
           "admin",
           "editor",
           "viewer"
-        ]
+        ],
+        "id": "select57698a6a"
+      },
+      {
+        "name": "id",
+        "type": "text",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "primaryKey": true,
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "pattern": "",
+        "min": 0,
+        "max": 15,
+        "id": "textbf396750"
+      },
+      {
+        "name": "created",
+        "type": "date",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "onCreate": true,
+        "id": "dateb23db7b8"
+      },
+      {
+        "name": "updated",
+        "type": "date",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "onUpdate": true,
+        "id": "datec69b96f7"
       }
     ],
     "indexes": [
@@ -3098,6 +4982,8 @@
     "viewRule": "",
     "createRule": "",
     "updateRule": "",
-    "deleteRule": ""
+    "deleteRule": "",
+    "id": "pbc_bdf23308",
+    "system": false
   }
 ]
