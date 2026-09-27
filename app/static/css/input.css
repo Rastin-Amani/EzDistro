@@ -5,48 +5,43 @@
 }
 
 @theme {
-    --font-sans: 'Arad', ui-sans-serif, system-ui, sans-serif;
-    --font-brand: 'Arad', ui-sans-serif, system-ui, sans-serif;
+    --font-sans: 'Inter', 'Arad', ui-sans-serif, system-ui, sans-serif;
+    --font-brand: 'Inter', 'Arad', ui-sans-serif, system-ui, sans-serif;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   "ezdistro" — warm editorial paper & ink & clay.
-   A calm, substantial workspace: warm paper surfaces, clay/terracotta brand,
-   forest accent, deep ink. Flat by design (borders + surface contrast, no
-   shadows). Applied via data-theme="ezdistro".
-   ═══════════════════════════════════════════════════════════════════════ */
+/* EzDistro Signal: white paper, ink, and a single lavender action color. */
 @plugin "daisyui/theme" {
     name: "ezdistro";
     default: true;
     prefersdark: false;
     color-scheme: light;
 
-    --color-base-100: oklch(98.5% 0.004 85);
-    --color-base-200: oklch(95.5% 0.007 85);
-    --color-base-300: oklch(89.5% 0.010 85);
-    --color-base-content: oklch(27% 0.020 62);
+    --color-base-100: #ffffff;
+    --color-base-200: #fafafa;
+    --color-base-300: #e8e8e8;
+    --color-base-content: #181925;
 
-    --color-primary: oklch(57% 0.165 32);
-    --color-primary-content: oklch(99% 0.005 85);
-    --color-secondary: oklch(47% 0.105 350);
-    --color-secondary-content: oklch(98% 0.010 85);
-    --color-accent: oklch(50% 0.090 158);
-    --color-accent-content: oklch(99% 0.005 85);
-    --color-neutral: oklch(33% 0.022 75);
-    --color-neutral-content: oklch(96% 0.008 85);
+    --color-primary: #918df6;
+    --color-primary-content: #181925;
+    --color-secondary: #9580ff;
+    --color-secondary-content: #181925;
+    --color-accent: #33c758;
+    --color-accent-content: #102b18;
+    --color-neutral: #181925;
+    --color-neutral-content: #ffffff;
 
-    --color-info: oklch(55% 0.130 235);
-    --color-info-content: oklch(99% 0.004 85);
-    --color-success: oklch(56% 0.125 152);
-    --color-success-content: oklch(99% 0.004 85);
-    --color-warning: oklch(70% 0.145 72);
-    --color-warning-content: oklch(28% 0.05 75);
-    --color-error: oklch(58% 0.205 25);
-    --color-error-content: oklch(99% 0.004 85);
+    --color-info: #286f9c;
+    --color-info-content: #ffffff;
+    --color-success: #1e7a36;
+    --color-success-content: #ffffff;
+    --color-warning: #9a5a00;
+    --color-warning-content: #ffffff;
+    --color-error: #b52b3a;
+    --color-error-content: #ffffff;
 
-    --radius-selector: 0.75rem;
-    --radius-field: 0.6rem;
-    --radius-box: 0.9rem;
+    --radius-selector: 9999px;
+    --radius-field: 0.5rem;
+    --radius-box: 1rem;
     --size-selector: 0.25rem;
     --size-field: 0.25rem;
     --border: 1px;
@@ -54,42 +49,39 @@
     --noise: 0;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   "ezdistro-dark" — paper & ink & clay, after dark.
-   Same brand soul, warm near-black environment.
-   ═══════════════════════════════════════════════════════════════════════ */
+/* Dark companion uses the same quiet surfaces and a brighter accessible accent. */
 @plugin "daisyui/theme" {
     name: "ezdistro-dark";
     default: false;
     prefersdark: true;
     color-scheme: dark;
 
-    --color-base-100: oklch(23% 0.012 75);
-    --color-base-200: oklch(19% 0.012 75);
-    --color-base-300: oklch(28% 0.015 75);
-    --color-base-content: oklch(92% 0.010 85);
+    --color-base-100: #22232f;
+    --color-base-200: #181925;
+    --color-base-300: #373845;
+    --color-base-content: #f5f5f5;
 
-    --color-primary: oklch(69% 0.150 33);
-    --color-primary-content: oklch(22% 0.04 33);
-    --color-secondary: oklch(60% 0.100 350);
-    --color-secondary-content: oklch(98% 0.010 85);
-    --color-accent: oklch(58% 0.080 158);
-    --color-accent-content: oklch(20% 0.03 158);
-    --color-neutral: oklch(42% 0.022 75);
-    --color-neutral-content: oklch(92% 0.008 85);
+    --color-primary: #b7b3ff;
+    --color-primary-content: #181925;
+    --color-secondary: #b4a6ff;
+    --color-secondary-content: #181925;
+    --color-accent: #55d777;
+    --color-accent-content: #102b18;
+    --color-neutral: #373845;
+    --color-neutral-content: #f5f5f5;
 
-    --color-info: oklch(66% 0.120 235);
-    --color-info-content: oklch(18% 0.03 235);
-    --color-success: oklch(66% 0.110 152);
-    --color-success-content: oklch(16% 0.03 152);
-    --color-warning: oklch(76% 0.125 72);
-    --color-warning-content: oklch(24% 0.04 72);
-    --color-error: oklch(66% 0.175 25);
-    --color-error-content: oklch(20% 0.04 25);
+    --color-info: #78c5ec;
+    --color-info-content: #182532;
+    --color-success: #65cc7b;
+    --color-success-content: #102f18;
+    --color-warning: #e7bd66;
+    --color-warning-content: #2e2410;
+    --color-error: #f17b82;
+    --color-error-content: #351417;
 
-    --radius-selector: 0.75rem;
-    --radius-field: 0.6rem;
-    --radius-box: 0.9rem;
+    --radius-selector: 9999px;
+    --radius-field: 0.5rem;
+    --radius-box: 1rem;
     --size-selector: 0.25rem;
     --size-field: 0.25rem;
     --border: 1px;
@@ -105,8 +97,7 @@
     font-display: swap;
 }
 
-/* Latin-first variable font for LTR locales; Persian glyphs still fall
-   back to Arad when a page mixes scripts. RTL locales keep Arad. */
+/* Local variable fonts: Inter is the English UI face; Arad covers Persian. */
 @font-face {
     font-family: 'Inter';
     src: url('./assets/InterVariable.ttf') format('truetype-variations'),
@@ -115,9 +106,12 @@
     font-display: swap;
 }
 
-/* Unlayered overrides (beat all @layer rules) */
-html[dir='ltr'] {
+/* Direction-aware font faces beat the shared `font-sans` utility. */
+html[dir='ltr'] body {
     font-family: 'Inter', 'Arad', ui-sans-serif, system-ui, sans-serif;
+}
+html[dir='rtl'] body {
+    font-family: 'Arad', 'Inter', ui-sans-serif, system-ui, sans-serif;
 }
 
 /* daisyUI's .dropdown-end uses inset-inline-end:0, which pushes the panel
@@ -138,6 +132,7 @@ html[dir='ltr'] {
         text-rendering: optimizeLegibility;
     }
     body {
+        background: var(--color-base-100);
         font-feature-settings: "ss01", "cv01";
     }
     /* Tabular numerals everywhere data lives (IDs, counts, dates, metrics) */
@@ -157,9 +152,9 @@ html[dir='ltr'] {
     [onclick] {
         cursor: pointer;
     }
-    /* Visible, consistent focus ring for keyboard users */
+    /* High-contrast focus ring for keyboard users */
     :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
-        outline: 2px solid var(--color-primary);
+        outline: 2px solid var(--color-base-content);
         outline-offset: 2px;
         border-radius: 0.5rem;
     }
@@ -190,14 +185,14 @@ html[dir='ltr'] {
    ═══════════════════════════════════════════════════════════════════════ */
 @layer components {
     .card {
-        @apply rounded-box border border-base-300/70 bg-base-100;
+        @apply rounded-2xl border border-base-300 bg-base-100;
     }
     .card-body {
         @apply gap-4;
     }
 
     .btn {
-        @apply rounded-xl border border-base-300 font-medium;
+        @apply rounded-full border border-base-300 font-medium;
     }
     .btn-ghost {
         @apply border-transparent;
@@ -209,7 +204,7 @@ html[dir='ltr'] {
     .input,
     .select,
     .textarea {
-        @apply rounded-xl border-base-300 bg-base-100;
+        @apply rounded-lg border-base-300 bg-base-100;
     }
     .input:focus,
     .select:focus,
@@ -253,11 +248,11 @@ html[dir='ltr'] {
         @apply text-base-content;
     }
     .table thead th {
-        @apply bg-base-200/80 font-medium text-base-content/55 text-xs sticky top-0 z-10;
+        @apply bg-base-200 font-medium text-base-content/70 text-xs sticky top-0 z-10;
         position: sticky;
     }
     .table tbody tr {
-        @apply border-base-200/80 transition-colors;
+        @apply border-base-300/70 transition-colors;
     }
     .table tbody tr:hover {
         @apply bg-base-200/50;
@@ -267,11 +262,11 @@ html[dir='ltr'] {
     }
 
     .badge {
-        @apply rounded-md border-transparent font-medium;
+        @apply rounded-full border-transparent font-medium;
     }
 
     .stat {
-        @apply rounded-box border border-base-300/70 bg-base-100 px-4 py-3;
+        @apply rounded-2xl border border-base-300 bg-base-100 px-4 py-3;
     }
     .stat-title {
         @apply text-base-content/55;
@@ -289,15 +284,15 @@ html[dir='ltr'] {
     }
 
     .alert {
-        @apply rounded-xl border border-base-300/70;
+        @apply rounded-xl border border-base-300;
     }
 
     .dropdown-content {
-        @apply rounded-box border border-base-300/70 bg-base-100 shadow-none;
+        @apply rounded-2xl border border-base-300 bg-base-100 shadow-none;
     }
 
     .modal-box {
-        @apply rounded-2xl border border-base-300/70 bg-base-100;
+        @apply rounded-2xl border border-base-300 bg-base-100;
     }
 
     .tooltip[data-tip] {
@@ -311,37 +306,36 @@ html[dir='ltr'] {
 @layer components {
     /* Page frame + header ---------------------------------------------- */
     .ezdistro-page {
-        @apply mx-auto w-full max-w-300 px-4 md:px-6 pb-24 md:pb-10 pt-5;
+        @apply mx-auto w-full max-w-300 px-4 pb-28 pt-5 sm:px-6 sm:pt-7 md:pb-10;
     }
     .ezdistro-pagehead {
-        @apply flex flex-wrap items-end justify-between gap-3 mb-5;
+        @apply flex flex-wrap items-end justify-between gap-4 mb-6;
     }
     .ezdistro-eyebrow {
         @apply inline-flex items-center gap-1.5 text-xs font-bold text-primary;
     }
     .ezdistro-title {
-        @apply text-xl font-extrabold tracking-tight text-base-content;
+        @apply text-2xl font-bold tracking-tight text-base-content sm:text-3xl;
     }
     .ezdistro-subtitle {
-        @apply text-sm text-base-content/55 mt-0.5;
+        @apply mt-1 max-w-2xl text-sm leading-relaxed text-base-content/65;
     }
     .ezdistro-actions {
         @apply flex items-center gap-2 flex-wrap;
     }
 
-    /* Brand mark — the one deliberate signature (flat, ink + clay) ------ */
+    /* Brand mark — a quiet, typographic signal. */
     .ezdistro-logo {
-        @apply grid place-items-center rounded-2xl bg-gradient-to-br from-primary to-secondary text-primary-content font-black;
-        box-shadow: none;
+        @apply grid place-items-center rounded-xl border border-primary/30 bg-primary text-primary-content font-black;
     }
 
     /* App shell — robust flex: sidebar is a normal sticky flow child so RTL
        offset hacks (and the bugs they cause) are unnecessary. */
     .ezdistro-shell {
-        @apply flex min-h-screen bg-base-200;
+        @apply flex min-h-dvh bg-base-100;
     }
     .ezdistro-sidebar {
-        @apply hidden border-e border-base-300/70 bg-base-100 md:sticky md:top-0 md:h-screen md:flex md:w-56 md:flex-none md:flex-col lg:w-64;
+        @apply hidden border-e border-base-300 bg-base-100 md:sticky md:top-0 md:h-dvh md:flex md:w-56 md:flex-none md:flex-col lg:w-64;
     }
     .ezdistro-sidebar-brand {
         @apply flex h-16 items-center gap-2.5 border-b border-base-300/70 px-4;
@@ -353,18 +347,18 @@ html[dir='ltr'] {
         @apply px-2 pb-1 pt-4 text-[0.65rem] font-bold uppercase tracking-wider text-base-content/40;
     }
     .ezdistro-navlink {
-        @apply relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-base-content/70 transition-colors hover:bg-base-200 hover:text-base-content;
+        @apply relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-base-content/75 transition-colors hover:bg-base-200 hover:text-base-content;
     }
     .ezdistro-navlink svg {
         @apply size-5 opacity-70;
     }
     .ezdistro-navlink-active {
-        @apply bg-primary/10 text-primary hover:bg-primary/10 hover:text-primary;
+        @apply bg-primary/10 text-base-content hover:bg-primary/15 hover:text-base-content;
     }
     .ezdistro-navlink-active svg {
         @apply opacity-100;
     }
-    /* The active rail — a thin clay bar on the inner edge (logical inline-end:
+    /* The active rail — a lavender bar on the inner edge (logical inline-end:
        right side in RTL, left side in LTR — always toward the content) */
     .ezdistro-navlink-active::before {
         content: "";
@@ -376,17 +370,49 @@ html[dir='ltr'] {
 
     /* Mobile dock ----------------------------------------------------- */
     .ezdistro-dock {
-        @apply fixed inset-x-0 bottom-0 z-40 flex h-16 items-stretch justify-around border-t border-base-300/70 bg-base-100/95 backdrop-blur md:hidden;
+        @apply fixed inset-x-0 bottom-0 z-40 flex items-stretch justify-around border-t border-base-300 bg-base-100/95 backdrop-blur md:hidden;
+        height: calc(4rem + env(safe-area-inset-bottom));
         padding-bottom: env(safe-area-inset-bottom);
     }
+    .ezdistro-mobile-header {
+        @apply sticky top-0 z-30 flex items-center justify-between border-b border-base-300 bg-base-100/95 px-4 backdrop-blur md:hidden;
+        height: calc(3.5rem + env(safe-area-inset-top));
+        padding-top: env(safe-area-inset-top);
+    }
+    .ezdistro-project-tabs {
+        position: sticky;
+        top: calc(3.5rem + env(safe-area-inset-top));
+        z-index: 20;
+        margin-inline: -1rem;
+        padding: 0.5rem 1rem;
+        margin-bottom: 0.5rem;
+        border-bottom: 1px solid color-mix(in oklab, var(--color-base-300) 70%, transparent);
+        background: color-mix(in oklab, var(--color-base-100) 95%, transparent);
+        backdrop-filter: blur(12px);
+    }
+    @media (min-width: 768px) {
+        .ezdistro-project-tabs {
+            top: 0;
+            margin-inline: 0;
+        }
+    }
     .ezdistro-dock a {
-        @apply flex flex-1 flex-col items-center justify-center gap-0.5 text-[0.65rem] font-medium text-base-content/55 transition-colors;
+        @apply relative flex flex-1 flex-col items-center justify-center gap-0.5 text-[0.65rem] font-medium text-base-content/65 transition-colors;
     }
     .ezdistro-dock a svg {
         @apply size-5;
     }
     .ezdistro-dock a.ezdistro-dock-active {
-        @apply text-primary;
+        @apply text-base-content;
+    }
+    .ezdistro-dock a.ezdistro-dock-active::before {
+        content: "";
+        position: absolute;
+        top: 0.45rem;
+        width: 1.5rem;
+        height: 3px;
+        border-radius: 9999px;
+        background: var(--color-primary);
     }
 
     /* Cards / panels -------------------------------------------------- */
@@ -394,7 +420,7 @@ html[dir='ltr'] {
         /* min-w-0: panels are grid/flex children — a long unbreakable value
            (workerId, hostname, version) must never force the column wider
            than the viewport (RTL blowout). */
-        @apply rounded-box border border-base-300/70 bg-base-100 min-w-0;
+        @apply min-w-0 rounded-2xl border border-base-300 bg-base-100;
     }
     .ezdistro-panel-head {
         @apply flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3;
@@ -405,7 +431,7 @@ html[dir='ltr'] {
 
     /* Metrics / stats -------------------------------------------------- */
     .ezdistro-metric {
-        @apply rounded-box border border-base-300/70 bg-base-100 p-4 flex flex-col gap-1 min-w-0;
+        @apply min-w-0 rounded-2xl border border-base-300 bg-base-100 p-4 flex flex-col gap-1;
     }
     .ezdistro-metric-label {
         @apply text-xs font-medium text-base-content/55;
@@ -427,12 +453,12 @@ html[dir='ltr'] {
 
     /* Status pills (used alongside daisyui badge-soft) ----------------- */
     .ezdistro-pill {
-        @apply inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-medium;
+        @apply inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium;
     }
 
     /* Project tab bar — mobile-first scrollable pills ------------------ */
     .ezdistro-tab-active {
-        @apply bg-primary/10 text-primary border-primary/30 font-semibold;
+        @apply border-primary/30 bg-primary/10 text-base-content font-semibold;
     }
     .ezdistro-tab-idle {
         @apply border-transparent text-base-content/55 hover:text-base-content hover:bg-base-100;
@@ -464,34 +490,51 @@ html[dir='ltr'] {
         @apply block font-bold text-base-content break-words;
     }
 
-    /* Toast — paper card with a colored start accent (RTL → right) ----- */
+    /* Toast — flat paper card with a semantic accent at the logical start. */
     .ezdistro-toast {
-        @apply flex items-center gap-3 rounded-xl border border-base-300/70 bg-base-100 px-4 py-3 text-sm font-medium text-base-content shadow-none max-w-sm w-full;
+        @apply pointer-events-auto flex min-w-0 items-start gap-3 rounded-xl border border-base-300/70 bg-base-100 px-4 py-3 text-base-content max-w-sm w-full;
+        border-inline-start-width: 3px;
     }
     .ezdistro-toast .ezdistro-toast-ico {
-        @apply grid size-7 shrink-0 place-items-center rounded-lg;
+        @apply mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg border border-base-300/70;
     }
+    .ezdistro-toast-info { border-inline-start-color: var(--color-info); }
+    .ezdistro-toast-success { border-inline-start-color: var(--color-success); }
+    .ezdistro-toast-error { border-inline-start-color: var(--color-error); }
+    .ezdistro-toast-warning { border-inline-start-color: var(--color-warning); }
     .ezdistro-toast-info .ezdistro-toast-ico { @apply bg-info/15 text-info; }
     .ezdistro-toast-success .ezdistro-toast-ico { @apply bg-success/15 text-success; }
     .ezdistro-toast-error .ezdistro-toast-ico { @apply bg-error/15 text-error; }
     .ezdistro-toast-warning .ezdistro-toast-ico { @apply bg-warning/15 text-warning; }
+
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
    Utilities — small, deliberate helpers
    ═══════════════════════════════════════════════════════════════════════ */
 @layer utilities {
+    /* Lavender is a CTA fill; its darker text variant stays readable on paper. */
+    .text-primary,
+    .link-primary,
+    .badge-soft.badge-primary {
+        color: var(--ezdistro-primary-text, #5d58bd);
+    }
+    [data-theme='ezdistro-dark'] .text-primary,
+    [data-theme='ezdistro-dark'] .link-primary,
+    [data-theme='ezdistro-dark'] .badge-soft.badge-primary {
+        color: #c3bfff;
+    }
     .num {
         font-variant-numeric: tabular-nums;
     }
-    /* RTL-safe numeric inputs keep their alignment */
-    input[type='number'],
-    input[type='date'],
-    input[type='time'],
-    input[type='datetime-local'],
-    input[type='tel'] {
+    /* Keep locale direction for native numeric/date controls. */
+    html[dir='rtl'] :is(input[type='number'], input[type='date'], input[type='time'], input[type='datetime-local'], input[type='tel']) {
         direction: rtl;
         text-align: right;
+    }
+    html[dir='ltr'] :is(input[type='number'], input[type='date'], input[type='time'], input[type='datetime-local'], input[type='tel']) {
+        direction: ltr;
+        text-align: left;
     }
 }
 

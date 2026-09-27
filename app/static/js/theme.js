@@ -2,7 +2,7 @@
    EzDistro — adaptive light/dark theme system
    -----------------------------------------------------------------------
    * Preference persisted in localStorage key `ezdistro-theme`
-     (system | light | dark). First visit / no value → follows OS.
+      (system | light | dark). First visit / no value → light.
    * The no-flash initial paint is handled by the tiny inline script in
      base.html <head>; this file wires the switcher UI + live OS updates.
    * Survives htmx body swaps via event delegation + htmx:afterSettle.
@@ -12,7 +12,7 @@
 
     var STORAGE_KEY = 'ezdistro-theme';
     var THEMES = { light: 'ezdistro', dark: 'ezdistro-dark' };
-    var CHROME_COLORS = { light: '#f4f2ec', dark: '#2a2820' };
+    var CHROME_COLORS = { light: '#ffffff', dark: '#181925' };
     var mqDark = window.matchMedia('(prefers-color-scheme: dark)');
 
     function savedPref() {
@@ -65,7 +65,7 @@
     // Reflect current DOM state onto every switcher instance (after htmx swaps).
     function syncUi() {
         var root = document.documentElement;
-        var choice = root.dataset.themeChoice || savedPref() || 'system';
+        var choice = root.dataset.themeChoice || savedPref() || 'light';
         document.querySelectorAll('[data-theme-pick]').forEach(function (input) {
             input.checked = input.getAttribute('data-theme-pick') === choice;
         });
@@ -96,7 +96,7 @@
     // OS flips while in System mode → follow instantly. Manual overrides ignored.
     function onSystemChange() {
         var root = document.documentElement;
-        var choice = root.dataset.themeChoice || savedPref() || 'system';
+        var choice = root.dataset.themeChoice || savedPref() || 'light';
         if (choice === 'system') {
             apply('system', false);
         } else {

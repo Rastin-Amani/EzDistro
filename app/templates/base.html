@@ -3,31 +3,25 @@
     <head>
         <meta charset="UTF-8" />
         <script>
-            /* Theme bootstrap — runs before first paint so the very first frame is
-               already the resolved theme (no light/dark flash). Reads the persisted
-               choice from localStorage; falls back to the OS preference. */
+            /* First paint defaults to light; OS preference applies only when the
+               user explicitly selects System. */
             (function () {
                 var KEY = 'ezdistro-theme';
+                var choice = 'light';
                 var mode = 'light';
                 try {
                     var stored = localStorage.getItem(KEY);
-                    if (stored === 'light' || stored === 'dark') {
-                        mode = stored;
-                    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                        mode = 'dark';
-                    } else {
-                        mode = 'light';
+                    if (stored === 'dark') {
+                        choice = mode = 'dark';
+                    } else if (stored === 'system') {
+                        choice = 'system';
+                        if (window.matchMedia('(prefers-color-scheme: dark)').matches) mode = 'dark';
                     }
                 } catch (e) {}
                 var el = document.documentElement;
                 el.dataset.theme = mode === 'dark' ? 'ezdistro-dark' : 'ezdistro';
                 el.dataset.themeMode = mode;
-                try {
-                    var v = localStorage.getItem(KEY);
-                    el.dataset.themeChoice = v === 'system' || v === 'light' || v === 'dark' ? v : 'system';
-                } catch (e) {
-                    el.dataset.themeChoice = 'system';
-                }
+                el.dataset.themeChoice = choice;
             })();
         </script>
         <meta
@@ -37,67 +31,24 @@
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="theme-color" content="#f4f2ec" />
+        <meta name="theme-color" content="#ffffff" />
 
         <link rel="manifest" href="/manifest.json" />
         <link rel="icon" href="/favicon.ico" />
 
         <link
             rel="preload"
-            href="{{ url_for('static', path='/assets/Arad-VF.woff2') }}"
+            href="{{ url_for('static', path='/assets/' ~ ('Arad-VF.woff2' if locale.is_rtl else 'InterVariable.ttf')) }}"
             as="font"
-            type="font/woff2"
+            type="{{ 'font/woff2' if locale.is_rtl else 'font/ttf' }}"
             crossorigin
         />
 
         <title>{{ title or _('EzDistro') }}</title>
         <link rel="stylesheet" href="{{ url_for('static', path='/app.css') }}" />
-
-        <script>
-            (function() {
-                var BANNER_ID = 'offline-banner';
-                var BANNER_TEXT = {{ _('⚠️ شما آفلاین هستید — داده‌های ذخیره‌شده نمایش داده می‌شود') | tojson }};
-                function createBanner() {
-                    var el = document.createElement('div');
-                    el.id = BANNER_ID;
-                    el.textContent = BANNER_TEXT;
-                    el.style.cssText = 'position:fixed;top:0;left:50%;translate:-50%;z-index:99999;background:oklch(92% 0.05 75);color:oklch(40% 0.1 50);text-align:center;font-size:0.8rem;font-weight:700;padding:0.5rem 1rem;border-radius:0 0 0.75rem 0.75rem;max-width:600px;width:100%';
-                    el.style.display = navigator.onLine ? 'none' : '';
-                    document.body.prepend(el);
-                }
-                function updateBanner() {
-                    var el = document.getElementById(BANNER_ID);
-                    if (el) {
-                        el.style.display = navigator.onLine ? 'none' : '';
-                    } else if (!navigator.onLine) {
-                        createBanner();
-                    }
-                }
-                window.addEventListener('offline', createBanner);
-                window.addEventListener('online', function() {
-                    var el = document.getElementById(BANNER_ID);
-                    if (el) el.style.display = 'none';
-                });
-                document.addEventListener('DOMContentLoaded', function() {
-                    if (!navigator.onLine) createBanner();
-                });
-                var observer = new MutationObserver(function() {
-                    if (!navigator.onLine && !document.getElementById(BANNER_ID)) {
-                        createBanner();
-                    }
-                });
-                if (document.body) {
-                    observer.observe(document.body, { childList: true, subtree: false });
-                } else {
-                    document.addEventListener('DOMContentLoaded', function() {
-                        observer.observe(document.body, { childList: true, subtree: false });
-                    });
-                }
-            })();
-        </script>
     </head>
 
-    <body class="bg-base-200 font-sans antialiased" hx-boost="true">
+    <body class="bg-base-100 font-sans antialiased" hx-boost="true">
         {% block body_start %}{% endblock %}
 
         <!-- Top loading progress bar — HIDDEN for now (kept intact for easy
@@ -113,7 +64,7 @@
         <div id="modal-container"></div>
         <div
             id="toast-container"
-            class="fixed top-4 right-4 z-[60] flex w-[min(92vw,22rem)] flex-col gap-2"
+            class="pointer-events-none fixed top-4 end-4 z-[60] flex w-[min(92vw,22rem)] flex-col gap-2"
             aria-live="polite"
             aria-atomic="false"
         ></div>
@@ -129,13 +80,13 @@
                         </svg>
                     </div>
                     <div class="min-w-0">
-                        <h3 class="font-bold text-lg">{{ _('تأیید عملیات') }}</h3>
+                        <h3 class="font-bold text-lg">{{ _('Confirm action') }}</h3>
                         <p class="py-2 text-sm opacity-70 leading-relaxed" data-confirm-text></p>
                     </div>
                 </div>
                 <div class="modal-action flex gap-3">
-                    <button type="button" class="btn btn-ghost flex-1" data-confirm-cancel>{{ _('انصراف') }}</button>
-                    <button type="button" class="btn btn-error flex-1" data-confirm-ok>{{ _('تأیید') }}</button>
+                    <button type="button" class="btn btn-ghost flex-1" data-confirm-cancel>{{ _('Cancel') }}</button>
+                    <button type="button" class="btn btn-error flex-1" data-confirm-ok>{{ _('Confirm') }}</button>
                 </div>
             </div>
             <div class="modal-backdrop bg-black/40 backdrop-blur-sm cursor-pointer" data-confirm-backdrop></div>
@@ -184,10 +135,10 @@
         <script>
             if (!window.toastListenerAttached) {
                 const ICONS = {
-                    info: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />',
-                    success: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />',
-                    error: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />',
-                    warning: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />',
+                    info: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
+                    success: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
+                    error: 'M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z',
+                    warning: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z',
                 };
                 const ROLE = {
                     info: 'ezdistro-toast-info',
@@ -197,26 +148,66 @@
                 };
                 document.addEventListener('show-toast', function (evt) {
                     const detail = evt.detail || {};
-                    const message = detail.message || '';
-                    const type = detail.type || 'info';
+                    const message = String(detail.message || '');
+                    if (!message) return;
+                    const type = ROLE[detail.type] ? detail.type : 'info';
                     const container = document.getElementById('toast-container');
                     if (!container) return;
 
                     const toast = document.createElement('div');
-                    toast.className = `ezdistro-toast ${ROLE[type] || ROLE.info} translate-x-full opacity-0 transition-all duration-300`;
-                    toast.setAttribute('role', 'status');
-                    toast.innerHTML = `
-                        <span class="ezdistro-toast-ico">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="size-5">${ICONS[type] || ICONS.info}</svg>
-                        </span>
-                        <span class="flex-1 text-sm font-medium">${message}</span>`;
+                    const entryOffset = document.documentElement.dir === 'rtl' ? '-translate-x-full' : 'translate-x-full';
+                    const exitOffset = document.documentElement.dir === 'rtl' ? '-translate-x-8' : 'translate-x-8';
+                    toast.className = `ezdistro-toast ${ROLE[type]} ${entryOffset} opacity-0 transition-all duration-300`;
+                    toast.setAttribute('role', type === 'error' ? 'alert' : 'status');
+                    toast.setAttribute('aria-live', type === 'error' ? 'assertive' : 'polite');
+                    toast.setAttribute('aria-atomic', 'true');
+
+                    const icon = document.createElement('span');
+                    icon.className = 'ezdistro-toast-ico';
+                    icon.setAttribute('aria-hidden', 'true');
+                    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                    svg.setAttribute('viewBox', '0 0 24 24');
+                    svg.setAttribute('fill', 'none');
+                    svg.setAttribute('stroke', 'currentColor');
+                    svg.setAttribute('stroke-width', '2');
+                    svg.setAttribute('stroke-linecap', 'round');
+                    svg.setAttribute('stroke-linejoin', 'round');
+                    svg.setAttribute('class', 'size-5');
+                    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    path.setAttribute('d', ICONS[type]);
+                    svg.appendChild(path);
+                    icon.appendChild(svg);
+
+                    const text = document.createElement('span');
+                    text.className = 'min-w-0 flex-1 break-words text-sm leading-5';
+                    text.textContent = message;
+                    toast.append(icon, text);
                     container.appendChild(toast);
-                    requestAnimationFrame(() => toast.classList.remove('translate-x-full', 'opacity-0'));
+                    requestAnimationFrame(() => toast.classList.remove(entryOffset, 'opacity-0'));
                     setTimeout(() => {
-                        toast.classList.add('opacity-0', 'translate-x-8');
+                        toast.classList.add('opacity-0', exitOffset);
                         setTimeout(() => toast.remove(), 300);
                     }, 4200);
                 });
+
+                function showPendingToasts(root) {
+                    const nodes = Array.from(root.querySelectorAll?.('[data-toast-message]') || []);
+                    if (root.matches?.('[data-toast-message]')) nodes.unshift(root);
+                    nodes.forEach((node) => {
+                        document.dispatchEvent(new CustomEvent('show-toast', {
+                            detail: {
+                                message: node.dataset.toastMessage,
+                                type: node.dataset.toastType || 'info',
+                            },
+                        }));
+                        node.remove();
+                    });
+                }
+
+                document.addEventListener('htmx:load', (evt) => {
+                    if (evt.detail?.elt) showPendingToasts(evt.detail.elt);
+                });
+                showPendingToasts(document);
 
                 // Delayed Redirect Listener — toast animates, THEN navigate
                 document.addEventListener('delayed-redirect', function (evt) {
@@ -228,14 +219,22 @@
                 // HTMX failure feedback — network errors and 4xx/5xx must never fail silently
                 document.addEventListener('htmx:sendError', function () {
                     document.dispatchEvent(new CustomEvent('show-toast', {
-                        detail: { message: {{ _('اتصال به سرور برقرار نشد. دوباره تلاش کنید.') | tojson }}, type: 'error' },
+                        detail: { message: {{ _('Could not reach the server. Please try again.') | tojson }}, type: 'error' },
                     }));
                 });
                 document.addEventListener('htmx:responseError', function () {
                     document.dispatchEvent(new CustomEvent('show-toast', {
-                        detail: { message: {{ _('مشکلی پیش آمد؛ دوباره تلاش کنید.') | tojson }}, type: 'error' },
+                        detail: { message: {{ _('Something went wrong; please try again.') | tojson }}, type: 'error' },
                     }));
                 });
+
+                const connectionToast = (message, type) => document.dispatchEvent(new CustomEvent('show-toast', {
+                    detail: { message, type },
+                }));
+                const offlineMessage = {{ _('You are offline — showing cached data') | tojson }};
+                window.addEventListener('offline', () => connectionToast(offlineMessage, 'warning'));
+                window.addEventListener('online', () => connectionToast({{ _('Connection restored.') | tojson }}, 'success'));
+                if (!navigator.onLine) connectionToast(offlineMessage, 'warning');
 
                 window.toastListenerAttached = true;
             }
@@ -252,7 +251,7 @@
                             newSW.addEventListener('statechange', () => {
                                 if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
                                     document.dispatchEvent(new CustomEvent('show-toast', {
-                                        detail: { message: {{ _('نسخه جدید در دسترس است.') | tojson }}, type: 'info' },
+                                        detail: { message: {{ _('A new version is available.') | tojson }}, type: 'info' },
                                     }));
                                 }
                             });
