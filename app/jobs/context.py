@@ -156,7 +156,7 @@ class JobContext:
     ) -> None:
         """Structured progress: percentage + stage + message + current/total items.
 
-        Example: progress(35, stage="writing_sections", message="بخش 7 از 20",
+        Example: progress(35, stage="writing_sections", message="\u0628\u062e\u0634 7 \u0627\u0632 20",
         current=7, total=20)
         """
         self.set_progress(

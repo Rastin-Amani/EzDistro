@@ -79,16 +79,16 @@ def _image_max_attempts(request: Request, project_id: str) -> int:
 # Planning
 # ---------------------------------------------------------------------------
 @router.post("/projects/{project_id}/articles/{article_id}/images/plan")
-@hx_error(_("برنامه‌ریزی تصاویر ناموفق بود"))
+@hx_error("Scheduling the image plan failed")
 def queue_image_plan(request: Request, project_id: str, article_id: str):
     require_hx(request)
     require_project_access(request, project_id)
     require_project_role(request, project_id)
     article = _load_article(request, project_id, article_id)
     if not article:
-        return error_response(_("مقاله یافت نشد"))
+        return error_response(_("Article not found"))
     if not (article.get("finalHtml") or article.get("generatedContent")):
-        return error_response(_("مقاله هنوز محتوایی ندارد — ابتدا مقاله را تولید کنید"))
+        return error_response(_("The article has no content yet — generate the article first"))
     active = JobRepo(request.state.pb).first(
         filter=(
             f'type="plan_article_images" && payload.articleId="{article_id}" && {_ACTIVE_FILTER}'
@@ -96,7 +96,7 @@ def queue_image_plan(request: Request, project_id: str, article_id: str):
     )
     if active:
         return success_response(
-            _("برنامه تصاویر قبلاً در حال پردازش است — صفحه خودبه‌خود تازه می‌شود"),
+            _("The image plan is already being processed — the page refreshes automatically"),
             extra_events={"refreshArticle": True},
         )
     _queue_job(
@@ -109,7 +109,7 @@ def queue_image_plan(request: Request, project_id: str, article_id: str):
         max_attempts=3,
     )
     return success_response(
-        _("برنامه تصاویر در صف پردازش قرار گرفت"),
+        _("Image plan queued for processing"),
         extra_events={"refreshArticle": True, "refreshJobs": True},
     )
 
@@ -144,7 +144,7 @@ def _queue_generation(
     )
     if active:
         return success_response(
-            _("این تصویر قبلاً در صف تولید است — صفحه خودبه‌خود تازه می‌شود"),
+            _("This image is already queued for generation — the page refreshes automatically"),
             extra_events={"refreshArticle": True},
         )
     version = ArticleImageRepo(request.state.pb).next_version(article_id, role, section_key)
@@ -166,7 +166,7 @@ def _queue_generation(
 
 
 @router.post("/projects/{project_id}/articles/{article_id}/images/generate")
-@hx_error(_("تولید تصویر ناموفق بود"))
+@hx_error("Image generation failed")
 def queue_image_generate(
     request: Request,
     project_id: str,
@@ -179,40 +179,40 @@ def queue_image_generate(
     require_project_role(request, project_id)
     article = _load_article(request, project_id, article_id)
     if not article:
-        return error_response(_("مقاله یافت نشد"))
+        return error_response(_("Article not found"))
     if not article.get("imagePlan"):
-        return error_response(_("ابتدا برنامه تصاویر را تولید کنید"))
+        return error_response(_("Generate the image plan first"))
     role = safe_str(role)
     if role == "cover":
         section_key = "cover"
     elif role == "interior":
         section_key = safe_str(section_key)
         if not _SECTION_KEY_RE.match(section_key):
-            return error_response(_("کلید بخش نامعتبر است — باید به شکل section-N باشد"))
+            return error_response(_("Invalid section key — it must be in the form section-N"))
     else:
-        return error_response(_("نقش تصویر نامعتبر است"))
+        return error_response(_("Invalid image role"))
     return _queue_generation(
         request,
         project_id,
         article_id,
         role=role,
         section_key=section_key,
-        message=_("تولید تصویر در صف قرار گرفت"),
+        message=_("Image generation queued"),
     )
 
 
 @router.post("/projects/{project_id}/articles/{article_id}/images/{image_id}/regenerate")
-@hx_error(_("بازتولید تصویر ناموفق بود"))
+@hx_error("Image regeneration failed")
 def queue_image_regenerate(request: Request, project_id: str, article_id: str, image_id: str):
     """Regenerate = a NEW version row; the successful old version stays for compare/rollback."""
     require_hx(request)
     require_project_access(request, project_id)
     require_project_role(request, project_id)
     if not _load_article(request, project_id, article_id):
-        return error_response(_("مقاله یافت نشد"))
+        return error_response(_("Article not found"))
     row = _load_image(request, project_id, article_id, image_id)
     if not row:
-        return error_response(_("تصویر یافت نشد"))
+        return error_response(_("Image not found"))
     role = str(row.get("role") or "")
     section_key = str(row.get("sectionKey") or ("cover" if role == "cover" else ""))
     return _queue_generation(
@@ -221,7 +221,7 @@ def queue_image_regenerate(request: Request, project_id: str, article_id: str, i
         article_id,
         role=role,
         section_key=section_key,
-        message=_("بازتولید تصویر در صف قرار گرفت (نسخهٔ جدید)"),
+        message=_("Image regeneration queued (new version)"),
     )
 
 
@@ -229,22 +229,24 @@ def queue_image_regenerate(request: Request, project_id: str, article_id: str, i
 # Version selection / removal / metadata
 # ---------------------------------------------------------------------------
 @router.post("/projects/{project_id}/articles/{article_id}/images/{image_id}/select")
-@hx_error(_("انتخاب نسخه ناموفق بود"))
+@hx_error("Selecting the version failed")
 def select_image_version(request: Request, project_id: str, article_id: str, image_id: str):
     require_hx(request)
     require_project_access(request, project_id)
     require_project_role(request, project_id)
     row = _load_image(request, project_id, article_id, image_id)
     if not row:
-        return error_response(_("تصویر یافت نشد"))
+        return error_response(_("Image not found"))
     if row.get("status") != "ready":
-        return error_response(_("فقط نسخه‌های آماده قابل انتخاب هستند"))
+        return error_response(_("Only ready versions can be selected"))
     ArticleImageRepo(request.state.pb).set_active(image_id)
-    return success_response(_("این نسخه از تصویر انتخاب شد"), extra_events={"refreshArticle": True})
+    return success_response(
+        _("This image version was selected"), extra_events={"refreshArticle": True}
+    )
 
 
 @router.post("/projects/{project_id}/articles/{article_id}/images/{image_id}/remove")
-@hx_error(_("حذف تصویر ناموفق بود"))
+@hx_error("Deleting the image failed")
 def remove_image(request: Request, project_id: str, article_id: str, image_id: str):
     """Deactivate (never a hard delete): history stays for rollback/audit."""
     require_hx(request)
@@ -252,16 +254,16 @@ def remove_image(request: Request, project_id: str, article_id: str, image_id: s
     require_project_role(request, project_id)
     row = _load_image(request, project_id, article_id, image_id)
     if not row:
-        return error_response(_("تصویر یافت نشد"))
+        return error_response(_("Image not found"))
     ArticleImageRepo(request.state.pb).deactivate(image_id)
     return success_response(
-        _("تصویر از مقاله حذف شد (نسخه در تاریخچه می‌ماند)"),
+        _("Image removed from the article (the version stays in history)"),
         extra_events={"refreshArticle": True},
     )
 
 
 @router.post("/projects/{project_id}/articles/{article_id}/images/{image_id}/metadata")
-@hx_error(_("ذخیره اطلاعات تصویر ناموفق بود"))
+@hx_error("Saving image info failed")
 def update_image_metadata(
     request: Request,
     project_id: str,
@@ -275,33 +277,33 @@ def update_image_metadata(
     require_project_role(request, project_id)
     row = _load_image(request, project_id, article_id, image_id)
     if not row:
-        return error_response(_("تصویر یافت نشد"))
+        return error_response(_("Image not found"))
     alt = safe_str(alt_text)
     if not alt:
-        return error_response(_("متن جایگزین (alt) نمی‌تواند خالی باشد"))
+        return error_response(_("Alt text cannot be empty"))
     try:
         ArticleImageRepo(request.state.pb).update_metadata(
             image_id, alt_text=alt, caption=safe_str(caption) or None
         )
     except ValueError as exc:
         return error_response(str(exc))
-    return success_response(_("اطلاعات تصویر ذخیره شد"), extra_events={"refreshArticle": True})
+    return success_response(_("Image info saved"), extra_events={"refreshArticle": True})
 
 
 # ---------------------------------------------------------------------------
 # Re-optimization + single-image WordPress upload
 # ---------------------------------------------------------------------------
 @router.post("/projects/{project_id}/articles/{article_id}/images/{image_id}/optimize")
-@hx_error(_("بهینه‌سازی تصویر ناموفق بود"))
+@hx_error("Image optimization failed")
 def queue_image_optimize(request: Request, project_id: str, article_id: str, image_id: str):
     require_hx(request)
     require_project_access(request, project_id)
     require_project_role(request, project_id)
     row = _load_image(request, project_id, article_id, image_id)
     if not row:
-        return error_response(_("تصویر یافت نشد"))
+        return error_response(_("Image not found"))
     if not row.get("sourceFile"):
-        return error_response(_("این تصویر فایل منبع ندارد — ابتدا تولیدش کنید"))
+        return error_response(_("This image has no source file — generate it first"))
     active = JobRepo(request.state.pb).first(
         filter=(
             f'type="optimize_article_image" && payload.imageId="{image_id}" && {_ACTIVE_FILTER}'
@@ -309,7 +311,7 @@ def queue_image_optimize(request: Request, project_id: str, article_id: str, ima
     )
     if active:
         return success_response(
-            _("بهینه‌سازی قبلاً در صف است"), extra_events={"refreshArticle": True}
+            _("Optimization is already queued"), extra_events={"refreshArticle": True}
         )
     _queue_job(
         request,
@@ -321,13 +323,13 @@ def queue_image_optimize(request: Request, project_id: str, article_id: str, ima
         max_attempts=3,
     )
     return success_response(
-        _("بهینه‌سازی مجدد تصویر در صف قرار گرفت"),
+        _("Image re-optimization queued"),
         extra_events={"refreshArticle": True, "refreshJobs": True},
     )
 
 
 @router.post("/projects/{project_id}/articles/{article_id}/images/{image_id}/publish")
-@hx_error(_("بارگذاری تصویر در وردپرس ناموفق بود"))
+@hx_error("Uploading the image to WordPress failed")
 def queue_image_publish(
     request: Request,
     project_id: str,
@@ -341,9 +343,9 @@ def queue_image_publish(
     require_project_role(request, project_id)
     row = _load_image(request, project_id, article_id, image_id)
     if not row:
-        return error_response(_("تصویر یافت نشد"))
+        return error_response(_("Image not found"))
     if row.get("status") != "ready":
-        return error_response(_("فقط تصاویر آماده قابل بارگذاری هستند"))
+        return error_response(_("Only ready images can be uploaded"))
     _queue_job(
         request,
         project_id,
@@ -354,6 +356,6 @@ def queue_image_publish(
         max_attempts=3,
     )
     return success_response(
-        _("بارگذاری تصویر در وردپرس در صف قرار گرفت"),
+        _("Image upload to WordPress queued"),
         extra_events={"refreshArticle": True, "refreshJobs": True},
     )

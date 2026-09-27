@@ -76,7 +76,7 @@ def _scope_filter(scope: list[str] | None, status: str = "") -> str:
 
 
 @router.get("/jobs", response_class=HTMLResponse)
-@page_guard(_("مشکلی در بارگذاری صفحه وظایف پیش آمد — دوباره تلاش کنید."))
+@page_guard("Something went wrong loading the jobs page — please try again.")
 def jobs_monitor(
     request: Request,
     project: str = "",
@@ -117,7 +117,7 @@ def jobs_monitor(
         request,
         "pages/jobs/monitor.html",
         {
-            "title": _("وظایف"),
+            "title": _("Jobs"),
             "provider_metrics": provider_metrics,
             "scheduler_heartbeat": scheduler_heartbeat,
             "jobs": rows,
@@ -142,7 +142,7 @@ def jobs_monitor(
 
 
 @router.get("/failed", response_class=HTMLResponse)
-@page_guard(_("مشکلی در بارگذاری صفحه وظایف ناموفق پیش آمد — دوباره تلاش کنید."))
+@page_guard("Something went wrong loading the failed jobs page — please try again.")
 def failed_jobs(request: Request, page: int = 1):
     """Failed jobs (dead-letter view) — retry from here or open the detail."""
     pb = request.state.pb
@@ -160,7 +160,7 @@ def failed_jobs(request: Request, page: int = 1):
         request,
         "pages/jobs/failed.html",
         {
-            "title": _("وظایف ناموفق"),
+            "title": _("Failed jobs"),
             "jobs": jobs,
             "total": total,
             "page": max(1, page),
@@ -175,7 +175,7 @@ def job_detail(request: Request, job_id: str):
     job = JobRepo(pb).get(job_id)
     if not job or not _job_accessible(request, job):
         return templates.TemplateResponse(
-            request, "pages/jobs/not_found.html", {"title": _("وظیفه یافت نشد")}
+            request, "pages/jobs/not_found.html", {"title": _("Job not found")}
         )
     events = JobEventRepo(pb).list_for_job(job_id, per_page=100)
     project = ProjectRepo(pb).get(job.get("project") or "")
@@ -185,7 +185,7 @@ def job_detail(request: Request, job_id: str):
         request,
         "pages/jobs/detail.html",
         {
-            "title": _("وظیفه %(t)s") % {"t": job.get("type", "")},
+            "title": _("Job %(t)s") % {"t": job.get("type", "")},
             "job": job,
             "events": events,
             "project": project,
@@ -210,30 +210,30 @@ def job_events_fragment(request: Request, job_id: str):
 
 
 @router.post("/jobs/{job_id}/cancel")
-@hx_error(_("لغو وظیفه ناموفق بود"))
+@hx_error("Cancelling job failed")
 def cancel_job(request: Request, job_id: str):
     require_hx(request)
     require_user(request)
     job = JobRepo(request.state.pb).get(job_id)
     if not _job_accessible(request, job):
-        return error_response(_("وظیفه یافت نشد"))
+        return error_response(_("Job not found"))
     JobRepo(request.state.pb).request_cancel(job_id)
     return toast_response(
-        _("لغو وظیفه درخواست شد"), type="warning", extra_events={"refreshJobs": True}
+        _("Job cancellation requested"), type="warning", extra_events={"refreshJobs": True}
     )
 
 
 @router.post("/jobs/{job_id}/retry")
-@hx_error(_("تلاش مجدد ناموفق بود"))
+@hx_error("Retry failed")
 def retry_job(request: Request, job_id: str):
     """Human retry — enqueues a `retry_failed_job` job (auditable, idempotent)."""
     require_hx(request)
     require_user(request)
     job = JobRepo(request.state.pb).get(job_id)
     if not _job_accessible(request, job):
-        return error_response(_("وظیفه یافت نشد"))
+        return error_response(_("Job not found"))
     if not job or job.get("status") != "failed":
-        return toast_response(_("این وظیفه در حالت ناموفق نیست"), type="warning")
+        return toast_response(_("This job is not in the failed state"), type="warning")
     existing = JobRepo(request.state.pb).first(
         filter=f'type="retry_failed_job" && payload.targetJobId="{job_id}" && (status="pending" || status="retrying" || status="running")'
     )
@@ -247,4 +247,4 @@ def retry_job(request: Request, job_id: str):
             entity_type="job",
             entity_id=job_id,
         )
-    return success_response(_("تلاش مجدد برنامه‌ریزی شد"), extra_events={"refreshJobs": True})
+    return success_response(_("Retry scheduled"), extra_events={"refreshJobs": True})

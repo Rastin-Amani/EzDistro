@@ -6,7 +6,7 @@
 
     <div class="flex flex-wrap items-center gap-2">
 
-        <h4 class="font-bold text-sm">{{ _('نتیجه افزودن — %(v)s') % {'v': filename} }}</h4>
+        <h4 class="font-bold text-sm">{{ _('Add result — %(v)s') % {'v': filename} }}</h4>
 
     </div>
 
@@ -16,7 +16,7 @@
 
             <p class="text-2xl font-bold text-success">{{ summary.created }}</p>
 
-            <p class="text-xs opacity-60">{{ _('افزوده شد') }}</p>
+            <p class="text-xs opacity-60">{{ _('Added') }}</p>
 
         </div>
 
@@ -24,7 +24,7 @@
 
             <p class="text-2xl font-bold">{{ summary.skipped }}</p>
 
-            <p class="text-xs opacity-60">{{ _('تکراری (رد شد)') }}</p>
+            <p class="text-xs opacity-60">{{ _('Duplicate (skipped)') }}</p>
 
         </div>
 
@@ -32,7 +32,7 @@
 
             <p class="text-2xl font-bold {{ 'text-error' if summary.error_count else '' }}">{{ summary.error_count }}</p>
 
-            <p class="text-xs opacity-60">{{ _('خطا') }}</p>
+            <p class="text-xs opacity-60">{{ _('Error') }}</p>
 
         </div>
 
@@ -50,9 +50,9 @@
 
                 <tr class="text-xs opacity-60">
 
-                    <th class="w-16">{{ _('ردیف') }}</th>
+                    <th class="w-16">{{ _('Row') }}</th>
 
-                    <th>{{ _('دلیل') }}</th>
+                    <th>{{ _('Reason') }}</th>
 
                 </tr>
 
@@ -80,7 +80,7 @@
 
     {% if summary.has_more_errors %}
 
-    <p class="text-xs opacity-50">{{ _('… و خطاهای بیشتری که در اینجا نمایش داده نشدند.') }}</p>
+    <p class="text-xs opacity-50">{{ _('… and more errors not shown here.') }}</p>
 
     {% endif %}
 
@@ -92,7 +92,7 @@
 
     <p class="text-xs opacity-60 leading-relaxed">
 
-        {{ _('%(n)s ردیف دارای برچسب نوع آزاد (مثل «راهنمای عیب‌یابی» یا «پرسش و پاسخ») بودند که با نوع پیش‌فرض «مقاله» اضافه شدند.') % {'n': summary.coerced} }}
+        {{ _('%(n)s rows had a free-form type label (e.g. “Troubleshooting guide” or “Q&A”) and were added with the default type “Article”.') % {'n': summary.coerced} }}
 
     </p>
 
@@ -104,7 +104,7 @@
 
             onclick="document.getElementById('topic-import-modal').close(); document.body.dispatchEvent(new CustomEvent('refreshTopics'));">
 
-        {{ _('اتمام') }}
+        {{ _('Finish') }}
 
     </button>
 

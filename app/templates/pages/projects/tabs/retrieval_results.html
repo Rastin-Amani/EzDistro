@@ -1,13 +1,13 @@
 <div class="flex flex-col gap-4">
     <div class="ezdistro-panel">
         <div class="ezdistro-panel-head">
-            <h2 class="ezdistro-panel-title">{{ _('نتایج برای: «%(v)s»') % {'v': query} }}</h2>
+            <h2 class="ezdistro-panel-title">{{ _('Results for: “%(v)s”') % {'v': query} }}</h2>
         </div>
         <div class="p-4 flex flex-col gap-2">
             <p class="text-xs opacity-50">
-                {{ _('%(a)s نتیجه — کاندیدا: %(b)s') % {'a': results|length, 'b': options.candidate_count} }}
-                {% if options.similarity_threshold %} — {{ _('آستانه: %(n)s') % {'n': options.similarity_threshold} }}{% endif %}
-                {% if options.rerank %} — {{ _('بازچینش: %(n)s نتیجه نهایی') % {'n': options.rerank_top_n} }}{% endif %}
+                {{ _('%(a)s results — candidates: %(b)s') % {'a': results|length, 'b': options.candidate_count} }}
+                {% if options.similarity_threshold %} — {{ _('Threshold: %(n)s') % {'n': options.similarity_threshold} }}{% endif %}
+                {% if options.rerank %} — {{ _('Rerank: %(n)s final results') % {'n': options.rerank_top_n} }}{% endif %}
             </p>
 
             {% if results %}
@@ -16,12 +16,12 @@
                     <thead>
                         <tr class="text-xs opacity-60">
                             <th>#</th>
-                            <th>{{ _('عنوان') }}</th>
-                            <th>{{ _('آدرس') }}</th>
-                            <th>{{ _('نمره برداری') }}</th>
-                            <th>{{ _('نمره بازچینش') }}</th>
-                            <th>{{ _('نمره نهایی') }}</th>
-                            <th>{{ _('قطعه') }}</th>
+                            <th>{{ _('Title') }}</th>
+                            <th>{{ _('URL') }}</th>
+                            <th>{{ _('Vector score') }}</th>
+                            <th>{{ _('Rerank score') }}</th>
+                            <th>{{ _('Final score') }}</th>
+                            <th>{{ _('Snippet') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -42,7 +42,7 @@
                 </table>
             </div>
             {% else %}
-            <p class="text-sm opacity-50 py-4 text-center">{{ _('نتیجه‌ای یافت نشد (آستانه تشابه یا خالی بودن نمایه را بررسی کنید).') }}</p>
+            <p class="text-sm opacity-50 py-4 text-center">{{ _('No results found (check the similarity threshold or whether the index is empty).') }}</p>
             {% endif %}
         </div>
     </div>
@@ -50,7 +50,7 @@
     {% if context.links %}
     <div class="ezdistro-panel">
         <div class="ezdistro-panel-head">
-            <h2 class="ezdistro-panel-title">{{ _('کاندیداهای لینک داخلی (%(n)s)') % {'n': context.links|length} }}</h2>
+            <h2 class="ezdistro-panel-title">{{ _('Internal link candidates (%(n)s)') % {'n': context.links|length} }}</h2>
         </div>
         <div class="p-4">
             <ul class="flex flex-col gap-1">
@@ -69,7 +69,7 @@
     {% if context.passages %}
     <div class="ezdistro-panel">
         <div class="ezdistro-panel-head">
-            <h2 class="ezdistro-panel-title">{{ _('زمینه پرامپت (%(a)s بخش — %(b)s کاراکتر)') % {'a': context.passages|length, 'b': context.used_chars} }}</h2>
+            <h2 class="ezdistro-panel-title">{{ _('Prompt context (%(a)s chunks — %(b)s characters)') % {'a': context.passages|length, 'b': context.used_chars} }}</h2>
         </div>
         <div class="p-4">
             <pre class="text-xs bg-base-200/60 rounded-xl p-3 whitespace-pre-wrap max-h-72 overflow-auto">{{ context.format_for_prompt }}</pre>

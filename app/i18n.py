@@ -41,11 +41,11 @@ class Locale:
 # One authoritative registry. Disabled entries are readiness declarations:
 # enabling a language = flip `enabled` + ship app/locales/<code>/LC_MESSAGES/messages.mo
 LOCALES: dict[str, Locale] = {
-    "fa": Locale("fa", "فارسی", "rtl", enabled=True, default=True, flag="🇮🇷"),
-    "en": Locale("en", "English", "ltr", enabled=True, flag="🇬🇧"),
+    "en": Locale("en", "English", "ltr", enabled=True, default=True, flag="🇬🇧"),
+    "fa": Locale("fa", "Persian", "rtl", enabled=True, flag="🇮🇷"),
     # --- prepared but disabled (same workflow, no architecture changes) ---
     "hy": Locale("hy", "Հայերեն", "ltr", flag="🇦🇲"),
-    "ar": Locale("ar", "العربية", "rtl", flag="🇸🇦"),
+    "ar": Locale("ar", "Arabic", "rtl", flag="🇸🇦"),
     "es": Locale("es", "Español", "ltr", flag="🇪🇸"),
     "ru": Locale("ru", "Русский", "ltr", flag="🇷🇺"),
     "de": Locale("de", "Deutsch", "ltr", flag="🇩🇪"),

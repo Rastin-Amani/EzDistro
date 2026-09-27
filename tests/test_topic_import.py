@@ -29,16 +29,17 @@ from app.services.topic_import import (
     store_preview,
 )
 from tests.fakes import FakePocketBase, default_unique_fields
+from tests.helpers import call_route_async
 
 SAMPLE_CSV = """Week,ID,Title,Keyword,Related Pillar,Cluster,Type,Written,Published,URL
-1,1,چرا کولر شاهین در سربالایی باد گرم می‌زند؟,مشکل کولر شاهین,تعمیر و نگهداری,سیستم تهویه,راهنمای عیب‌یابی,1,1,https://cheraq-check.ir/?p=3397
-1,2,صدای تق‌تق فرمان پراید هنگام پیچیدن,صدای تق تق فرمان پراید,عیب‌یابی فنی,جلوبندی,پرسش و پاسخ,0,0,
-2,3,"تفاوت لنت ترمز تکستار اصلی و تقلبی برای ۲۰۶ تیپ ۵ + عکس تشخیص",تشخیص لنت تکستار اصلی ۲۰۶,قطعات یدکی,سیستم ترمز,راهنمای خرید,0,0,"""
+1,1,\u0686\u0631\u0627 \u06a9\u0648\u0644\u0631 \u0634\u0627\u0647\u06cc\u0646 \u062f\u0631 \u0633\u0631\u0628\u0627\u0644\u0627\u06cc\u06cc \u0628\u0627\u062f \u06af\u0631\u0645 \u0645\u06cc\u200c\u0632\u0646\u062f\u061f,\u0645\u0634\u06a9\u0644 \u06a9\u0648\u0644\u0631 \u0634\u0627\u0647\u06cc\u0646,\u062a\u0639\u0645\u06cc\u0631 \u0648 \u0646\u06af\u0647\u062f\u0627\u0631\u06cc,\u0633\u06cc\u0633\u062a\u0645 \u062a\u0647\u0648\u06cc\u0647,\u0631\u0627\u0647\u0646\u0645\u0627\u06cc \u0639\u06cc\u0628\u200c\u06cc\u0627\u0628\u06cc,1,1,https://cheraq-check.ir/?p=3397
+1,2,\u0635\u062f\u0627\u06cc \u062a\u0642\u200c\u062a\u0642 \u0641\u0631\u0645\u0627\u0646 \u067e\u0631\u0627\u06cc\u062f \u0647\u0646\u06af\u0627\u0645 \u067e\u06cc\u0686\u06cc\u062f\u0646,\u0635\u062f\u0627\u06cc \u062a\u0642 \u062a\u0642 \u0641\u0631\u0645\u0627\u0646 \u067e\u0631\u0627\u06cc\u062f,\u0639\u06cc\u0628\u200c\u06cc\u0627\u0628\u06cc \u0641\u0646\u06cc,\u062c\u0644\u0648\u0628\u0646\u062f\u06cc,\u067e\u0631\u0633\u0634 \u0648 \u067e\u0627\u0633\u062e,0,0,
+2,3,"\u062a\u0641\u0627\u0648\u062a \u0644\u0646\u062a \u062a\u0631\u0645\u0632 \u062a\u06a9\u0633\u062a\u0627\u0631 \u0627\u0635\u0644\u06cc \u0648 \u062a\u0642\u0644\u0628\u06cc \u0628\u0631\u0627\u06cc \u06f2\u06f0\u06f6 \u062a\u06cc\u067e \u06f5 + \u0639\u06a9\u0633 \u062a\u0634\u062e\u06cc\u0635",\u062a\u0634\u062e\u06cc\u0635 \u0644\u0646\u062a \u062a\u06a9\u0633\u062a\u0627\u0631 \u0627\u0635\u0644\u06cc \u06f2\u06f0\u06f6,\u0642\u0637\u0639\u0627\u062a \u06cc\u062f\u06a9\u06cc,\u0633\u06cc\u0633\u062a\u0645 \u062a\u0631\u0645\u0632,\u0631\u0627\u0647\u0646\u0645\u0627\u06cc \u062e\u0631\u06cc\u062f,0,0,"""
 
-PIPE_PASTE = """موضوع اول | کلمه اول | ستون الف | خوشه ۱ | راهنما | 5
-موضوع دوم | کلمه دوم"""
+PIPE_PASTE = """\u0645\u0648\u0636\u0648\u0639 \u0627\u0648\u0644 | \u06a9\u0644\u0645\u0647 \u0627\u0648\u0644 | \u0633\u062a\u0648\u0646 \u0627\u0644\u0641 | \u062e\u0648\u0634\u0647 \u06f1 | \u0631\u0627\u0647\u0646\u0645\u0627 | 5
+\u0645\u0648\u0636\u0648\u0639 \u062f\u0648\u0645 | \u06a9\u0644\u0645\u0647 \u062f\u0648\u0645"""
 
-TAB_PASTE = "عنوان\tکلمه\tستون\tخوشه\tنوع\tاولویت\nالف\tب\tج\tد\tراهنما\t۳"
+TAB_PASTE = "\u0639\u0646\u0648\u0627\u0646\t\u06a9\u0644\u0645\u0647\t\u0633\u062a\u0648\u0646\t\u062e\u0648\u0634\u0647\t\u0646\u0648\u0639\t\u0627\u0648\u0644\u0648\u06cc\u062a\n\u0627\u0644\u0641\t\u0628\t\u062c\t\u062f\t\u0631\u0627\u0647\u0646\u0645\u0627\t\u06f3"
 
 
 def make_pb() -> FakePocketBase:
@@ -93,14 +94,17 @@ def test_parse_quoted_csv_keeps_commas():
     delim, rows = parse_delimited(SAMPLE_CSV)
     assert delim == ","
     assert len(rows) == 4
-    assert "تفاوت لنت ترمز تکستار اصلی و تقلبی برای ۲۰۶ تیپ ۵ + عکس تشخیص" in rows[3]
+    assert (
+        "\u062a\u0641\u0627\u0648\u062a \u0644\u0646\u062a \u062a\u0631\u0645\u0632 \u062a\u06a9\u0633\u062a\u0627\u0631 \u0627\u0635\u0644\u06cc \u0648 \u062a\u0642\u0644\u0628\u06cc \u0628\u0631\u0627\u06cc \u06f2\u06f0\u06f6 \u062a\u06cc\u067e \u06f5 + \u0639\u06a9\u0633 \u062a\u0634\u062e\u06cc\u0635"
+        in rows[3]
+    )
 
 
 def test_header_detection_en_and_fa():
     assert detect_header(parse_delimited(SAMPLE_CSV)[1]) is True
-    fa = "هفته،عنوان،کلمه کلیدی،ستون،خوشه،نوع\n۱،الف،ب،ج،د،راهنما"
+    fa = "\u0647\u0641\u062a\u0647\u060c\u0639\u0646\u0648\u0627\u0646\u060c\u06a9\u0644\u0645\u0647 \u06a9\u0644\u06cc\u062f\u06cc\u060c\u0633\u062a\u0648\u0646\u060c\u062e\u0648\u0634\u0647\u060c\u0646\u0648\u0639\n\u06f1\u060c\u0627\u0644\u0641\u060c\u0628\u060c\u062c\u060c\u062f\u060c\u0631\u0627\u0647\u0646\u0645\u0627"
     delim, rows = parse_delimited(fa)
-    assert delim == "،"
+    assert delim == "\u060c"
     assert detect_header(rows) is True
     assert detect_header(parse_delimited(PIPE_PASTE)[1]) is False
 
@@ -144,7 +148,16 @@ def _cmap(**fields) -> dict:
 
 
 def test_build_payload_ok():
-    row = ["عنوان نمونه", "کلید نمونه", "ستون", "خوشه", "راهنما", "7", "12", "https://x.ir/1"]
+    row = [
+        "\u0639\u0646\u0648\u0627\u0646 \u0646\u0645\u0648\u0646\u0647",
+        "\u06a9\u0644\u06cc\u062f \u0646\u0645\u0648\u0646\u0647",
+        "\u0633\u062a\u0648\u0646",
+        "\u062e\u0648\u0634\u0647",
+        "\u0631\u0627\u0647\u0646\u0645\u0627",
+        "7",
+        "12",
+        "https://x.ir/1",
+    ]
     payload, reason = build_payload(
         row,
         {
@@ -163,7 +176,7 @@ def test_build_payload_ok():
         set(),
     )
     assert reason is None
-    assert payload["title"] == "عنوان نمونه"
+    assert payload["title"] == "\u0639\u0646\u0648\u0627\u0646 \u0646\u0645\u0648\u0646\u0647"
     assert payload["type"] == "guide"
     assert payload["priority"] == 7
     assert payload["week"] == 12
@@ -173,23 +186,52 @@ def test_build_payload_ok():
 def test_build_payload_empty_title():
     payload, reason = build_payload(["  "], {"title": 0}, set(), set(), set(), set())
     assert payload is None
-    assert reason == "عنوان خالی است"
+    assert reason == "Title is empty"
 
 
 def test_build_payload_duplicate_title_and_keyword():
-    row = ["تکراری", "کلید تکراری", "", "", "", "", "", ""]
+    row = [
+        "\u062a\u06a9\u0631\u0627\u0631\u06cc",
+        "\u06a9\u0644\u06cc\u062f \u062a\u06a9\u0631\u0627\u0631\u06cc",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+    ]
     cmap = {"title": 0, "keyword": 1}
-    _p, r1 = build_payload(row, cmap, {normalize_key("تکراری")}, set(), set(), set())
+    _p, r1 = build_payload(
+        row, cmap, {normalize_key("\u062a\u06a9\u0631\u0627\u0631\u06cc")}, set(), set(), set()
+    )
     assert r1 == "duplicate"
-    _p, r2 = build_payload(row, cmap, set(), {normalize_key("کلید تکراری")}, set(), set())
+    _p, r2 = build_payload(
+        row,
+        cmap,
+        set(),
+        {normalize_key("\u06a9\u0644\u06cc\u062f \u062a\u06a9\u0631\u0627\u0631\u06cc")},
+        set(),
+        set(),
+    )
     assert r2 == "duplicate"
     # duplicate within the same batch
-    _p, r3 = build_payload(row, cmap, set(), set(), {normalize_key("تکراری")}, set())
+    _p, r3 = build_payload(
+        row, cmap, set(), set(), {normalize_key("\u062a\u06a9\u0631\u0627\u0631\u06cc")}, set()
+    )
     assert r3 == "duplicate"
 
 
 def test_build_payload_coerces_freeform_type():
-    row = ["تیتر", "کلید", "", "", "پرسش و پاسخ", "", "", ""]
+    row = [
+        "\u062a\u06cc\u062a\u0631",
+        "\u06a9\u0644\u06cc\u062f",
+        "",
+        "",
+        "\u067e\u0631\u0633\u0634 \u0648 \u067e\u0627\u0633\u062e",
+        "",
+        "",
+        "",
+    ]
     payload, reason = build_payload(
         row, {"title": 0, "keyword": 1, "type": 4}, set(), set(), set(), set()
     )
@@ -207,7 +249,9 @@ def test_import_rows_full_cycle(setup):
 
     first = import_rows(pb, proj["id"], rows, mapped, has_header=True)
     assert first["created"] == 3
-    assert first["coerced"] == 3  # راهنمای عیب‌یابی + پرسش و پاسخ + راهنمای خرید → article
+    assert (
+        first["coerced"] == 3
+    )  # \u0631\u0627\u0647\u0646\u0645\u0627\u06cc \u0639\u06cc\u0628\u200c\u06cc\u0627\u0628\u06cc + \u067e\u0631\u0633\u0634 \u0648 \u067e\u0627\u0633\u062e + \u0631\u0627\u0647\u0646\u0645\u0627\u06cc \u062e\u0631\u06cc\u062f → article
     assert first["errors"] == []
 
     # rerun → everything is a duplicate
@@ -225,10 +269,14 @@ def test_import_rows_full_cycle(setup):
 def test_import_rows_collects_errors(setup):
     pb, proj = setup["pb"], setup["proj"]
     rows = [
-        ["T", "K", "نوع"],
-        ["الف", "ک1", "راهنمای عیب‌یابی"],  # coerced → created
-        ["الف", "ک2", ""],  # duplicate title → skipped
-        ["", "ک3", ""],  # empty title → error
+        ["T", "K", "\u0646\u0648\u0639"],
+        [
+            "\u0627\u0644\u0641",
+            "\u06a91",
+            "\u0631\u0627\u0647\u0646\u0645\u0627\u06cc \u0639\u06cc\u0628\u200c\u06cc\u0627\u0628\u06cc",
+        ],  # coerced → created
+        ["\u0627\u0644\u0641", "\u06a92", ""],  # duplicate title → skipped
+        ["", "\u06a93", ""],  # empty title → error
     ]
     summary = import_rows(
         pb, proj["id"], rows, {"title": 0, "keyword": 1, "type": 2}, has_header=True
@@ -238,7 +286,7 @@ def test_import_rows_collects_errors(setup):
     assert summary["coerced"] == 1
     assert summary["error_count"] == 1
     assert summary["errors"][0]["row"] == 4
-    assert "عنوان خالی است" in summary["errors"][0]["reason"]
+    assert "Title is empty" in summary["errors"][0]["reason"]
 
 
 def test_preview_cache_roundtrip():
@@ -260,20 +308,25 @@ def test_preview_cache_roundtrip():
 # ---------------------------------------------------------------------------
 async def test_import_preview_renders_mapping_form(setup):
     req = make_req(setup["pb"], make_user(), setup["proj"]["id"])
-    resp = await P.topic_import_preview(req, setup["proj"]["id"], csv_text=PIPE_PASTE)
+    resp = await call_route_async(
+        P.topic_import_preview, req, setup["proj"]["id"], csv_text=PIPE_PASTE
+    )
     assert resp.status_code == 200
     body = resp.body.decode()
     assert "col_title" in body
-    assert "موضوع اول" in body  # preview sample row
-    assert "بدون هدر" in body
+    assert "\u0645\u0648\u0636\u0648\u0639 \u0627\u0648\u0644" in body  # preview sample row
+    assert "\u0628\u062f\u0648\u0646 \u0647\u062f\u0631" in body
     assert 'name="token"' in body
 
 
 async def test_import_preview_empty_input(setup):
     req = make_req(setup["pb"], make_user(), setup["proj"]["id"])
-    resp = await P.topic_import_preview(req, setup["proj"]["id"], csv_text="")
+    resp = await call_route_async(P.topic_import_preview, req, setup["proj"]["id"], csv_text="")
     assert resp.status_code == 200
-    assert "متن یا فایلی وارد نشده است" in toast_message(resp)
+    assert (
+        "\u0645\u062a\u0646 \u06cc\u0627 \u0641\u0627\u06cc\u0644\u06cc \u0648\u0627\u0631\u062f \u0646\u0634\u062f\u0647 \u0627\u0633\u062a"
+        in toast_message(resp)
+    )
 
 
 async def test_import_confirm_creates_topics(setup):
@@ -296,20 +349,20 @@ async def test_import_confirm_creates_topics(setup):
         return form
 
     req.form = fake_form
-    resp = await P.topic_import(req, proj["id"])
+    resp = await call_route_async(P.topic_import, req, proj["id"])
     assert resp.status_code == 200
     body = resp.body.decode()
-    assert "افزوده شد" in body
+    assert "\u0627\u0641\u0632\u0648\u062f\u0647 \u0634\u062f" in body
     assert TopicRepo(pb).list_for_project(proj["id"], per_page=50)  # non-empty
 
 
 async def test_import_confirm_requires_title_column(setup):
     pb, proj = setup["pb"], setup["proj"]
     token = store_preview(
-        rows=[["الف", "ب"]],
+        rows=[["\u0627\u0644\u0641", "\u0628"]],
         delimiter=",",
         has_header=False,
-        columns=[{"index": 0, "name": "ستون 1", "samples": []}],
+        columns=[{"index": 0, "name": "\u0633\u062a\u0648\u0646 1", "samples": []}],
         filename="s.csv",
     )
     req = make_req(pb, make_user(), proj["id"])
@@ -318,9 +371,12 @@ async def test_import_confirm_requires_title_column(setup):
         return {"token": token, "col_keyword": "1"}
 
     req.form = fake_form
-    resp = await P.topic_import(req, proj["id"])
+    resp = await call_route_async(P.topic_import, req, proj["id"])
     assert resp.status_code == 200
-    assert "ستون عنوان را انتخاب کنید" in toast_message(resp)
+    assert (
+        "\u0633\u062a\u0648\u0646 \u0639\u0646\u0648\u0627\u0646 \u0631\u0627 \u0627\u0646\u062a\u062e\u0627\u0628 \u06a9\u0646\u06cc\u062f"
+        in toast_message(resp)
+    )
 
 
 async def test_import_confirm_stale_token(setup):
@@ -330,9 +386,9 @@ async def test_import_confirm_stale_token(setup):
         return {"token": "expired", "col_title": "0"}
 
     req.form = fake_form
-    resp = await P.topic_import(req, setup["proj"]["id"])
+    resp = await call_route_async(P.topic_import, req, setup["proj"]["id"])
     assert resp.status_code == 200
-    assert "منقضی شده" in toast_message(resp)
+    assert "\u0645\u0646\u0642\u0636\u06cc \u0634\u062f\u0647" in toast_message(resp)
 
 
 def test_import_form_back_button_partial(setup):

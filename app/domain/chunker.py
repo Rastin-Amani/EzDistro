@@ -21,11 +21,11 @@ _SCRIPT_RE = re.compile(r"<(script|style|noscript|iframe)[^>]*>.*?</\1>", re.IGN
 _WS_RE = re.compile(r"\s+")
 _TRAILING_HYPHEN_RE = re.compile(r"\s*[-\u2014\u2013]\s*$")
 _PARAGRAPH_RE = re.compile(r"\n\s*\n")
-# Persian-aware sentence boundaries: . ! ? ؟ ! ؛ ; whitespace after a
+# Persian-aware sentence boundaries: . ! ? \u061f ! \u061b ; whitespace after a
 # sentence end, or a line break itself.
-_SENTENCE_RE = re.compile(r"(?<=[.!?؟!؛])\s+|\r?\n+")
+_SENTENCE_RE = re.compile(r"(?<=[.!?\u061f!\u061b])\s+|\r?\n+")
 # sentence-ending punctuation (used to decide hard-split points)
-_SENTENCE_END = re.compile(r"[.!?؟!؛]$")
+_SENTENCE_END = re.compile(r"[.!?\u061f!\u061b]$")
 
 SEPARATOR_STRATEGIES = ("auto", "paragraph", "sentence", "word")
 
@@ -69,7 +69,7 @@ def split_paragraphs(text: str) -> list[str]:
 
 
 def split_sentences(text: str) -> list[str]:
-    """Persian-aware sentence split: . ! ? ؟ ! ؛ and newlines as boundaries."""
+    """Persian-aware sentence split: . ! ? \u061f ! \u061b and newlines as boundaries."""
     parts = _SENTENCE_RE.split(text)
     sentences: list[str] = []
     for part in parts:

@@ -14,6 +14,7 @@ from app.pb import LazyDataPb, get_data_pb, get_pb
 # Routes anyone can access without a token.
 PUBLIC_PATHS = [
     "/login",
+    "/locale/",
     "/static",
     "/manifest.json",
     "/sw.js",
@@ -29,7 +30,7 @@ logger = get_logger(__name__)
 
 class AuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
-        # ---- Locale resolution (cookie preference, allowlisted, default fa) ----
+        # ---- Locale resolution (cookie preference, allowlisted, English default) ----
         set_request_locale(request.cookies.get(LOCALE_COOKIE))
 
         # ---- Request ID for correlation ----

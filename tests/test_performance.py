@@ -25,7 +25,7 @@ from tests.fakes import FakePocketBase, default_unique_fields
 def make_project(pb: FakePocketBase) -> dict[str, Any]:
     project = pb.collection("projects").create(
         {
-            "name": "پ",
+            "name": "\u067e",
             "slug": "perf",
             "language": "fa",
             "status": "active",
@@ -34,10 +34,13 @@ def make_project(pb: FakePocketBase) -> dict[str, Any]:
     )
     pb.collection("project_settings").create({"project": project["id"], **DEFAULT_SETTINGS})
     for ptype, content in (
-        ("brand_voice", "تو نویسنده سئو هستی."),
-        ("outline_user", "JSON برگردان."),
-        ("section_user", "HTML برگردان."),
-        ("seo_rules", "قوانین."),
+        (
+            "brand_voice",
+            "\u062a\u0648 \u0646\u0648\u06cc\u0633\u0646\u062f\u0647 \u0633\u0626\u0648 \u0647\u0633\u062a\u06cc.",
+        ),
+        ("outline_user", "JSON \u0628\u0631\u06af\u0631\u062f\u0627\u0646."),
+        ("section_user", "HTML \u0628\u0631\u06af\u0631\u062f\u0627\u0646."),
+        ("seo_rules", "\u0642\u0648\u0627\u0646\u06cc\u0646."),
     ):
         PromptRepo(pb).save_version(
             project_id=project["id"], ptype=ptype, name="default", content=content
@@ -82,7 +85,7 @@ def test_concurrent_generations_respect_llm_concurrency_limit(monkeypatch):
     pb = FakePocketBase(default_unique_fields())
     project = make_project(pb)
     topics = [
-        TopicRepo(pb).create(project=project["id"], title=f"ت{i}", keyword=f"ک{i}")
+        TopicRepo(pb).create(project=project["id"], title=f"\u062a{i}", keyword=f"\u06a9{i}")
         for i in range(4)
     ]
 
@@ -96,10 +99,14 @@ def test_concurrent_generations_respect_llm_concurrency_limit(monkeypatch):
         self.calls.append({"json_mode": json_mode, "user": user})
         if "JSON" in user or "json" in user:
             sections = ",".join(
-                f'{{"heading": "ب {s}", "content_brief": "خ"}}' for s in range(1, 5)
+                f'{{"heading": "\u0628 {s}", "content_brief": "\u062e"}}' for s in range(1, 5)
             )
-            return '{"title": "ت", "slug": "t", "sections": [' + sections + "]}"
-        return "<p>" + ("کلمه محتوا " * 120).strip() + "</p>"
+            return '{"title": "\u062a", "slug": "t", "sections": [' + sections + "]}"
+        return (
+            "<p>"
+            + ("\u06a9\u0644\u0645\u0647 \u0645\u062d\u062a\u0648\u0627 " * 120).strip()
+            + "</p>"
+        )
 
     monkeypatch.setattr(FakeLLM, "_next", syn_next)
 
@@ -155,7 +162,7 @@ def test_graceful_degradation_with_slow_providers(monkeypatch):
         pb.collection("project_settings").get_first_list_item(f'project="{project["id"]}"')["id"],
         {"retryPolicy": {"max_attempts": 3, "backoff_base": 2, "backoff_max": 60}},
     )
-    topic = TopicRepo(pb).create(project=project["id"], title="ت", keyword="ک")
+    topic = TopicRepo(pb).create(project=project["id"], title="\u062a", keyword="\u06a9")
 
     registry = SlowRegistry()
     registry.llm = FakeLLM([], delay=0.15)
@@ -165,10 +172,14 @@ def test_graceful_degradation_with_slow_providers(monkeypatch):
         self.calls.append({"json_mode": json_mode, "user": user})
         if "JSON" in user or "json" in user:
             sections = ",".join(
-                f'{{"heading": "ب {s}", "content_brief": "خ"}}' for s in range(1, 4)
+                f'{{"heading": "\u0628 {s}", "content_brief": "\u062e"}}' for s in range(1, 4)
             )
-            return '{"title": "ت", "slug": "t", "sections": [' + sections + "]}"
-        return "<p>" + ("کلمه محتوا " * 120).strip() + "</p>"
+            return '{"title": "\u062a", "slug": "t", "sections": [' + sections + "]}"
+        return (
+            "<p>"
+            + ("\u06a9\u0644\u0645\u0647 \u0645\u062d\u062a\u0648\u0627 " * 120).strip()
+            + "</p>"
+        )
 
     monkeypatch.setattr(FakeLLM, "_next", syn_next)
 
@@ -242,7 +253,7 @@ def test_retrieval_dedupe_keeps_best_score_per_url_and_unlinked():
     results = [
         RetrievalResult(
             document_id="a",
-            title="الف",
+            title="\u0627\u0644\u0641",
             source_url="https://s.test/1",
             snippet="x",
             vector_score=0.5,
@@ -250,7 +261,7 @@ def test_retrieval_dedupe_keeps_best_score_per_url_and_unlinked():
         ),
         RetrievalResult(
             document_id="b",
-            title="الف",
+            title="\u0627\u0644\u0641",
             source_url="https://s.test/1/",
             snippet="y",
             vector_score=0.9,
@@ -258,7 +269,7 @@ def test_retrieval_dedupe_keeps_best_score_per_url_and_unlinked():
         ),  # same URL
         RetrievalResult(
             document_id="c",
-            title="بدون لینک",
+            title="\u0628\u062f\u0648\u0646 \u0644\u06cc\u0646\u06a9",
             source_url="",
             snippet="z",
             vector_score=0.3,
@@ -335,8 +346,8 @@ def test_retrieval_service_dedupe_integration():
             payload={
                 "project_id": project["id"],
                 "source_url": "https://s.test/1",
-                "title": "الف",
-                "chunk_text": "متن الف",
+                "title": "\u0627\u0644\u0641",
+                "chunk_text": "\u0645\u062a\u0646 \u0627\u0644\u0641",
             },
         ),
         "x:2": VectorPoint(
@@ -345,8 +356,8 @@ def test_retrieval_service_dedupe_integration():
             payload={
                 "project_id": project["id"],
                 "source_url": "https://s.test/1",
-                "title": "الف",
-                "chunk_text": "متن الف بهتر",
+                "title": "\u0627\u0644\u0641",
+                "chunk_text": "\u0645\u062a\u0646 \u0627\u0644\u0641 \u0628\u0647\u062a\u0631",
             },
         ),
         "x:3": VectorPoint(
@@ -355,8 +366,8 @@ def test_retrieval_service_dedupe_integration():
             payload={
                 "project_id": project["id"],
                 "source_url": "https://s.test/2",
-                "title": "ب",
-                "chunk_text": "متن ب",
+                "title": "\u0628",
+                "chunk_text": "\u0645\u062a\u0646 \u0628",
             },
         ),
     }
@@ -364,7 +375,9 @@ def test_retrieval_service_dedupe_integration():
     service = RetrievalService(pb, registry)
     results = asyncio.run(
         service.retrieve(
-            config, "سئو", RetrievalOptions(candidate_count=10, similarity_threshold=None)
+            config,
+            "\u0633\u0626\u0648",
+            RetrievalOptions(candidate_count=10, similarity_threshold=None),
         )
     )
     urls = [r.source_url for r in results]

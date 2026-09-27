@@ -45,6 +45,7 @@ from app.domain.images import (
     style_fingerprint_source,
     validate_publishable_images,
 )
+from app.i18n import _
 from app.jobs.context import JobContext
 from app.jobs.handlers import register_job
 from app.providers.base import ImageRequest, PermanentError, ProviderError, TransientError
@@ -284,7 +285,7 @@ async def _generate_image(ctx: JobContext, *, role: str, section_key: str) -> di
     plan_raw = article.get("imagePlan")
     if not plan_raw:
         raise PermanentError(
-            "برنامه تصاویر ساخته نشده — ابتدا «برنامه تصاویر» را تولید کنید",
+            _("Image plan not created — generate the image plan first"),
             details={"article": article_id},
         )
     plan = ArticleImagePlan.model_validate(plan_raw)
@@ -376,8 +377,8 @@ async def _generate_image(ctx: JobContext, *, role: str, section_key: str) -> di
     image_id = row["id"]
     attempts = repo.bump_attempts(image_id)
 
-    ctx.stage_started("generating", "در حال تولید تصویر…")
-    ctx.progress(10, stage="generating", message="در حال تولید تصویر…")
+    ctx.stage_started("generating", _("Generating the image…"))
+    ctx.progress(10, stage="generating", message=_("Generating the image…"))
     await ctx.check_cancelled()
 
     cache: dict[str, Any] = {}
@@ -435,12 +436,12 @@ async def _generate_image(ctx: JobContext, *, role: str, section_key: str) -> di
             ctx.warning("generated image aspect drifted from plan", {"imageId": image_id})
 
         if imgs["ai_qa_enabled"]:
-            ctx.progress(45, stage="qa", message="بررسی کیفیت تصویر…")
+            ctx.progress(45, stage="qa", message=_("Checking image quality…"))
             await _ai_qa(ctx, result.data, result.mime_type, spec.prompt)
 
         # optimize + store
-        ctx.stage_started("optimizing", "در حال بهینه‌سازی تصویر…")
-        ctx.progress(60, stage="optimizing", message="در حال بهینه‌سازی تصویر…")
+        ctx.stage_started("optimizing", _("Optimizing the image…"))
+        ctx.progress(60, stage="optimizing", message=_("Optimizing the image…"))
         repo.mark_optimizing(image_id)
         service = ImageOptimizationService()
         optimized, mime, opt_w, opt_h, small = service.optimize(
@@ -496,12 +497,12 @@ async def _generate_image(ctx: JobContext, *, role: str, section_key: str) -> di
     repo.set_active(image_id)
 
     duration_ms = int((time.monotonic() - started) * 1000)
-    ctx.stage_completed("optimizing", "تصویر آماده شد")
-    ctx.progress(100, stage="done", message="تصویر آماده شد")
+    ctx.stage_completed("optimizing", _("Image is ready"))
+    ctx.progress(100, stage="done", message=_("Image is ready"))
     # usage accounting: image_generated (no prompt content — internal event)
     ctx.event(
         "image_generated",
-        "تصویر تولید شد",
+        _("Image generated"),
         {
             "imageId": image_id,
             "role": role,
@@ -558,10 +559,10 @@ async def handle_optimize_article_image(ctx: JobContext) -> dict[str, Any]:
     source = row.get("sourceFile") or ""
     if not source:
         raise PermanentError(
-            "این تصویر فایل منبع ندارد — برای بهینه‌سازی مجدد ابتدا آن را دوباره تولید کنید"
+            _("This image has no source file — regenerate it before re-optimizing")
         )
     imgs = ctx.config.images
-    ctx.stage_started("optimizing", "در حال بهینه‌سازی تصویر…")
+    ctx.stage_started("optimizing", _("Optimizing the image…"))
     data = await _download_file(pb_file_url(image_id, source))
     service = ImageOptimizationService()
     optimized, mime, width, height, small = service.optimize(
@@ -589,7 +590,7 @@ async def handle_optimize_article_image(ctx: JobContext) -> dict[str, Any]:
     # serving the pre-re-optimization file until the next publish re-attaches.
     ctx.event(
         "image_optimized",
-        "تصویر بهینه‌سازی شد",
+        _("Image optimized"),
         {"imageId": image_id, "format": mime, "width": width, "height": height},
     )
     return {"imageId": image_id, "format": mime, "width": width, "height": height}
@@ -607,7 +608,7 @@ async def ensure_wp_media(
         return existing_id, str(row.get("wordpressUrl") or "")
     file_field = row.get("optimizedFile") or row.get("sourceFile") or ""
     if not file_field:
-        raise PermanentError("تصویر فایل آماده ندارد", details={"imageId": row["id"]})
+        raise PermanentError(_("The image has no ready file"), details={"imageId": row["id"]})
     data = await _download_file(pb_file_url(row["id"], file_field))
     try:
         media = await publisher.upload_media(
@@ -620,7 +621,7 @@ async def ensure_wp_media(
         )
     except ProviderError as exc:
         raise PermanentError(
-            f"بارگذاری تصویر در وردپرس ناموفق بود: {exc}",
+            _("Uploading the image to WordPress failed: %(error)s") % {"error": exc},
             details={"category": "wordpress_upload_failure", "imageId": row["id"]},
         ) from exc
     media_id = int(media.get("id") or 0)
@@ -651,7 +652,11 @@ async def handle_publish_article_image(ctx: JobContext) -> dict[str, Any]:
         and row.get("role") == "cover"
         and not int(article.get("wordpressPostId") or 0)
     ):
-        raise PermanentError("مقاله هنوز در وردپرس منتشر نشده — تنظیم تصویر شاخص ممکن نیست")
+        raise PermanentError(
+            _(
+                "The article is not published on WordPress yet — setting the featured image is not possible"
+            )
+        )
     publisher = ctx.providers.publisher
     media_id, url = await ensure_wp_media(ctx, row, article, publisher)
     featured = False
@@ -661,7 +666,7 @@ async def handle_publish_article_image(ctx: JobContext) -> dict[str, Any]:
         featured = True
     ctx.event(
         "image_uploaded",
-        "تصویر در وردپرس بارگذاری شد",
+        _("Image uploaded to WordPress"),
         {"imageId": image_id, "mediaId": media_id, "url": url, "featured": featured},
     )
     return {"imageId": image_id, "mediaId": media_id, "url": url, "featured": featured}
@@ -708,7 +713,7 @@ async def apply_images_to_html(
     )
     if not ok:
         raise PermanentError(
-            "انتشار متوقف شد: " + "؛ ".join(problems),
+            _("Publishing stopped: %(problems)s") % {"problems": "; ".join(problems)},
             details={"images": problems, "article": article["id"]},
         )
 

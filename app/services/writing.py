@@ -28,6 +28,7 @@ from app.domain.article_validation import ArticleValidator, SectionValidator
 from app.domain.parsing import extract_json
 from app.domain.sanitize import sanitize_html
 from app.domain.seo_score import seo_score
+from app.i18n import _
 from app.jobs.context import JobCancelled, JobContext
 from app.jobs.handlers import register_job
 from app.providers.base import GenerationParams, ProviderError, TransientError
@@ -138,8 +139,8 @@ async def _write(
             "resuming with saved outline", {"article": article["id"], "version": outline_version}
         )
     else:
-        ctx.stage_started("outline", "در حال تولید رئوس مطالب")
-        ctx.progress(5, stage="outline", message="در حال تولید رئوس مطالب…")
+        ctx.stage_started("outline", _("Generating the outline"))
+        ctx.progress(5, stage="outline", message=_("Generating the outline…"))
         topics.set_status(topic_id, "planning")
         outline = await _generate_outline(ctx, topic)
         if article is None:
@@ -155,7 +156,7 @@ async def _write(
         )
         topics.link_article(topic_id, article["id"])
         topics.set_status(topic_id, "outline_ready")
-        ctx.stage_completed("outline", "رئوس مطالب آماده شد")
+        ctx.stage_completed("outline", _("The outline is ready"))
 
     article_id = article["id"]
 
@@ -211,8 +212,8 @@ async def _write(
             "assembleJob": assemble["id"],
         },
     )
-    ctx.stage_completed("outline", "تولید مقاله آغاز شد")
-    ctx.progress(100, stage="done", message="وظایف بخش‌ها ساخته شدند")
+    ctx.stage_completed("outline", _("Article generation started"))
+    ctx.progress(100, stage="done", message=_("Section jobs created"))
     return {
         "articleId": article_id,
         "outlineVersion": outline_version,
@@ -248,7 +249,7 @@ async def handle_generate_outline(ctx: JobContext) -> dict[str, Any]:
     topics.link_article(topic_id, article["id"])
     _persist_sections(ctx, sections, article["id"], outline)
     topics.set_status(topic_id, "outline_ready")
-    ctx.progress(100, stage="done", message="رئوس مطالب آماده شد")
+    ctx.progress(100, stage="done", message=_("The outline is ready"))
     return {"topicId": topic_id, "articleId": article["id"], "outlineVersion": version}
 
 
@@ -275,7 +276,9 @@ async def handle_generate_section(ctx: JobContext) -> dict[str, Any]:
     plan = _section_plan_at(outline, position, section)
 
     ctx.progress(
-        10, stage="generating_section", message=f"تولید بخش: {section.get('heading') or ''}"
+        10,
+        stage="generating_section",
+        message=_("Generating section: %(heading)s") % {"heading": section.get("heading") or ""},
     )
     sections.mark_generating(section_id)
 
@@ -313,7 +316,7 @@ async def handle_generate_section(ctx: JobContext) -> dict[str, Any]:
         )
         if not waiting:
             articles.set_status(article.get("id"), "review")
-    ctx.progress(100, stage="done", message="بخش تولید شد")
+    ctx.progress(100, stage="done", message=_("Section generated"))
     ctx.info("section generated", {"section": section_id, "words": result.get("words", 0)})
     return {"sectionId": section_id, "promptVersion": result["prompt_version"]}
 
@@ -354,8 +357,8 @@ async def handle_assemble_article(ctx: JobContext) -> dict[str, Any]:
             details={"failed_sections": failed_ids},
         )
 
-    ctx.stage_started("assembling", "در حال ساخت مقاله نهایی")
-    ctx.progress(40, stage="assembling", message="در حال ساخت مقاله نهایی…")
+    ctx.stage_started("assembling", _("Assembling the final article"))
+    ctx.progress(40, stage="assembling", message=_("Assembling the final article…"))
 
     outline = article.get("outline") or {}
     ordered = [r for r in rows if r.get("status") == "done"]
@@ -502,8 +505,8 @@ async def handle_assemble_article(ctx: JobContext) -> dict[str, Any]:
                     {"score": score, "attempts": attempts, "article": article_id},
                 )
 
-    ctx.stage_completed("assembling", "مقاله آماده بازبینی است")
-    ctx.progress(100, stage="done", message="مقاله آماده بازبینی است")
+    ctx.stage_completed("assembling", _("The article is ready for review"))
+    ctx.progress(100, stage="done", message=_("The article is ready for review"))
     return {
         "articleId": article_id,
         "words": word_count_from_html(html),
@@ -539,7 +542,10 @@ async def _generate_outline(ctx: JobContext, topic: dict[str, Any]) -> dict[str,
     else:
         user = _OUTLINE_TASK_FALLBACK
         if retrieval["context"]:
-            user += "\n\n## زمینه بازیابی (فقط نتایج مرتبط)\n" + retrieval["context"]
+            user += (
+                "\n\n## \u0632\u0645\u06cc\u0646\u0647 \u0628\u0627\u0632\u06cc\u0627\u0628\u06cc (\u0641\u0642\u0637 \u0646\u062a\u0627\u06cc\u062c \u0645\u0631\u062a\u0628\u0637)\n"
+                + retrieval["context"]
+            )
 
     system_raw = ctx.config.prompt("outline_system") or ctx.config.prompt("brand_voice")
     system = None
@@ -685,7 +691,10 @@ async def _generate_section(
         user = _SECTION_TASK_FALLBACK
         links = context["internal_links"]
         if links:
-            user += "\n\n## لینک‌های داخلی این بخش (در صورت نیاز استفاده کن)\n" + links
+            user += (
+                "\n\n## \u0644\u06cc\u0646\u06a9\u200c\u0647\u0627\u06cc \u062f\u0627\u062e\u0644\u06cc \u0627\u06cc\u0646 \u0628\u062e\u0634 (\u062f\u0631 \u0635\u0648\u0631\u062a \u0646\u06cc\u0627\u0632 \u0627\u0633\u062a\u0641\u0627\u062f\u0647 \u06a9\u0646)\n"
+                + links
+            )
 
     system_raw = ctx.config.prompt("section_system") or ctx.config.prompt("brand_voice")
     system = None
@@ -743,20 +752,20 @@ def _generation_params(ctx: JobContext, role: str = "outline") -> GenerationPara
 
 
 _OUTLINE_TASK_FALLBACK = (
-    "خروجی را فقط به‌صورت JSON معتبر با این ساختار بده:\n"
+    "\u062e\u0631\u0648\u062c\u06cc \u0631\u0627 \u0641\u0642\u0637 \u0628\u0647\u200c\u0635\u0648\u0631\u062a JSON \u0645\u0639\u062a\u0628\u0631 \u0628\u0627 \u0627\u06cc\u0646 \u0633\u0627\u062e\u062a\u0627\u0631 \u0628\u062f\u0647:\n"
     '{"title": string, "slug": string, "sections": ['
     '{"heading": string, "content_brief": string, "internal_links": [{"title": string, "url": string, "anchor_text": string}]}'
     "]}\n"
-    "سرفصل‌ها مختصر و حاوی کلمه کلیدی باشند؛ title باید عیناً شامل کلمه کلیدی باشد و slug از روی آن "
-    "ساخته شود تا URL حاوی کلمه کلیدی باشد؛ دست‌کم یک تیتر بخش حاوی کلمه کلیدی باشد؛ "
-    "هیچ توضیحی خارج از JSON ننویس."
+    "\u0633\u0631\u0641\u0635\u0644\u200c\u0647\u0627 \u0645\u062e\u062a\u0635\u0631 \u0648 \u062d\u0627\u0648\u06cc \u06a9\u0644\u0645\u0647 \u06a9\u0644\u06cc\u062f\u06cc \u0628\u0627\u0634\u0646\u062f\u061b title \u0628\u0627\u06cc\u062f \u0639\u06cc\u0646\u0627\u064b \u0634\u0627\u0645\u0644 \u06a9\u0644\u0645\u0647 \u06a9\u0644\u06cc\u062f\u06cc \u0628\u0627\u0634\u062f \u0648 slug \u0627\u0632 \u0631\u0648\u06cc \u0622\u0646 "
+    "\u0633\u0627\u062e\u062a\u0647 \u0634\u0648\u062f \u062a\u0627 URL \u062d\u0627\u0648\u06cc \u06a9\u0644\u0645\u0647 \u06a9\u0644\u06cc\u062f\u06cc \u0628\u0627\u0634\u062f\u061b \u062f\u0633\u062a\u200c\u06a9\u0645 \u06cc\u06a9 \u062a\u06cc\u062a\u0631 \u0628\u062e\u0634 \u062d\u0627\u0648\u06cc \u06a9\u0644\u0645\u0647 \u06a9\u0644\u06cc\u062f\u06cc \u0628\u0627\u0634\u062f\u061b "
+    "\u0647\u06cc\u0686 \u062a\u0648\u0636\u06cc\u062d\u06cc \u062e\u0627\u0631\u062c \u0627\u0632 JSON \u0646\u0646\u0648\u06cc\u0633."
 )
 
 _SECTION_TASK_FALLBACK = (
-    "فقط HTML معتبر برای بخش برگردان: تیتر با <h2> و محتوا با <p>/<ul>/<ol>/<strong>/<em>/<a>؛ "
-    "بدون استایل inline، بدون تیتر <h1>، بدون fence و بدون توضیح اضافه. "
-    "هر بخش دست‌کم ۱۵۰ کلمه و دست‌کم یک لیست (ul/ol) داشته باشد؛ بخش اول مقاله باید اولین جمله‌اش را "
-    "با کلمه کلیدی شروع کند؛ کلمه کلیدی را طبیعی و حدود ۱ تا ۲ بار در هر ۱۰۰ کلمه تکرار کن."
+    "\u0641\u0642\u0637 HTML \u0645\u0639\u062a\u0628\u0631 \u0628\u0631\u0627\u06cc \u0628\u062e\u0634 \u0628\u0631\u06af\u0631\u062f\u0627\u0646: \u062a\u06cc\u062a\u0631 \u0628\u0627 <h2> \u0648 \u0645\u062d\u062a\u0648\u0627 \u0628\u0627 <p>/<ul>/<ol>/<strong>/<em>/<a>\u061b "
+    "\u0628\u062f\u0648\u0646 \u0627\u0633\u062a\u0627\u06cc\u0644 inline\u060c \u0628\u062f\u0648\u0646 \u062a\u06cc\u062a\u0631 <h1>\u060c \u0628\u062f\u0648\u0646 fence \u0648 \u0628\u062f\u0648\u0646 \u062a\u0648\u0636\u06cc\u062d \u0627\u0636\u0627\u0641\u0647. "
+    "\u0647\u0631 \u0628\u062e\u0634 \u062f\u0633\u062a\u200c\u06a9\u0645 \u06f1\u06f5\u06f0 \u06a9\u0644\u0645\u0647 \u0648 \u062f\u0633\u062a\u200c\u06a9\u0645 \u06cc\u06a9 \u0644\u06cc\u0633\u062a (ul/ol) \u062f\u0627\u0634\u062a\u0647 \u0628\u0627\u0634\u062f\u061b \u0628\u062e\u0634 \u0627\u0648\u0644 \u0645\u0642\u0627\u0644\u0647 \u0628\u0627\u06cc\u062f \u0627\u0648\u0644\u06cc\u0646 \u062c\u0645\u0644\u0647\u200c\u0627\u0634 \u0631\u0627 "
+    "\u0628\u0627 \u06a9\u0644\u0645\u0647 \u06a9\u0644\u06cc\u062f\u06cc \u0634\u0631\u0648\u0639 \u06a9\u0646\u062f\u061b \u06a9\u0644\u0645\u0647 \u06a9\u0644\u06cc\u062f\u06cc \u0631\u0627 \u0637\u0628\u06cc\u0639\u06cc \u0648 \u062d\u062f\u0648\u062f \u06f1 \u062a\u0627 \u06f2 \u0628\u0627\u0631 \u062f\u0631 \u0647\u0631 \u06f1\u06f0\u06f0 \u06a9\u0644\u0645\u0647 \u062a\u06a9\u0631\u0627\u0631 \u06a9\u0646."
 )
 
 

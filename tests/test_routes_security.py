@@ -47,20 +47,20 @@ def _anon_req(pb, project_id):
 
 MUTATIONS = [
     # (route fn, path args builder, form kwargs builder)
-    (P.create_topic, lambda pb, a, b: (a["id"],), lambda: {"title": "ت"}),
+    (P.create_topic, lambda pb, a, b: (a["id"],), lambda: {"title": "\u062a"}),
     (
         P.write_topic,
-        lambda pb, a, b: (a["id"], make_topic(pb, a["id"], title="ت")["id"]),
+        lambda pb, a, b: (a["id"], make_topic(pb, a["id"], title="\u062a")["id"]),
         lambda: {},
     ),
     (
         P.cancel_topic,
-        lambda pb, a, b: (a["id"], make_topic(pb, a["id"], title="ت", status="queued")["id"]),
+        lambda pb, a, b: (a["id"], make_topic(pb, a["id"], title="\u062a", status="queued")["id"]),
         lambda: {},
     ),
     (
         P.delete_topic,
-        lambda pb, a, b: (a["id"], make_topic(pb, a["id"], title="ت")["id"]),
+        lambda pb, a, b: (a["id"], make_topic(pb, a["id"], title="\u062a")["id"]),
         lambda: {},
     ),
     (P.topics_bulk, lambda pb, a, b: (a["id"],), lambda: {"action": "generate", "topic_ids": "x"}),
@@ -71,7 +71,7 @@ MUTATIONS = [
         lambda pb, a, b: (a["id"],),
         lambda: {"kind": "index", "enabled": "1", "interval_minutes": "60"},
     ),
-    (P.save_settings, lambda pb, a, b: (a["id"],), lambda: {"name": "x"}),
+    (P.save_settings, lambda pb, a, b: (a["id"],), lambda: {}),
     (
         W.set_article_status,
         lambda pb, a, b: (a["id"], make_article(pb, a["id"], status="review")["id"]),
@@ -91,7 +91,7 @@ MUTATIONS = [
     (
         W.outline_add,
         lambda pb, a, b: (a["id"], make_article(pb, a["id"])["id"]),
-        lambda: {"heading": "ج", "content_brief": "خ"},
+        lambda: {"heading": "\u062c", "content_brief": "\u062e"},
     ),
     (A.regenerate_article, lambda pb, a, b: (a["id"], make_article(pb, a["id"])["id"]), lambda: {}),
     (
@@ -118,7 +118,9 @@ def test_mutations_reject_anonymous(fn, build_args, build_kwargs):
         "jobs": len(pb.collection("jobs").get_full_list()),
     }
     resp = call_route(fn, _anon_req(pb, proj_a["id"]), *args, **kwargs)
-    assert "ناموفق" in toast_message(resp) or "دسترسی" in toast_message(resp)
+    assert "\u0646\u0627\u0645\u0648\u0641\u0642" in toast_message(
+        resp
+    ) or "\u062f\u0633\u062a\u0631\u0633\u06cc" in toast_message(resp)
     # no mutation happened
     assert len(TopicRepo(pb).list_for_project(proj_a["id"], per_page=500)) == before["topics"]
     assert len(pb.collection("articles").get_full_list()) == before["articles"]
@@ -134,7 +136,9 @@ def test_mutations_reject_non_member(fn, build_args, build_kwargs):
     kwargs = build_kwargs()
     req = make_req(pb, make_user("stranger"), proj_a["id"])
     resp = call_route(fn, req, *args, **kwargs)
-    assert "ناموفق" in toast_message(resp) or "دسترسی" in toast_message(resp)
+    assert "\u0646\u0627\u0645\u0648\u0641\u0642" in toast_message(
+        resp
+    ) or "\u062f\u0633\u062a\u0631\u0633\u06cc" in toast_message(resp)
 
 
 @pytest.mark.parametrize(
@@ -147,7 +151,9 @@ def test_mutations_reject_viewer_role(fn, build_args, build_kwargs):
     kwargs = build_kwargs()
     req = make_req(pb, make_user("v1"), proj_a["id"])
     resp = call_route(fn, req, *args, **kwargs)
-    assert "ناموفق" in toast_message(resp) or "کافی" in toast_message(resp)
+    assert "\u0646\u0627\u0645\u0648\u0641\u0642" in toast_message(
+        resp
+    ) or "\u06a9\u0627\u0641\u06cc" in toast_message(resp)
 
 
 @pytest.mark.parametrize(
@@ -159,7 +165,9 @@ def test_mutations_reject_missing_hx_header(fn, build_args, build_kwargs):
     kwargs = build_kwargs()
     req = make_req_plain(pb, make_user(), proj_a["id"])
     resp = call_route(fn, req, *args, **kwargs)
-    assert "ناموفق" in toast_message(resp) or "فقط" in toast_message(resp)
+    assert "\u0646\u0627\u0645\u0648\u0641\u0642" in toast_message(
+        resp
+    ) or "\u0641\u0642\u0637" in toast_message(resp)
 
 
 # ---------------------------------------------------------------------------
@@ -167,10 +175,10 @@ def test_mutations_reject_missing_hx_header(fn, build_args, build_kwargs):
 # ---------------------------------------------------------------------------
 def test_topic_mutations_cannot_touch_foreign_topic():
     pb, proj_a, proj_b = _setup()
-    foreign = make_topic(pb, proj_b["id"], title="ب", status="queued")
+    foreign = make_topic(pb, proj_b["id"], title="\u0628", status="queued")
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(P.cancel_topic, req, proj_a["id"], foreign["id"])
-    assert "یافت نشد" in toast_message(resp)
+    assert "\u06cc\u0627\u0641\u062a \u0646\u0634\u062f" in toast_message(resp)
     assert TopicRepo(pb).get(foreign["id"])["status"] == "queued"
 
 
@@ -179,7 +187,7 @@ def test_article_mutations_cannot_touch_foreign_article():
     foreign = make_article(pb, proj_b["id"], status="review")
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(W.approve_article, req, proj_a["id"], foreign["id"])
-    assert "یافت نشد" in toast_message(resp)
+    assert "\u06cc\u0627\u0641\u062a \u0646\u0634\u062f" in toast_message(resp)
     assert ArticleRepo(pb).get(foreign["id"])["status"] == "review"
 
 
@@ -188,7 +196,7 @@ def test_integration_delete_cannot_touch_foreign_integration():
     foreign = make_integration(pb, proj_b["id"])
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(P.delete_integration, req, proj_a["id"], foreign["id"])
-    assert "ناموفق" in toast_message(resp)
+    assert "\u0646\u0627\u0645\u0648\u0641\u0642" in toast_message(resp)
     assert pb.collection("integrations").get_one(foreign["id"]) is not None
 
 
@@ -200,7 +208,7 @@ def test_schedule_cannot_be_created_for_foreign_project_via_id_substitution():
     resp = call_route(
         P.save_schedules, req, proj_a["id"], kind="index", enabled="1", interval_minutes="5"
     )
-    assert "ذخیره شد" in toast_message(resp)
+    assert "\u0630\u062e\u06cc\u0631\u0647 \u0634\u062f" in toast_message(resp)
     # schedule lands in A (the URL project), never in B
     assert len(pb.collection("schedules").get_full_list()) == 1
     assert pb.collection("schedules").get_full_list()[0]["project"] == proj_a["id"]
@@ -210,8 +218,8 @@ def test_admin_bypasses_project_membership_but_stays_in_project():
     """Global admins can access any project, but record-level guards still
     prevent writing foreign records."""
     pb, proj_a, proj_b = _setup()
-    foreign = make_topic(pb, proj_b["id"], title="ب")
+    foreign = make_topic(pb, proj_b["id"], title="\u0628")
     req = make_req(pb, make_user("admin1", role="admin"), proj_a["id"])
     resp = call_route(P.write_topic, req, proj_a["id"], foreign["id"])
-    assert "یافت نشد" in toast_message(resp)
+    assert "\u06cc\u0627\u0641\u062a \u0646\u0634\u062f" in toast_message(resp)
     assert TopicRepo(pb).get(foreign["id"])["status"] == "planned"

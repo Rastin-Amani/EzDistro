@@ -31,5 +31,5 @@ def logs_page(request: Request, level: str = ""):
     return templates.TemplateResponse(
         request,
         "pages/logs/feed.html",
-        {"title": _("رویدادها"), "events": events, "level_filter": level},
+        {"title": _("Events"), "events": events, "level_filter": level},
     )

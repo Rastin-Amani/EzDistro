@@ -272,7 +272,7 @@ def build_visual_prompt(
     parts = [plan_prompt.strip()]
     if subject_context:
         parts.append(subject_context.strip())
-    style_bits = "، ".join(
+    style_bits = ", ".join(
         bit
         for bit in (
             str(style.get("tone") or "").strip(),
@@ -337,7 +337,7 @@ def estimate_cost(
     height: int,
     usage: dict[str, Any] | None = None,
 ) -> float | None:
-    """Estimated USD cost; None = unknown (UI shows 'نامشخص')."""
+    """Estimated USD cost; None = unknown (UI shows 'Unknown')."""
     rates = COST_RATES.get(provider or "")
     if not rates:
         return None

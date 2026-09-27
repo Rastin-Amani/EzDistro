@@ -65,11 +65,15 @@ class RetrievalContext:
         """Human-readable compact context block for LLM prompts."""
         parts: list[str] = []
         if self.links:
-            parts.append("## مقالات موجود در سایت (لینک‌سازی داخلی)")
+            parts.append(
+                "## \u0645\u0642\u0627\u0644\u0627\u062a \u0645\u0648\u062c\u0648\u062f \u062f\u0631 \u0633\u0627\u06cc\u062a (\u0644\u06cc\u0646\u06a9\u200c\u0633\u0627\u0632\u06cc \u062f\u0627\u062e\u0644\u06cc)"
+            )
             for link in self.links:
                 parts.append(f"- {link.title} ({link.url}) — {link.relevance_score:.2f}")
         if self.passages:
-            parts.append("## بخش‌های مرتبط از مقالات موجود")
+            parts.append(
+                "## \u0628\u062e\u0634\u200c\u0647\u0627\u06cc \u0645\u0631\u062a\u0628\u0637 \u0627\u0632 \u0645\u0642\u0627\u0644\u0627\u062a \u0645\u0648\u062c\u0648\u062f"
+            )
             for passage in self.passages:
                 parts.append(f"- {passage}")
         return "\n".join(parts)

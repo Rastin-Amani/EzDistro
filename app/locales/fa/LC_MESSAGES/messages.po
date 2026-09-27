@@ -1,4 +1,4 @@
-# English translations for PROJECT.
+# Persian translations for PROJECT.
 # Copyright (C) 2026 ORGANIZATION
 # This file is distributed under the same license as the PROJECT project.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
@@ -10,9 +10,9 @@ msgstr ""
 "POT-Creation-Date: 2026-09-27 22:41+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language: en\n"
-"Language-Team: en <LL@li.org>\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: fa\n"
+"Language-Team: fa <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -20,1311 +20,1311 @@ msgstr ""
 
 #: app/templates.py:166
 msgid "Pending"
-msgstr "Pending"
+msgstr "در انتظار"
 
 #: app/templates.py:167
 msgid "Awaiting retry"
-msgstr "Awaiting retry"
+msgstr "در انتظار تلاش مجدد"
 
 #: app/templates.py:168 app/templates/pages/workers/index.html:101 app/templates/pages/workers/index.html:229
 msgid "Running"
-msgstr "Running"
+msgstr "در حال اجرا"
 
 #: app/templates.py:169 app/templates/pages/workers/index.html:103
 msgid "Completed"
-msgstr "Completed"
+msgstr "تکمیل شده"
 
 #: app/templates.py:170 app/templates/layouts/platform.html:185 app/templates/pages/articles/_section_status.html:10 app/templates/pages/dashboard/_stats.html:13 app/templates/pages/projects/tabs/integration_health.html:3 app/templates/pages/workers/index.html:39 app/templates/pages/workers/index.html:105 app/templates/pages/workers/index.html:235
 msgid "Failed"
-msgstr "Failed"
+msgstr "ناموفق"
 
 #: app/templates.py:171
 msgid "Cancelled"
-msgstr "Cancelled"
+msgstr "لغو شده"
 
 #: app/templates.py:172
 msgid "Planned"
-msgstr "Planned"
+msgstr "برنامه‌ریزی‌شده"
 
 #: app/templates.py:173 app/templates/pages/workers/index.html:35
 msgid "Queued"
-msgstr "Queued"
+msgstr "در صف"
 
 #: app/templates.py:174
 msgid "Outlining"
-msgstr "Outlining"
+msgstr "در حال رئوس‌سازی"
 
 #: app/templates.py:175
 msgid "Outline ready"
-msgstr "Outline ready"
+msgstr "رئوس آماده"
 
 #: app/templates.py:176
 msgid "Writing"
-msgstr "Writing"
+msgstr "در حال نگارش"
 
 #: app/templates.py:177 app/templates/pages/articles/workspace.html:93
 msgid "Review"
-msgstr "Review"
+msgstr "بازبینی"
 
 #: app/templates.py:178
 msgid "Approved"
-msgstr "Approved"
+msgstr "تأیید شده"
 
 #: app/templates.py:179 app/templates/pages/articles/review.html:67
 msgid "Returned"
-msgstr "Returned"
+msgstr "بازگردانده شده"
 
 #: app/templates.py:180
 msgid "Publishing"
-msgstr "Publishing"
+msgstr "در حال انتشار"
 
 #: app/templates.py:181 app/templates/pages/dashboard/_stats.html:10 app/templates/pages/projects/tabs/indexing.html:27
 msgid "Published"
-msgstr "Published"
+msgstr "منتشر شده"
 
 #: app/templates.py:182
 msgid "Rejected"
-msgstr "Rejected"
+msgstr "رد شده"
 
 #: app/templates.py:183 app/templates/pages/projects/tabs/prompts.html:247
 msgid "Duplicate"
-msgstr "Duplicate"
+msgstr "تکراری"
 
 #: app/templates.py:184 app/templates/pages/projects/tabs/settings.html:78
 msgid "Draft"
-msgstr "Draft"
+msgstr "پیش‌نویس"
 
 #: app/templates.py:185 app/templates/pages/articles/_section_status.html:4
 msgid "Generating"
-msgstr "Generating"
+msgstr "در حال تولید"
 
 #: app/templates.py:187
 msgid "Optimizing"
-msgstr "Optimizing"
+msgstr "در حال بهینه‌سازی"
 
 #: app/templates.py:188
 msgid "Ready"
-msgstr "Ready"
+msgstr "آماده"
 
 #: app/templates.py:189
 msgid "Uploading"
-msgstr "Uploading"
+msgstr "در حال بارگذاری"
 
 #: app/templates.py:190 app/templates/pages/articles/_section_status.html:12
 msgid "Done"
-msgstr "Done"
+msgstr "انجام شد"
 
 #: app/templates.py:191 app/templates/pages/projects/tabs/indexing.html:155
 msgid "Indexed"
-msgstr "Indexed"
+msgstr "نمایه شده"
 
 #: app/templates.py:192
 msgid "Deleted"
-msgstr "Deleted"
+msgstr "حذف شده"
 
 #: app/templates.py:193
 msgid "Manual"
-msgstr "Manual"
+msgstr "دستی"
 
 #: app/templates.py:194 app/templates/pages/jobs/detail.html:46
 msgid "Schedule"
-msgstr "Schedule"
+msgstr "زمان‌بندی"
 
 #: app/api/projects.py:94 app/templates.py:195
 msgid "Healthy"
-msgstr "Healthy"
+msgstr "سالم"
 
 #: app/api/projects.py:95 app/templates.py:196
 msgid "Degraded"
-msgstr "Degraded"
+msgstr "مشکل‌دار"
 
 #: app/api/projects.py:96 app/templates.py:197
 msgid "Unhealthy"
-msgstr "Unhealthy"
+msgstr "ناسالم"
 
 #: app/api/projects.py:93 app/templates.py:198 app/templates/pages/workers/index.html:67
 msgid "Unknown"
-msgstr "Unknown"
+msgstr "نامشخص"
 
 #: app/templates.py:199 app/templates/pages/logs/feed.html:11
 msgid "Info"
-msgstr "Info"
+msgstr "اطلاعات"
 
 #: app/templates.py:200 app/templates/pages/logs/feed.html:11
 msgid "Warning"
-msgstr "Warning"
+msgstr "هشدار"
 
 #: app/templates.py:201 app/templates/components/topics/import_result.html:35 app/templates/pages/articles/_images_pane.html:94 app/templates/pages/articles/review.html:139 app/templates/pages/jobs/detail.html:78 app/templates/pages/logs/feed.html:11 app/templates/pages/projects/tabs/indexing.html:159
 msgid "Error"
-msgstr "Error"
+msgstr "خطا"
 
 #: app/templates.py:202
 msgid "Debug"
-msgstr "Debug"
+msgstr "دیباگ"
 
 #: app/templates.py:203
 msgid "Job created"
-msgstr "Job created"
+msgstr "ایجاد وظیفه"
 
 #: app/templates.py:204
 msgid "Job claimed"
-msgstr "Job claimed"
+msgstr "دریافت وظیفه"
 
 #: app/templates.py:205
 msgid "Job started"
-msgstr "Job started"
+msgstr "شروع وظیفه"
 
 #: app/templates.py:206
 msgid "Stage started"
-msgstr "Stage started"
+msgstr "شروع مرحله"
 
 #: app/templates.py:207
 msgid "Stage finished"
-msgstr "Stage finished"
+msgstr "پایان مرحله"
 
 #: app/api/articles.py:278 app/api/jobs.py:250 app/templates.py:208
 msgid "Retry scheduled"
-msgstr "Retry scheduled"
+msgstr "زمان‌بندی تلاش مجدد"
 
 #: app/templates.py:209
 msgid "Provider error"
-msgstr "Provider error"
+msgstr "خطای ارائه‌دهنده"
 
 #: app/templates.py:210
 msgid "Job completed"
-msgstr "Job completed"
+msgstr "تکمیل وظیفه"
 
 #: app/templates.py:211
 msgid "Job failed"
-msgstr "Job failed"
+msgstr "شکست وظیفه"
 
 #: app/templates.py:212
 msgid "Job cancelled"
-msgstr "Job cancelled"
+msgstr "لغو وظیفه"
 
 #: app/templates.py:213
 msgid "Provider call"
-msgstr "Provider call"
+msgstr "فراخوانی ارائه‌دهنده"
 
 #: app/templates.py:229
 msgid "just now"
-msgstr "just now"
+msgstr "همین حالا"
 
 #: app/templates.py:232
 #, python-format
 msgid "1 minute ago"
 msgid_plural "%(n)d minutes ago"
-msgstr[0] "1 minute ago"
-msgstr[1] "%(n)d minutes ago"
+msgstr[0] "۱ دقیقه پیش"
+msgstr[1] "%(n)d دقیقه پیش"
 
 #: app/templates.py:235
 #, python-format
 msgid "1 hour ago"
 msgid_plural "%(n)d hours ago"
-msgstr[0] "1 hour ago"
-msgstr[1] "%(n)d hours ago"
+msgstr[0] "۱ ساعت پیش"
+msgstr[1] "%(n)d ساعت پیش"
 
 #: app/templates.py:237
 #, python-format
 msgid "1 day ago"
 msgid_plural "%(n)d days ago"
-msgstr[0] "1 day ago"
-msgstr[1] "%(n)d days ago"
+msgstr[0] "۱ روز پیش"
+msgstr[1] "%(n)d روز پیش"
 
 #: app/api/articles.py:30
 msgid "Something went wrong loading the article — please try again."
-msgstr "Something went wrong loading the article — please try again."
+msgstr "مشکلی در بارگذاری مقاله پیش آمد — دوباره تلاش کنید."
 
 #: app/api/articles.py:38 app/api/articles.py:71 app/api/articles.py:132 app/api/articles.py:212 app/api/articles.py:230 app/api/articles.py:249 app/api/images.py:89 app/api/images.py:182 app/api/images.py:212 app/api/workspace.py:42 app/api/workspace.py:197 app/api/workspace.py:220 app/api/workspace.py:264 app/api/workspace.py:286 app/api/workspace.py:302 app/api/workspace.py:325 app/api/workspace.py:368 app/api/workspace.py:402 app/api/workspace.py:434 app/services/revisions.py:87
 msgid "Article not found"
-msgstr "Article not found"
+msgstr "مقاله یافت نشد"
 
 #: app/api/articles.py:47 app/api/workspace.py:53 app/templates/auth/login.html:45 app/templates/pages/projects/tabs/publishing.html:11 app/templates/pages/projects/tabs/topics.html:141 app/templates/pages/projects/tabs/topics.html:213 app/templates/pages/topics/index.html:103 app/templates/pages/topics/index.html:185
 msgid "Article"
-msgstr "Article"
+msgstr "مقاله"
 
 #: app/api/articles.py:58
 msgid "Save failed"
-msgstr "Save failed"
+msgstr "ذخیره ناموفق بود"
 
 #: app/api/articles.py:78
 msgid "Title and description saved"
-msgstr "Title and description saved"
+msgstr "عنوان و توضیحات ذخیره شد"
 
 #: app/api/articles.py:82
 msgid "Saving section failed"
-msgstr "Saving section failed"
+msgstr "ذخیره بخش ناموفق بود"
 
 #: app/api/articles.py:98 app/api/articles.py:139
 msgid "Section not found"
-msgstr "Section not found"
+msgstr "بخش یافت نشد"
 
 #: app/api/articles.py:115
 msgid "Section saved"
-msgstr "Section saved"
+msgstr "بخش ذخیره شد"
 
 #: app/api/articles.py:119
 msgid "Starting regeneration failed"
-msgstr "Starting regeneration failed"
+msgstr "شروع بازتولید ناموفق بود"
 
 #: app/api/articles.py:152
 msgid "Section regeneration scheduled"
-msgstr "Section regeneration scheduled"
+msgstr "بازتولید بخش برنامه‌ریزی شد"
 
 #: app/api/articles.py:159
 msgid "Article is not linked to a topic"
-msgstr "Article is not linked to a topic"
+msgstr "مقاله به موضوعی متصل نیست"
 
 #: app/api/articles.py:166
 msgid "Article is being regenerated — try again shortly"
-msgstr "Article is being regenerated — try again shortly"
+msgstr "مقاله در حال بازتولید است — کمی بعد دوباره تلاش کنید"
 
 #: app/api/articles.py:178
 msgid "Article regeneration started (previous version is preserved)"
-msgstr "Article regeneration started (previous version is preserved)"
+msgstr "بازتولید مقاله آغاز شد (نسخه قبلی حفظ می‌شود)"
 
 #: app/api/articles.py:205
 msgid "Starting publish failed"
-msgstr "Starting publish failed"
+msgstr "شروع انتشار ناموفق بود"
 
 #: app/api/articles.py:214
 msgid "Article has no content yet"
-msgstr "Article has no content yet"
+msgstr "مقاله هنوز محتوایی ندارد"
 
 #: app/api/articles.py:217
 msgid "Publishing started"
-msgstr "Publishing started"
+msgstr "انتشار آغاز شد"
 
 #: app/api/articles.py:222
 msgid "Starting update failed"
-msgstr "Starting update failed"
+msgstr "شروع به‌روزرسانی ناموفق بود"
 
 #: app/api/articles.py:232
 msgid "Article is not published on WordPress yet — publish it first"
-msgstr "Article is not published on WordPress yet — publish it first"
+msgstr "مقاله هنوز در وردپرس منتشر نشده است — ابتدا انتشار دهید"
 
 #: app/api/articles.py:235
 msgid "WordPress update started"
-msgstr "WordPress update started"
+msgstr "به‌روزرسانی در وردپرس آغاز شد"
 
 #: app/api/articles.py:241
 msgid "Starting unpublish failed"
-msgstr "Starting unpublish failed"
+msgstr "شروع لغو انتشار ناموفق بود"
 
 #: app/api/articles.py:251
 msgid "Article is not on WordPress"
-msgstr "Article is not on WordPress"
+msgstr "مقاله در وردپرس نیست"
 
 #: app/api/articles.py:254
 msgid "Unpublish (make private) started"
-msgstr "Unpublish (make private) started"
+msgstr "لغو انتشار (خصوصی‌سازی) آغاز شد"
 
 #: app/api/articles.py:260 app/api/jobs.py:227 app/api/projects.py:1342
 msgid "Retry failed"
-msgstr "Retry failed"
+msgstr "تلاش مجدد ناموفق بود"
 
 #: app/api/articles.py:270
 msgid "Publish attempt not found"
-msgstr "Publish attempt not found"
+msgstr "تلاش انتشار یافت نشد"
 
 #: app/api/auth.py:32 app/api/auth.py:97
 msgid "Sign in to EzDistro"
-msgstr "Sign in to EzDistro"
+msgstr "ورود به EzDistro"
 
 #: app/api/auth.py:56 app/api/auth.py:98
 msgid "Wrong email or password"
-msgstr "Wrong email or password"
+msgstr "ایمیل یا رمز عبور اشتباه است"
 
 #: app/api/auth.py:65
 msgid "Your account is disabled"
-msgstr "Your account is disabled"
+msgstr "حساب شما غیرفعال است"
 
 #: app/api/auth.py:72
 msgid "Welcome"
-msgstr "Welcome"
+msgstr "خوش آمدید"
 
 #: app/api/auth.py:107
 msgid "Signed out"
-msgstr "Signed out"
+msgstr "خارج شدید"
 
 #: app/api/dashboard.py:23 app/templates/layouts/platform.html:31 app/templates/layouts/platform.html:161 app/templates/pages/dashboard.html:18
 msgid "Dashboard"
-msgstr "Dashboard"
+msgstr "داشبورد"
 
 #: app/api/images.py:82
 msgid "Scheduling the image plan failed"
-msgstr "Scheduling the image plan failed"
+msgstr "برنامه‌ریزی تصاویر ناموفق بود"
 
 #: app/api/images.py:91
 msgid "The article has no content yet — generate the article first"
-msgstr "The article has no content yet — generate the article first"
+msgstr "مقاله هنوز محتوایی ندارد — ابتدا مقاله را تولید کنید"
 
 #: app/api/images.py:99
 msgid "The image plan is already being processed — the page refreshes automatically"
-msgstr "The image plan is already being processed — the page refreshes automatically"
+msgstr "برنامه تصاویر قبلاً در حال پردازش است — صفحه خودبه‌خود تازه می‌شود"
 
 #: app/api/images.py:112
 msgid "Image plan queued for processing"
-msgstr "Image plan queued for processing"
+msgstr "برنامه تصاویر در صف پردازش قرار گرفت"
 
 #: app/api/images.py:147
 msgid "This image is already queued for generation — the page refreshes automatically"
-msgstr "This image is already queued for generation — the page refreshes automatically"
+msgstr "این تصویر قبلاً در صف تولید است — صفحه خودبه‌خود تازه می‌شود"
 
 #: app/api/images.py:169
 msgid "Image generation failed"
-msgstr "Image generation failed"
+msgstr "تولید تصویر ناموفق بود"
 
 #: app/api/images.py:184
 msgid "Generate the image plan first"
-msgstr "Generate the image plan first"
+msgstr "ابتدا برنامه تصاویر را تولید کنید"
 
 #: app/api/images.py:191
 msgid "Invalid section key — it must be in the form section-N"
-msgstr "Invalid section key — it must be in the form section-N"
+msgstr "کلید بخش نامعتبر است — باید به شکل section-N باشد"
 
 #: app/api/images.py:193
 msgid "Invalid image role"
-msgstr "Invalid image role"
+msgstr "نقش تصویر نامعتبر است"
 
 #: app/api/images.py:200
 msgid "Image generation queued"
-msgstr "Image generation queued"
+msgstr "تولید تصویر در صف قرار گرفت"
 
 #: app/api/images.py:205
 msgid "Image regeneration failed"
-msgstr "Image regeneration failed"
+msgstr "بازتولید تصویر ناموفق بود"
 
 #: app/api/images.py:215 app/api/images.py:239 app/api/images.py:255 app/api/images.py:278 app/api/images.py:302 app/api/images.py:344
 msgid "Image not found"
-msgstr "Image not found"
+msgstr "تصویر یافت نشد"
 
 #: app/api/images.py:224
 msgid "Image regeneration queued (new version)"
-msgstr "Image regeneration queued (new version)"
+msgstr "بازتولید تصویر در صف قرار گرفت (نسخهٔ جدید)"
 
 #: app/api/images.py:232
 msgid "Selecting the version failed"
-msgstr "Selecting the version failed"
+msgstr "انتخاب نسخه ناموفق بود"
 
 #: app/api/images.py:241
 msgid "Only ready versions can be selected"
-msgstr "Only ready versions can be selected"
+msgstr "فقط نسخه‌های آماده قابل انتخاب هستند"
 
 #: app/api/images.py:243
 msgid "This image version was selected"
-msgstr "This image version was selected"
+msgstr "این نسخه از تصویر انتخاب شد"
 
 #: app/api/images.py:247
 msgid "Deleting the image failed"
-msgstr "Deleting the image failed"
+msgstr "حذف تصویر ناموفق بود"
 
 #: app/api/images.py:258
 msgid "Image removed from the article (the version stays in history)"
-msgstr "Image removed from the article (the version stays in history)"
+msgstr "تصویر از مقاله حذف شد (نسخه در تاریخچه می‌ماند)"
 
 #: app/api/images.py:264
 msgid "Saving image info failed"
-msgstr "Saving image info failed"
+msgstr "ذخیره اطلاعات تصویر ناموفق بود"
 
 #: app/api/images.py:281
 msgid "Alt text cannot be empty"
-msgstr "Alt text cannot be empty"
+msgstr "متن جایگزین (alt) نمی‌تواند خالی باشد"
 
 #: app/api/images.py:288
 msgid "Image info saved"
-msgstr "Image info saved"
+msgstr "اطلاعات تصویر ذخیره شد"
 
 #: app/api/images.py:295
 msgid "Image optimization failed"
-msgstr "Image optimization failed"
+msgstr "بهینه‌سازی تصویر ناموفق بود"
 
 #: app/api/images.py:304
 msgid "This image has no source file — generate it first"
-msgstr "This image has no source file — generate it first"
+msgstr "این تصویر فایل منبع ندارد — ابتدا تولیدش کنید"
 
 #: app/api/images.py:312
 msgid "Optimization is already queued"
-msgstr "Optimization is already queued"
+msgstr "بهینه‌سازی قبلاً در صف است"
 
 #: app/api/images.py:324
 msgid "Image re-optimization queued"
-msgstr "Image re-optimization queued"
+msgstr "بهینه‌سازی مجدد تصویر در صف قرار گرفت"
 
 #: app/api/images.py:330
 msgid "Uploading the image to WordPress failed"
-msgstr "Uploading the image to WordPress failed"
+msgstr "بارگذاری تصویر در وردپرس ناموفق بود"
 
 #: app/api/images.py:346
 msgid "Only ready images can be uploaded"
-msgstr "Only ready images can be uploaded"
+msgstr "فقط تصاویر آماده قابل بارگذاری هستند"
 
 #: app/api/images.py:357
 msgid "Image upload to WordPress queued"
-msgstr "Image upload to WordPress queued"
+msgstr "بارگذاری تصویر در وردپرس در صف قرار گرفت"
 
 #: app/api/jobs.py:79
 msgid "Something went wrong loading the jobs page — please try again."
-msgstr "Something went wrong loading the jobs page — please try again."
+msgstr "مشکلی در بارگذاری صفحه وظایف پیش آمد — دوباره تلاش کنید."
 
 #: app/api/jobs.py:120 app/templates/layouts/platform.html:35 app/templates/layouts/platform.html:177 app/templates/pages/jobs/monitor.html:5 app/templates/pages/projects/detail.html:71 app/templates/pages/projects/tabs/jobs.html:6 app/templates/pages/projects/tabs/jobs.html:9
 msgid "Jobs"
-msgstr "Jobs"
+msgstr "وظایف"
 
 #: app/api/jobs.py:145
 msgid "Something went wrong loading the failed jobs page — please try again."
-msgstr "Something went wrong loading the failed jobs page — please try again."
+msgstr "مشکلی در بارگذاری صفحه وظایف ناموفق پیش آمد — دوباره تلاش کنید."
 
 #: app/api/jobs.py:163 app/templates/layouts/platform.html:39 app/templates/pages/jobs/failed.html:5 app/templates/pages/projects/tabs/indexing.html:29
 msgid "Failed jobs"
-msgstr "Failed jobs"
+msgstr "وظایف ناموفق"
 
 #: app/api/jobs.py:178 app/api/jobs.py:219 app/api/jobs.py:234
 msgid "Job not found"
-msgstr "Job not found"
+msgstr "وظیفه یافت نشد"
 
 #: app/api/jobs.py:188
 #, python-format
 msgid "Job %(t)s"
-msgstr "Job %(t)s"
+msgstr "وظیفه %(t)s"
 
 #: app/api/jobs.py:213
 msgid "Cancelling job failed"
-msgstr "Cancelling job failed"
+msgstr "لغو وظیفه ناموفق بود"
 
 #: app/api/jobs.py:222
 msgid "Job cancellation requested"
-msgstr "Job cancellation requested"
+msgstr "لغو وظیفه درخواست شد"
 
 #: app/api/jobs.py:236
 msgid "This job is not in the failed state"
-msgstr "This job is not in the failed state"
+msgstr "این وظیفه در حالت ناموفق نیست"
 
 #: app/api/logs.py:34 app/templates/layouts/platform.html:41 app/templates/layouts/platform.html:193 app/templates/pages/logs/feed.html:5 app/templates/pages/projects/detail.html:73 app/templates/pages/projects/tabs/logs.html:2 app/templates/pages/projects/tabs/logs.html:9
 msgid "Events"
-msgstr "Events"
+msgstr "رویدادها"
 
 #: app/api/projects.py:82
 msgid "Language model (LLM)"
-msgstr "Language model (LLM)"
+msgstr "مدل زبانی (LLM)"
 
 #: app/api/projects.py:83 app/templates/pages/projects/tabs/settings.html:5
 msgid "Text embedding"
-msgstr "Text embedding"
+msgstr "جاسازی متن (Embedding)"
 
 #: app/api/projects.py:84
 msgid "Reranking"
-msgstr "Reranking"
+msgstr "بازچینش (Reranker)"
 
 #: app/api/projects.py:85
 msgid "Vector store (Qdrant)"
-msgstr "Vector store (Qdrant)"
+msgstr "ذخیره‌سازی برداری (Qdrant)"
 
 #: app/api/projects.py:86 app/templates/auth/login.html:54
 msgid "Publishing (WordPress)"
-msgstr "Publishing (WordPress)"
+msgstr "انتشار (WordPress)"
 
 #: app/api/projects.py:87
 msgid "Image generation (AI Image)"
-msgstr "Image generation (AI Image)"
+msgstr "تولید تصویر (AI Image)"
 
 #: app/api/projects.py:117 app/templates/layouts/platform.html:33 app/templates/layouts/platform.html:169 app/templates/pages/projects/list.html:11
 msgid "Projects"
-msgstr "Projects"
+msgstr "پروژه‌ها"
 
 #: app/api/projects.py:122
 msgid "Creating project failed"
-msgstr "Creating project failed"
+msgstr "ساخت پروژه ناموفق بود"
 
 #: app/api/projects.py:149
 msgid "Project created"
-msgstr "Project created"
+msgstr "پروژه ساخته شد"
 
 #: app/api/projects.py:153
 msgid "Deleting project failed"
-msgstr "Deleting project failed"
+msgstr "حذف پروژه ناموفق بود"
 
 #: app/api/projects.py:159
 msgid "Project deleted"
-msgstr "Project deleted"
+msgstr "پروژه حذف شد"
 
 #: app/api/projects.py:177
 msgid "Toggling project failed"
-msgstr "Toggling project failed"
+msgstr "تغییر وضعیت پروژه ناموفق بود"
 
 #: app/api/projects.py:185 app/api/projects.py:436 app/api/projects.py:460
 msgid "Project not found"
-msgstr "Project not found"
+msgstr "پروژه یافت نشد"
 
 #: app/api/projects.py:188
 msgid "Project activated"
-msgstr "Project activated"
+msgstr "پروژه فعال شد"
 
 #: app/api/projects.py:188
 msgid "Project deactivated"
-msgstr "Project deactivated"
+msgstr "پروژه غیرفعال شد"
 
 #: app/api/projects.py:240
 #, python-format
 msgid "Topics — %(name)s"
-msgstr "Topics — %(name)s"
+msgstr "موضوع‌ها — %(name)s"
 
 #: app/api/projects.py:257
 msgid "Bulk operation failed"
-msgstr "Bulk operation failed"
+msgstr "عملیات گروهی ناموفق بود"
 
 #: app/api/projects.py:267
 msgid "No topic selected"
-msgstr "No topic selected"
+msgstr "موضوعی انتخاب نشده است"
 
 #: app/api/projects.py:302
 #, python-format
 msgid "%(n)d topic updated"
 msgid_plural "%(n)d topics updated"
-msgstr[0] "%(n)d topic updated"
-msgstr[1] "%(n)d topics updated"
+msgstr[0] "%(n)d موضوع به‌روزرسانی شد"
+msgstr[1] "%(n)d موضوع به‌روزرسانی شد"
 
 #: app/api/projects.py:308
 msgid "Cancelling topic failed"
-msgstr "Cancelling topic failed"
+msgstr "لغو موضوع ناموفق بود"
 
 #: app/api/projects.py:315 app/api/projects.py:1134 app/api/projects.py:1159
 msgid "Topic not found"
-msgstr "Topic not found"
+msgstr "موضوع یافت نشد"
 
 #: app/api/projects.py:317
 msgid "Topic cancelled"
-msgstr "Topic cancelled"
+msgstr "موضوع لغو شد"
 
 #: app/api/projects.py:364
 msgid "Outline — system"
-msgstr "Outline — system"
+msgstr "رئوس — سیستم"
 
 #: app/api/projects.py:365
 msgid "Outline — user"
-msgstr "Outline — user"
+msgstr "رئوس — کاربر"
 
 #: app/api/projects.py:366
 msgid "Section — system"
-msgstr "Section — system"
+msgstr "بخش — سیستم"
 
 #: app/api/projects.py:367
 msgid "Section — user"
-msgstr "Section — user"
+msgstr "بخش — کاربر"
 
 #: app/api/projects.py:368
 msgid "SEO rules"
-msgstr "SEO rules"
+msgstr "قوانین سئو"
 
 #: app/api/projects.py:369
 msgid "Internal linking"
-msgstr "Internal linking"
+msgstr "لینک‌سازی داخلی"
 
 #: app/api/projects.py:370
 msgid "Brand voice"
-msgstr "Brand voice"
+msgstr "صدای برند"
 
 #: app/api/projects.py:371 app/templates/pages/articles/detail.html:123
 msgid "Article validation"
-msgstr "Article validation"
+msgstr "اعتبارسنجی مقاله"
 
 #: app/api/projects.py:397
 msgid "Outline model"
-msgstr "Outline model"
+msgstr "مدل رئوس مطالب (Outline)"
 
 #: app/api/projects.py:398
 msgid "Section writer model"
-msgstr "Section writer model"
+msgstr "مدل نویسنده بخش‌ها (Section)"
 
 #: app/api/projects.py:399
 msgid "Meta/SEO model (optional)"
-msgstr "Meta/SEO model (optional)"
+msgstr "مدل متا/سئو (اختیاری)"
 
 #: app/api/projects.py:400
 msgid "Review model (optional)"
-msgstr "Review model (optional)"
+msgstr "مدل بازبینی (اختیاری)"
 
 #: app/api/projects.py:411
 msgid "No fallback"
-msgstr "No fallback"
+msgstr "بدون جایگزین"
 
 #: app/api/projects.py:446 app/templates/pages/jobs/_table.html:12 app/templates/pages/jobs/detail.html:38 app/templates/pages/jobs/monitor.html:38 app/templates/pages/jobs/monitor.html:100 app/templates/pages/projects/tabs/articles.html:2 app/templates/pages/projects/tabs/images.html:3 app/templates/pages/projects/tabs/indexing.html:11 app/templates/pages/projects/tabs/integrations.html:13 app/templates/pages/projects/tabs/jobs.html:6 app/templates/pages/projects/tabs/logs.html:2 app/templates/pages/projects/tabs/prompts.html:11 app/templates/pages/projects/tabs/publishing.html:2 app/templates/pages/projects/tabs/retrieval.html:3 app/templates/pages/projects/tabs/topics.html:11
 msgid "Project"
-msgstr "Project"
+msgstr "پروژه"
 
 #: app/api/projects.py:458
 msgid "Project not found or access denied"
-msgstr "Project not found or access denied"
+msgstr "پروژه یافت نشد یا دسترسی ندارید"
 
 #: app/api/projects.py:478
 msgid "Saving settings failed"
-msgstr "Saving settings failed"
+msgstr "ذخیره تنظیمات ناموفق بود"
 
 #: app/api/projects.py:565
 msgid "Settings saved"
-msgstr "Settings saved"
+msgstr "تنظیمات ذخیره شد"
 
 #: app/api/projects.py:569
 msgid "Saving image settings failed"
-msgstr "Saving image settings failed"
+msgstr "ذخیره تنظیمات تصاویر ناموفق بود"
 
 #: app/api/projects.py:628
 msgid "Image settings saved"
-msgstr "Image settings saved"
+msgstr "تنظیمات تصاویر ذخیره شد"
 
 #: app/api/projects.py:639 app/templates/pages/projects/tabs/_image_test_result.html:3
 msgid "Image generation test failed"
-msgstr "Image generation test failed"
+msgstr "تست تولید تصویر ناموفق بود"
 
 #: app/api/projects.py:656
 msgid "Cover image model is not set — save the model first"
-msgstr "Cover image model is not set — save the model first"
+msgstr "مدل تصویر کاور تنظیم نشده است — ابتدا مدل را ذخیره کنید"
 
 #: app/api/projects.py:738 app/templates/pages/projects/tabs/settings.html:110
 msgid "Auto-indexing"
-msgstr "Auto-indexing"
+msgstr "نمایه‌سازی خودکار"
 
 #: app/api/projects.py:738 app/templates/pages/projects/tabs/settings.html:116
 msgid "Auto-writing"
-msgstr "Auto-writing"
+msgstr "نویسندگی خودکار"
 
 #: app/api/projects.py:742
 msgid "Saving schedule failed"
-msgstr "Saving schedule failed"
+msgstr "ذخیره زمان‌بندی ناموفق بود"
 
 #: app/api/projects.py:756
 msgid "Invalid schedule type"
-msgstr "Invalid schedule type"
+msgstr "نوع زمان‌بندی نامعتبر است"
 
 #: app/api/projects.py:789
 msgid "Schedule saved"
-msgstr "Schedule saved"
+msgstr "زمان‌بندی ذخیره شد"
 
 #: app/api/projects.py:798
 msgid "Saving connection failed"
-msgstr "Saving connection failed"
+msgstr "ذخیره اتصال ناموفق بود"
 
 #: app/api/projects.py:816
 msgid "Invalid category"
-msgstr "Invalid category"
+msgstr "دسته‌بندی نامعتبر است"
 
 #: app/api/projects.py:863
 msgid "Connection saved"
-msgstr "Connection saved"
+msgstr "اتصال ذخیره شد"
 
 #: app/api/projects.py:867 app/api/workspace.py:189
 msgid "Toggling failed"
-msgstr "Toggling failed"
+msgstr "تغییر وضعیت ناموفق بود"
 
 #: app/api/projects.py:875 app/api/projects.py:889
 msgid "Connection not found"
-msgstr "Connection not found"
+msgstr "اتصال یافت نشد"
 
 #: app/api/projects.py:878
 msgid "Connection status changed"
-msgstr "Connection status changed"
+msgstr "وضعیت اتصال تغییر کرد"
 
 #: app/api/projects.py:882
 msgid "Connection test failed"
-msgstr "Connection test failed"
+msgstr "تست اتصال ناموفق بود"
 
 #: app/api/projects.py:903
 msgid "Deleting connection failed"
-msgstr "Deleting connection failed"
+msgstr "حذف اتصال ناموفق بود"
 
 #: app/api/projects.py:911
 msgid "Connection deleted"
-msgstr "Connection deleted"
+msgstr "اتصال حذف شد"
 
 #: app/api/projects.py:955
 msgid "Invalid variable(s): "
-msgstr "Invalid variable(s): "
+msgstr "متغیر(های) نامعتبر: "
 
 #: app/api/projects.py:959
 msgid "Prompts saved"
-msgstr "Prompts saved"
+msgstr "پرامپت‌ها ذخیره شد"
 
 #: app/api/projects.py:966
 msgid "Activating version failed"
-msgstr "Activating version failed"
+msgstr "فعال‌سازی نسخه ناموفق بود"
 
 #: app/api/projects.py:975 app/api/projects.py:977 app/api/projects.py:993 app/api/projects.py:995 app/services/revisions.py:83
 msgid "Version not found"
-msgstr "Version not found"
+msgstr "نسخه یافت نشد"
 
 #: app/api/projects.py:979
 msgid "Version activated"
-msgstr "Version activated"
+msgstr "نسخه فعال شد"
 
 #: app/api/projects.py:983
 msgid "Duplication failed"
-msgstr "Duplication failed"
+msgstr "تکراری‌سازی ناموفق بود"
 
 #: app/api/projects.py:1000
 msgid "Version duplicated (inactive)"
-msgstr "Version duplicated (inactive)"
+msgstr "نسخه تکراری‌سازی شد (غیرفعال)"
 
 #: app/api/projects.py:1027
 msgid "Prompt test failed"
-msgstr "Prompt test failed"
+msgstr "تست پرامپت ناموفق بود"
 
 #: app/api/projects.py:1093
 msgid "Adding topic failed"
-msgstr "Adding topic failed"
+msgstr "افزودن موضوع ناموفق بود"
 
 #: app/api/projects.py:1110
 msgid "Topic title is required"
-msgstr "Topic title is required"
+msgstr "عنوان موضوع الزامی است"
 
 #: app/api/projects.py:1123
 msgid "Topic added"
-msgstr "Topic added"
+msgstr "موضوع اضافه شد"
 
 #: app/api/projects.py:1127
 msgid "Starting article generation failed"
-msgstr "Starting article generation failed"
+msgstr "شروع تولید مقاله ناموفق بود"
 
 #: app/api/projects.py:1147 app/services/writing.py:215
 msgid "Article generation started"
-msgstr "Article generation started"
+msgstr "تولید مقاله آغاز شد"
 
 #: app/api/projects.py:1152
 msgid "Deleting topic failed"
-msgstr "Deleting topic failed"
+msgstr "حذف موضوع ناموفق بود"
 
 #: app/api/projects.py:1161
 msgid "Topic deleted"
-msgstr "Topic deleted"
+msgstr "موضوع حذف شد"
 
 #: app/api/projects.py:1178
 msgid "Reading file or text failed"
-msgstr "Reading file or text failed"
+msgstr "خواندن فایل یا متن ناموفق بود"
 
 #: app/api/projects.py:1203
 msgid "No text or file provided"
-msgstr "No text or file provided"
+msgstr "متن یا فایلی وارد نشده است"
 
 #: app/api/projects.py:1207
 msgid "No rows found"
-msgstr "No rows found"
+msgstr "هیچ ردیفی پیدا نشد"
 
 #: app/api/projects.py:1239
 msgid "Bulk add failed"
-msgstr "Bulk add failed"
+msgstr "افزودن گروهی ناموفق بود"
 
 #: app/api/projects.py:1250
 msgid "Preview expired; please try again"
-msgstr "Preview expired; please try again"
+msgstr "پیش‌نمایش منقضی شده است؛ دوباره تلاش کنید"
 
 #: app/api/projects.py:1258
 msgid "Select the title column"
-msgstr "Select the title column"
+msgstr "ستون عنوان را انتخاب کنید"
 
 #: app/api/projects.py:1272
 msgid "Pasted text"
-msgstr "Pasted text"
+msgstr "متن جای‌گذاری‌شده"
 
 #: app/api/projects.py:1279
 msgid "Loading form failed"
-msgstr "Loading form failed"
+msgstr "بارگذاری فرم ناموفق بود"
 
 #: app/api/projects.py:1295
 msgid "Starting indexing failed"
-msgstr "Starting indexing failed"
+msgstr "شروع نمایه‌سازی ناموفق بود"
 
 #: app/api/projects.py:1312
 msgid "Full reindex started"
-msgstr "Full reindex started"
+msgstr "بازنمایه کامل آغاز شد"
 
 #: app/api/projects.py:1312
 msgid "Incremental indexing started"
-msgstr "Incremental indexing started"
+msgstr "نمایه‌سازی افزایشی آغاز شد"
 
 #: app/api/projects.py:1318
 msgid "Starting document indexing failed"
-msgstr "Starting document indexing failed"
+msgstr "شروع نمایه‌سازی مستند ناموفق بود"
 
 #: app/api/projects.py:1326
 msgid "Document not found"
-msgstr "Document not found"
+msgstr "مستند یافت نشد"
 
 #: app/api/projects.py:1337
 msgid "Document indexing started"
-msgstr "Document indexing started"
+msgstr "نمایه‌سازی مستند آغاز شد"
 
 #: app/api/projects.py:1350
 msgid "Run not found"
-msgstr "Run not found"
+msgstr "اجرا یافت نشد"
 
 #: app/api/projects.py:1361
 msgid "Indexing run rescheduled"
-msgstr "Indexing run rescheduled"
+msgstr "اجرای نمایه‌سازی دوباره برنامه‌ریزی شد"
 
 #: app/api/projects.py:1370
 msgid "Saving models failed"
-msgstr "Saving models failed"
+msgstr "ذخیره مدل‌ها ناموفق بود"
 
 #: app/api/projects.py:1445
 msgid "Models saved"
-msgstr "Models saved"
+msgstr "مدل‌ها ذخیره شد"
 
 #: app/api/projects.py:1554
 msgid "Saving defaults failed"
-msgstr "Saving defaults failed"
+msgstr "ذخیره پیش‌فرض‌ها ناموفق بود"
 
 #: app/api/projects.py:1585
 msgid "Global defaults saved"
-msgstr "Global defaults saved"
+msgstr "پیش‌فرض‌های سراسری ذخیره شد"
 
 #: app/api/projects.py:1592
 msgid "Retrieval failed"
-msgstr "Retrieval failed"
+msgstr "بازیابی ناموفق بود"
 
 #: app/api/projects.py:1606
 msgid "Search query is required"
-msgstr "Search query is required"
+msgstr "عبارت جستجو الزامی است"
 
 #: app/api/workers.py:31
 msgid "Something went wrong loading the workers page — please try again."
-msgstr "Something went wrong loading the workers page — please try again."
+msgstr "مشکلی در بارگذاری صفحه کارگرها پیش آمد — دوباره تلاش کنید."
 
 #: app/api/workers.py:67 app/templates/layouts/platform.html:37 app/templates/pages/workers/index.html:21
 msgid "Workers"
-msgstr "Workers"
+msgstr "کارگرها"
 
 #: app/api/workers.py:77
 msgid "Run the worker (development)"
-msgstr "Run the worker (development)"
+msgstr "راه‌اندازی کارگر (توسعه)"
 
 #: app/api/workers.py:79
 msgid "After every code change, stop and re-run the worker."
-msgstr "After every code change, stop and re-run the worker."
+msgstr "پس از هر تغییر کد، کارگر را متوقف و دوباره اجرا کنید."
 
 #: app/api/workers.py:82
 msgid "Run the worker (service)"
-msgstr "Run the worker (service)"
+msgstr "راه‌اندازی کارگر (سرویس)"
 
 #: app/api/workers.py:84
 msgid "If the worker runs as a systemd service."
-msgstr "If the worker runs as a systemd service."
+msgstr "اگر کارگر به‌صورت سرویس systemd اجرا می‌شود."
 
 #: app/api/workspace.py:34
 msgid "Something went wrong loading the article workspace — please try again."
-msgstr "Something went wrong loading the article workspace — please try again."
+msgstr "مشکلی در بارگذاری کارگاه مقاله پیش آمد — دوباره تلاش کنید."
 
 #: app/api/workspace.py:202
 msgid "Article is not ready to publish yet"
-msgstr "Article is not ready to publish yet"
+msgstr "مقاله هنوز آماده انتشار نیست"
 
 #: app/api/workspace.py:204
 msgid "Article status updated"
-msgstr "Article status updated"
+msgstr "وضعیت مقاله به‌روزرسانی شد"
 
 #: app/api/workspace.py:208
 msgid "Scheduling rebuild failed"
-msgstr "Scheduling rebuild failed"
+msgstr "برنامه‌ریزی بازسازی ناموفق بود"
 
 #: app/api/workspace.py:226
 msgid "Article is being built — the page refreshes automatically"
-msgstr "Article is being built — the page refreshes automatically"
+msgstr "مقاله در حال ساخت است — صفحه خودبه‌خود تازه می‌شود"
 
 #: app/api/workspace.py:239
 msgid "Article rebuild scheduled"
-msgstr "Article rebuild scheduled"
+msgstr "بازسازی مقاله برنامه‌ریزی شد"
 
 #: app/api/workspace.py:255
 msgid "Moving section failed"
-msgstr "Moving section failed"
+msgstr "جابه‌جایی بخش ناموفق بود"
 
 #: app/api/workspace.py:269
 msgid "Section moved"
-msgstr "Section moved"
+msgstr "بخش جابه‌جا شد"
 
 #: app/api/workspace.py:273
 msgid "Adding section failed"
-msgstr "Adding section failed"
+msgstr "افزودن بخش ناموفق بود"
 
 #: app/api/workspace.py:291
 msgid "Section added"
-msgstr "Section added"
+msgstr "بخش اضافه شد"
 
 #: app/api/workspace.py:295
 msgid "Deleting section failed"
-msgstr "Deleting section failed"
+msgstr "حذف بخش ناموفق بود"
 
 #: app/api/workspace.py:307
 msgid "Section deleted"
-msgstr "Section deleted"
+msgstr "بخش حذف شد"
 
 #: app/api/workspace.py:311
 msgid "Saving brief failed"
-msgstr "Saving brief failed"
+msgstr "ذخیره خلاصه ناموفق بود"
 
 #: app/api/workspace.py:333
 msgid "Section brief saved — section marked for regeneration"
-msgstr "Section brief saved — section marked for regeneration"
+msgstr "خلاصه بخش ذخیره شد — بخش برای بازتولید علامت‌گذاری شد"
 
 #: app/api/workspace.py:360
 msgid "Something went wrong loading the review page — please try again."
-msgstr "Something went wrong loading the review page — please try again."
+msgstr "مشکلی در بارگذاری صفحه بازبینی پیش آمد — دوباره تلاش کنید."
 
 #: app/api/workspace.py:381
 #, python-format
 msgid "Review — %(title)s"
-msgstr "Review — %(title)s"
+msgstr "بازبینی — %(title)s"
 
 #: app/api/workspace.py:394
 msgid "Approving article failed"
-msgstr "Approving article failed"
+msgstr "تأیید مقاله ناموفق بود"
 
 #: app/api/workspace.py:404
 msgid "Only articles in review status can be approved"
-msgstr "Only articles in review status can be approved"
+msgstr "فقط مقاله در وضعیت بازبینی قابل تأیید است"
 
 #: app/api/workspace.py:412
 #, python-format
 msgid "Article failed validation: %(issues)s"
-msgstr "Article failed validation: %(issues)s"
+msgstr "مقاله اعتبارسنجی را پاس نکرد: %(issues)s"
 
 #: app/api/workspace.py:421
 msgid "Article approved — publishing enabled"
-msgstr "Article approved — publishing enabled"
+msgstr "مقاله تأیید شد — انتشار فعال شد"
 
 #: app/api/workspace.py:426
 msgid "Returning article failed"
-msgstr "Returning article failed"
+msgstr "بازگرداندن مقاله ناموفق بود"
 
 #: app/api/workspace.py:436
 msgid "Article is not in a returnable state"
-msgstr "Article is not in a returnable state"
+msgstr "مقاله در وضعیت قابل بازگشت نیست"
 
 #: app/api/workspace.py:444
 msgid "Article returned"
-msgstr "Article returned"
+msgstr "مقاله بازگردانده شد"
 
 #: app/api/workspace.py:448
 msgid "Rolling back to version failed"
-msgstr "Rolling back to version failed"
+msgstr "بازگشت به نسخه ناموفق بود"
 
 #: app/api/workspace.py:461
 msgid "Rolled back to version"
-msgstr "Rolled back to version"
+msgstr "بازگشت به نسخه انجام شد"
 
 #: app/domain/prompt_render.py:29 app/templates/pages/projects/list.html:115
 msgid "Project name"
-msgstr "Project name"
+msgstr "نام پروژه"
 
 #: app/domain/prompt_render.py:30
 msgid "Project slug"
-msgstr "Project slug"
+msgstr "شناسه پروژه"
 
 #: app/domain/prompt_render.py:31
 msgid "Project language"
-msgstr "Project language"
+msgstr "زبان پروژه"
 
 #: app/domain/prompt_render.py:32 app/templates/pages/projects/tabs/topics.html:207 app/templates/pages/topics/index.html:174
 msgid "Topic title"
-msgstr "Topic title"
+msgstr "عنوان موضوع"
 
 #: app/domain/prompt_render.py:33
 msgid "Topic keyword"
-msgstr "Topic keyword"
+msgstr "کلمه کلیدی موضوع"
 
 #: app/domain/prompt_render.py:34
 msgid "Topic pillar"
-msgstr "Topic pillar"
+msgstr "ستون موضوع"
 
 #: app/domain/prompt_render.py:35
 msgid "Topic cluster"
-msgstr "Topic cluster"
+msgstr "خوشه موضوع"
 
 #: app/domain/prompt_render.py:36
 msgid "Topic type"
-msgstr "Topic type"
+msgstr "نوع موضوع"
 
 #: app/domain/prompt_render.py:37
 msgid "Article title"
-msgstr "Article title"
+msgstr "عنوان مقاله"
 
 #: app/domain/prompt_render.py:38
 msgid "Article slug"
-msgstr "Article slug"
+msgstr "اسلاگ مقاله"
 
 #: app/domain/prompt_render.py:39
 msgid "Article meta description"
-msgstr "Article meta description"
+msgstr "متا توضیحات مقاله"
 
 #: app/domain/prompt_render.py:40 app/templates/pages/articles/_outline_pane.html:32 app/templates/pages/articles/detail.html:207 app/templates/pages/articles/workspace.html:281
 msgid "Section heading"
-msgstr "Section heading"
+msgstr "تیتر بخش"
 
 #: app/domain/prompt_render.py:41
 msgid "Section content brief"
-msgstr "Section content brief"
+msgstr "خلاصه محتوای بخش (brief)"
 
 #: app/domain/prompt_render.py:42
 msgid "Section position (0 = the first section)"
-msgstr "Section position (0 = the first section)"
+msgstr "شماره ترتیب بخش (۰ = بخش اول مقاله)"
 
 #: app/domain/prompt_render.py:43
 msgid "Retrieved context — related sections from existing articles"
-msgstr "Retrieved context — related sections from existing articles"
+msgstr "زمینه بازیابی — بخش‌های مرتبط از مقالات موجود"
 
 #: app/domain/prompt_render.py:44
 msgid "Suggested internal links (title + URL)"
-msgstr "Suggested internal links (title + URL)"
+msgstr "لینک‌های داخلی پیشنهادی (عنوان + آدرس)"
 
 #: app/domain/prompt_render.py:45
 msgid "The project's resolved SEO rules"
-msgstr "The project's resolved SEO rules"
+msgstr "قوانین سئوی حل‌شده پروژه"
 
 #: app/domain/prompt_render.py:46
 msgid "The project's resolved internal linking rules"
-msgstr "The project's resolved internal linking rules"
+msgstr "قوانین لینک‌سازی داخلی حل‌شده پروژه"
 
 #: app/domain/prompt_render.py:47
 msgid "Writing language"
-msgstr "Writing language"
+msgstr "زبان نگارش"
 
 #: app/domain/prompt_render.py:48
 msgid "Raw model output (validation prompt only)"
-msgstr "Raw model output (validation prompt only)"
+msgstr "خروجی خام مدل (فقط در پرامپت اعتبارسنجی)"
 
 #: app/domain/prompt_render.py:50
 msgid "Image prompt language (independent of the article language)"
-msgstr "Image prompt language (independent of the article language)"
+msgstr "زبان پرامپت تصویری (مستقل از زبان مقاله)"
 
 #: app/domain/prompt_render.py:51
 msgid "Article section list for image planning"
-msgstr "Article section list for image planning"
+msgstr "فهرست بخش‌های مقاله برای برنامه‌ریزی تصویر"
 
 #: app/domain/prompt_render.py:52
 msgid "Project visual style profile (tone/palette/lighting)"
-msgstr "Project visual style profile (tone/palette/lighting)"
+msgstr "پروفایل سبک بصری پروژه (tone/palette/lighting)"
 
 #: app/domain/prompt_render.py:53
 msgid "Maximum allowed number of interior images"
-msgstr "Maximum allowed number of interior images"
+msgstr "حداکثر تعداد تصویر داخلی مجاز"
 
 #: app/services/image_planning.py:103
 msgid "The article has no content yet — finish writing it first"
-msgstr "The article has no content yet — finish writing it first"
+msgstr "مقاله هنوز محتوایی ندارد — ابتدا نوشتن مقاله را کامل کنید"
 
 #: app/services/image_planning.py:131
 msgid "The image_plan_user prompt is not set — run the bootstrap"
-msgstr "The image_plan_user prompt is not set — run the bootstrap"
+msgstr "پرامپت image_plan_user تنظیم نشده است — بوت‌استرپ را اجرا کنید"
 
 #: app/services/image_planning.py:145
 msgid "Designing the image plan…"
-msgstr "Designing the image plan…"
+msgstr "در حال طراحی برنامه تصاویر…"
 
 #: app/services/image_planning.py:159
 #, python-format
 msgid "The image plan was invalid: %(error)s"
-msgstr "The image plan was invalid: %(error)s"
+msgstr "برنامه تصاویر نامعتبر بود: %(error)s"
 
 #: app/services/image_planning.py:178
 msgid "Image plan is ready"
-msgstr "Image plan is ready"
+msgstr "برنامه تصاویر آماده شد"
 
 #: app/services/image_planning.py:183
 msgid "Image plan created"
-msgstr "Image plan created"
+msgstr "برنامه تصاویر ساخته شد"
 
 #: app/services/images.py:288
 msgid "Image plan not created — generate the image plan first"
-msgstr "Image plan not created — generate the image plan first"
+msgstr "برنامه تصاویر ساخته نشده — ابتدا «برنامه تصاویر» را تولید کنید"
 
 #: app/services/images.py:380 app/services/images.py:381
 msgid "Generating the image…"
-msgstr "Generating the image…"
+msgstr "در حال تولید تصویر…"
 
 #: app/services/images.py:439
 msgid "Checking image quality…"
-msgstr "Checking image quality…"
+msgstr "بررسی کیفیت تصویر…"
 
 #: app/services/images.py:443 app/services/images.py:444 app/services/images.py:565
 msgid "Optimizing the image…"
-msgstr "Optimizing the image…"
+msgstr "در حال بهینه‌سازی تصویر…"
 
 #: app/services/images.py:500 app/services/images.py:501
 msgid "Image is ready"
-msgstr "Image is ready"
+msgstr "تصویر آماده شد"
 
 #: app/services/images.py:505
 msgid "Image generated"
-msgstr "Image generated"
+msgstr "تصویر تولید شد"
 
 #: app/services/images.py:562
 msgid "This image has no source file — regenerate it before re-optimizing"
-msgstr "This image has no source file — regenerate it before re-optimizing"
+msgstr "این تصویر فایل منبع ندارد — برای بهینه‌سازی مجدد ابتدا آن را دوباره تولید کنید"
 
 #: app/services/images.py:593
 msgid "Image optimized"
-msgstr "Image optimized"
+msgstr "تصویر بهینه‌سازی شد"
 
 #: app/services/images.py:611
 msgid "The image has no ready file"
-msgstr "The image has no ready file"
+msgstr "تصویر فایل آماده ندارد"
 
 #: app/services/images.py:624
 #, python-format
 msgid "Uploading the image to WordPress failed: %(error)s"
-msgstr "Uploading the image to WordPress failed: %(error)s"
+msgstr "بارگذاری تصویر در وردپرس ناموفق بود: %(error)s"
 
 #: app/services/images.py:655
 msgid "The article is not published on WordPress yet — setting the featured image is not possible"
-msgstr "The article is not published on WordPress yet — setting the featured image is not possible"
+msgstr "مقاله هنوز در وردپرس منتشر نشده — تنظیم تصویر شاخص ممکن نیست"
 
 #: app/services/images.py:665
 msgid "Image uploaded to WordPress"
-msgstr "Image uploaded to WordPress"
+msgstr "تصویر در وردپرس بارگذاری شد"
 
 #: app/services/images.py:712
 #, python-format
 msgid "Publishing stopped: %(problems)s"
-msgstr "Publishing stopped: %(problems)s"
+msgstr "انتشار متوقف شد: %(problems)s"
 
 #: app/services/indexing.py:59
 msgid "Fetching posts from WordPress"
-msgstr "Fetching posts from WordPress"
+msgstr "در حال دریافت نوشته‌ها از وردپرس"
 
 #: app/services/indexing.py:60
 msgid "Preparing…"
-msgstr "Preparing…"
+msgstr "در حال آماده‌سازی…"
 
 #: app/services/indexing.py:112
 #, python-format
 msgid "Checking %(n)d posts…"
-msgstr "Checking %(n)d posts…"
+msgstr "در حال بررسی %(n)d نوشته…"
 
 #: app/services/indexing.py:139
 #, python-format
 msgid "%(n)d posts checked"
-msgstr "%(n)d posts checked"
+msgstr "%(n)d نوشته بررسی شد"
 
 #: app/services/indexing.py:153 app/services/indexing.py:154
 msgid "Indexing complete"
-msgstr "Indexing complete"
+msgstr "پایان نمایه‌سازی"
 
 #: app/services/indexing.py:178
 msgid "Fetching posts…"
-msgstr "Fetching posts…"
+msgstr "در حال دریافت نوشته…"
 
 #: app/services/indexing.py:218
 msgid "Indexing done"
-msgstr "Indexing done"
+msgstr "نمایه‌سازی انجام شد"
 
 #: app/services/indexing.py:394
 msgid "Cleaning up old vectors"
-msgstr "Cleaning up old vectors"
+msgstr "پاک‌سازی برداری‌های قدیمی"
 
 #: app/services/outline_editor.py:28 app/services/outline_editor.py:60 app/services/outline_editor.py:71
 msgid "Invalid section position"
-msgstr "Invalid section position"
+msgstr "جایگاه بخش نامعتبر است"
 
 #: app/services/outline_editor.py:31
 msgid "Moving in this direction is not possible"
-msgstr "Moving in this direction is not possible"
+msgstr "جابه‌جایی در این جهت ممکن نیست"
 
 #: app/services/outline_editor.py:43 app/services/outline_editor.py:73
 msgid "Section heading is required"
-msgstr "Section heading is required"
+msgstr "عنوان بخش الزامی است"
 
 #: app/services/publishing_service.py:119 app/services/publishing_service.py:120
 msgid "Sending to WordPress…"
-msgstr "Sending to WordPress…"
+msgstr "در حال ارسال به وردپرس…"
 
 #: app/services/publishing_service.py:141 app/services/publishing_service.py:167 app/services/publishing_service.py:180
 msgid "Untitled"
-msgstr "Untitled"
+msgstr "بدون عنوان"
 
 #: app/services/publishing_service.py:229 app/services/publishing_service.py:230
 msgid "Article updated on WordPress"
-msgstr "Article updated on WordPress"
+msgstr "مقاله در وردپرس به‌روزرسانی شد"
 
 #: app/services/topic_import.py:37
 msgid "Title (required)"
-msgstr "Title (required)"
+msgstr "عنوان (الزامی)"
 
 #: app/services/topic_import.py:38 app/templates/pages/articles/review.html:199 app/templates/pages/articles/workspace.html:291 app/templates/pages/articles/workspace.html:401 app/templates/pages/projects/tabs/topics.html:89 app/templates/pages/projects/tabs/topics.html:211 app/templates/pages/topics/index.html:74 app/templates/pages/topics/index.html:179
 msgid "Keyword"
-msgstr "Keyword"
+msgstr "کلمه کلیدی"
 
 #: app/services/topic_import.py:39 app/templates/pages/projects/tabs/topics.html:219 app/templates/pages/topics/index.html:194
 msgid "Pillar"
-msgstr "Pillar"
+msgstr "ستون (Pillar)"
 
 #: app/services/topic_import.py:40 app/templates/pages/projects/tabs/topics.html:221 app/templates/pages/topics/index.html:198
 msgid "Cluster"
-msgstr "Cluster"
+msgstr "خوشه (Cluster)"
 
 #: app/services/topic_import.py:41 app/templates/pages/dashboard.html:39 app/templates/pages/jobs/_table.html:11 app/templates/pages/jobs/detail.html:36 app/templates/pages/jobs/monitor.html:47 app/templates/pages/jobs/monitor.html:99 app/templates/pages/projects/tabs/indexing.html:147 app/templates/pages/projects/tabs/jobs.html:14 app/templates/pages/projects/tabs/topics.html:213 app/templates/pages/topics/index.html:183
 msgid "Type"
-msgstr "Type"
+msgstr "نوع"
 
 #: app/services/topic_import.py:42 app/templates/pages/jobs/detail.html:41 app/templates/pages/projects/tabs/topics.html:95 app/templates/pages/projects/tabs/topics.html:227 app/templates/pages/topics/index.html:47 app/templates/pages/topics/index.html:77 app/templates/pages/topics/index.html:203
 msgid "Priority"
-msgstr "Priority"
+msgstr "اولویت"
 
 #: app/services/topic_import.py:43 app/templates/pages/projects/tabs/topics.html:229 app/templates/pages/topics/index.html:207
 msgid "Week"
-msgstr "Week"
+msgstr "هفته"
 
 #: app/services/topic_import.py:44
 msgid "Link"
-msgstr "Link"
+msgstr "لینک"
 
 #: app/services/topic_import.py:235
 #, python-format
 msgid "Column %(n)d"
-msgstr "Column %(n)d"
+msgstr "ستون %(n)d"
 
 #: app/services/topic_import.py:307
 msgid "Title is empty"
-msgstr "Title is empty"
+msgstr "عنوان خالی است"
 
 #: app/services/topic_import.py:400
 #, python-format
 msgid "Save failed: %(error)s"
-msgstr "Save failed: %(error)s"
+msgstr "ذخیره ناموفق: %(error)s"
 
 #: app/services/writing.py:142
 msgid "Generating the outline"
-msgstr "Generating the outline"
+msgstr "در حال تولید رئوس مطالب"
 
 #: app/services/writing.py:143
 msgid "Generating the outline…"
-msgstr "Generating the outline…"
+msgstr "در حال تولید رئوس مطالب…"
 
 #: app/services/writing.py:159 app/services/writing.py:252
 msgid "The outline is ready"
-msgstr "The outline is ready"
+msgstr "رئوس مطالب آماده شد"
 
 #: app/services/writing.py:216
 msgid "Section jobs created"
-msgstr "Section jobs created"
+msgstr "وظایف بخش‌ها ساخته شدند"
 
 #: app/services/writing.py:281
 #, python-format
 msgid "Generating section: %(heading)s"
-msgstr "Generating section: %(heading)s"
+msgstr "تولید بخش: %(heading)s"
 
 #: app/services/writing.py:319
 msgid "Section generated"
-msgstr "Section generated"
+msgstr "بخش تولید شد"
 
 #: app/services/writing.py:360
 msgid "Assembling the final article"
-msgstr "Assembling the final article"
+msgstr "در حال ساخت مقاله نهایی"
 
 #: app/services/writing.py:361
 msgid "Assembling the final article…"
-msgstr "Assembling the final article…"
+msgstr "در حال ساخت مقاله نهایی…"
 
 #: app/services/writing.py:508 app/services/writing.py:509
 msgid "The article is ready for review"
-msgstr "The article is ready for review"
+msgstr "مقاله آماده بازبینی است"
 
 #: app/templates/base.html:47
 msgid "EzDistro"
@@ -1332,2198 +1332,2198 @@ msgstr "EzDistro"
 
 #: app/templates/base.html:83
 msgid "Confirm action"
-msgstr "Confirm action"
+msgstr "تأیید عملیات"
 
 #: app/templates/base.html:88 app/templates/components/topics/import_step1.html:59 app/templates/pages/articles/review.html:113 app/templates/pages/jobs/_table.html:44 app/templates/pages/jobs/detail.html:22 app/templates/pages/jobs/monitor.html:131 app/templates/pages/projects/detail.html:149 app/templates/pages/projects/list.html:183 app/templates/pages/projects/tabs/integrations.html:355 app/templates/pages/projects/tabs/jobs.html:44 app/templates/pages/projects/tabs/topics.html:245 app/templates/pages/topics/index.html:59 app/templates/pages/topics/index.html:100 app/templates/pages/topics/index.html:212
 msgid "Cancel"
-msgstr "Cancel"
+msgstr "انصراف"
 
 #: app/templates/base.html:89 app/templates/pages/articles/review.html:53
 msgid "Confirm"
-msgstr "Confirm"
+msgstr "تأیید"
 
 #: app/templates/base.html:222
 msgid "Could not reach the server. Please try again."
-msgstr "Could not reach the server. Please try again."
+msgstr "اتصال به سرور برقرار نشد. دوباره تلاش کنید."
 
 #: app/templates/base.html:227
 msgid "Something went wrong; please try again."
-msgstr "Something went wrong; please try again."
+msgstr "مشکلی پیش آمد؛ دوباره تلاش کنید."
 
 #: app/templates/base.html:234
 msgid "You are offline — showing cached data"
-msgstr "You are offline — showing cached data"
+msgstr "شما آفلاین هستید — داده‌های ذخیره‌شده نمایش داده می‌شود"
 
 #: app/templates/base.html:236
 msgid "Connection restored."
-msgstr "Connection restored."
+msgstr "اتصال اینترنت دوباره برقرار شد"
 
 #: app/templates/base.html:254
 msgid "A new version is available."
-msgstr "A new version is available."
+msgstr "نسخه جدید در دسترس است."
 
 #: app/templates/auth/login.html:5 app/templates/auth/login.html:12 app/templates/auth/login.html:79
 msgid "SEO automation and content generation platform"
-msgstr "SEO automation and content generation platform"
+msgstr "پلتفرم اتوماسیون سئو و تولید محتوا"
 
 #: app/templates/auth/login.html:14
 msgid "From search opportunity to published article."
-msgstr "From search opportunity to published article."
+msgstr "از فرصت جستجو تا مقالهٔ منتشرشده"
 
 #: app/templates/auth/login.html:17
 msgid "Find the right topics, build articles, and publish them to WordPress."
-msgstr "Find the right topics, build articles, and publish them to WordPress."
+msgstr "موضوع‌های درست را پیدا کنید، مقاله بسازید و در وردپرس منتشر کنید."
 
 #: app/templates/auth/login.html:22
 msgid "Publishing path"
-msgstr "Publishing path"
+msgstr "مسیر انتشار"
 
 #: app/templates/auth/login.html:35 app/templates/pages/projects/detail.html:71 app/templates/pages/projects/tabs/topics.html:11 app/templates/pages/projects/tabs/topics.html:77 app/templates/pages/topics/index.html:11
 msgid "Topics"
-msgstr "Topics"
+msgstr "موضوع‌ها"
 
 #: app/templates/auth/login.html:60 app/templates/auth/login.html:117
 #, python-format
 msgid "Version %(v)s"
-msgstr "Version %(v)s"
+msgstr "نسخه %(v)s"
 
 #: app/templates/auth/login.html:64
 msgid "Display settings"
-msgstr "Display settings"
+msgstr "تنظیمات نمایش"
 
 #: app/templates/auth/login.html:77
 #, python-format
 msgid "Sign in to %(v)s"
-msgstr "Sign in to %(v)s"
+msgstr "ورود به %(v)s"
 
 #: app/templates/auth/login.html:85
 msgid "Your account has been deactivated. Contact an administrator to reactivate it."
-msgstr "Your account has been deactivated. Contact an administrator to reactivate it."
+msgstr "حساب شما غیرفعال شده است. برای فعال‌سازی با مدیر تماس بگیرید."
 
 #: app/templates/auth/login.html:91
 msgid "Email"
-msgstr "Email"
+msgstr "ایمیل"
 
 #: app/templates/auth/login.html:103
 msgid "Password"
-msgstr "Password"
+msgstr "رمز عبور"
 
 #: app/templates/auth/login.html:114
 msgid "Sign in"
-msgstr "Sign in"
+msgstr "ورود"
 
 #: app/templates/components/locale_switcher.html:10
 msgid "Change language"
-msgstr "Change language"
+msgstr "تغییر زبان"
 
 #: app/templates/components/locale_switcher.html:20
 msgid "Available languages"
-msgstr "Available languages"
+msgstr "زبان‌های موجود"
 
 #: app/templates/components/schedule_panel.html:10 app/templates/pages/articles/_images_pane.html:247 app/templates/pages/projects/_status_toggle.html:16 app/templates/pages/projects/tabs/images.html:51 app/templates/pages/projects/tabs/integrations.html:65 app/templates/pages/projects/tabs/prompts.html:213 app/templates/pages/projects/tabs/retrieval.html:41 app/templates/pages/projects/tabs/settings.html:49 app/templates/pages/projects/tabs/settings.html:81 app/templates/pages/projects/tabs/settings.html:86 app/templates/pages/projects/tabs/settings.html:111 app/templates/pages/projects/tabs/settings.html:117 app/templates/pages/workers/index.html:63
 msgid "Active"
-msgstr "Active"
+msgstr "فعال"
 
 #: app/templates/components/schedule_panel.html:11 app/templates/pages/projects/_status_toggle.html:16 app/templates/pages/projects/tabs/images.html:51 app/templates/pages/projects/tabs/prompts.html:217 app/templates/pages/projects/tabs/retrieval.html:41 app/templates/pages/projects/tabs/settings.html:49 app/templates/pages/projects/tabs/settings.html:81 app/templates/pages/projects/tabs/settings.html:86 app/templates/pages/projects/tabs/settings.html:111 app/templates/pages/projects/tabs/settings.html:117
 msgid "Inactive"
-msgstr "Inactive"
+msgstr "غیرفعال"
 
 #: app/templates/components/schedule_panel.html:15
 msgid "Interval (minutes)"
-msgstr "Interval (minutes)"
+msgstr "بازه (دقیقه)"
 
 #: app/templates/components/schedule_panel.html:19 app/templates/pages/articles/detail.html:101 app/templates/pages/articles/workspace.html:217 app/templates/pages/projects/tabs/integrations.html:351
 msgid "Save"
-msgstr "Save"
+msgstr "ذخیره"
 
 #: app/templates/components/schedule_panel.html:21
 #, python-format
 msgid "Last run: %(v)s"
-msgstr "Last run: %(v)s"
+msgstr "آخرین اجرا: %(v)s"
 
 #: app/templates/components/theme_switcher.html:10
 msgid "Choose theme (dark, light or auto)"
-msgstr "Choose theme (dark, light or auto)"
+msgstr "انتخاب تم (تیره، روشن یا خودکار)"
 
 #: app/templates/components/theme_switcher.html:23
 msgid "Theme options"
-msgstr "Theme options"
+msgstr "گزینه‌های تم"
 
 #: app/templates/components/theme_switcher.html:32
 msgid "Light"
-msgstr "Light"
+msgstr "روشن"
 
 #: app/templates/components/theme_switcher.html:44
 msgid "Dark"
-msgstr "Dark"
+msgstr "تیره"
 
 #: app/templates/components/theme_switcher.html:56
 msgid "Auto"
-msgstr "Auto"
+msgstr "خودکار"
 
 #: app/templates/components/topics/import_mapping.html:13 app/templates/components/topics/import_mapping.html:139
 #, python-format
 msgid "%(n)s topics"
-msgstr "%(n)s topics"
+msgstr "%(n)s موضوع"
 
 #: app/templates/components/topics/import_mapping.html:19
 msgid "Has header"
-msgstr "Has header"
+msgstr "دارای هدر"
 
 #: app/templates/components/topics/import_mapping.html:19
 msgid "No header"
-msgstr "No header"
+msgstr "بدون هدر"
 
 #: app/templates/components/topics/import_mapping.html:21
 #, python-format
 msgid "Delimiter: %(v)s"
-msgstr "Delimiter: %(v)s"
+msgstr "جداکننده: %(v)s"
 
 #: app/templates/components/topics/import_mapping.html:105
 msgid "— Ignore —"
-msgstr "— Ignore —"
+msgstr "— نادیده بگیر —"
 
 #: app/templates/components/topics/import_mapping.html:111 app/templates/pages/projects/tabs/integration_health.html:7
 msgid ", "
-msgstr ", "
+msgstr "، "
 
 #: app/templates/components/topics/import_mapping.html:127
 msgid "Rows whose title or keyword already exists in the project (or in this file) are skipped automatically."
-msgstr "Rows whose title or keyword already exists in the project (or in this file) are skipped automatically."
+msgstr "ردیف‌هایی که عنوان یا کلمه کلیدی‌شان قبلاً در پروژه (یا همین فایل) وجود داشته باشد خودکار رد می‌شوند."
 
 #: app/templates/components/topics/import_mapping.html:129
 msgid "All topics are added with the “Planned” status."
-msgstr "All topics are added with the “Planned” status."
+msgstr "همه موضوع‌ها با وضعیت «برنامه‌ریزی‌شده» اضافه می‌شوند."
 
 #: app/templates/components/topics/import_mapping.html:139 app/templates/pages/articles/_outline_pane.html:34 app/templates/pages/projects/tabs/topics.html:241 app/templates/pages/topics/index.html:211
 msgid "Add"
-msgstr "Add"
+msgstr "افزودن"
 
 #: app/templates/components/topics/import_mapping.html:147
 msgid "Edit text"
-msgstr "Edit text"
+msgstr "تغییر متن"
 
 #: app/templates/components/topics/import_modal.html:7
 msgid "Bulk add topics"
-msgstr "Bulk add topics"
+msgstr "افزودن گروهی موضوع‌ها"
 
 #: app/templates/components/topics/import_modal.html:8 app/templates/pages/projects/list.html:107 app/templates/pages/projects/tabs/integrations.html:191 app/templates/pages/projects/tabs/prompt_compare.html:5 app/templates/pages/projects/tabs/topics.html:193 app/templates/pages/topics/index.html:170
 msgid "Close"
-msgstr "Close"
+msgstr "بستن"
 
 #: app/templates/components/topics/import_result.html:9
 #, python-format
 msgid "Add result — %(v)s"
-msgstr "Add result — %(v)s"
+msgstr "نتیجه افزودن — %(v)s"
 
 #: app/templates/components/topics/import_result.html:19
 msgid "Added"
-msgstr "Added"
+msgstr "افزوده شد"
 
 #: app/templates/components/topics/import_result.html:27
 msgid "Duplicate (skipped)"
-msgstr "Duplicate (skipped)"
+msgstr "تکراری (رد شد)"
 
 #: app/templates/components/topics/import_result.html:53
 msgid "Row"
-msgstr "Row"
+msgstr "ردیف"
 
 #: app/templates/components/topics/import_result.html:55
 msgid "Reason"
-msgstr "Reason"
+msgstr "دلیل"
 
 #: app/templates/components/topics/import_result.html:83
 msgid "… and more errors not shown here."
-msgstr "… and more errors not shown here."
+msgstr "… و خطاهای بیشتری که در اینجا نمایش داده نشدند."
 
 #: app/templates/components/topics/import_result.html:95
 #, python-format
 msgid "%(n)s rows had a free-form type label (e.g. “Troubleshooting guide” or “Q&A”) and were added with the default type “Article”."
-msgstr "%(n)s rows had a free-form type label (e.g. “Troubleshooting guide” or “Q&A”) and were added with the default type “Article”."
+msgstr "%(n)s ردیف دارای برچسب نوع آزاد (مثل «راهنمای عیب‌یابی» یا «پرسش و پاسخ») بودند که با نوع پیش‌فرض «مقاله» اضافه شدند."
 
 #: app/templates/components/topics/import_result.html:107
 msgid "Finish"
-msgstr "Finish"
+msgstr "اتمام"
 
 #: app/templates/components/topics/import_step1.html:13
 msgid "Paste text"
-msgstr "Paste text"
+msgstr "جای‌گذاری متن"
 
 #: app/templates/components/topics/import_step1.html:17
 msgid "Title | Keyword | Pillar | Cluster | Type | Priority&#10;…or a full CSV with header (e.g. Week,Title,Keyword,Related Pillar,…)"
-msgstr "Title | Keyword | Pillar | Cluster | Type | Priority&#10;…or a full CSV with header (e.g. Week,Title,Keyword,Related Pillar,…)"
+msgstr "عنوان | کلمه کلیدی | ستون | خوشه | نوع | اولویت&#10;…یا CSV کامل با هدر (مثل: Week,Title,Keyword,Related Pillar,…)"
 
 #: app/templates/components/topics/import_step1.html:25 app/templates/components/topics/import_step1.html:45
 msgid "or"
-msgstr "or"
+msgstr "یا"
 
 #: app/templates/components/topics/import_step1.html:33
 msgid "Upload a CSV / TSV file"
-msgstr "Upload a CSV / TSV file"
+msgstr "بارگذاری فایل CSV / TSV"
 
 #: app/templates/components/topics/import_step1.html:45
 msgid "Each line is one topic. Columns are separated by"
-msgstr "Each line is one topic. Columns are separated by"
+msgstr "هر خط یک موضوع است. ستون‌ها با"
 
 #: app/templates/components/topics/import_step1.html:45
 msgid ": Title | Keyword | Pillar | Cluster | Type | Priority. Header columns (Week, ID, Title, Keyword, Related Pillar, Cluster, Type, …) are detected automatically and you can adjust the mapping in the next step. Duplicate rows are skipped automatically."
-msgstr ": Title | Keyword | Pillar | Cluster | Type | Priority. Header columns (Week, ID, Title, Keyword, Related Pillar, Cluster, Type, …) are detected automatically and you can adjust the mapping in the next step. Duplicate rows are skipped automatically."
+msgstr "جدا می‌شوند: عنوان | کلمه کلیدی | ستون | خوشه | نوع | اولویت. ستون‌های هدر (Week, ID, Title, Keyword, Related Pillar, Cluster, Type, …) خودکار شناسایی می‌شوند و در مرحله بعد می‌توانید نگاشت را تغییر دهید. ردیف‌های تکراری خودکار رد می‌شوند."
 
 #: app/templates/components/topics/import_step1.html:55
 msgid "Preview and map columns"
-msgstr "Preview and map columns"
+msgstr "پیش‌نمایش و تنظیم ستون‌ها"
 
 #: app/templates/layouts/platform.html:13 app/templates/layouts/platform.html:111
 msgid "EzDistro — Home"
-msgstr "EzDistro — Home"
+msgstr "EzDistro — خانه"
 
 #: app/templates/layouts/platform.html:25 app/templates/layouts/platform.html:27 app/templates/layouts/platform.html:155
 msgid "Main menu"
-msgstr "Main menu"
+msgstr "منوی اصلی"
 
 #: app/templates/layouts/platform.html:75 app/templates/layouts/platform.html:127
 msgid "Account"
-msgstr "Account"
+msgstr "حساب کاربری"
 
 #: app/templates/layouts/platform.html:87 app/templates/layouts/platform.html:132
 msgid "Sign out"
-msgstr "Sign out"
+msgstr "خروج"
 
 #: app/templates/macros/forms.html:104
 msgid "Save your changes when you are done"
-msgstr "Save your changes when you are done"
+msgstr "تغییرات را پس از پایان ذخیره کنید"
 
 #: app/templates/pages/dashboard.html:19
 msgid "Overall health of content production, indexing and providers"
-msgstr "Overall health of content production, indexing and providers"
+msgstr "نمای کل سلامت تولید محتوا، نمایه‌سازی و ارائه‌دهنده‌ها"
 
 #: app/templates/pages/dashboard.html:20
 msgid "Command center"
-msgstr "Command center"
+msgstr "فرماندهی"
 
 #: app/templates/pages/dashboard.html:33
 msgid "Recent jobs"
-msgstr "Recent jobs"
+msgstr "وظایف اخیر"
 
 #: app/templates/pages/dashboard.html:33 app/templates/pages/jobs/failed.html:5 app/templates/pages/workers/index.html:209
 msgid "All jobs"
-msgstr "All jobs"
+msgstr "همه وظایف"
 
 #: app/templates/pages/articles/detail.html:295 app/templates/pages/articles/workspace.html:381 app/templates/pages/dashboard.html:40 app/templates/pages/jobs/_table.html:13 app/templates/pages/jobs/detail.html:39 app/templates/pages/jobs/monitor.html:56 app/templates/pages/jobs/monitor.html:101 app/templates/pages/projects/tabs/indexing.html:145 app/templates/pages/projects/tabs/indexing.html:251 app/templates/pages/projects/tabs/jobs.html:15 app/templates/pages/projects/tabs/prompts.html:189 app/templates/pages/projects/tabs/publishing.html:14 app/templates/pages/projects/tabs/topics.html:93 app/templates/pages/topics/index.html:76
 msgid "Status"
-msgstr "Status"
+msgstr "وضعیت"
 
 #: app/templates/pages/dashboard.html:41 app/templates/pages/jobs/_table.html:14 app/templates/pages/jobs/detail.html:57 app/templates/pages/jobs/monitor.html:102 app/templates/pages/projects/tabs/jobs.html:16
 msgid "Progress"
-msgstr "Progress"
+msgstr "پیشرفت"
 
 #: app/templates/pages/articles/detail.html:301 app/templates/pages/dashboard.html:42 app/templates/pages/jobs/_table.html:17 app/templates/pages/jobs/monitor.html:105 app/templates/pages/logs/feed.html:28 app/templates/pages/projects/tabs/indexing.html:163 app/templates/pages/projects/tabs/logs.html:17 app/templates/pages/projects/tabs/prompts.html:187 app/templates/pages/projects/tabs/publishing.html:17
 msgid "Time"
-msgstr "Time"
+msgstr "زمان"
 
 #: app/templates/pages/dashboard.html:53 app/templates/pages/jobs/_table.html:30 app/templates/pages/jobs/detail.html:60 app/templates/pages/jobs/monitor.html:118 app/templates/pages/jobs/monitor.html:165 app/templates/pages/jobs/monitor.html:166 app/templates/pages/projects/tabs/indexing.html:63 app/templates/pages/projects/tabs/jobs.html:30
 #, python-format
 msgid "%(n)s%%"
-msgstr "%(n)s%%"
+msgstr "%(n)s٪"
 
 #: app/templates/pages/dashboard.html:67
 msgid "No jobs recorded yet"
-msgstr "No jobs recorded yet"
+msgstr "هنوز وظیفه‌ای ثبت نشده است"
 
 #: app/templates/pages/dashboard.html:73
 msgid "Recent events"
-msgstr "Recent events"
+msgstr "رویدادهای اخیر"
 
 #: app/templates/pages/dashboard.html:73
 msgid "All events"
-msgstr "All events"
+msgstr "همه رویدادها"
 
 #: app/templates/pages/dashboard.html:88 app/templates/pages/logs/feed.html:59
 msgid "No events recorded"
-msgstr "No events recorded"
+msgstr "رویدادی ثبت نشده است"
 
 #: app/templates/pages/articles/_images_pane.html:12
 msgid "Article images"
-msgstr "Article images"
+msgstr "تصاویر مقاله"
 
 #: app/templates/pages/articles/_images_pane.html:19
 msgid "Rebuild the image plan? The current prompts will be replaced."
-msgstr "Rebuild the image plan? The current prompts will be replaced."
+msgstr "برنامه تصاویر دوباره ساخته شود؟ پرامپت‌های فعلی جایگزین می‌شوند."
 
 #: app/templates/pages/articles/_images_pane.html:21
 msgid "Image plan"
-msgstr "Image plan"
+msgstr "برنامه تصاویر"
 
 #: app/templates/pages/articles/_images_pane.html:32
 msgid "The image plan has not been created"
-msgstr "The image plan has not been created"
+msgstr "برنامه تصاویر ساخته نشده است"
 
 #: app/templates/pages/articles/_images_pane.html:34
 msgid "Build the image plan first to generate the cover and in-text images."
-msgstr "Build the image plan first to generate the cover and in-text images."
+msgstr "برای تولید تصویر کاور و تصاویر داخل متن، ابتدا برنامه تصاویر را بسازید."
 
 #: app/templates/pages/articles/_images_pane.html:42
 #, python-format
 msgid "%(n)s images in the plan: 1 cover + %(m)s in-text images. Each regeneration creates a new version; successful versions are never overwritten."
-msgstr "%(n)s images in the plan: 1 cover + %(m)s in-text images. Each regeneration creates a new version; successful versions are never overwritten."
+msgstr "%(n)s تصویر در برنامه: ۱ کاور + %(m)s تصویر داخل متن. هر بازتولید یک نسخهٔ جدید می‌سازد؛ نسخه‌های موفق هرگز بازنویسی نمی‌شوند."
 
 #: app/templates/pages/articles/_images_pane.html:60
 msgid "Article cover"
-msgstr "Article cover"
+msgstr "کاور مقاله"
 
 #: app/templates/pages/articles/_images_pane.html:60
 msgid "In-text image"
-msgstr "In-text image"
+msgstr "تصویر داخل متن"
 
 #: app/templates/pages/articles/_images_pane.html:70
 msgid "Estimated generation cost"
-msgstr "Estimated generation cost"
+msgstr "هزینهٔ تخمینی تولید"
 
 #: app/templates/pages/articles/_images_pane.html:72
 msgid "Cost: unknown"
-msgstr "Cost: unknown"
+msgstr "هزینه: نامشخص"
 
 #: app/templates/pages/articles/_images_pane.html:97
 msgid "Retryable"
-msgstr "Retryable"
+msgstr "قابل تلاش مجدد"
 
 #: app/templates/pages/articles/_images_pane.html:107
 msgid "Aspect ratio"
-msgstr "Aspect ratio"
+msgstr "نسبت"
 
 #: app/templates/pages/articles/_images_pane.html:109 app/templates/pages/projects/tabs/settings.html:13
 msgid "Dimensions"
-msgstr "Dimensions"
+msgstr "ابعاد"
 
 #: app/templates/pages/articles/_images_pane.html:111
 msgid "Semantic role"
-msgstr "Semantic role"
+msgstr "نقش معنایی"
 
 #: app/templates/pages/articles/_images_pane.html:117
 msgid "Image prompt"
-msgstr "Image prompt"
+msgstr "پرامپت تصویر"
 
 #: app/templates/pages/articles/_images_pane.html:123 app/templates/pages/articles/_images_pane.html:188
 msgid "Alt text"
-msgstr "Alt text"
+msgstr "متن جایگزین"
 
 #: app/templates/pages/articles/_images_pane.html:125 app/templates/pages/projects/list.html:173
 msgid "Description"
-msgstr "Description"
+msgstr "توضیح"
 
 #: app/templates/pages/articles/_images_pane.html:142
 msgid "Image generation"
-msgstr "Image generation"
+msgstr "تولید تصویر"
 
 #: app/templates/pages/articles/_images_pane.html:149
 msgid "Create a new version? The current version is kept."
-msgstr "Create a new version? The current version is kept."
+msgstr "نسخهٔ جدید ساخته شود؟ نسخهٔ فعلی حفظ می‌شود."
 
 #: app/templates/pages/articles/_images_pane.html:151 app/templates/pages/articles/detail.html:249
 msgid "Regenerate"
-msgstr "Regenerate"
+msgstr "بازتولید"
 
 #: app/templates/pages/articles/_images_pane.html:156
 msgid "Re-optimize with the current settings (format/dimensions)"
-msgstr "Re-optimize with the current settings (format/dimensions)"
+msgstr "بهینه‌سازی مجدد با تنظیمات فعلی (فرمت/ابعاد)"
 
 #: app/templates/pages/articles/_images_pane.html:158
 msgid "Re-optimize"
-msgstr "Re-optimize"
+msgstr "بهینه‌سازی مجدد"
 
 #: app/templates/pages/articles/_images_pane.html:164
 msgid "Upload to WordPress (existing media is reused on repeats)"
-msgstr "Upload to WordPress (existing media is reused on repeats)"
+msgstr "بارگذاری در وردپرس (در صورت تکرار، رسانهٔ موجود بازاستفاده می‌شود)"
 
 #: app/templates/pages/articles/_images_pane.html:166
 msgid "Upload to WordPress"
-msgstr "Upload to WordPress"
+msgstr "بارگذاری در وردپرس"
 
 #: app/templates/pages/articles/_images_pane.html:171
 msgid "Processing…"
-msgstr "Processing…"
+msgstr "در حال پردازش…"
 
 #: app/templates/pages/articles/_images_pane.html:191
 msgid "A natural image description for search engines"
-msgstr "A natural image description for search engines"
+msgstr "توضیح طبیعی تصویر برای موتورهای جستجو"
 
 #: app/templates/pages/articles/_images_pane.html:197
 msgid "Caption — optional"
-msgstr "Caption — optional"
+msgstr "توضیح (caption) — اختیاری"
 
 #: app/templates/pages/articles/_images_pane.html:204
 msgid "Save info"
-msgstr "Save info"
+msgstr "ذخیره اطلاعات"
 
 #: app/templates/pages/articles/_images_pane.html:216
 msgid "Versions"
-msgstr "Versions"
+msgstr "نسخه‌ها"
 
 #: app/templates/pages/articles/_images_pane.html:242
 msgid "Use this image"
-msgstr "Use this image"
+msgstr "استفاده از این تصویر"
 
 #: app/templates/pages/articles/_images_pane.html:250
 msgid "Deactivate this version?"
-msgstr "Deactivate this version?"
+msgstr "این نسخه غیرفعال شود؟"
 
 #: app/templates/pages/articles/_images_pane.html:251 app/templates/pages/articles/_outline_pane.html:22 app/templates/pages/projects/detail.html:51 app/templates/pages/projects/tabs/integrations.html:137 app/templates/pages/projects/tabs/topics.html:149 app/templates/pages/topics/index.html:107
 msgid "Delete"
-msgstr "Delete"
+msgstr "حذف"
 
 #: app/templates/pages/articles/_outline_pane.html:9
 msgid "Jump to section"
-msgstr "Jump to section"
+msgstr "پرش به بخش"
 
 #: app/templates/pages/articles/_outline_pane.html:9
 msgid "View"
-msgstr "View"
+msgstr "مشاهده"
 
 #: app/templates/pages/articles/_outline_pane.html:13
 msgid "Up"
-msgstr "Up"
+msgstr "بالا"
 
 #: app/templates/pages/articles/_outline_pane.html:18
 msgid "Down"
-msgstr "Down"
+msgstr "پایین"
 
 #: app/templates/pages/articles/_outline_pane.html:22
 msgid "Delete this section?"
-msgstr "Delete this section?"
+msgstr "این بخش حذف شود؟"
 
 #: app/templates/pages/articles/_outline_pane.html:26
 msgid "No sections yet."
-msgstr "No sections yet."
+msgstr "بخشی وجود ندارد."
 
 #: app/templates/pages/articles/_outline_pane.html:30
 msgid "+ Add section"
-msgstr "+ Add section"
+msgstr "+ افزودن بخش"
 
 #: app/templates/pages/articles/_outline_pane.html:33 app/templates/pages/articles/detail.html:215 app/templates/pages/articles/workspace.html:301
 msgid "Content brief"
-msgstr "Content brief"
+msgstr "خلاصه محتوا"
 
 #: app/templates/pages/articles/_section_status.html:8
 msgid "Queued — waiting for provider"
-msgstr "Queued — waiting for provider"
+msgstr "در صف — منتظر ارائه‌دهنده"
 
 #: app/templates/pages/articles/_section_status.html:16
 msgid "View technical details"
-msgstr "View technical details"
+msgstr "مشاهده جزئیات فنی"
 
 #: app/templates/pages/articles/detail.html:13 app/templates/pages/articles/review.html:277 app/templates/pages/articles/workspace.html:27 app/templates/pages/jobs/detail.html:8 app/templates/pages/projects/detail.html:13 app/templates/pages/topics/index.html:7
 msgid "Back"
-msgstr "Back"
+msgstr "بازگشت"
 
 #: app/templates/pages/articles/detail.html:27 app/templates/pages/articles/review.html:27 app/templates/pages/articles/review.html:173 app/templates/pages/articles/workspace.html:41 app/templates/pages/projects/tabs/articles.html:14
 #, python-format
 msgid "%(n)s words"
-msgstr "%(n)s words"
+msgstr "%(n)s کلمه"
 
 #: app/templates/pages/articles/detail.html:29
 #, python-format
 msgid "SEO: %(n)s/100"
-msgstr "SEO: %(n)s/100"
+msgstr "سئو: %(n)s/۱۰۰"
 
 #: app/templates/pages/articles/detail.html:31
 #, python-format
 msgid "Outline version: %(n)s"
-msgstr "Outline version: %(n)s"
+msgstr "نسخه رئوس: %(n)s"
 
 #: app/templates/pages/articles/detail.html:33 app/templates/pages/articles/workspace.html:45
 msgid "View on WordPress"
-msgstr "View on WordPress"
+msgstr "مشاهده در وردپرس"
 
 #: app/templates/pages/articles/detail.html:43 app/templates/pages/articles/workspace.html:63
 msgid "Send the article to WordPress?"
-msgstr "Send the article to WordPress?"
+msgstr "مقاله به وردپرس ارسال شود؟"
 
 #: app/templates/pages/articles/detail.html:47 app/templates/pages/articles/review.html:63 app/templates/pages/articles/workspace.html:67 app/templates/pages/projects/detail.html:73 app/templates/pages/projects/tabs/publishing.html:2
 msgid "Publish"
-msgstr "Publish"
+msgstr "انتشار"
 
 #: app/templates/pages/articles/detail.html:73 app/templates/pages/articles/workspace.html:189
 msgid "Title and meta"
-msgstr "Title and meta"
+msgstr "عنوان و متا"
 
 #: app/templates/pages/articles/detail.html:81 app/templates/pages/articles/workspace.html:197 app/templates/pages/projects/tabs/indexing.html:243 app/templates/pages/projects/tabs/retrieval_results.html:19 app/templates/pages/projects/tabs/topics.html:87 app/templates/pages/topics/index.html:47 app/templates/pages/topics/index.html:73
 msgid "Title"
-msgstr "Title"
+msgstr "عنوان"
 
 #: app/templates/pages/articles/detail.html:89 app/templates/pages/articles/review.html:317 app/templates/pages/articles/workspace.html:205
 msgid "Meta description"
-msgstr "Meta description"
+msgstr "متا توضیحات"
 
 #: app/templates/pages/articles/detail.html:127 app/templates/pages/articles/workspace.html:421
 msgid "Valid"
-msgstr "Valid"
+msgstr "معتبر"
 
 #: app/templates/pages/articles/detail.html:127 app/templates/pages/articles/workspace.html:421
 msgid "Invalid"
-msgstr "Invalid"
+msgstr "نامعتبر"
 
 #: app/templates/pages/articles/detail.html:139
 #, python-format
 msgid "Words: %(a)s — sections: %(b)s —"
-msgstr "Words: %(a)s — sections: %(b)s —"
+msgstr "کلمات: %(a)s — بخش‌ها: %(b)s —"
 
 #: app/templates/pages/articles/detail.html:141
 #, python-format
 msgid "Minimum: %(n)s"
-msgstr "Minimum: %(n)s"
+msgstr "حداقل: %(n)s"
 
 #: app/templates/pages/articles/detail.html:155
 #, python-format
 msgid "Section %(n)s"
-msgstr "Section %(n)s"
+msgstr "بخش %(n)s"
 
 #: app/templates/pages/articles/detail.html:181
 #, python-format
 msgid "Sections — article outline (%(n)s)"
-msgstr "Sections — article outline (%(n)s)"
+msgstr "بخش‌ها — رئوس مقاله (%(n)s)"
 
 #: app/templates/pages/articles/detail.html:197
 msgid "Prompt version"
-msgstr "Prompt version"
+msgstr "نسخه پرامپت"
 
 #: app/templates/pages/articles/detail.html:223 app/templates/pages/articles/workspace.html:311
 msgid "HTML content"
-msgstr "HTML content"
+msgstr "محتوای HTML"
 
 #: app/templates/pages/articles/detail.html:233
 #, python-format
 msgid "Generation time: %(a)sms — attempts: %(b)s"
-msgstr "Generation time: %(a)sms — attempts: %(b)s"
+msgstr "زمان تولید: %(a)sms — تلاش‌ها: %(b)s"
 
 #: app/templates/pages/articles/detail.html:233
 msgid "Not generated"
-msgstr "Not generated"
+msgstr "تولید نشده"
 
 #: app/templates/pages/articles/detail.html:235 app/templates/pages/projects/tabs/prompt_test_result.html:9
 #, python-format
 msgid "Tokens: %(n)s"
-msgstr "Tokens: %(n)s"
+msgstr "توکن: %(n)s"
 
 #: app/templates/pages/articles/detail.html:249
 msgid "Mark this section for regeneration?"
-msgstr "Mark this section for regeneration?"
+msgstr "این بخش برای بازتولید علامت‌گذاری شود؟"
 
 #: app/templates/pages/articles/detail.html:251 app/templates/pages/articles/workspace.html:341
 msgid "Save section"
-msgstr "Save section"
+msgstr "ذخیره بخش"
 
 #: app/templates/pages/articles/detail.html:263
 msgid "No sections yet — generate the outline first."
-msgstr "No sections yet — generate the outline first."
+msgstr "بخشی وجود ندارد — ابتدا رئوس مطالب تولید کنید."
 
 #: app/templates/pages/articles/detail.html:279 app/templates/pages/articles/workspace.html:505 app/templates/pages/projects/tabs/publishing.html:6
 msgid "Publish history"
-msgstr "Publish history"
+msgstr "تاریخچه انتشار"
 
 #: app/templates/pages/articles/detail.html:291 app/templates/pages/jobs/_table.html:16 app/templates/pages/jobs/monitor.html:104 app/templates/pages/projects/tabs/jobs.html:18 app/templates/pages/projects/tabs/publishing.html:12
 msgid "Attempt"
-msgstr "Attempt"
+msgstr "تلاش"
 
 #: app/templates/pages/articles/detail.html:293 app/templates/pages/projects/tabs/publishing.html:13
 msgid "Mode"
-msgstr "Mode"
+msgstr "حالت"
 
 #: app/templates/pages/articles/detail.html:297 app/templates/pages/projects/tabs/publishing.html:15
 msgid "Post ID"
-msgstr "Post ID"
+msgstr "شناسه پست"
 
 #: app/templates/pages/articles/detail.html:299 app/templates/pages/projects/tabs/publishing.html:16 app/templates/pages/projects/tabs/retrieval_results.html:20
 msgid "URL"
-msgstr "URL"
+msgstr "آدرس"
 
 #: app/templates/pages/articles/detail.html:353
 msgid "Preview (sanitized)"
-msgstr "Preview (sanitized)"
+msgstr "پیش‌نمایش (امن‌سازی‌شده)"
 
 #: app/templates/pages/articles/not_found.html:5
 msgid "Article not found."
-msgstr "Article not found."
+msgstr "مقاله یافت نشد."
 
 #: app/templates/pages/articles/not_found.html:6 app/templates/pages/articles/render_error.html:6
 msgid "Back to articles"
-msgstr "Back to articles"
+msgstr "بازگشت به مقاله‌ها"
 
 #: app/templates/pages/articles/render_error.html:5
 msgid "Something went wrong loading this page."
-msgstr "Something went wrong loading this page."
+msgstr "مشکلی در بارگذاری این صفحه پیش آمد."
 
 #: app/templates/pages/articles/review.html:13
 msgid "Back to workspace"
-msgstr "Back to workspace"
+msgstr "بازگشت به کارگاه"
 
 #: app/templates/pages/articles/review.html:21
 #, python-format
 msgid "Review: %(v)s"
-msgstr "Review: %(v)s"
+msgstr "بازبینی: %(v)s"
 
 #: app/templates/pages/articles/review.html:29 app/templates/pages/articles/workspace.html:43
 #, python-format
 msgid "Outline v%(n)s"
-msgstr "Outline v%(n)s"
+msgstr "رئوس v%(n)s"
 
 #: app/templates/pages/articles/review.html:31
 #, python-format
 msgid "Generated: %(v)s"
-msgstr "Generated: %(v)s"
+msgstr "تولید: %(v)s"
 
 #: app/templates/pages/articles/review.html:47 app/templates/pages/articles/review.html:111
 msgid "Return"
-msgstr "Return"
+msgstr "بازگرداندن"
 
 #: app/templates/pages/articles/review.html:59
 msgid "Approved — publishing enabled"
-msgstr "Approved — publishing enabled"
+msgstr "تأیید شده — انتشار فعال"
 
 #: app/templates/pages/articles/review.html:69 app/templates/pages/articles/workspace.html:87
 msgid "Regenerate article"
-msgstr "Regenerate article"
+msgstr "بازتولید مقاله"
 
 #: app/templates/pages/articles/review.html:77
 msgid "The current version is saved to history; continue full regeneration?"
-msgstr "The current version is saved to history; continue full regeneration?"
+msgstr "نسخه فعلی در تاریخچه ذخیره می‌شود؛ بازتولید کامل ادامه یابد؟"
 
 #: app/templates/pages/articles/review.html:77
 msgid "Full regeneration"
-msgstr "Full regeneration"
+msgstr "بازتولید کامل"
 
 #: app/templates/pages/articles/review.html:101
 msgid "Return article"
-msgstr "Return article"
+msgstr "بازگرداندن مقاله"
 
 #: app/templates/pages/articles/review.html:107
 msgid "Reason for returning (recorded in history)…"
-msgstr "Reason for returning (recorded in history)…"
+msgstr "دلیل بازگرداندن (برای تاریخچه ثبت می‌شود)…"
 
 #: app/templates/pages/articles/review.html:135
 msgid "Validation panel"
-msgstr "Validation panel"
+msgstr "پنل اعتبارسنجی"
 
 #: app/templates/pages/articles/review.html:139
 msgid "Passed"
-msgstr "Passed"
+msgstr "گذشت"
 
 #: app/templates/pages/articles/review.html:149
 msgid "All checks passed — the article can be approved."
-msgstr "All checks passed — the article can be approved."
+msgstr "همه بررسی‌ها موفق بودند — مقاله قابل تأیید است."
 
 #: app/templates/pages/articles/review.html:175 app/templates/pages/articles/workspace.html:167
 #, python-format
 msgid "%(n)s sections"
-msgstr "%(n)s sections"
+msgstr "%(n)s بخش"
 
 #: app/templates/pages/articles/review.html:177
 #, python-format
 msgid "Minimum %(n)s"
-msgstr "Minimum %(n)s"
+msgstr "حداقل %(n)s"
 
 #: app/templates/pages/articles/review.html:189
 msgid "Generation info"
-msgstr "Generation info"
+msgstr "اطلاعات تولید"
 
 #: app/templates/pages/articles/review.html:193
 msgid "Latest generation version"
-msgstr "Latest generation version"
+msgstr "نسخه آخرین تولید"
 
 #: app/templates/pages/articles/review.html:195
 msgid "Generation time"
-msgstr "Generation time"
+msgstr "زمان تولید"
 
 #: app/templates/pages/articles/review.html:197 app/templates/pages/articles/workspace.html:395
 msgid "SEO score"
-msgstr "SEO score"
+msgstr "امتیاز سئو"
 
 #: app/templates/pages/articles/review.html:201
 msgid "Sections (model/prompt version)"
-msgstr "Sections (model/prompt version)"
+msgstr "بخش‌ها (مدل/نسخه پرامپت)"
 
 #: app/templates/pages/articles/review.html:227 app/templates/pages/articles/workspace.html:477
 msgid "Internal links"
-msgstr "Internal links"
+msgstr "لینک‌های داخلی"
 
 #: app/templates/pages/articles/review.html:247
 msgid "Version history"
-msgstr "Version history"
+msgstr "تاریخچه نسخه‌ها"
 
 #: app/templates/pages/articles/review.html:277
 msgid "Restore this version? The current version is saved to history."
-msgstr "Restore this version? The current version is saved to history."
+msgstr "این نسخه بازگردانده شود؟ نسخه فعلی در تاریخچه ذخیره می‌شود."
 
 #: app/templates/pages/articles/review.html:289
 msgid "No history recorded."
-msgstr "No history recorded."
+msgstr "تاریخچه‌ای ثبت نشده است."
 
 #: app/templates/pages/articles/review.html:307
 msgid "Title and slug"
-msgstr "Title and slug"
+msgstr "عنوان و اسلاگ"
 
 #: app/templates/pages/articles/review.html:315
 msgid "Slug"
-msgstr "Slug"
+msgstr "اسلاگ"
 
 #: app/templates/pages/articles/review.html:329
 msgid "Outline"
-msgstr "Outline"
+msgstr "رئوس مطالب"
 
 #: app/templates/pages/articles/review.html:357
 msgid "Article body"
-msgstr "Article body"
+msgstr "بدنه مقاله"
 
 #: app/templates/pages/articles/review.html:367
 msgid "No content has been generated."
-msgstr "No content has been generated."
+msgstr "محتوایی تولید نشده است."
 
 #: app/templates/pages/articles/review.html:381
 #, python-format
 msgid "Generated version (v%(n)s)"
-msgstr "Generated version (v%(n)s)"
+msgstr "نسخه تولیدشده (v%(n)s)"
 
 #: app/templates/pages/articles/review.html:385
 msgid "Differs from the current version — use history to roll back."
-msgstr "Differs from the current version — use history to roll back."
+msgstr "متفاوت از نسخه فعلی — برای بازگشت از تاریخچه استفاده کنید."
 
 #: app/templates/pages/articles/workspace.html:57
 msgid "Review and approve"
-msgstr "Review and approve"
+msgstr "بازبینی و تأیید"
 
 #: app/templates/pages/articles/workspace.html:75
 msgid "Update the WordPress post with the current version?"
-msgstr "Update the WordPress post with the current version?"
+msgstr "محتوای پست وردپرس با نسخه فعلی به‌روزرسانی شود؟"
 
 #: app/templates/pages/articles/workspace.html:75 app/templates/pages/projects/tabs/indexing.html:253
 msgid "Update"
-msgstr "Update"
+msgstr "به‌روزرسانی"
 
 #: app/templates/pages/articles/workspace.html:81
 msgid "Make the WordPress post private (unpublish)?"
-msgstr "Make the WordPress post private (unpublish)?"
+msgstr "پست وردپرس خصوصی شود (لغو انتشار)؟"
 
 #: app/templates/pages/articles/workspace.html:81
 msgid "Unpublish"
-msgstr "Unpublish"
+msgstr "لغو انتشار"
 
 #: app/templates/pages/articles/workspace.html:101
 msgid "Rebuild the article from the current sections"
-msgstr "Rebuild the article from the current sections"
+msgstr "بازسازی مقاله از بخش‌های فعلی"
 
 #: app/templates/pages/articles/workspace.html:101
 msgid "Rebuild"
-msgstr "Rebuild"
+msgstr "بازسازی"
 
 #: app/templates/pages/articles/workspace.html:125
 msgid "Preparing outline and sections…"
-msgstr "Preparing outline and sections…"
+msgstr "در حال آماده‌سازی رئوس و بخش‌ها…"
 
 #: app/templates/pages/articles/workspace.html:129
 #, python-format
 msgid "Generating sections — %(a)s of %(b)s ready"
-msgstr "Generating sections — %(a)s of %(b)s ready"
+msgstr "در حال تولید بخش‌ها — %(a)s از %(b)s بخش آماده شد"
 
 #: app/templates/pages/articles/workspace.html:133
 msgid "Sections ready — building the final article"
-msgstr "Sections ready — building the final article"
+msgstr "بخش‌ها آماده شدند — در حال ساخت مقاله نهایی"
 
 #: app/templates/pages/articles/workspace.html:141
 msgid "This process is automatic; the page keeps refreshing until the article moves to “Review”."
-msgstr "This process is automatic; the page keeps refreshing until the article moves to “Review”."
+msgstr "این فرآیند خودکار است و صفحه تا انتقال به «بازبینی» خودبه‌خود تازه می‌شود."
 
 #: app/templates/pages/articles/workspace.html:143
 msgid "If a section fails, use “Regenerate section”."
-msgstr "If a section fails, use “Regenerate section”."
+msgstr "اگر بخشی ناموفق باشد، از «بازتولید بخش» استفاده کنید."
 
 #: app/templates/pages/articles/workspace.html:165
 msgid "Article outline"
-msgstr "Article outline"
+msgstr "رئوس مقاله"
 
 #: app/templates/pages/articles/workspace.html:269
 msgid "This section is being generated — manual saving is disabled until it finishes."
-msgstr "This section is being generated — manual saving is disabled until it finishes."
+msgstr "این بخش در حال تولید است — ذخیره دستی تا پایان تولید غیرفعال است."
 
 #: app/templates/pages/articles/workspace.html:323
 #, python-format
 msgid "Last generation: %(n)sms"
-msgstr "Last generation: %(n)sms"
+msgstr "آخرین تولید: %(n)sms"
 
 #: app/templates/pages/articles/workspace.html:339
 msgid "Regenerate this section?"
-msgstr "Regenerate this section?"
+msgstr "این بخش دوباره تولید شود؟"
 
 #: app/templates/pages/articles/workspace.html:339
 msgid "Regenerate section"
-msgstr "Regenerate section"
+msgstr "بازتولید بخش"
 
 #: app/templates/pages/articles/workspace.html:359
 msgid "No sections"
-msgstr "No sections"
+msgstr "بخشی وجود ندارد"
 
 #: app/templates/pages/articles/workspace.html:361
 msgid "Generate the outline first."
-msgstr "Generate the outline first."
+msgstr "ابتدا رئوس مطالب تولید کنید."
 
 #: app/templates/pages/articles/workspace.html:397
 msgid "Words"
-msgstr "Words"
+msgstr "کلمات"
 
 #: app/templates/pages/articles/workspace.html:399
 msgid "Outline version"
-msgstr "Outline version"
+msgstr "نسخه رئوس"
 
 #: app/templates/pages/articles/workspace.html:415
 msgid "Validation"
-msgstr "Validation"
+msgstr "اعتبارسنجی"
 
 #: app/templates/pages/articles/workspace.html:441
 msgid "Generating sections"
-msgstr "Generating sections"
+msgstr "تولید بخش‌ها"
 
 #: app/templates/pages/articles/workspace.html:493
 msgid "No internal links defined."
-msgstr "No internal links defined."
+msgstr "لینک داخلی تعریف نشده است."
 
 #: app/templates/pages/articles/workspace.html:519
 msgid "Request ID"
-msgstr "Request ID"
+msgstr "شناسه درخواست"
 
 #: app/templates/pages/articles/workspace.html:529
 #, python-format
 msgid "Post %(n)s"
-msgstr "Post %(n)s"
+msgstr "پست %(n)s"
 
 #: app/templates/pages/articles/workspace.html:533 app/templates/pages/articles/workspace.html:537 app/templates/pages/jobs/_table.html:47 app/templates/pages/jobs/detail.html:24 app/templates/pages/jobs/failed.html:19 app/templates/pages/jobs/monitor.html:134 app/templates/pages/jobs/monitor.html:155 app/templates/pages/projects/tabs/indexing.html:207 app/templates/pages/projects/tabs/jobs.html:49 app/templates/pages/projects/tabs/settings.html:95 app/templates/pages/topics/index.html:58 app/templates/pages/workers/index.html:37 app/templates/pages/workers/index.html:223
 msgid "Retry"
-msgstr "Retry"
+msgstr "تلاش مجدد"
 
 #: app/templates/pages/dashboard/_stats.html:7
 msgid "Planned topics"
-msgstr "Planned topics"
+msgstr "موضوع‌های برنامه‌ریزی‌شده"
 
 #: app/templates/pages/dashboard/_stats.html:8
 msgid "Articles being written"
-msgstr "Articles being written"
+msgstr "مقالات در حال نگارش"
 
 #: app/templates/pages/dashboard/_stats.html:9
 msgid "Awaiting review"
-msgstr "Awaiting review"
+msgstr "در انتظار بازبینی"
 
 #: app/templates/pages/dashboard/_stats.html:11
 msgid "Pending jobs"
-msgstr "Pending jobs"
+msgstr "وظایف در انتظار"
 
 #: app/templates/pages/dashboard/_stats.html:12
 msgid "Running / retrying"
-msgstr "Running / retrying"
+msgstr "در حال اجرا / تلاش مجدد"
 
 #: app/templates/pages/dashboard/_stats.html:14
 msgid "Failure rate / average (seconds)"
-msgstr "Failure rate / average (seconds)"
+msgstr "نرخ شکست / میانگین (ثانیه)"
 
 #: app/templates/pages/dashboard/_stats.html:14
 msgid "% / "
-msgstr "% / "
+msgstr "٪ / "
 
 #: app/templates/pages/dashboard/_stats.html:15
 msgid "Indexing health"
-msgstr "Indexing health"
+msgstr "سلامت نمایه‌سازی"
 
 #: app/templates/pages/dashboard/_stats.html:15 app/templates/pages/dashboard/_stats.html:16
 msgid " healthy"
-msgstr " healthy"
+msgstr " سالم"
 
 #: app/templates/pages/dashboard/_stats.html:15
 msgid " degraded"
-msgstr " degraded"
+msgstr " مشکل‌دار"
 
 #: app/templates/pages/dashboard/_stats.html:16
 msgid "Provider health"
-msgstr "Provider health"
+msgstr "سلامت ارائه‌دهنده‌ها"
 
 #: app/templates/pages/dashboard/_stats.html:16
 msgid " unhealthy · "
-msgstr " unhealthy · "
+msgstr " ناسالم · "
 
 #: app/templates/pages/dashboard/_stats.html:20 app/templates/pages/workers/index.html:31
 msgid "Worker online"
-msgstr "Worker online"
+msgstr "کارگر فعال"
 
 #: app/templates/pages/dashboard/_stats.html:23
 msgid "View worker status →"
-msgstr "View worker status →"
+msgstr "مشاهده وضعیت کارگرها ←"
 
 #: app/templates/pages/jobs/_table.html:15 app/templates/pages/jobs/monitor.html:103 app/templates/pages/logs/feed.html:26 app/templates/pages/projects/tabs/jobs.html:17 app/templates/pages/projects/tabs/logs.html:15
 msgid "Message"
-msgstr "Message"
+msgstr "پیام"
 
 #: app/templates/pages/jobs/_table.html:44 app/templates/pages/jobs/detail.html:22 app/templates/pages/jobs/monitor.html:131 app/templates/pages/projects/tabs/jobs.html:44
 msgid "Cancel this job?"
-msgstr "Cancel this job?"
+msgstr "لغو این وظیفه؟"
 
 #: app/templates/pages/jobs/_table.html:59
 msgid "No jobs"
-msgstr "No jobs"
+msgstr "وظیفه‌ای وجود ندارد"
 
 #: app/templates/pages/jobs/_timeline.html:16
 #, python-format
 msgid "Attempt %(a)s/%(b)s — delay %(c)ss"
-msgstr "Attempt %(a)s/%(b)s — delay %(c)ss"
+msgstr "تلاش %(a)s/%(b)s — تأخیر %(c)ss"
 
 #: app/templates/pages/jobs/_timeline.html:30 app/templates/pages/projects/tabs/logs.html:45
 msgid "No events recorded."
-msgstr "No events recorded."
+msgstr "رویدادی ثبت نشده است."
 
 #: app/templates/pages/jobs/detail.html:33
 msgid "Details"
-msgstr "Details"
+msgstr "مشخصات"
 
 #: app/templates/pages/jobs/detail.html:35
 msgid "ID"
-msgstr "ID"
+msgstr "شناسه"
 
 #: app/templates/pages/jobs/detail.html:37
 msgid "Entity"
-msgstr "Entity"
+msgstr "موجودیت"
 
 #: app/templates/pages/jobs/detail.html:40
 msgid "Attempts"
-msgstr "Attempts"
+msgstr "تلاش‌ها"
 
 #: app/templates/pages/jobs/detail.html:48
 msgid "Created"
-msgstr "Created"
+msgstr "ایجاد"
 
 #: app/templates/pages/jobs/detail.html:49
 msgid "Started"
-msgstr "Started"
+msgstr "شروع"
 
 #: app/templates/pages/jobs/detail.html:50
 msgid "Finished"
-msgstr "Finished"
+msgstr "پایان"
 
 #: app/templates/pages/jobs/detail.html:51
 msgid "Ready since"
-msgstr "Ready since"
+msgstr "آماده از"
 
 #: app/templates/pages/jobs/detail.html:52
 msgid "Next attempt"
-msgstr "Next attempt"
+msgstr "تلاش بعدی"
 
 #: app/templates/pages/jobs/detail.html:67
 msgid "Run"
-msgstr "Run"
+msgstr "اجرا"
 
 #: app/templates/pages/jobs/detail.html:69 app/templates/pages/jobs/monitor.html:74
 msgid "Worker"
-msgstr "Worker"
+msgstr "کارگر"
 
 #: app/templates/pages/jobs/detail.html:70
 msgid "Locked by"
-msgstr "Locked by"
+msgstr "قفل از"
 
 #: app/templates/pages/jobs/detail.html:71
 msgid "Lease expiry"
-msgstr "Lease expiry"
+msgstr "انقضای اجاره"
 
 #: app/templates/pages/jobs/detail.html:72
 msgid "Heartbeat"
-msgstr "Heartbeat"
+msgstr "ضربان قلب"
 
 #: app/templates/pages/jobs/detail.html:84
 msgid "Technical details (admin)"
-msgstr "Technical details (admin)"
+msgstr "جزئیات فنی (مدیر)"
 
 #: app/templates/pages/jobs/detail.html:96
 msgid "Timeline"
-msgstr "Timeline"
+msgstr "خط زمانی"
 
 #: app/templates/pages/jobs/failed.html:5
 msgid "Jobs that hit errors and need attention"
-msgstr "Jobs that hit errors and need attention"
+msgstr "وظایفی که با خطا مواجه شده‌اند و نیاز به بررسی دارند"
 
 #: app/templates/pages/jobs/failed.html:5 app/templates/pages/logs/feed.html:5
 msgid "Monitoring"
-msgstr "Monitoring"
+msgstr "نظارت"
 
 #: app/templates/pages/jobs/failed.html:24
 #, python-format
 msgid "(attempt %(n)s)"
-msgstr "(attempt %(n)s)"
+msgstr "(تلاش %(n)s)"
 
 #: app/templates/pages/jobs/failed.html:37
 msgid "No failed jobs"
-msgstr "No failed jobs"
+msgstr "وظیفه ناموفقی وجود ندارد"
 
 #: app/templates/pages/jobs/failed.html:38
 msgid "Everything is running as planned."
-msgstr "Everything is running as planned."
+msgstr "همه چیز طبق برنامه پیش می‌رود."
 
 #: app/templates/pages/jobs/monitor.html:5
 msgid "Monitor indexing and article generation across all projects"
-msgstr "Monitor indexing and article generation across all projects"
+msgstr "نظارت بر اجرای نمایه‌سازی و تولید مقاله در همه پروژه‌ها"
 
 #: app/templates/pages/jobs/monitor.html:5 app/templates/pages/workers/index.html:21
 msgid "Operations & monitoring"
-msgstr "Operations & monitoring"
+msgstr "اجرا و نظارت"
 
 #: app/templates/pages/jobs/monitor.html:5
 msgid " items</span>"
-msgstr " items</span>"
+msgstr " مورد</span>"
 
 #: app/templates/pages/jobs/monitor.html:10 app/templates/pages/jobs/monitor.html:25
 msgid "Automatic schedules (worker)"
-msgstr "Automatic schedules (worker)"
+msgstr "زمان‌بندی خودکار (کارگر)"
 
 #: app/templates/pages/jobs/monitor.html:12
 msgid "Last check:"
-msgstr "Last check:"
+msgstr "آخرین بررسی:"
 
 #: app/templates/pages/jobs/monitor.html:13
 msgid "Schedules due:"
-msgstr "Schedules due:"
+msgstr "زمان‌بندی آماده:"
 
 #: app/templates/pages/jobs/monitor.html:14
 msgid "Jobs created:"
-msgstr "Jobs created:"
+msgstr "وظیفه ساخته‌شده:"
 
 #: app/templates/pages/jobs/monitor.html:16
 #, python-format
 msgid "Errors running %(n)s schedule(s)"
-msgstr "Errors running %(n)s schedule(s)"
+msgstr "خطا در اجرای %(n)s زمان‌بندی"
 
 #: app/templates/pages/jobs/monitor.html:19
 msgid "Schedules were due but no job was created — check the worker log."
-msgstr "Schedules were due but no job was created — check the worker log."
+msgstr "زمان‌بندی‌ها آماده بودند ولی وظیفه‌ای ساخته نشد — گزارش کارگر را بررسی کنید."
 
 #: app/templates/pages/jobs/monitor.html:27 app/templates/pages/workers/index.html:189
 msgid "The worker has not checked schedules yet."
-msgstr "The worker has not checked schedules yet."
+msgstr "کارگر هنوز زمان‌بندی‌ها را بررسی نکرده است."
 
 #: app/templates/pages/jobs/monitor.html:28
 msgid "— make sure the worker process"
-msgstr "— make sure the worker process"
+msgstr "— مطمئن شوید فرآیند"
 
 #: app/templates/pages/jobs/monitor.html:28
 msgid "is running (and was restarted after the last code change)."
-msgstr "is running (and was restarted after the last code change)."
+msgstr "در حال اجراست (و پس از آخرین تغییر کد راه‌اندازی مجدد شده)."
 
 #: app/templates/pages/jobs/monitor.html:34
 msgid "Filters"
-msgstr "Filters"
+msgstr "فیلترها"
 
 #: app/templates/pages/jobs/monitor.html:40 app/templates/pages/jobs/monitor.html:49 app/templates/pages/jobs/monitor.html:58 app/templates/pages/jobs/monitor.html:67 app/templates/pages/logs/feed.html:11 app/templates/pages/projects/tabs/topics.html:21 app/templates/pages/workers/index.html:311
 msgid "All"
-msgstr "All"
+msgstr "همه"
 
 #: app/templates/pages/jobs/monitor.html:65
 msgid "Error type"
-msgstr "Error type"
+msgstr "نوع خطا"
 
 #: app/templates/pages/jobs/monitor.html:78
 msgid "From date"
-msgstr "From date"
+msgstr "از تاریخ"
 
 #: app/templates/pages/jobs/monitor.html:82
 msgid "To date"
-msgstr "To date"
+msgstr "تا تاریخ"
 
 #: app/templates/pages/jobs/monitor.html:87
 msgid "Apply filter"
-msgstr "Apply filter"
+msgstr "اعمال فیلتر"
 
 #: app/templates/pages/jobs/monitor.html:88 app/templates/pages/projects/tabs/topics.html:65 app/templates/pages/topics/index.html:31
 msgid "Clear"
-msgstr "Clear"
+msgstr "پاک‌کردن"
 
 #: app/templates/pages/jobs/monitor.html:139
 msgid "No jobs match these filters"
-msgstr "No jobs match these filters"
+msgstr "وظیفه‌ای با این فیلترها یافت نشد"
 
 #: app/templates/pages/jobs/monitor.html:148
 msgid "Provider metrics (last 7 days)"
-msgstr "Provider metrics (last 7 days)"
+msgstr "متریک‌های ارائه‌دهنده (۷ روز اخیر)"
 
 #: app/templates/pages/jobs/monitor.html:153 app/templates/pages/projects/tabs/ai_models.html:37 app/templates/pages/projects/tabs/indexing.html:47 app/templates/pages/projects/tabs/integrations.html:57 app/templates/pages/projects/tabs/integrations.html:241 app/templates/pages/projects/tabs/settings.html:7
 msgid "Provider"
-msgstr "Provider"
+msgstr "ارائه‌دهنده"
 
 #: app/templates/pages/jobs/monitor.html:153 app/templates/pages/projects/tabs/ai_models.html:65 app/templates/pages/projects/tabs/indexing.html:47 app/templates/pages/projects/tabs/prompts.html:133 app/templates/pages/projects/tabs/settings.html:10
 msgid "Model"
-msgstr "Model"
+msgstr "مدل"
 
 #: app/templates/pages/jobs/monitor.html:153 app/templates/pages/projects/tabs/indexing.html:47 app/templates/pages/projects/tabs/prompts.html:191 app/templates/pages/topics/index.html:78
 msgid "Operation"
-msgstr "Operation"
+msgstr "عملیات"
 
 #: app/templates/pages/jobs/monitor.html:153 app/templates/pages/projects/tabs/indexing.html:47
 msgid "Count"
-msgstr "Count"
+msgstr "تعداد"
 
 #: app/templates/pages/jobs/monitor.html:154 app/templates/pages/projects/tabs/indexing.html:47
 msgid "Success"
-msgstr "Success"
+msgstr "موفقیت"
 
 #: app/templates/pages/jobs/monitor.html:154
 msgid "Failure"
-msgstr "Failure"
+msgstr "شکست"
 
 #: app/templates/pages/jobs/monitor.html:154 app/templates/pages/projects/tabs/indexing.html:47
 msgid "Average (ms)"
-msgstr "Average (ms)"
+msgstr "میانگین (ms)"
 
 #: app/templates/pages/jobs/monitor.html:155
 msgid "Tokens"
-msgstr "Tokens"
+msgstr "توکن‌ها"
 
 #: app/templates/pages/jobs/not_found.html:5
 msgid "Job not found or access denied."
-msgstr "Job not found or access denied."
+msgstr "وظیفه یافت نشد یا دسترسی ندارید."
 
 #: app/templates/pages/jobs/not_found.html:6
 msgid "Back to jobs"
-msgstr "Back to jobs"
+msgstr "بازگشت به وظایف"
 
 #: app/templates/pages/logs/feed.html:5
 msgid "Live stream of system events, errors and warnings"
-msgstr "Live stream of system events, errors and warnings"
+msgstr "جریان زنده رخدادهای سیستم، خطاها و هشدارها"
 
 #: app/templates/pages/logs/feed.html:8
 msgid "Level filter:"
-msgstr "Level filter:"
+msgstr "فیلتر سطح:"
 
 #: app/templates/pages/logs/feed.html:25 app/templates/pages/projects/tabs/logs.html:14
 msgid "Level"
-msgstr "Level"
+msgstr "سطح"
 
 #: app/templates/pages/logs/feed.html:27 app/templates/pages/projects/tabs/logs.html:16
 msgid "Data"
-msgstr "Data"
+msgstr "داده"
 
 #: app/templates/pages/projects/_status_toggle.html:9
 msgid "Project is active; shown in the project list"
-msgstr "Project is active; shown in the project list"
+msgstr "پروژه فعال است؛ در فهرست پروژه‌ها نمایش داده می‌شود"
 
 #: app/templates/pages/projects/_status_toggle.html:9
 msgid "Project is inactive; hidden from the project list"
-msgstr "Project is inactive; hidden from the project list"
+msgstr "پروژه غیرفعال است؛ از فهرست پروژه‌ها مخفی است"
 
 #: app/templates/pages/projects/_status_toggle.html:14
 msgid "Toggle project status"
-msgstr "Toggle project status"
+msgstr "تغییر وضعیت پروژه"
 
 #: app/templates/pages/projects/detail.html:39
 msgid "Re-indexes only changed documents"
-msgstr "Re-indexes only changed documents"
+msgstr "فقط مستندات تغییر‌یافته را دوباره نمایه می‌کند"
 
 #: app/templates/pages/projects/detail.html:45 app/templates/pages/projects/detail.html:73 app/templates/pages/projects/tabs/indexing.html:11
 msgid "Indexing"
-msgstr "Indexing"
+msgstr "نمایه‌سازی"
 
 #: app/templates/pages/projects/detail.html:69 app/templates/pages/projects/tabs/settings.html:2
 msgid "Settings"
-msgstr "Settings"
+msgstr "تنظیمات"
 
 #: app/templates/pages/projects/detail.html:69 app/templates/pages/projects/tabs/integrations.html:13
 msgid "Connections"
-msgstr "Connections"
+msgstr "اتصالات"
 
 #: app/templates/pages/projects/detail.html:69 app/templates/pages/projects/tabs/ai_models.html:3 app/templates/pages/projects/tabs/settings.html:19
 msgid "AI models"
-msgstr "AI models"
+msgstr "مدل‌های AI"
 
 #: app/templates/pages/projects/detail.html:69 app/templates/pages/projects/tabs/prompts.html:11
 msgid "Prompts"
-msgstr "Prompts"
+msgstr "پرامپت‌ها"
 
 #: app/templates/pages/projects/detail.html:71 app/templates/pages/projects/tabs/articles.html:2
 msgid "Articles"
-msgstr "Articles"
+msgstr "مقاله‌ها"
 
 #: app/templates/pages/projects/detail.html:71 app/templates/pages/projects/tabs/retrieval.html:3 app/templates/pages/projects/tabs/settings.html:42
 msgid "Retrieval"
-msgstr "Retrieval"
+msgstr "بازیابی"
 
 #: app/templates/pages/projects/detail.html:71 app/templates/pages/projects/tabs/images.html:3
 msgid "Images"
-msgstr "Images"
+msgstr "تصاویر"
 
 #: app/templates/pages/projects/detail.html:109
 msgid "Loading…"
-msgstr "Loading…"
+msgstr "در حال بارگذاری…"
 
 #: app/templates/pages/projects/detail.html:135 app/templates/pages/projects/detail.html:145
 msgid "Delete project"
-msgstr "Delete project"
+msgstr "حذف پروژه"
 
 #: app/templates/pages/projects/detail.html:139
 #, python-format
 msgid "Project “%(v)s” and all related data will be deleted. This cannot be undone."
-msgstr "Project “%(v)s” and all related data will be deleted. This cannot be undone."
+msgstr "پروژه «%(v)s» و همه داده‌های مرتبط حذف می‌شود. این عمل قابل بازگشت نیست."
 
 #: app/templates/pages/projects/list.html:13
 msgid "Each project has its own WordPress site, models and prompts"
-msgstr "Each project has its own WordPress site, models and prompts"
+msgstr "هر پروژه یک سایت وردپرس، مجموعه‌ای از مدل‌ها و پرامپت‌های اختصاصی دارد"
 
 #: app/templates/pages/projects/list.html:15
 msgid "Workspace"
-msgstr "Workspace"
+msgstr "فضای کار"
 
 #: app/templates/pages/projects/list.html:17 app/templates/pages/projects/list.html:105
 msgid "New project"
-msgstr "New project"
+msgstr "پروژه جدید"
 
 #: app/templates/pages/projects/list.html:59
 msgid "Open project"
-msgstr "Open project"
+msgstr "باز کردن پروژه"
 
 #: app/templates/pages/projects/list.html:83
 msgid "You have not created a project yet"
-msgstr "You have not created a project yet"
+msgstr "هنوز پروژه‌ای نساخته‌اید"
 
 #: app/templates/pages/projects/list.html:85
 msgid "Create your first project to start indexing and article generation."
-msgstr "Create your first project to start indexing and article generation."
+msgstr "پروژه اول را بسازید تا نمایه‌سازی و تولید مقاله را آغاز کنید."
 
 #: app/templates/pages/projects/list.html:87
 msgid "Create first project"
-msgstr "Create first project"
+msgstr "ساخت اولین پروژه"
 
 #: app/templates/pages/projects/list.html:117
 msgid "e.g. Tech Magazine"
-msgstr "e.g. Tech Magazine"
+msgstr "مثلاً: مجله فناوری"
 
 #: app/templates/pages/projects/list.html:123
 msgid "Slug — English"
-msgstr "Slug — English"
+msgstr "شناسه (slug) — انگلیسی"
 
 #: app/templates/pages/projects/list.html:127
 msgid "Left empty, it is derived from the name"
-msgstr "Left empty, it is derived from the name"
+msgstr "اگر خالی بماند از نام ساخته می‌شود"
 
 #: app/templates/pages/projects/list.html:135
 msgid "Language"
-msgstr "Language"
+msgstr "زبان"
 
 #: app/templates/pages/projects/list.html:139 app/templates/pages/projects/tabs/images.html:49
 msgid "Persian"
-msgstr "Persian"
+msgstr "فارسی"
 
 #: app/templates/pages/projects/list.html:143
 msgid "Arabic"
-msgstr "Arabic"
+msgstr "العربية"
 
 #: app/templates/pages/projects/list.html:153
 msgid "Timezone"
-msgstr "Timezone"
+msgstr "منطقه زمانی"
 
 #: app/templates/pages/projects/list.html:181
 msgid "Create"
-msgstr "Create"
+msgstr "ساخت"
 
 #: app/templates/pages/projects/not_found.html:5
 msgid "Project not found or access denied."
-msgstr "Project not found or access denied."
+msgstr "پروژه یافت نشد یا دسترسی ندارید."
 
 #: app/templates/pages/projects/not_found.html:6
 msgid "Back to projects"
-msgstr "Back to projects"
+msgstr "بازگشت به پروژه‌ها"
 
 #: app/templates/pages/projects/tabs/_image_test_result.html:7
 msgid "Check: the saved provider/model, the connection base URL, and the «Image generation» category in integrations."
-msgstr "Check: the saved provider/model, the connection base URL, and the «Image generation» category in integrations."
+msgstr "بررسی کنید: پرایدر/مدل ذخیره‌شده، base URL اتصال و دستهٔ «تولید تصویر» در اتصالات."
 
 #: app/templates/pages/projects/tabs/_image_test_result.html:12
 msgid "Image generation test completed successfully"
-msgstr "Image generation test completed successfully"
+msgstr "تست تولید تصویر با موفقیت انجام شد"
 
 #: app/templates/pages/projects/tabs/_image_test_result.html:13
 msgid "Test image"
-msgstr "Test image"
+msgstr "تصویر تست"
 
 #: app/templates/pages/projects/tabs/ai_models.html:3
 msgid "Priority: project setting → global default. Changing a model only creates an audit event; the metadata of previous articles (provider/model/prompt version) never changes."
-msgstr "Priority: project setting → global default. Changing a model only creates an audit event; the metadata of previous articles (provider/model/prompt version) never changes."
+msgstr "اولویت: تنظیم پروژه ← پیش‌فرض سراسری. تغییر مدل فقط یک رویداد ممیزی می‌سازد؛ متادیتای مقالات قبلی (provider/model/نسخه پرامپت) هرگز تغییر نمی‌کند."
 
 #: app/templates/pages/projects/tabs/ai_models.html:23
 msgid "Roles: Outline builds the outline, Section writes the sections, Meta and Review are optional. If left empty, the global default is used."
-msgstr "Roles: Outline builds the outline, Section writes the sections, Meta and Review are optional. If left empty, the global default is used."
+msgstr "نقش‌ها: Outline رئوس را می‌سازد، Section بخش‌ها را می‌نویسد، Meta و Review اختیاری‌اند. اگر خالی بماند از پیش‌فرض سراسری استفاده می‌شود."
 
 #: app/templates/pages/projects/tabs/ai_models.html:39
 msgid "LLM provider for this role — pick from active connections in the “Connections” tab."
-msgstr "LLM provider for this role — pick from active connections in the “Connections” tab."
+msgstr "ارائه‌دهنده LLM این نقش — از اتصالات فعال تب «اتصالات» انتخاب شود."
 
 #: app/templates/pages/projects/tabs/ai_models.html:45
 msgid "— Global default —"
-msgstr "— Global default —"
+msgstr "— پیش‌فرض سراسری —"
 
 #: app/templates/pages/projects/tabs/ai_models.html:67
 msgid "Model ID — enter it manually or fetch it from the provider with “Fetch”."
-msgstr "Model ID — enter it manually or fetch it from the provider with “Fetch”."
+msgstr "شناسه مدل — می‌توانید دستی وارد کنید یا با «دریافت» از ارائه‌دهنده بارگیری کنید."
 
 #: app/templates/pages/projects/tabs/ai_models.html:83
 msgid "Fetch models from provider"
-msgstr "Fetch models from provider"
+msgstr "دریافت مدل‌ها از ارائه‌دهنده"
 
 #: app/templates/pages/projects/tabs/ai_models.html:87
 msgid "Fetch"
-msgstr "Fetch"
+msgstr "دریافت"
 
 #: app/templates/pages/projects/tabs/ai_models.html:95
 msgid "You can enter the model ID manually."
-msgstr "You can enter the model ID manually."
+msgstr "می‌توانید شناسه مدل را دستی وارد کنید."
 
 #: app/templates/pages/projects/tabs/ai_models.html:105
 msgid "Global default"
-msgstr "Global default"
+msgstr "پیش‌فرض سراسری"
 
 #: app/templates/pages/projects/tabs/ai_models.html:107
 msgid "The global value defined by the admin; used when this role is empty."
-msgstr "The global value defined by the admin; used when this role is empty."
+msgstr "مقدار سراسری که مدیر تعریف کرده؛ اگر این نقش خالی باشد از همین استفاده می‌شود."
 
 #: app/templates/pages/projects/tabs/ai_models.html:117
 msgid "Not set"
-msgstr "Not set"
+msgstr "تعریف نشده"
 
 #: app/templates/pages/projects/tabs/ai_models.html:135
 msgid "Temperature"
-msgstr "Temperature"
+msgstr "دما (temperature)"
 
 #: app/templates/pages/projects/tabs/ai_models.html:137
 msgid "Output randomness — 0 is deterministic, 2 is creative. For SEO, 0.6–0.8 usually works well."
-msgstr "Output randomness — 0 is deterministic, 2 is creative. For SEO, 0.6–0.8 usually works well."
+msgstr "تصادفی بودن خروجی — ۰ یعنی قطعی، ۲ یعنی خلاقانه. برای سئو معمولاً ۰.۶ تا ۰.۸ مناسب است."
 
 #: app/templates/pages/projects/tabs/ai_models.html:151
 msgid "Max tokens"
-msgstr "Max tokens"
+msgstr "حداکثر توکن"
 
 #: app/templates/pages/projects/tabs/ai_models.html:153
 msgid "Output token cap per call. Must not exceed the model's capacity."
-msgstr "Output token cap per call. Must not exceed the model's capacity."
+msgstr "سقف توکن خروجی هر فراخوانی. بیشتر از ظرفیت مدل نباشد."
 
 #: app/templates/pages/projects/tabs/ai_models.html:167
 msgid "Timeout (seconds)"
-msgstr "Timeout (seconds)"
+msgstr "تایم‌اوت (ثانیه)"
 
 #: app/templates/pages/projects/tabs/ai_models.html:169
 msgid "Maximum wait for a provider response before an error is raised."
-msgstr "Maximum wait for a provider response before an error is raised."
+msgstr "حداکثر زمان انتظار برای پاسخ ارائه‌دهنده قبل از اعلام خطا."
 
 #: app/templates/pages/projects/tabs/ai_models.html:183 app/templates/pages/projects/tabs/settings.html:97
 msgid "Max attempts"
-msgstr "Max attempts"
+msgstr "حداکثر تلاش"
 
 #: app/templates/pages/projects/tabs/ai_models.html:185
 msgid "Number of retries on transient errors."
-msgstr "Number of retries on transient errors."
+msgstr "تعداد دفعات تلاش مجدد هنگام خطای موقت."
 
 #: app/templates/pages/projects/tabs/ai_models.html:199
 msgid "Base delay (s)"
-msgstr "Base delay (s)"
+msgstr "پایه تأخیر (s)"
 
 #: app/templates/pages/projects/tabs/ai_models.html:201
 msgid "Initial delay before a retry; grows exponentially with each failure."
-msgstr "Initial delay before a retry; grows exponentially with each failure."
+msgstr "تأخیر اولیه قبل از تلاش مجدد؛ با هر شکست نمایی رشد می‌کند."
 
 #: app/templates/pages/projects/tabs/ai_models.html:221
 msgid "Dedicated connection (Base URL + key — optional)"
-msgstr "Dedicated connection (Base URL + key — optional)"
+msgstr "اتصال اختصاصی (Base URL + کلید — اختیاری)"
 
 #: app/templates/pages/projects/tabs/ai_models.html:225
 msgid "Custom OpenAI-compatible URL — usually ends with /v1."
-msgstr "Custom OpenAI-compatible URL — usually ends with /v1."
+msgstr "آدرس سفارشی سازگار با OpenAI — معمولاً با /v1 تمام می‌شود."
 
 #: app/templates/pages/projects/tabs/ai_models.html:227
 msgid "API key (empty = keep existing)"
-msgstr "API key (empty = keep existing)"
+msgstr "API Key (خالی = حفظ قبلی)"
 
 #: app/templates/pages/projects/tabs/ai_models.html:227
 msgid "API key for this connection — stored encrypted and never displayed."
-msgstr "API key for this connection — stored encrypted and never displayed."
+msgstr "کلید API این اتصال — رمزنگاری‌شده ذخیره و هرگز نمایش داده نمی‌شود."
 
 #: app/templates/pages/projects/tabs/ai_models.html:243
 msgid "Save models"
-msgstr "Save models"
+msgstr "ذخیره مدل‌ها"
 
 #: app/templates/pages/projects/tabs/ai_models.html:257
 msgid "Global defaults (admin only)"
-msgstr "Global defaults (admin only)"
+msgstr "پیش‌فرض‌های سراسری (فقط مدیر)"
 
 #: app/templates/pages/projects/tabs/ai_models.html:259
 msgid "Values that all new projects use as defaults; project settings always take precedence."
-msgstr "Values that all new projects use as defaults; project settings always take precedence."
+msgstr "مقادیری که همه پروژه‌های جدید به‌عنوان پیش‌فرض استفاده می‌کنند؛ تنظیم پروژه همیشه بر این مقادیر اولویت دارد."
 
 #: app/templates/pages/projects/tabs/ai_models.html:267
 msgid "Project settings always take precedence over these values."
-msgstr "Project settings always take precedence over these values."
+msgstr "تنظیم پروژه همیشه بر این مقادیر اولویت دارد."
 
 #: app/templates/pages/projects/tabs/ai_models.html:291
 msgid "Save defaults"
-msgstr "Save defaults"
+msgstr "ذخیره پیش‌فرض‌ها"
 
 #: app/templates/pages/projects/tabs/articles.html:2
 msgid "Articles generated for this project."
-msgstr "Articles generated for this project."
+msgstr "مقاله‌های تولیدشده برای این پروژه."
 
 #: app/templates/pages/projects/tabs/articles.html:25
 msgid "No articles generated yet. Pick a topic from the “Topics” tab."
-msgstr "No articles generated yet. Pick a topic from the “Topics” tab."
+msgstr "هنوز مقاله‌ای تولید نشده است. از تب «موضوع‌ها» یک موضوع انتخاب کنید."
 
 #: app/templates/pages/projects/tabs/images.html:3
 msgid "Settings for generating and publishing article images (cover and in-text images)."
-msgstr "Settings for generating and publishing article images (cover and in-text images)."
+msgstr "تنظیمات تولید و انتشار تصاویر مقاله (کاور و تصاویر داخل متن)."
 
 #: app/templates/pages/projects/tabs/images.html:11
 msgid "Image generation models"
-msgstr "Image generation models"
+msgstr "مدل‌های تولید تصویر"
 
 #: app/templates/pages/projects/tabs/images.html:17
 msgid "Cover provider"
-msgstr "Cover provider"
+msgstr "پروایدر کاور"
 
 #: app/templates/pages/projects/tabs/images.html:17
 msgid "Default: Gemini for the article cover image."
-msgstr "Default: Gemini for the article cover image."
+msgstr "پیش‌فرض: Gemini برای تصویر کاور مقاله."
 
 #: app/templates/pages/projects/tabs/images.html:19
 msgid "Cover model"
-msgstr "Cover model"
+msgstr "مدل کاور"
 
 #: app/templates/pages/projects/tabs/images.html:19
 msgid "Model ID — data-driven, never hardcoded in the pipeline."
-msgstr "Model ID — data-driven, never hardcoded in the pipeline."
+msgstr "شناسهٔ مدل — داده‌محور است و در پایپ‌لاین هاردکد نمی‌شود."
 
 #: app/templates/pages/projects/tabs/images.html:21
 msgid "In-text image provider"
-msgstr "In-text image provider"
+msgstr "پروایدر تصاویر داخل متن"
 
 #: app/templates/pages/projects/tabs/images.html:21
 msgid "Default: Black Forest Labs (FLUX) for in-text images."
-msgstr "Default: Black Forest Labs (FLUX) for in-text images."
+msgstr "پیش‌فرض: Black Forest Labs (FLUX) برای تصاویر داخل متن."
 
 #: app/templates/pages/projects/tabs/images.html:23
 msgid "In-text image model"
-msgstr "In-text image model"
+msgstr "مدل تصاویر داخل متن"
 
 #: app/templates/pages/projects/tabs/images.html:23
 msgid "e.g. FLUX.2 Klein 9B — per-megapixel pricing."
-msgstr "e.g. FLUX.2 Klein 9B — per-megapixel pricing."
+msgstr "مثلاً FLUX.2 Klein 9B — قیمت‌گذاری مگاپیکسلی."
 
 #: app/templates/pages/projects/tabs/images.html:25
 msgid "Fallback provider (optional)"
-msgstr "Fallback provider (optional)"
+msgstr "پروایدر جایگزین (اختیاری)"
 
 #: app/templates/pages/projects/tabs/images.html:25
 msgid "Tried when the primary provider fails."
-msgstr "Tried when the primary provider fails."
+msgstr "اگر پروایدر اصلی شکست خورد، این پروایدر امتحان می‌شود."
 
 #: app/templates/pages/projects/tabs/images.html:27
 msgid "Fallback model"
-msgstr "Fallback model"
+msgstr "مدل جایگزین"
 
 #: app/templates/pages/projects/tabs/images.html:27
 msgid "Empty = no fallback."
-msgstr "Empty = no fallback."
+msgstr "خالی = بدون جایگزین."
 
 #: app/templates/pages/projects/tabs/images.html:33
 msgid "Cover aspect ratio"
-msgstr "Cover aspect ratio"
+msgstr "نسبت کاور"
 
 #: app/templates/pages/projects/tabs/images.html:33
 msgid "e.g. 16:9"
-msgstr "e.g. 16:9"
+msgstr "مثل 16:9"
 
 #: app/templates/pages/projects/tabs/images.html:35
 msgid "In-text image aspect ratio"
-msgstr "In-text image aspect ratio"
+msgstr "نسبت تصاویر داخل متن"
 
 #: app/templates/pages/projects/tabs/images.html:35
 msgid "e.g. 4:3"
-msgstr "e.g. 4:3"
+msgstr "مثل 4:3"
 
 #: app/templates/pages/projects/tabs/images.html:37
 msgid "Minimum cover width (px)"
-msgstr "Minimum cover width (px)"
+msgstr "حداقل عرض کاور (px)"
 
 #: app/templates/pages/projects/tabs/images.html:37
 msgid "At least 1200 recommended for SEO and Google Discover."
-msgstr "At least 1200 recommended for SEO and Google Discover."
+msgstr "برای سئو و Google Discover دست‌کم ۱۲۰۰ توصیه می‌شود."
 
 #: app/templates/pages/projects/tabs/images.html:39
 msgid "Max in-text images"
-msgstr "Max in-text images"
+msgstr "حداکثر تصاویر داخل متن"
 
 #: app/templates/pages/projects/tabs/images.html:39
 msgid "Hard cap; density adapts to the article length."
-msgstr "Hard cap; density adapts to the article length."
+msgstr "سقف نهایی تعداد؛ تراکم بر اساس طول مقاله تنظیم می‌شود."
 
 #: app/templates/pages/projects/tabs/images.html:45
 msgid "Max retries"
-msgstr "Max retries"
+msgstr "حداکثر تلاش مجدد"
 
 #: app/templates/pages/projects/tabs/images.html:45
 msgid "Job engine attempts for transient errors."
-msgstr "Job engine attempts for transient errors."
+msgstr "تلاش‌های موتور جاب برای خطاهای گذرا."
 
 #: app/templates/pages/projects/tabs/images.html:47
 msgid "Optimization format"
-msgstr "Optimization format"
+msgstr "فرمت بهینه‌سازی"
 
 #: app/templates/pages/projects/tabs/images.html:47
 msgid "AVIF when the server supports it; otherwise WebP."
-msgstr "AVIF when the server supports it; otherwise WebP."
+msgstr "AVIF در صورت پشتیبانی سرور؛ وگرنه WebP."
 
 #: app/templates/pages/projects/tabs/images.html:49
 msgid "Image prompt language"
-msgstr "Image prompt language"
+msgstr "زبان پرامپت تصویر"
 
 #: app/templates/pages/projects/tabs/images.html:49
 msgid "English"
-msgstr "English"
+msgstr "انگلیسی"
 
 #: app/templates/pages/projects/tabs/images.html:49
 msgid "Independent of the article language — alt and captions are always produced in the article language."
-msgstr "Independent of the article language — alt and captions are always produced in the article language."
+msgstr "مستقل از زبان مقاله — alt و توضیح همیشه به زبان مقاله تولید می‌شوند."
 
 #: app/templates/pages/projects/tabs/images.html:51
 msgid "AI visual review"
-msgstr "AI visual review"
+msgstr "بازبینی بصری با هوش مصنوعی"
 
 #: app/templates/pages/projects/tabs/images.html:51
 msgid "Optional validation of the image output with a vision model — extra cost."
-msgstr "Optional validation of the image output with a vision model — extra cost."
+msgstr "اعتبارسنجی اختیاری خروجی تصویر با مدل بینایی — هزینهٔ اضافه دارد."
 
 #: app/templates/pages/projects/tabs/images.html:63
 msgid "Visual style profile"
-msgstr "Visual style profile"
+msgstr "پروفایل سبک بصری"
 
 #: app/templates/pages/projects/tabs/images.html:65
 msgid "The project's brand style — added to every image prompt. «Forbidden elements» go into the negative prompt."
-msgstr "The project's brand style — added to every image prompt. «Forbidden elements» go into the negative prompt."
+msgstr "سبک برند پروژه — به پرامپت همهٔ تصاویر اضافه می‌شود. «المان‌های ممنوع» به پرامپت منفی می‌رود."
 
 #: app/templates/pages/projects/tabs/images.html:73
 msgid "Tone and feel"
-msgstr "Tone and feel"
+msgstr "لحن و حس کلی"
 
 #: app/templates/pages/projects/tabs/images.html:73
 msgid "e.g. minimal, professional, warm"
-msgstr "e.g. minimal, professional, warm"
+msgstr "مثلاً: مینیمال، حرفه‌ای، گرم"
 
 #: app/templates/pages/projects/tabs/images.html:75
 msgid "Color palette"
-msgstr "Color palette"
+msgstr "پالت رنگی"
 
 #: app/templates/pages/projects/tabs/images.html:75
 msgid "e.g. dark blue and white"
-msgstr "e.g. dark blue and white"
+msgstr "مثلاً: آبی تیره و سفید"
 
 #: app/templates/pages/projects/tabs/images.html:77
 msgid "Lighting"
-msgstr "Lighting"
+msgstr "نورپردازی"
 
 #: app/templates/pages/projects/tabs/images.html:77
 msgid "e.g. soft and natural"
-msgstr "e.g. soft and natural"
+msgstr "مثلاً: نرم و طبیعی"
 
 #: app/templates/pages/projects/tabs/images.html:79
 msgid "Global negative prompt"
-msgstr "Global negative prompt"
+msgstr "پرامپت منفی سراسری"
 
 #: app/templates/pages/projects/tabs/images.html:79
 msgid "Added to the «no text and watermark» default."
-msgstr "Added to the «no text and watermark» default."
+msgstr "به پیش‌فرض «بدون متن و واترمارک» اضافه می‌شود."
 
 #: app/templates/pages/projects/tabs/images.html:81
 msgid "Forbidden elements"
-msgstr "Forbidden elements"
+msgstr "المان‌های ممنوع"
 
 #: app/templates/pages/projects/tabs/images.html:81
 msgid "e.g. logos, specific people's faces"
-msgstr "e.g. logos, specific people's faces"
+msgstr "مثلاً: لوگو، چهرهٔ افراد خاص"
 
 #: app/templates/pages/projects/tabs/images.html:87
 msgid "Save image settings"
-msgstr "Save image settings"
+msgstr "ذخیره تنظیمات تصاویر"
 
 #: app/templates/pages/projects/tabs/images.html:93 app/templates/pages/projects/tabs/images.html:104
 msgid "Image generation test"
-msgstr "Image generation test"
+msgstr "تست تولید تصویر"
 
 #: app/templates/pages/projects/tabs/images.html:96
 msgid "Generates one small test image with the saved cover settings (each click costs money)."
-msgstr "Generates one small test image with the saved cover settings (each click costs money)."
+msgstr "یک تصویر آزمایشی کوچک با تنظیمات ذخیره‌شدهٔ کاور تولید می‌کند (هر کلیک هزینه دارد)."
 
 #: app/templates/pages/projects/tabs/indexing.html:11
 msgid "Indexing status, runs and documents."
-msgstr "Indexing status, runs and documents."
+msgstr "وضعیت نمایه‌سازی، اجراها و مستندات."
 
 #: app/templates/pages/projects/tabs/indexing.html:19 app/templates/pages/projects/tabs/indexing.html:91
 msgid "Indexed documents"
-msgstr "Indexed documents"
+msgstr "مستندات نمایه‌شده"
 
 #: app/templates/pages/projects/tabs/indexing.html:21
 msgid "Stale documents"
-msgstr "Stale documents"
+msgstr "مستندات کهنه"
 
 #: app/templates/pages/projects/tabs/indexing.html:23
 msgid "Generated articles"
-msgstr "Generated articles"
+msgstr "مقالات تولیدشده"
 
 #: app/templates/pages/projects/tabs/indexing.html:25
 msgid "Generated sections"
-msgstr "Generated sections"
+msgstr "بخش‌های تولیدشده"
 
 #: app/templates/pages/projects/tabs/indexing.html:39
 msgid "Provider metrics"
-msgstr "Provider metrics"
+msgstr "متریک‌های ارائه‌دهنده"
 
 #: app/templates/pages/projects/tabs/indexing.html:93
 msgid "Recent runs"
-msgstr "Recent runs"
+msgstr "اجراهای اخیر"
 
 #: app/templates/pages/projects/tabs/indexing.html:99
 msgid "Indexes only changed documents — fast and cheap"
-msgstr "Indexes only changed documents — fast and cheap"
+msgstr "فقط مستندات تغییرکرده را نمایه می‌کند — سریع و کم‌هزینه"
 
 #: app/templates/pages/projects/tabs/indexing.html:105
 msgid "Incremental indexing"
-msgstr "Incremental indexing"
+msgstr "نمایه‌سازی افزایشی"
 
 #: app/templates/pages/projects/tabs/indexing.html:113
 msgid "Full reindex: every document is re-embedded and old vectors are deleted. Continue?"
-msgstr "Full reindex: every document is re-embedded and old vectors are deleted. Continue?"
+msgstr "بازنمایه کامل: همه مستندات دوباره جاسازی می‌شوند و برداری‌های قدیمی پاک می‌شوند. ادامه می‌دهید؟"
 
 #: app/templates/pages/projects/tabs/indexing.html:117
 msgid "All documents are re-embedded — required after changing the embedding model/dimensions"
-msgstr "All documents are re-embedded — required after changing the embedding model/dimensions"
+msgstr "همه مستندات از نو جاسازی می‌شوند — برای تغییر مدل/ابعاد جاسازی لازم است"
 
 #: app/templates/pages/projects/tabs/indexing.html:119
 msgid "Full reindex"
-msgstr "Full reindex"
+msgstr "بازنمایه کامل"
 
 #: app/templates/pages/projects/tabs/indexing.html:135
 msgid "Indexing runs"
-msgstr "Indexing runs"
+msgstr "اجراهای نمایه‌سازی"
 
 #: app/templates/pages/projects/tabs/indexing.html:149
 msgid "Discovered"
-msgstr "Discovered"
+msgstr "کشف"
 
 #: app/templates/pages/projects/tabs/indexing.html:151
 msgid "Unchanged"
-msgstr "Unchanged"
+msgstr "بدون تغییر"
 
 #: app/templates/pages/projects/tabs/indexing.html:153
 msgid "Changed"
-msgstr "Changed"
+msgstr "تغییر"
 
 #: app/templates/pages/projects/tabs/indexing.html:157
 msgid "Skipped"
-msgstr "Skipped"
+msgstr "ردشده"
 
 #: app/templates/pages/projects/tabs/indexing.html:161
 msgid "Duration (s)"
-msgstr "Duration (s)"
+msgstr "مدت (s)"
 
 #: app/templates/pages/projects/tabs/indexing.html:233
 msgid "Recent documents"
-msgstr "Recent documents"
+msgstr "مستندات اخیر"
 
 #: app/templates/pages/projects/tabs/indexing.html:245
 msgid "Source"
-msgstr "Source"
+msgstr "منبع"
 
 #: app/templates/pages/projects/tabs/indexing.html:247
 msgid "Embedding model"
-msgstr "Embedding model"
+msgstr "مدل جاسازی"
 
 #: app/templates/pages/projects/tabs/indexing.html:249
 msgid "Chunks"
-msgstr "Chunks"
+msgstr "تکه‌ها"
 
 #: app/templates/pages/projects/tabs/indexing.html:289
 msgid "Reindex this document?"
-msgstr "Reindex this document?"
+msgstr "این مستند دوباره نمایه شود؟"
 
 #: app/templates/pages/projects/tabs/indexing.html:289
 msgid "Reindex"
-msgstr "Reindex"
+msgstr "بازنمایه"
 
 #: app/templates/pages/projects/tabs/integration_health.html:3
 msgid "Succeeded"
-msgstr "Succeeded"
+msgstr "موفق"
 
 #: app/templates/pages/projects/tabs/integration_health.html:5 app/templates/pages/projects/tabs/prompt_test_result.html:8
 #, python-format
 msgid "Latency: %(n)sms"
-msgstr "Latency: %(n)sms"
+msgstr "تأخیر: %(n)sms"
 
 #: app/templates/pages/projects/tabs/integration_health.html:7
 msgid "Available models"
-msgstr "Available models"
+msgstr "مدل‌های موجود"
 
 #: app/templates/pages/projects/tabs/integration_health.html:9
 msgid "Model listing is not supported by this provider — enter the model ID manually."
-msgstr "Model listing is not supported by this provider — enter the model ID manually."
+msgstr "لیست مدل‌ها توسط ارائه‌دهنده پشتیبانی نمی‌شود — شناسه مدل را دستی وارد کنید."
 
 #: app/templates/pages/projects/tabs/integration_health.html:11
 msgid "Connection OK — set the embedding model under “Project settings → Text embedding”."
-msgstr "Connection OK — set the embedding model under “Project settings → Text embedding”."
+msgstr "اتصال موفق — مدل جاسازی را در «تنظیمات پروژه ← جاسازی متن» تنظیم کنید."
 
 #: app/templates/pages/projects/tabs/integration_health.html:13
 msgid "Connection OK."
-msgstr "Connection OK."
+msgstr "اتصال موفق."
 
 #: app/templates/pages/projects/tabs/integrations.html:13
 msgid "Manage provider connections."
-msgstr "Manage provider connections."
+msgstr "اتصالات ارائه‌دهنده‌ها را مدیریت کنید."
 
 #: app/templates/pages/projects/tabs/integrations.html:29
 msgid "Active connections in this category — create one per provider and use it in project settings."
-msgstr "Active connections in this category — create one per provider and use it in project settings."
+msgstr "اتصالات فعال در این دسته — برای هر ارائه‌دهنده یک اتصال بسازید و در تنظیمات پروژه از آن استفاده کنید."
 
 #: app/templates/pages/projects/tabs/integrations.html:35
 #, python-format
 msgid "%(n)s connections"
-msgstr "%(n)s connections"
+msgstr "%(n)s اتصال"
 
 #: app/templates/pages/projects/tabs/integrations.html:39
 msgid "+ Add"
-msgstr "+ Add"
+msgstr "+ افزودن"
 
 #: app/templates/pages/projects/tabs/integrations.html:55
 msgid "Name"
-msgstr "Name"
+msgstr "نام"
 
 #: app/templates/pages/projects/tabs/integrations.html:59
 msgid "Key"
-msgstr "Key"
+msgstr "کلید"
 
 #: app/templates/pages/projects/tabs/integrations.html:61
 msgid "Health"
-msgstr "Health"
+msgstr "سلامت"
 
 #: app/templates/pages/projects/tabs/integrations.html:63
 msgid "Last test"
-msgstr "Last test"
+msgstr "آخرین تست"
 
 #: app/templates/pages/projects/tabs/integrations.html:93
 msgid "Active — click to deactivate"
-msgstr "Active — click to deactivate"
+msgstr "فعال — برای غیرفعال‌سازی کلیک کنید"
 
 #: app/templates/pages/projects/tabs/integrations.html:93
 msgid "Inactive — click to activate"
-msgstr "Inactive — click to activate"
+msgstr "غیرفعال — برای فعال‌سازی کلیک کنید"
 
 #: app/templates/pages/projects/tabs/integrations.html:101
 #, python-format
 msgid "Toggle connection %(v)s"
-msgstr "Toggle connection %(v)s"
+msgstr "تغییر وضعیت اتصال %(v)s"
 
 #: app/templates/pages/projects/tabs/integrations.html:117
 msgid "Edit"
-msgstr "Edit"
+msgstr "ویرایش"
 
 #: app/templates/pages/projects/tabs/integrations.html:127
 msgid "Test"
-msgstr "Test"
+msgstr "تست"
 
 #: app/templates/pages/projects/tabs/integrations.html:137
 msgid "Delete this integration? This cannot be undone."
-msgstr "Delete this integration? This cannot be undone."
+msgstr "این اتصال حذف شود؟ این عمل قابل بازگشت نیست."
 
 #: app/templates/pages/projects/tabs/integrations.html:163
 msgid "No connections registered in this category."
-msgstr "No connections registered in this category."
+msgstr "اتصالی در این دسته ثبت نشده است."
 
 #: app/templates/pages/projects/tabs/integrations.html:165
 msgid "Create the first connection with “+ Add”."
-msgstr "Create the first connection with “+ Add”."
+msgstr "با «+ افزودن» اولین اتصال را بسازید."
 
 #: app/templates/pages/projects/tabs/integrations.html:189
 msgid "Edit connection"
-msgstr "Edit connection"
+msgstr "ویرایش اتصال"
 
 #: app/templates/pages/projects/tabs/integrations.html:189
 msgid "New connection"
-msgstr "New connection"
+msgstr "اتصال جدید"
 
 #: app/templates/pages/projects/tabs/integrations.html:219
 msgid "Display name"
-msgstr "Display name"
+msgstr "نام نمایشی"
 
 #: app/templates/pages/projects/tabs/integrations.html:221
 msgid "The name you see in the connections table, e.g. “Main OpenAI”"
-msgstr "The name you see in the connections table, e.g. “Main OpenAI”"
+msgstr "نامی که در جدول اتصالات می‌بینید، مثلاً «OpenAI اصلی»"
 
 #: app/templates/pages/projects/tabs/integrations.html:243
 msgid "Provider ID (e.g. openai_compat) — pick from the list or enter manually"
-msgstr "Provider ID (e.g. openai_compat) — pick from the list or enter manually"
+msgstr "شناسه ارائه‌دهنده (مثلاً openai_compat) — از فهرست انتخاب کنید یا دستی وارد کنید"
 
 #: app/templates/pages/projects/tabs/integrations.html:261
 msgid "Model (optional)"
-msgstr "Model (optional)"
+msgstr "مدل (اختیاری)"
 
 #: app/templates/pages/projects/tabs/integrations.html:263
 msgid "Default model for this connection (e.g. gpt-4o-mini) — can be changed in project settings"
-msgstr "Default model for this connection (e.g. gpt-4o-mini) — can be changed in project settings"
+msgstr "مدل پیش‌فرض این اتصال (مثلاً gpt-4o-mini) — در تنظیمات پروژه قابل تغییر است"
 
 #: app/templates/pages/projects/tabs/integrations.html:283
 msgid "Base URL"
-msgstr "Base URL"
+msgstr "آدرس پایه (Base URL)"
 
 #: app/templates/pages/projects/tabs/integrations.html:285
 msgid "API URL — for OpenAI usually …/v1, for Qdrant usually http://127.0.0.1:6333. Without a protocol, https:// is added."
-msgstr "API URL — for OpenAI usually …/v1, for Qdrant usually http://127.0.0.1:6333. Without a protocol, https:// is added."
+msgstr "آدرس API — برای OpenAI معمولاً …/v1 و برای Qdrant معمولاً http://127.0.0.1:6333. اگر بدون پروتکل وارد کنید https:// اضافه می‌شود."
 
 #: app/templates/pages/projects/tabs/integrations.html:305
 msgid "WordPress username"
-msgstr "WordPress username"
+msgstr "نام کاربری وردپرس"
 
 #: app/templates/pages/projects/tabs/integrations.html:307
 msgid "WordPress username together with an Application Password"
-msgstr "WordPress username together with an Application Password"
+msgstr "نام کاربری وردپرس همراه با رمز برنامه (Application Password)"
 
 #: app/templates/pages/projects/tabs/integrations.html:325
 msgid "API key"
-msgstr "API key"
+msgstr "کلید API"
 
 #: app/templates/pages/projects/tabs/integrations.html:327
 msgid "When editing, leave empty to keep the existing key. The key is never stored or displayed in plaintext — only an encrypted version is kept"
-msgstr "When editing, leave empty to keep the existing key. The key is never stored or displayed in plaintext — only an encrypted version is kept"
+msgstr "هنگام ویرایش اگر خالی بماند، کلید قبلی حفظ می‌شود. کلید هرگز ذخیره یا نمایش داده نمی‌شود — فقط نسخه رمزنگاری‌شده نگهداری می‌گردد"
 
 #: app/templates/pages/projects/tabs/integrations.html:339
 msgid "If left empty, the previous value is kept"
-msgstr "If left empty, the previous value is kept"
+msgstr "در صورت خالی بودن، مقدار قبلی حفظ می‌شود"
 
 #: app/templates/pages/projects/tabs/jobs.html:6
 msgid "Running jobs and history."
-msgstr "Running jobs and history."
+msgstr "وظیفه‌های در حال اجرا و تاریخچه."
 
 #: app/templates/pages/projects/tabs/jobs.html:41
 msgid "Cancellation requested — the job stops at the first opportunity"
-msgstr "Cancellation requested — the job stops at the first opportunity"
+msgstr "درخواست لغو — وظیفه در اولین فرصت متوقف می‌شود"
 
 #: app/templates/pages/projects/tabs/jobs.html:47
 msgid "Puts the job back into the queue"
-msgstr "Puts the job back into the queue"
+msgstr "وظیفه را دوباره در صف قرار می‌دهد"
 
 #: app/templates/pages/projects/tabs/jobs.html:62
 msgid "No jobs."
-msgstr "No jobs."
+msgstr "وظیفه‌ای وجود ندارد."
 
 #: app/templates/pages/projects/tabs/logs.html:2
 msgid "Project event history."
-msgstr "Project event history."
+msgstr "تاریخچه رویدادهای پروژه."
 
 #: app/templates/pages/projects/tabs/prompt_compare.html:4
 #, python-format
 msgid "Compare versions — %(v)s"
-msgstr "Compare versions — %(v)s"
+msgstr "مقایسه نسخه‌ها — %(v)s"
 
 #: app/templates/pages/projects/tabs/prompt_compare.html:10 app/templates/pages/projects/tabs/prompt_compare.html:16
 #, python-format
 msgid "Version v%(v)s"
-msgstr "Version v%(v)s"
+msgstr "نسخه v%(v)s"
 
 #: app/templates/pages/projects/tabs/prompt_test_result.html:5
 msgid "Validation: passed"
-msgstr "Validation: passed"
+msgstr "اعتبارسنجی: موفق"
 
 #: app/templates/pages/projects/tabs/prompt_test_result.html:5
 msgid "Validation: failed"
-msgstr "Validation: failed"
+msgstr "اعتبارسنجی: ناموفق"
 
 #: app/templates/pages/projects/tabs/prompt_test_result.html:5
 msgid "No validation"
-msgstr "No validation"
+msgstr "بدون اعتبارسنجی"
 
 #: app/templates/pages/projects/tabs/prompt_test_result.html:19
 msgid "Rendered prompt"
-msgstr "Rendered prompt"
+msgstr "پرامپت رندر شده"
 
 #: app/templates/pages/projects/tabs/prompt_test_result.html:23
 msgid "Model response"
-msgstr "Model response"
+msgstr "پاسخ مدل"
 
 #: app/templates/pages/projects/tabs/prompts.html:11
 msgid "Manage prompt versions and run interactive tests."
-msgstr "Manage prompt versions and run interactive tests."
+msgstr "مدیریت نسخه‌های پرامپت و تست تعاملی."
 
 #: app/templates/pages/projects/tabs/prompts.html:19
 msgid "Available variables"
-msgstr "Available variables"
+msgstr "متغیرهای قابل استفاده"
 
 #: app/templates/pages/projects/tabs/prompts.html:55
 #, python-format
 msgid "Active version: v%(n)s"
-msgstr "Active version: v%(n)s"
+msgstr "نسخه فعال: v%(n)s"
 
 #: app/templates/pages/projects/tabs/prompts.html:59
 msgid "Global default is used"
-msgstr "Global default is used"
+msgstr "پیش‌فرض سراسری استفاده می‌شود"
 
 #: app/templates/pages/projects/tabs/prompts.html:69
 msgid "Prompt text"
-msgstr "Prompt text"
+msgstr "متن پرامپت"
 
 #: app/templates/pages/projects/tabs/prompts.html:69
 msgid "Full text of this prompt. You can use the variables listed above."
-msgstr "Full text of this prompt. You can use the variables listed above."
+msgstr "متن کامل این پرامپت. از متغیرهای فهرست بالا می‌توانید استفاده کنید."
 
 #: app/templates/pages/projects/tabs/prompts.html:69
 msgid "Save = new version (v"
-msgstr "Save = new version (v"
+msgstr "ذخیره = نسخه جدید (v"
 
 #: app/templates/pages/projects/tabs/prompts.html:77
 msgid "Save new version"
-msgstr "Save new version"
+msgstr "ذخیره نسخه جدید"
 
 #: app/templates/pages/projects/tabs/prompts.html:93
 msgid "Interactive prompt test (does not change versions)"
-msgstr "Interactive prompt test (does not change versions)"
+msgstr "تست تعاملی پرامپت (بدون تغییر نسخه‌ها)"
 
 #: app/templates/pages/projects/tabs/prompts.html:109
 msgid "Topic"
-msgstr "Topic"
+msgstr "موضوع"
 
 #: app/templates/pages/projects/tabs/prompts.html:111
 msgid "Pick a real topic so real retrieval context is built."
-msgstr "Pick a real topic so real retrieval context is built."
+msgstr "یک موضوع واقعی انتخاب کنید تا زمینه بازیابی واقعی ساخته شود."
 
 #: app/templates/pages/projects/tabs/prompts.html:117
 msgid "— No topic —"
-msgstr "— No topic —"
+msgstr "— بدون موضوع —"
 
 #: app/templates/pages/projects/tabs/prompts.html:135
 msgid "Role of the model the prompt runs with (Outline or Section)."
-msgstr "Role of the model the prompt runs with (Outline or Section)."
+msgstr "نقش مدلی که پرامپت با آن اجرا می‌شود (Outline یا Section)."
 
 #: app/templates/pages/projects/tabs/prompts.html:155
 msgid "Test prompt"
-msgstr "Test prompt"
+msgstr "تست پرامپت"
 
 #: app/templates/pages/projects/tabs/prompts.html:183 app/templates/pages/workers/index.html:109
 msgid "Version"
-msgstr "Version"
+msgstr "نسخه"
 
 #: app/templates/pages/projects/tabs/prompts.html:185
 msgid "Author"
-msgstr "Author"
+msgstr "نویسنده"
 
 #: app/templates/pages/projects/tabs/prompts.html:235
 msgid "Activate this version? The previous version is deactivated."
-msgstr "Activate this version? The previous version is deactivated."
+msgstr "این نسخه فعال شود؟ نسخه قبلی غیرفعال می‌شود."
 
 #: app/templates/pages/projects/tabs/prompts.html:235
 msgid "Activate"
-msgstr "Activate"
+msgstr "فعال‌سازی"
 
 #: app/templates/pages/projects/tabs/prompts.html:247
 msgid "Copy as a new (inactive) version"
-msgstr "Copy as a new (inactive) version"
+msgstr "کپی به‌عنوان نسخه جدید (غیرفعال)"
 
 #: app/templates/pages/projects/tabs/prompts.html:257
 msgid "Compare"
-msgstr "Compare"
+msgstr "مقایسه"
 
 #: app/templates/pages/projects/tabs/publishing.html:2
 msgid "Article publish history on WordPress."
-msgstr "Article publish history on WordPress."
+msgstr "تاریخچه انتشار مقاله‌ها در وردپرس."
 
 #: app/templates/pages/projects/tabs/publishing.html:41
 msgid "No publishes recorded yet."
-msgstr "No publishes recorded yet."
+msgstr "هنوز انتشاراتی ثبت نشده است."
 
 #: app/templates/pages/projects/tabs/retrieval.html:3
 msgid "Diagnose and test the semantic retrieval pipeline."
-msgstr "Diagnose and test the semantic retrieval pipeline."
+msgstr "تشخیص و آزمایش مسیر بازیابی معنایی."
 
 #: app/templates/pages/projects/tabs/retrieval.html:13
 msgid "Retrieval diagnostics"
-msgstr "Retrieval diagnostics"
+msgstr "تشخیص بازیابی"
 
 #: app/templates/pages/projects/tabs/retrieval.html:15
 msgid "Enter a query to run the real retrieval path (embedding → Qdrant search → optional rerank) and inspect the result."
-msgstr "Enter a query to run the real retrieval path (embedding → Qdrant search → optional rerank) and inspect the result."
+msgstr "عبارت را وارد کنید تا مسیر واقعی بازیابی (جاسازی → جستجو در کیوردنت → بازچینش اختیاری) اجرا و نتیجه بررسی شود."
 
 #: app/templates/pages/projects/tabs/retrieval.html:25
 msgid "Enter a query to run real retrieval and inspect the result. Defaults come from project settings."
-msgstr "Enter a query to run real retrieval and inspect the result. Defaults come from project settings."
+msgstr "عبارت جستجو را وارد کنید تا بازیابی واقعی اجرا و نتیجه بررسی شود. مقادیر پیش‌فرض از تنظیمات پروژه می‌آیند."
 
 #: app/templates/pages/projects/tabs/retrieval.html:31
 msgid "Search query"
-msgstr "Search query"
+msgstr "عبارت جستجو"
 
 #: app/templates/pages/projects/tabs/retrieval.html:31
 msgid "What we look up while writing the article — e.g. the topic title."
-msgstr "What we look up while writing the article — e.g. the topic title."
+msgstr "عبارتی که هنگام نوشتن مقاله به‌دنبالش می‌گردیم — مثلاً عنوان موضوع."
 
 #: app/templates/pages/projects/tabs/retrieval.html:31
 msgid "e.g. Best SEO practices"
-msgstr "e.g. Best SEO practices"
+msgstr "مثلاً: بهترین روش‌های سئو"
 
 #: app/templates/pages/projects/tabs/retrieval.html:35
 msgid "Candidate count"
-msgstr "Candidate count"
+msgstr "تعداد کاندیدا"
 
 #: app/templates/pages/projects/tabs/retrieval.html:35
 msgid "Number of candidate chunks before reranking."
-msgstr "Number of candidate chunks before reranking."
+msgstr "تعداد تکه‌های نامزد پیش از بازچینش."
 
 #: app/templates/pages/projects/tabs/retrieval.html:37 app/templates/pages/projects/tabs/settings.html:46
 msgid "Similarity threshold"
-msgstr "Similarity threshold"
+msgstr "آستانه تشابه"
 
 #: app/templates/pages/projects/tabs/retrieval.html:39
 msgid "Minimum similarity score for a chunk to qualify."
-msgstr "Minimum similarity score for a chunk to qualify."
+msgstr "حداقل امتیاز شباهت برای قبول یک تکه."
 
 #: app/templates/pages/projects/tabs/retrieval.html:41 app/templates/pages/projects/tabs/settings.html:48
 msgid "Rerank"
-msgstr "Rerank"
+msgstr "بازچینش"
 
 #: app/templates/pages/projects/tabs/retrieval.html:41
 msgid "Enable a reranker model for better ordering."
-msgstr "Enable a reranker model for better ordering."
+msgstr "فعال‌سازی مدل بازچینش برای مرتب‌سازی بهتر."
 
 #: app/templates/pages/projects/tabs/retrieval.html:43
 msgid "Final results (Top N)"
-msgstr "Final results (Top N)"
+msgstr "نتایج نهایی (Top N)"
 
 #: app/templates/pages/projects/tabs/retrieval.html:43
 msgid "Number of final chunks after reranking."
-msgstr "Number of final chunks after reranking."
+msgstr "تعداد تکه‌های نهایی پس از بازچینش."
 
 #: app/templates/pages/projects/tabs/retrieval.html:53
 msgid "Run retrieval"
-msgstr "Run retrieval"
+msgstr "اجرای بازیابی"
 
 #: app/templates/pages/projects/tabs/retrieval_results.html:4
 #, python-format
 msgid "Results for: “%(v)s”"
-msgstr "Results for: “%(v)s”"
+msgstr "نتایج برای: «%(v)s»"
 
 #: app/templates/pages/projects/tabs/retrieval_results.html:8
 #, python-format
 msgid "%(a)s results — candidates: %(b)s"
-msgstr "%(a)s results — candidates: %(b)s"
+msgstr "%(a)s نتیجه — کاندیدا: %(b)s"
 
 #: app/templates/pages/projects/tabs/retrieval_results.html:9
 #, python-format
 msgid "Threshold: %(n)s"
-msgstr "Threshold: %(n)s"
+msgstr "آستانه: %(n)s"
 
 #: app/templates/pages/projects/tabs/retrieval_results.html:10
 #, python-format
 msgid "Rerank: %(n)s final results"
-msgstr "Rerank: %(n)s final results"
+msgstr "بازچینش: %(n)s نتیجه نهایی"
 
 #: app/templates/pages/projects/tabs/retrieval_results.html:21
 msgid "Vector score"
-msgstr "Vector score"
+msgstr "نمره برداری"
 
 #: app/templates/pages/projects/tabs/retrieval_results.html:22
 msgid "Rerank score"
-msgstr "Rerank score"
+msgstr "نمره بازچینش"
 
 #: app/templates/pages/projects/tabs/retrieval_results.html:23
 msgid "Final score"
-msgstr "Final score"
+msgstr "نمره نهایی"
 
 #: app/templates/pages/projects/tabs/retrieval_results.html:24
 msgid "Snippet"
-msgstr "Snippet"
+msgstr "قطعه"
 
 #: app/templates/pages/projects/tabs/retrieval_results.html:45
 msgid "No results found (check the similarity threshold or whether the index is empty)."
-msgstr "No results found (check the similarity threshold or whether the index is empty)."
+msgstr "نتیجه‌ای یافت نشد (آستانه تشابه یا خالی بودن نمایه را بررسی کنید)."
 
 #: app/templates/pages/projects/tabs/retrieval_results.html:53
 #, python-format
 msgid "Internal link candidates (%(n)s)"
-msgstr "Internal link candidates (%(n)s)"
+msgstr "کاندیداهای لینک داخلی (%(n)s)"
 
 #: app/templates/pages/projects/tabs/retrieval_results.html:72
 #, python-format
 msgid "Prompt context (%(a)s chunks — %(b)s characters)"
-msgstr "Prompt context (%(a)s chunks — %(b)s characters)"
+msgstr "زمینه پرامپت (%(a)s بخش — %(b)s کاراکتر)"
 
 #: app/templates/pages/projects/tabs/settings.html:2
 msgid "Project settings"
-msgstr "Project settings"
+msgstr "تنظیمات پروژه"
 
 #: app/templates/pages/projects/tabs/settings.html:2
 msgid "Configure embedding, retrieval, generation and publishing."
-msgstr "Configure embedding, retrieval, generation and publishing."
+msgstr "پیکربندی جاسازی، بازیابی، تولید و انتشار."
 
 #: app/templates/pages/projects/tabs/settings.html:5
 msgid "Set the embedding model, the text-to-vector converter. Changing it creates a new vector space in Qdrant."
-msgstr "Set the embedding model, the text-to-vector converter. Changing it creates a new vector space in Qdrant."
+msgstr "تنظیم مدل جاسازی، انتخابگر متن به بردار. تغییر مدل، فضای بردار جدیدی در کیوردنت می‌سازد."
 
 #: app/templates/pages/projects/tabs/settings.html:5
 msgid "The embedding model converts text to vectors; used for semantic retrieval."
-msgstr "The embedding model converts text to vectors; used for semantic retrieval."
+msgstr "مدل جاسازی متن را به بردار تبدیل می‌کند؛ برای بازیابی معنایی استفاده می‌شود."
 
 #: app/templates/pages/projects/tabs/settings.html:8
 msgid "Embedding service provider (e.g. Cohere or OpenAI). Must have an active connection in the “Connections” tab."
-msgstr "Embedding service provider (e.g. Cohere or OpenAI). Must have an active connection in the “Connections” tab."
+msgstr "ارائه‌دهنده سرویس جاسازی (مثلاً Cohere یا OpenAI). باید یک اتصال فعال در تب «اتصالات» داشته باشد."
 
 #: app/templates/pages/projects/tabs/settings.html:9
 msgid "Must match an active connection."
-msgstr "Must match an active connection."
+msgstr "باید با یک اتصال فعال هماهنگ باشد."
 
 #: app/templates/pages/projects/tabs/settings.html:11
 msgid "Embedding model ID — for Cohere usually embed-v4.0, for OpenAI text-embedding-3-small."
-msgstr "Embedding model ID — for Cohere usually embed-v4.0, for OpenAI text-embedding-3-small."
+msgstr "شناسه مدل جاسازی — برای Cohere معمولاً embed-v4.0 و برای OpenAI text-embedding-3-small."
 
 #: app/templates/pages/projects/tabs/settings.html:14
 msgid "Number of output vector dimensions — must match the model (embed-v4.0 = 1024, text-embedding-3-small = 1536)."
-msgstr "Number of output vector dimensions — must match the model (embed-v4.0 = 1024, text-embedding-3-small = 1536)."
+msgstr "تعداد ابعاد بردار خروجی — باید با مدل هماهنگ باشد (embed-v4.0 = 1024، text-embedding-3-small = 1536)."
 
 #: app/templates/pages/projects/tabs/settings.html:15
 msgid "Changing the model or dimensions = a new vector space; a full reindex is required."
-msgstr "Changing the model or dimensions = a new vector space; a full reindex is required."
+msgstr "تغییر مدل یا ابعاد = فضای بردار جدید؛ نیاز به بازنمایه کامل دارد."
 
 #: app/templates/pages/projects/tabs/settings.html:19
 msgid "Content generation models are configured in a separate tab."
-msgstr "Content generation models are configured in a separate tab."
+msgstr "پیکربندی مدل‌های تولید محتوا در تب جداگانه."
 
 #: app/templates/pages/projects/tabs/settings.html:19
 msgid "Provider, model, temperature, tokens and timeout per role (outline / sections) are set here."
-msgstr "Provider, model, temperature, tokens and timeout per role (outline / sections) are set here."
+msgstr "ارائه‌دهنده، مدل، دما، توکن و تایم‌اوت هر نقش (رئوس / بخش‌ها) از اینجا قابل تنظیم است."
 
 #: app/templates/pages/projects/tabs/settings.html:21
 msgid "Fine-tune the LLM models used for outlining and section writing."
-msgstr "Fine-tune the LLM models used for outlining and section writing."
+msgstr "تنظیم دقیق مدل‌های LLM برای رئوس‌سازی و نگارش بخش‌ها."
 
 #: app/templates/pages/projects/tabs/settings.html:23
 msgid "Model configuration"
-msgstr "Model configuration"
+msgstr "پیکربندی مدل‌ها"
 
 #: app/templates/pages/projects/tabs/settings.html:27
 msgid "Chunking"
-msgstr "Chunking"
+msgstr "تکه‌بندی (Chunking)"
 
 #: app/templates/pages/projects/tabs/settings.html:27
 msgid "Documents are split into small chunks for retrieval."
-msgstr "Documents are split into small chunks for retrieval."
+msgstr "مستندات برای بازیابی به تکه‌های کوچک تقسیم می‌شوند."
 
 #: app/templates/pages/projects/tabs/settings.html:27
 msgid "Persian text is first split on paragraph/sentence boundaries and only falls back to word limits when a hard cap is hit — never mid-word."
-msgstr "Persian text is first split on paragraph/sentence boundaries and only falls back to word limits when a hard cap is hit — never mid-word."
+msgstr "متن فارسی ابتدا بر اساس مرز پاراگراف/جمله شکسته می‌شود و تنها در صورت نیاز به حد سخت کلمه می‌رسد — هیچ‌گاه در وسط کلمه."
 
 #: app/templates/pages/projects/tabs/settings.html:29
 msgid "Chunk size (words)"
-msgstr "Chunk size (words)"
+msgstr "اندازه تکه (کلمه)"
 
 #: app/templates/pages/projects/tabs/settings.html:30
 msgid "Desired words per chunk for retrieval. Smaller = more precise, more expensive."
-msgstr "Desired words per chunk for retrieval. Smaller = more precise, more expensive."
+msgstr "حد مطلوب کلمات در هر تکه برای بازیابی. مقادیر کوچکتر = دقت بیشتر، هزینه بالاتر."
 
 #: app/templates/pages/projects/tabs/settings.html:31
 msgid "Overlap"
-msgstr "Overlap"
+msgstr "همپوشانی"
 
 #: app/templates/pages/projects/tabs/settings.html:32
 #, python-format
@@ -3532,572 +3532,572 @@ msgstr "Words shared between adjacent chunks so context is not lost. Usually 15�
 
 #: app/templates/pages/projects/tabs/settings.html:33
 msgid "Splitter strategy"
-msgstr "Splitter strategy"
+msgstr "استراتژی جداکننده"
 
 #: app/templates/pages/projects/tabs/settings.html:34
 msgid "Auto (paragraph → sentence)"
-msgstr "Auto (paragraph → sentence)"
+msgstr "خودکار (پاراگراف→جمله)"
 
 #: app/templates/pages/projects/tabs/settings.html:34
 msgid "Paragraph"
-msgstr "Paragraph"
+msgstr "پاراگراف"
 
 #: app/templates/pages/projects/tabs/settings.html:34
 msgid "Sentence"
-msgstr "Sentence"
+msgstr "جمله"
 
 #: app/templates/pages/projects/tabs/settings.html:34
 msgid "Word"
-msgstr "Word"
+msgstr "کلمه"
 
 #: app/templates/pages/projects/tabs/settings.html:36
 msgid "Text split boundary: auto tries paragraph first, then sentence."
-msgstr "Text split boundary: auto tries paragraph first, then sentence."
+msgstr "مرز شکستن متن: خودکار ابتدا پاراگراف و سپس جمله را امتحان می‌کند."
 
 #: app/templates/pages/projects/tabs/settings.html:37
 msgid "Max chunks (0 = unlimited)"
-msgstr "Max chunks (0 = unlimited)"
+msgstr "حداکثر تکه (۰ = نامحدود)"
 
 #: app/templates/pages/projects/tabs/settings.html:38
 msgid "Cap on chunks per document; 0 means unlimited. Useful for cost control."
-msgstr "Cap on chunks per document; 0 means unlimited. Useful for cost control."
+msgstr "سقف تعداد تکه‌های هر مستند؛ ۰ یعنی بدون محدودیت. برای کنترل هزینه مفید است."
 
 #: app/templates/pages/projects/tabs/settings.html:42
 msgid "Semantic search and result ranking."
-msgstr "Semantic search and result ranking."
+msgstr "جستجوی معنایی و مرتب‌سازی نتایج."
 
 #: app/templates/pages/projects/tabs/settings.html:42
 msgid "While writing an article, the most relevant document chunks are retrieved and fed to the model."
-msgstr "While writing an article, the most relevant document chunks are retrieved and fed to the model."
+msgstr "هنگام نوشتن مقاله، مرتبط‌ترین تکه‌های مستندات بازیابی و به مدل داده می‌شود."
 
 #: app/templates/pages/projects/tabs/settings.html:44
 msgid "Candidates (Top K)"
-msgstr "Candidates (Top K)"
+msgstr "تعداد کاندیدا (Top K)"
 
 #: app/templates/pages/projects/tabs/settings.html:45
 msgid "Candidate chunks fetched from Qdrant before reranking."
-msgstr "Candidate chunks fetched from Qdrant before reranking."
+msgstr "تعداد تکه‌های نامزد که از کیوردنت بازیابی می‌شوند قبل از بازچینش."
 
 #: app/templates/pages/projects/tabs/settings.html:47
 msgid "Minimum similarity score for a chunk to qualify (0–1). Higher = fewer, more precise results."
-msgstr "Minimum similarity score for a chunk to qualify (0–1). Higher = fewer, more precise results."
+msgstr "حداقل امتیاز شباهت برای قبول یک تکه (۰ تا ۱). بالاتر = نتایج محدودتر و دقیق‌تر."
 
 #: app/templates/pages/projects/tabs/settings.html:50
 msgid "With a reranker, candidates are re-ordered so the most relevant rise to the top."
-msgstr "With a reranker, candidates are re-ordered so the most relevant rise to the top."
+msgstr "با یک مدل بازچینش، کاندیداها دوباره مرتب می‌شوند تا مرتبط‌ترین‌ها بالا بیایند."
 
 #: app/templates/pages/projects/tabs/settings.html:51
 msgid "Results after rerank"
-msgstr "Results after rerank"
+msgstr "نتایج پس از بازچینش"
 
 #: app/templates/pages/projects/tabs/settings.html:52
 msgid "Final number of chunks fed to the model after reranking."
-msgstr "Final number of chunks fed to the model after reranking."
+msgstr "تعداد نهایی تکه‌هایی که پس از بازچینش به مدل داده می‌شود."
 
 #: app/templates/pages/projects/tabs/settings.html:53
 msgid "Rerank model"
-msgstr "Rerank model"
+msgstr "مدل بازچینش"
 
 #: app/templates/pages/projects/tabs/settings.html:54
 msgid "Rerank model ID (e.g. rerank-v4.0 from Cohere)."
-msgstr "Rerank model ID (e.g. rerank-v4.0 from Cohere)."
+msgstr "شناسه مدل بازچینش (مثلاً rerank-v4.0 از Cohere)."
 
 #: app/templates/pages/projects/tabs/settings.html:55
 msgid "Rerank provider"
-msgstr "Rerank provider"
+msgstr "ارائه‌دهنده بازچینش"
 
 #: app/templates/pages/projects/tabs/settings.html:56
 msgid "Reranking service provider — must have an active connection."
-msgstr "Reranking service provider — must have an active connection."
+msgstr "ارائه‌دهنده سرویس بازچینش — باید اتصال فعال داشته باشد."
 
 #: app/templates/pages/projects/tabs/settings.html:60
 msgid "Prompt context budget"
-msgstr "Prompt context budget"
+msgstr "بودجه زمینه پرامپت (Context)"
 
 #: app/templates/pages/projects/tabs/settings.html:60
 msgid "Cap on the data fed to the model."
-msgstr "Cap on the data fed to the model."
+msgstr "سقف داده‌ای که به مدل داده می‌شود."
 
 #: app/templates/pages/projects/tabs/settings.html:60
 msgid "Only this much of the retrieval results is fed to the LLM — not the whole documents."
-msgstr "Only this much of the retrieval results is fed to the LLM — not the whole documents."
+msgstr "فقط همین مقدار از نتایج بازیابی به مدل زبانی داده می‌شود — نه کل مستندات."
 
 #: app/templates/pages/projects/tabs/settings.html:62
 msgid "Max internal links"
-msgstr "Max internal links"
+msgstr "حداکثر لینک داخلی"
 
 #: app/templates/pages/projects/tabs/settings.html:63
 msgid "Suggested internal links added to the article per section."
-msgstr "Suggested internal links added to the article per section."
+msgstr "تعداد لینک‌های داخلی پیشنهادی که در هر بخش به مقاله اضافه می‌شود."
 
 #: app/templates/pages/projects/tabs/settings.html:64
 msgid "Max related chunks"
-msgstr "Max related chunks"
+msgstr "حداکثر بخش مرتبط"
 
 #: app/templates/pages/projects/tabs/settings.html:65
 msgid "Retrieved chunks that go into the prompt context."
-msgstr "Retrieved chunks that go into the prompt context."
+msgstr "تعداد تکه‌های بازیابی‌شده‌ای که وارد زمینه پرامپت می‌شوند."
 
 #: app/templates/pages/projects/tabs/settings.html:66
 msgid "Max characters"
-msgstr "Max characters"
+msgstr "حداکثر کاراکتر"
 
 #: app/templates/pages/projects/tabs/settings.html:67
 msgid "Total character cap on context to control cost and prompt length."
-msgstr "Total character cap on context to control cost and prompt length."
+msgstr "سقف کل کاراکترهای زمینه برای کنترل هزینه و طول پرامپت."
 
 #: app/templates/pages/projects/tabs/settings.html:71
 msgid "Generation & publishing"
-msgstr "Generation & publishing"
+msgstr "تولید و انتشار"
 
 #: app/templates/pages/projects/tabs/settings.html:71
 msgid "Set concurrency, minimum length and publish mode."
-msgstr "Set concurrency, minimum length and publish mode."
+msgstr "تنظیم همزمانی، حداقل طول و حالت انتشار."
 
 #: app/templates/pages/projects/tabs/settings.html:73
 msgid "Concurrent section generation"
-msgstr "Concurrent section generation"
+msgstr "تولید هم‌زمان بخش‌ها"
 
 #: app/templates/pages/projects/tabs/settings.html:74
 msgid "How many sections are generated in parallel. Higher = faster but more cost and rate limits."
-msgstr "How many sections are generated in parallel. Higher = faster but more cost and rate limits."
+msgstr "تعداد بخش‌هایی که همزمان تولید می‌شوند. بالاتر = سریع‌تر ولی هزینه و محدودیت نرخ بیشتر."
 
 #: app/templates/pages/projects/tabs/settings.html:75
 msgid "Minimum article words"
-msgstr "Minimum article words"
+msgstr "حداقل کلمات مقاله"
 
 #: app/templates/pages/projects/tabs/settings.html:76
 msgid "Minimum total words for the article to pass validation."
-msgstr "Minimum total words for the article to pass validation."
+msgstr "حداقل کلمات کل مقاله برای قبولی در اعتبارسنجی."
 
 #: app/templates/pages/projects/tabs/settings.html:77
 msgid "Publish mode"
-msgstr "Publish mode"
+msgstr "حالت انتشار"
 
 #: app/templates/pages/projects/tabs/settings.html:78
 msgid "Live publish"
-msgstr "Live publish"
+msgstr "انتشار زنده"
 
 #: app/templates/pages/projects/tabs/settings.html:79
 msgid "Draft: the article is only saved. Live publish: immediately published on WordPress."
-msgstr "Draft: the article is only saved. Live publish: immediately published on WordPress."
+msgstr "پیش‌نویس: مقاله فقط ذخیره می‌شود. انتشار زنده: بلافاصله در وردپرس منتشر می‌شود."
 
 #: app/templates/pages/projects/tabs/settings.html:80
 msgid "Autosave"
-msgstr "Autosave"
+msgstr "ذخیره خودکار (Autosave)"
 
 #: app/templates/pages/projects/tabs/settings.html:82
 msgid "Periodically auto-save workspace edits so your work is never lost."
-msgstr "Periodically auto-save workspace edits so your work is never lost."
+msgstr "ذخیره دوره‌ای خودکار ویرایش‌های workspace تا کار شما از بین نرود."
 
 #: app/templates/pages/projects/tabs/settings.html:83
 msgid "Autosave interval (minutes)"
-msgstr "Autosave interval (minutes)"
+msgstr "بازه autosave (دقیقه)"
 
 #: app/templates/pages/projects/tabs/settings.html:84
 msgid "How often changes are saved automatically."
-msgstr "How often changes are saved automatically."
+msgstr "هر چند دقیقه یک‌بار تغییرات به‌صورت خودکار ذخیره شوند."
 
 #: app/templates/pages/projects/tabs/settings.html:85
 msgid "Auto-publish"
-msgstr "Auto-publish"
+msgstr "انتشار خودکار (Auto-publish)"
 
 #: app/templates/pages/projects/tabs/settings.html:87
 msgid "Articles produced by the automatic schedule go straight to WordPress without review (following the project's publish mode)."
-msgstr "Articles produced by the automatic schedule go straight to WordPress without review (following the project's publish mode)."
+msgstr "مقاله‌های تولیدشده توسط زمان‌بندی خودکار، بدون بازبینی و مستقیم به وردپرس ارسال می‌شوند (طبق حالت انتشار پروژه)."
 
 #: app/templates/pages/projects/tabs/settings.html:88
 msgid "Minimum SEO score"
-msgstr "Minimum SEO score"
+msgstr "حداقل امتیاز سئو"
 
 #: app/templates/pages/projects/tabs/settings.html:89
 msgid "If the SEO score falls below this, the article is rewritten until it reaches it."
-msgstr "If the SEO score falls below this, the article is rewritten until it reaches it."
+msgstr "اگر امتیاز سئو به این حد نرسد، مقاله بازنویسی می‌شود تا برسد."
 
 #: app/templates/pages/projects/tabs/settings.html:90
 msgid "Max rewrites"
-msgstr "Max rewrites"
+msgstr "حداکثر بازنویسی"
 
 #: app/templates/pages/projects/tabs/settings.html:91
 msgid "After this many failed rewrites, the article is left for human review."
-msgstr "After this many failed rewrites, the article is left for human review."
+msgstr "پس از این تعداد بازنویسی ناموفق، مقاله برای بازبینی انسانی رها می‌شود."
 
 #: app/templates/pages/projects/tabs/settings.html:95
 msgid "How transient provider errors are handled."
-msgstr "How transient provider errors are handled."
+msgstr "رفتار خطاهای موقتی در تماس با ارائه‌دهنده‌ها."
 
 #: app/templates/pages/projects/tabs/settings.html:95
 msgid "On transient errors (rate limit, network, 5xx) the job retries with exponential backoff."
-msgstr "On transient errors (rate limit, network, 5xx) the job retries with exponential backoff."
+msgstr "هنگام خطای موقت (نرخ، شبکه، ۵xx) وظیفه با تأخیر نمایی دوباره تلاش می‌شود."
 
 #: app/templates/pages/projects/tabs/settings.html:98
 msgid "Maximum attempts per job before it is marked failed."
-msgstr "Maximum attempts per job before it is marked failed."
+msgstr "بیشترین تعداد تلاش برای هر وظیفه قبل از علامت‌گذاری به‌عنوان ناموفق."
 
 #: app/templates/pages/projects/tabs/settings.html:99
 msgid "Base delay (seconds)"
-msgstr "Base delay (seconds)"
+msgstr "پایه تأخیر (ثانیه)"
 
 #: app/templates/pages/projects/tabs/settings.html:100
 msgid "Initial delay before the first retry; grows exponentially with each failure."
-msgstr "Initial delay before the first retry; grows exponentially with each failure."
+msgstr "تأخیر اولیه قبل از اولین تلاش مجدد؛ با هر بار شکست به‌صورت نمایی رشد می‌کند."
 
 #: app/templates/pages/projects/tabs/settings.html:101
 msgid "Delay cap (seconds)"
-msgstr "Delay cap (seconds)"
+msgstr "سقف تأخیر (ثانیه)"
 
 #: app/templates/pages/projects/tabs/settings.html:102
 msgid "Maximum delay between two retries."
-msgstr "Maximum delay between two retries."
+msgstr "بیشترین تأخیر ممکن بین دو تلاش مجدد."
 
 #: app/templates/pages/projects/tabs/settings.html:106
 msgid "Job scheduling"
-msgstr "Job scheduling"
+msgstr "زمان‌بندی وظایف"
 
 #: app/templates/pages/projects/tabs/settings.html:106
 msgid "Schedule automatic indexing and writing."
-msgstr "Schedule automatic indexing and writing."
+msgstr "زمان‌بندی نمایه‌سازی و نویسندگی خودکار."
 
 #: app/templates/pages/projects/tabs/settings.html:106
 msgid "The worker checks schedules every minute and creates jobs at the configured interval."
-msgstr "The worker checks schedules every minute and creates jobs at the configured interval."
+msgstr "کارگر (worker) هر دقیقه زمان‌بندی‌ها را بررسی و در بازه تعیین‌شده وظیفه می‌سازد."
 
 #: app/templates/pages/projects/tabs/settings.html:112
 msgid "Enable automatic indexing at the configured interval."
-msgstr "Enable automatic indexing at the configured interval."
+msgstr "فعال‌سازی نمایه‌سازی خودکار در بازه تعیین‌شده."
 
 #: app/templates/pages/projects/tabs/settings.html:113
 msgid "Indexing interval (minutes)"
-msgstr "Indexing interval (minutes)"
+msgstr "بازه نمایه‌سازی (دقیقه)"
 
 #: app/templates/pages/projects/tabs/settings.html:115
 msgid "Time between two automatic indexing runs."
-msgstr "Time between two automatic indexing runs."
+msgstr "فاصله بین دو نمایه‌سازی خودکار."
 
 #: app/templates/pages/projects/tabs/settings.html:118
 msgid "Automatic writing for the project's first planned topic."
-msgstr "Automatic writing for the project's first planned topic."
+msgstr "نویسندگی خودکار برای اولین موضوع برنامه‌ریزی‌شدهٔ پروژه."
 
 #: app/templates/pages/projects/tabs/settings.html:119
 msgid "Writing interval (minutes)"
-msgstr "Writing interval (minutes)"
+msgstr "بازه نویسندگی (دقیقه)"
 
 #: app/templates/pages/projects/tabs/settings.html:121
 msgid "Time between two writing runs."
-msgstr "Time between two writing runs."
+msgstr "فاصله بین دو اجرای نویسندگی."
 
 #: app/templates/pages/projects/tabs/settings.html:125
 msgid "Save settings"
-msgstr "Save settings"
+msgstr "ذخیره تنظیمات"
 
 #: app/templates/pages/projects/tabs/topics.html:11
 msgid "Manage topics and article generation."
-msgstr "Manage topics and article generation."
+msgstr "مدیریت موضوعات و تولید مقاله."
 
 #: app/templates/pages/projects/tabs/topics.html:35
 msgid "Full view"
-msgstr "Full view"
+msgstr "نمای کامل"
 
 #: app/templates/pages/projects/tabs/topics.html:41 app/templates/pages/topics/index.html:18
 msgid "CSV / Bulk"
-msgstr "CSV / Bulk"
+msgstr "CSV / گروهی"
 
 #: app/templates/pages/projects/tabs/topics.html:45 app/templates/pages/topics/index.html:20
 msgid "+ Topic"
-msgstr "+ Topic"
+msgstr "+ موضوع"
 
 #: app/templates/pages/projects/tabs/topics.html:59 app/templates/pages/topics/index.html:29
 msgid "Search by title or keyword…"
-msgstr "Search by title or keyword…"
+msgstr "جستجو در عنوان یا کلمه کلیدی…"
 
 #: app/templates/pages/projects/tabs/topics.html:91 app/templates/pages/topics/index.html:75
 msgid "Pillar/Cluster"
-msgstr "Pillar/Cluster"
+msgstr "ستون/خوشه"
 
 #: app/templates/pages/projects/tabs/topics.html:135
 msgid "Write article"
-msgstr "Write article"
+msgstr "نوشتن مقاله"
 
 #: app/templates/pages/projects/tabs/topics.html:149
 msgid "Delete this topic? This cannot be undone."
-msgstr "Delete this topic? This cannot be undone."
+msgstr "این موضوع حذف شود؟ این عمل قابل بازگشت نیست."
 
 #: app/templates/pages/projects/tabs/topics.html:171
 msgid "No topic found."
-msgstr "No topic found."
+msgstr "موضوعی یافت نشد."
 
 #: app/templates/pages/projects/tabs/topics.html:191 app/templates/pages/topics/index.html:169
 msgid "New topic"
-msgstr "New topic"
+msgstr "موضوع جدید"
 
 #: app/templates/pages/projects/tabs/topics.html:207
 msgid "The title of the article you want written — the more precise, the better the output."
-msgstr "The title of the article you want written — the more precise, the better the output."
+msgstr "عنوان مقاله‌ای که می‌خواهید درباره‌اش بنویسید — هرچه دقیق‌تر باشد خروجی بهتری می‌گیرید."
 
 #: app/templates/pages/projects/tabs/topics.html:207 app/templates/pages/topics/index.html:175
 msgid "e.g. Best SEO practices in 1405"
-msgstr "e.g. Best SEO practices in 1405"
+msgstr "مثلاً: بهترین روش‌های سئو در ۱۴۰۵"
 
 #: app/templates/pages/projects/tabs/topics.html:207
 msgid "This title is the primary input for article generation."
-msgstr "This title is the primary input for article generation."
+msgstr "این عنوان به‌عنوان ورودی اصلی تولید مقاله استفاده می‌شود."
 
 #: app/templates/pages/projects/tabs/topics.html:211
 msgid "The main phrase or keyword this article optimizes for."
-msgstr "The main phrase or keyword this article optimizes for."
+msgstr "عبارت یا کلمه کلیدی اصلی این مقاله برای بهینه‌سازی سئو."
 
 #: app/templates/pages/projects/tabs/topics.html:211
 msgid "e.g. SEO tutorial"
-msgstr "e.g. SEO tutorial"
+msgstr "مثلاً: آموزش سئو"
 
 #: app/templates/pages/projects/tabs/topics.html:213 app/templates/pages/topics/index.html:186
 msgid "Pillar page"
-msgstr "Pillar page"
+msgstr "صفحه ستون"
 
 #: app/templates/pages/projects/tabs/topics.html:213 app/templates/pages/topics/index.html:187
 msgid "Guide"
-msgstr "Guide"
+msgstr "راهنما"
 
 #: app/templates/pages/projects/tabs/topics.html:213 app/templates/pages/topics/index.html:188
 msgid "News"
-msgstr "News"
+msgstr "خبر"
 
 #: app/templates/pages/projects/tabs/topics.html:213
 msgid "Content type — the pillar page anchors the whole content cluster."
-msgstr "Content type — the pillar page anchors the whole content cluster."
+msgstr "نوع محتوا — صفحه ستون پایه کل خوشه محتواست."
 
 #: app/templates/pages/projects/tabs/topics.html:219
 msgid "The main pillar article this topic relates to (for internal linking)."
-msgstr "The main pillar article this topic relates to (for internal linking)."
+msgstr "مقاله ستون اصلی که این موضوع به آن مرتبط است (برای لینک‌سازی داخلی)."
 
 #: app/templates/pages/projects/tabs/topics.html:221
 msgid "Content cluster name for grouping related topics."
-msgstr "Content cluster name for grouping related topics."
+msgstr "نام خوشه محتوایی برای گروه‌بندی موضوعات مرتبط."
 
 #: app/templates/pages/projects/tabs/topics.html:227
 msgid "The higher, the sooner it enters the generation queue."
-msgstr "The higher, the sooner it enters the generation queue."
+msgstr "هرچه بزرگ‌تر، زودتر در صف تولید قرار می‌گیرد."
 
 #: app/templates/pages/projects/tabs/topics.html:229
 msgid "Editorial calendar week (optional)."
-msgstr "Editorial calendar week (optional)."
+msgstr "هفته تقویم تحریریه (اختیاری)."
 
 #: app/templates/pages/projects/tabs/topics.html:233
 msgid "Article link"
-msgstr "Article link"
+msgstr "لینک مقاله"
 
 #: app/templates/pages/projects/tabs/topics.html:233
 msgid "Published URL (optional)."
-msgstr "Published URL (optional)."
+msgstr "آدرس منتشرشده (اختیاری)."
 
 #: app/templates/pages/topics/index.html:12
 #, python-format
 msgid "%(n)s items · %(v)s"
-msgstr "%(n)s items · %(v)s"
+msgstr "%(n)s مورد · %(v)s"
 
 #: app/templates/pages/topics/index.html:30
 msgid "Search"
-msgstr "Search"
+msgstr "جستجو"
 
 #: app/templates/pages/topics/index.html:36
 #, python-format
 msgid "All (%(n)s)"
-msgstr "All (%(n)s)"
+msgstr "همه (%(n)s)"
 
 #: app/templates/pages/topics/index.html:46
 msgid "Sort:"
-msgstr "Sort:"
+msgstr "مرتب‌سازی:"
 
 #: app/templates/pages/topics/index.html:47
 msgid "Priority ↑"
-msgstr "Priority ↑"
+msgstr "اولویت ↑"
 
 #: app/templates/pages/topics/index.html:47
 msgid "Newest"
-msgstr "Newest"
+msgstr "جدیدترین"
 
 #: app/templates/pages/topics/index.html:56
 msgid "Selected —"
-msgstr "Selected —"
+msgstr "انتخاب شده —"
 
 #: app/templates/pages/topics/index.html:57
 msgid "Generate article"
-msgstr "Generate article"
+msgstr "تولید مقاله"
 
 #: app/templates/pages/topics/index.html:96
 msgid "Generate"
-msgstr "Generate"
+msgstr "تولید"
 
 #: app/templates/pages/topics/index.html:107
 msgid "Delete this topic?"
-msgstr "Delete this topic?"
+msgstr "این موضوع حذف شود؟"
 
 #: app/templates/pages/topics/index.html:116
 msgid "No topic found"
-msgstr "No topic found"
+msgstr "موضوعی یافت نشد"
 
 #: app/templates/pages/topics/index.html:117
 msgid "Add the first topic or use CSV import."
-msgstr "Add the first topic or use CSV import."
+msgstr "نخستین موضوع را اضافه کنید یا از واردات CSV استفاده نمایید."
 
 #: app/templates/pages/topics/index.html:118
 msgid "+ New topic"
-msgstr "+ New topic"
+msgstr "+ موضوع جدید"
 
 #: app/templates/pages/topics/index.html:208
 msgid "Editorial calendar week (optional)"
-msgstr "Editorial calendar week (optional)"
+msgstr "هفته تقویم تحریریه (اختیاری)"
 
 #: app/templates/pages/workers/index.html:21
 msgid "Live status of worker processes, the job queue and automatic schedule health."
-msgstr "Live status of worker processes, the job queue and automatic schedule health."
+msgstr "وضعیت زندهٔ فرآیندهای کارگر، صف وظایف و سلامت زمان‌بندی خودکار."
 
 #: app/templates/pages/workers/index.html:23
 msgid "Auto-refreshes every 5 seconds"
-msgstr "Auto-refreshes every 5 seconds"
+msgstr "به‌روزرسانی خودکار هر ۵ ثانیه"
 
 #: app/templates/pages/workers/index.html:31
 msgid "Heartbeat within the last 45 seconds"
-msgstr "Heartbeat within the last 45 seconds"
+msgstr "ضربان قلب در ۴۵ ثانیهٔ اخیر"
 
 #: app/templates/pages/workers/index.html:33
 msgid "Running jobs"
-msgstr "Running jobs"
+msgstr "وظایف در حال اجرا"
 
 #: app/templates/pages/workers/index.html:33
 msgid "All workers"
-msgstr "All workers"
+msgstr "همه کارگرها"
 
 #: app/templates/pages/workers/index.html:35
 msgid "Waiting to claim"
-msgstr "Waiting to claim"
+msgstr "منتظر دریافت"
 
 #: app/templates/pages/workers/index.html:37
 msgid "With exponential backoff"
-msgstr "With exponential backoff"
+msgstr "با تأخیر نمایی"
 
 #: app/templates/pages/workers/index.html:39
 msgid "Needs attention"
-msgstr "Needs attention"
+msgstr "نیاز به بررسی"
 
 #: app/templates/pages/workers/index.html:71
 msgid "Offline"
-msgstr "Offline"
+msgstr "آفلاین"
 
 #: app/templates/pages/workers/index.html:77
 msgid "Worker version differs from the web version"
-msgstr "Worker version differs from the web version"
+msgstr "نسخهٔ کارگر با نسخهٔ وب یکی نیست"
 
 #: app/templates/pages/workers/index.html:77
 msgid "Needs restart"
-msgstr "Needs restart"
+msgstr "نیاز به راه‌اندازی مجدد"
 
 #: app/templates/pages/workers/index.html:91
 #, python-format
 msgid "Started: %(v)s"
-msgstr "Started: %(v)s"
+msgstr "شروع: %(v)s"
 
 #: app/templates/pages/workers/index.html:99
 msgid "Last heartbeat"
-msgstr "Last heartbeat"
+msgstr "آخرین ضربان"
 
 #: app/templates/pages/workers/index.html:99
 msgid "never"
-msgstr "never"
+msgstr "هرگز"
 
 #: app/templates/pages/workers/index.html:107
 msgid "Concurrency"
-msgstr "Concurrency"
+msgstr "همزمانی"
 
 #: app/templates/pages/workers/index.html:117
 msgid "Schedules:"
-msgstr "Schedules:"
+msgstr "زمان‌بندی:"
 
 #: app/templates/pages/workers/index.html:121
 #, python-format
 msgid "Last check %(v)s"
-msgstr "Last check %(v)s"
+msgstr "آخرین بررسی %(v)s"
 
 #: app/templates/pages/workers/index.html:123
 msgid "Created:"
-msgstr "Created:"
+msgstr "ساخته‌شده:"
 
 #: app/templates/pages/workers/index.html:125
 #, python-format
 msgid "Errors: %(v)s"
-msgstr "Errors: %(v)s"
+msgstr "خطا: %(v)s"
 
 #: app/templates/pages/workers/index.html:129
 msgid "Not checked yet"
-msgstr "Not checked yet"
+msgstr "بررسی نشده"
 
 #: app/templates/pages/workers/index.html:149
 msgid "No workers are running"
-msgstr "No workers are running"
+msgstr "هیچ کارگری در حال اجرا نیست"
 
 #: app/templates/pages/workers/index.html:151
 msgid "Run the worker process so jobs and schedules are processed."
-msgstr "Run the worker process so jobs and schedules are processed."
+msgstr "فرآیند کارگر را اجرا کنید تا وظایف و زمان‌بندی‌ها پردازش شوند."
 
 #: app/templates/pages/workers/index.html:169
 msgid "Automatic schedules"
-msgstr "Automatic schedules"
+msgstr "زمان‌بندی خودکار"
 
 #: app/templates/pages/workers/index.html:175
 msgid "Last check"
-msgstr "Last check"
+msgstr "آخرین بررسی"
 
 #: app/templates/pages/workers/index.html:177
 msgid "Schedules due"
-msgstr "Schedules due"
+msgstr "زمان‌بندی آماده"
 
 #: app/templates/pages/workers/index.html:179
 msgid "Jobs created"
-msgstr "Jobs created"
+msgstr "وظیفه ساخته‌شده"
 
 #: app/templates/pages/workers/index.html:183
 #, python-format
 msgid "Errors occurred in %(n)s schedule(s) — check the worker log."
-msgstr "Errors occurred in %(n)s schedule(s) — check the worker log."
+msgstr "در %(n)s زمان‌بندی خطا رخ داد — گزارش کارگر را بررسی کنید."
 
 #: app/templates/pages/workers/index.html:193
 msgid "Every 60 seconds the worker checks due schedules and creates jobs."
-msgstr "Every 60 seconds the worker checks due schedules and creates jobs."
+msgstr "کارگر هر ۶۰ ثانیه زمان‌بندی‌های آماده را بررسی و وظیفه می‌سازد."
 
 #: app/templates/pages/workers/index.html:207
 msgid "Job queue"
-msgstr "Job queue"
+msgstr "صف وظایف"
 
 #: app/templates/pages/workers/index.html:217
 msgid "Queued (waiting to claim)"
-msgstr "Queued (waiting to claim)"
+msgstr "در صف (منتظر دریافت)"
 
 #: app/templates/pages/workers/index.html:251
 msgid "Restart the worker"
-msgstr "Restart the worker"
+msgstr "راه‌اندازی مجدد کارگر"
 
 #: app/templates/pages/workers/index.html:257
 msgid "After every code change the worker must be restarted to run the new version."
-msgstr "After every code change the worker must be restarted to run the new version."
+msgstr "پس از هر تغییر کد، کارگر باید دوباره راه‌اندازی شود تا نسخهٔ جدید را اجرا کند."
 
 #: app/templates/pages/workers/index.html:259
 #, python-format
 msgid "If a worker's version differs from the web version (v%(v)s), it gets a “Needs restart” badge."
-msgstr "If a worker's version differs from the web version (v%(v)s), it gets a “Needs restart” badge."
+msgstr "اگر نسخهٔ یک کارگر با نسخهٔ وب (v%(v)s) فرق داشته باشد، نشان «نیاز به راه‌اندازی مجدد» می‌گیرد."
 
 #: app/templates/pages/workers/index.html:283
 msgid "Copy command"
-msgstr "Copy command"
+msgstr "کپی فرمان"
 
 #: app/templates/pages/workers/index.html:285
 msgid "Copy"
-msgstr "Copy"
+msgstr "کپی"
 
 #: app/templates/pages/workers/index.html:287
 msgid "Copied ✓"
-msgstr "Copied ✓"
+msgstr "کپی شد ✓"
 
 #: app/templates/pages/workers/index.html:309
 msgid "Recent failures"
-msgstr "Recent failures"
+msgstr "ناموفق‌های اخیر"
 

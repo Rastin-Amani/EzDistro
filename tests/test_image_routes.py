@@ -43,7 +43,10 @@ def test_plan_route_requires_content():
     make_article(pb, project["id"], final_html=None)  # another article, empty
     req = make_req(pb, user, project["id"])
     resp = call_route(queue_image_plan, req, project["id"], article["id"])  # article has content
-    assert toast_message(resp) == "برنامه تصاویر در صف پردازش قرار گرفت"
+    assert (
+        toast_message(resp)
+        == "\u0628\u0631\u0646\u0627\u0645\u0647 \u062a\u0635\u0627\u0648\u06cc\u0631 \u062f\u0631 \u0635\u0641 \u067e\u0631\u062f\u0627\u0632\u0634 \u0642\u0631\u0627\u0631 \u06af\u0631\u0641\u062a"
+    )
     jobs = pb.collection("jobs").get_list(1, 50).items
     assert any(j["type"] == "plan_article_images" for j in jobs)
 
@@ -55,7 +58,10 @@ def test_generate_route_requires_plan():
     resp = call_route(
         queue_image_generate, req, project["id"], article["id"], role="cover", section_key=""
     )
-    assert "برنامه تصاویر" in toast_message(resp)
+    assert (
+        "\u0628\u0631\u0646\u0627\u0645\u0647 \u062a\u0635\u0627\u0648\u06cc\u0631"
+        in toast_message(resp)
+    )
 
 
 def test_generate_route_queues_cover_and_validates_interior_key():
@@ -66,7 +72,7 @@ def test_generate_route_queues_cover_and_validates_interior_key():
     resp = call_route(
         queue_image_generate, req, project["id"], article["id"], role="cover", section_key=""
     )
-    assert "در صف" in toast_message(resp)
+    assert "\u062f\u0631 \u0635\u0641" in toast_message(resp)
     resp = call_route(
         queue_image_generate,
         req,
@@ -75,7 +81,7 @@ def test_generate_route_queues_cover_and_validates_interior_key():
         role="interior",
         section_key="section-1",
     )
-    assert "در صف" in toast_message(resp)
+    assert "\u062f\u0631 \u0635\u0641" in toast_message(resp)
     # invalid interior key rejected
     resp = call_route(
         queue_image_generate,
@@ -85,7 +91,10 @@ def test_generate_route_queues_cover_and_validates_interior_key():
         role="interior",
         section_key="not-a-key",
     )
-    assert "کلید بخش نامعتبر" in toast_message(resp)
+    assert (
+        "\u06a9\u0644\u06cc\u062f \u0628\u062e\u0634 \u0646\u0627\u0645\u0639\u062a\u0628\u0631"
+        in toast_message(resp)
+    )
 
 
 def test_regenerate_select_remove_metadata_flow():
@@ -109,11 +118,14 @@ def test_regenerate_select_remove_metadata_flow():
         project["id"],
         article["id"],
         row["id"],
-        alt_text="نمای نزدیک داشبورد خودرو",
-        caption="توضیح تصویر",
+        alt_text="\u0646\u0645\u0627\u06cc \u0646\u0632\u062f\u06cc\u06a9 \u062f\u0627\u0634\u0628\u0648\u0631\u062f \u062e\u0648\u062f\u0631\u0648",
+        caption="\u062a\u0648\u0636\u06cc\u062d \u062a\u0635\u0648\u06cc\u0631",
     )
     assert toast_message(resp)
-    assert ArticleImageRepo(pb).get(row["id"])["altText"] == "نمای نزدیک داشبورد خودرو"
+    assert (
+        ArticleImageRepo(pb).get(row["id"])["altText"]
+        == "\u0646\u0645\u0627\u06cc \u0646\u0632\u062f\u06cc\u06a9 \u062f\u0627\u0634\u0628\u0648\u0631\u062f \u062e\u0648\u062f\u0631\u0648"
+    )
 
     # empty alt rejected
     resp = call_route(
@@ -123,7 +135,7 @@ def test_regenerate_select_remove_metadata_flow():
 
     # regenerate queues a NEW version job (version=2 payload)
     resp = call_route(queue_image_regenerate, req, project["id"], article["id"], row["id"])
-    assert "نسخهٔ جدید" in toast_message(resp)
+    assert "\u0646\u0633\u062e\u0647\u0654 \u062c\u062f\u06cc\u062f" in toast_message(resp)
     jobs = [
         j
         for j in pb.collection("jobs").get_list(1, 50).items
@@ -133,11 +145,14 @@ def test_regenerate_select_remove_metadata_flow():
 
     # select a non-ready row is rejected; ready rows can be re-selected
     resp = call_route(select_image_version, req, project["id"], article["id"], row["id"])
-    assert toast_message(resp) == "این نسخه از تصویر انتخاب شد"
+    assert (
+        toast_message(resp)
+        == "\u0627\u06cc\u0646 \u0646\u0633\u062e\u0647 \u0627\u0632 \u062a\u0635\u0648\u06cc\u0631 \u0627\u0646\u062a\u062e\u0627\u0628 \u0634\u062f"
+    )
 
     # remove deactivates but keeps history
     resp = call_route(remove_image, req, project["id"], article["id"], row["id"])
-    assert "تاریخچه" in toast_message(resp)
+    assert "\u062a\u0627\u0631\u06cc\u062e\u0686\u0647" in toast_message(resp)
     assert ArticleImageRepo(pb).get(row["id"])["active"] in (False, 0)
 
 
@@ -201,7 +216,7 @@ def test_workspace_renders_populated_images_pane(monkeypatch):
         }
     )
     assert ready_row["filename"] in html  # preview src uses the optimized file
-    assert "آماده" in html  # ready badge
+    assert "Ready" in html  # ready badge (en is the default render locale)
     assert ready_row["altText"] in html  # alt text prefilled in the metadata form
 
 
@@ -236,6 +251,7 @@ def test_image_test_route_success(monkeypatch):
     buf = io.BytesIO()
     Image.new("RGB", (8, 8), (200, 30, 30)).save(buf, format="PNG")
     assert f"data:image/png;base64,{b64.b64encode(buf.getvalue()).decode('ascii')[:20]}" in html
+    assert 'data-toast-type="success"' in html
     assert provider.calls, "test route should call the provider"
     assert "fakeimg" in html and "fake-image-1" in html
 
@@ -271,6 +287,7 @@ def test_image_test_route_error_shows_category(monkeypatch):
     request = make_req(pb, user, project["id"])
     response = asyncio.run(call_route(run_image_test_route, request, project_id=project["id"]))
     html = response.body.decode()
+    assert 'data-toast-type="error"' in html
     assert "invalid_request" in html
     assert "HTML web page" in html
 
@@ -287,4 +304,5 @@ def test_image_test_route_requires_model(monkeypatch):
     ProjectSettingsRepo(pb).upsert(project["id"], {"imageCoverModel": ""})
     request = make_req(pb, user, project["id"])
     response = asyncio.run(call_route(run_image_test_route, request, project_id=project["id"]))
-    assert "مدل تصویر کاور" in response.body.decode()
+    assert 'data-toast-type="error"' in response.body.decode()
+    assert "Cover image model is not set" in response.body.decode()

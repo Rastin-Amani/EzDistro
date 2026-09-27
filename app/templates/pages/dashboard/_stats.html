@@ -4,23 +4,23 @@
      hx-trigger="every 8s"
      hx-swap="outerHTML">
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {{ f.stat(_('موضوع‌های برنامه‌ریزی‌شده'), stats.topics_planned, 'bg-primary') }}
-        {{ f.stat(_('مقالات در حال نگارش'), stats.articles_writing, 'bg-warning', '', ) }}
-        {{ f.stat(_('در انتظار بازبینی'), stats.articles_review, 'bg-info') }}
-        {{ f.stat(_('منتشر شده'), stats.articles_published, 'bg-success') }}
-        {{ f.stat(_('وظایف در انتظار'), stats.jobs_pending, 'bg-base-content/40') }}
-        {{ f.stat(_('در حال اجرا / تلاش مجدد'), stats.jobs_running + stats.jobs_retrying, 'bg-warning') }}
-        {{ f.stat(_('ناموفق'), stats.jobs_failed, 'bg-error') }}
-        {{ f.stat(_('نرخ شکست / میانگین (ثانیه)'), (stats.failure_rate * 100)|round(1) ~ _('٪ / ') ~ stats.average_duration_s, 'bg-error') }}
-        {{ f.stat(_('سلامت نمایه‌سازی'), stats.indexing_ok ~ _(' سالم'), 'bg-success', stats.indexing_failed ~ _(' مشکل‌دار')) }}
-        {{ f.stat(_('سلامت ارائه‌دهنده‌ها'), stats.provider_healthy ~ _(' سالم'), 'bg-success', stats.provider_unhealthy ~ _(' ناسالم · ') ~ stats.provider_latency_ms ~ 'ms') }}
+        {{ f.stat(_('Planned topics'), stats.topics_planned, 'bg-primary') }}
+        {{ f.stat(_('Articles being written'), stats.articles_writing, 'bg-warning', '', ) }}
+        {{ f.stat(_('Awaiting review'), stats.articles_review, 'bg-info') }}
+        {{ f.stat(_('Published'), stats.articles_published, 'bg-success') }}
+        {{ f.stat(_('Pending jobs'), stats.jobs_pending, 'bg-base-content/40') }}
+        {{ f.stat(_('Running / retrying'), stats.jobs_running + stats.jobs_retrying, 'bg-warning') }}
+        {{ f.stat(_('Failed'), stats.jobs_failed, 'bg-error') }}
+        {{ f.stat(_('Failure rate / average (seconds)'), (stats.failure_rate * 100)|round(1) ~ _('% / ') ~ stats.average_duration_s, 'bg-error') }}
+        {{ f.stat(_('Indexing health'), stats.indexing_ok ~ _(' healthy'), 'bg-success', stats.indexing_failed ~ _(' degraded')) }}
+        {{ f.stat(_('Provider health'), stats.provider_healthy ~ _(' healthy'), 'bg-success', stats.provider_unhealthy ~ _(' unhealthy · ') ~ stats.provider_latency_ms ~ 'ms') }}
         <a href="/workers" class="ezdistro-metric hover:bg-base-200/60 transition-colors rounded-box">
             <div class="flex items-center gap-2">
                 <span class="ezdistro-metric-swatch bg-info"></span>
-                <span class="ezdistro-metric-label">{{ _('کارگر فعال') }}</span>
+                <span class="ezdistro-metric-label">{{ _('Worker online') }}</span>
             </div>
             <span class="ezdistro-metric-value">{{ stats.workers_active }}</span>
-            <span class="text-xs text-base-content/50">{{ _('مشاهده وضعیت کارگرها ←') }}</span>
+            <span class="text-xs text-base-content/50">{{ _('View worker status →') }}</span>
         </a>
     </div>
 </div>

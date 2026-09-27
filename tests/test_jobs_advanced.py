@@ -25,7 +25,7 @@ from tests.fakes import FakePocketBase, default_unique_fields
 def make_project(pb: FakePocketBase, slug: str = "test-proj") -> dict[str, Any]:
     project = pb.collection("projects").create(
         {
-            "name": "پروژه",
+            "name": "\u067e\u0631\u0648\u0698\u0647",
             "slug": slug,
             "language": "fa",
             "status": "active",
@@ -34,10 +34,13 @@ def make_project(pb: FakePocketBase, slug: str = "test-proj") -> dict[str, Any]:
     )
     pb.collection("project_settings").create({"project": project["id"], **DEFAULT_SETTINGS})
     for ptype, content in (
-        ("brand_voice", "تو نویسنده سئو هستی."),
-        ("outline_user", "JSON برگردان."),
-        ("section_user", "HTML برگردان."),
-        ("seo_rules", "قوانین."),
+        (
+            "brand_voice",
+            "\u062a\u0648 \u0646\u0648\u06cc\u0633\u0646\u062f\u0647 \u0633\u0626\u0648 \u0647\u0633\u062a\u06cc.",
+        ),
+        ("outline_user", "JSON \u0628\u0631\u06af\u0631\u062f\u0627\u0646."),
+        ("section_user", "HTML \u0628\u0631\u06af\u0631\u062f\u0627\u0646."),
+        ("seo_rules", "\u0642\u0648\u0627\u0646\u06cc\u0646."),
     ):
         PromptRepo(pb).save_version(
             project_id=project["id"], ptype=ptype, name="default", content=content
@@ -402,7 +405,13 @@ def test_progress_stage_and_items_persisted():
     job = seed_job(pb, project["id"])
 
     async def handler(ctx):
-        ctx.progress(35, stage="writing_sections", message="بخش 7 از 20", current=7, total=20)
+        ctx.progress(
+            35,
+            stage="writing_sections",
+            message="\u0628\u062e\u0634 7 \u0627\u0632 20",
+            current=7,
+            total=20,
+        )
         return {}
 
     engine = make_engine(pb, handlers={"test": handler})
@@ -417,7 +426,13 @@ def test_progress_stage_and_items_persisted():
     job2 = seed_job(pb, project["id"], maxAttempts=1)
 
     async def handler2(ctx):
-        ctx.progress(35, stage="writing_sections", message="بخش 7 از 20", current=7, total=20)
+        ctx.progress(
+            35,
+            stage="writing_sections",
+            message="\u0628\u062e\u0634 7 \u0627\u0632 20",
+            current=7,
+            total=20,
+        )
         raise PermanentError("stop")
 
     engine2 = make_engine(pb, handlers={"test": handler2})
@@ -487,10 +502,12 @@ def test_generate_outline_handler():
 
     pb = FakePocketBase(default_unique_fields())
     project = make_project(pb)
-    topic = TopicRepo(pb).create(project=project["id"], title="سئو", keyword="سئو")
+    topic = TopicRepo(pb).create(
+        project=project["id"], title="\u0633\u0626\u0648", keyword="\u0633\u0626\u0648"
+    )
     registry = FakeRegistry()
     registry.llm.responses = [
-        '{"title": "ت", "slug": "t", "sections": [{"heading": "الف", "content_brief": "خلاصه الف"}, {"heading": "ب", "content_brief": "خلاصه ب"}]}'
+        '{"title": "\u062a", "slug": "t", "sections": [{"heading": "\u0627\u0644\u0641", "content_brief": "\u062e\u0644\u0627\u0635\u0647 \u0627\u0644\u0641"}, {"heading": "\u0628", "content_brief": "\u062e\u0644\u0627\u0635\u0647 \u0628"}]}'
     ]
     config = ProjectConfig.load(pb, project["id"])
     job = seed_job(pb, project["id"], type="generate_outline", payload={"topicId": topic["id"]})
@@ -520,19 +537,23 @@ def test_generate_section_handler():
 
     pb = FakePocketBase(default_unique_fields())
     project = make_project(pb)
-    topic = TopicRepo(pb).create(project=project["id"], title="ت", keyword="")
+    topic = TopicRepo(pb).create(project=project["id"], title="\u062a", keyword="")
     article = pb.collection("articles").create(
         {
             "project": project["id"],
             "topicId": topic["id"],
-            "title": "ت",
+            "title": "\u062a",
             "status": "outline_ready",
             "outlineVersion": 1,
             "outline": {
-                "title": "ت",
+                "title": "\u062a",
                 "slug": "t",
                 "sections": [
-                    {"heading": "بخش اول", "content_brief": "- نکته", "internal_links": []}
+                    {
+                        "heading": "\u0628\u062e\u0634 \u0627\u0648\u0644",
+                        "content_brief": "- \u0646\u06a9\u062a\u0647",
+                        "internal_links": [],
+                    }
                 ],
             },
         }
@@ -541,15 +562,21 @@ def test_generate_section_handler():
         {
             "article": article["id"],
             "position": 0,
-            "heading": "بخش اول",
-            "contentBrief": "- نکته",
+            "heading": "\u0628\u062e\u0634 \u0627\u0648\u0644",
+            "contentBrief": "- \u0646\u06a9\u062a\u0647",
             "status": "pending",
             "generationAttempts": 0,
             "internalLinks": [],
         }
     )
     registry = FakeRegistry()
-    registry.llm.responses = ["<p>" + ("کلمه محتوای بخش " * 15).strip() + "</p>"]
+    registry.llm.responses = [
+        "<p>"
+        + (
+            "\u06a9\u0644\u0645\u0647 \u0645\u062d\u062a\u0648\u0627\u06cc \u0628\u062e\u0634 " * 15
+        ).strip()
+        + "</p>"
+    ]
     config = ProjectConfig.load(pb, project["id"])
     job = seed_job(pb, project["id"], type="generate_section", payload={"sectionId": section["id"]})
     ctx = JobContext(
@@ -583,39 +610,51 @@ def test_assemble_article_handler():
         pb.collection("project_settings").get_first_list_item(f'project="{project["id"]}"')["id"],
         {"minArticleWords": 10},
     )
-    topic = TopicRepo(pb).create(project=project["id"], title="ت", keyword="سئو")
+    topic = TopicRepo(pb).create(
+        project=project["id"], title="\u062a", keyword="\u0633\u0626\u0648"
+    )
     article = pb.collection("articles").create(
         {
             "project": project["id"],
             "topicId": topic["id"],
-            "title": "عنوان",
+            "title": "\u0639\u0646\u0648\u0627\u0646",
             "slug": "onvan",
             "status": "outline_ready",
             "outlineVersion": 1,
             "outline": {
-                "title": "عنوان",
+                "title": "\u0639\u0646\u0648\u0627\u0646",
                 "slug": "onvan",
                 "sections": [
                     {
-                        "heading": "الف",
-                        "content_brief": "خلاصه",
+                        "heading": "\u0627\u0644\u0641",
+                        "content_brief": "\u062e\u0644\u0627\u0635\u0647",
                         "internal_links": [
-                            {"title": "لینک", "url": "https://site.test/1", "anchor_text": "لینک"}
+                            {
+                                "title": "\u0644\u06cc\u0646\u06a9",
+                                "url": "https://site.test/1",
+                                "anchor_text": "\u0644\u06cc\u0646\u06a9",
+                            }
                         ],
                     },
-                    {"heading": "ب", "content_brief": "خلاصه", "internal_links": []},
+                    {
+                        "heading": "\u0628",
+                        "content_brief": "\u062e\u0644\u0627\u0635\u0647",
+                        "internal_links": [],
+                    },
                 ],
             },
         }
     )
-    for i, heading in enumerate(["الف", "ب"]):
+    for i, heading in enumerate(["\u0627\u0644\u0641", "\u0628"]):
         pb.collection("article_sections").create(
             {
                 "article": article["id"],
                 "position": i,
                 "heading": heading,
                 "status": "done",
-                "content": "<p>" + ("کلمه محتوای " * 10).strip() + "</p>",
+                "content": "<p>"
+                + ("\u06a9\u0644\u0645\u0647 \u0645\u062d\u062a\u0648\u0627\u06cc " * 10).strip()
+                + "</p>",
                 "internalLinks": [],
             }
         )
@@ -637,7 +676,7 @@ def test_assemble_article_handler():
     assert updated["status"] == "review"
     assert updated["validation"]["ok"] is True
     # keyword enforcement: the title/H1 must contain the keyword (score floor)
-    assert "<h1>سئو | عنوان</h1>" in updated["finalHtml"]
+    assert "<h1>\u0633\u0626\u0648 | \u0639\u0646\u0648\u0627\u0646</h1>" in updated["finalHtml"]
     assert "https://site.test/1" in updated["finalHtml"]  # intended link preserved
     assert updated["seoScore"] >= 90
     assert result["seoScore"] == updated["seoScore"]
@@ -654,7 +693,15 @@ def test_index_document_handler():
     project = make_project(pb)
     registry = FakeRegistry()
     registry.publisher = FakePublisher(
-        posts=[WPPost(7, "تک نوشته", "<p>متن کوتاه برای نمایه</p>", "https://s.test/7", "publish")]
+        posts=[
+            WPPost(
+                7,
+                "\u062a\u06a9 \u0646\u0648\u0634\u062a\u0647",
+                "<p>\u0645\u062a\u0646 \u06a9\u0648\u062a\u0627\u0647 \u0628\u0631\u0627\u06cc \u0646\u0645\u0627\u06cc\u0647</p>",
+                "https://s.test/7",
+                "publish",
+            )
+        ]
     )
     config = ProjectConfig.load(pb, project["id"])
     job = seed_job(pb, project["id"], type="index_document", payload={"sourceId": "7"})

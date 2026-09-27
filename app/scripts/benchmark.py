@@ -39,28 +39,48 @@ from tests.fake_providers import (  # noqa: E402
 from tests.fakes import FakePocketBase, default_unique_fields  # noqa: E402
 
 OUTLINE_JSON = (
-    '{"title": "مقاله شماره {n}", "slug": "article-{n}", "sections": ['
-    + ",".join('{"heading": "بخش {s}", "content_brief": "خلاصه بخش {s}"}' for s in range(1, 11))
+    '{"title": "\u0645\u0642\u0627\u0644\u0647 \u0634\u0645\u0627\u0631\u0647 {n}", "slug": "article-{n}", "sections": ['
+    + ",".join(
+        '{"heading": "\u0628\u062e\u0634 {s}", "content_brief": "\u062e\u0644\u0627\u0635\u0647 \u0628\u062e\u0634 {s}"}'
+        for s in range(1, 11)
+    )
     + "]}"
 )
-SECTION_HTML = "<p>" + ("کلمه محتوای این بخش برای آزمون بار " * 40).strip() + "</p>"
+SECTION_HTML = (
+    "<p>"
+    + (
+        "\u06a9\u0644\u0645\u0647 \u0645\u062d\u062a\u0648\u0627\u06cc \u0627\u06cc\u0646 \u0628\u062e\u0634 \u0628\u0631\u0627\u06cc \u0622\u0632\u0645\u0648\u0646 \u0628\u0627\u0631 "
+        * 40
+    ).strip()
+    + "</p>"
+)
 
 
 def seed_environment(pb: FakePocketBase, project_id: str, n_topics: int) -> list[str]:
     """Seed prompts, retrieval corpus (1000 docs), and topics."""
     for ptype, content in (
-        ("brand_voice", "تو نویسنده سئو هستی."),
-        ("outline_user", "JSON برگردان برای موضوع «{{ topic.title }}»."),
-        ("section_user", "HTML برگردان."),
-        ("seo_rules", "قوانین."),
-        ("internal_linking", "لینک داخلی."),
+        (
+            "brand_voice",
+            "\u062a\u0648 \u0646\u0648\u06cc\u0633\u0646\u062f\u0647 \u0633\u0626\u0648 \u0647\u0633\u062a\u06cc.",
+        ),
+        (
+            "outline_user",
+            "JSON \u0628\u0631\u06af\u0631\u062f\u0627\u0646 \u0628\u0631\u0627\u06cc \u0645\u0648\u0636\u0648\u0639 «{{ topic.title }}».",
+        ),
+        ("section_user", "HTML \u0628\u0631\u06af\u0631\u062f\u0627\u0646."),
+        ("seo_rules", "\u0642\u0648\u0627\u0646\u06cc\u0646."),
+        ("internal_linking", "\u0644\u06cc\u0646\u06a9 \u062f\u0627\u062e\u0644\u06cc."),
     ):
         PromptRepo(pb).save_version(
             project_id=project_id, ptype=ptype, name="default", content=content
         )
     topics: list[str] = []
     for i in range(n_topics):
-        topic = TopicRepo(pb).create(project=project_id, title=f"موضوع {i}", keyword=f"کلید {i}")
+        topic = TopicRepo(pb).create(
+            project=project_id,
+            title=f"\u0645\u0648\u0636\u0648\u0639 {i}",
+            keyword=f"\u06a9\u0644\u06cc\u062f {i}",
+        )
         topics.append(topic["id"])
     return topics
 
@@ -76,10 +96,10 @@ class SyntheticLLM(FakeLLM):
         self.calls.append({"json_mode": json_mode, "user": user})
         if "JSON" in user or "json" in user:
             sections = ",".join(
-                f'{{"heading": "بخش {s}", "content_brief": "خلاصه بخش {s}"}}'
+                f'{{"heading": "\u0628\u062e\u0634 {s}", "content_brief": "\u062e\u0644\u0627\u0635\u0647 \u0628\u062e\u0634 {s}"}}'
                 for s in range(1, self.n_sections + 1)
             )
-            return '{"title": "مقاله", "slug": "article", "sections": [' + sections + "]}"
+            return '{"title": "Article", "slug": "article", "sections": [' + sections + "]}"
         return SECTION_HTML
 
 
@@ -107,7 +127,7 @@ async def run_load_test(
     pb = FakePocketBase(default_unique_fields())
     project = pb.collection("projects").create(
         {
-            "name": "پ",
+            "name": "\u067e",
             "slug": "bench",
             "language": "fa",
             "status": "active",
@@ -125,8 +145,8 @@ async def run_load_test(
             payload={
                 "project_id": project["id"],
                 "source_url": f"https://site.test/{i}",
-                "title": f"مستند {i}",
-                "chunk_text": "متن مرتبط برای بازیابی",
+                "title": f"\u0645\u0633\u062a\u0646\u062f {i}",
+                "chunk_text": "\u0645\u062a\u0646 \u0645\u0631\u062a\u0628\u0637 \u0628\u0631\u0627\u06cc \u0628\u0627\u0632\u06cc\u0627\u0628\u06cc",
             },
         )
         for i in range(1000)

@@ -107,11 +107,14 @@ def test_workers_page_renders_statuses_and_restart_badge(monkeypatch):
     assert resp.status_code == 200
     body = resp.body.decode()
     assert "w-active" in body and "w-stale" in body and "w-old" in body
-    assert "فعال" in body and "آفلاین" in body
+    assert "\u0641\u0639\u0627\u0644" in body and "\u0622\u0641\u0644\u0627\u06cc\u0646" in body
     # w-stale runs an old version → restart-needed badge
-    assert "نیاز به راه‌اندازی مجدد" in body
+    assert (
+        "\u0646\u06cc\u0627\u0632 \u0628\u0647 \u0631\u0627\u0647\u200c\u0627\u0646\u062f\u0627\u0632\u06cc \u0645\u062c\u062f\u062f"
+        in body
+    )
     assert "make worker" in body
-    assert "کپی" in body
+    assert "\u06a9\u067e\u06cc" in body
 
 
 def test_workers_page_empty_state():
@@ -124,5 +127,8 @@ def test_workers_page_empty_state():
     resp = call_route(W.workers_page, req)
     assert resp.status_code == 200
     body = resp.body.decode()
-    assert "هیچ کارگری در حال اجرا نیست" in body
+    assert (
+        "\u0647\u06cc\u0686 \u06a9\u0627\u0631\u06af\u0631\u06cc \u062f\u0631 \u062d\u0627\u0644 \u0627\u062c\u0631\u0627 \u0646\u06cc\u0633\u062a"
+        in body
+    )
     assert "make worker" in body

@@ -10,7 +10,7 @@
 
      hx-swap="outerHTML">
 
-{{ f.page_header(_('اتصالات'), _('اتصالات ارائه‌دهنده‌ها را مدیریت کنید.'), eyebrow=_('پروژه')) }}
+{{ f.page_header(_('Connections'), _('Manage provider connections.'), eyebrow=_('Project')) }}
 
     <div class="flex flex-col gap-5">
 
@@ -26,17 +26,17 @@
 
                     <h2 class="ezdistro-panel-title">{{ label }}</h2>
 
-                    <span class="tooltip tooltip-right" data-tip="{{ _(_( 'اتصالات فعال در این دسته — برای هر ارائه‌دهنده یک اتصال بسازید و در تنظیمات پروژه از آن استفاده کنید.' )) }}">
+                    <span class="tooltip tooltip-right" data-tip="{{ _(_( 'Active connections in this category — create one per provider and use it in project settings.' )) }}">
 
                         <span class="cursor-help text-base-content/40"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/></svg></span>
 
                     </span>
 
-                    <span class="badge badge-soft badge-neutral badge-sm">{{ _('%(n)s اتصال') % {'n': integs|length} }}</span>
+                    <span class="badge badge-soft badge-neutral badge-sm">{{ _('%(n)s connections') % {'n': integs|length} }}</span>
 
                 </div>
 
-                <button type="button" class="btn btn-primary btn-sm" @click="openEditor(null, '{{ category }}')">{{ _('+ افزودن') }}</button>
+                <button type="button" class="btn btn-primary btn-sm" @click="openEditor(null, '{{ category }}')">{{ _('+ Add') }}</button>
 
             </div>
 
@@ -52,17 +52,17 @@
 
                             <tr class="text-xs opacity-60">
 
-                                <th>{{ _('نام') }}</th>
+                                <th>{{ _('Name') }}</th>
 
-                                <th>{{ _('ارائه‌دهنده') }}</th>
+                                <th>{{ _('Provider') }}</th>
 
-                                <th>{{ _('کلید') }}</th>
+                                <th>{{ _('Key') }}</th>
 
-                                <th>{{ _('سلامت') }}</th>
+                                <th>{{ _('Health') }}</th>
 
-                                <th>{{ _('آخرین تست') }}</th>
+                                <th>{{ _('Last test') }}</th>
 
-                                <th>{{ _('فعال') }}</th>
+                                <th>{{ _('Active') }}</th>
 
                                 <th class="w-44"></th>
 
@@ -90,7 +90,7 @@
 
                                 <td>
 
-                                    <label class="tooltip tooltip-top cursor-pointer" data-tip="{{ _('فعال — برای غیرفعال‌سازی کلیک کنید') if i.enabled else _('غیرفعال — برای فعال‌سازی کلیک کنید') }}">
+                                    <label class="tooltip tooltip-top cursor-pointer" data-tip="{{ _('Active — click to deactivate') if i.enabled else _('Inactive — click to activate') }}">
 
                                         <input type="checkbox" class="toggle toggle-xs toggle-primary" {% if i.enabled %}checked{% endif %}
 
@@ -98,7 +98,7 @@
 
                                                hx-trigger="change" hx-swap="none"
 
-                                               aria-label="{{ _('تغییر وضعیت اتصال %(v)s') % {'v': i.displayName} }}" />
+                                               aria-label="{{ _('Toggle connection %(v)s') % {'v': i.displayName} }}" />
 
                                     </label>
 
@@ -114,7 +114,7 @@
 
                                                 data-payload='{{ {"id": i.id, "category": category, "displayName": i.displayName, "provider": i.provider, "model": cfg.model or "", "baseUrl": cfg.base_url or "", "username": cfg.username or "", "masked": cfg.masked or ""} | tojson }}'
 
-                                                @click="openEditorFrom($event.currentTarget)">{{ _('ویرایش') }}</button>
+                                                @click="openEditorFrom($event.currentTarget)">{{ _('Edit') }}</button>
 
                                         <button class="btn btn-ghost btn-xs"
 
@@ -124,7 +124,7 @@
 
                                             <span class="loading loading-spinner loading-xs htmx-indicator"></span>
 
-                                            {{ _('تست') }}
+                                            {{ _('Test') }}
 
                                         </button>
 
@@ -134,7 +134,7 @@
 
                                                 hx-swap="none"
 
-                                                hx-confirm="اتصال «{{ i.displayName }}» حذف شود؟ این عمل قابل بازگشت نیست.">{{ _('حذف') }}</button>
+                                                hx-confirm="{{ _('Delete this integration? This cannot be undone.') }}">{{ _('Delete') }}</button>
 
                                     </div>
 
@@ -160,9 +160,9 @@
 
                 <div class="ezdistro-empty">
 
-                    <p class="font-bold text-base-content/75">{{ _('اتصالی در این دسته ثبت نشده است.') }}</p>
+                    <p class="font-bold text-base-content/75">{{ _('No connections registered in this category.') }}</p>
 
-                    <p class="text-sm text-base-content/50">{{ _('با «+ افزودن» اولین اتصال را بسازید.') }}</p>
+                    <p class="text-sm text-base-content/50">{{ _('Create the first connection with “+ Add”.') }}</p>
 
                 </div>
 
@@ -186,9 +186,9 @@
 
             <div class="flex items-center justify-between mb-4">
 
-                <h3 class="font-bold text-lg" x-text="isEdit ? {{ _('ویرایش اتصال')|tojson }} : {{ _('اتصال جدید')|tojson }}"></h3>
+                <h3 class="font-bold text-lg" x-text="isEdit ? {{ _('Edit connection')|tojson }} : {{ _('New connection')|tojson }}"></h3>
 
-                <button type="button" class="btn btn-ghost btn-circle btn-sm" @click="closeEditor()" aria-label="{{ _('بستن') }}">
+                <button type="button" class="btn btn-ghost btn-circle btn-sm" @click="closeEditor()" aria-label="{{ _('Close') }}">
 
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
 
@@ -216,9 +216,9 @@
 
                     <div class="label px-0 pb-1">
 
-                        <span class="label-text font-medium text-sm">{{ _('نام نمایشی') }} <span class="text-error">*</span></span>
+                        <span class="label-text font-medium text-sm">{{ _('Display name') }} <span class="text-error">*</span></span>
 
-                        <span class="tooltip tooltip-left sm:tooltip-top" data-tip="{{ _(_( 'نامی که در جدول اتصالات می‌بینید، مثلاً «OpenAI اصلی»' )) }}">
+                        <span class="tooltip tooltip-left sm:tooltip-top" data-tip="{{ _(_( 'The name you see in the connections table, e.g. “Main OpenAI”' )) }}">
 
                             <span class="cursor-help text-base-content/40"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/></svg></span>
 
@@ -238,9 +238,9 @@
 
                         <div class="label px-0 pb-1">
 
-                            <span class="label-text font-medium text-sm">{{ _('ارائه‌دهنده') }}</span>
+                            <span class="label-text font-medium text-sm">{{ _('Provider') }}</span>
 
-                            <span class="tooltip tooltip-left sm:tooltip-top" data-tip="{{ _(_( 'شناسه ارائه‌دهنده (مثلاً openai_compat) — از فهرست انتخاب کنید یا دستی وارد کنید' )) }}">
+                            <span class="tooltip tooltip-left sm:tooltip-top" data-tip="{{ _(_( 'Provider ID (e.g. openai_compat) — pick from the list or enter manually' )) }}">
 
                                 <span class="cursor-help text-base-content/40"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/></svg></span>
 
@@ -258,9 +258,9 @@
 
                         <div class="label px-0 pb-1">
 
-                            <span class="label-text font-medium text-sm">{{ _('مدل (اختیاری)') }}</span>
+                            <span class="label-text font-medium text-sm">{{ _('Model (optional)') }}</span>
 
-                            <span class="tooltip tooltip-left sm:tooltip-top" data-tip="{{ _(_( 'مدل پیش‌فرض این اتصال (مثلاً gpt-4o-mini) — در تنظیمات پروژه قابل تغییر است' )) }}">
+                            <span class="tooltip tooltip-left sm:tooltip-top" data-tip="{{ _(_( 'Default model for this connection (e.g. gpt-4o-mini) — can be changed in project settings' )) }}">
 
                                 <span class="cursor-help text-base-content/40"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/></svg></span>
 
@@ -280,9 +280,9 @@
 
                     <div class="label px-0 pb-1">
 
-                        <span class="label-text font-medium text-sm">{{ _('آدرس پایه (Base URL)') }}</span>
+                        <span class="label-text font-medium text-sm">{{ _('Base URL') }}</span>
 
-                        <span class="tooltip tooltip-left sm:tooltip-top" data-tip="{{ _(_( 'آدرس API — برای OpenAI معمولاً …/v1 و برای Qdrant معمولاً http://127.0.0.1:6333. اگر بدون پروتکل وارد کنید https:// اضافه می‌شود.' )) }}">
+                        <span class="tooltip tooltip-left sm:tooltip-top" data-tip="{{ _(_( 'API URL — for OpenAI usually …/v1, for Qdrant usually http://127.0.0.1:6333. Without a protocol, https:// is added.' )) }}">
 
                             <span class="cursor-help text-base-content/40"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/></svg></span>
 
@@ -302,9 +302,9 @@
 
                     <div class="label px-0 pb-1">
 
-                        <span class="label-text font-medium text-sm">{{ _('نام کاربری وردپرس') }}</span>
+                        <span class="label-text font-medium text-sm">{{ _('WordPress username') }}</span>
 
-                        <span class="tooltip tooltip-left sm:tooltip-top" data-tip="{{ _(_( 'نام کاربری وردپرس همراه با رمز برنامه (Application Password)' )) }}">
+                        <span class="tooltip tooltip-left sm:tooltip-top" data-tip="{{ _(_( 'WordPress username together with an Application Password' )) }}">
 
                             <span class="cursor-help text-base-content/40"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/></svg></span>
 
@@ -322,9 +322,9 @@
 
                     <div class="label px-0 pb-1">
 
-                        <span class="label-text font-medium text-sm">{{ _('کلید API') }}</span>
+                        <span class="label-text font-medium text-sm">{{ _('API key') }}</span>
 
-                        <span class="tooltip tooltip-left sm:tooltip-top" data-tip="{{ _(_( 'هنگام ویرایش اگر خالی بماند، کلید قبلی حفظ می‌شود. کلید هرگز ذخیره یا نمایش داده نمی‌شود — فقط نسخه رمزنگاری‌شده نگهداری می‌گردد' )) }}">
+                        <span class="tooltip tooltip-left sm:tooltip-top" data-tip="{{ _(_( 'When editing, leave empty to keep the existing key. The key is never stored or displayed in plaintext — only an encrypted version is kept' )) }}">
 
                             <span class="cursor-help text-base-content/40"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/></svg></span>
 
@@ -336,7 +336,7 @@
 
                            autocomplete="new-password" x-model="form.secret"
 
-                           placeholder="{{ _('در صورت خالی بودن، مقدار قبلی حفظ می‌شود') }}" />
+                           placeholder="{{ _('If left empty, the previous value is kept') }}" />
 
                 </label>
 
@@ -348,11 +348,11 @@
 
                         <span class="loading loading-spinner loading-xs htmx-indicator"></span>
 
-                        {{ _('ذخیره') }}
+                        {{ _('Save') }}
 
                     </button>
 
-                    <button type="button" class="btn btn-ghost flex-1" @click="closeEditor()">{{ _('انصراف') }}</button>
+                    <button type="button" class="btn btn-ghost flex-1" @click="closeEditor()">{{ _('Cancel') }}</button>
 
                 </div>
 

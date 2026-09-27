@@ -34,7 +34,7 @@ def make_pb() -> FakePocketBase:
 def make_project(pb: FakePocketBase) -> dict[str, Any]:
     project = pb.collection("projects").create(
         {
-            "name": "پروژه سئو",
+            "name": "\u067e\u0631\u0648\u0698\u0647 \u0633\u0626\u0648",
             "slug": "seo-proj",
             "language": "fa",
             "status": "active",
@@ -50,10 +50,13 @@ def make_project(pb: FakePocketBase) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 def test_render_substitutes_known_variables():
     out = render_prompt(
-        "مقاله: {{ article.title }} — کلمه کلیدی: {{ topic.keyword }}",
-        {"article.title": "عنوان", "topic.keyword": "سئو"},
+        "\u0645\u0642\u0627\u0644\u0647: {{ article.title }} — \u06a9\u0644\u0645\u0647 \u06a9\u0644\u06cc\u062f\u06cc: {{ topic.keyword }}",
+        {"article.title": "\u0639\u0646\u0648\u0627\u0646", "topic.keyword": "\u0633\u0626\u0648"},
     )
-    assert out == "مقاله: عنوان — کلمه کلیدی: سئو"
+    assert (
+        out
+        == "\u0645\u0642\u0627\u0644\u0647: \u0639\u0646\u0648\u0627\u0646 — \u06a9\u0644\u0645\u0647 \u06a9\u0644\u06cc\u062f\u06cc: \u0633\u0626\u0648"
+    )
 
 
 def test_render_unknown_variable_fails():
@@ -78,11 +81,11 @@ def test_render_missing_known_variable_renders_empty():
 
 def test_render_is_pure_substitution_no_code_execution():
     # Jinja/Python constructs must stay as literal text
-    payload = {"topic.title": "ت"}
+    payload = {"topic.title": "\u062a"}
     out = render_prompt("{{ topic.title }} {% if true %}x{% endif %} {{ 1+1 }}", payload)
     assert "{% if true %}x{% endif %}" in out
     assert "{{ 1+1 }}" in out
-    assert out.startswith("ت")
+    assert out.startswith("\u062a")
 
 
 def test_used_variables_and_link_format():
@@ -90,9 +93,12 @@ def test_used_variables_and_link_format():
         "topic.title",
         "topic.keyword",
     ]
-    links = [{"title": "الف", "url": "https://x.com/1"}, {"title": "ب", "url": "https://x.com/2"}]
+    links = [
+        {"title": "\u0627\u0644\u0641", "url": "https://x.com/1"},
+        {"title": "\u0628", "url": "https://x.com/2"},
+    ]
     formatted = format_internal_links(links)
-    assert "- الف (https://x.com/1)" in formatted
+    assert "- \u0627\u0644\u0641 (https://x.com/1)" in formatted
     assert format_internal_links([]) == ""
 
 
@@ -104,8 +110,18 @@ def test_versioning_lifecycle():
     project = make_project(pb)
     service = PromptService(pb)
 
-    v1 = service.save(project["id"], "seo_rules", "قوانین نسخه ۱", author="user-a")
-    v2 = service.save(project["id"], "seo_rules", "قوانین نسخه ۲", author="user-b")
+    v1 = service.save(
+        project["id"],
+        "seo_rules",
+        "\u0642\u0648\u0627\u0646\u06cc\u0646 \u0646\u0633\u062e\u0647 \u06f1",
+        author="user-a",
+    )
+    v2 = service.save(
+        project["id"],
+        "seo_rules",
+        "\u0642\u0648\u0627\u0646\u06cc\u0646 \u0646\u0633\u062e\u0647 \u06f2",
+        author="user-b",
+    )
     assert v2["version"] == 2
     # re-fetch: v1 was deactivated when v2 became active
     rows = PromptRepo(pb).history(project["id"], "seo_rules")
@@ -125,7 +141,7 @@ def test_versioning_lifecycle():
     dup = service.duplicate(project["id"], "seo_rules", v2["id"], author="user-a")
     assert dup["version"] == 3
     assert dup["active"] is False
-    assert dup["content"] == "قوانین نسخه ۲"
+    assert dup["content"] == "\u0642\u0648\u0627\u0646\u06cc\u0646 \u0646\u0633\u062e\u0647 \u06f2"
     assert (dup.get("variables") or {}).get("duplicatedFrom") == v2["id"]
     # active unchanged after duplicate
     assert service.resolve_active(project["id"], "seo_rules")["version"] == 1
@@ -146,7 +162,7 @@ def test_save_records_used_variables():
     project = make_project(pb)
     service = PromptService(pb)
     saved = service.save(
-        project["id"], "outline_user", "{{ topic.title }} و {{ seo_rules }}", author="a"
+        project["id"], "outline_user", "{{ topic.title }} \u0648 {{ seo_rules }}", author="a"
     )
     assert saved["variables"]["used"] == ["topic.title", "seo_rules"]
 
@@ -158,8 +174,11 @@ def test_build_context_and_render():
     pb = make_pb()
     project = make_project(pb)
     for ptype, content in (
-        ("seo_rules", "کلمه کلیدی: {{ topic.keyword }}"),
-        ("internal_linking", "قوانین لینک"),
+        (
+            "seo_rules",
+            "\u06a9\u0644\u0645\u0647 \u06a9\u0644\u06cc\u062f\u06cc: {{ topic.keyword }}",
+        ),
+        ("internal_linking", "\u0642\u0648\u0627\u0646\u06cc\u0646 \u0644\u06cc\u0646\u06a9"),
     ):
         PromptRepo(pb).save_version(
             project_id=project["id"], ptype=ptype, name="default", content=content
@@ -169,16 +188,27 @@ def test_build_context_and_render():
 
     context = service.build_context(
         config,
-        topic={"title": "راهنمای سئو", "keyword": "سئو", "pillar": "پ", "cluster": "خ"},
-        retrieval_context="متن مرتبط...",
-        internal_links=[{"title": "لینک", "url": "https://x.com/1"}],
+        topic={
+            "title": "\u0631\u0627\u0647\u0646\u0645\u0627\u06cc \u0633\u0626\u0648",
+            "keyword": "\u0633\u0626\u0648",
+            "pillar": "\u067e",
+            "cluster": "\u062e",
+        },
+        retrieval_context="\u0645\u062a\u0646 \u0645\u0631\u062a\u0628\u0637...",
+        internal_links=[{"title": "\u0644\u06cc\u0646\u06a9", "url": "https://x.com/1"}],
     )
-    assert context["topic.title"] == "راهنمای سئو"
+    assert context["topic.title"] == "\u0631\u0627\u0647\u0646\u0645\u0627\u06cc \u0633\u0626\u0648"
     assert "https://x.com/1" in context["internal_links"]
-    assert "کلمه کلیدی: سئو" in context["seo_rules"]  # nested rules resolved
+    assert (
+        "\u06a9\u0644\u0645\u0647 \u06a9\u0644\u06cc\u062f\u06cc: \u0633\u0626\u0648"
+        in context["seo_rules"]
+    )  # nested rules resolved
 
     rendered = service.render("{{ project.name }} — {{ topic.title }} — {{ seo_rules }}", context)
-    assert rendered == "پروژه سئو — راهنمای سئو — کلمه کلیدی: سئو"
+    assert (
+        rendered
+        == "\u067e\u0631\u0648\u0698\u0647 \u0633\u0626\u0648 — \u0631\u0627\u0647\u0646\u0645\u0627\u06cc \u0633\u0626\u0648 — \u06a9\u0644\u0645\u0647 \u06a9\u0644\u06cc\u062f\u06cc: \u0633\u0626\u0648"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -187,11 +217,13 @@ def test_build_context_and_render():
 def test_tester_renders_runs_and_validates():
     pb = make_pb()
     project = make_project(pb)
-    topic = TopicRepo(pb).create(project=project["id"], title="سئو", keyword="سئو")
+    topic = TopicRepo(pb).create(
+        project=project["id"], title="\u0633\u0626\u0648", keyword="\u0633\u0626\u0648"
+    )
     config = ProjectConfig.load(pb, project["id"])
     registry = FakeRegistry()
     registry.llm.responses = [
-        '{"title": "ت", "slug": "t", "sections": [{"heading": "الف", "content_brief": "ب"}, {"heading": "ج", "content_brief": "د"}]}'
+        '{"title": "\u062a", "slug": "t", "sections": [{"heading": "\u0627\u0644\u0641", "content_brief": "\u0628"}, {"heading": "\u062c", "content_brief": "\u062f"}]}'
     ]
     service = PromptService(pb, registry)
 
@@ -199,12 +231,15 @@ def test_tester_renders_runs_and_validates():
         service.test(
             config,
             ptype="outline_user",
-            content="موضوع: {{ topic.title }} — JSON بده.",
+            content="\u0645\u0648\u0636\u0648\u0639: {{ topic.title }} — JSON \u0628\u062f\u0647.",
             topic=topic,
             model_role="outline",
         )
     )
-    assert result["rendered"] == "موضوع: سئو — JSON بده."
+    assert (
+        result["rendered"]
+        == "\u0645\u0648\u0636\u0648\u0639: \u0633\u0626\u0648 — JSON \u0628\u062f\u0647."
+    )
     assert result["model"] == "fake-model"
     assert result["latency_ms"] >= 0
     assert result["usage"]["completion_tokens"] == 5
@@ -220,11 +255,16 @@ def test_tester_section_validation():
     project = make_project(pb)
     config = ProjectConfig.load(pb, project["id"])
     registry = FakeRegistry()
-    registry.llm.responses = ["<p>کوتاه</p>"]
+    registry.llm.responses = ["<p>\u06a9\u0648\u062a\u0627\u0647</p>"]
     service = PromptService(pb, registry)
 
     result = asyncio.run(
-        service.test(config, ptype="section_user", content="بنویس.", model_role="section")
+        service.test(
+            config,
+            ptype="section_user",
+            content="\u0628\u0646\u0648\u06cc\u0633.",
+            model_role="section",
+        )
     )
     assert result["validation"]["ok"] is False
     assert any(i["code"] == "too_short" for i in result["validation"]["issues"])
@@ -237,24 +277,30 @@ def test_writer_renders_variable_driven_outline_prompt():
     pb = make_pb()
     project = make_project(pb)
     for ptype, content in (
-        ("brand_voice", "تو نویسنده سئو هستی."),
+        (
+            "brand_voice",
+            "\u062a\u0648 \u0646\u0648\u06cc\u0633\u0646\u062f\u0647 \u0633\u0626\u0648 \u0647\u0633\u062a\u06cc.",
+        ),
         (
             "outline_user",
-            "JSON برگردان برای موضوع «{{ topic.title }}» با کلیدواژه «{{ topic.keyword }}».",
+            "JSON \u0628\u0631\u06af\u0631\u062f\u0627\u0646 \u0628\u0631\u0627\u06cc \u0645\u0648\u0636\u0648\u0639 «{{ topic.title }}» \u0628\u0627 \u06a9\u0644\u06cc\u062f\u0648\u0627\u0698\u0647 «{{ topic.keyword }}».",
         ),
-        ("section_user", "HTML برگردان."),
-        ("seo_rules", "قوانین."),
+        ("section_user", "HTML \u0628\u0631\u06af\u0631\u062f\u0627\u0646."),
+        ("seo_rules", "\u0642\u0648\u0627\u0646\u06cc\u0646."),
     ):
         PromptRepo(pb).save_version(
             project_id=project["id"], ptype=ptype, name="default", content=content
         )
 
     topic = TopicRepo(pb).create(
-        project=project["id"], title="راهنمای سئو", keyword="سئو", pillar="پ"
+        project=project["id"],
+        title="\u0631\u0627\u0647\u0646\u0645\u0627\u06cc \u0633\u0626\u0648",
+        keyword="\u0633\u0626\u0648",
+        pillar="\u067e",
     )
     registry = FakeRegistry()
     registry.llm.responses = [
-        '{"title": "ت", "slug": "t", "sections": [{"heading": "الف", "content_brief": "ب"}, {"heading": "ج", "content_brief": "د"}]}'
+        '{"title": "\u062a", "slug": "t", "sections": [{"heading": "\u0627\u0644\u0641", "content_brief": "\u0628"}, {"heading": "\u062c", "content_brief": "\u062f"}]}'
     ]
     job = JobRepo(pb).create(
         project=project["id"],
@@ -277,7 +323,10 @@ def test_writer_renders_variable_driven_outline_prompt():
     asyncio.run(handle_write_article(ctx))
 
     outline_call = registry.llm.calls[0]["user"]
-    assert "موضوع «راهنمای سئو» با کلیدواژه «سئو»" in outline_call
+    assert (
+        "\u0645\u0648\u0636\u0648\u0639 «\u0631\u0627\u0647\u0646\u0645\u0627\u06cc \u0633\u0626\u0648» \u0628\u0627 \u06a9\u0644\u06cc\u062f\u0648\u0627\u0698\u0647 «\u0633\u0626\u0648»"
+        in outline_call
+    )
     assert "{{ topic.title }}" not in outline_call  # rendered, not literal
 
 
@@ -285,14 +334,14 @@ def test_writer_unknown_variable_fails_permanently():
     pb = make_pb()
     project = make_project(pb)
     for ptype, content in (
-        ("outline_user", "JSON برگردان. {{ unknown.var }}"),
-        ("section_user", "HTML برگردان."),
+        ("outline_user", "JSON \u0628\u0631\u06af\u0631\u062f\u0627\u0646. {{ unknown.var }}"),
+        ("section_user", "HTML \u0628\u0631\u06af\u0631\u062f\u0627\u0646."),
     ):
         PromptRepo(pb).save_version(
             project_id=project["id"], ptype=ptype, name="default", content=content
         )
 
-    topic = TopicRepo(pb).create(project=project["id"], title="ت", keyword="ک")
+    topic = TopicRepo(pb).create(project=project["id"], title="\u062a", keyword="\u06a9")
     registry = FakeRegistry()
     job = JobRepo(pb).create(
         project=project["id"],

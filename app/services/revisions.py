@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from app.i18n import _
 from app.repositories.articles import ArticleRepo, SectionRepo
 from app.repositories.revisions import ArticleRevisionRepo
 
@@ -79,11 +80,11 @@ class RevisionService:
         """Restore article + sections from a revision snapshot (history preserved)."""
         revision = self._revisions.get(revision_id)
         if not revision or revision.get("article") != article_id:
-            raise ValueError("نسخه‌ای یافت نشد")
+            raise ValueError(_("Version not found"))
         snapshot = revision.get("snapshot") or {}
         article = self._articles.get(article_id)
         if not article:
-            raise ValueError("مقاله‌ای یافت نشد")
+            raise ValueError(_("Article not found"))
 
         # checkpoint the current state before overwriting (never destroy)
         self.snapshot(

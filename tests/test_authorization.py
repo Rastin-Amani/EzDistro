@@ -24,7 +24,7 @@ from app.repositories.prompts import PromptRepo
 from app.repositories.schedules import ScheduleRepo
 from app.repositories.topics import TopicRepo
 from tests.fakes import FakePocketBase, default_unique_fields
-from tests.helpers import toast_message
+from tests.helpers import call_route, toast_message
 
 
 def make_pb() -> FakePocketBase:
@@ -52,20 +52,6 @@ def make_req(pb: FakePocketBase, user: dict, project_id: str) -> SimpleNamespace
     )
 
 
-def call_route(fn, request, *args, **kwargs):
-    """Invoke a FastAPI route directly, filling Form() defaults with real strings."""
-    import inspect
-
-    from fastapi.params import Form
-
-    for name, param in inspect.signature(fn).parameters.items():
-        if name in kwargs or name == "request":
-            continue
-        if isinstance(param.default, Form):
-            kwargs[name] = ""
-    return fn(request, *args, **kwargs)
-
-
 @pytest.fixture()
 def setup():
     """User u1 is owner of projectA; projectB exists with data; u2 is a viewer of A."""
@@ -75,18 +61,20 @@ def setup():
     MemberRepo(pb).add(project=proj_a["id"], user="u1", role="owner")
     MemberRepo(pb).add(project=proj_a["id"], user="u2", role="viewer")
 
-    topic_b = TopicRepo(pb).create(project=proj_b["id"], title="موضوع B", keyword="kb")
+    topic_b = TopicRepo(pb).create(
+        project=proj_b["id"], title="\u0645\u0648\u0636\u0648\u0639 B", keyword="kb"
+    )
     article_b = pb.collection("articles").create(
         {
             "project": proj_b["id"],
             "topicId": topic_b["id"],
-            "title": "مقاله B",
+            "title": "\u0645\u0642\u0627\u0644\u0647 B",
             "slug": "art-b",
             "status": "outline_ready",
         }
     )
     section_b = SectionRepo(pb).create(
-        article=article_b["id"], position=0, heading="ب", content_brief="خ"
+        article=article_b["id"], position=0, heading="\u0628", content_brief="\u062e"
     )
     int_b = IntegrationRepo(pb).create(
         project=proj_b["id"],
@@ -120,11 +108,11 @@ def test_save_meta_cannot_modify_foreign_article(setup):
         req,
         setup["proj_a"]["id"],
         setup["article_b"]["id"],
-        title="هک",
+        title="\u0647\u06a9",
         meta_description="",
     )
     article = ArticleRepo(setup["pb"]).get(setup["article_b"]["id"])
-    assert article["title"] == "مقاله B"  # untouched
+    assert article["title"] == "\u0645\u0642\u0627\u0644\u0647 B"  # untouched
 
 
 def test_save_section_cannot_modify_foreign_section(setup):
@@ -135,12 +123,12 @@ def test_save_section_cannot_modify_foreign_section(setup):
         setup["proj_a"]["id"],
         setup["article_b"]["id"],
         setup["section_b"]["id"],
-        heading="هک",
+        heading="\u0647\u06a9",
         content_brief="",
-        content="<p>هک</p>",
+        content="<p>\u0647\u06a9</p>",
     )
     section = SectionRepo(setup["pb"]).get(setup["section_b"]["id"])
-    assert section["heading"] == "ب"  # untouched
+    assert section["heading"] == "\u0628"  # untouched
 
 
 def test_delete_topic_cannot_delete_foreign_topic(setup):
@@ -283,7 +271,9 @@ def test_viewer_cannot_delete_project(setup):
 
 def test_viewer_cannot_publish(setup):
     # give project A an approved article
-    topic_a = TopicRepo(setup["pb"]).create(project=setup["proj_a"]["id"], title="ت", keyword="k")
+    topic_a = TopicRepo(setup["pb"]).create(
+        project=setup["proj_a"]["id"], title="\u062a", keyword="k"
+    )
     article_a = (
         setup["pb"]
         .collection("articles")
@@ -291,7 +281,7 @@ def test_viewer_cannot_publish(setup):
             {
                 "project": setup["proj_a"]["id"],
                 "topicId": topic_a["id"],
-                "title": "الف",
+                "title": "\u0627\u0644\u0641",
                 "slug": "a",
                 "status": "approved",
                 "finalHtml": "<p>x</p>",
@@ -337,7 +327,10 @@ def test_project_detail_missing_project_renders_not_found(setup):
     req = make_req(setup["pb"], make_user(), "does-not-exist")
     resp = call_route(P.project_detail, req, "does-not-exist")
     assert resp.status_code == 200
-    assert "پروژه یافت نشد" in resp.body.decode()
+    assert (
+        "\u067e\u0631\u0648\u0698\u0647 \u06cc\u0627\u0641\u062a \u0646\u0634\u062f"
+        in resp.body.decode()
+    )
 
 
 def test_project_detail_renders_active_tab_with_context(setup):
@@ -347,7 +340,9 @@ def test_project_detail_renders_active_tab_with_context(setup):
     assert resp.status_code == 200
     body = resp.body.decode()
     assert ">A</h1>" in body  # project name heading
-    assert "جاسازی متن (Embedding)" in body  # settings tab partial rendered inline
+    assert (
+        "\u062c\u0627\u0633\u0627\u0632\u06cc \u0645\u062a\u0646 (Embedding)" in body
+    )  # settings tab partial rendered inline
 
 
 def test_settings_tab_schedule_forms_are_not_nested(setup):
@@ -385,7 +380,7 @@ def test_save_settings_persists_auto_publish(setup):
         auto_publish_min_score="95",
         auto_publish_max_attempts="2",
     )
-    assert "ذخیره شد" in toast_message(resp)
+    assert "\u0630\u062e\u06cc\u0631\u0647 \u0634\u062f" in toast_message(resp)
     stored = pb.collection("project_settings").get_first_list_item(f'project="{proj_a["id"]}"')
     assert stored["autoPublish"] == {"enabled": True, "min_score": 95, "max_attempts": 2}
     # and the settings read view reflects it
@@ -411,7 +406,7 @@ def test_save_settings_persists_schedules(setup):
         schedule_write_enabled="0",
         schedule_write_interval="120",
     )
-    assert "ذخیره شد" in toast_message(resp)
+    assert "\u0630\u062e\u06cc\u0631\u0647 \u0634\u062f" in toast_message(resp)
     index = ScheduleRepo(pb).first(filter=f'project="{proj_a["id"]}" && kind="index"')
     write = ScheduleRepo(pb).first(filter=f'project="{proj_a["id"]}" && kind="write"')
     assert index is not None and index["enabled"] is True and index["intervalMinutes"] == 60
@@ -435,7 +430,10 @@ def test_project_tab_prompts_empty_history_renders(setup):
     req = make_req(setup["pb"], make_user(), setup["proj_a"]["id"])
     resp = call_route(P.project_tab, req, setup["proj_a"]["id"], "prompts")
     assert resp.status_code == 200
-    assert "پیش‌فرض سراسری استفاده می‌شود" in resp.body.decode()
+    assert (
+        "\u067e\u06cc\u0634\u200c\u0641\u0631\u0636 \u0633\u0631\u0627\u0633\u0631\u06cc \u0627\u0633\u062a\u0641\u0627\u062f\u0647 \u0645\u06cc\u200c\u0634\u0648\u062f"
+        in resp.body.decode()
+    )
 
 
 # ---------------------------------------------------------------------------

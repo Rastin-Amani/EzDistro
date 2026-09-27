@@ -8,13 +8,13 @@
 
 {{ f.page_header(
 
-    _( 'پروژه‌ها' ),
+    _( 'Projects' ),
 
-    _( 'هر پروژه یک سایت وردپرس، مجموعه‌ای از مدل‌ها و پرامپت‌های اختصاصی دارد' ),
+    _( 'Each project has its own WordPress site, models and prompts' ),
 
-    _( 'فضای کار' ),
+    _( 'Workspace' ),
 
-    '<button class="btn btn-primary btn-sm" onclick="document.getElementById(\'new-project-modal\').showModal()">' ~ _('پروژه جدید') ~ '</button>'
+    '<button class="btn btn-primary btn-sm" onclick="document.getElementById(\'new-project-modal\').showModal()">' ~ _('New project') ~ '</button>'
 
 ) }}
 
@@ -54,9 +54,9 @@
 
         {% endif %}
 
-        <div class="mt-3 flex items-center gap-1.5 text-xs opacity-0 group-hover:opacity-100 transition-opacity text-primary font-medium">
+        <div class="mt-3 flex items-center gap-1.5 text-xs opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity text-primary font-medium">
 
-            {{ _('باز کردن پروژه') }}
+            {{ _('Open project') }}
 
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" /></svg>
 
@@ -80,11 +80,11 @@
 
         </div>
 
-        <p class="font-bold text-base-content/75">{{ _('هنوز پروژه‌ای نساخته‌اید') }}</p>
+        <p class="font-bold text-base-content/75">{{ _('You have not created a project yet') }}</p>
 
-        <p class="text-sm text-base-content/50 max-w-xs">{{ _('پروژه اول را بسازید تا نمایه‌سازی و تولید مقاله را آغاز کنید.') }}</p>
+        <p class="text-sm text-base-content/50 max-w-xs">{{ _('Create your first project to start indexing and article generation.') }}</p>
 
-        <button class="btn btn-primary btn-sm mt-1" onclick="document.getElementById('new-project-modal').showModal()">{{ _('ساخت اولین پروژه') }}</button>
+        <button class="btn btn-primary btn-sm mt-1" onclick="document.getElementById('new-project-modal').showModal()">{{ _('Create first project') }}</button>
 
     </div>
 
@@ -102,9 +102,9 @@
 
         <div class="flex items-center justify-between mb-4">
 
-            <h3 class="font-bold text-lg">{{ _('پروژه جدید') }}</h3>
+            <h3 class="font-bold text-lg">{{ _('New project') }}</h3>
 
-            <button type="button" class="btn btn-ghost btn-sm btn-circle" onclick="document.getElementById('new-project-modal').close()" aria-label="{{ _('بستن') }}">✕</button>
+            <button type="button" class="btn btn-ghost btn-sm btn-circle" onclick="document.getElementById('new-project-modal').close()" aria-label="{{ _('Close') }}">✕</button>
 
         </div>
 
@@ -112,19 +112,19 @@
 
             <label class="floating-label">
 
-                <span>{{ _('نام پروژه') }}</span>
+                <span>{{ _('Project name') }}</span>
 
-                <input name="name" class="input validator" required placeholder="{{ _('مثلاً: مجله فناوری') }}" />
+                <input name="name" class="input validator" required placeholder="{{ _('e.g. Tech Magazine') }}" />
 
             </label>
 
             <label class="floating-label">
 
-                <span>{{ _('شناسه (slug) — انگلیسی') }}</span>
+                <span>{{ _('Slug — English') }}</span>
 
                 <input name="slug" class="input" dir="ltr" placeholder="tech-magazine" />
 
-                <span class="text-xs opacity-50">{{ _('اگر خالی بماند از نام ساخته می‌شود') }}</span>
+                <span class="text-xs opacity-50">{{ _('Left empty, it is derived from the name') }}</span>
 
             </label>
 
@@ -132,15 +132,15 @@
 
                 <label class="floating-label">
 
-                    <span>{{ _('زبان') }}</span>
+                    <span>{{ _('Language') }}</span>
 
                     <select name="language" class="select">
 
-                        <option value="fa">{{ _('فارسی') }}</option>
+                        <option value="fa">{{ _('Persian') }}</option>
 
                         <option value="en">English</option>
 
-                        <option value="ar">{{ _('العربية') }}</option>
+                        <option value="ar">{{ _('Arabic') }}</option>
 
                         <option value="tr">Türkçe</option>
 
@@ -150,7 +150,7 @@
 
                 <label class="floating-label">
 
-                    <span>{{ _('منطقه زمانی') }}</span>
+                    <span>{{ _('Timezone') }}</span>
 
                     <select name="timezone" class="select">
 
@@ -170,7 +170,7 @@
 
             <label class="floating-label">
 
-                <span>{{ _('توضیحات') }}</span>
+                <span>{{ _('Description') }}</span>
 
                 <textarea name="description" class="textarea" rows="2"></textarea>
 
@@ -178,9 +178,9 @@
 
             <div class="flex gap-3 mt-1">
 
-                <button type="submit" class="btn btn-primary flex-1">{{ _('ساخت') }}</button>
+                <button type="submit" class="btn btn-primary flex-1">{{ _('Create') }}</button>
 
-                <button type="button" class="btn btn-ghost" onclick="document.getElementById('new-project-modal').close()">{{ _('انصراف') }}</button>
+                <button type="button" class="btn btn-ghost" onclick="document.getElementById('new-project-modal').close()">{{ _('Cancel') }}</button>
 
             </div>
 

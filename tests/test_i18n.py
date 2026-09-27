@@ -20,6 +20,11 @@ from app.templates import loc_date, loc_year, status_label, to_rel_time
 client = TestClient(app)
 
 
+def _js(text: str) -> str:
+    """Jinja's tojson() renders non-ASCII as \\uXXXX escapes inside <script>."""
+    return text.encode("unicode_escape").decode()
+
+
 @pytest.fixture(autouse=True)
 def _reset_locale():
     """Direct set_request_locale() calls must not leak into other test files
@@ -37,31 +42,54 @@ def _use(code: str | None) -> None:
 # ---------------------------------------------------------------------------
 def test_registry_metadata():
     fa, en = LOCALES["fa"], LOCALES["en"]
-    assert fa.is_rtl and fa.default and fa.enabled
-    assert not en.is_rtl and en.enabled
+    assert fa.is_rtl and fa.enabled and not fa.default
+    assert not en.is_rtl and en.enabled and en.default
     assert "hy" in LOCALES and "hy" not in ENABLED_LOCALES  # readiness ≠ enabled
 
 
-def test_default_is_fa_and_unknown_collapses_to_default():
+def test_default_is_en_and_unknown_collapses_to_default():
     _use(None)
-    assert get_locale().code == DEFAULT_LOCALE.code == "fa"
+    assert get_locale().code == DEFAULT_LOCALE.code == "en"
     _use("not-a-locale")
-    assert get_locale().code == "fa"
+    assert get_locale().code == "en"
     _use("hy")  # disabled → default
-    assert get_locale().code == "fa"
+    assert get_locale().code == "en"
 
 
 def test_middleware_sets_locale_from_cookie():
     resp = client.get("/login", follow_redirects=False)
+    assert 'lang="en"' in resp.text and 'dir="ltr"' in resp.text
+    assert "Sign in to EzDistro" in resp.text
+    assert "From search opportunity to published article." in resp.text
+    assert _js("You are offline — showing cached data") in resp.text
+    assert "Connection restored." in resp.text
+
+    resp = client.get("/login", cookies={"locale": "fa"})
     assert 'lang="fa"' in resp.text and 'dir="rtl"' in resp.text
-    assert "ورود به EzDistro" in resp.text
+    assert "\u0648\u0631\u0648\u062f \u0628\u0647 EzDistro" in resp.text
+    assert (
+        "\u0627\u0632 \u0641\u0631\u0635\u062a \u062c\u0633\u062a\u062c\u0648 \u062a\u0627 \u0645\u0642\u0627\u0644\u0647\u0654 \u0645\u0646\u062a\u0634\u0631\u0634\u062f\u0647"
+        in resp.text
+    )
+    assert (
+        _js(
+            "\u0634\u0645\u0627 \u0622\u0641\u0644\u0627\u06cc\u0646 \u0647\u0633\u062a\u06cc\u062f \u2014 \u062f\u0627\u062f\u0647\u200c\u0647\u0627\u06cc \u0630\u062e\u06cc\u0631\u0647\u200c\u0634\u062f\u0647 \u0646\u0645\u0627\u06cc\u0634 \u062f\u0627\u062f\u0647 \u0645\u06cc\u200c\u0634\u0648\u062f"
+        )
+        in resp.text
+    )
+    assert (
+        _js(
+            "\u0627\u062a\u0635\u0627\u0644 \u0627\u06cc\u0646\u062a\u0631\u0646\u062a \u062f\u0648\u0628\u0627\u0631\u0647 \u0628\u0631\u0642\u0631\u0627\u0631 \u0634\u062f"
+        )
+        in resp.text
+    )
 
     resp = client.get("/login", cookies={"locale": "en"})
     assert 'lang="en"' in resp.text and 'dir="ltr"' in resp.text
     assert "Sign in to EzDistro" in resp.text
 
     resp = client.get("/login", cookies={"locale": "zz"})
-    assert 'dir="rtl"' in resp.text and "ورود به EzDistro" in resp.text
+    assert 'dir="ltr"' in resp.text and "Sign in to EzDistro" in resp.text
 
 
 def test_htmx_partial_renders_in_request_locale():
@@ -75,22 +103,23 @@ def test_htmx_partial_renders_in_request_locale():
 # ---------------------------------------------------------------------------
 def test_translation_and_fallback():
     _use("fa")
-    assert _("ورود به EzDistro") == "ورود به EzDistro"  # source language
+    assert (
+        _("Sign in to EzDistro") == "\u0648\u0631\u0648\u062f \u0628\u0647 EzDistro"
+    )  # fa catalog
     _use("en")
-    assert _("ورود به EzDistro") == "Sign in to EzDistro"
+    assert _("Sign in to EzDistro") == "Sign in to EzDistro"
     assert _("__msgid_missing_from_catalog__") == "__msgid_missing_from_catalog__"  # fails safe
 
 
 def test_ngettext_plural():
     _use("en")
-    assert ngettext("۱ دقیقه پیش", "%(n)d دقیقه پیش", 1) == "1 minute ago"
-    plural = ngettext("۱ دقیقه پیش", "%(n)d دقیقه پیش", 3)
+    assert ngettext("1 minute ago", "%(n)d minutes ago", 1) == "1 minute ago"
+    plural = ngettext("1 minute ago", "%(n)d minutes ago", 3)
     assert plural % {"n": 3} == "3 minutes ago"
 
 
 def test_locale_switch_route():
-    """Auth gate runs first for unauthenticated requests, so exercise the handler
-    directly (with a live PB the route behaves identically post-auth)."""
+    """Language selection works before login and only redirects to local paths."""
     from app.main import switch_locale
 
     resp = switch_locale("en", "/")
@@ -100,8 +129,13 @@ def test_locale_switch_route():
     assert switch_locale("xx", "/").status_code == 404
     assert switch_locale("en", "//evil.com").headers["location"] == "/"
 
-    resp = client.get("/locale/xx", follow_redirects=False)  # auth gate wins unauthenticated
-    assert resp.status_code in (303, 404)
+    resp = client.get("/locale/fa?next_url=%2Flogin", follow_redirects=False)
+    assert resp.status_code == 303
+    assert resp.headers["location"] == "/login"
+    assert "locale=fa" in resp.headers.get("set-cookie", "")
+
+    resp = client.get("/locale/xx", follow_redirects=False)
+    assert resp.status_code == 404
 
 
 def test_switcher_lists_enabled_locales():
@@ -124,7 +158,7 @@ def test_switcher_lists_enabled_locales():
 # ---------------------------------------------------------------------------
 def test_status_label_locale_aware():
     _use("fa")
-    assert status_label("published") == "منتشر شده"
+    assert status_label("published") == "\u0645\u0646\u062a\u0634\u0631 \u0634\u062f\u0647"
     _use("en")
     assert status_label("published") == "Published"
     assert status_label("__unknown__") == "__unknown__"  # passthrough
@@ -146,7 +180,7 @@ def test_rel_time_locale_aware():
     past = dt.datetime.now(dt.UTC) - dt.timedelta(minutes=10)
     ten_min_ago = past.strftime("%Y-%m-%d %H:%M:%S")
     _use("fa")
-    assert "دقیقه پیش" in to_rel_time(ten_min_ago)
+    assert "\u062f\u0642\u06cc\u0642\u0647 \u067e\u06cc\u0634" in to_rel_time(ten_min_ago)
     _use("en")
     assert "minute" in to_rel_time(ten_min_ago)
 
@@ -167,4 +201,4 @@ def test_en_catalog_placeholders_survive_formatting():
         translated = _(msgid)
         values = {k: 1 for k in spec.findall(translated)}
         translated % values  # must not raise
-    assert _("%(n)s٪") % {"n": 33} == "33%"
+    assert _("%(n)s%%") % {"n": 33} == "33%"

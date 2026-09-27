@@ -1,20 +1,20 @@
 {% import 'macros/forms.html' as f %}
-{{ f.page_header(_('رویدادها'), _('تاریخچه رویدادهای پروژه.'), eyebrow=_('پروژه')) }}
+{{ f.page_header(_('Events'), _('Project event history.'), eyebrow=_('Project')) }}
 <div id="logs-table"
      hx-get="/projects/{{ project.id }}/tabs/logs"
      hx-trigger="every 8s"
      hx-swap="outerHTML">
     {% if events %}
     <div class="ezdistro-panel">
-        <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('رویدادها') }}</h2></div>
+        <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('Events') }}</h2></div>
         <div class="overflow-x-auto">
             <table class="table table-sm">
                 <thead>
                     <tr class="text-xs opacity-60">
-                        <th>{{ _('سطح') }}</th>
-                        <th>{{ _('پیام') }}</th>
-                        <th>{{ _('داده') }}</th>
-                        <th>{{ _('زمان') }}</th>
+                        <th>{{ _('Level') }}</th>
+                        <th>{{ _('Message') }}</th>
+                        <th>{{ _('Data') }}</th>
+                        <th>{{ _('Time') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -42,7 +42,7 @@
     {% else %}
     <div class="ezdistro-panel">
         <div class="p-4 flex flex-col items-center gap-3 py-8 text-center">
-            <p class="text-sm opacity-50">{{ _('رویدادی ثبت نشده است.') }}</p>
+            <p class="text-sm opacity-50">{{ _('No events recorded.') }}</p>
         </div>
     </div>
     {% endif %}

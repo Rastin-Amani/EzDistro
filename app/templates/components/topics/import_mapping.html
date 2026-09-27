@@ -10,15 +10,15 @@
 
             <span class="font-semibold">{{ filename }}</span>
 
-            — {{ _('%(n)s موضوع') % {'n': row_count} }}
+            — {{ _('%(n)s topics') % {'n': row_count} }}
 
         </p>
 
         <div class="flex items-center gap-1">
 
-            <span class="badge badge-soft badge-neutral badge-xs">{{ _('دارای هدر') if has_header else _('بدون هدر') }}</span>
+            <span class="badge badge-soft badge-neutral badge-xs">{{ _('Has header') if has_header else _('No header') }}</span>
 
-            <span class="badge badge-soft badge-neutral badge-xs">{{ _('جداکننده: %(v)s') % {'v': 'Tab' if delimiter == '\t' else delimiter} }}</span>
+            <span class="badge badge-soft badge-neutral badge-xs">{{ _('Delimiter: %(v)s') % {'v': 'Tab' if delimiter == '\t' else delimiter} }}</span>
 
         </div>
 
@@ -102,13 +102,13 @@
 
                 <select name="col_{{ field }}" class="select select-sm w-full">
 
-                    <option value="-1">{{ _('— نادیده بگیر —') }}</option>
+                    <option value="-1">{{ _('— Ignore —') }}</option>
 
                     {% for c in columns %}
 
                     <option value="{{ c.index }}" {{ 'selected' if column_map.get(field) == c.index }}>
 
-                        {{ c.name }}{% if c.samples %} · {{ c.samples|join(_('، ')) }}{% endif %}
+                        {{ c.name }}{% if c.samples %} · {{ c.samples|join(_(', ')) }}{% endif %}
 
                     </option>
 
@@ -124,9 +124,9 @@
 
         <p class="text-xs opacity-50 leading-relaxed">
 
-            {{ _('ردیف‌هایی که عنوان یا کلمه کلیدی‌شان قبلاً در پروژه (یا همین فایل) وجود داشته باشد خودکار رد می‌شوند.') }}
+            {{ _('Rows whose title or keyword already exists in the project (or in this file) are skipped automatically.') }}
 
-            {{ _('همه موضوع‌ها با وضعیت «برنامه‌ریزی‌شده» اضافه می‌شوند.') }}
+            {{ _('All topics are added with the “Planned” status.') }}
 
         </p>
 
@@ -136,7 +136,7 @@
 
                 <span class="loading loading-spinner loading-xs htmx-indicator"></span>
 
-                افزودن {{ _('%(n)s موضوع') % {'n': row_count} }}
+                {{ _('Add') }} {{ _('%(n)s topics') % {'n': row_count} }}
 
             </button>
 
@@ -144,7 +144,7 @@
 
                     hx-get="/projects/{{ project.id }}/topics/import"
 
-                    hx-target="#topic-import-body" hx-swap="innerHTML">{{ _('تغییر متن') }}</button>
+                    hx-target="#topic-import-body" hx-swap="innerHTML">{{ _('Edit text') }}</button>
 
         </div>
 

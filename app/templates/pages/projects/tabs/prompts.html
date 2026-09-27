@@ -8,7 +8,7 @@
 
      hx-swap="outerHTML">
 
-{{ f.page_header(_('پرامپت‌ها'), _('مدیریت نسخه‌های پرامپت و تست تعاملی.'), eyebrow=_('پروژه')) }}
+{{ f.page_header(_('Prompts'), _('Manage prompt versions and run interactive tests.'), eyebrow=_('Project')) }}
 
     <!-- Variables reference -->
 
@@ -16,7 +16,7 @@
 
         <summary class="ezdistro-panel-head cursor-pointer">
 
-            <span class="ezdistro-panel-title">{{ _('متغیرهای قابل استفاده') }}</span>
+            <span class="ezdistro-panel-title">{{ _('Available variables') }}</span>
 
         </summary>
 
@@ -52,11 +52,11 @@
 
             {% if active %}
 
-            <span class="badge badge-soft badge-success badge-sm">{{ _('نسخه فعال: v%(n)s') % {'n': active.version} }}</span>
+            <span class="badge badge-soft badge-success badge-sm">{{ _('Active version: v%(n)s') % {'n': active.version} }}</span>
 
             {% else %}
 
-            <span class="badge badge-soft badge-warning badge-sm">{{ _('پیش‌فرض سراسری استفاده می‌شود') }}</span>
+            <span class="badge badge-soft badge-warning badge-sm">{{ _('Global default is used') }}</span>
 
             {% endif %}
 
@@ -66,7 +66,7 @@
 
             <form hx-post="/projects/{{ project.id }}/prompts" hx-swap="none" class="flex flex-col gap-2">
 
-                {{ f.textarea(ptype, _('متن پرامپت'), active.content if active else '', _('متن کامل این پرامپت. از متغیرهای فهرست بالا می‌توانید استفاده کنید.'), 5, false, '', _('ذخیره = نسخه جدید (v') ~ next_ver ~ ')') }}
+                {{ f.textarea(ptype, _('Prompt text'), active.content if active else '', _('Full text of this prompt. You can use the variables listed above.'), 5, false, '', _('Save = new version (v') ~ next_ver ~ ')') }}
 
                 <div class="flex items-center justify-end">
 
@@ -74,7 +74,7 @@
 
                         <span class="loading loading-spinner loading-xs htmx-indicator"></span>
 
-                        {{ _('ذخیره نسخه جدید') }}
+                        {{ _('Save new version') }}
 
                     </button>
 
@@ -90,7 +90,7 @@
 
                 <summary class="ezdistro-panel-head cursor-pointer">
 
-                    <span class="ezdistro-panel-title text-xs">{{ _('تست تعاملی پرامپت (بدون تغییر نسخه‌ها)') }}</span>
+                    <span class="ezdistro-panel-title text-xs">{{ _('Interactive prompt test (does not change versions)') }}</span>
 
                 </summary>
 
@@ -106,15 +106,15 @@
 
                         <div class="label px-0 pb-1">
 
-                            <span class="label-text font-medium text-xs">{{ _('موضوع') }}</span>
+                            <span class="label-text font-medium text-xs">{{ _('Topic') }}</span>
 
-                            {{ f.tip(_('یک موضوع واقعی انتخاب کنید تا زمینه بازیابی واقعی ساخته شود.')) }}
+                            {{ f.tip(_('Pick a real topic so real retrieval context is built.')) }}
 
                         </div>
 
                         <select name="topic_id" class="select select-bordered w-full select-sm">
 
-                            <option value="">{{ _('— بدون موضوع —') }}</option>
+                            <option value="">{{ _('— No topic —') }}</option>
 
                             {% for t in topics %}
 
@@ -130,9 +130,9 @@
 
                         <div class="label px-0 pb-1">
 
-                            <span class="label-text font-medium text-xs">{{ _('مدل') }}</span>
+                            <span class="label-text font-medium text-xs">{{ _('Model') }}</span>
 
-                            {{ f.tip(_('نقش مدلی که پرامپت با آن اجرا می‌شود (Outline یا Section).')) }}
+                            {{ f.tip(_('Role of the model the prompt runs with (Outline or Section).')) }}
 
                         </div>
 
@@ -152,7 +152,7 @@
 
                             <span class="loading loading-spinner loading-xs htmx-indicator"></span>
 
-                            {{ _('تست پرامپت') }}
+                            {{ _('Test prompt') }}
 
                         </button>
 
@@ -180,15 +180,15 @@
 
                         <tr class="text-xs opacity-60">
 
-                            <th>{{ _('نسخه') }}</th>
+                            <th>{{ _('Version') }}</th>
 
-                            <th>{{ _('نویسنده') }}</th>
+                            <th>{{ _('Author') }}</th>
 
-                            <th>{{ _('زمان') }}</th>
+                            <th>{{ _('Time') }}</th>
 
-                            <th>{{ _('وضعیت') }}</th>
+                            <th>{{ _('Status') }}</th>
 
-                            <th>{{ _('عملیات') }}</th>
+                            <th>{{ _('Operation') }}</th>
 
                         </tr>
 
@@ -210,11 +210,11 @@
 
                                 {% if v.active %}
 
-                                <span class="badge badge-soft badge-success badge-xs">{{ _('فعال') }}</span>
+                                <span class="badge badge-soft badge-success badge-xs">{{ _('Active') }}</span>
 
                                 {% else %}
 
-                                <span class="badge badge-soft badge-neutral badge-xs">{{ _('غیرفعال') }}</span>
+                                <span class="badge badge-soft badge-neutral badge-xs">{{ _('Inactive') }}</span>
 
                                 {% endif %}
 
@@ -232,7 +232,7 @@
 
                                         hx-swap="none"
 
-                                        hx-confirm="نسخه v{{ v.version }} فعال شود؟ نسخه قبلی غیرفعال می‌شود.">{{ _('فعال‌سازی') }}</button>
+                                        hx-confirm="{{ _('Activate this version? The previous version is deactivated.') }}">{{ _('Activate') }}</button>
 
                                 {% endif %}
 
@@ -244,7 +244,7 @@
 
                                         hx-swap="none"
 
-                                        title="{{ _('کپی به‌عنوان نسخه جدید (غیرفعال)') }}">{{ _('تکراری‌سازی') }}</button>
+                                        title="{{ _('Copy as a new (inactive) version') }}">{{ _('Duplicate') }}</button>
 
                                 {% set other = versions | rejectattr('id', 'equalto', v.id) | first %}
 
@@ -254,7 +254,7 @@
 
                                         hx-get="/projects/{{ project.id }}/prompts/compare?ptype={{ ptype }}&a={{ v.id }}&b={{ other.id }}"
 
-                                        hx-target="#compare-modal" hx-swap="innerHTML">{{ _('مقایسه') }}</button>
+                                        hx-target="#compare-modal" hx-swap="innerHTML">{{ _('Compare') }}</button>
 
                                 {% endif %}
 

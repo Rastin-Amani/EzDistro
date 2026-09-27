@@ -73,7 +73,7 @@ After implementation, an operator can, without touching PocketBase directly:
 
 1. Create a user account from the UI (email, display name, role, initial
    password or generated one).
-2. Open a project → **اعضا (Members)** tab → invite a teammate by email:
+2. Open a project → **Members** tab → invite a teammate by email:
    - existing account → added directly with the chosen role;
    - new person → an invitation record is created and a single-use,
      expiring invite link is displayed for out-of-band sharing.
@@ -197,7 +197,7 @@ acceptance criterion in §25 holds.
 | Users schema | `users` gains `role` (`admin`\|`member`) + `displayName` idempotently | `app/scripts/bootstrap_pb.py:913-947` |
 | Schema mirror | `pb_collections_import.json` must be kept in sync with bootstrap | `docs/SCHEMA.md:4-6` |
 | Doc'd security model | "All collection rules require an authenticated user; project-level authorization lives in the app layer" | `docs/SCHEMA.md:26-27` |
-| HTMX contract | Mutations: `require_hx` + `@hx_error("پیام فارسی")` + helpers `ok_with_redirect/success_response/error_response/hx_trigger` | `app/api/deps.py:22-25`, `app/api/errors.py`, `app/utils.py` |
+| HTMX contract | Mutations: `require_hx` + `@hx_error("message")` + helpers `ok_with_redirect/success_response/error_response/hx_trigger` | `app/api/deps.py:22-25`, `app/api/errors.py`, `app/utils.py` |
 | i18n | `_()` / `ngettext` (Babel); Persian default + `en` catalog; `make i18n-extract/add/update/compile` | `Makefile:31-42`, `app/locales/` |
 | Nav | Sidebar `nav` list + mobile dock, logout in user menu | `app/templates/layouts/platform.html:29-57,143-185` |
 | Tests | Fake PocketBase with unique-constraint + filter emulation; helpers `make_user`, `make_member`, `make_project`; role-matrix tests already exist | `tests/fakes.py`, `tests/helpers.py:23,87`, `tests/test_authorization.py`, `tests/test_routes_security.py` |
@@ -227,7 +227,7 @@ acceptance criterion in §25 holds.
   require an explicit confirmation step.
 - R8: The invite link is shown once in a copyable field immediately after
   creation, with an inline copy button (`hx-on:click` →
-  `navigator.clipboard.writeText`) and a Persian "کپی شد" feedback. If lost:
+  `navigator.clipboard.writeText`) and a "Copied" feedback. If lost:
   revoke + re-invite (no re-display — only the hash is stored).
 
 ### Technical
@@ -270,12 +270,12 @@ acceptance criterion in §25 holds.
    form state preserved.
 
 ### J2 — Owner invites an existing teammate
-1. Owner → project → **اعضا** tab → enters teammate email + role ≤ own role.
+1. Owner → project → **Members** tab → enters teammate email + role ≤ own role.
 2. Server finds the user → `MemberRepo.add(...)` → toast + list refresh.
 3. Failure paths: unknown email → switches to invite-link flow (J3); already
-   a member → "این کاربر قبلاً عضو است" toast (upsert to new role is offered
+   a member → "this user is already a member" toast (upsert to new role is offered
    only to owner/admin explicitly via the role dropdown, not silently);
-   role > granter → "نمی‌توانید نقش بالاتر از نقش خود بدهید".
+   role > granter → "you cannot grant a role above your own".
 
 ### J3 — Owner invites a new person
 1. Same form; email matches no user → invitation record created, modal shows
@@ -294,7 +294,7 @@ acceptance criterion in §25 holds.
    with invited role, marks invite `accepted`, logs the user in (set `pb_auth`
    cookie), 303 → project page. Reuses the native-POST/303 cookie pattern from
    `app/api/auth.py:59-70`.
-4. Email already registered → page shows "ابتدا وارد شوید" with `next`
+4. Email already registered → page shows "sign in first" with `next`
    redirect back to the invite URL after login.
 5. Logged in as the *wrong* account → error: invite belongs to another email;
    offer logout → login-as-invited → reopen link.
@@ -306,7 +306,7 @@ acceptance criterion in §25 holds.
   Failure: demoting the last owner → blocked; editor/viewer attempting → 403
   toast via existing guard; changing the owner's row unless you are owner →
   blocked.
-- Member clicks "خروج از پروژه" → confirm → membership deleted → redirect to
+- Member clicks "leave project" → confirm → membership deleted → redirect to
   `/projects`. Failure: last owner → blocked with explanation.
 - Removing a user (project scope) deletes only the membership row — the
   account and all project data remain (data preservation invariant).
@@ -315,7 +315,7 @@ acceptance criterion in §25 holds.
 1. `/admin/users` → disable → confirm → `users.disabled = true`.
 2. On the victim's next request, `AuthMiddleware` sees `disabled` → clears
    auth store → behaves as logged out (redirect to `/login` with a Persian
-   "حساب شما غیرفعال شده" notice — not a silent bounce loop).
+   "your account is disabled" notice — not a silent bounce loop).
 3. Failure: attempting to disable the last enabled global admin (including
    self) → blocked.
 
@@ -441,7 +441,7 @@ pending --expiresAt < now()--> expired (derived)             [terminal]
     email matches the (new or logged-in) account. Side effects: create user
     if absent (single-use account creation), `MemberRepo.add(project, user,
     invite.role)` (upsert-safe), status → `accepted`, `acceptedBy` set, session
-    cookie issued. Re-accept → reject ("این دعوت‌نامه قبلاً استفاده شده").
+    cookie issued. Re-accept → reject ("this invite has already been used").
   - **revoke**: owner/admin of that project. Idempotent.
   - **expire**: no write needed; every read/accept checks `expiresAt`.
 - Terminal states are never transitioned; re-inviting always mints a new row.
@@ -526,7 +526,7 @@ Add to `PUBLIC_PATHS` (`app/middleware.py:14`): `/invite` (prefix match like
 | S2 | `POST /account/profile` | any user | `displayName` | toast | empty name |
 | S3 | `POST /account/password` | any user | `current`, `new`, `confirm` | toast | wrong current / weak / mismatch |
 
-Add an "حساب کاربری" link to the user menu in
+Add an "Account" link to the user menu in
 `app/templates/layouts/platform.html` (near line 87).
 
 ## 15. UI / UX
@@ -534,7 +534,7 @@ Add an "حساب کاربری" link to the user menu in
 - **Members tab**: add `"members"` to `TABS` (`app/api/projects.py:63-76`,
   suggested position after `"settings"`) **and** to the labels dict in
   `app/templates/pages/projects/detail.html:67-75`
-  (`'members': _('اعضا')`). New template
+  (`'members': _('Members')`). New template
   `app/templates/pages/projects/tabs/members.html`. Data: extend
   `_tab_context` (`app/api/projects.py`, inspect ~line 330-427) to fetch
   members (`expand=user`), pending invites, and the current user's role for
@@ -543,7 +543,7 @@ Add an "حساب کاربری" link to the user menu in
 - Sections in the tab: ① member table (avatar/initials, displayName, email,
   role badge, joined date `jalali_*`, actions gated by §10), ② invite form
   (email + role select with only grantable options), ③ pending invites table
-  (email, role, expiry, revoke), ④ "خروج از پروژه" button.
+  (email, role, expiry, revoke), ④ "leave project" button.
 - Role badges: DaisyUI `badge` variants (owner=primary, admin=secondary,
   editor=info, viewer=ghost) — consistent with existing badges; no new CSS
   unless unavoidable (then `input.css` + `make css`).
@@ -552,15 +552,14 @@ Add an "حساب کاربری" link to the user menu in
 - `/admin/users`: full page in `platform.html` layout, added to sidebar nav
   **only when** `current_user.role == "admin"` (wrap the nav tuple, don't
   show it to members).
-- Empty states: "عضوی وجود ندارد — اولین نفر را دعوت کنید" / "دعوت در
-  انتظاری نیست". Loading: existing `hx-indicator` pattern. Errors: toasts.
+- Empty states: "no members yet — invite the first one" / "no pending invites". Loading: existing `hx-indicator` pattern. Errors: toasts.
 
 ### UI state matrix (invite form — representative)
 
 | State | Behavior |
 |---|---|
 | Initial | email + role select; submit enabled |
-| Loading | `hx-disabled` / indicator text «در حال…» |
+| Loading | `hx-disabled` / indicator text "loading…" |
 | Success (existing user) | toast + row appended |
 | Success (new email) | invite modal with copyable link |
 | Validation error (bad/empty email) | inline error, values preserved |
@@ -818,7 +817,7 @@ long timeout (~3 min suite; rerun the known-flaky
 
 - `docs/SCHEMA.md`: new `invitations` section (§ numbering), `users` section
   (+`disabled`), update principle 7 if 18-A lands, update "Last verified".
-- `docs/USER-GUIDE.md`: "مدیریت تیم" section — invite flow, role meanings,
+- `docs/USER-GUIDE.md`: "Team management" section — invite flow, role meanings,
   link-only caveat (share the link yourself), account self-service.
 - `docs/CONFIGURATION.md` + `.env.example`: `INVITE_TTL_HOURS` (if made
   env-configurable) — and note web now (also) requires `PB_ADMIN_*` if 18-A(b)
@@ -909,7 +908,7 @@ Commit per phase via `git-hygiene` (logically grouped, no drive-by refactors).
   zero owners.
 - **AC7** Given a disabled user with a still-valid session cookie, when they
   make any request, then they are treated as logged out and login is refused
-  with a "حساب غیرفعال" message.
+  with an "account disabled" message.
 - **AC8** Given the last enabled global admin, when an admin tries to
   disable/demote/delete them (even themselves), then it is blocked.
 - **AC9** Given `?next=//evil.com` on login, then the redirect target is

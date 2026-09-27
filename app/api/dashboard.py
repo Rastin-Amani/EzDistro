@@ -20,7 +20,7 @@ def dashboard(request: Request, welcome: bool = False):
         request,
         "pages/dashboard.html",
         {
-            "title": _("داشبورد"),
+            "title": _("Dashboard"),
             "welcome": welcome,
             "stats": stats.global_stats(request.state.pb, scope),
             "recent_jobs": stats.recent_jobs(request.state.pb, scope, limit=8),

@@ -88,7 +88,7 @@ def fake_pb(monkeypatch):
             "email": "owner@x.com",
             "password": "s3cret",
             "role": "member",
-            "displayName": "مالک",
+            "displayName": "\u0645\u0627\u0644\u06a9",
         }
     )
     pb.collection("users").create(
@@ -97,7 +97,7 @@ def fake_pb(monkeypatch):
             "email": "admin@x.com",
             "password": "adm1n",
             "role": "admin",
-            "displayName": "ادمین",
+            "displayName": "\u0627\u062f\u0645\u06cc\u0646",
         }
     )
     monkeypatch.setattr("app.middleware.get_pb", lambda: pb)
@@ -168,6 +168,10 @@ def test_login_wrong_password_rejected(fake_pb):
     with TestClient(app) as client:
         resp = client.post("/login", data={"email": "owner@x.com", "password": "nope"})
         assert resp.status_code == 200
+        assert 'id="login-email"' in resp.text and 'value="owner@x.com"' in resp.text
+        assert 'value="nope"' not in resp.text
+        assert 'data-toast-type="error"' in resp.text
+        assert 'class="alert' not in resp.text
         assert "pb_auth" not in resp.headers.get("set-cookie", "")
         # still anonymous
         assert client.get("/projects", follow_redirects=False).status_code == 303
@@ -177,6 +181,30 @@ def test_login_unknown_email_rejected(fake_pb):
     with TestClient(app) as client:
         resp = client.post("/login", data={"email": "ghost@x.com", "password": "x"})
         assert "pb_auth" not in resp.headers.get("set-cookie", "")
+
+
+@pytest.mark.parametrize("htmx", [False, True])
+def test_login_pocketbase_unavailable_returns_503(monkeypatch, htmx):
+    def unavailable(*_args, **_kwargs):
+        raise ClientResponseError("connection refused", status=0)
+
+    pb = SimpleNamespace(collection=lambda _name: SimpleNamespace(auth_with_password=unavailable))
+    monkeypatch.setattr("app.api.auth.get_pb", lambda: pb)
+    headers = {"HX-Request": "true"} if htmx else {}
+
+    with TestClient(app) as client:
+        resp = client.post(
+            "/login",
+            data={"email": "owner@x.com", "password": "secret"},
+            headers=headers,
+        )
+
+    assert resp.status_code == 503
+    if htmx:
+        assert "Could not reach the server" in resp.headers["hx-trigger"]
+    else:
+        assert "Could not reach the server" in resp.text
+        assert 'value="owner@x.com"' in resp.text
 
 
 def test_htmx_login_error_toast(fake_pb):
@@ -190,7 +218,7 @@ def test_htmx_login_error_toast(fake_pb):
         import json
 
         events = json.loads(resp.headers.get("hx-trigger", "{}"))
-        assert "اشتباه است" in events["show-toast"]["message"]
+        assert "Wrong email or password" in events["show-toast"]["message"]
 
 
 def test_logout_clears_cookie(fake_pb):

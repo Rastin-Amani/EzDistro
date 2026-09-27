@@ -1,6 +1,6 @@
 {% import 'macros/forms.html' as f %}
 
-{{ f.page_header(_('مدل‌های هوش مصنوعی'), _('اولویت: تنظیم پروژه ← پیش‌فرض سراسری. تغییر مدل فقط یک رویداد ممیزی می‌سازد؛ متادیتای مقالات قبلی (provider/model/نسخه پرامپت) هرگز تغییر نمی‌کند.')) }}
+{{ f.page_header(_('AI models'), _('Priority: project setting → global default. Changing a model only creates an audit event; the metadata of previous articles (provider/model/prompt version) never changes.')) }}
 
 <div id="ai-models-tab" class="flex flex-col gap-5 w-full">
 
@@ -20,7 +20,7 @@
 
                     <h3 class="ezdistro-panel-title">{{ label }}</h3>
 
-                    {{ f.tip(_('نقش‌ها: Outline رئوس را می‌سازد، Section بخش‌ها را می‌نویسد، Meta و Review اختیاری‌اند. اگر خالی بماند از پیش‌فرض سراسری استفاده می‌شود.')) }}
+                    {{ f.tip(_('Roles: Outline builds the outline, Section writes the sections, Meta and Review are optional. If left empty, the global default is used.')) }}
 
                 </div>
 
@@ -34,15 +34,15 @@
 
                         <div class="label px-0 pb-1">
 
-                            <span class="label-text text-xs font-medium">{{ _('ارائه‌دهنده') }}</span>
+                            <span class="label-text text-xs font-medium">{{ _('Provider') }}</span>
 
-                            {{ f.tip(_('ارائه‌دهنده LLM این نقش — از اتصالات فعال تب «اتصالات» انتخاب شود.')) }}
+                            {{ f.tip(_('LLM provider for this role — pick from active connections in the “Connections” tab.')) }}
 
                         </div>
 
                         <select name="{{ role }}_provider" class="select select-bordered w-full" x-model="provider">
 
-                            <option value="">{{ _('— پیش‌فرض سراسری —') }}</option>
+                            <option value="">{{ _('— Global default —') }}</option>
 
                             {% for meta in llm_meta %}
 
@@ -62,9 +62,9 @@
 
                         <div class="label px-0 pb-1">
 
-                            <span class="label-text text-xs font-medium">{{ _('مدل') }}</span>
+                            <span class="label-text text-xs font-medium">{{ _('Model') }}</span>
 
-                            {{ f.tip(_('شناسه مدل — می‌توانید دستی وارد کنید یا با «دریافت» از ارائه‌دهنده بارگیری کنید.')) }}
+                            {{ f.tip(_('Model ID — enter it manually or fetch it from the provider with “Fetch”.')) }}
 
                         </div>
 
@@ -80,11 +80,11 @@
 
                                     hx-target="#models-{{ role }}" hx-swap="innerHTML"
 
-                                    title="{{ _('دریافت مدل‌ها از ارائه‌دهنده') }}">
+                                    title="{{ _('Fetch models from provider') }}">
 
                                 <span class="loading loading-spinner loading-xs htmx-indicator"></span>
 
-                                {{ _('دریافت') }}
+                                {{ _('Fetch') }}
 
                             </button>
 
@@ -92,7 +92,7 @@
 
                         <datalist id="models-{{ role }}"></datalist>
 
-                        <span class="text-xs opacity-40 mt-1">{{ _('می‌توانید شناسه مدل را دستی وارد کنید.') }}</span>
+                        <span class="text-xs opacity-40 mt-1">{{ _('You can enter the model ID manually.') }}</span>
 
                     </label>
 
@@ -102,9 +102,9 @@
 
                         <div class="label px-0 pb-1">
 
-                            <span class="label-text text-xs font-medium">{{ _('پیش‌فرض سراسری') }}</span>
+                            <span class="label-text text-xs font-medium">{{ _('Global default') }}</span>
 
-                            {{ f.tip(_('مقدار سراسری که مدیر تعریف کرده؛ اگر این نقش خالی باشد از همین استفاده می‌شود.')) }}
+                            {{ f.tip(_('The global value defined by the admin; used when this role is empty.')) }}
 
                         </div>
 
@@ -114,7 +114,7 @@
 
                             {{ global_defaults[role].provider }} / {{ global_defaults[role].model }}
 
-                            {% else %}— {{ _('تعریف نشده') }} —{% endif %}
+                            {% else %}— {{ _('Not set') }} —{% endif %}
 
                         </div>
 
@@ -132,9 +132,9 @@
 
                         <div class="label px-0 pb-1">
 
-                            <span class="label-text text-xs font-medium">{{ _('دما (temperature)') }}</span>
+                            <span class="label-text text-xs font-medium">{{ _('Temperature') }}</span>
 
-                            {{ f.tip(_('تصادفی بودن خروجی — ۰ یعنی قطعی، ۲ یعنی خلاقانه. برای سئو معمولاً ۰.۶ تا ۰.۸ مناسب است.')) }}
+                            {{ f.tip(_('Output randomness — 0 is deterministic, 2 is creative. For SEO, 0.6–0.8 usually works well.')) }}
 
                         </div>
 
@@ -148,9 +148,9 @@
 
                         <div class="label px-0 pb-1">
 
-                            <span class="label-text text-xs font-medium">{{ _('حداکثر توکن') }}</span>
+                            <span class="label-text text-xs font-medium">{{ _('Max tokens') }}</span>
 
-                            {{ f.tip(_('سقف توکن خروجی هر فراخوانی. بیشتر از ظرفیت مدل نباشد.')) }}
+                            {{ f.tip(_('Output token cap per call. Must not exceed the model\'s capacity.')) }}
 
                         </div>
 
@@ -164,9 +164,9 @@
 
                         <div class="label px-0 pb-1">
 
-                            <span class="label-text text-xs font-medium">{{ _('تایم‌اوت (ثانیه)') }}</span>
+                            <span class="label-text text-xs font-medium">{{ _('Timeout (seconds)') }}</span>
 
-                            {{ f.tip(_('حداکثر زمان انتظار برای پاسخ ارائه‌دهنده قبل از اعلام خطا.')) }}
+                            {{ f.tip(_('Maximum wait for a provider response before an error is raised.')) }}
 
                         </div>
 
@@ -180,9 +180,9 @@
 
                         <div class="label px-0 pb-1">
 
-                            <span class="label-text text-xs font-medium">{{ _('حداکثر تلاش') }}</span>
+                            <span class="label-text text-xs font-medium">{{ _('Max attempts') }}</span>
 
-                            {{ f.tip(_('تعداد دفعات تلاش مجدد هنگام خطای موقت.')) }}
+                            {{ f.tip(_('Number of retries on transient errors.')) }}
 
                         </div>
 
@@ -196,9 +196,9 @@
 
                         <div class="label px-0 pb-1">
 
-                            <span class="label-text text-xs font-medium">{{ _('پایه تأخیر (s)') }}</span>
+                            <span class="label-text text-xs font-medium">{{ _('Base delay (s)') }}</span>
 
-                            {{ f.tip(_('تأخیر اولیه قبل از تلاش مجدد؛ با هر شکست نمایی رشد می‌کند.')) }}
+                            {{ f.tip(_('Initial delay before a retry; grows exponentially with each failure.')) }}
 
                         </div>
 
@@ -218,13 +218,13 @@
 
                 <details class="border border-base-300/70 rounded-xl px-4 py-3" x-show="provider === 'custom' || provider === 'openai_compat'">
 
-                    <summary class="text-xs opacity-70 cursor-pointer">{{ _('اتصال اختصاصی (Base URL + کلید — اختیاری)') }}</summary>
+                    <summary class="text-xs opacity-70 cursor-pointer">{{ _('Dedicated connection (Base URL + key — optional)') }}</summary>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
 
-                        {{ f.text('base_url', 'Base URL', '', _('آدرس سفارشی سازگار با OpenAI — معمولاً با /v1 تمام می‌شود.'), 'https://api.example.com/v1', dir='ltr') }}
+                        {{ f.text('base_url', 'Base URL', '', _('Custom OpenAI-compatible URL — usually ends with /v1.'), 'https://api.example.com/v1', dir='ltr') }}
 
-                        {{ f.password('api_key', _('API Key (خالی = حفظ قبلی)'), '', _('کلید API این اتصال — رمزنگاری‌شده ذخیره و هرگز نمایش داده نمی‌شود.')) }}
+                        {{ f.password('api_key', _('API key (empty = keep existing)'), '', _('API key for this connection — stored encrypted and never displayed.')) }}
 
                     </div>
 
@@ -240,7 +240,7 @@
 
 
 
-        {{ f.sticky_save(_('ذخیره مدل‌ها')) }}
+        {{ f.sticky_save(_('Save models')) }}
 
     </form>
 
@@ -254,9 +254,9 @@
 
             <div class="flex items-center gap-2">
 
-                <h3 class="ezdistro-panel-title">{{ _('پیش‌فرض‌های سراسری (فقط مدیر)') }}</h3>
+                <h3 class="ezdistro-panel-title">{{ _('Global defaults (admin only)') }}</h3>
 
-                {{ f.tip(_('مقادیری که همه پروژه‌های جدید به‌عنوان پیش‌فرض استفاده می‌کنند؛ تنظیم پروژه همیشه بر این مقادیر اولویت دارد.')) }}
+                {{ f.tip(_('Values that all new projects use as defaults; project settings always take precedence.')) }}
 
             </div>
 
@@ -264,7 +264,7 @@
 
         <div class="p-4 flex flex-col gap-3">
 
-            <p class="text-xs opacity-50">{{ _('تنظیم پروژه همیشه بر این مقادیر اولویت دارد.') }}</p>
+            <p class="text-xs opacity-50">{{ _('Project settings always take precedence over these values.') }}</p>
 
             <form hx-post="/projects/{{ project.id }}/ai-models/global" hx-swap="none" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
 
@@ -288,7 +288,7 @@
 
                     <span class="loading loading-spinner loading-xs htmx-indicator"></span>
 
-                    {{ _('ذخیره پیش‌فرض‌ها') }}
+                    {{ _('Save defaults') }}
 
                 </button>
 

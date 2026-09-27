@@ -177,7 +177,11 @@ async def test_flux_full_flow_success(monkeypatch):
             if state["polls"] < 2:
                 return httpx.Response(200, json={"status": "Pending"})
             return httpx.Response(
-                200, json={"status": "Ready", "result": {"sample": "https://cdn.bfl.test/img.png"}}
+                200,
+                json={
+                    "status": "Ready",
+                    "result": {"sample": "https://cdn.bfl.test/img.png"},
+                },
             )
         if request.url.host == "cdn.bfl.test":
             return httpx.Response(200, content=_png(32, 16))
@@ -209,7 +213,11 @@ async def test_flux_dims_rounded_to_32(monkeypatch):
             captured["body"] = request.read()
             return httpx.Response(200, json={"id": "t"})
         return httpx.Response(
-            200, json={"status": "Ready", "result": {"sample": "https://x.test/i.png"}}
+            200,
+            json={
+                "status": "Ready",
+                "result": {"sample": "https://x.test/i.png"},
+            },
         )
 
     adapter = FluxImage(
@@ -285,7 +293,10 @@ async def test_flux_non_https_sample_refused(monkeypatch):
                 if r.url.path == "/v1/m"
                 else httpx.Response(
                     200,
-                    json={"status": "Ready", "result": {"sample": "http://insecure.test/i.png"}},
+                    json={
+                        "status": "Ready",
+                        "result": {"sample": "http://insecure.test/i.png"},
+                    },
                 )
             )
         ),

@@ -1,16 +1,16 @@
 <div id="health-{{ integration.id }}" class="text-xs border border-base-300/70 rounded-xl px-3 py-2 mt-1 flex flex-wrap items-center gap-2 {{ 'border-success/40 bg-success/5' if result.ok else 'border-error/40 bg-error/5' }}">
     <span class="badge badge-sm {{ 'badge-soft badge-success' if result.ok else 'badge-soft badge-error' }}">
-        {{ _('موفق') if result.ok else _('ناموفق') }}
+        {{ _('Succeeded') if result.ok else _('Failed') }}
     </span>
-    <span class="opacity-70">{{ _('تأخیر: %(n)sms') % {'n': result.latency_ms} }}</span>
+    <span class="opacity-70">{{ _('Latency: %(n)sms') % {'n': result.latency_ms} }}</span>
     {% if result.models %}
-    <span class="opacity-70">مدل‌های موجود: {{ result.models|length }} — {{ result.models[:5]|join(_('، ')) }}{% if result.models|length > 5 %}…{% endif %}</span>
+    <span class="opacity-70">{{ _('Available models') }}: {{ result.models|length }} — {{ result.models[:5]|join(_(', ')) }}{% if result.models|length > 5 %}…{% endif %}</span>
     {% elif result.ok and integration.category == 'llm' %}
-    <span class="opacity-70">{{ _('لیست مدل‌ها توسط ارائه‌دهنده پشتیبانی نمی‌شود — شناسه مدل را دستی وارد کنید.') }}</span>
+    <span class="opacity-70">{{ _('Model listing is not supported by this provider — enter the model ID manually.') }}</span>
     {% elif result.ok and integration.category == 'embedding' %}
-    <span class="opacity-70">{{ _('اتصال موفق — مدل جاسازی را در «تنظیمات پروژه ← جاسازی متن» تنظیم کنید.') }}</span>
+    <span class="opacity-70">{{ _('Connection OK — set the embedding model under “Project settings → Text embedding”.') }}</span>
     {% elif result.ok %}
-    <span class="opacity-70">{{ _('اتصال موفق.') }}</span>
+    <span class="opacity-70">{{ _('Connection OK.') }}</span>
     {% endif %}
     {% if not result.ok %}
     <span class="text-error font-mono break-all" dir="ltr">{{ result.message }}</span>

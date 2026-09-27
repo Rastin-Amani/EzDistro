@@ -8,7 +8,7 @@
 
      hx-swap="outerHTML">
 
-{{ f.page_header(_('موضوع‌ها'), _('مدیریت موضوعات و تولید مقاله.'), eyebrow=_('پروژه')) }}
+{{ f.page_header(_('Topics'), _('Manage topics and article generation.'), eyebrow=_('Project')) }}
 
     <div class="flex flex-col gap-3">
 
@@ -18,7 +18,7 @@
 
                 <a class="join-item btn btn-xs {{ 'btn-primary' if not status_filter }}"
 
-                   hx-get="/projects/{{ project.id }}/tabs/topics?q={{ q }}" hx-target="#tab-content">{{ _('همه') }}</a>
+                   hx-get="/projects/{{ project.id }}/tabs/topics?q={{ q }}" hx-target="#tab-content">{{ _('All') }}</a>
 
                 {% for s in ['planned', 'queued', 'planning', 'outline_ready', 'writing', 'review', 'publishing', 'published', 'failed', 'cancelled'] %}
 
@@ -32,17 +32,17 @@
 
             <div class="flex items-center gap-2">
 
-                <a href="/projects/{{ project.id }}/topics" class="btn btn-ghost btn-xs">{{ _('نمای کامل') }}</a>
+                <a href="/projects/{{ project.id }}/topics" class="btn btn-ghost btn-xs">{{ _('Full view') }}</a>
 
                 <button class="btn btn-ghost btn-xs" onclick="document.getElementById('topic-import-modal').showModal()">
 
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" /></svg>
 
-                    {{ _('CSV / گروهی') }}
+                    {{ _('CSV / Bulk') }}
 
                 </button>
 
-                <button class="btn btn-primary btn-xs" onclick="document.getElementById('new-topic-modal').showModal()">{{ _('+ موضوع') }}</button>
+                <button class="btn btn-primary btn-xs" onclick="document.getElementById('new-topic-modal').showModal()">{{ _('+ Topic') }}</button>
 
             </div>
 
@@ -56,13 +56,13 @@
 
             <input id="topics-tab-search" name="q" type="search" value="{{ q }}" class="input input-sm w-full max-w-64"
 
-                   placeholder="{{ _('جستجو در عنوان یا کلمه کلیدی…') }}" />
+                   placeholder="{{ _('Search by title or keyword…') }}" />
 
             <input type="hidden" name="status" value="{{ status_filter }}" />
 
             {% if q %}
 
-            <a class="btn btn-ghost btn-xs text-error" href="/projects/{{ project.id }}?tab=topics">{{ _('پاک‌کردن') }}</a>
+            <a class="btn btn-ghost btn-xs text-error" href="/projects/{{ project.id }}?tab=topics">{{ _('Clear') }}</a>
 
             {% endif %}
 
@@ -74,7 +74,7 @@
 
         <div class="ezdistro-panel">
 
-            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('موضوع‌ها') }}</h2></div>
+            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('Topics') }}</h2></div>
 
             <div class="overflow-x-auto">
 
@@ -84,15 +84,15 @@
 
                         <tr class="text-xs opacity-60">
 
-                            <th>{{ _('عنوان') }}</th>
+                            <th>{{ _('Title') }}</th>
 
-                            <th>{{ _('کلمه کلیدی') }}</th>
+                            <th>{{ _('Keyword') }}</th>
 
-                            <th>{{ _('ستون/خوشه') }}</th>
+                            <th>{{ _('Pillar/Cluster') }}</th>
 
-                            <th>{{ _('وضعیت') }}</th>
+                            <th>{{ _('Status') }}</th>
 
-                            <th>{{ _('اولویت') }}</th>
+                            <th>{{ _('Priority') }}</th>
 
                             <th></th>
 
@@ -132,13 +132,13 @@
 
                                 <button class="btn btn-ghost btn-xs text-primary"
 
-                                        hx-post="/projects/{{ project.id }}/topics/{{ t.id }}/write" hx-swap="none">{{ _('نوشتن مقاله') }}</button>
+                                        hx-post="/projects/{{ project.id }}/topics/{{ t.id }}/write" hx-swap="none">{{ _('Write article') }}</button>
 
                                 {% endif %}
 
                                 {% if t.articleId %}
 
-                                <a class="btn btn-ghost btn-xs" href="/projects/{{ project.id }}/articles/{{ t.articleId }}">{{ _('مقاله') }}</a>
+                                <a class="btn btn-ghost btn-xs" href="/projects/{{ project.id }}/articles/{{ t.articleId }}">{{ _('Article') }}</a>
 
                                 {% endif %}
 
@@ -146,7 +146,7 @@
 
                                         hx-post="/projects/{{ project.id }}/topics/{{ t.id }}/delete" hx-swap="none"
 
-                                        hx-confirm="موضوع «{{ t.title }}» حذف شود؟ این عمل قابل بازگشت نیست.">{{ _('حذف') }}</button>
+                                        hx-confirm="{{ _('Delete this topic? This cannot be undone.') }}">{{ _('Delete') }}</button>
 
                             </td>
 
@@ -168,7 +168,7 @@
 
             <div class="p-4 flex flex-col items-center gap-3 py-8 text-center">
 
-                <p class="text-sm opacity-50">{{ _('موضوعی یافت نشد.') }}</p>
+                <p class="text-sm opacity-50">{{ _('No topic found.') }}</p>
 
             </div>
 
@@ -188,9 +188,9 @@
 
             <div class="flex items-center justify-between mb-4">
 
-                <h3 class="font-bold text-lg">{{ _('موضوع جدید') }}</h3>
+                <h3 class="font-bold text-lg">{{ _('New topic') }}</h3>
 
-                <button type="button" class="btn btn-ghost btn-circle btn-sm" onclick="document.getElementById('new-topic-modal').close()" aria-label="{{ _('بستن') }}">
+                <button type="button" class="btn btn-ghost btn-circle btn-sm" onclick="document.getElementById('new-topic-modal').close()" aria-label="{{ _('Close') }}">
 
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
 
@@ -204,33 +204,33 @@
 
                   class="flex flex-col gap-4">
 
-                {{ f.text('title', _('عنوان موضوع'), '', _('عنوان مقاله‌ای که می‌خواهید درباره‌اش بنویسید — هرچه دقیق‌تر باشد خروجی بهتری می‌گیرید.'), _('مثلاً: بهترین روش‌های سئو در ۱۴۰۵'), true, hint=_('این عنوان به‌عنوان ورودی اصلی تولید مقاله استفاده می‌شود.')) }}
+                {{ f.text('title', _('Topic title'), '', _('The title of the article you want written — the more precise, the better the output.'), _('e.g. Best SEO practices in 1405'), true, hint=_('This title is the primary input for article generation.')) }}
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-                    {{ f.text('keyword', _('کلمه کلیدی'), '', _('عبارت یا کلمه کلیدی اصلی این مقاله برای بهینه‌سازی سئو.'), _('مثلاً: آموزش سئو')) }}
+                    {{ f.text('keyword', _('Keyword'), '', _('The main phrase or keyword this article optimizes for.'), _('e.g. SEO tutorial')) }}
 
-                    {{ f.select('type', _('نوع'), [('article', _('مقاله')), ('pillar_page', _('صفحه ستون')), ('guide', _('راهنما')), ('news', _('خبر'))], 'article', _('نوع محتوا — صفحه ستون پایه کل خوشه محتواست.')) }}
+                    {{ f.select('type', _('Type'), [('article', _('Article')), ('pillar_page', _('Pillar page')), ('guide', _('Guide')), ('news', _('News'))], 'article', _('Content type — the pillar page anchors the whole content cluster.')) }}
 
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-                    {{ f.text('pillar', _('ستون (Pillar)'), '', _('مقاله ستون اصلی که این موضوع به آن مرتبط است (برای لینک‌سازی داخلی).')) }}
+                    {{ f.text('pillar', _('Pillar'), '', _('The main pillar article this topic relates to (for internal linking).')) }}
 
-                    {{ f.text('cluster', _('خوشه (Cluster)'), '', _('نام خوشه محتوایی برای گروه‌بندی موضوعات مرتبط.')) }}
+                    {{ f.text('cluster', _('Cluster'), '', _('Content cluster name for grouping related topics.')) }}
 
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-                    {{ f.number('priority', _('اولویت'), '0', _('هرچه بزرگ‌تر، زودتر در صف تولید قرار می‌گیرد.'), min='0') }}
+                    {{ f.number('priority', _('Priority'), '0', _('The higher, the sooner it enters the generation queue.'), min='0') }}
 
-                    {{ f.number('week', _('هفته'), '', _('هفته تقویم تحریریه (اختیاری).')) }}
+                    {{ f.number('week', _('Week'), '', _('Editorial calendar week (optional).')) }}
 
                 </div>
 
-                {{ f.text('url', _('لینک مقاله'), '', _('آدرس منتشرشده (اختیاری).')) }}
+                {{ f.text('url', _('Article link'), '', _('Published URL (optional).')) }}
 
                 <div class="flex gap-3 mt-2">
 
@@ -238,11 +238,11 @@
 
                         <span class="loading loading-spinner loading-xs htmx-indicator"></span>
 
-                        {{ _('افزودن') }}
+                        {{ _('Add') }}
 
                     </button>
 
-                    <button type="button" class="btn btn-ghost flex-1" onclick="document.getElementById('new-topic-modal').close()">{{ _('انصراف') }}</button>
+                    <button type="button" class="btn btn-ghost flex-1" onclick="document.getElementById('new-topic-modal').close()">{{ _('Cancel') }}</button>
 
                 </div>
 

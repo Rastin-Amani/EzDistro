@@ -1,6 +1,6 @@
 {% import 'macros/forms.html' as f %}
 
-{{ f.page_header(_('بازیابی'), _('تشخیص و آزمایش مسیر بازیابی معنایی.'), eyebrow=_('پروژه')) }}
+{{ f.page_header(_('Retrieval'), _('Diagnose and test the semantic retrieval pipeline.'), eyebrow=_('Project')) }}
 
 <div id="retrieval-tab" class="flex flex-col gap-4 w-full">
 
@@ -10,9 +10,9 @@
 
             <div class="flex items-center gap-2">
 
-                <h2 class="ezdistro-panel-title">{{ _('تشخیص بازیابی') }}</h2>
+                <h2 class="ezdistro-panel-title">{{ _('Retrieval diagnostics') }}</h2>
 
-                {{ f.tip(_('عبارت را وارد کنید تا مسیر واقعی بازیابی (جاسازی → جستجو در کیوردنت → بازچینش اختیاری) اجرا و نتیجه بررسی شود.')) }}
+                {{ f.tip(_('Enter a query to run the real retrieval path (embedding → Qdrant search → optional rerank) and inspect the result.')) }}
 
             </div>
 
@@ -22,25 +22,25 @@
 
             <p class="text-xs opacity-50 leading-relaxed">
 
-                {{ _('عبارت جستجو را وارد کنید تا بازیابی واقعی اجرا و نتیجه بررسی شود. مقادیر پیش‌فرض از تنظیمات پروژه می‌آیند.') }}
+                {{ _('Enter a query to run real retrieval and inspect the result. Defaults come from project settings.') }}
 
             </p>
 
             <form hx-post="/projects/{{ project.id }}/retrieval/diagnose" hx-target="#retrieval-results" hx-swap="innerHTML" class="flex flex-col gap-4">
 
-                {{ f.text('query', _('عبارت جستجو'), '', _('عبارتی که هنگام نوشتن مقاله به‌دنبالش می‌گردیم — مثلاً عنوان موضوع.'), _('مثلاً: بهترین روش‌های سئو'), true) }}
+                {{ f.text('query', _('Search query'), '', _('What we look up while writing the article — e.g. the topic title.'), _('e.g. Best SEO practices'), true) }}
 
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
 
-                    {{ f.number('candidate_count', _('تعداد کاندیدا'), settings.retrievalTopK or 20, _('تعداد تکه‌های نامزد پیش از بازچینش.')) }}
+                    {{ f.number('candidate_count', _('Candidate count'), settings.retrievalTopK or 20, _('Number of candidate chunks before reranking.')) }}
 
-                    {{ f.number('similarity_threshold', _('آستانه تشابه'), settings.similarityThreshold or 0.35,
+                    {{ f.number('similarity_threshold', _('Similarity threshold'), settings.similarityThreshold or 0.35,
 
-                        _( 'حداقل امتیاز شباهت برای قبول یک تکه.' ), step='0.05') }}
+                        _( 'Minimum similarity score for a chunk to qualify.' ), step='0.05') }}
 
-                    {{ f.select('rerank_enabled', _('بازچینش'), [('0', _('غیرفعال')), ('1', _('فعال'))], '1' if settings.rerankingEnabled else '0', _('فعال‌سازی مدل بازچینش برای مرتب‌سازی بهتر.')) }}
+                    {{ f.select('rerank_enabled', _('Rerank'), [('0', _('Inactive')), ('1', _('Active'))], '1' if settings.rerankingEnabled else '0', _('Enable a reranker model for better ordering.')) }}
 
-                    {{ f.number('rerank_top_n', _('نتایج نهایی (Top N)'), settings.rerankerTopN or 8, _('تعداد تکه‌های نهایی پس از بازچینش.')) }}
+                    {{ f.number('rerank_top_n', _('Final results (Top N)'), settings.rerankerTopN or 8, _('Number of final chunks after reranking.')) }}
 
                 </div>
 
@@ -50,7 +50,7 @@
 
                         <span class="loading loading-spinner loading-xs htmx-indicator"></span>
 
-                        {{ _('اجرای بازیابی') }}
+                        {{ _('Run retrieval') }}
 
                     </button>
 

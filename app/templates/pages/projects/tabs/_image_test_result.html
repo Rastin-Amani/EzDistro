@@ -1,22 +1,16 @@
 {# Result of the one-off image-generation test (settings → images tab). #}
 {% if error %}
-<div role="alert" class="alert alert-error mt-2 text-sm">
-  <div>
-    <div class="font-semibold">
-      {{ _('تست تولید تصویر ناموفق بود') }}
-      {% if category %}<span class="badge badge-outline badge-sm ms-2">{{ category }}</span>{% endif %}
-    </div>
-    <div class="opacity-80 break-words" dir="ltr">{{ error }}</div>
-    {% if category in ('invalid_request', 'authentication') %}
-    <div class="mt-1 opacity-70">
-      {{ _('بررسی کنید: پرایدر/مدل ذخیره‌شده، base URL اتصال و دستهٔ «تولید تصویر» در اتصالات.') }}
-    </div>
-    {% endif %}
-  </div>
-</div>
+{% set message = _('Image generation test failed') %}
+{% if category %}{% set message = message ~ ' (' ~ category ~ ')' %}{% endif %}
+{% set message = message ~ ': ' ~ error %}
+{% if category in ('invalid_request', 'authentication') %}
+{% set message = message ~ ' — ' ~ _('Check: the saved provider/model, the connection base URL, and the «Image generation» category in integrations.') %}
+{% endif %}
+<span hidden data-toast-type="error" data-toast-message="{{ message }}"></span>
 {% else %}
 <div class="mt-2 flex flex-wrap items-center gap-3 text-sm">
-  <img src="{{ data_uri }}" alt="{{ _('تصویر تست') }}" class="rounded-lg border border-base-300 max-h-40 w-auto" width="{{ width or 512 }}" height="{{ height or 512 }}" decoding="async">
+  <span hidden data-toast-type="success" data-toast-message="{{ _('Image generation test completed successfully') }}"></span>
+  <img src="{{ data_uri }}" alt="{{ _('Test image') }}" class="rounded-lg border border-base-300 max-h-40 w-auto" width="{{ width or 512 }}" height="{{ height or 512 }}" decoding="async">
   <div class="ezdistro-kv">
     <span>{{ provider }}</span>/<span dir="ltr">{{ model }}</span>
     — {{ width }}×{{ height }} · {{ (bytes / 1024) | round(0) | int }}KB · {{ (latency / 1000) | round(1) }}s

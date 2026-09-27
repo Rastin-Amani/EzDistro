@@ -21,6 +21,7 @@ import uuid
 from typing import Any
 
 from app.domain.article_html import slugify
+from app.i18n import _
 from app.jobs.context import JobContext
 from app.jobs.handlers import register_job
 from app.providers.base import ProviderError
@@ -115,8 +116,8 @@ async def handle_publish_article(ctx: JobContext) -> dict[str, Any]:
         attempt=runs.next_attempt(article_id),
     )
 
-    ctx.stage_started("publishing", "در حال ارسال به وردپرس…")
-    ctx.progress(20, stage="publishing", message="در حال ارسال به وردپرس…")
+    ctx.stage_started("publishing", _("Sending to WordPress…"))
+    ctx.progress(20, stage="publishing", message=_("Sending to WordPress…"))
     try:
         publisher = ctx.registry.get_publisher_provider(ctx.config.project, ctx.config.settings)
 
@@ -137,7 +138,7 @@ async def handle_publish_article(ctx: JobContext) -> dict[str, Any]:
             # Safe publishing: UPDATE the existing post instead of creating a duplicate.
             result = await publisher.update_post(
                 existing_wp_id,
-                title=article.get("title") or "بدون عنوان",
+                title=article.get("title") or _("Untitled"),
                 html=html,
                 status=mode,
                 slug=article.get("slug") or slugify(article.get("title") or "post"),
@@ -163,7 +164,7 @@ async def handle_publish_article(ctx: JobContext) -> dict[str, Any]:
             if orphan is not None and orphan.id:
                 result = await publisher.update_post(
                     orphan.id,
-                    title=article.get("title") or "بدون عنوان",
+                    title=article.get("title") or _("Untitled"),
                     html=html,
                     status=mode,
                     slug=article.get("slug") or slugify(article.get("title") or "post"),
@@ -176,7 +177,7 @@ async def handle_publish_article(ctx: JobContext) -> dict[str, Any]:
                 existing_wp_id = orphan.id
             else:
                 result = await publisher.create_post(
-                    title=article.get("title") or "بدون عنوان",
+                    title=article.get("title") or _("Untitled"),
                     html=html,
                     status=mode,
                     slug=article.get("slug") or slugify(article.get("title") or "post"),
@@ -225,8 +226,8 @@ async def handle_publish_article(ctx: JobContext) -> dict[str, Any]:
             entity_id=article_id,
         )
 
-    ctx.stage_completed("publishing", "مقاله در وردپرس به‌روزرسانی شد")
-    ctx.progress(100, stage="done", message="مقاله در وردپرس به‌روزرسانی شد")
+    ctx.stage_completed("publishing", _("Article updated on WordPress"))
+    ctx.progress(100, stage="done", message=_("Article updated on WordPress"))
     ctx.info(
         "wordpress publish finished",
         {

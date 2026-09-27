@@ -8,7 +8,7 @@ from tests.fakes import FakePocketBase, default_unique_fields
 def seed(pb: FakePocketBase) -> str:
     project = pb.collection("projects").create(
         {
-            "name": "پروژه",
+            "name": "\u067e\u0631\u0648\u0698\u0647",
             "slug": "sched-proj",
             "language": "fa",
             "status": "active",
@@ -26,7 +26,7 @@ def test_due_schedule_creates_index_job_once_per_window():
     sched = pb.collection("schedules").create(
         {
             "project": project_id,
-            "name": "شاخص روزانه",
+            "name": "\u0634\u0627\u062e\u0635 \u0631\u0648\u0632\u0627\u0646\u0647",
             "kind": "index",
             "enabled": True,
             "intervalMinutes": 60,
@@ -59,7 +59,7 @@ def test_disabled_and_inactive_project_schedules_skipped():
     pb.collection("schedules").create(
         {
             "project": project_id,
-            "name": "خاموش",
+            "name": "\u062e\u0627\u0645\u0648\u0634",
             "kind": "write",
             "enabled": False,
             "intervalMinutes": 60,
@@ -74,7 +74,7 @@ def test_disabled_and_inactive_project_schedules_skipped():
     pb.collection("schedules").create(
         {
             "project": project_id,
-            "name": "فعال ولی پروژه خاموش",
+            "name": "\u0641\u0639\u0627\u0644 \u0648\u0644\u06cc \u067e\u0631\u0648\u0698\u0647 \u062e\u0627\u0645\u0648\u0634",
             "kind": "index",
             "enabled": True,
             "intervalMinutes": 60,
@@ -94,7 +94,7 @@ def test_write_schedule_creates_write_job_for_next_planned_topic():
     pb.collection("topics").create(
         {
             "project": project_id,
-            "title": "کم‌اولویت",
+            "title": "\u06a9\u0645\u200c\u0627\u0648\u0644\u0648\u06cc\u062a",
             "status": "planned",
             "priority": 1,
             "type": "article",
@@ -103,7 +103,7 @@ def test_write_schedule_creates_write_job_for_next_planned_topic():
     high = pb.collection("topics").create(
         {
             "project": project_id,
-            "title": "پراولویت",
+            "title": "\u067e\u0631\u0627\u0648\u0644\u0648\u06cc\u062a",
             "status": "planned",
             "priority": 9,
             "type": "article",
@@ -112,7 +112,7 @@ def test_write_schedule_creates_write_job_for_next_planned_topic():
     pb.collection("schedules").create(
         {
             "project": project_id,
-            "name": "نویسنده",
+            "name": "\u0646\u0648\u06cc\u0633\u0646\u062f\u0647",
             "kind": "write",
             "enabled": True,
             "intervalMinutes": 120,
@@ -135,7 +135,7 @@ def test_write_schedule_without_planned_topics_skips_job():
     sched = pb.collection("schedules").create(
         {
             "project": project_id,
-            "name": "نویسنده",
+            "name": "\u0646\u0648\u06cc\u0633\u0646\u062f\u0647",
             "kind": "write",
             "enabled": True,
             "intervalMinutes": 120,

@@ -88,7 +88,7 @@ def pb(monkeypatch):
             "email": "ok@x.com",
             "password": "pw123456",
             "role": "member",
-            "displayName": "کاربر فعال",
+            "displayName": "\u06a9\u0627\u0631\u0628\u0631 \u0641\u0639\u0627\u0644",
             "disabled": False,
         }
     )
@@ -98,7 +98,7 @@ def pb(monkeypatch):
             "email": "off@x.com",
             "password": "pw123456",
             "role": "member",
-            "displayName": "کاربر غیرفعال",
+            "displayName": "\u06a9\u0627\u0631\u0628\u0631 \u063a\u06cc\u0631\u0641\u0639\u0627\u0644",
             "disabled": True,
         }
     )
@@ -122,7 +122,9 @@ def test_disabled_user_with_valid_session_is_logged_out(pb):
         # no bounce loop: the notice page itself is public
         follow = client.get("/login?disabled=1")
         assert follow.status_code == 200
-        assert "غیرفعال" in follow.text
+        assert 'data-toast-type="warning"' in follow.text
+        assert 'class="alert' not in follow.text
+        assert "deactivated" in follow.text
 
 
 def test_login_refuses_disabled_account_native(pb):
@@ -130,7 +132,9 @@ def test_login_refuses_disabled_account_native(pb):
     with TestClient(app) as client:
         resp = client.post("/login", data={"email": "off@x.com", "password": "pw123456"})
         assert resp.status_code == 200
-        assert "حساب شما غیرفعال است" in resp.text
+        assert 'data-toast-type="error"' in resp.text
+        assert 'class="alert' not in resp.text
+        assert "Your account is disabled" in resp.text
         assert "pb_auth" not in resp.headers.get("set-cookie", "")
         # still anonymous afterwards
         assert client.get("/projects", follow_redirects=False).status_code == 303
@@ -145,7 +149,7 @@ def test_login_refuses_disabled_account_htmx(pb):
         )
         assert resp.status_code == 200
         events = json.loads(resp.headers.get("hx-trigger", "{}"))
-        assert "غیرفعال" in events["show-toast"]["message"]
+        assert "disabled" in events["show-toast"]["message"]
         assert "pb_auth" not in resp.headers.get("set-cookie", "")
 
 
@@ -191,7 +195,7 @@ def test_public_pages_never_touch_data_client(monkeypatch):
     with TestClient(app) as client:
         resp = client.get("/login")
         assert resp.status_code == 200
-        assert "ورود" in resp.text
+        assert "Sign in to EzDistro" in resp.text
 
 
 def test_session_validation_never_clobbers_data_client(pb, monkeypatch):

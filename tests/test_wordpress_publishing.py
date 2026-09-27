@@ -113,7 +113,13 @@ def test_provider_paginated_fetch_stops_at_end():
 # ---------------------------------------------------------------------------
 def make_project(pb: FakePocketBase) -> dict[str, Any]:
     project = pb.collection("projects").create(
-        {"name": "پ", "slug": "p1", "language": "fa", "status": "active", "timezone": "Asia/Tehran"}
+        {
+            "name": "\u067e",
+            "slug": "p1",
+            "language": "fa",
+            "status": "active",
+            "timezone": "Asia/Tehran",
+        }
     )
     pb.collection("project_settings").create({"project": project["id"], **DEFAULT_SETTINGS})
     return project
@@ -137,17 +143,17 @@ def make_article(
     pb: FakePocketBase, project_id: str, *, wp_id: int | None = None
 ) -> dict[str, Any]:
     topic = pb.collection("topics").create(
-        {"project": project_id, "title": "ت", "keyword": "ک", "status": "published"}
+        {"project": project_id, "title": "\u062a", "keyword": "\u06a9", "status": "published"}
     )
     article = pb.collection("articles").create(
         {
             "project": project_id,
             "topicId": topic["id"],
-            "title": "عنوان",
+            "title": "\u0639\u0646\u0648\u0627\u0646",
             "slug": "onvan",
             "status": "approved",
-            "finalHtml": "<h1>عنوان</h1><p>محتوا</p>",
-            "metaDescription": "م",
+            "finalHtml": "<h1>\u0639\u0646\u0648\u0627\u0646</h1><p>\u0645\u062d\u062a\u0648\u0627</p>",
+            "metaDescription": "\u0645",
             "outlineVersion": 1,
         }
     )

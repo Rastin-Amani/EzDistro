@@ -28,7 +28,7 @@ STALE_AFTER_S = 300  # 5 min without a beat → effectively offline
 
 
 @router.get("/workers", response_class=HTMLResponse)
-@page_guard(_("مشکلی در بارگذاری صفحه کارگرها پیش آمد — دوباره تلاش کنید."))
+@page_guard("Something went wrong loading the workers page — please try again.")
 def workers_page(request: Request):
     pb = request.state.pb
     try:
@@ -64,7 +64,7 @@ def workers_page(request: Request):
         request,
         "pages/workers/index.html",
         {
-            "title": _("کارگرها"),
+            "title": _("Workers"),
             "workers": workers,
             "active_count": active,
             "queue": queue,
@@ -74,14 +74,14 @@ def workers_page(request: Request):
             "app_version": settings.app_version,
             "restart_commands": [
                 {
-                    "label": _("راه‌اندازی کارگر (توسعه)"),
+                    "label": _("Run the worker (development)"),
                     "command": "make worker",
-                    "hint": _("پس از هر تغییر کد، کارگر را متوقف و دوباره اجرا کنید."),
+                    "hint": _("After every code change, stop and re-run the worker."),
                 },
                 {
-                    "label": _("راه‌اندازی کارگر (سرویس)"),
+                    "label": _("Run the worker (service)"),
                     "command": "sudo systemctl restart ezdistro-worker",
-                    "hint": _("اگر کارگر به‌صورت سرویس systemd اجرا می‌شود."),
+                    "hint": _("If the worker runs as a systemd service."),
                 },
             ],
         },

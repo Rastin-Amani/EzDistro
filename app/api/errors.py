@@ -1,14 +1,14 @@
-"""Centralized HTMX error handling — simple, native-Persian, no raw prints.
+"""Centralized HTMX error handling with request-local translations.
 
-Every mutation route wraps its body with ``@hx_error("پیام فارسی …")``.
+Every mutation route wraps its body with a Persian source-language msgid.
 Unexpected exceptions are logged once (structlog, with the route name) and
-the user receives a clean Persian toast. Nothing leaks an English traceback
+the user receives a localized toast. Nothing leaks an English traceback
 into the UI, and the old ``print("… error:", e)`` noise is gone.
 
 Usage::
 
     @router.post("/x")
-    @hx_error("ذخیره ناموفق بود")
+    @hx_error("Save failed")
     def save_x(request: Request):
         require_hx(request)
         ...
@@ -36,7 +36,7 @@ def hx_error(fail: str) -> Callable[[F], F]:
     """Wrap an HTMX route with uniform error handling.
 
     Handles both sync and async routes; on any exception it logs the failure
-    with route context and answers with a Persian toast instead of a crash.
+    with route context and answers with a localized toast instead of a crash.
     """
 
     def deco(fn: F) -> F:
@@ -69,7 +69,7 @@ def page_guard(fail: str) -> Callable[[F], F]:
     """Wrap a full-page GET route with graceful error handling.
 
     On any exception the error is logged WITH the full traceback (so the cause
-    can be found in `make web`/`make worker` output) and a clean Persian error
+    can be found in `make web`/`make worker` output) and a localized error
     page is rendered instead of a white screen. Handles sync and async routes.
     """
 

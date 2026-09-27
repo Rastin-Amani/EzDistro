@@ -52,7 +52,7 @@ def call_route(fn, request, *args, **kwargs):
 
 
 def setup_project(pb: FakePocketBase) -> dict:
-    project = ProjectRepo(pb).create(name="پ", slug="proj-a")
+    project = ProjectRepo(pb).create(name="\u067e", slug="proj-a")
     MemberRepo(pb).add(project=project["id"], user="u1", role="owner")
     return project
 
@@ -164,11 +164,12 @@ def test_prompt_switch_via_prompts_ui():
         P.save_prompts,
         req,
         project["id"],
-        seo_rules="قوانین نسخه ۱",
-        brand_voice="صدای نسخه ۱",
+        seo_rules="\u0642\u0648\u0627\u0646\u06cc\u0646 \u0646\u0633\u062e\u0647 \u06f1",
+        brand_voice="\u0635\u062f\u0627\u06cc \u0646\u0633\u062e\u0647 \u06f1",
     )
     assert (
-        PromptService(pb).resolve_active(project["id"], "seo_rules")["content"] == "قوانین نسخه ۱"
+        PromptService(pb).resolve_active(project["id"], "seo_rules")["content"]
+        == "\u0642\u0648\u0627\u0646\u06cc\u0646 \u0646\u0633\u062e\u0647 \u06f1"
     )
 
     # save v2 → v2 active, v1 archived
@@ -176,21 +177,24 @@ def test_prompt_switch_via_prompts_ui():
         P.save_prompts,
         req,
         project["id"],
-        seo_rules="قوانین نسخه ۲",
-        brand_voice="صدای نسخه ۲",
+        seo_rules="\u0642\u0648\u0627\u0646\u06cc\u0646 \u0646\u0633\u062e\u0647 \u06f2",
+        brand_voice="\u0635\u062f\u0627\u06cc \u0646\u0633\u062e\u0647 \u06f2",
     )
     assert (
-        PromptService(pb).resolve_active(project["id"], "seo_rules")["content"] == "قوانین نسخه ۲"
+        PromptService(pb).resolve_active(project["id"], "seo_rules")["content"]
+        == "\u0642\u0648\u0627\u0646\u06cc\u0646 \u0646\u0633\u062e\u0647 \u06f2"
     )
 
     # activate v1 again via the version-activation UI
     v1 = PromptRepo(pb).history(project["id"], "seo_rules")[1]  # oldest = v1
     call_route(P.activate_prompt_version, req, project["id"], "seo_rules", version_id=v1["id"])
     assert (
-        PromptService(pb).resolve_active(project["id"], "seo_rules")["content"] == "قوانین نسخه ۱"
+        PromptService(pb).resolve_active(project["id"], "seo_rules")["content"]
+        == "\u0642\u0648\u0627\u0646\u06cc\u0646 \u0646\u0633\u062e\u0647 \u06f1"
     )
     assert (
-        PromptService(pb).resolve_active(project["id"], "brand_voice")["content"] == "صدای نسخه ۲"
+        PromptService(pb).resolve_active(project["id"], "brand_voice")["content"]
+        == "\u0635\u062f\u0627\u06cc \u0646\u0633\u062e\u0647 \u06f2"
     )
 
 

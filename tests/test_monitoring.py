@@ -19,7 +19,13 @@ from tests.fakes import FakePocketBase, default_unique_fields
 
 def make_project(pb: FakePocketBase, slug: str = "p1") -> dict[str, Any]:
     return pb.collection("projects").create(
-        {"name": "پ", "slug": slug, "language": "fa", "status": "active", "timezone": "Asia/Tehran"}
+        {
+            "name": "\u067e",
+            "slug": slug,
+            "language": "fa",
+            "status": "active",
+            "timezone": "Asia/Tehran",
+        }
     )
 
 
@@ -268,7 +274,7 @@ def test_project_metrics_counts():
     pb = FakePocketBase(default_unique_fields())
     project = make_project(pb)
     topic = pb.collection("topics").create(
-        {"project": project["id"], "title": "ت", "status": "published"}
+        {"project": project["id"], "title": "\u062a", "status": "published"}
     )
     pb.collection("documents").create(
         {
@@ -292,13 +298,13 @@ def test_project_metrics_counts():
         {
             "project": project["id"],
             "topicId": topic["id"],
-            "title": "الف",
+            "title": "\u0627\u0644\u0641",
             "status": "published",
             "generatedAt": "2026-01-01 10:00:00.000Z",
         }
     )
     pb.collection("article_sections").create(
-        {"article": article["id"], "position": 0, "heading": "ب", "status": "done"}
+        {"article": article["id"], "position": 0, "heading": "\u0628", "status": "done"}
     )
     seed_job(pb, project["id"], status="failed")
 

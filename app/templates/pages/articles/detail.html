@@ -10,7 +10,7 @@
 
     <div class="flex items-center gap-2.5 min-w-0">
 
-        <a href="/projects/{{ project.id }}?tab=articles" class="btn btn-ghost btn-circle btn-sm shrink-0" aria-label="{{ _('بازگشت') }}">
+        <a href="/projects/{{ project.id }}?tab=articles" class="btn btn-ghost btn-circle btn-sm shrink-0" aria-label="{{ _('Back') }}">
 
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
 
@@ -24,13 +24,13 @@
 
                 <span class="badge badge-sm {{ article.status|status_badge }}">{{ article.status|status_label }}</span>
 
-                <span class="tabular">{{ _('%(n)s کلمه') % {'n': article.wordCount or 0} }}</span>
+                <span class="tabular">{{ _('%(n)s words') % {'n': article.wordCount or 0} }}</span>
 
-                {% if article.seoScore is not none %}<span class="badge badge-soft badge-info badge-sm">{{ _('سئو: %(n)s/۱۰۰') % {'n': article.seoScore} }}</span>{% endif %}
+                {% if article.seoScore is not none %}<span class="badge badge-soft badge-info badge-sm">{{ _('SEO: %(n)s/100') % {'n': article.seoScore} }}</span>{% endif %}
 
-                <span>{{ _('نسخه رئوس: %(n)s') % {'n': article.outlineVersion or 0} }}</span>
+                <span>{{ _('Outline version: %(n)s') % {'n': article.outlineVersion or 0} }}</span>
 
-                {% if article.wordpressUrl %}<a href="{{ article.wordpressUrl }}" target="_blank" rel="noopener" class="link link-primary" dir="ltr">{{ _('مشاهده در وردپرس') }}</a>{% endif %}
+                {% if article.wordpressUrl %}<a href="{{ article.wordpressUrl }}" target="_blank" rel="noopener" class="link link-primary" dir="ltr">{{ _('View on WordPress') }}</a>{% endif %}
 
             </div>
 
@@ -40,11 +40,11 @@
 
     {% if article.finalHtml and article.status not in ['published', 'publishing'] %}
 
-    <button class="btn btn-primary btn-sm" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/publish" hx-swap="none" hx-confirm="{{ _(_( 'مقاله به وردپرس ارسال شود؟' )) }}">
+    <button class="btn btn-primary btn-sm" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/publish" hx-swap="none" hx-confirm="{{ _(_( 'Send the article to WordPress?' )) }}">
 
         <span class="loading loading-spinner loading-xs htmx-indicator"></span>
 
-        {{ _('انتشار') }}
+        {{ _('Publish') }}
 
     </button>
 
@@ -70,7 +70,7 @@
 
     <div class="ezdistro-panel">
 
-        <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('عنوان و متا') }}</h2></div>
+        <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('Title and meta') }}</h2></div>
 
         <div class="p-4">
 
@@ -78,7 +78,7 @@
 
                 <label class="form-control">
 
-                    <span class="label-text text-xs font-medium">{{ _('عنوان') }}</span>
+                    <span class="label-text text-xs font-medium">{{ _('Title') }}</span>
 
                     <input name="title" class="input w-full text-base" dir="auto" value="{{ article.title }}" />
 
@@ -86,7 +86,7 @@
 
                 <label class="form-control">
 
-                    <span class="label-text text-xs font-medium">{{ _('متا توضیحات') }}</span>
+                    <span class="label-text text-xs font-medium">{{ _('Meta description') }}</span>
 
                     <textarea name="meta_description" class="textarea w-full" rows="3" dir="auto">{{ article.metaDescription or '' }}</textarea>
 
@@ -98,7 +98,7 @@
 
                         <span class="loading loading-spinner loading-xs htmx-indicator"></span>
 
-                        {{ _('ذخیره') }}
+                        {{ _('Save') }}
 
                     </button>
 
@@ -120,11 +120,11 @@
 
         <div class="ezdistro-panel-head">
 
-            <h2 class="ezdistro-panel-title">{{ _('اعتبارسنجی مقاله') }}</h2>
+            <h2 class="ezdistro-panel-title">{{ _('Article validation') }}</h2>
 
             <span class="badge badge-sm {{ 'badge-soft badge-success' if article.validation.ok else 'badge-soft badge-error' }}">
 
-                {{ _('معتبر') if article.validation.ok else _('نامعتبر') }}
+                {{ _('Valid') if article.validation.ok else _('Invalid') }}
 
             </span>
 
@@ -136,9 +136,9 @@
 
             <p class="text-xs opacity-50">
 
-                {{ _('کلمات: %(a)s — بخش‌ها: %(b)s —') % {'a': article.validation.stats.words, 'b': article.validation.stats.sections} }}
+                {{ _('Words: %(a)s — sections: %(b)s —') % {'a': article.validation.stats.words, 'b': article.validation.stats.sections} }}
 
-                {{ _('حداقل: %(n)s') % {'n': article.validation.stats.min_words} }}
+                {{ _('Minimum: %(n)s') % {'n': article.validation.stats.min_words} }}
 
             </p>
 
@@ -152,7 +152,7 @@
 
                 <li class="text-xs text-error bg-error/5 border border-error/20 rounded-lg px-3 py-1.5">
 
-                    {% if issue.section %}<span class="badge badge-soft badge-neutral badge-xs">{{ _('بخش %(n)s') % {'n': issue.section} }}</span>{% endif %}
+                    {% if issue.section %}<span class="badge badge-soft badge-neutral badge-xs">{{ _('Section %(n)s') % {'n': issue.section} }}</span>{% endif %}
 
                     {{ issue.message }}
 
@@ -178,7 +178,7 @@
 
     <div class="ezdistro-panel">
 
-        <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('بخش‌ها — رئوس مقاله (%(n)s)') % {'n': sections|length} }}</h2></div>
+        <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('Sections — article outline (%(n)s)') % {'n': sections|length} }}</h2></div>
 
         <div class="p-4 flex flex-col gap-3">
 
@@ -194,7 +194,7 @@
 
                     {% if s.model %}<span class="badge badge-soft badge-neutral badge-xs hidden sm:inline-flex" dir="ltr">{{ s.model }}</span>{% endif %}
 
-                    {% if s.promptVersion %}<span class="badge badge-soft badge-info badge-xs" title="{{ _('نسخه پرامپت') }}">v{{ s.promptVersion }}</span>{% endif %}
+                    {% if s.promptVersion %}<span class="badge badge-soft badge-info badge-xs" title="{{ _('Prompt version') }}">v{{ s.promptVersion }}</span>{% endif %}
 
                     <span class="badge badge-sm ms-auto {{ s.status|status_badge }}">{{ s.status|status_label }}</span>
 
@@ -204,7 +204,7 @@
 
                     <label class="form-control">
 
-                        <span class="label-text text-xs font-medium">{{ _('تیتر بخش') }}</span>
+                        <span class="label-text text-xs font-medium">{{ _('Section heading') }}</span>
 
                         <input name="heading" class="input w-full" value="{{ s.heading }}" />
 
@@ -212,7 +212,7 @@
 
                     <label class="form-control">
 
-                        <span class="label-text text-xs font-medium">{{ _('خلاصه محتوا (brief)') }}</span>
+                        <span class="label-text text-xs font-medium">{{ _('Content brief') }}</span>
 
                         <textarea name="content_brief" class="textarea w-full" rows="3">{{ s.contentBrief or '' }}</textarea>
 
@@ -220,7 +220,7 @@
 
                     <label class="form-control">
 
-                        <span class="label-text text-xs font-medium">{{ _('محتوای HTML') }}</span>
+                        <span class="label-text text-xs font-medium">{{ _('HTML content') }}</span>
 
                         <textarea name="content" class="textarea w-full font-mono text-xs min-h-40" dir="auto">{{ s.content or '' }}</textarea>
 
@@ -230,9 +230,9 @@
 
                         <span class="text-xs opacity-50">
 
-                            {% if s.generationLatency %}{{ _('زمان تولید: %(a)sms — تلاش‌ها: %(b)s') % {'a': s.generationLatency, 'b': s.generationAttempts or 0 } }}{% else %}{{ _('تولید نشده') }}{% endif %}
+                            {% if s.generationLatency %}{{ _('Generation time: %(a)sms — attempts: %(b)s') % {'a': s.generationLatency, 'b': s.generationAttempts or 0 } }}{% else %}{{ _('Not generated') }}{% endif %}
 
-                            {% if s.tokenUsage and s.tokenUsage != {} %} — {{ _('توکن: %(n)s') % {'n': s.tokenUsage.completion_tokens or 0} }}{% endif %}
+                            {% if s.tokenUsage and s.tokenUsage != {} %} — {{ _('Tokens: %(n)s') % {'n': s.tokenUsage.completion_tokens or 0} }}{% endif %}
 
                         </span>
 
@@ -246,9 +246,9 @@
 
                                     hx-swap="none"
 
-                                    hx-confirm="این بخش برای بازتولید علامت‌گذاری شود؟">{{ _('بازتولید') }}</button>
+                                    hx-confirm="{{ _('Mark this section for regeneration?') }}">{{ _('Regenerate') }}</button>
 
-                            <button type="submit" class="btn btn-primary btn-sm">{{ _('ذخیره بخش') }}</button>
+                            <button type="submit" class="btn btn-primary btn-sm">{{ _('Save section') }}</button>
 
                         </div>
 
@@ -260,7 +260,7 @@
 
             {% else %}
 
-            <p class="text-sm opacity-50 py-4 text-center">{{ _('بخشی وجود ندارد — ابتدا رئوس مطالب تولید کنید.') }}</p>
+            <p class="text-sm opacity-50 py-4 text-center">{{ _('No sections yet — generate the outline first.') }}</p>
 
             {% endfor %}
 
@@ -276,7 +276,7 @@
 
     <div class="ezdistro-panel">
 
-        <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('تاریخچه انتشار') }}</h2></div>
+        <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('Publish history') }}</h2></div>
 
         <div class="p-4">
 
@@ -288,17 +288,17 @@
 
                         <tr>
 
-                            <th>{{ _('تلاش') }}</th>
+                            <th>{{ _('Attempt') }}</th>
 
-                            <th>{{ _('حالت') }}</th>
+                            <th>{{ _('Mode') }}</th>
 
-                            <th>{{ _('وضعیت') }}</th>
+                            <th>{{ _('Status') }}</th>
 
-                            <th>{{ _('شناسه پست') }}</th>
+                            <th>{{ _('Post ID') }}</th>
 
-                            <th>{{ _('آدرس') }}</th>
+                            <th>{{ _('URL') }}</th>
 
-                            <th>{{ _('زمان') }}</th>
+                            <th>{{ _('Time') }}</th>
 
                         </tr>
 
@@ -350,7 +350,7 @@
 
     <div class="ezdistro-panel">
 
-        <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('پیش‌نمایش (امن‌سازی‌شده)') }}</h2></div>
+        <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('Preview (sanitized)') }}</h2></div>
 
         <div class="p-4">
 

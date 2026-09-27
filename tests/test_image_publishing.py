@@ -33,21 +33,21 @@ PLAN_JSON_E2E = json.dumps(
             {
                 "role": "cover",
                 "prompt": "closeup of a car dashboard with an amber warning light",
-                "alt_text": "نمایشگر خودرو با چراغ هشدار روشن",
-                "caption": "چراغ هشدار موتور روی صفحه کیلومتر",
+                "alt_text": "\u0646\u0645\u0627\u06cc\u0634\u06af\u0631 \u062e\u0648\u062f\u0631\u0648 \u0628\u0627 \u0686\u0631\u0627\u063a \u0647\u0634\u062f\u0627\u0631 \u0631\u0648\u0634\u0646",
+                "caption": "\u0686\u0631\u0627\u063a \u0647\u0634\u062f\u0627\u0631 \u0645\u0648\u062a\u0648\u0631 \u0631\u0648\u06cc \u0635\u0641\u062d\u0647 \u06a9\u06cc\u0644\u0648\u0645\u062a\u0631",
                 "aspect_ratio": "16:9",
             },
             {
                 "role": "interior",
                 "section_key": "section-1",
                 "prompt": "open engine bay photographed in daylight",
-                "alt_text": "موتور خودرو از نمای بالا",
+                "alt_text": "\u0645\u0648\u062a\u0648\u0631 \u062e\u0648\u062f\u0631\u0648 \u0627\u0632 \u0646\u0645\u0627\u06cc \u0628\u0627\u0644\u0627",
             },
             {
                 "role": "interior",
                 "section_key": "section-2",
                 "prompt": "mechanic plugging a diagnostic scanner into the car",
-                "alt_text": "تعمیرکار در حال اتصال دستگاه دیاگ",
+                "alt_text": "\u062a\u0639\u0645\u06cc\u0631\u06a9\u0627\u0631 \u062f\u0631 \u062d\u0627\u0644 \u0627\u062a\u0635\u0627\u0644 \u062f\u0633\u062a\u06af\u0627\u0647 \u062f\u06cc\u0627\u06af",
             },
         ]
     },
@@ -57,11 +57,11 @@ PLAN_JSON_E2E = json.dumps(
 
 def make_publishable_article(pb: FakePocketBase, project_id: str) -> dict[str, Any]:
     html = (
-        "<h1>عنوان</h1>"
-        "<p>مقدمه مقاله برای انتشار.</p>"
+        "<h1>\u0639\u0646\u0648\u0627\u0646</h1>"
+        "<p>\u0645\u0642\u062f\u0645\u0647 \u0645\u0642\u0627\u0644\u0647 \u0628\u0631\u0627\u06cc \u0627\u0646\u062a\u0634\u0627\u0631.</p>"
         "{{IMAGE:cover}}"
-        "<h2>بخش اول</h2>"
-        "<p>متن بخش اول.</p>"
+        "<h2>\u0628\u062e\u0634 \u0627\u0648\u0644</h2>"
+        "<p>\u0645\u062a\u0646 \u0628\u062e\u0634 \u0627\u0648\u0644.</p>"
         "{{IMAGE:section-1}}"
     )
     article = make_plan_article(pb, project_id)
@@ -143,7 +143,10 @@ def test_publish_resolves_placeholders_and_sets_featured(monkeypatch):
     )
     # metadata localized from the plan
     upload = registry.publisher.media_uploads_of("")[0]
-    assert upload["alt_text"] == "چراغ هشدار موتور روی داشبورد"
+    assert (
+        upload["alt_text"]
+        == "\u0686\u0631\u0627\u063a \u0647\u0634\u062f\u0627\u0631 \u0645\u0648\u062a\u0648\u0631 \u0631\u0648\u06cc \u062f\u0627\u0634\u0628\u0648\u0631\u062f"
+    )
 
     # retry/update → media reused, NOT re-uploaded (no duplicates in WP)
     before = len(registry.publisher.media)
@@ -160,7 +163,7 @@ def test_missing_cover_blocks_publish(monkeypatch):
     registry = FakeRegistry()
     patch_download(monkeypatch, pb)
 
-    with pytest.raises(ProviderError, match="انتشار متوقف شد"):
+    with pytest.raises(ProviderError, match="Publishing stopped"):
         run_publish(pb, registry, article["id"], project["id"], key="nc1")
 
     refreshed = pb.collection("articles").get_one(article["id"])
@@ -213,12 +216,12 @@ def test_full_e2e_scenario(monkeypatch):
     pb = make_pb()
     project = make_project(pb)
     html = (
-        "<h1>عنوان</h1>"
-        "<p>مقدمه.</p>"
+        "<h1>\u0639\u0646\u0648\u0627\u0646</h1>"
+        "<p>\u0645\u0642\u062f\u0645\u0647.</p>"
         "{{IMAGE:cover}}"
-        "<h2>بخش اول</h2><p>متن.</p>"
+        "<h2>\u0628\u062e\u0634 \u0627\u0648\u0644</h2><p>\u0645\u062a\u0646.</p>"
         "{{IMAGE:section-1}}"
-        "<h2>بخش دوم</h2><p>متن.</p>"
+        "<h2>\u0628\u062e\u0634 \u062f\u0648\u0645</h2><p>\u0645\u062a\u0646.</p>"
         "{{IMAGE:section-2}}"
     )
     article = make_plan_article(pb, project["id"])
@@ -290,9 +293,9 @@ def test_interiors_inserted_without_placeholders(monkeypatch):
         article["id"],
         {
             "finalHtml": (
-                "<h1>عنوان</h1><p>مقدمه.</p>"
-                "<h2>بخش اول</h2><p>متن اول.</p>"
-                "<h2>بخش دوم</h2><p>متن دوم.</p>"
+                "<h1>\u0639\u0646\u0648\u0627\u0646</h1><p>\u0645\u0642\u062f\u0645\u0647.</p>"
+                "<h2>\u0628\u062e\u0634 \u0627\u0648\u0644</h2><p>\u0645\u062a\u0646 \u0627\u0648\u0644.</p>"
+                "<h2>\u0628\u062e\u0634 \u062f\u0648\u0645</h2><p>\u0645\u062a\u0646 \u062f\u0648\u0645.</p>"
             ),
             "status": "approved",
         },
@@ -309,7 +312,7 @@ def test_interiors_inserted_without_placeholders(monkeypatch):
     second_h2_end = content.index("</h2>", first_h2_end) + len("</h2>")
     figs = [i for i, ch in enumerate(content) if content.startswith("<img", i)]
     assert len(figs) == 2
-    assert first_h2_end <= figs[0] < content.index("بخش دوم")
+    assert first_h2_end <= figs[0] < content.index("\u0628\u062e\u0634 \u062f\u0648\u0645")
     assert second_h2_end <= figs[1]
     assert 'loading="lazy"' in content
 
@@ -323,7 +326,10 @@ def test_interior_beyond_sections_appended(monkeypatch):
 
     ArticleRepo(pb).update(
         article["id"],
-        {"finalHtml": "<h1>عنوان</h1><p>متن.</p>", "status": "approved"},
+        {
+            "finalHtml": "<h1>\u0639\u0646\u0648\u0627\u0646</h1><p>\u0645\u062a\u0646.</p>",
+            "status": "approved",
+        },
     )
     set_plan(pb, article["id"], ["section-3"])
     article = pb.collection("articles").get_one(article["id"])

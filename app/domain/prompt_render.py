@@ -14,37 +14,44 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from app.i18n import _
+
 _TOKEN_RE = re.compile(r"\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}")
 _UNCLOSED_RE = re.compile(r"\{\{[^{}]*$")
 
-# Canonical variable registry: name → Persian description (shown in the UI).
-VARIABLE_REGISTRY: dict[str, str] = {
-    "project.name": "نام پروژه",
-    "project.slug": "شناسه پروژه",
-    "project.language": "زبان پروژه",
-    "topic.title": "عنوان موضوع",
-    "topic.keyword": "کلمه کلیدی موضوع",
-    "topic.pillar": "ستون موضوع",
-    "topic.cluster": "خوشه موضوع",
-    "topic.type": "نوع موضوع",
-    "article.title": "عنوان مقاله",
-    "article.slug": "اسلاگ مقاله",
-    "article.meta_description": "متا توضیحات مقاله",
-    "section.heading": "تیتر بخش",
-    "section.content_brief": "خلاصه محتوای بخش (brief)",
-    "section.position": "شماره ترتیب بخش (۰ = بخش اول مقاله)",
-    "retrieved_context": "زمینه بازیابی — بخش‌های مرتبط از مقالات موجود",
-    "internal_links": "لینک‌های داخلی پیشنهادی (عنوان + آدرس)",
-    "seo_rules": "قوانین سئوی حل‌شده پروژه",
-    "internal_linking_rules": "قوانین لینک‌سازی داخلی حل‌شده پروژه",
-    "language": "زبان نگارش",
-    "raw_output": "خروجی خام مدل (فقط در پرامپت اعتبارسنجی)",
-    # image planning prompts
-    "prompt_language": "زبان پرامپت تصویری (مستقل از زبان مقاله)",
-    "sections": "فهرست بخش‌های مقاله برای برنامه‌ریزی تصویر",
-    "style_profile": "پروفایل سبک بصری پروژه (tone/palette/lighting)",
-    "max_interior_images": "حداکثر تعداد تصویر داخلی مجاز",
-}
+
+def variable_labels() -> dict[str, str]:
+    """Canonical variable registry: name → UI description.
+
+    Called per request so labels follow the active locale (see field_labels).
+    """
+    return {
+        "project.name": _("Project name"),
+        "project.slug": _("Project slug"),
+        "project.language": _("Project language"),
+        "topic.title": _("Topic title"),
+        "topic.keyword": _("Topic keyword"),
+        "topic.pillar": _("Topic pillar"),
+        "topic.cluster": _("Topic cluster"),
+        "topic.type": _("Topic type"),
+        "article.title": _("Article title"),
+        "article.slug": _("Article slug"),
+        "article.meta_description": _("Article meta description"),
+        "section.heading": _("Section heading"),
+        "section.content_brief": _("Section content brief"),
+        "section.position": _("Section position (0 = the first section)"),
+        "retrieved_context": _("Retrieved context — related sections from existing articles"),
+        "internal_links": _("Suggested internal links (title + URL)"),
+        "seo_rules": _("The project's resolved SEO rules"),
+        "internal_linking_rules": _("The project's resolved internal linking rules"),
+        "language": _("Writing language"),
+        "raw_output": _("Raw model output (validation prompt only)"),
+        # image planning prompts
+        "prompt_language": _("Image prompt language (independent of the article language)"),
+        "sections": _("Article section list for image planning"),
+        "style_profile": _("Project visual style profile (tone/palette/lighting)"),
+        "max_interior_images": _("Maximum allowed number of interior images"),
+    }
 
 
 class PromptRenderError(ValueError):
@@ -73,7 +80,7 @@ def validate_prompt(content: str) -> list[str]:
     """
     if not content:
         return []
-    unknown = [name for name in used_variables(content) if name not in VARIABLE_REGISTRY]
+    unknown = [name for name in used_variables(content) if name not in variable_labels()]
     return unknown
 
 
@@ -87,10 +94,11 @@ def render_prompt(content: str, variables: dict[str, Any] | None = None) -> str:
         return ""
     variables = variables or {}
     unknown: list[str] = []
+    known = variable_labels()
 
     def _sub(match: re.Match) -> str:
         name = match.group(1)
-        if name not in VARIABLE_REGISTRY:
+        if name not in known:
             unknown.append(name)
             return match.group(0)
         value = variables.get(name)

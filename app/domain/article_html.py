@@ -108,7 +108,7 @@ def build_article_html(
     for i, section in enumerate(sections, start=1):
         heading = normalize_article_html(section.get("heading") or "")
         if not heading:
-            heading = f"بخش {i}"
+            heading = f"\u0628\u062e\u0634 {i}"
         heading = _dedupe_heading(heading, used_headings)
         raw = normalize_article_html(section.get("content") or "")
         content = sanitize_html(raw) if sanitize else raw
@@ -119,7 +119,7 @@ def build_article_html(
 
     links = _valid_internal_links(internal_links or [])
     if links:
-        parts.append("<h2>مطالب مرتبط</h2>")
+        parts.append("<h2>\u0645\u0637\u0627\u0644\u0628 \u0645\u0631\u062a\u0628\u0637</h2>")
         items = "".join(
             f'<li><a href="{_escape(link["url"])}" target="_blank" rel="noopener">{_escape(link["anchor_text"] or link["title"])}</a></li>'
             for link in links

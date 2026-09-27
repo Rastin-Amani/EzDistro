@@ -163,54 +163,54 @@ def status_badge(status: str) -> str:
 
 def status_label(status: str) -> str:
     labels = {
-        "pending": _("در انتظار"),
-        "retrying": _("در انتظار تلاش مجدد"),
-        "running": _("در حال اجرا"),
-        "completed": _("تکمیل شده"),
-        "failed": _("ناموفق"),
-        "cancelled": _("لغو شده"),
-        "planned": _("برنامه‌ریزی‌شده"),
-        "queued": _("در صف"),
-        "planning": _("در حال رئوس‌سازی"),
-        "outline_ready": _("رئوس آماده"),
-        "writing": _("در حال نگارش"),
-        "review": _("بازبینی"),
-        "approved": _("تأیید شده"),
-        "sent_back": _("بازگردانده شده"),
-        "publishing": _("در حال انتشار"),
-        "published": _("منتشر شده"),
-        "skipped": _("رد شده"),
-        "skipped_duplicate": _("تکراری"),
-        "draft": _("پیش‌نویس"),
-        "generating": _("در حال تولید"),
+        "pending": _("Pending"),
+        "retrying": _("Awaiting retry"),
+        "running": _("Running"),
+        "completed": _("Completed"),
+        "failed": _("Failed"),
+        "cancelled": _("Cancelled"),
+        "planned": _("Planned"),
+        "queued": _("Queued"),
+        "planning": _("Outlining"),
+        "outline_ready": _("Outline ready"),
+        "writing": _("Writing"),
+        "review": _("Review"),
+        "approved": _("Approved"),
+        "sent_back": _("Returned"),
+        "publishing": _("Publishing"),
+        "published": _("Published"),
+        "skipped": _("Rejected"),
+        "skipped_duplicate": _("Duplicate"),
+        "draft": _("Draft"),
+        "generating": _("Generating"),
         # images
-        "optimizing": _("در حال بهینه‌سازی"),
-        "ready": _("آماده"),
-        "uploading": _("در حال بارگذاری"),
-        "done": _("انجام شد"),
-        "indexed": _("نمایه شده"),
-        "deleted": _("حذف شده"),
-        "manual": _("دستی"),
-        "schedule": _("زمان‌بندی"),
-        "healthy": _("سالم"),
-        "degraded": _("مشکل‌دار"),
-        "unhealthy": _("ناسالم"),
-        "unknown": _("نامشخص"),
-        "info": _("اطلاعات"),
-        "warning": _("هشدار"),
-        "error": _("خطا"),
-        "debug": _("دیباگ"),
-        "job.created": _("ایجاد وظیفه"),
-        "job.claimed": _("دریافت وظیفه"),
-        "job.started": _("شروع وظیفه"),
-        "job.stage_started": _("شروع مرحله"),
-        "job.stage_completed": _("پایان مرحله"),
-        "job.retry_scheduled": _("زمان‌بندی تلاش مجدد"),
-        "job.provider_error": _("خطای ارائه‌دهنده"),
-        "job.completed": _("تکمیل وظیفه"),
-        "job.failed": _("شکست وظیفه"),
-        "job.cancelled": _("لغو وظیفه"),
-        "provider_call": _("فراخوانی ارائه‌دهنده"),
+        "optimizing": _("Optimizing"),
+        "ready": _("Ready"),
+        "uploading": _("Uploading"),
+        "done": _("Done"),
+        "indexed": _("Indexed"),
+        "deleted": _("Deleted"),
+        "manual": _("Manual"),
+        "schedule": _("Schedule"),
+        "healthy": _("Healthy"),
+        "degraded": _("Degraded"),
+        "unhealthy": _("Unhealthy"),
+        "unknown": _("Unknown"),
+        "info": _("Info"),
+        "warning": _("Warning"),
+        "error": _("Error"),
+        "debug": _("Debug"),
+        "job.created": _("Job created"),
+        "job.claimed": _("Job claimed"),
+        "job.started": _("Job started"),
+        "job.stage_started": _("Stage started"),
+        "job.stage_completed": _("Stage finished"),
+        "job.retry_scheduled": _("Retry scheduled"),
+        "job.provider_error": _("Provider error"),
+        "job.completed": _("Job completed"),
+        "job.failed": _("Job failed"),
+        "job.cancelled": _("Job cancelled"),
+        "provider_call": _("Provider call"),
     }
     return labels.get(status, status)
 
@@ -226,15 +226,15 @@ def to_rel_time(date_str):
 
     seconds = max(0, int((dt.datetime.now(dt.UTC) - parsed.replace(tzinfo=dt.UTC)).total_seconds()))
     if seconds < 45:
-        return _("همین حالا")
+        return _("just now")
     if seconds < 3600:
         n = seconds // 60
-        return ngettext("۱ دقیقه پیش", "%(n)d دقیقه پیش", n) % {"n": n}
+        return ngettext("1 minute ago", "%(n)d minutes ago", n) % {"n": n}
     if seconds < 86400:
         n = seconds // 3600
-        return ngettext("۱ ساعت پیش", "%(n)d ساعت پیش", n) % {"n": n}
+        return ngettext("1 hour ago", "%(n)d hours ago", n) % {"n": n}
     n = seconds // 86400
-    return ngettext("۱ روز پیش", "%(n)d روز پیش", n) % {"n": n}
+    return ngettext("1 day ago", "%(n)d days ago", n) % {"n": n}
 
 
 # ---------------------------------------------------------------------------

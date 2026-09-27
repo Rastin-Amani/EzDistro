@@ -31,7 +31,7 @@ router = APIRouter()
 
 
 @router.get("/projects/{project_id}/articles/{article_id}/workspace", response_class=HTMLResponse)
-@page_guard(_("مشکلی در بارگذاری کارگاه مقاله پیش آمد — دوباره تلاش کنید."))
+@page_guard("Something went wrong loading the article workspace — please try again.")
 def article_workspace(request: Request, project_id: str, article_id: str):
     project = require_project_access(request, project_id)
     article = ArticleRepo(request.state.pb).get(article_id)
@@ -39,7 +39,7 @@ def article_workspace(request: Request, project_id: str, article_id: str):
         return templates.TemplateResponse(
             request,
             "pages/articles/not_found.html",
-            {"title": _("مقاله یافت نشد"), "project": project},
+            {"title": _("Article not found"), "project": project},
         )
     sections = SectionRepo(request.state.pb).list_for_article(article_id)
     topic = TopicRepo(request.state.pb).get(article.get("topicId") or "")
@@ -50,7 +50,7 @@ def article_workspace(request: Request, project_id: str, article_id: str):
         request,
         "pages/articles/workspace.html",
         {
-            "title": article.get("title", _("مقاله")),
+            "title": article.get("title", _("Article")),
             "project": project,
             "article": article,
             "sections": sections,
@@ -186,7 +186,7 @@ def section_status(request: Request, project_id: str, article_id: str, section_i
 
 
 @router.post("/projects/{project_id}/articles/{article_id}/status")
-@hx_error(_("تغییر وضعیت ناموفق بود"))
+@hx_error("Toggling failed")
 def set_article_status(request: Request, project_id: str, article_id: str, status: str = Form("")):
     """Explicit status transitions from the workspace (e.g. review → ready_to_publish)."""
     require_hx(request)
@@ -194,18 +194,18 @@ def set_article_status(request: Request, project_id: str, article_id: str, statu
     require_project_role(request, project_id)
     article = ArticleRepo(request.state.pb).get(article_id)
     if not article or article.get("project") != project_id:
-        return error_response(_("مقاله یافت نشد"))
+        return error_response(_("Article not found"))
     if status == "ready_to_publish" and article.get("status") not in (
         "review",
         "ready_to_publish",
     ):
-        return error_response(_("مقاله هنوز آماده انتشار نیست"))
+        return error_response(_("Article is not ready to publish yet"))
     ArticleRepo(request.state.pb).set_status(article_id, status)
-    return success_response(_("وضعیت مقاله به‌روزرسانی شد"), extra_events={"refreshArticle": True})
+    return success_response(_("Article status updated"), extra_events={"refreshArticle": True})
 
 
 @router.post("/projects/{project_id}/articles/{article_id}/assemble")
-@hx_error(_("برنامه‌ریزی بازسازی ناموفق بود"))
+@hx_error("Scheduling rebuild failed")
 def queue_assemble(request: Request, project_id: str, article_id: str):
     """Queue an assemble job (rebuild final HTML from current sections).
 
@@ -217,13 +217,13 @@ def queue_assemble(request: Request, project_id: str, article_id: str):
     require_project_role(request, project_id)
     article = ArticleRepo(request.state.pb).get(article_id)
     if not article or article.get("project") != project_id:
-        return error_response(_("مقاله یافت نشد"))
+        return error_response(_("Article not found"))
     active = JobRepo(request.state.pb).first(
         filter=f'type="assemble_article" && payload.articleId="{article_id}" && (status="pending" || status="retrying" || status="running")'
     )
     if active:
         return success_response(
-            _("مقاله در حال ساخت است — صفحه خودبه‌خود تازه می‌شود"),
+            _("Article is being built — the page refreshes automatically"),
             extra_events={"refreshArticle": True},
         )
     JobRepo(request.state.pb).create(
@@ -236,7 +236,7 @@ def queue_assemble(request: Request, project_id: str, article_id: str):
         entity_id=article_id,
     )
     return success_response(
-        _("بازسازی مقاله برنامه‌ریزی شد"),
+        _("Article rebuild scheduled"),
         extra_events={"refreshArticle": True, "refreshJobs": True},
     )
 
@@ -252,7 +252,7 @@ def _load_article(request: Request, project_id: str, article_id: str) -> dict | 
 
 
 @router.post("/projects/{project_id}/articles/{article_id}/outline/sections/{position}/move")
-@hx_error(_("جابه‌جایی بخش ناموفق بود"))
+@hx_error("Moving section failed")
 def outline_move(
     request: Request, project_id: str, article_id: str, position: int, direction: str = Form("")
 ):
@@ -261,16 +261,16 @@ def outline_move(
     require_project_role(request, project_id)
     article = _load_article(request, project_id, article_id)
     if not article:
-        return error_response(_("مقاله یافت نشد"))
+        return error_response(_("Article not found"))
     try:
         OutlineEditor(request.state.pb).move(article, position, direction)
     except ValueError as e:
         return error_response(str(e))
-    return success_response(_("بخش جابه‌جا شد"), extra_events={"refreshArticle": True})
+    return success_response(_("Section moved"), extra_events={"refreshArticle": True})
 
 
 @router.post("/projects/{project_id}/articles/{article_id}/outline/sections/add")
-@hx_error(_("افزودن بخش ناموفق بود"))
+@hx_error("Adding section failed")
 def outline_add(
     request: Request,
     project_id: str,
@@ -283,32 +283,32 @@ def outline_add(
     require_project_role(request, project_id)
     article = _load_article(request, project_id, article_id)
     if not article:
-        return error_response(_("مقاله یافت نشد"))
+        return error_response(_("Article not found"))
     try:
         OutlineEditor(request.state.pb).add(article, safe_str(heading), safe_str(content_brief))
     except ValueError as e:
         return error_response(str(e))
-    return success_response(_("بخش اضافه شد"), extra_events={"refreshArticle": True})
+    return success_response(_("Section added"), extra_events={"refreshArticle": True})
 
 
 @router.post("/projects/{project_id}/articles/{article_id}/outline/sections/{position}/delete")
-@hx_error(_("حذف بخش ناموفق بود"))
+@hx_error("Deleting section failed")
 def outline_delete(request: Request, project_id: str, article_id: str, position: int):
     require_hx(request)
     require_project_access(request, project_id)
     require_project_role(request, project_id)
     article = _load_article(request, project_id, article_id)
     if not article:
-        return error_response(_("مقاله یافت نشد"))
+        return error_response(_("Article not found"))
     try:
         OutlineEditor(request.state.pb).delete(article, position)
     except ValueError as e:
         return error_response(str(e))
-    return success_response(_("بخش حذف شد"), extra_events={"refreshArticle": True})
+    return success_response(_("Section deleted"), extra_events={"refreshArticle": True})
 
 
 @router.post("/projects/{project_id}/articles/{article_id}/outline/sections/{position}/brief")
-@hx_error(_("ذخیره خلاصه ناموفق بود"))
+@hx_error("Saving brief failed")
 def outline_update_brief(
     request: Request,
     project_id: str,
@@ -322,7 +322,7 @@ def outline_update_brief(
     require_project_role(request, project_id)
     article = _load_article(request, project_id, article_id)
     if not article:
-        return error_response(_("مقاله یافت نشد"))
+        return error_response(_("Article not found"))
     try:
         OutlineEditor(request.state.pb).update_brief(
             article, position, safe_str(heading), safe_str(content_brief)
@@ -330,7 +330,7 @@ def outline_update_brief(
     except ValueError as e:
         return error_response(str(e))
     return success_response(
-        _("خلاصه بخش ذخیره شد — بخش برای بازتولید علامت‌گذاری شد"),
+        _("Section brief saved — section marked for regeneration"),
         extra_events={"refreshArticle": True},
     )
 
@@ -357,7 +357,7 @@ def _live_validation(pb: Any, article: dict, sections: list[dict], keyword: str)
 
 
 @router.get("/projects/{project_id}/articles/{article_id}/review", response_class=HTMLResponse)
-@page_guard(_("مشکلی در بارگذاری صفحه بازبینی پیش آمد — دوباره تلاش کنید."))
+@page_guard("Something went wrong loading the review page — please try again.")
 def article_review(request: Request, project_id: str, article_id: str):
     project = require_project_access(request, project_id)
     article = ArticleRepo(request.state.pb).get(article_id)
@@ -365,7 +365,7 @@ def article_review(request: Request, project_id: str, article_id: str):
         return templates.TemplateResponse(
             request,
             "pages/articles/not_found.html",
-            {"title": _("مقاله یافت نشد"), "project": project},
+            {"title": _("Article not found"), "project": project},
         )
     sections = SectionRepo(request.state.pb).list_for_article(article_id)
     topic = TopicRepo(request.state.pb).get(article.get("topicId") or "")
@@ -378,7 +378,7 @@ def article_review(request: Request, project_id: str, article_id: str):
         request,
         "pages/articles/review.html",
         {
-            "title": _("بازبینی — %(title)s") % {"title": article.get("title", "")},
+            "title": _("Review — %(title)s") % {"title": article.get("title", "")},
             "project": project,
             "article": article,
             "sections": sections,
@@ -391,7 +391,7 @@ def article_review(request: Request, project_id: str, article_id: str):
 
 
 @router.post("/projects/{project_id}/articles/{article_id}/approve")
-@hx_error(_("تأیید مقاله ناموفق بود"))
+@hx_error("Approving article failed")
 def approve_article(request: Request, project_id: str, article_id: str):
     """review → approved. Only allowed when the live validation passes."""
     require_hx(request)
@@ -399,9 +399,9 @@ def approve_article(request: Request, project_id: str, article_id: str):
     require_project_role(request, project_id)
     article = ArticleRepo(request.state.pb).get(article_id)
     if not article or article.get("project") != project_id:
-        return error_response(_("مقاله یافت نشد"))
+        return error_response(_("Article not found"))
     if article.get("status") != "review":
-        return error_response(_("فقط مقاله در وضعیت بازبینی قابل تأیید است"))
+        return error_response(_("Only articles in review status can be approved"))
     sections = SectionRepo(request.state.pb).list_for_article(article_id)
     topic = TopicRepo(request.state.pb).get(article.get("topicId") or "")
     report = _live_validation(
@@ -409,7 +409,7 @@ def approve_article(request: Request, project_id: str, article_id: str):
     )
     if not report.ok:
         issues = "; ".join(i.message for i in report.issues[:5])
-        return error_response(_("مقاله اعتبارسنجی را پاس نکرد: %(issues)s") % {"issues": issues})
+        return error_response(_("Article failed validation: %(issues)s") % {"issues": issues})
     RevisionService(request.state.pb).snapshot(
         article,
         "manual",
@@ -418,12 +418,12 @@ def approve_article(request: Request, project_id: str, article_id: str):
     )
     ArticleRepo(request.state.pb).set_approved(article_id)
     return success_response(
-        _("مقاله تأیید شد — انتشار فعال شد"), extra_events={"refreshArticle": True}
+        _("Article approved — publishing enabled"), extra_events={"refreshArticle": True}
     )
 
 
 @router.post("/projects/{project_id}/articles/{article_id}/send-back")
-@hx_error(_("بازگرداندن مقاله ناموفق بود"))
+@hx_error("Returning article failed")
 def send_back_article(request: Request, project_id: str, article_id: str, note: str = Form("")):
     """review/approved → sent_back with reviewer feedback (history preserved)."""
     require_hx(request)
@@ -431,9 +431,9 @@ def send_back_article(request: Request, project_id: str, article_id: str, note: 
     require_project_role(request, project_id)
     article = ArticleRepo(request.state.pb).get(article_id)
     if not article or article.get("project") != project_id:
-        return error_response(_("مقاله یافت نشد"))
+        return error_response(_("Article not found"))
     if article.get("status") not in ("review", "approved"):
-        return error_response(_("مقاله در وضعیت قابل بازگشت نیست"))
+        return error_response(_("Article is not in a returnable state"))
     RevisionService(request.state.pb).snapshot(
         article,
         "manual",
@@ -441,11 +441,11 @@ def send_back_article(request: Request, project_id: str, article_id: str, note: 
         created_by=require_user(request).get("id", ""),
     )
     ArticleRepo(request.state.pb).send_back(article_id, safe_str(note))
-    return success_response(_("مقاله بازگردانده شد"), extra_events={"refreshArticle": True})
+    return success_response(_("Article returned"), extra_events={"refreshArticle": True})
 
 
 @router.post("/projects/{project_id}/articles/{article_id}/revisions/{revision_id}/rollback")
-@hx_error(_("بازگشت به نسخه ناموفق بود"))
+@hx_error("Rolling back to version failed")
 def rollback_article(request: Request, project_id: str, article_id: str, revision_id: str):
     require_hx(request)
     require_project_access(request, project_id)
@@ -458,4 +458,4 @@ def rollback_article(request: Request, project_id: str, article_id: str, revisio
     except ValueError as e:
         return error_response(str(e))
     ArticleRepo(request.state.pb).set_status(article_id, "review")
-    return success_response(_("بازگشت به نسخه انجام شد"), extra_events={"refreshArticle": True})
+    return success_response(_("Rolled back to version"), extra_events={"refreshArticle": True})

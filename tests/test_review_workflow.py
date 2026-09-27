@@ -26,36 +26,52 @@ from tests.fakes import FakePocketBase, default_unique_fields
 
 def make_project(pb: FakePocketBase) -> dict[str, Any]:
     project = pb.collection("projects").create(
-        {"name": "پ", "slug": "p1", "language": "fa", "status": "active", "timezone": "Asia/Tehran"}
+        {
+            "name": "\u067e",
+            "slug": "p1",
+            "language": "fa",
+            "status": "active",
+            "timezone": "Asia/Tehran",
+        }
     )
     pb.collection("project_settings").create({"project": project["id"], **DEFAULT_SETTINGS})
     return project
 
 
 def make_article(pb: FakePocketBase, project_id: str, status: str = "review") -> dict[str, Any]:
-    topic = TopicRepo(pb).create(project=project_id, title="سئو", keyword="سئو")
+    topic = TopicRepo(pb).create(
+        project=project_id, title="\u0633\u0626\u0648", keyword="\u0633\u0626\u0648"
+    )
     article = pb.collection("articles").create(
         {
             "project": project_id,
             "topicId": topic["id"],
-            "title": "راهنمای سئو",
+            "title": "\u0631\u0627\u0647\u0646\u0645\u0627\u06cc \u0633\u0626\u0648",
             "slug": "rahnama-seo",
             "status": status,
             "outlineVersion": 1,
             "outline": {
-                "title": "راهنمای سئو",
+                "title": "\u0631\u0627\u0647\u0646\u0645\u0627\u06cc \u0633\u0626\u0648",
                 "slug": "rahnama-seo",
                 "sections": [
-                    {"heading": "مقدمه", "content_brief": "خلاصه مقدمه", "internal_links": []},
-                    {"heading": "تکنیکها", "content_brief": "خلاصه تکنیکها", "internal_links": []},
+                    {
+                        "heading": "\u0645\u0642\u062f\u0645\u0647",
+                        "content_brief": "\u062e\u0644\u0627\u0635\u0647 \u0645\u0642\u062f\u0645\u0647",
+                        "internal_links": [],
+                    },
+                    {
+                        "heading": "\u062a\u06a9\u0646\u06cc\u06a9\u0647\u0627",
+                        "content_brief": "\u062e\u0644\u0627\u0635\u0647 \u062a\u06a9\u0646\u06cc\u06a9\u0647\u0627",
+                        "internal_links": [],
+                    },
                 ],
             },
-            "finalHtml": "<h1>راهنمای سئو</h1><h2>مقدمه</h2><p>"
-            + ("کلمه " * 200).strip()
-            + "</p><h2>تکنیکها</h2><p>"
-            + ("کلمه " * 200).strip()
+            "finalHtml": "<h1>\u0631\u0627\u0647\u0646\u0645\u0627\u06cc \u0633\u0626\u0648</h1><h2>\u0645\u0642\u062f\u0645\u0647</h2><p>"
+            + ("\u06a9\u0644\u0645\u0647 " * 200).strip()
+            + "</p><h2>\u062a\u06a9\u0646\u06cc\u06a9\u0647\u0627</h2><p>"
+            + ("\u06a9\u0644\u0645\u0647 " * 200).strip()
             + "</p>",
-            "metaDescription": "خلاصه",
+            "metaDescription": "\u062e\u0644\u0627\u0635\u0647",
             "wordCount": 400,
             "seoScore": 70,
         }
@@ -69,7 +85,7 @@ def make_article(pb: FakePocketBase, project_id: str, status: str = "review") ->
                 "contentBrief": plan["content_brief"],
                 "internalLinks": [],
                 "status": "done",
-                "content": "<p>" + ("کلمه " * 200).strip() + "</p>",
+                "content": "<p>" + ("\u06a9\u0644\u0645\u0647 " * 200).strip() + "</p>",
                 "generationAttempts": 1,
                 "promptVersion": 1,
                 "provider": "openai_compat",
@@ -99,15 +115,15 @@ def make_ctx(pb: FakePocketBase, registry: FakeRegistry, job: dict[str, Any]) ->
 # ---------------------------------------------------------------------------
 def test_validator_flags_duplicate_headings_broken_links_suspicious():
     html = (
-        "<h2>تکرار</h2><p>متن</p><h2>تکرار</h2><p>متن</p>"
+        "<h2>\u062a\u06a9\u0631\u0627\u0631</h2><p>\u0645\u062a\u0646</p><h2>\u062a\u06a9\u0631\u0627\u0631</h2><p>\u0645\u062a\u0646</p>"
         '<a href="javascript:alert(1)">x</a>'
         "<p>{{ unrendered }}</p><p>lorem ipsum</p>"
     )
     report = ArticleValidator(min_words=10).validate(
-        title="ت",
+        title="\u062a",
         slug="t",
         outline={},
-        sections=[{"heading": "الف", "content": "<p>متن</p>"}],
+        sections=[{"heading": "\u0627\u0644\u0641", "content": "<p>\u0645\u062a\u0646</p>"}],
         html=html,
     )
     codes = {i.code for i in report.issues}
@@ -117,12 +133,12 @@ def test_validator_flags_duplicate_headings_broken_links_suspicious():
 
 
 def test_validator_keyword_requirements():
-    html = "<h2>بخش</h2><p>" + ("کلمه " * 50).strip() + "</p>"
-    report = ArticleValidator(min_words=10, keyword="سئو").validate(
-        title="بدون کلیدواژه",
+    html = "<h2>\u0628\u062e\u0634</h2><p>" + ("\u06a9\u0644\u0645\u0647 " * 50).strip() + "</p>"
+    report = ArticleValidator(min_words=10, keyword="\u0633\u0626\u0648").validate(
+        title="\u0628\u062f\u0648\u0646 \u06a9\u0644\u06cc\u062f\u0648\u0627\u0698\u0647",
         slug="t",
         outline={},
-        sections=[{"heading": "ب", "content": "<p>x</p>"}],
+        sections=[{"heading": "\u0628", "content": "<p>x</p>"}],
         html=html,
     )
     codes = {i.code for i in report.issues}
@@ -142,7 +158,11 @@ def test_revision_snapshot_and_rollback_never_destroys_previous():
     v1 = service.snapshot(article, "generated", note="first")
     # mutate the article (simulate regeneration)
     pb.collection("articles").update(
-        article["id"], {"title": "عنوان جدید", "finalHtml": "<h1>جدید</h1>"}
+        article["id"],
+        {
+            "title": "\u0639\u0646\u0648\u0627\u0646 \u062c\u062f\u06cc\u062f",
+            "finalHtml": "<h1>\u062c\u062f\u06cc\u062f</h1>",
+        },
     )
     changed = pb.collection("articles").get_one(article["id"])
     v2 = service.snapshot(changed, "generated", note="second")
@@ -153,8 +173,10 @@ def test_revision_snapshot_and_rollback_never_destroys_previous():
 
     # rollback to v1 restores the old title + sections
     restored = service.rollback(article["id"], v1["id"], created_by="reviewer")
-    assert restored["title"] == "راهنمای سئو"
-    assert "راهنمای سئو" in (restored.get("finalHtml") or "")
+    assert restored["title"] == "\u0631\u0627\u0647\u0646\u0645\u0627\u06cc \u0633\u0626\u0648"
+    assert "\u0631\u0627\u0647\u0646\u0645\u0627\u06cc \u0633\u0626\u0648" in (
+        restored.get("finalHtml") or ""
+    )
     # rollback itself is recorded (3 revisions now)
     assert len(service.list(article["id"])) == 3
     # sections restored with content
@@ -210,9 +232,9 @@ def test_publish_requires_approved_state():
 # Regeneration preserves history
 # ---------------------------------------------------------------------------
 OUTLINE_JSON = (
-    '{"title": "راهنمای سئو", "slug": "rahnama-seo", "sections": ['
-    '{"heading": "مقدمه", "content_brief": "خلاصه مقدمه"},'
-    '{"heading": "تکنیکها", "content_brief": "خلاصه تکنیکها"}]}'
+    '{"title": "\u0631\u0627\u0647\u0646\u0645\u0627\u06cc \u0633\u0626\u0648", "slug": "rahnama-seo", "sections": ['
+    '{"heading": "\u0645\u0642\u062f\u0645\u0647", "content_brief": "\u062e\u0644\u0627\u0635\u0647 \u0645\u0642\u062f\u0645\u0647"},'
+    '{"heading": "\u062a\u06a9\u0646\u06cc\u06a9\u0647\u0627", "content_brief": "\u062e\u0644\u0627\u0635\u0647 \u062a\u06a9\u0646\u06cc\u06a9\u0647\u0627"}]}'
 )
 
 
@@ -220,10 +242,13 @@ def test_regenerate_article_preserves_previous_version():
     pb = FakePocketBase(default_unique_fields())
     project = make_project(pb)
     for ptype, content in (
-        ("brand_voice", "تو نویسنده سئو هستی."),
-        ("outline_user", "JSON برگردان."),
-        ("section_user", "HTML برگردان."),
-        ("seo_rules", "قوانین."),
+        (
+            "brand_voice",
+            "\u062a\u0648 \u0646\u0648\u06cc\u0633\u0646\u062f\u0647 \u0633\u0626\u0648 \u0647\u0633\u062a\u06cc.",
+        ),
+        ("outline_user", "JSON \u0628\u0631\u06af\u0631\u062f\u0627\u0646."),
+        ("section_user", "HTML \u0628\u0631\u06af\u0631\u062f\u0627\u0646."),
+        ("seo_rules", "\u0642\u0648\u0627\u0646\u06cc\u0646."),
     ):
         PromptRepo(pb).save_version(
             project_id=project["id"], ptype=ptype, name="default", content=content
@@ -231,10 +256,16 @@ def test_regenerate_article_preserves_previous_version():
 
     article = make_article(pb, project["id"], status="sent_back")
     pb.collection("articles").update(
-        article["id"], {"finalHtml": "<h1>نسخه قبلی</h1>", "title": "نسخه قبلی"}
+        article["id"],
+        {
+            "finalHtml": "<h1>\u0646\u0633\u062e\u0647 \u0642\u0628\u0644\u06cc</h1>",
+            "title": "\u0646\u0633\u062e\u0647 \u0642\u0628\u0644\u06cc",
+        },
     )
     registry = FakeRegistry()
-    registry.llm.responses = [OUTLINE_JSON] + ["<p>" + ("کلمه " * 200).strip() + "</p>"] * 2
+    registry.llm.responses = [OUTLINE_JSON] + [
+        "<p>" + ("\u06a9\u0644\u0645\u0647 " * 200).strip() + "</p>"
+    ] * 2
 
     # regenerate from sent_back
     job = JobRepo(pb).create(
@@ -252,8 +283,10 @@ def test_regenerate_article_preserves_previous_version():
     kinds = [r["kind"] for r in revisions]
     assert "checkpoint" in kinds
     checkpoint = next(r for r in revisions if r["kind"] == "checkpoint")
-    assert checkpoint["snapshot"]["title"] == "نسخه قبلی"
-    assert "نسخه قبلی" in checkpoint["snapshot"]["finalHtml"]
+    assert checkpoint["snapshot"]["title"] == "\u0646\u0633\u062e\u0647 \u0642\u0628\u0644\u06cc"
+    assert (
+        "\u0646\u0633\u062e\u0647 \u0642\u0628\u0644\u06cc" in checkpoint["snapshot"]["finalHtml"]
+    )
 
 
 def test_regenerate_from_review_proceeds_not_already_written():
@@ -263,10 +296,13 @@ def test_regenerate_from_review_proceeds_not_already_written():
     pb = FakePocketBase(default_unique_fields())
     project = make_project(pb)
     for ptype, content in (
-        ("brand_voice", "تو نویسنده سئو هستی."),
-        ("outline_user", "JSON برگردان."),
-        ("section_user", "HTML برگردان."),
-        ("seo_rules", "قوانین."),
+        (
+            "brand_voice",
+            "\u062a\u0648 \u0646\u0648\u06cc\u0633\u0646\u062f\u0647 \u0633\u0626\u0648 \u0647\u0633\u062a\u06cc.",
+        ),
+        ("outline_user", "JSON \u0628\u0631\u06af\u0631\u062f\u0627\u0646."),
+        ("section_user", "HTML \u0628\u0631\u06af\u0631\u062f\u0627\u0646."),
+        ("seo_rules", "\u0642\u0648\u0627\u0646\u06cc\u0646."),
     ):
         PromptRepo(pb).save_version(
             project_id=project["id"], ptype=ptype, name="default", content=content
@@ -277,7 +313,9 @@ def test_regenerate_from_review_proceeds_not_already_written():
     TopicRepo(pb).set_status(article["topicId"], "review")
 
     registry = FakeRegistry()
-    registry.llm.responses = [OUTLINE_JSON] + ["<p>" + ("کلمه " * 200).strip() + "</p>"] * 2
+    registry.llm.responses = [OUTLINE_JSON] + [
+        "<p>" + ("\u06a9\u0644\u0645\u0647 " * 200).strip() + "</p>"
+    ] * 2
     job = JobRepo(pb).create(
         project=project["id"],
         type="write_article",
@@ -300,10 +338,13 @@ def test_section_regeneration_restores_article_status():
     pb = FakePocketBase(default_unique_fields())
     project = make_project(pb)
     for ptype, content in (
-        ("brand_voice", "تو نویسنده سئو هستی."),
-        ("outline_user", "JSON برگردان."),
-        ("section_user", "HTML برگردان."),
-        ("seo_rules", "قوانین."),
+        (
+            "brand_voice",
+            "\u062a\u0648 \u0646\u0648\u06cc\u0633\u0646\u062f\u0647 \u0633\u0626\u0648 \u0647\u0633\u062a\u06cc.",
+        ),
+        ("outline_user", "JSON \u0628\u0631\u06af\u0631\u062f\u0627\u0646."),
+        ("section_user", "HTML \u0628\u0631\u06af\u0631\u062f\u0627\u0646."),
+        ("seo_rules", "\u0642\u0648\u0627\u0646\u06cc\u0646."),
     ):
         PromptRepo(pb).save_version(
             project_id=project["id"], ptype=ptype, name="default", content=content
@@ -315,7 +356,7 @@ def test_section_regeneration_restores_article_status():
     pb.collection("article_sections").update(section["id"], {"status": "pending", "content": ""})
 
     registry = FakeRegistry()
-    registry.llm.responses = ["<p>" + ("کلمه " * 200).strip() + "</p>"]
+    registry.llm.responses = ["<p>" + ("\u06a9\u0644\u0645\u0647 " * 200).strip() + "</p>"]
     job = JobRepo(pb).create(
         project=project["id"],
         type="generate_section",
@@ -340,7 +381,7 @@ def test_approve_requires_valid_article():
     pb.collection("articles").update(article["id"], {"finalHtml": "", "title": ""})
     broken = pb.collection("articles").get_one(article["id"])
     sections = SectionRepo(pb).list_for_article(article["id"])
-    report = _live_validation(pb, broken, sections, "سئو")
+    report = _live_validation(pb, broken, sections, "\u0633\u0626\u0648")
     assert report.ok is False
     codes = {i.code for i in report.issues}
     assert "missing_title" in codes

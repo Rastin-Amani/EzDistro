@@ -4,32 +4,41 @@ from app.domain.article_html import build_article_html, normalize_outline, slugi
 from app.domain.sanitize import sanitize_html
 
 GOOD_OUTLINE = {
-    "title": "راهنمای کامل سئو",
+    "title": "\u0631\u0627\u0647\u0646\u0645\u0627\u06cc \u06a9\u0627\u0645\u0644 \u0633\u0626\u0648",
     "slug": "rahnama-seo",
     "sections": [
         {
-            "heading": "مقدمه",
-            "content_brief": "خلاصه مقدمه",
+            "heading": "\u0645\u0642\u062f\u0645\u0647",
+            "content_brief": "\u062e\u0644\u0627\u0635\u0647 \u0645\u0642\u062f\u0645\u0647",
             "internal_links": [
                 {
-                    "title": "مقاله مرتبط",
+                    "title": "\u0645\u0642\u0627\u0644\u0647 \u0645\u0631\u062a\u0628\u0637",
                     "url": "https://example.com/related",
-                    "anchor_text": "مقاله مرتبط",
+                    "anchor_text": "\u0645\u0642\u0627\u0644\u0647 \u0645\u0631\u062a\u0628\u0637",
                 }
             ],
         },
-        {"heading": "تکنیک‌ها", "content_brief": "خلاصه تکنیک‌ها"},
+        {
+            "heading": "\u062a\u06a9\u0646\u06cc\u06a9\u200c\u0647\u0627",
+            "content_brief": "\u062e\u0644\u0627\u0635\u0647 \u062a\u06a9\u0646\u06cc\u06a9\u200c\u0647\u0627",
+        },
     ],
 }
 
 
 def test_normalize_outline_valid():
     result = normalize_outline(GOOD_OUTLINE)
-    assert result["title"] == "راهنمای کامل سئو"
+    assert (
+        result["title"]
+        == "\u0631\u0627\u0647\u0646\u0645\u0627\u06cc \u06a9\u0627\u0645\u0644 \u0633\u0626\u0648"
+    )
     assert result["slug"] == "rahnama-seo"
     assert len(result["sections"]) == 2
     assert result["sections"][0]["internal_links"][0]["url"] == "https://example.com/related"
-    assert result["sections"][0]["content_brief"] == "خلاصه مقدمه"
+    assert (
+        result["sections"][0]["content_brief"]
+        == "\u062e\u0644\u0627\u0635\u0647 \u0645\u0642\u062f\u0645\u0647"
+    )
 
 
 def test_normalize_outline_rejects_garbage():
@@ -44,57 +53,78 @@ def test_normalize_outline_rejects_garbage():
 
 
 def test_slugify_persian_and_ascii():
-    assert slugify("راهنمای کامل سئو") == "راهنمای-کامل-سئو"
+    assert (
+        slugify(
+            "\u0631\u0627\u0647\u0646\u0645\u0627\u06cc \u06a9\u0627\u0645\u0644 \u0633\u0626\u0648"
+        )
+        == "\u0631\u0627\u0647\u0646\u0645\u0627\u06cc-\u06a9\u0627\u0645\u0644-\u0633\u0626\u0648"
+    )
     assert slugify("Hello World!") == "hello-world"
     assert slugify("") == "post"
 
 
 def test_build_article_html_structure():
     html = build_article_html(
-        title="تیتر اصلی",
+        title="\u062a\u06cc\u062a\u0631 \u0627\u0635\u0644\u06cc",
         slug="titr-asli",
-        sections=[{"heading": "بخش ۱", "content": "<p>محتوا</p><script>alert(1)</script>"}],
-        internal_links=[{"title": "لینک", "url": "https://x.com", "anchor_text": "لینک"}],
+        sections=[
+            {
+                "heading": "\u0628\u062e\u0634 \u06f1",
+                "content": "<p>\u0645\u062d\u062a\u0648\u0627</p><script>alert(1)</script>",
+            }
+        ],
+        internal_links=[
+            {
+                "title": "\u0644\u06cc\u0646\u06a9",
+                "url": "https://x.com",
+                "anchor_text": "\u0644\u06cc\u0646\u06a9",
+            }
+        ],
     )
-    assert "<h1>تیتر اصلی</h1>" in html
-    assert "<h2>بخش ۱</h2>" in html
+    assert "<h1>\u062a\u06cc\u062a\u0631 \u0627\u0635\u0644\u06cc</h1>" in html
+    assert "<h2>\u0628\u062e\u0634 \u06f1</h2>" in html
     assert "<script>" not in html  # sanitized inside build
-    assert "مطالب مرتبط" in html
+    assert "\u0645\u0637\u0627\u0644\u0628 \u0645\u0631\u062a\u0628\u0637" in html
     assert 'href="https://x.com"' in html
 
 
 def test_build_article_html_dedupes_headings_and_keeps_order():
     html = build_article_html(
-        title="ت",
+        title="\u062a",
         sections=[
-            {"heading": "تکرار", "content": "<p>اول</p>"},
-            {"heading": "دیگر", "content": "<p>دوم</p>"},
-            {"heading": "تکرار", "content": "<p>سوم</p>"},
+            {"heading": "\u062a\u06a9\u0631\u0627\u0631", "content": "<p>\u0627\u0648\u0644</p>"},
+            {"heading": "\u062f\u06cc\u06af\u0631", "content": "<p>\u062f\u0648\u0645</p>"},
+            {"heading": "\u062a\u06a9\u0631\u0627\u0631", "content": "<p>\u0633\u0648\u0645</p>"},
         ],
     )
     assert (
-        html.index("<h2>تکرار</h2>")
-        < html.index("<h2>دیگر</h2>")
-        < html.index("<h2>تکرار (2)</h2>")
+        html.index("<h2>\u062a\u06a9\u0631\u0627\u0631</h2>")
+        < html.index("<h2>\u062f\u06cc\u06af\u0631</h2>")
+        < html.index("<h2>\u062a\u06a9\u0631\u0627\u0631 (2)</h2>")
     )
-    assert html.count("<h2>تکرار") == 2
+    assert html.count("<h2>\u062a\u06a9\u0631\u0627\u0631") == 2
     assert "<br>" not in html  # no arbitrary separators
     assert "<hr>" not in html
 
 
 def test_build_article_html_removes_markdown_fences():
     html = build_article_html(
-        title="ت",
-        sections=[{"heading": "ب", "content": "<p>متن</p>" + "```" + "\nکد\n" + "```"}],
+        title="\u062a",
+        sections=[
+            {
+                "heading": "\u0628",
+                "content": "<p>\u0645\u062a\u0646</p>" + "```" + "\n\u06a9\u062f\n" + "```",
+            }
+        ],
     )
     assert "```" not in html
-    assert "کد" in html  # fence markers removed; inner content kept as text
+    assert "\u06a9\u062f" in html  # fence markers removed; inner content kept as text
 
 
 def test_build_article_html_escapes_title():
     html = build_article_html(
         title='<script>alert("x")</script>',
-        sections=[{"heading": "ب", "content": "<p>c</p>"}],
+        sections=[{"heading": "\u0628", "content": "<p>c</p>"}],
     )
     assert "<script>" not in html
 
@@ -111,8 +141,8 @@ def test_sanitize_removes_dangerous_html():
 
 def test_sanitize_keeps_allowlist():
     clean = sanitize_html(
-        '<h2>تیتر</h2><p><strong>bold</strong> <a href="https://ok.com">link</a></p><ul><li>x</li></ul>'
+        '<h2>\u062a\u06cc\u062a\u0631</h2><p><strong>bold</strong> <a href="https://ok.com">link</a></p><ul><li>x</li></ul>'
     )
-    assert "<h2>تیتر</h2>" in clean
+    assert "<h2>\u062a\u06cc\u062a\u0631</h2>" in clean
     assert "<strong>bold</strong>" in clean
     assert 'href="https://ok.com"' in clean

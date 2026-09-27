@@ -7,7 +7,7 @@
         tabindex="0"
         role="button"
         class="btn btn-ghost btn-circle"
-        aria-label="{{ _('تغییر زبان') }}"
+        aria-label="{{ _('Change language') }}"
         aria-haspopup="menu"
     >
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
@@ -17,14 +17,14 @@
     <ul
         tabindex="0"
         role="menu"
-        aria-label="{{ _('زبان‌های موجود') }}"
-        class="dropdown-content menu z-50 w-44 rounded-box border border-base-300 bg-base-100 p-2 shadow-lg"
+        aria-label="{{ _('Available languages') }}"
+        class="dropdown-content menu z-50 w-44 rounded-box border border-base-300 bg-base-100 p-2"
     >
         {% set next_path = (request.url.path ~ ('?' ~ request.url.query if request.url.query else '')) if request is defined and request else '/' %}
         {% for l in locale.enabled() %}
         <li>
             <a
-                href="/locale/{{ l.code }}?next={{ next_path | urlencode }}"
+                href="/locale/{{ l.code }}?next_url={{ next_path | urlencode }}"
                 {% if l.code == locale.code %}class="active" aria-current="true"{% endif %}
                 lang="{{ l.code }}" dir="{{ l.direction }}"
             >{{ l.flag }} {{ l.native_name }}</a>

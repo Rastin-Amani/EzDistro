@@ -31,7 +31,7 @@ worker:
 # --- i18n workflow (gettext/Babel) ---
 # msgids are the Persian source strings; catalogs live in app/locales/<code>/LC_MESSAGES/.
 i18n-extract:
-	$(PYBABEL) extract -F babel.cfg -k _ -k ngettext:1,2 -o app/locales/messages.pot app
+	$(PYBABEL) extract -F babel.cfg -k _ -k ngettext:1,2 -k hx_error -k page_guard -o app/locales/messages.pot app
 
 i18n-add: i18n-extract ## new locale: make i18n-add LOCALE=de
 	$(PYBABEL) init -i app/locales/messages.pot -d app/locales -l $(LOCALE)

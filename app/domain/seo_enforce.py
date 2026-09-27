@@ -42,7 +42,9 @@ def enforce_outline(outline: dict[str, Any], keyword: str) -> dict[str, Any]:
     sections = list(out.get("sections") or [])
     if sections and not _any_heading_has_kw(sections, kw):
         first = dict(sections[0])
-        first["heading"] = _heading_with_kw(first.get("heading") or "مقدمه", kw)
+        first["heading"] = _heading_with_kw(
+            first.get("heading") or "\u0645\u0642\u062f\u0645\u0647", kw
+        )
         sections[0] = first
         out["sections"] = sections
     return out
@@ -73,7 +75,9 @@ def enforce_article_html(
     sections = list(sections)
     if kw and sections and not _any_heading_has_kw(sections, kw):
         first = dict(sections[0])
-        first["heading"] = _heading_with_kw(first.get("heading") or "مقدمه", kw)
+        first["heading"] = _heading_with_kw(
+            first.get("heading") or "\u0645\u0642\u062f\u0645\u0647", kw
+        )
         sections[0] = first
 
     def _build(intro: str = "") -> str:
@@ -111,6 +115,6 @@ def _first_paragraph_contains(html: str, keyword: str) -> bool:
 
 def _intro_paragraph(keyword: str) -> str:
     return (
-        f"{keyword} یکی از مهم‌ترین موضوعاتی است که در این مقاله به آن پرداخته شده است. "
-        f"در ادامه به بررسی کامل {keyword} و نکات کلیدی مرتبط با آن می‌پردازیم."
+        f"{keyword} \u06cc\u06a9\u06cc \u0627\u0632 \u0645\u0647\u0645\u200c\u062a\u0631\u06cc\u0646 \u0645\u0648\u0636\u0648\u0639\u0627\u062a\u06cc \u0627\u0633\u062a \u06a9\u0647 \u062f\u0631 \u0627\u06cc\u0646 \u0645\u0642\u0627\u0644\u0647 \u0628\u0647 \u0622\u0646 \u067e\u0631\u062f\u0627\u062e\u062a\u0647 \u0634\u062f\u0647 \u0627\u0633\u062a. "
+        f"\u062f\u0631 \u0627\u062f\u0627\u0645\u0647 \u0628\u0647 \u0628\u0631\u0631\u0633\u06cc \u06a9\u0627\u0645\u0644 {keyword} \u0648 \u0646\u06a9\u0627\u062a \u06a9\u0644\u06cc\u062f\u06cc \u0645\u0631\u062a\u0628\u0637 \u0628\u0627 \u0622\u0646 \u0645\u06cc\u200c\u067e\u0631\u062f\u0627\u0632\u06cc\u0645."
     )

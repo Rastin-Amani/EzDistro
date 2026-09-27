@@ -23,6 +23,7 @@ from app.domain.images import (
     validate_plan,
 )
 from app.domain.parsing import extract_json
+from app.i18n import _
 from app.jobs.context import JobContext
 from app.jobs.handlers import register_job
 from app.providers.base import GenerationParams, ProviderError
@@ -99,7 +100,7 @@ async def handle_plan_article_images(ctx: JobContext) -> dict[str, Any]:
         raise ValueError(f"article not found: {article_id}")
     if not (article.get("finalHtml") or article.get("generatedContent")):
         raise ProviderError(
-            "مقاله هنوز محتوایی ندارد — ابتدا نوشتن مقاله را کامل کنید",
+            _("The article has no content yet — finish writing it first"),
             retryable=False,
         )
 
@@ -127,7 +128,7 @@ async def handle_plan_article_images(ctx: JobContext) -> dict[str, Any]:
     user_tpl = ctx.config.prompt("image_plan_user")
     if not user_tpl:
         raise ProviderError(
-            "پرامپت image_plan_user تنظیم نشده است — بوت‌استرپ را اجرا کنید",
+            _("The image_plan_user prompt is not set — run the bootstrap"),
             retryable=False,
         )
     user = service.render(user_tpl, context)
@@ -141,7 +142,7 @@ async def handle_plan_article_images(ctx: JobContext) -> dict[str, Any]:
         timeout=float(role_cfg.get("timeout") or 120.0),
     )
 
-    ctx.stage_started("planning", "در حال طراحی برنامه تصاویر…")
+    ctx.stage_started("planning", _("Designing the image plan…"))
     started = time.monotonic()
     llm = ctx.providers.llm_for("outline")
     raw = await llm.generate(system=system, user=user, params=params)
@@ -154,7 +155,9 @@ async def handle_plan_article_images(ctx: JobContext) -> dict[str, Any]:
         )
         validate_plan(plan, max_interior=imgs["max_interior_images"])
     except ValueError as exc:
-        raise ProviderError(f"برنامه تصاویر نامعتبر بود: {exc}", retryable=False) from exc
+        raise ProviderError(
+            _("The image plan was invalid: %(error)s") % {"error": exc}, retryable=False
+        ) from exc
 
     # resolved dimensions per image (persisted into the plan snapshot)
     for spec in plan.images:
@@ -172,12 +175,12 @@ async def handle_plan_article_images(ctx: JobContext) -> dict[str, Any]:
     elapsed = int((time.monotonic() - started) * 1000)
     ctx.stage_completed(
         "planning",
-        "برنامه تصاویر آماده شد",
+        _("Image plan is ready"),
         {"cover": 1, "interiors": len(plan.interiors()), "version": version},
     )
     ctx.event(
         "image_plan_created",
-        "برنامه تصاویر ساخته شد",
+        _("Image plan created"),
         {
             "version": version,
             "interiors": len(plan.interiors()),

@@ -49,7 +49,7 @@ def test_article_detail_renders():
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(A.article_detail, req, proj_a["id"], article["id"])
     assert resp.status_code == 200
-    assert "عنوان مقاله" in resp.body.decode()
+    assert "Article title" in resp.body.decode()
 
 
 def test_article_detail_foreign_article_not_found_page():
@@ -58,7 +58,7 @@ def test_article_detail_foreign_article_not_found_page():
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(A.article_detail, req, proj_a["id"], foreign["id"])
     assert resp.status_code == 200
-    assert "یافت نشد" in resp.body.decode()
+    assert "\u06cc\u0627\u0641\u062a \u0646\u0634\u062f" in resp.body.decode()
 
 
 def test_article_workspace_renders_with_outline():
@@ -68,7 +68,7 @@ def test_article_workspace_renders_with_outline():
     resp = call_route(W.article_workspace, req, proj_a["id"], article["id"])
     assert resp.status_code == 200
     body = resp.body.decode()
-    assert "مقدمه" in body  # outline section heading rendered
+    assert "\u0645\u0642\u062f\u0645\u0647" in body  # outline section heading rendered
 
 
 def test_outline_pane_fragment_renders():
@@ -77,7 +77,7 @@ def test_outline_pane_fragment_renders():
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(W.article_outline_pane, req, proj_a["id"], article["id"])
     assert resp.status_code == 200
-    assert "مقدمه" in resp.body.decode()
+    assert "\u0645\u0642\u062f\u0645\u0647" in resp.body.decode()
 
 
 def test_section_status_fragment_renders():
@@ -87,23 +87,25 @@ def test_section_status_fragment_renders():
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(W.section_status, req, proj_a["id"], article["id"], section["id"])
     assert resp.status_code == 200
-    assert "انجام شد" in resp.body.decode()  # status badge fragment
+    assert (
+        "\u0627\u0646\u062c\u0627\u0645 \u0634\u062f" in resp.body.decode()
+    )  # status badge fragment
 
 
 def test_review_page_renders_validation_report():
     pb, proj_a, _ = _setup()
-    article = make_article(pb, proj_a["id"], final_html="<p>محتوا</p>")
+    article = make_article(pb, proj_a["id"], final_html="<p>\u0645\u062d\u062a\u0648\u0627</p>")
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(W.article_review, req, proj_a["id"], article["id"])
     assert resp.status_code == 200
-    assert "بازبینی" in resp.body.decode()
+    assert "\u0628\u0627\u0632\u0628\u06cc\u0646\u06cc" in resp.body.decode()
 
 
 def test_review_page_never_white_screens_on_internal_error(monkeypatch):
     """A data/render error in the review pipeline must surface a friendly
     error page (200 + Persian message), never a blank 500."""
     pb, proj_a, _ = _setup()
-    article = make_article(pb, proj_a["id"], final_html="<p>محتوا</p>")
+    article = make_article(pb, proj_a["id"], final_html="<p>\u0645\u062d\u062a\u0648\u0627</p>")
     req = make_req(pb, make_user(), proj_a["id"])
 
     def boom(*args, **kwargs):
@@ -113,8 +115,13 @@ def test_review_page_never_white_screens_on_internal_error(monkeypatch):
     resp = call_route(W.article_review, req, proj_a["id"], article["id"])
     assert resp.status_code == 200
     body = resp.body.decode()
-    assert "مشکلی در بارگذاری صفحه بازبینی" in body
-    assert "بازگشت به مقاله" in body
+    assert (
+        "\u0645\u0634\u06a9\u0644\u06cc \u062f\u0631 \u0628\u0627\u0631\u06af\u0630\u0627\u0631\u06cc \u0635\u0641\u062d\u0647 \u0628\u0627\u0632\u0628\u06cc\u0646\u06cc"
+        in body
+    )
+    assert (
+        "\u0628\u0627\u0632\u06af\u0634\u062a \u0628\u0647 \u0645\u0642\u0627\u0644\u0647" in body
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -127,7 +134,9 @@ def test_set_article_status_valid_transition():
     resp = call_route(
         W.set_article_status, req, proj_a["id"], article["id"], status="ready_to_publish"
     )
-    assert "به‌روزرسانی" in toast_message(resp)
+    assert "\u0628\u0647\u200c\u0631\u0648\u0632\u0631\u0633\u0627\u0646\u06cc" in toast_message(
+        resp
+    )
     assert ArticleRepo(pb).get(article["id"])["status"] == "ready_to_publish"
 
 
@@ -138,7 +147,10 @@ def test_set_article_status_rejects_premature_ready_to_publish():
     resp = call_route(
         W.set_article_status, req, proj_a["id"], article["id"], status="ready_to_publish"
     )
-    assert "آماده انتشار نیست" in toast_message(resp)
+    assert (
+        "\u0622\u0645\u0627\u062f\u0647 \u0627\u0646\u062a\u0634\u0627\u0631 \u0646\u06cc\u0633\u062a"
+        in toast_message(resp)
+    )
     assert ArticleRepo(pb).get(article["id"])["status"] == "draft"
 
 
@@ -147,22 +159,22 @@ def test_set_article_status_rejects_invalid_status():
     article = make_article(pb, proj_a["id"], status="review")
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(W.set_article_status, req, proj_a["id"], article["id"], status="bogus")
-    assert "ناموفق" in toast_message(resp)
+    assert "\u0646\u0627\u0645\u0648\u0641\u0642" in toast_message(resp)
     assert ArticleRepo(pb).get(article["id"])["status"] == "review"
 
 
 def test_approve_article_passes_validation():
     pb, proj_a, _ = _setup()
-    words = " ".join(f"کلمه {i}" for i in range(320))
+    words = " ".join(f"\u06a9\u0644\u0645\u0647 {i}" for i in range(320))
     article = make_article(
         pb,
         proj_a["id"],
         status="review",
-        final_html=f"<h2>مقدمه</h2><p>{words}</p>",
+        final_html=f"<h2>\u0645\u0642\u062f\u0645\u0647</h2><p>{words}</p>",
     )
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(W.approve_article, req, proj_a["id"], article["id"])
-    assert "تأیید شد" in toast_message(resp)
+    assert "\u062a\u0623\u06cc\u06cc\u062f \u0634\u062f" in toast_message(resp)
     assert ArticleRepo(pb).get(article["id"])["status"] == "approved"
 
 
@@ -171,7 +183,7 @@ def test_approve_article_refused_when_not_review():
     article = make_article(pb, proj_a["id"], status="draft")
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(W.approve_article, req, proj_a["id"], article["id"])
-    assert "بازبینی" in toast_message(resp)
+    assert "\u0628\u0627\u0632\u0628\u06cc\u0646\u06cc" in toast_message(resp)
     assert ArticleRepo(pb).get(article["id"])["status"] == "draft"
 
 
@@ -181,7 +193,9 @@ def test_approve_article_refused_when_validation_fails():
     article = make_article(pb, proj_a["id"], status="review", final_html="")
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(W.approve_article, req, proj_a["id"], article["id"])
-    assert "اعتبارسنجی" in toast_message(resp) or "پاس نکرد" in toast_message(resp)
+    assert "\u0627\u0639\u062a\u0628\u0627\u0631\u0633\u0646\u062c\u06cc" in toast_message(
+        resp
+    ) or "\u067e\u0627\u0633 \u0646\u06a9\u0631\u062f" in toast_message(resp)
     assert ArticleRepo(pb).get(article["id"])["status"] == "review"
 
 
@@ -189,11 +203,23 @@ def test_send_back_article_records_note():
     pb, proj_a, _ = _setup()
     article = make_article(pb, proj_a["id"], status="review")
     req = make_req(pb, make_user(), proj_a["id"])
-    resp = call_route(W.send_back_article, req, proj_a["id"], article["id"], note="بازنویسی مقدمه")
-    assert "بازگردانده شد" in toast_message(resp)
+    resp = call_route(
+        W.send_back_article,
+        req,
+        proj_a["id"],
+        article["id"],
+        note="\u0628\u0627\u0632\u0646\u0648\u06cc\u0633\u06cc \u0645\u0642\u062f\u0645\u0647",
+    )
+    assert (
+        "\u0628\u0627\u0632\u06af\u0631\u062f\u0627\u0646\u062f\u0647 \u0634\u062f"
+        in toast_message(resp)
+    )
     updated = ArticleRepo(pb).get(article["id"])
     assert updated["status"] == "sent_back"
-    assert updated["reviewNote"] == "بازنویسی مقدمه"
+    assert (
+        updated["reviewNote"]
+        == "\u0628\u0627\u0632\u0646\u0648\u06cc\u0633\u06cc \u0645\u0642\u062f\u0645\u0647"
+    )
 
 
 def test_send_back_article_refused_from_wrong_state():
@@ -201,7 +227,10 @@ def test_send_back_article_refused_from_wrong_state():
     article = make_article(pb, proj_a["id"], status="draft")
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(W.send_back_article, req, proj_a["id"], article["id"], note="x")
-    assert "قابل بازگشت نیست" in toast_message(resp)
+    assert (
+        "\u0642\u0627\u0628\u0644 \u0628\u0627\u0632\u06af\u0634\u062a \u0646\u06cc\u0633\u062a"
+        in toast_message(resp)
+    )
     assert ArticleRepo(pb).get(article["id"])["status"] == "draft"
 
 
@@ -217,13 +246,13 @@ def test_outline_add_section():
         req,
         proj_a["id"],
         article["id"],
-        heading="بخش جدید",
-        content_brief="خلاصه جدید",
+        heading="\u0628\u062e\u0634 \u062c\u062f\u06cc\u062f",
+        content_brief="\u062e\u0644\u0627\u0635\u0647 \u062c\u062f\u06cc\u062f",
     )
-    assert "اضافه شد" in toast_message(resp)
+    assert "\u0627\u0636\u0627\u0641\u0647 \u0634\u062f" in toast_message(resp)
     sections = SectionRepo(pb).list_for_article(article["id"])
     assert len(sections) == 3
-    assert sections[-1]["heading"] == "بخش جدید"
+    assert sections[-1]["heading"] == "\u0628\u062e\u0634 \u062c\u062f\u06cc\u062f"
 
 
 def test_outline_add_requires_heading():
@@ -231,7 +260,7 @@ def test_outline_add_requires_heading():
     article = make_article(pb, proj_a["id"])
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(W.outline_add, req, proj_a["id"], article["id"], heading="  ")
-    assert "الزامی" in toast_message(resp)
+    assert "\u0627\u0644\u0632\u0627\u0645\u06cc" in toast_message(resp)
     assert len(SectionRepo(pb).list_for_article(article["id"])) == 2
 
 
@@ -240,9 +269,9 @@ def test_outline_move_swaps_positions():
     article = make_article(pb, proj_a["id"])
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(W.outline_move, req, proj_a["id"], article["id"], 0, direction="down")
-    assert "جابه‌جا شد" in toast_message(resp)
+    assert "\u062c\u0627\u0628\u0647\u200c\u062c\u0627 \u0634\u062f" in toast_message(resp)
     sections = sorted(SectionRepo(pb).list_for_article(article["id"]), key=lambda s: s["position"])
-    assert sections[0]["heading"] == "بدنه"
+    assert sections[0]["heading"] == "\u0628\u062f\u0646\u0647"
 
 
 def test_outline_move_invalid_position_errors():
@@ -250,7 +279,7 @@ def test_outline_move_invalid_position_errors():
     article = make_article(pb, proj_a["id"])
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(W.outline_move, req, proj_a["id"], article["id"], 99, direction="down")
-    assert "نامعتبر" in toast_message(resp)
+    assert "\u0646\u0627\u0645\u0639\u062a\u0628\u0631" in toast_message(resp)
 
 
 def test_outline_delete_removes_section():
@@ -258,7 +287,7 @@ def test_outline_delete_removes_section():
     article = make_article(pb, proj_a["id"])
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(W.outline_delete, req, proj_a["id"], article["id"], 0)
-    assert "حذف شد" in toast_message(resp)
+    assert "\u062d\u0630\u0641 \u0634\u062f" in toast_message(resp)
     assert len(SectionRepo(pb).list_for_article(article["id"])) == 1
 
 
@@ -272,14 +301,14 @@ def test_outline_update_brief_marks_regeneration():
         proj_a["id"],
         article["id"],
         0,
-        heading="مقدمه",
-        content_brief="خلاصه تازه",
+        heading="\u0645\u0642\u062f\u0645\u0647",
+        content_brief="\u062e\u0644\u0627\u0635\u0647 \u062a\u0627\u0632\u0647",
     )
-    assert "ذخیره شد" in toast_message(resp)
+    assert "\u0630\u062e\u06cc\u0631\u0647 \u0634\u062f" in toast_message(resp)
     section = sorted(SectionRepo(pb).list_for_article(article["id"]), key=lambda s: s["position"])[
         0
     ]
-    assert section["contentBrief"] == "خلاصه تازه"
+    assert section["contentBrief"] == "\u062e\u0644\u0627\u0635\u0647 \u062a\u0627\u0632\u0647"
     assert section["status"] == "pending"
 
 
@@ -291,7 +320,10 @@ def test_queue_assemble_creates_job():
     article = make_article(pb, proj_a["id"])
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(W.queue_assemble, req, proj_a["id"], article["id"])
-    assert "برنامه‌ریزی شد" in toast_message(resp)
+    assert (
+        "\u0628\u0631\u0646\u0627\u0645\u0647\u200c\u0631\u06cc\u0632\u06cc \u0634\u062f"
+        in toast_message(resp)
+    )
     jobs = JobRepo(pb).list_for_project(proj_a["id"], per_page=10)
     assert jobs[0]["type"] == "assemble_article"
     assert jobs[0]["payload"] == {"articleId": article["id"]}
@@ -312,7 +344,10 @@ def test_queue_assemble_reuses_active_job():
     )
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(W.queue_assemble, req, proj_a["id"], article["id"])
-    assert "در حال ساخت است" in toast_message(resp)
+    assert (
+        "\u062f\u0631 \u062d\u0627\u0644 \u0633\u0627\u062e\u062a \u0627\u0633\u062a"
+        in toast_message(resp)
+    )
     jobs = JobRepo(pb).list_for_project(proj_a["id"], per_page=10)
     assert len([j for j in jobs if j["type"] == "assemble_article"]) == 1
 
@@ -333,7 +368,10 @@ def test_queue_assemble_reassembles_after_completion():
     pb.collection("jobs").update(completed["id"], {"status": "completed"})
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(W.queue_assemble, req, proj_a["id"], article["id"])
-    assert "برنامه‌ریزی شد" in toast_message(resp)
+    assert (
+        "\u0628\u0631\u0646\u0627\u0645\u0647\u200c\u0631\u06cc\u0632\u06cc \u0634\u062f"
+        in toast_message(resp)
+    )
     jobs = JobRepo(pb).list_for_project(proj_a["id"], per_page=10)
     assert len([j for j in jobs if j["type"] == "assemble_article"]) == 2
 
@@ -351,8 +389,11 @@ def test_workspace_generating_shows_progress_and_readonly():
     resp = call_route(W.article_workspace, req, proj_a["id"], article["id"])
     assert resp.status_code == 200
     body = resp.body.decode()
-    assert "در حال تولید بخش‌ها" in body
-    assert "1 از 2 بخش آماده شد" in body
+    assert (
+        "\u062f\u0631 \u062d\u0627\u0644 \u062a\u0648\u0644\u06cc\u062f \u0628\u062e\u0634\u200c\u0647\u0627"
+        in body
+    )
+    assert "1 \u0627\u0632 2 \u0628\u062e\u0634 \u0622\u0645\u0627\u062f\u0647 \u0634\u062f" in body
     assert "disabled" in body  # in-flight section editor is read-only
 
 
@@ -365,8 +406,11 @@ def test_workspace_generating_all_done_offers_reassemble():
     resp = call_route(W.article_workspace, req, proj_a["id"], article["id"])
     assert resp.status_code == 200
     body = resp.body.decode()
-    assert "بخش‌ها آماده شدند — در حال ساخت مقاله نهایی" in body
-    assert "بازسازی" in body  # manual assemble available
+    assert (
+        "\u0628\u062e\u0634\u200c\u0647\u0627 \u0622\u0645\u0627\u062f\u0647 \u0634\u062f\u0646\u062f \u2014 \u062f\u0631 \u062d\u0627\u0644 \u0633\u0627\u062e\u062a \u0645\u0642\u0627\u0644\u0647 \u0646\u0647\u0627\u06cc\u06cc"
+        in body
+    )
+    assert "\u0628\u0627\u0632\u0633\u0627\u0632\u06cc" in body  # manual assemble available
 
 
 def test_regenerate_section_queues_generate_section():
@@ -377,7 +421,9 @@ def test_regenerate_section_queues_generate_section():
     resp = call_route(
         A.regenerate_article, req, proj_a["id"], article["id"], section_id=section["id"]
     )
-    assert "بازتولید بخش" in toast_message(resp)
+    assert "\u0628\u0627\u0632\u062a\u0648\u0644\u06cc\u062f \u0628\u062e\u0634" in toast_message(
+        resp
+    )
     jobs = JobRepo(pb).list_for_project(proj_a["id"], per_page=10)
     assert jobs[0]["type"] == "generate_section"
     assert jobs[0]["payload"] == {"sectionId": section["id"]}
@@ -389,7 +435,10 @@ def test_regenerate_full_article_queues_write_job():
     article = make_article(pb, proj_a["id"])
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(A.regenerate_article, req, proj_a["id"], article["id"])
-    assert "بازتولید مقاله" in toast_message(resp)
+    assert (
+        "\u0628\u0627\u0632\u062a\u0648\u0644\u06cc\u062f \u0645\u0642\u0627\u0644\u0647"
+        in toast_message(resp)
+    )
     jobs = JobRepo(pb).list_for_project(proj_a["id"], per_page=10)
     assert jobs[0]["type"] == "write_article"
     assert jobs[0]["payload"]["regenerate"] is True
@@ -411,7 +460,10 @@ def test_regenerate_full_article_rejects_duplicate_inflight():
     )
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(A.regenerate_article, req, proj_a["id"], article["id"])
-    assert "در حال بازتولید است" in toast_message(resp)
+    assert (
+        "\u062f\u0631 \u062d\u0627\u0644 \u0628\u0627\u0632\u062a\u0648\u0644\u06cc\u062f \u0627\u0633\u062a"
+        in toast_message(resp)
+    )
 
 
 def test_regenerate_foreign_section_rejected():
@@ -426,7 +478,7 @@ def test_regenerate_foreign_section_rejected():
         foreign_article["id"],
         section_id=foreign_section["id"],
     )
-    assert "یافت نشد" in toast_message(resp)
+    assert "\u06cc\u0627\u0641\u062a \u0646\u0634\u062f" in toast_message(resp)
     assert SectionRepo(pb).get(foreign_section["id"])["status"] == "done"
 
 
@@ -438,7 +490,10 @@ def test_publish_article_queues_publish_job():
     article = make_article(pb, proj_a["id"], status="approved", final_html="<p>x</p>")
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(A.publish_article, req, proj_a["id"], article["id"])
-    assert "انتشار آغاز شد" in toast_message(resp)
+    assert (
+        "\u0627\u0646\u062a\u0634\u0627\u0631 \u0622\u063a\u0627\u0632 \u0634\u062f"
+        in toast_message(resp)
+    )
     jobs = JobRepo(pb).list_for_project(proj_a["id"], per_page=10)
     assert jobs[0]["type"] == "publish_article"
     assert jobs[0]["payload"] == {"articleId": article["id"], "action": "publish"}
@@ -449,7 +504,10 @@ def test_publish_article_requires_content():
     article = make_article(pb, proj_a["id"], status="approved", final_html=None)
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(A.publish_article, req, proj_a["id"], article["id"])
-    assert "محتوایی ندارد" in toast_message(resp)
+    assert (
+        "\u0645\u062d\u062a\u0648\u0627\u06cc\u06cc \u0646\u062f\u0627\u0631\u062f"
+        in toast_message(resp)
+    )
     assert len(JobRepo(pb).list_for_project(proj_a["id"], per_page=10)) == 0
 
 
@@ -473,7 +531,7 @@ def test_update_article_post_requires_wp_id():
     article = make_article(pb, proj_a["id"], status="published", final_html="<p>x</p>")
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(A.update_article_post, req, proj_a["id"], article["id"])
-    assert "منتشر نشده" in toast_message(resp)
+    assert "\u0645\u0646\u062a\u0634\u0631 \u0646\u0634\u062f\u0647" in toast_message(resp)
 
 
 def test_update_article_post_queues_update():
@@ -481,7 +539,9 @@ def test_update_article_post_queues_update():
     article = make_article(pb, proj_a["id"], status="published", final_html="<p>x</p>", wp_id=42)
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(A.update_article_post, req, proj_a["id"], article["id"])
-    assert "به‌روزرسانی" in toast_message(resp)
+    assert "\u0628\u0647\u200c\u0631\u0648\u0632\u0631\u0633\u0627\u0646\u06cc" in toast_message(
+        resp
+    )
     jobs = JobRepo(pb).list_for_project(proj_a["id"], per_page=10)
     assert jobs[0]["payload"]["action"] == "update"
 
@@ -491,7 +551,10 @@ def test_unpublish_requires_wp_id():
     article = make_article(pb, proj_a["id"], status="published", final_html="<p>x</p>")
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(A.unpublish_article_post, req, proj_a["id"], article["id"])
-    assert "در وردپرس نیست" in toast_message(resp)
+    assert (
+        "\u062f\u0631 \u0648\u0631\u062f\u067e\u0631\u0633 \u0646\u06cc\u0633\u062a"
+        in toast_message(resp)
+    )
 
 
 def test_unpublish_queues_unpublish_job():
@@ -499,7 +562,7 @@ def test_unpublish_queues_unpublish_job():
     article = make_article(pb, proj_a["id"], status="published", final_html="<p>x</p>", wp_id=7)
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(A.unpublish_article_post, req, proj_a["id"], article["id"])
-    assert "خصوصی" in toast_message(resp)
+    assert "\u062e\u0635\u0648\u0635\u06cc" in toast_message(resp)
     jobs = JobRepo(pb).list_for_project(proj_a["id"], per_page=10)
     assert jobs[0]["payload"]["action"] == "unpublish"
 
@@ -510,7 +573,7 @@ def test_retry_publish_run_queues_matching_mode():
     run = make_publish_run(pb, article["id"], proj_a["id"])
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(A.retry_publish_run, req, proj_a["id"], article["id"], run["id"])
-    assert "تلاش مجدد" in toast_message(resp)
+    assert "\u062a\u0644\u0627\u0634 \u0645\u062c\u062f\u062f" in toast_message(resp)
     jobs = JobRepo(pb).list_for_project(proj_a["id"], per_page=10)
     assert jobs[0]["payload"]["action"] == "publish"
 
@@ -523,7 +586,7 @@ def test_retry_publish_run_foreign_run_rejected():
     resp = call_route(
         A.retry_publish_run, req, proj_a["id"], foreign_article["id"], foreign_run["id"]
     )
-    assert "ناموفق" in toast_message(resp)
+    assert "\u0646\u0627\u0645\u0648\u0641\u0642" in toast_message(resp)
     assert len(JobRepo(pb).list_for_project(proj_a["id"], per_page=10)) == 0
 
 
@@ -532,19 +595,27 @@ def test_retry_publish_run_foreign_run_rejected():
 # ---------------------------------------------------------------------------
 def test_rollback_restores_revision_and_sets_review():
     pb, proj_a, _ = _setup()
-    article = make_article(pb, proj_a["id"], status="approved", final_html="<p>جدید</p>")
+    article = make_article(
+        pb, proj_a["id"], status="approved", final_html="<p>\u062c\u062f\u06cc\u062f</p>"
+    )
     # snapshot current state as a revision
     from app.services.revisions import RevisionService
 
     rev = RevisionService(pb).snapshot(article, "manual", note="before")
     # mutate content
-    ArticleRepo(pb).update(article["id"], {"finalHtml": "<p>پس از تغییر</p>"})
+    ArticleRepo(pb).update(
+        article["id"],
+        {"finalHtml": "<p>\u067e\u0633 \u0627\u0632 \u062a\u063a\u06cc\u06cc\u0631</p>"},
+    )
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(W.rollback_article, req, proj_a["id"], article["id"], rev["id"])
-    assert "بازگشت به نسخه" in toast_message(resp)
+    assert (
+        "\u0628\u0627\u0632\u06af\u0634\u062a \u0628\u0647 \u0646\u0633\u062e\u0647"
+        in toast_message(resp)
+    )
     restored = ArticleRepo(pb).get(article["id"])
     assert restored["status"] == "review"
-    assert "<p>جدید</p>" in (restored.get("finalHtml") or "")
+    assert "<p>\u062c\u062f\u06cc\u062f</p>" in (restored.get("finalHtml") or "")
 
 
 def test_rollback_foreign_revision_rejected():
@@ -556,7 +627,7 @@ def test_rollback_foreign_revision_rejected():
     article = make_article(pb, proj_a["id"])
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(W.rollback_article, req, proj_a["id"], article["id"], rev["id"])
-    assert "یافت نشد" in toast_message(resp)
+    assert "\u06cc\u0627\u0641\u062a \u0646\u0634\u062f" in toast_message(resp)
 
 
 # ---------------------------------------------------------------------------
@@ -577,7 +648,7 @@ def test_article_mutations_reject_foreign_article(route, fn):
     foreign = make_article(pb, proj_b["id"], final_html="<p>x</p>", wp_id=1)
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(fn, req, proj_a["id"], foreign["id"])
-    assert "یافت نشد" in toast_message(resp)
+    assert "\u06cc\u0627\u0641\u062a \u0646\u0634\u062f" in toast_message(resp)
     # the foreign article was not touched
     assert ArticleRepo(pb).get(foreign["id"])["status"] == foreign["status"]
 
@@ -598,4 +669,6 @@ def test_article_mutations_reject_viewer_role(fn):
     article = make_article(pb, proj_a["id"], status="review", final_html="<p>x</p>")
     req = make_req(pb, make_user("v1"), proj_a["id"])
     resp = call_route(fn, req, proj_a["id"], article["id"])
-    assert "ناموفق" in toast_message(resp) or "کافی" in toast_message(resp)
+    assert "\u0646\u0627\u0645\u0648\u0641\u0642" in toast_message(
+        resp
+    ) or "\u06a9\u0627\u0641\u06cc" in toast_message(resp)

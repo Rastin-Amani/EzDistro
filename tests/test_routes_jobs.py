@@ -93,7 +93,10 @@ def test_logs_page_renders():
     req = make_req(pb, make_user("admin1", role="admin"), "")
     resp = call_route(L.logs_page, req)
     assert resp.status_code == 200
-    assert "رویداد" in resp.body.decode() or "ورود" in resp.body.decode()
+    assert (
+        "\u0631\u0648\u06cc\u062f\u0627\u062f" in resp.body.decode()
+        or "\u0648\u0631\u0648\u062f" in resp.body.decode()
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -115,7 +118,7 @@ def test_job_detail_hides_foreign_job():
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(J.job_detail, req, foreign["id"])
     assert resp.status_code == 200
-    assert "یافت نشد" in resp.body.decode()
+    assert "\u06cc\u0627\u0641\u062a \u0646\u0634\u062f" in resp.body.decode()
 
 
 def test_job_events_fragment_renders_timeline():
@@ -146,7 +149,7 @@ def test_cancel_job_requests_cancel():
     job = make_job(pb, proj_a["id"], job_type="write_article", status="running")
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(J.cancel_job, req, job["id"])
-    assert "لغو" in toast_message(resp)
+    assert "\u0644\u063a\u0648" in toast_message(resp)
     assert JobRepo(pb).get(job["id"])["cancelRequested"] is True
 
 
@@ -155,7 +158,7 @@ def test_cancel_job_foreign_job_rejected():
     foreign = make_job(pb, proj_b["id"], status="running")
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(J.cancel_job, req, foreign["id"])
-    assert "یافت نشد" in toast_message(resp)
+    assert "\u06cc\u0627\u0641\u062a \u0646\u0634\u062f" in toast_message(resp)
     assert JobRepo(pb).get(foreign["id"])["cancelRequested"] is False
 
 
@@ -164,7 +167,7 @@ def test_retry_job_schedules_retry_for_failed():
     job = make_job(pb, proj_a["id"], job_type="write_article", status="failed")
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(J.retry_job, req, job["id"])
-    assert "تلاش مجدد" in toast_message(resp)
+    assert "\u062a\u0644\u0627\u0634 \u0645\u062c\u062f\u062f" in toast_message(resp)
     jobs = JobRepo(pb).list_for_project(proj_a["id"], per_page=10)
     retry = [j for j in jobs if j["type"] == "retry_failed_job"]
     assert len(retry) == 1
@@ -176,7 +179,7 @@ def test_retry_job_refuses_non_failed():
     job = make_job(pb, proj_a["id"], job_type="write_article", status="running")
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(J.retry_job, req, job["id"])
-    assert "ناموفق نیست" in toast_message(resp)
+    assert "\u0646\u0627\u0645\u0648\u0641\u0642 \u0646\u06cc\u0633\u062a" in toast_message(resp)
     assert len(JobRepo(pb).list_for_project(proj_a["id"], per_page=10)) == 1
 
 
@@ -185,5 +188,5 @@ def test_retry_job_foreign_rejected():
     foreign = make_job(pb, proj_b["id"], status="failed")
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(J.retry_job, req, foreign["id"])
-    assert "یافت نشد" in toast_message(resp)
+    assert "\u06cc\u0627\u0641\u062a \u0646\u0634\u062f" in toast_message(resp)
     assert len(JobRepo(pb).list_for_project(proj_a["id"], per_page=10)) == 0

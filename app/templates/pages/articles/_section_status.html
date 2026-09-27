@@ -1,19 +1,19 @@
 {% if section.status == 'generating' %}
 <span class="badge badge-sm badge-soft badge-warning">
     <span class="loading loading-spinner loading-xs me-1"></span>
-    {{ _('در حال تولید') }}{% if section.model %} — <span class="font-mono" dir="ltr">{{ section.model }}</span>{% endif %}
+    {{ _('Generating') }}{% if section.model %} — <span class="font-mono" dir="ltr">{{ section.model }}</span>{% endif %}
     {% if elapsed is not none %} — {{ elapsed }}s{% endif %}
 </span>
 {% elif section.status == 'pending' %}
-<span class="badge badge-sm badge-soft badge-info">{{ _('در صف — منتظر ارائه‌دهنده') }}</span>
+<span class="badge badge-sm badge-soft badge-info">{{ _('Queued — waiting for provider') }}</span>
 {% elif section.status == 'failed' %}
-<span class="badge badge-sm badge-soft badge-error">{{ _('ناموفق') }}</span>
+<span class="badge badge-sm badge-soft badge-error">{{ _('Failed') }}</span>
 {% else %}
-<span class="badge badge-sm badge-soft badge-success">{{ _('انجام شد') }}{% if section.generationLatency %} — {{ section.generationLatency }}ms{% endif %}</span>
+<span class="badge badge-sm badge-soft badge-success">{{ _('Done') }}{% if section.generationLatency %} — {{ section.generationLatency }}ms{% endif %}</span>
 {% endif %}
 {% if section.status == 'failed' and section.error %}
 <details class="mt-1">
-    <summary class="text-xs text-error cursor-pointer">{{ _('مشاهده جزئیات فنی') }}</summary>
+    <summary class="text-xs text-error cursor-pointer">{{ _('View technical details') }}</summary>
     <pre class="text-xs bg-error/5 border border-error/20 rounded-lg p-2 font-mono overflow-auto max-h-40" dir="ltr">{{ section.error.message }}
 {{ section.error|tojson }}</pre>
 </details>

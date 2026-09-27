@@ -10,6 +10,7 @@ import json
 from types import SimpleNamespace
 from typing import Any
 
+from app.i18n import get_locale, set_request_locale
 from app.repositories.projects import DEFAULT_SETTINGS
 from app.repositories.prompts import PromptRepo
 from app.repositories.topics import TopicRepo
@@ -45,17 +46,36 @@ def make_req_plain(pb: FakePocketBase, user: dict, project_id: str = "") -> Simp
 
 
 def call_route(fn, request, *args, **kwargs):
-    """Invoke a FastAPI route directly, filling Form() defaults with real strings."""
+    """Invoke a route in Persian for legacy source-language assertions."""
     import inspect
 
     from fastapi.params import Form
 
-    for name, param in inspect.signature(fn).parameters.items():
-        if name in kwargs or name == "request":
-            continue
-        if isinstance(param.default, Form):
-            kwargs[name] = ""
-    return fn(request, *args, **kwargs)
+    previous_locale = get_locale().code
+    set_request_locale("fa")
+    try:
+        for name, param in inspect.signature(fn).parameters.items():
+            if name in kwargs or name == "request":
+                continue
+            if isinstance(param.default, Form):
+                kwargs[name] = ""
+        response = fn(request, *args, **kwargs)
+        getattr(response, "body", None)  # render lazy template responses in this locale
+        return response
+    finally:
+        set_request_locale(previous_locale)
+
+
+async def call_route_async(fn, request, *args, **kwargs):
+    """Async counterpart for direct route tests that assert Persian copy."""
+    previous_locale = get_locale().code
+    set_request_locale("fa")
+    try:
+        response = await call_route(fn, request, *args, **kwargs)
+        getattr(response, "body", None)
+        return response
+    finally:
+        set_request_locale(previous_locale)
 
 
 def toast_message(resp) -> str:
@@ -96,7 +116,7 @@ def make_topic(
     pb: FakePocketBase,
     project_id: str,
     *,
-    title: str = "موضوع",
+    title: str = "Topic",
     keyword: str = "",
     status: str = "planned",
     priority: int = 0,
@@ -122,17 +142,25 @@ def make_article(
     data: dict[str, Any] = {
         "project": project_id,
         "topicId": topic,
-        "title": "عنوان مقاله",
+        "title": "Article title",
         "slug": "onvan",
         "status": status,
         "outlineVersion": 1,
-        "metaDescription": "م",
+        "metaDescription": "\u0645",
         "outline": {
-            "title": "عنوان مقاله",
+            "title": "Article title",
             "slug": "onvan",
             "sections": [
-                {"heading": "مقدمه", "content_brief": "خلاصه", "internal_links": []},
-                {"heading": "بدنه", "content_brief": "خلاصه", "internal_links": []},
+                {
+                    "heading": "\u0645\u0642\u062f\u0645\u0647",
+                    "content_brief": "\u062e\u0644\u0627\u0635\u0647",
+                    "internal_links": [],
+                },
+                {
+                    "heading": "\u0628\u062f\u0646\u0647",
+                    "content_brief": "\u062e\u0644\u0627\u0635\u0647",
+                    "internal_links": [],
+                },
             ],
         },
     }
@@ -142,7 +170,7 @@ def make_article(
         data["wordpressPostId"] = wp_id
         data["wordpressUrl"] = f"https://s.test/?p={wp_id}"
     article = pb.collection("articles").create(data)
-    body_words = " ".join(f"کلمه {i}" for i in range(60))
+    body_words = " ".join(f"\u06a9\u0644\u0645\u0647 {i}" for i in range(60))
     for i, plan in enumerate(data["outline"]["sections"]):
         pb.collection("article_sections").create(
             {
@@ -167,8 +195,8 @@ def make_section(pb: FakePocketBase, article_id: str, *, position: int = 0) -> d
         {
             "article": article_id,
             "position": position,
-            "heading": "بخش",
-            "contentBrief": "خلاصه",
+            "heading": "\u0628\u062e\u0634",
+            "contentBrief": "\u062e\u0644\u0627\u0635\u0647",
             "internalLinks": [],
             "status": "pending",
             "content": "",
@@ -221,7 +249,7 @@ def make_document(pb: FakePocketBase, project_id: str) -> dict[str, Any]:
             "project": project_id,
             "sourceType": "wordpress",
             "sourceId": "100",
-            "title": "مستند",
+            "title": "\u0645\u0633\u062a\u0646\u062f",
             "sourceUrl": "https://s.test/?p=100",
             "contentHash": "abc",
             "indexStatus": "indexed",
@@ -266,7 +294,10 @@ def make_publish_run(
 
 def make_prompt(pb: FakePocketBase, project_id: str, ptype: str = "outline_user") -> dict[str, Any]:
     return PromptRepo(pb).save_version(
-        project_id=project_id, ptype=ptype, name="default", content="JSON برگردان."
+        project_id=project_id,
+        ptype=ptype,
+        name="default",
+        content="JSON \u0628\u0631\u06af\u0631\u062f\u0627\u0646.",
     )
 
 
@@ -282,7 +313,7 @@ def make_integration(pb: FakePocketBase, project_id: str) -> dict[str, Any]:
             "project": project_id,
             "category": "llm",
             "provider": "openai_compat",
-            "displayName": "LLM اصلی",
+            "displayName": "LLM \u0627\u0635\u0644\u06cc",
             "configuration": {},
             "secretsEnc": "",
             "enabled": True,
