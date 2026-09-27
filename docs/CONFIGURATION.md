@@ -29,7 +29,7 @@ whitespace/comments after empty values (pydantic-settings captures everything af
 
 | Variable | Default | Effect |
 |---|---|---|
-| `PB_URL` | `https://db.ezdistro.rastin.cloud` | Source-of-truth server; both processes need it |
+| `PB_URL` | `https://db.ezdistro.space` | Source-of-truth server; both processes need it |
 | `PB_ADMIN_EMAIL` / `PB_ADMIN_PASSWORD` | *(empty)* | Superuser auth for worker + bootstrap (auth falls back `_superusers` → `_admins` for PB < 0.23) |
 | `SEED_ADMIN_EMAIL` | `admin@ezdistro.local` | Platform admin user created by bootstrap when password set |
 | `SEED_ADMIN_PASSWORD` | *(empty)* | Empty ⇒ no seed user is created |
