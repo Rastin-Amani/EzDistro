@@ -98,7 +98,10 @@ def test_review_page_renders_validation_report():
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(W.article_review, req, proj_a["id"], article["id"])
     assert resp.status_code == 200
-    assert "\u0628\u0627\u0632\u0628\u06cc\u0646\u06cc" in resp.body.decode()
+    body = resp.body.decode()
+    assert "\u0628\u0627\u0632\u0628\u06cc\u0646\u06cc" in body
+    send_back_url = f'hx-post="/projects/{proj_a["id"]}/articles/{article["id"]}/send-back"'
+    assert body.count(send_back_url) == 1
 
 
 def test_review_page_never_white_screens_on_internal_error(monkeypatch):

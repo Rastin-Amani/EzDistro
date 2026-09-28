@@ -40,10 +40,7 @@
 
         {% if article.status == 'review' %}
 
-        <button class="btn btn-ghost btn-sm text-warning"
-
-                hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/send-back" hx-swap="none"
-
+        <button type="button" class="btn btn-ghost btn-sm text-warning"
                 onclick="document.getElementById('sendback-note').showModal()">{{ _('Return') }}</button>
 
         <button class="btn btn-primary btn-sm" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/approve" hx-swap="none">
