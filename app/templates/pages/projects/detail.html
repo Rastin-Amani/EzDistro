@@ -60,7 +60,7 @@
 
 <div class="ezdistro-project-tabs">
 
-    <div id="project-tabs" role="tablist"
+    <nav id="project-tabs" aria-label="{{ _('بخش‌های پروژه') }}"
 
          class="tabs tabs-box tabs-sm ezdistro-scroll-x overflow-x-auto flex-nowrap">
 
@@ -76,11 +76,13 @@
 
     {% for tab in tabs %}
 
-    <a role="tab"
+    <a href="/projects/{{ project.id }}?tab={{ tab }}"
 
        data-tab="{{ tab }}"
 
        class="tab whitespace-nowrap {{ 'tab-active' if tab == active_tab }}"
+
+       {% if tab == active_tab %}aria-current="page"{% endif %}
 
        hx-get="/projects/{{ project.id }}/tabs/{{ tab }}"
 
@@ -90,9 +92,7 @@
 
        hx-swap="innerHTML"
 
-       hx-indicator="#tab-indicator"
-
-       {% if tab == active_tab %}aria-selected="true"{% else %}aria-selected="false"{% endif %}>
+       hx-indicator="#tab-indicator">
 
         {{ labels[tab] }}
 
@@ -100,7 +100,7 @@
 
     {% endfor %}
 
-    </div>
+    </nav>
 
 </div>
 
@@ -178,7 +178,8 @@
 
                 t.classList.toggle('tab-active', on);
 
-                t.setAttribute('aria-selected', on ? 'true' : 'false');
+                if (on) t.setAttribute('aria-current', 'page');
+                else t.removeAttribute('aria-current');
 
             });
 

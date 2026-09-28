@@ -1,26 +1,58 @@
-{% import 'macros/forms.html' as f %}
 <div id="stats-row"
      hx-get="/dashboard/partial/stats"
      hx-trigger="every 8s"
-     hx-swap="outerHTML">
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {{ f.stat(_('Planned topics'), stats.topics_planned, 'bg-primary') }}
-        {{ f.stat(_('Articles being written'), stats.articles_writing, 'bg-warning', '', ) }}
-        {{ f.stat(_('Awaiting review'), stats.articles_review, 'bg-info') }}
-        {{ f.stat(_('Published'), stats.articles_published, 'bg-success') }}
-        {{ f.stat(_('Pending jobs'), stats.jobs_pending, 'bg-base-content/40') }}
-        {{ f.stat(_('Running / retrying'), stats.jobs_running + stats.jobs_retrying, 'bg-warning') }}
-        {{ f.stat(_('Failed'), stats.jobs_failed, 'bg-error') }}
-        {{ f.stat(_('Failure rate / average (seconds)'), (stats.failure_rate * 100)|round(1) ~ _('% / ') ~ stats.average_duration_s, 'bg-error') }}
-        {{ f.stat(_('Indexing health'), stats.indexing_ok ~ _(' healthy'), 'bg-success', stats.indexing_failed ~ _(' degraded')) }}
-        {{ f.stat(_('Provider health'), stats.provider_healthy ~ _(' healthy'), 'bg-success', stats.provider_unhealthy ~ _(' unhealthy · ') ~ stats.provider_latency_ms ~ 'ms') }}
-        <a href="/workers" class="ezdistro-metric hover:bg-base-200/60 transition-colors rounded-box">
-            <div class="flex items-center gap-2">
-                <span class="ezdistro-metric-swatch bg-info"></span>
-                <span class="ezdistro-metric-label">{{ _('Worker online') }}</span>
+     hx-swap="outerHTML" class="flex flex-col gap-4">
+    <section class="ezdistro-panel" aria-labelledby="content-pipeline-title">
+        <div class="ezdistro-panel-head">
+             <h2 id="content-pipeline-title" class="ezdistro-panel-title">{{ _('روند تولید محتوا') }}</h2>
+             <a href="/projects" class="btn btn-ghost btn-sm">{{ _('مشاهده پروژه‌ها') }}</a>
+        </div>
+        {% set stages = [
+            (_('Planned topics'), stats.topics_planned, 'bg-primary'),
+            (_('Articles being written'), stats.articles_writing, 'bg-warning'),
+            (_('Awaiting review'), stats.articles_review, 'bg-info'),
+            (_('Published'), stats.articles_published, 'bg-success'),
+        ] %}
+        <ol class="grid grid-cols-2 divide-x divide-y divide-base-300/70 sm:grid-cols-4 sm:divide-y-0">
+            {% for label, value, color in stages %}
+            <li class="min-w-0 px-4 py-4 first:border-s-0">
+                <span class="mb-2 flex items-center gap-2 text-xs font-medium text-base-content/65">
+                    <span class="size-2 rounded-full {{ color }}" aria-hidden="true"></span>{{ label }}
+                </span>
+                <span class="block text-3xl font-bold tracking-tight tabular-nums">{{ value }}</span>
+            </li>
+            {% endfor %}
+        </ol>
+    </section>
+
+    <details class="ezdistro-panel group">
+        <summary class="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-base-content sm:px-5">
+             <span class="font-semibold">{{ _('سلامت سیستم') }}</span>
+            {% if stats.jobs_failed %}<span class="badge badge-soft badge-error">{{ stats.jobs_failed }} {{ _('Failed') }}</span>{% endif %}
+            <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="ms-auto size-4 transition-transform group-open:rotate-180"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6" /></svg>
+        </summary>
+        <dl class="grid grid-cols-1 gap-x-8 border-t border-base-300/70 px-4 py-2 sm:grid-cols-2 sm:px-5">
+            <div class="flex items-center justify-between gap-3 border-b border-base-300/60 py-3">
+                <dt class="text-sm text-base-content/65">{{ _('Pending jobs') }}</dt><dd class="font-semibold tabular-nums">{{ stats.jobs_pending }}</dd>
             </div>
-            <span class="ezdistro-metric-value">{{ stats.workers_active }}</span>
-            <span class="text-xs text-base-content/50">{{ _('View worker status →') }}</span>
-        </a>
-    </div>
+            <div class="flex items-center justify-between gap-3 border-b border-base-300/60 py-3">
+                <dt class="text-sm text-base-content/65">{{ _('Running / retrying') }}</dt><dd class="font-semibold tabular-nums">{{ stats.jobs_running + stats.jobs_retrying }}</dd>
+            </div>
+            <div class="flex items-center justify-between gap-3 border-b border-base-300/60 py-3">
+                <dt class="text-sm text-base-content/65">{{ _('Failure rate / average (seconds)') }}</dt><dd class="font-semibold tabular-nums">{{ (stats.failure_rate * 100)|round(1) }}% / {{ stats.average_duration_s }}s</dd>
+            </div>
+            <div class="flex items-center justify-between gap-3 border-b border-base-300/60 py-3">
+                <dt class="text-sm text-base-content/65">{{ _('Indexing health') }}</dt><dd class="text-end text-sm"><span class="font-semibold text-success">{{ stats.indexing_ok }}{{ _(' healthy') }}</span><span class="ms-2 text-warning">{{ stats.indexing_failed }}{{ _(' degraded') }}</span></dd>
+            </div>
+            <div class="flex items-center justify-between gap-3 border-b border-base-300/60 py-3">
+                <dt class="text-sm text-base-content/65">{{ _('Provider health') }}</dt><dd class="text-end text-sm"><span class="font-semibold text-success">{{ stats.provider_healthy }}{{ _(' healthy') }}</span><span class="ms-2 text-warning">{{ stats.provider_unhealthy }}{{ _(' unhealthy · ') }}{{ stats.provider_latency_ms }}ms</span></dd>
+            </div>
+            <div class="flex items-center justify-between gap-3 border-b border-base-300/60 py-3">
+                <dt class="text-sm text-base-content/65">{{ _('Failed') }}</dt><dd><a href="/failed" class="link link-error font-semibold tabular-nums">{{ stats.jobs_failed }} {{ _('View failed jobs') }}</a></dd>
+            </div>
+            <div class="flex items-center justify-between gap-3 py-3">
+                <dt class="text-sm text-base-content/65">{{ _('Worker online') }}</dt><dd><a href="/workers" class="link link-primary font-semibold tabular-nums">{{ stats.workers_active }} {{ _('View worker status →') }}</a></dd>
+            </div>
+        </dl>
+    </details>
 </div>

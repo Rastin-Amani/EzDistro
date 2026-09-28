@@ -4,6 +4,8 @@
 
 <div class="flex flex-col gap-4">
 
+    {% with current_step=3 %}{% include "components/topics/import_progress.html" %}{% endwith %}
+
     <div class="flex flex-wrap items-center gap-2">
 
         <h4 class="font-bold text-sm">{{ _('Add result — %(v)s') % {'v': filename} }}</h4>

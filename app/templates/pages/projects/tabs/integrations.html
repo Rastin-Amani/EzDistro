@@ -54,17 +54,17 @@
 
                                 <th>{{ _('Name') }}</th>
 
-                                <th>{{ _('Provider') }}</th>
+                                <th class="hidden xl:table-cell">{{ _('Provider') }}</th>
 
-                                <th>{{ _('Key') }}</th>
+                                <th class="hidden xl:table-cell">{{ _('Key') }}</th>
 
                                 <th>{{ _('Health') }}</th>
 
-                                <th>{{ _('Last test') }}</th>
+                                <th class="hidden md:table-cell">{{ _('Last test') }}</th>
 
                                 <th>{{ _('Active') }}</th>
 
-                                <th class="w-44"></th>
+                                <th><span class="sr-only">{{ _('Actions') }}</span></th>
 
                             </tr>
 
@@ -78,15 +78,15 @@
 
                             <tr>
 
-                                <td class="text-xs font-medium">{{ i.displayName }}</td>
+                                <td class="max-w-32 truncate text-xs font-medium sm:max-w-none">{{ i.displayName }}</td>
 
-                                <td class="text-xs opacity-70" dir="ltr">{{ i.provider }}</td>
+                                <td class="hidden text-xs opacity-70 xl:table-cell" dir="ltr">{{ i.provider }}</td>
 
-                                <td class="text-xs font-mono opacity-70" dir="ltr">{{ cfg.masked if cfg.masked else '—' }}</td>
+                                <td class="hidden text-xs font-mono opacity-70 xl:table-cell" dir="ltr">{{ cfg.masked if cfg.masked else '—' }}</td>
 
                                 <td><span class="badge badge-sm {{ i.healthStatus|status_badge }}">{{ health_labels.get(i.healthStatus, i.healthStatus) }}</span></td>
 
-                                <td class="text-xs opacity-60 whitespace-nowrap">{{ i.lastTestedAt|loc_dt if i.lastTestedAt else '—' }}</td>
+                                <td class="hidden whitespace-nowrap text-xs opacity-60 md:table-cell">{{ i.lastTestedAt|loc_dt if i.lastTestedAt else '—' }}</td>
 
                                 <td>
 
@@ -106,9 +106,9 @@
 
                                 <td class="whitespace-nowrap">
 
-                                    <div class="flex items-center gap-1">
+                                    <div class="flex items-center justify-end gap-1">
 
-                                        <button type="button" class="btn btn-ghost btn-xs"
+                                        <button type="button" class="btn btn-ghost btn-sm"
 
                                                 data-category="{{ category }}"
 
@@ -116,7 +116,7 @@
 
                                                 @click="openEditorFrom($event.currentTarget)">{{ _('Edit') }}</button>
 
-                                        <button class="btn btn-ghost btn-xs"
+                                        <button class="btn btn-primary btn-sm"
 
                                                 hx-post="/projects/{{ project.id }}/integrations/{{ i.id }}/test"
 
@@ -128,13 +128,17 @@
 
                                         </button>
 
-                                        <button class="btn btn-ghost btn-xs text-error"
-
-                                                hx-post="/projects/{{ project.id }}/integrations/{{ i.id }}/delete"
-
-                                                hx-swap="none"
-
-                                                hx-confirm="{{ _('Delete this integration? This cannot be undone.') }}">{{ _('Delete') }}</button>
+                                        <details>
+                                            <summary class="btn btn-ghost btn-square btn-sm list-none" aria-label="{{ _('اقدام‌های بیشتر') }}">
+                                                <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="size-5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h.01M12 12h.01M19 12h.01" /></svg>
+                                            </summary>
+                                            <ul class="menu mt-1 w-40 rounded-box border border-base-300 bg-base-100 p-2 text-sm">
+                                                <li><button class="text-error"
+                                                    hx-post="/projects/{{ project.id }}/integrations/{{ i.id }}/delete"
+                                                    hx-swap="none"
+                                                    hx-confirm="{{ _('Delete this integration? This cannot be undone.') }}">{{ _('Delete') }}</button></li>
+                                            </ul>
+                                        </details>
 
                                     </div>
 

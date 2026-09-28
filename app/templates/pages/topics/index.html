@@ -69,42 +69,50 @@
         <table class="table table-sm">
             <thead>
                 <tr>
-                    <th class="w-8"><input type="checkbox" class="checkbox checkbox-sm" id="check-all" /></th>
+                    <th class="w-8"><input type="checkbox" class="checkbox checkbox-sm" id="check-all" aria-label="{{ _('انتخاب همه موضوع‌ها') }}" /></th>
                     <th>{{ _('Title') }}</th>
-                    <th>{{ _('Keyword') }}</th>
-                    <th>{{ _('Pillar/Cluster') }}</th>
+                    <th class="hidden md:table-cell">{{ _('Keyword') }}</th>
+                    <th class="hidden lg:table-cell">{{ _('Pillar/Cluster') }}</th>
                     <th>{{ _('Status') }}</th>
-                    <th>{{ _('Priority') }}</th>
+                    <th class="hidden sm:table-cell">{{ _('Priority') }}</th>
                     <th>{{ _('Operation') }}</th>
                 </tr>
             </thead>
             <tbody>
                 {% for t in topics %}
                 <tr>
-                    <td><input type="checkbox" class="checkbox checkbox-sm topic-check" value="{{ t.id }}" /></td>
-                    <td class="text-xs max-w-56">
+                    <td><input type="checkbox" class="checkbox checkbox-sm topic-check" value="{{ t.id }}" aria-label="{{ _('انتخاب موضوع «%(v)s»') % {'v': t.title} }}" /></td>
+                    <td class="max-w-40 text-xs sm:max-w-56">
                         <p class="truncate font-semibold">{{ t.title }}</p>
                         {% if t.type %}<span class="badge badge-soft badge-neutral badge-xs mt-0.5">{{ t.type }}</span>{% endif %}
                     </td>
-                    <td class="text-xs">{{ t.keyword or '—' }}</td>
-                    <td class="text-xs max-w-32"><p class="truncate">{{ t.pillar or '—' }}{% if t.cluster %} / {{ t.cluster }}{% endif %}</p></td>
+                    <td class="hidden text-xs md:table-cell">{{ t.keyword or '—' }}</td>
+                    <td class="hidden max-w-32 text-xs lg:table-cell"><p class="truncate">{{ t.pillar or '—' }}{% if t.cluster %} / {{ t.cluster }}{% endif %}</p></td>
                     <td><span class="badge badge-sm {{ t.status|status_badge }}">{{ t.status|status_label }}</span></td>
-                    <td class="text-xs tabular">{{ t.priority or 0 }}</td>
+                    <td class="hidden text-xs tabular sm:table-cell">{{ t.priority or 0 }}</td>
                     <td class="whitespace-nowrap">
+                        <div class="flex items-center justify-end gap-1">
                         {% if t.status in ['planned', 'failed', 'cancelled'] %}
-                        <button class="btn btn-ghost btn-xs text-primary"
+                        <button class="btn btn-primary btn-sm"
                                 hx-post="/projects/{{ project.id }}/topics/{{ t.id }}/write" hx-swap="none">{{ _('Generate') }}</button>
+                        {% elif t.articleId %}
+                        <a class="btn btn-ghost btn-sm" href="/projects/{{ project.id }}/articles/{{ t.articleId }}/workspace">{{ _('Article') }}</a>
                         {% endif %}
-                        {% if t.status in ['planned', 'queued', 'planning', 'outline_ready', 'writing'] %}
-                        <button class="btn btn-ghost btn-xs text-warning"
-                                hx-post="/projects/{{ project.id }}/topics/{{ t.id }}/cancel" hx-swap="none">{{ _('Cancel') }}</button>
-                        {% endif %}
-                        {% if t.articleId %}
-                        <a class="btn btn-ghost btn-xs" href="/projects/{{ project.id }}/articles/{{ t.articleId }}/workspace">{{ _('Article') }}</a>
-                        {% endif %}
-                        <button class="btn btn-ghost btn-xs text-error"
-                                hx-post="/projects/{{ project.id }}/topics/{{ t.id }}/delete" hx-swap="none"
-                                hx-confirm="{{ _('Delete this topic?') }}">{{ _('Delete') }}</button>
+                        <details>
+                            <summary class="btn btn-ghost btn-square btn-sm list-none" aria-label="{{ _('اقدام‌های بیشتر') }}">
+                                <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="size-5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h.01M12 12h.01M19 12h.01" /></svg>
+                            </summary>
+                            <ul class="menu mt-1 w-40 rounded-box border border-base-300 bg-base-100 p-2 text-sm">
+                                {% if t.status in ['planned', 'queued', 'planning', 'outline_ready', 'writing'] %}
+                                <li><button class="text-warning" hx-post="/projects/{{ project.id }}/topics/{{ t.id }}/cancel" hx-swap="none">{{ _('Cancel') }}</button></li>
+                                {% endif %}
+                                {% if t.articleId and t.status in ['planned', 'failed', 'cancelled'] %}
+                                <li><a href="/projects/{{ project.id }}/articles/{{ t.articleId }}/workspace">{{ _('Article') }}</a></li>
+                                {% endif %}
+                                <li><button class="text-error" hx-post="/projects/{{ project.id }}/topics/{{ t.id }}/delete" hx-swap="none" hx-confirm="{{ _('Delete this topic?') }}">{{ _('Delete') }}</button></li>
+                            </ul>
+                        </details>
+                        </div>
                     </td>
                 </tr>
                 {% else %}

@@ -343,6 +343,10 @@ def test_project_detail_renders_active_tab_with_context(setup):
     assert (
         "\u062c\u0627\u0633\u0627\u0632\u06cc \u0645\u062a\u0646 (Embedding)" in body
     )  # settings tab partial rendered inline
+    assert '<nav id="project-tabs"' in body
+    assert f'href="/projects/{setup["proj_a"]["id"]}?tab=settings"' in body
+    assert 'data-tab="settings"' in body and 'aria-current="page"' in body
+    assert 'role="tab"' not in body
 
 
 def test_settings_tab_schedule_forms_are_not_nested(setup):

@@ -21,19 +21,14 @@
     '<span id="last-updated" class="text-xs opacity-50 hidden sm:inline"></span>'
 ) }}
 
-<div id="stats-row"
-     hx-get="/dashboard/partial/stats"
-     hx-trigger="every 8s"
-     hx-swap="outerHTML">
-    {% include "pages/dashboard/_stats.html" %}
-</div>
+{% include "pages/dashboard/_stats.html" %}
 
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6">
     <!-- Recent jobs -->
     {{ f.panel(_('Recent jobs'), '<a href="/jobs" class="btn btn-ghost btn-xs">' ~ _('All jobs') ~ '</a>') }}
         {% if recent_jobs %}
         <div class="overflow-x-auto -mx-4">
-            <table class="table table-sm">
+            <table class="table table-sm hidden sm:table">
                 <thead>
                     <tr>
                         <th>{{ _('Type') }}</th>
@@ -45,11 +40,11 @@
                 <tbody>
                     {% for j in recent_jobs %}
                     <tr>
-                        <td class="text-xs font-medium">{{ j.type }}</td>
+                        <td class="text-xs font-medium"><a href="/jobs/{{ j.id }}" class="link link-hover">{{ j.type }}</a></td>
                         <td><span class="badge badge-sm {{ j.status|status_badge }}">{{ j.status|status_label }}</span></td>
                         <td>
                             <div class="flex items-center gap-2">
-                                <progress class="progress progress-primary w-20 h-1.5" value="{{ j.progress or 0 }}" max="100"></progress>
+                                <progress class="progress progress-primary w-20 h-1.5" value="{{ j.progress or 0 }}" max="100" aria-label="{{ _('Progress') }}"></progress>
                                 <span class="text-xs tabular">{{ _('%(n)s%%') % {'n': j.progress or 0} }}</span>
                             </div>
                         </td>
@@ -59,6 +54,25 @@
                 </tbody>
             </table>
         </div>
+        <ul class="divide-y divide-base-300/70 sm:hidden">
+            {% for j in recent_jobs %}
+            <li>
+                <a href="/jobs/{{ j.id }}" class="flex min-h-16 items-center justify-between gap-3 py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-base-content">
+                    <span class="min-w-0">
+                        <span class="block truncate font-semibold">{{ j.type }}</span>
+                        <span class="mt-1 flex flex-wrap items-center gap-2">
+                            <span class="badge badge-sm {{ j.status|status_badge }}">{{ j.status|status_label }}</span>
+                            <span class="text-xs text-base-content/55">{{ j.created|loc_dt }}</span>
+                        </span>
+                    </span>
+                    <span class="flex shrink-0 flex-col items-end gap-1">
+                        <span class="text-xs font-semibold tabular-nums">{{ _('%(n)s%%') % {'n': j.progress or 0} }}</span>
+                        <progress class="progress progress-primary w-16 h-1.5" value="{{ j.progress or 0 }}" max="100" aria-label="{{ _('Progress') }}"></progress>
+                    </span>
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
         {% else %}
         <div class="ezdistro-empty py-8">
             <div class="ezdistro-empty-icon">
@@ -78,7 +92,7 @@
                 <span class="badge badge-xs mt-1 {{ e.level|status_badge }}">{{ e.level|status_label }}</span>
                 <div class="min-w-0">
                     <p class="truncate">{{ e.message }}</p>
-                    <p class="text-xs opacity-40">{{ e.created|loc_dt }}</p>
+                    <p class="text-xs text-base-content/55">{{ e.created|loc_dt }}</p>
                 </div>
             </li>
             {% endfor %}

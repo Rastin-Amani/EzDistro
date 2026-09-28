@@ -152,13 +152,13 @@
 
 
 
-<div id="workspace-grid" class="grid grid-cols-1 lg:grid-cols-[260px_1fr_280px] gap-4 items-start">
+<div id="workspace-grid" class="grid grid-cols-1 gap-4 items-start 2xl:grid-cols-[240px_minmax(0,1fr)_260px]">
 
 
 
     <!-- Left: outline navigation -->
 
-    <aside class="ezdistro-panel lg:sticky lg:top-16">
+    <aside class="ezdistro-panel 2xl:sticky 2xl:top-16">
 
         <div class="ezdistro-panel-head">
 
@@ -196,7 +196,7 @@
 
                         <span class="label-text text-xs font-medium">{{ _('Title') }}</span>
 
-                        <input name="title" class="input w-full text-base" dir="auto" value="{{ article.title }}" />
+                        <input id="article-meta-title" hx-preserve="true" name="title" class="input w-full text-base" dir="auto" value="{{ article.title }}" />
 
                     </label>
 
@@ -204,7 +204,7 @@
 
                         <span class="label-text text-xs font-medium">{{ _('Meta description') }}</span>
 
-                        <textarea name="meta_description" class="textarea w-full" rows="3" dir="auto">{{ article.metaDescription or '' }}</textarea>
+                        <textarea id="article-meta-description" hx-preserve="true" name="meta_description" class="textarea w-full" rows="3" dir="auto">{{ article.metaDescription or '' }}</textarea>
 
                     </label>
 
@@ -280,7 +280,7 @@
 
                         <span class="label-text text-xs font-medium">{{ _('Section heading') }}</span>
 
-                        <input name="heading" class="input w-full" value="{{ s.heading }}" />
+                        <input id="section-heading-{{ s.id }}" hx-preserve="true" name="heading" class="input w-full" value="{{ s.heading }}" />
 
                     </label>
 
@@ -290,7 +290,7 @@
 
                         <span class="label-text text-xs font-medium">{{ _('Keyword') }}</span>
 
-                        <input name="keyword" class="input w-full" value="{{ s.keyword }}" />
+                        <input id="section-keyword-{{ s.id }}" hx-preserve="true" name="keyword" class="input w-full" value="{{ s.keyword }}" />
 
                     </label>
 
@@ -300,7 +300,7 @@
 
                         <span class="label-text text-xs font-medium">{{ _('Content brief') }}</span>
 
-                        <textarea name="content_brief" class="textarea w-full" rows="3">{{ s.contentBrief or '' }}</textarea>
+                        <textarea id="section-brief-{{ s.id }}" hx-preserve="true" name="content_brief" class="textarea w-full" rows="3">{{ s.contentBrief or '' }}</textarea>
 
                     </label>
 
@@ -310,7 +310,7 @@
 
                         <span class="label-text text-xs font-medium">{{ _('HTML content') }}</span>
 
-                        <textarea name="content" class="textarea w-full font-mono text-xs min-h-40" dir="auto" {% if s.status in ['pending', 'generating'] %}disabled{% endif %}>{{ s.content or '' }}</textarea>
+                        <textarea id="section-content-{{ s.id }}" {% if s.status not in ['pending', 'generating'] %}hx-preserve="true"{% endif %} name="content" class="textarea w-full font-mono text-xs min-h-40" dir="auto" {% if s.status in ['pending', 'generating'] %}disabled{% endif %}>{{ s.content or '' }}</textarea>
 
                     </label>
 
@@ -374,7 +374,7 @@
 
     <!-- Right: metadata -->
 
-    <aside class="flex flex-col gap-4 lg:sticky lg:top-16">
+    <aside class="flex flex-col gap-4 2xl:sticky 2xl:top-16">
 
         <div class="ezdistro-panel">
 

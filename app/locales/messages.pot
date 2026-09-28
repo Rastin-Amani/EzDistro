@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-09-27 22:41+0000\n"
+"POT-Creation-Date: 2026-09-28 06:14+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -34,9 +34,10 @@ msgstr ""
 msgid "Completed"
 msgstr ""
 
-#: app/templates.py:170 app/templates/layouts/platform.html:185
+#: app/templates.py:170 app/templates/layouts/platform.html:193
 #: app/templates/pages/articles/_section_status.html:10
-#: app/templates/pages/dashboard/_stats.html:13
+#: app/templates/pages/dashboard/_stats.html:31
+#: app/templates/pages/dashboard/_stats.html:51
 #: app/templates/pages/projects/tabs/integration_health.html:3
 #: app/templates/pages/workers/index.html:39
 #: app/templates/pages/workers/index.html:105
@@ -76,7 +77,7 @@ msgstr ""
 msgid "Approved"
 msgstr ""
 
-#: app/templates.py:179 app/templates/pages/articles/review.html:67
+#: app/templates.py:179 app/templates/pages/articles/review.html:64
 msgid "Returned"
 msgstr ""
 
@@ -84,7 +85,7 @@ msgstr ""
 msgid "Publishing"
 msgstr ""
 
-#: app/templates.py:181 app/templates/pages/dashboard/_stats.html:10
+#: app/templates.py:181 app/templates/pages/dashboard/_stats.html:14
 #: app/templates/pages/projects/tabs/indexing.html:27
 msgid "Published"
 msgstr ""
@@ -162,9 +163,9 @@ msgstr ""
 msgid "Warning"
 msgstr ""
 
-#: app/templates.py:201 app/templates/components/topics/import_result.html:35
+#: app/templates.py:201 app/templates/components/topics/import_result.html:37
 #: app/templates/pages/articles/_images_pane.html:94
-#: app/templates/pages/articles/review.html:139
+#: app/templates/pages/articles/review.html:136
 #: app/templates/pages/jobs/detail.html:78
 #: app/templates/pages/logs/feed.html:11
 #: app/templates/pages/projects/tabs/indexing.html:159
@@ -263,8 +264,9 @@ msgstr ""
 #: app/templates/pages/projects/tabs/publishing.html:11
 #: app/templates/pages/projects/tabs/topics.html:141
 #: app/templates/pages/projects/tabs/topics.html:213
-#: app/templates/pages/topics/index.html:103
-#: app/templates/pages/topics/index.html:185
+#: app/templates/pages/topics/index.html:99
+#: app/templates/pages/topics/index.html:110
+#: app/templates/pages/topics/index.html:193
 msgid "Article"
 msgstr ""
 
@@ -344,7 +346,7 @@ msgstr ""
 msgid "Unpublish (make private) started"
 msgstr ""
 
-#: app/api/articles.py:260 app/api/jobs.py:227 app/api/projects.py:1342
+#: app/api/articles.py:260 app/api/jobs.py:227 app/api/projects.py:1344
 msgid "Retry failed"
 msgstr ""
 
@@ -352,23 +354,27 @@ msgstr ""
 msgid "Publish attempt not found"
 msgstr ""
 
-#: app/api/auth.py:32 app/api/auth.py:97
+#: app/api/auth.py:34 app/api/auth.py:112
 msgid "Sign in to EzDistro"
 msgstr ""
 
-#: app/api/auth.py:56 app/api/auth.py:98
+#: app/api/auth.py:56 app/templates/base.html:222
+msgid "Could not reach the server. Please try again."
+msgstr ""
+
+#: app/api/auth.py:66 app/api/auth.py:113
 msgid "Wrong email or password"
 msgstr ""
 
-#: app/api/auth.py:65
+#: app/api/auth.py:75
 msgid "Your account is disabled"
 msgstr ""
 
-#: app/api/auth.py:72
+#: app/api/auth.py:82
 msgid "Welcome"
 msgstr ""
 
-#: app/api/auth.py:107
+#: app/api/auth.py:122
 msgid "Signed out"
 msgstr ""
 
@@ -426,8 +432,8 @@ msgstr ""
 msgid "Image regeneration failed"
 msgstr ""
 
-#: app/api/images.py:215 app/api/images.py:239 app/api/images.py:255
-#: app/api/images.py:278 app/api/images.py:302 app/api/images.py:344
+#: app/api/images.py:215 app/api/images.py:239 app/api/images.py:257
+#: app/api/images.py:280 app/api/images.py:304 app/api/images.py:346
 msgid "Image not found"
 msgstr ""
 
@@ -443,55 +449,55 @@ msgstr ""
 msgid "Only ready versions can be selected"
 msgstr ""
 
-#: app/api/images.py:243
+#: app/api/images.py:244
 msgid "This image version was selected"
 msgstr ""
 
-#: app/api/images.py:247
+#: app/api/images.py:249
 msgid "Deleting the image failed"
 msgstr ""
 
-#: app/api/images.py:258
+#: app/api/images.py:260
 msgid "Image removed from the article (the version stays in history)"
 msgstr ""
 
-#: app/api/images.py:264
+#: app/api/images.py:266
 msgid "Saving image info failed"
 msgstr ""
 
-#: app/api/images.py:281
+#: app/api/images.py:283
 msgid "Alt text cannot be empty"
 msgstr ""
 
-#: app/api/images.py:288
+#: app/api/images.py:290
 msgid "Image info saved"
 msgstr ""
 
-#: app/api/images.py:295
+#: app/api/images.py:297
 msgid "Image optimization failed"
 msgstr ""
 
-#: app/api/images.py:304
+#: app/api/images.py:306
 msgid "This image has no source file — generate it first"
 msgstr ""
 
-#: app/api/images.py:312
+#: app/api/images.py:314
 msgid "Optimization is already queued"
 msgstr ""
 
-#: app/api/images.py:324
+#: app/api/images.py:326
 msgid "Image re-optimization queued"
 msgstr ""
 
-#: app/api/images.py:330
+#: app/api/images.py:332
 msgid "Uploading the image to WordPress failed"
 msgstr ""
 
-#: app/api/images.py:346
+#: app/api/images.py:348
 msgid "Only ready images can be uploaded"
 msgstr ""
 
-#: app/api/images.py:357
+#: app/api/images.py:359
 msgid "Image upload to WordPress queued"
 msgstr ""
 
@@ -500,7 +506,7 @@ msgid "Something went wrong loading the jobs page — please try again."
 msgstr ""
 
 #: app/api/jobs.py:120 app/templates/layouts/platform.html:35
-#: app/templates/layouts/platform.html:177
+#: app/templates/layouts/platform.html:185
 #: app/templates/pages/jobs/monitor.html:5
 #: app/templates/pages/projects/detail.html:71
 #: app/templates/pages/projects/tabs/jobs.html:6
@@ -540,7 +546,7 @@ msgid "This job is not in the failed state"
 msgstr ""
 
 #: app/api/logs.py:34 app/templates/layouts/platform.html:41
-#: app/templates/layouts/platform.html:193 app/templates/pages/logs/feed.html:5
+#: app/templates/layouts/platform.html:201 app/templates/pages/logs/feed.html:5
 #: app/templates/pages/projects/detail.html:73
 #: app/templates/pages/projects/tabs/logs.html:2
 #: app/templates/pages/projects/tabs/logs.html:9
@@ -633,7 +639,7 @@ msgstr[1] ""
 msgid "Cancelling topic failed"
 msgstr ""
 
-#: app/api/projects.py:315 app/api/projects.py:1134 app/api/projects.py:1159
+#: app/api/projects.py:315 app/api/projects.py:1136 app/api/projects.py:1161
 msgid "Topic not found"
 msgstr ""
 
@@ -775,172 +781,172 @@ msgstr ""
 msgid "Toggling failed"
 msgstr ""
 
-#: app/api/projects.py:875 app/api/projects.py:889
+#: app/api/projects.py:875 app/api/projects.py:891
 msgid "Connection not found"
 msgstr ""
 
-#: app/api/projects.py:878
+#: app/api/projects.py:879
 msgid "Connection status changed"
 msgstr ""
 
-#: app/api/projects.py:882
+#: app/api/projects.py:884
 msgid "Connection test failed"
 msgstr ""
 
-#: app/api/projects.py:903
+#: app/api/projects.py:905
 msgid "Deleting connection failed"
 msgstr ""
 
-#: app/api/projects.py:911
+#: app/api/projects.py:913
 msgid "Connection deleted"
 msgstr ""
 
-#: app/api/projects.py:955
+#: app/api/projects.py:957
 msgid "Invalid variable(s): "
 msgstr ""
 
-#: app/api/projects.py:959
+#: app/api/projects.py:961
 msgid "Prompts saved"
 msgstr ""
 
-#: app/api/projects.py:966
+#: app/api/projects.py:968
 msgid "Activating version failed"
 msgstr ""
 
-#: app/api/projects.py:975 app/api/projects.py:977 app/api/projects.py:993
-#: app/api/projects.py:995 app/services/revisions.py:83
+#: app/api/projects.py:977 app/api/projects.py:979 app/api/projects.py:995
+#: app/api/projects.py:997 app/services/revisions.py:83
 msgid "Version not found"
 msgstr ""
 
-#: app/api/projects.py:979
+#: app/api/projects.py:981
 msgid "Version activated"
 msgstr ""
 
-#: app/api/projects.py:983
+#: app/api/projects.py:985
 msgid "Duplication failed"
 msgstr ""
 
-#: app/api/projects.py:1000
+#: app/api/projects.py:1002
 msgid "Version duplicated (inactive)"
 msgstr ""
 
-#: app/api/projects.py:1027
+#: app/api/projects.py:1029
 msgid "Prompt test failed"
 msgstr ""
 
-#: app/api/projects.py:1093
+#: app/api/projects.py:1095
 msgid "Adding topic failed"
 msgstr ""
 
-#: app/api/projects.py:1110
+#: app/api/projects.py:1112
 msgid "Topic title is required"
 msgstr ""
 
-#: app/api/projects.py:1123
+#: app/api/projects.py:1125
 msgid "Topic added"
 msgstr ""
 
-#: app/api/projects.py:1127
+#: app/api/projects.py:1129
 msgid "Starting article generation failed"
 msgstr ""
 
-#: app/api/projects.py:1147 app/services/writing.py:215
+#: app/api/projects.py:1149 app/services/writing.py:215
 msgid "Article generation started"
 msgstr ""
 
-#: app/api/projects.py:1152
+#: app/api/projects.py:1154
 msgid "Deleting topic failed"
 msgstr ""
 
-#: app/api/projects.py:1161
+#: app/api/projects.py:1163
 msgid "Topic deleted"
 msgstr ""
 
-#: app/api/projects.py:1178
+#: app/api/projects.py:1180
 msgid "Reading file or text failed"
 msgstr ""
 
-#: app/api/projects.py:1203
+#: app/api/projects.py:1205
 msgid "No text or file provided"
 msgstr ""
 
-#: app/api/projects.py:1207
+#: app/api/projects.py:1209
 msgid "No rows found"
 msgstr ""
 
-#: app/api/projects.py:1239
+#: app/api/projects.py:1241
 msgid "Bulk add failed"
 msgstr ""
 
-#: app/api/projects.py:1250
+#: app/api/projects.py:1252
 msgid "Preview expired; please try again"
 msgstr ""
 
-#: app/api/projects.py:1258
+#: app/api/projects.py:1260
 msgid "Select the title column"
 msgstr ""
 
-#: app/api/projects.py:1272
+#: app/api/projects.py:1274
 msgid "Pasted text"
 msgstr ""
 
-#: app/api/projects.py:1279
+#: app/api/projects.py:1281
 msgid "Loading form failed"
 msgstr ""
 
-#: app/api/projects.py:1295
+#: app/api/projects.py:1297
 msgid "Starting indexing failed"
 msgstr ""
 
-#: app/api/projects.py:1312
+#: app/api/projects.py:1314
 msgid "Full reindex started"
 msgstr ""
 
-#: app/api/projects.py:1312
+#: app/api/projects.py:1314
 msgid "Incremental indexing started"
 msgstr ""
 
-#: app/api/projects.py:1318
+#: app/api/projects.py:1320
 msgid "Starting document indexing failed"
 msgstr ""
 
-#: app/api/projects.py:1326
+#: app/api/projects.py:1328
 msgid "Document not found"
 msgstr ""
 
-#: app/api/projects.py:1337
+#: app/api/projects.py:1339
 msgid "Document indexing started"
 msgstr ""
 
-#: app/api/projects.py:1350
+#: app/api/projects.py:1352
 msgid "Run not found"
 msgstr ""
 
-#: app/api/projects.py:1361
+#: app/api/projects.py:1363
 msgid "Indexing run rescheduled"
 msgstr ""
 
-#: app/api/projects.py:1370
+#: app/api/projects.py:1372
 msgid "Saving models failed"
 msgstr ""
 
-#: app/api/projects.py:1445
+#: app/api/projects.py:1447
 msgid "Models saved"
 msgstr ""
 
-#: app/api/projects.py:1554
+#: app/api/projects.py:1556
 msgid "Saving defaults failed"
 msgstr ""
 
-#: app/api/projects.py:1585
+#: app/api/projects.py:1587
 msgid "Global defaults saved"
 msgstr ""
 
-#: app/api/projects.py:1592
+#: app/api/projects.py:1594
 msgid "Retrieval failed"
 msgstr ""
 
-#: app/api/projects.py:1606
+#: app/api/projects.py:1608
 msgid "Search query is required"
 msgstr ""
 
@@ -949,6 +955,7 @@ msgid "Something went wrong loading the workers page — please try again."
 msgstr ""
 
 #: app/api/workers.py:67 app/templates/layouts/platform.html:37
+#: app/templates/layouts/platform.html:177
 #: app/templates/pages/workers/index.html:21
 msgid "Workers"
 msgstr ""
@@ -1085,7 +1092,7 @@ msgstr ""
 
 #: app/domain/prompt_render.py:32
 #: app/templates/pages/projects/tabs/topics.html:207
-#: app/templates/pages/topics/index.html:174
+#: app/templates/pages/topics/index.html:182
 msgid "Topic title"
 msgstr ""
 
@@ -1239,17 +1246,17 @@ msgstr ""
 msgid "Uploading the image to WordPress failed: %(error)s"
 msgstr ""
 
-#: app/services/images.py:655
+#: app/services/images.py:657
 msgid ""
 "The article is not published on WordPress yet — setting the featured "
 "image is not possible"
 msgstr ""
 
-#: app/services/images.py:665
+#: app/services/images.py:669
 msgid "Image uploaded to WordPress"
 msgstr ""
 
-#: app/services/images.py:712
+#: app/services/images.py:716
 #, python-format
 msgid "Publishing stopped: %(problems)s"
 msgstr ""
@@ -1321,29 +1328,29 @@ msgstr ""
 msgid "Title (required)"
 msgstr ""
 
-#: app/services/topic_import.py:38 app/templates/pages/articles/review.html:199
+#: app/services/topic_import.py:38 app/templates/pages/articles/review.html:196
 #: app/templates/pages/articles/workspace.html:291
 #: app/templates/pages/articles/workspace.html:401
 #: app/templates/pages/projects/tabs/topics.html:89
 #: app/templates/pages/projects/tabs/topics.html:211
 #: app/templates/pages/topics/index.html:74
-#: app/templates/pages/topics/index.html:179
+#: app/templates/pages/topics/index.html:187
 msgid "Keyword"
 msgstr ""
 
 #: app/services/topic_import.py:39
 #: app/templates/pages/projects/tabs/topics.html:219
-#: app/templates/pages/topics/index.html:194
+#: app/templates/pages/topics/index.html:202
 msgid "Pillar"
 msgstr ""
 
 #: app/services/topic_import.py:40
 #: app/templates/pages/projects/tabs/topics.html:221
-#: app/templates/pages/topics/index.html:198
+#: app/templates/pages/topics/index.html:206
 msgid "Cluster"
 msgstr ""
 
-#: app/services/topic_import.py:41 app/templates/pages/dashboard.html:39
+#: app/services/topic_import.py:41 app/templates/pages/dashboard.html:34
 #: app/templates/pages/jobs/_table.html:11
 #: app/templates/pages/jobs/detail.html:36
 #: app/templates/pages/jobs/monitor.html:47
@@ -1351,7 +1358,7 @@ msgstr ""
 #: app/templates/pages/projects/tabs/indexing.html:147
 #: app/templates/pages/projects/tabs/jobs.html:14
 #: app/templates/pages/projects/tabs/topics.html:213
-#: app/templates/pages/topics/index.html:183
+#: app/templates/pages/topics/index.html:191
 msgid "Type"
 msgstr ""
 
@@ -1360,13 +1367,13 @@ msgstr ""
 #: app/templates/pages/projects/tabs/topics.html:227
 #: app/templates/pages/topics/index.html:47
 #: app/templates/pages/topics/index.html:77
-#: app/templates/pages/topics/index.html:203
+#: app/templates/pages/topics/index.html:211
 msgid "Priority"
 msgstr ""
 
 #: app/services/topic_import.py:43
 #: app/templates/pages/projects/tabs/topics.html:229
-#: app/templates/pages/topics/index.html:207
+#: app/templates/pages/topics/index.html:215
 msgid "Week"
 msgstr ""
 
@@ -1374,16 +1381,16 @@ msgstr ""
 msgid "Link"
 msgstr ""
 
-#: app/services/topic_import.py:235
+#: app/services/topic_import.py:260
 #, python-format
 msgid "Column %(n)d"
 msgstr ""
 
-#: app/services/topic_import.py:307
+#: app/services/topic_import.py:332
 msgid "Title is empty"
 msgstr ""
 
-#: app/services/topic_import.py:400
+#: app/services/topic_import.py:425
 #, python-format
 msgid "Save failed: %(error)s"
 msgstr ""
@@ -1434,28 +1441,24 @@ msgid "Confirm action"
 msgstr ""
 
 #: app/templates/base.html:88
-#: app/templates/components/topics/import_step1.html:59
-#: app/templates/pages/articles/review.html:113
+#: app/templates/components/topics/import_step1.html:61
+#: app/templates/pages/articles/review.html:110
 #: app/templates/pages/jobs/_table.html:44
 #: app/templates/pages/jobs/detail.html:22
-#: app/templates/pages/jobs/monitor.html:131
+#: app/templates/pages/jobs/monitor.html:137
 #: app/templates/pages/projects/detail.html:149
 #: app/templates/pages/projects/list.html:183
-#: app/templates/pages/projects/tabs/integrations.html:355
+#: app/templates/pages/projects/tabs/integrations.html:359
 #: app/templates/pages/projects/tabs/jobs.html:44
 #: app/templates/pages/projects/tabs/topics.html:245
 #: app/templates/pages/topics/index.html:59
-#: app/templates/pages/topics/index.html:100
-#: app/templates/pages/topics/index.html:212
+#: app/templates/pages/topics/index.html:107
+#: app/templates/pages/topics/index.html:220
 msgid "Cancel"
 msgstr ""
 
-#: app/templates/base.html:89 app/templates/pages/articles/review.html:53
+#: app/templates/base.html:89 app/templates/pages/articles/review.html:50
 msgid "Confirm"
-msgstr ""
-
-#: app/templates/base.html:222
-msgid "Could not reach the server. Please try again."
 msgstr ""
 
 #: app/templates/base.html:227
@@ -1574,7 +1577,7 @@ msgstr ""
 #: app/templates/components/schedule_panel.html:19
 #: app/templates/pages/articles/detail.html:101
 #: app/templates/pages/articles/workspace.html:217
-#: app/templates/pages/projects/tabs/integrations.html:351
+#: app/templates/pages/projects/tabs/integrations.html:355
 msgid "Save"
 msgstr ""
 
@@ -1603,52 +1606,52 @@ msgstr ""
 msgid "Auto"
 msgstr ""
 
-#: app/templates/components/topics/import_mapping.html:13
-#: app/templates/components/topics/import_mapping.html:139
+#: app/templates/components/topics/import_mapping.html:15
+#: app/templates/components/topics/import_mapping.html:141
 #, python-format
 msgid "%(n)s topics"
 msgstr ""
 
-#: app/templates/components/topics/import_mapping.html:19
+#: app/templates/components/topics/import_mapping.html:21
 msgid "Has header"
 msgstr ""
 
-#: app/templates/components/topics/import_mapping.html:19
+#: app/templates/components/topics/import_mapping.html:21
 msgid "No header"
 msgstr ""
 
-#: app/templates/components/topics/import_mapping.html:21
+#: app/templates/components/topics/import_mapping.html:23
 #, python-format
 msgid "Delimiter: %(v)s"
 msgstr ""
 
-#: app/templates/components/topics/import_mapping.html:105
+#: app/templates/components/topics/import_mapping.html:107
 msgid "— Ignore —"
 msgstr ""
 
-#: app/templates/components/topics/import_mapping.html:111
+#: app/templates/components/topics/import_mapping.html:113
 #: app/templates/pages/projects/tabs/integration_health.html:7
 msgid ", "
 msgstr ""
 
-#: app/templates/components/topics/import_mapping.html:127
+#: app/templates/components/topics/import_mapping.html:129
 msgid ""
 "Rows whose title or keyword already exists in the project (or in this "
 "file) are skipped automatically."
 msgstr ""
 
-#: app/templates/components/topics/import_mapping.html:129
+#: app/templates/components/topics/import_mapping.html:131
 msgid "All topics are added with the “Planned” status."
 msgstr ""
 
-#: app/templates/components/topics/import_mapping.html:139
+#: app/templates/components/topics/import_mapping.html:141
 #: app/templates/pages/articles/_outline_pane.html:34
 #: app/templates/pages/projects/tabs/topics.html:241
-#: app/templates/pages/topics/index.html:211
+#: app/templates/pages/topics/index.html:219
 msgid "Add"
 msgstr ""
 
-#: app/templates/components/topics/import_mapping.html:147
+#: app/templates/components/topics/import_mapping.html:149
 msgid "Edit text"
 msgstr ""
 
@@ -1658,73 +1661,89 @@ msgstr ""
 
 #: app/templates/components/topics/import_modal.html:8
 #: app/templates/pages/projects/list.html:107
-#: app/templates/pages/projects/tabs/integrations.html:191
+#: app/templates/pages/projects/tabs/integrations.html:195
 #: app/templates/pages/projects/tabs/prompt_compare.html:5
 #: app/templates/pages/projects/tabs/topics.html:193
-#: app/templates/pages/topics/index.html:170
+#: app/templates/pages/topics/index.html:178
 msgid "Close"
 msgstr ""
 
-#: app/templates/components/topics/import_result.html:9
+#: app/templates/components/topics/import_progress.html:1
+msgid "مراحل درون‌ریزی"
+msgstr ""
+
+#: app/templates/components/topics/import_progress.html:3
+msgid "افزودن موضوع‌ها"
+msgstr ""
+
+#: app/templates/components/topics/import_progress.html:3
+msgid "نگاشت ستون‌ها"
+msgstr ""
+
+#: app/templates/components/topics/import_progress.html:3
+msgid "مرور نتایج"
+msgstr ""
+
+#: app/templates/components/topics/import_result.html:11
 #, python-format
 msgid "Add result — %(v)s"
 msgstr ""
 
-#: app/templates/components/topics/import_result.html:19
+#: app/templates/components/topics/import_result.html:21
 msgid "Added"
 msgstr ""
 
-#: app/templates/components/topics/import_result.html:27
+#: app/templates/components/topics/import_result.html:29
 msgid "Duplicate (skipped)"
 msgstr ""
 
-#: app/templates/components/topics/import_result.html:53
+#: app/templates/components/topics/import_result.html:55
 msgid "Row"
 msgstr ""
 
-#: app/templates/components/topics/import_result.html:55
+#: app/templates/components/topics/import_result.html:57
 msgid "Reason"
 msgstr ""
 
-#: app/templates/components/topics/import_result.html:83
+#: app/templates/components/topics/import_result.html:85
 msgid "… and more errors not shown here."
 msgstr ""
 
-#: app/templates/components/topics/import_result.html:95
+#: app/templates/components/topics/import_result.html:97
 #, python-format
 msgid ""
 "%(n)s rows had a free-form type label (e.g. “Troubleshooting guide” or "
 "“Q&A”) and were added with the default type “Article”."
 msgstr ""
 
-#: app/templates/components/topics/import_result.html:107
+#: app/templates/components/topics/import_result.html:109
 msgid "Finish"
 msgstr ""
 
-#: app/templates/components/topics/import_step1.html:13
+#: app/templates/components/topics/import_step1.html:15
 msgid "Paste text"
 msgstr ""
 
-#: app/templates/components/topics/import_step1.html:17
+#: app/templates/components/topics/import_step1.html:19
 msgid ""
 "Title | Keyword | Pillar | Cluster | Type | Priority&#10;…or a full CSV "
 "with header (e.g. Week,Title,Keyword,Related Pillar,…)"
 msgstr ""
 
-#: app/templates/components/topics/import_step1.html:25
-#: app/templates/components/topics/import_step1.html:45
+#: app/templates/components/topics/import_step1.html:27
+#: app/templates/components/topics/import_step1.html:47
 msgid "or"
 msgstr ""
 
-#: app/templates/components/topics/import_step1.html:33
+#: app/templates/components/topics/import_step1.html:35
 msgid "Upload a CSV / TSV file"
 msgstr ""
 
-#: app/templates/components/topics/import_step1.html:45
+#: app/templates/components/topics/import_step1.html:47
 msgid "Each line is one topic. Columns are separated by"
 msgstr ""
 
-#: app/templates/components/topics/import_step1.html:45
+#: app/templates/components/topics/import_step1.html:47
 msgid ""
 ": Title | Keyword | Pillar | Cluster | Type | Priority. Header columns "
 "(Week, ID, Title, Keyword, Related Pillar, Cluster, Type, …) are detected"
@@ -1732,7 +1751,7 @@ msgid ""
 " rows are skipped automatically."
 msgstr ""
 
-#: app/templates/components/topics/import_step1.html:55
+#: app/templates/components/topics/import_step1.html:57
 msgid "Preview and map columns"
 msgstr ""
 
@@ -1769,18 +1788,18 @@ msgstr ""
 msgid "Command center"
 msgstr ""
 
-#: app/templates/pages/dashboard.html:33
+#: app/templates/pages/dashboard.html:28
 msgid "Recent jobs"
 msgstr ""
 
-#: app/templates/pages/dashboard.html:33 app/templates/pages/jobs/failed.html:5
+#: app/templates/pages/dashboard.html:28 app/templates/pages/jobs/failed.html:5
 #: app/templates/pages/workers/index.html:209
 msgid "All jobs"
 msgstr ""
 
 #: app/templates/pages/articles/detail.html:295
 #: app/templates/pages/articles/workspace.html:381
-#: app/templates/pages/dashboard.html:40
+#: app/templates/pages/dashboard.html:35
 #: app/templates/pages/jobs/_table.html:13
 #: app/templates/pages/jobs/detail.html:39
 #: app/templates/pages/jobs/monitor.html:56
@@ -1795,16 +1814,18 @@ msgstr ""
 msgid "Status"
 msgstr ""
 
-#: app/templates/pages/dashboard.html:41
+#: app/templates/pages/dashboard.html:36 app/templates/pages/dashboard.html:47
+#: app/templates/pages/dashboard.html:70
 #: app/templates/pages/jobs/_table.html:14
 #: app/templates/pages/jobs/detail.html:57
 #: app/templates/pages/jobs/monitor.html:102
+#: app/templates/pages/jobs/monitor.html:117
 #: app/templates/pages/projects/tabs/jobs.html:16
 msgid "Progress"
 msgstr ""
 
 #: app/templates/pages/articles/detail.html:301
-#: app/templates/pages/dashboard.html:42
+#: app/templates/pages/dashboard.html:37
 #: app/templates/pages/jobs/_table.html:17
 #: app/templates/pages/jobs/monitor.html:105
 #: app/templates/pages/logs/feed.html:28
@@ -1815,31 +1836,32 @@ msgstr ""
 msgid "Time"
 msgstr ""
 
-#: app/templates/pages/dashboard.html:53
+#: app/templates/pages/dashboard.html:48 app/templates/pages/dashboard.html:69
 #: app/templates/pages/jobs/_table.html:30
 #: app/templates/pages/jobs/detail.html:60
 #: app/templates/pages/jobs/monitor.html:118
-#: app/templates/pages/jobs/monitor.html:165
-#: app/templates/pages/jobs/monitor.html:166
+#: app/templates/pages/jobs/monitor.html:124
+#: app/templates/pages/jobs/monitor.html:171
+#: app/templates/pages/jobs/monitor.html:172
 #: app/templates/pages/projects/tabs/indexing.html:63
 #: app/templates/pages/projects/tabs/jobs.html:30
 #, python-format
 msgid "%(n)s%%"
 msgstr ""
 
-#: app/templates/pages/dashboard.html:67
+#: app/templates/pages/dashboard.html:81
 msgid "No jobs recorded yet"
 msgstr ""
 
-#: app/templates/pages/dashboard.html:73
+#: app/templates/pages/dashboard.html:87
 msgid "Recent events"
 msgstr ""
 
-#: app/templates/pages/dashboard.html:73
+#: app/templates/pages/dashboard.html:87
 msgid "All events"
 msgstr ""
 
-#: app/templates/pages/dashboard.html:88 app/templates/pages/logs/feed.html:59
+#: app/templates/pages/dashboard.html:102 app/templates/pages/logs/feed.html:59
 msgid "No events recorded"
 msgstr ""
 
@@ -1978,9 +2000,9 @@ msgstr ""
 #: app/templates/pages/articles/_images_pane.html:251
 #: app/templates/pages/articles/_outline_pane.html:22
 #: app/templates/pages/projects/detail.html:51
-#: app/templates/pages/projects/tabs/integrations.html:137
+#: app/templates/pages/projects/tabs/integrations.html:139
 #: app/templates/pages/projects/tabs/topics.html:149
-#: app/templates/pages/topics/index.html:107
+#: app/templates/pages/topics/index.html:112
 msgid "Delete"
 msgstr ""
 
@@ -2027,7 +2049,7 @@ msgid "View technical details"
 msgstr ""
 
 #: app/templates/pages/articles/detail.html:13
-#: app/templates/pages/articles/review.html:277
+#: app/templates/pages/articles/review.html:274
 #: app/templates/pages/articles/workspace.html:27
 #: app/templates/pages/jobs/detail.html:8
 #: app/templates/pages/projects/detail.html:13
@@ -2037,7 +2059,7 @@ msgstr ""
 
 #: app/templates/pages/articles/detail.html:27
 #: app/templates/pages/articles/review.html:27
-#: app/templates/pages/articles/review.html:173
+#: app/templates/pages/articles/review.html:170
 #: app/templates/pages/articles/workspace.html:41
 #: app/templates/pages/projects/tabs/articles.html:14
 #, python-format
@@ -2065,7 +2087,7 @@ msgid "Send the article to WordPress?"
 msgstr ""
 
 #: app/templates/pages/articles/detail.html:47
-#: app/templates/pages/articles/review.html:63
+#: app/templates/pages/articles/review.html:60
 #: app/templates/pages/articles/workspace.html:67
 #: app/templates/pages/projects/detail.html:73
 #: app/templates/pages/projects/tabs/publishing.html:2
@@ -2088,7 +2110,7 @@ msgid "Title"
 msgstr ""
 
 #: app/templates/pages/articles/detail.html:89
-#: app/templates/pages/articles/review.html:317
+#: app/templates/pages/articles/review.html:314
 #: app/templates/pages/articles/workspace.html:205
 msgid "Meta description"
 msgstr ""
@@ -2227,123 +2249,123 @@ msgstr ""
 msgid "Generated: %(v)s"
 msgstr ""
 
-#: app/templates/pages/articles/review.html:47
-#: app/templates/pages/articles/review.html:111
+#: app/templates/pages/articles/review.html:44
+#: app/templates/pages/articles/review.html:108
 msgid "Return"
 msgstr ""
 
-#: app/templates/pages/articles/review.html:59
+#: app/templates/pages/articles/review.html:56
 msgid "Approved — publishing enabled"
 msgstr ""
 
-#: app/templates/pages/articles/review.html:69
+#: app/templates/pages/articles/review.html:66
 #: app/templates/pages/articles/workspace.html:87
 msgid "Regenerate article"
 msgstr ""
 
-#: app/templates/pages/articles/review.html:77
+#: app/templates/pages/articles/review.html:74
 msgid "The current version is saved to history; continue full regeneration?"
 msgstr ""
 
-#: app/templates/pages/articles/review.html:77
+#: app/templates/pages/articles/review.html:74
 msgid "Full regeneration"
 msgstr ""
 
-#: app/templates/pages/articles/review.html:101
+#: app/templates/pages/articles/review.html:98
 msgid "Return article"
 msgstr ""
 
-#: app/templates/pages/articles/review.html:107
+#: app/templates/pages/articles/review.html:104
 msgid "Reason for returning (recorded in history)…"
 msgstr ""
 
-#: app/templates/pages/articles/review.html:135
+#: app/templates/pages/articles/review.html:132
 msgid "Validation panel"
 msgstr ""
 
-#: app/templates/pages/articles/review.html:139
+#: app/templates/pages/articles/review.html:136
 msgid "Passed"
 msgstr ""
 
-#: app/templates/pages/articles/review.html:149
+#: app/templates/pages/articles/review.html:146
 msgid "All checks passed — the article can be approved."
 msgstr ""
 
-#: app/templates/pages/articles/review.html:175
+#: app/templates/pages/articles/review.html:172
 #: app/templates/pages/articles/workspace.html:167
 #, python-format
 msgid "%(n)s sections"
 msgstr ""
 
-#: app/templates/pages/articles/review.html:177
+#: app/templates/pages/articles/review.html:174
 #, python-format
 msgid "Minimum %(n)s"
 msgstr ""
 
-#: app/templates/pages/articles/review.html:189
+#: app/templates/pages/articles/review.html:186
 msgid "Generation info"
 msgstr ""
 
-#: app/templates/pages/articles/review.html:193
+#: app/templates/pages/articles/review.html:190
 msgid "Latest generation version"
 msgstr ""
 
-#: app/templates/pages/articles/review.html:195
+#: app/templates/pages/articles/review.html:192
 msgid "Generation time"
 msgstr ""
 
-#: app/templates/pages/articles/review.html:197
+#: app/templates/pages/articles/review.html:194
 #: app/templates/pages/articles/workspace.html:395
 msgid "SEO score"
 msgstr ""
 
-#: app/templates/pages/articles/review.html:201
+#: app/templates/pages/articles/review.html:198
 msgid "Sections (model/prompt version)"
 msgstr ""
 
-#: app/templates/pages/articles/review.html:227
+#: app/templates/pages/articles/review.html:224
 #: app/templates/pages/articles/workspace.html:477
 msgid "Internal links"
 msgstr ""
 
-#: app/templates/pages/articles/review.html:247
+#: app/templates/pages/articles/review.html:244
 msgid "Version history"
 msgstr ""
 
-#: app/templates/pages/articles/review.html:277
+#: app/templates/pages/articles/review.html:274
 msgid "Restore this version? The current version is saved to history."
 msgstr ""
 
-#: app/templates/pages/articles/review.html:289
+#: app/templates/pages/articles/review.html:286
 msgid "No history recorded."
 msgstr ""
 
-#: app/templates/pages/articles/review.html:307
+#: app/templates/pages/articles/review.html:304
 msgid "Title and slug"
 msgstr ""
 
-#: app/templates/pages/articles/review.html:315
+#: app/templates/pages/articles/review.html:312
 msgid "Slug"
 msgstr ""
 
-#: app/templates/pages/articles/review.html:329
+#: app/templates/pages/articles/review.html:326
 msgid "Outline"
 msgstr ""
 
-#: app/templates/pages/articles/review.html:357
+#: app/templates/pages/articles/review.html:354
 msgid "Article body"
 msgstr ""
 
-#: app/templates/pages/articles/review.html:367
+#: app/templates/pages/articles/review.html:364
 msgid "No content has been generated."
 msgstr ""
 
-#: app/templates/pages/articles/review.html:381
+#: app/templates/pages/articles/review.html:378
 #, python-format
 msgid "Generated version (v%(n)s)"
 msgstr ""
 
-#: app/templates/pages/articles/review.html:385
+#: app/templates/pages/articles/review.html:382
 msgid "Differs from the current version — use history to roll back."
 msgstr ""
 
@@ -2464,8 +2486,8 @@ msgstr ""
 #: app/templates/pages/jobs/_table.html:47
 #: app/templates/pages/jobs/detail.html:24
 #: app/templates/pages/jobs/failed.html:19
-#: app/templates/pages/jobs/monitor.html:134
-#: app/templates/pages/jobs/monitor.html:155
+#: app/templates/pages/jobs/monitor.html:140
+#: app/templates/pages/jobs/monitor.html:161
 #: app/templates/pages/projects/tabs/indexing.html:207
 #: app/templates/pages/projects/tabs/jobs.html:49
 #: app/templates/pages/projects/tabs/settings.html:95
@@ -2476,60 +2498,72 @@ msgid "Retry"
 msgstr ""
 
 #: app/templates/pages/dashboard/_stats.html:7
-msgid "Planned topics"
+msgid "روند تولید محتوا"
 msgstr ""
 
 #: app/templates/pages/dashboard/_stats.html:8
-msgid "Articles being written"
-msgstr ""
-
-#: app/templates/pages/dashboard/_stats.html:9
-msgid "Awaiting review"
+msgid "مشاهده پروژه‌ها"
 msgstr ""
 
 #: app/templates/pages/dashboard/_stats.html:11
-msgid "Pending jobs"
+msgid "Planned topics"
 msgstr ""
 
 #: app/templates/pages/dashboard/_stats.html:12
+msgid "Articles being written"
+msgstr ""
+
+#: app/templates/pages/dashboard/_stats.html:13
+msgid "Awaiting review"
+msgstr ""
+
+#: app/templates/pages/dashboard/_stats.html:30
+msgid "سلامت سیستم"
+msgstr ""
+
+#: app/templates/pages/dashboard/_stats.html:36
+msgid "Pending jobs"
+msgstr ""
+
+#: app/templates/pages/dashboard/_stats.html:39
 msgid "Running / retrying"
 msgstr ""
 
-#: app/templates/pages/dashboard/_stats.html:14
+#: app/templates/pages/dashboard/_stats.html:42
 msgid "Failure rate / average (seconds)"
 msgstr ""
 
-#: app/templates/pages/dashboard/_stats.html:14
-msgid "% / "
-msgstr ""
-
-#: app/templates/pages/dashboard/_stats.html:15
+#: app/templates/pages/dashboard/_stats.html:45
 msgid "Indexing health"
 msgstr ""
 
-#: app/templates/pages/dashboard/_stats.html:15
-#: app/templates/pages/dashboard/_stats.html:16
+#: app/templates/pages/dashboard/_stats.html:45
+#: app/templates/pages/dashboard/_stats.html:48
 msgid " healthy"
 msgstr ""
 
-#: app/templates/pages/dashboard/_stats.html:15
+#: app/templates/pages/dashboard/_stats.html:45
 msgid " degraded"
 msgstr ""
 
-#: app/templates/pages/dashboard/_stats.html:16
+#: app/templates/pages/dashboard/_stats.html:48
 msgid "Provider health"
 msgstr ""
 
-#: app/templates/pages/dashboard/_stats.html:16
+#: app/templates/pages/dashboard/_stats.html:48
 msgid " unhealthy · "
 msgstr ""
 
-#: app/templates/pages/dashboard/_stats.html:20
+#: app/templates/pages/dashboard/_stats.html:51
+msgid "View failed jobs"
+msgstr ""
+
+#: app/templates/pages/dashboard/_stats.html:54
 #: app/templates/pages/workers/index.html:31
 msgid "Worker online"
 msgstr ""
 
-#: app/templates/pages/dashboard/_stats.html:23
+#: app/templates/pages/dashboard/_stats.html:54
 msgid "View worker status →"
 msgstr ""
 
@@ -2543,7 +2577,7 @@ msgstr ""
 
 #: app/templates/pages/jobs/_table.html:44
 #: app/templates/pages/jobs/detail.html:22
-#: app/templates/pages/jobs/monitor.html:131
+#: app/templates/pages/jobs/monitor.html:137
 #: app/templates/pages/projects/tabs/jobs.html:44
 msgid "Cancel this job?"
 msgstr ""
@@ -2736,24 +2770,29 @@ msgstr ""
 msgid "Clear"
 msgstr ""
 
-#: app/templates/pages/jobs/monitor.html:139
+#: app/templates/pages/jobs/monitor.html:106
+#: app/templates/pages/projects/tabs/integrations.html:67
+msgid "Actions"
+msgstr ""
+
+#: app/templates/pages/jobs/monitor.html:145
 msgid "No jobs match these filters"
 msgstr ""
 
-#: app/templates/pages/jobs/monitor.html:148
+#: app/templates/pages/jobs/monitor.html:154
 msgid "Provider metrics (last 7 days)"
 msgstr ""
 
-#: app/templates/pages/jobs/monitor.html:153
+#: app/templates/pages/jobs/monitor.html:159
 #: app/templates/pages/projects/tabs/ai_models.html:37
 #: app/templates/pages/projects/tabs/indexing.html:47
 #: app/templates/pages/projects/tabs/integrations.html:57
-#: app/templates/pages/projects/tabs/integrations.html:241
+#: app/templates/pages/projects/tabs/integrations.html:245
 #: app/templates/pages/projects/tabs/settings.html:7
 msgid "Provider"
 msgstr ""
 
-#: app/templates/pages/jobs/monitor.html:153
+#: app/templates/pages/jobs/monitor.html:159
 #: app/templates/pages/projects/tabs/ai_models.html:65
 #: app/templates/pages/projects/tabs/indexing.html:47
 #: app/templates/pages/projects/tabs/prompts.html:133
@@ -2761,33 +2800,33 @@ msgstr ""
 msgid "Model"
 msgstr ""
 
-#: app/templates/pages/jobs/monitor.html:153
+#: app/templates/pages/jobs/monitor.html:159
 #: app/templates/pages/projects/tabs/indexing.html:47
 #: app/templates/pages/projects/tabs/prompts.html:191
 #: app/templates/pages/topics/index.html:78
 msgid "Operation"
 msgstr ""
 
-#: app/templates/pages/jobs/monitor.html:153
+#: app/templates/pages/jobs/monitor.html:159
 #: app/templates/pages/projects/tabs/indexing.html:47
 msgid "Count"
 msgstr ""
 
-#: app/templates/pages/jobs/monitor.html:154
+#: app/templates/pages/jobs/monitor.html:160
 #: app/templates/pages/projects/tabs/indexing.html:47
 msgid "Success"
 msgstr ""
 
-#: app/templates/pages/jobs/monitor.html:154
+#: app/templates/pages/jobs/monitor.html:160
 msgid "Failure"
 msgstr ""
 
-#: app/templates/pages/jobs/monitor.html:154
+#: app/templates/pages/jobs/monitor.html:160
 #: app/templates/pages/projects/tabs/indexing.html:47
 msgid "Average (ms)"
 msgstr ""
 
-#: app/templates/pages/jobs/monitor.html:155
+#: app/templates/pages/jobs/monitor.html:161
 msgid "Tokens"
 msgstr ""
 
@@ -2837,6 +2876,10 @@ msgstr ""
 #: app/templates/pages/projects/detail.html:73
 #: app/templates/pages/projects/tabs/indexing.html:11
 msgid "Indexing"
+msgstr ""
+
+#: app/templates/pages/projects/detail.html:63
+msgid "بخش‌های پروژه"
 msgstr ""
 
 #: app/templates/pages/projects/detail.html:69
@@ -3496,77 +3539,82 @@ msgstr ""
 msgid "Test"
 msgstr ""
 
-#: app/templates/pages/projects/tabs/integrations.html:137
+#: app/templates/pages/projects/tabs/integrations.html:132
+#: app/templates/pages/topics/index.html:102
+msgid "اقدام‌های بیشتر"
+msgstr ""
+
+#: app/templates/pages/projects/tabs/integrations.html:139
 msgid "Delete this integration? This cannot be undone."
 msgstr ""
 
-#: app/templates/pages/projects/tabs/integrations.html:163
+#: app/templates/pages/projects/tabs/integrations.html:167
 msgid "No connections registered in this category."
 msgstr ""
 
-#: app/templates/pages/projects/tabs/integrations.html:165
+#: app/templates/pages/projects/tabs/integrations.html:169
 msgid "Create the first connection with “+ Add”."
 msgstr ""
 
-#: app/templates/pages/projects/tabs/integrations.html:189
+#: app/templates/pages/projects/tabs/integrations.html:193
 msgid "Edit connection"
 msgstr ""
 
-#: app/templates/pages/projects/tabs/integrations.html:189
+#: app/templates/pages/projects/tabs/integrations.html:193
 msgid "New connection"
 msgstr ""
 
-#: app/templates/pages/projects/tabs/integrations.html:219
+#: app/templates/pages/projects/tabs/integrations.html:223
 msgid "Display name"
 msgstr ""
 
-#: app/templates/pages/projects/tabs/integrations.html:221
+#: app/templates/pages/projects/tabs/integrations.html:225
 msgid "The name you see in the connections table, e.g. “Main OpenAI”"
 msgstr ""
 
-#: app/templates/pages/projects/tabs/integrations.html:243
+#: app/templates/pages/projects/tabs/integrations.html:247
 msgid "Provider ID (e.g. openai_compat) — pick from the list or enter manually"
 msgstr ""
 
-#: app/templates/pages/projects/tabs/integrations.html:261
+#: app/templates/pages/projects/tabs/integrations.html:265
 msgid "Model (optional)"
 msgstr ""
 
-#: app/templates/pages/projects/tabs/integrations.html:263
+#: app/templates/pages/projects/tabs/integrations.html:267
 msgid ""
 "Default model for this connection (e.g. gpt-4o-mini) — can be changed in "
 "project settings"
 msgstr ""
 
-#: app/templates/pages/projects/tabs/integrations.html:283
+#: app/templates/pages/projects/tabs/integrations.html:287
 msgid "Base URL"
 msgstr ""
 
-#: app/templates/pages/projects/tabs/integrations.html:285
+#: app/templates/pages/projects/tabs/integrations.html:289
 msgid ""
 "API URL — for OpenAI usually …/v1, for Qdrant usually "
 "http://127.0.0.1:6333. Without a protocol, https:// is added."
 msgstr ""
 
-#: app/templates/pages/projects/tabs/integrations.html:305
+#: app/templates/pages/projects/tabs/integrations.html:309
 msgid "WordPress username"
 msgstr ""
 
-#: app/templates/pages/projects/tabs/integrations.html:307
+#: app/templates/pages/projects/tabs/integrations.html:311
 msgid "WordPress username together with an Application Password"
 msgstr ""
 
-#: app/templates/pages/projects/tabs/integrations.html:325
+#: app/templates/pages/projects/tabs/integrations.html:329
 msgid "API key"
 msgstr ""
 
-#: app/templates/pages/projects/tabs/integrations.html:327
+#: app/templates/pages/projects/tabs/integrations.html:331
 msgid ""
 "When editing, leave empty to keep the existing key. The key is never "
 "stored or displayed in plaintext — only an encrypted version is kept"
 msgstr ""
 
-#: app/templates/pages/projects/tabs/integrations.html:339
+#: app/templates/pages/projects/tabs/integrations.html:343
 msgid "If left empty, the previous value is kept"
 msgstr ""
 
@@ -4255,7 +4303,7 @@ msgid "No topic found."
 msgstr ""
 
 #: app/templates/pages/projects/tabs/topics.html:191
-#: app/templates/pages/topics/index.html:169
+#: app/templates/pages/topics/index.html:177
 msgid "New topic"
 msgstr ""
 
@@ -4266,7 +4314,7 @@ msgid ""
 msgstr ""
 
 #: app/templates/pages/projects/tabs/topics.html:207
-#: app/templates/pages/topics/index.html:175
+#: app/templates/pages/topics/index.html:183
 msgid "e.g. Best SEO practices in 1405"
 msgstr ""
 
@@ -4283,17 +4331,17 @@ msgid "e.g. SEO tutorial"
 msgstr ""
 
 #: app/templates/pages/projects/tabs/topics.html:213
-#: app/templates/pages/topics/index.html:186
+#: app/templates/pages/topics/index.html:194
 msgid "Pillar page"
 msgstr ""
 
 #: app/templates/pages/projects/tabs/topics.html:213
-#: app/templates/pages/topics/index.html:187
+#: app/templates/pages/topics/index.html:195
 msgid "Guide"
 msgstr ""
 
 #: app/templates/pages/projects/tabs/topics.html:213
-#: app/templates/pages/topics/index.html:188
+#: app/templates/pages/topics/index.html:196
 msgid "News"
 msgstr ""
 
@@ -4359,27 +4407,36 @@ msgstr ""
 msgid "Generate article"
 msgstr ""
 
-#: app/templates/pages/topics/index.html:96
+#: app/templates/pages/topics/index.html:72
+msgid "انتخاب همه موضوع‌ها"
+msgstr ""
+
+#: app/templates/pages/topics/index.html:84
+#, python-format
+msgid "انتخاب موضوع «%(v)s»"
+msgstr ""
+
+#: app/templates/pages/topics/index.html:97
 msgid "Generate"
 msgstr ""
 
-#: app/templates/pages/topics/index.html:107
+#: app/templates/pages/topics/index.html:112
 msgid "Delete this topic?"
 msgstr ""
 
-#: app/templates/pages/topics/index.html:116
+#: app/templates/pages/topics/index.html:124
 msgid "No topic found"
 msgstr ""
 
-#: app/templates/pages/topics/index.html:117
+#: app/templates/pages/topics/index.html:125
 msgid "Add the first topic or use CSV import."
 msgstr ""
 
-#: app/templates/pages/topics/index.html:118
+#: app/templates/pages/topics/index.html:126
 msgid "+ New topic"
 msgstr ""
 
-#: app/templates/pages/topics/index.html:208
+#: app/templates/pages/topics/index.html:216
 msgid "Editorial calendar week (optional)"
 msgstr ""
 

@@ -4101,3 +4101,44 @@ msgstr "Copied ✓"
 msgid "Recent failures"
 msgstr "Recent failures"
 
+#: app/templates/components/topics/import_progress.html
+msgid "مراحل درون‌ریزی"
+msgstr "Import steps"
+
+#: app/templates/components/topics/import_progress.html
+msgid "افزودن موضوع‌ها"
+msgstr "Add topics"
+
+#: app/templates/components/topics/import_progress.html
+msgid "نگاشت ستون‌ها"
+msgstr "Map columns"
+
+#: app/templates/components/topics/import_progress.html
+msgid "مرور نتایج"
+msgstr "Review results"
+
+#: app/templates/pages/dashboard/_stats.html
+msgid "روند تولید محتوا"
+msgstr "Content pipeline"
+
+#: app/templates/pages/dashboard/_stats.html
+msgid "مشاهده پروژه‌ها"
+msgstr "View projects"
+
+#: app/templates/pages/dashboard/_stats.html
+msgid "سلامت سیستم"
+msgstr "System health"
+
+#: app/templates/pages/projects/detail.html
+msgid "بخش‌های پروژه"
+msgstr "Project sections"
+
+#: app/templates/pages/topics/index.html
+#: app/templates/pages/projects/tabs/integrations.html
+msgid "اقدام‌های بیشتر"
+msgstr "More actions"
+
+#: app/templates/pages/topics/index.html
+#, python-format
+msgid "انتخاب موضوع «%(v)s»"
+msgstr "Select topic “%(v)s”"

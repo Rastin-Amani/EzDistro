@@ -8,11 +8,13 @@
 
       hx-encoding="multipart/form-data" class="flex flex-col gap-4">
 
+    {% with current_step=1 %}{% include "components/topics/import_progress.html" %}{% endwith %}
+
     <label class="form-control w-full">
 
         <span class="label-text font-medium text-sm">{{ _('Paste text') }}</span>
 
-        <textarea name="csv_text" rows="7" dir="ltr" class="textarea w-full font-mono text-xs leading-relaxed"
+        <textarea name="csv_text" rows="7" dir="auto" class="textarea w-full font-mono text-xs leading-relaxed"
 
                   placeholder="{{ _('Title | Keyword | Pillar | Cluster | Type | Priority&#10;…or a full CSV with header (e.g. Week,Title,Keyword,Related Pillar,…)') }}"></textarea>
 

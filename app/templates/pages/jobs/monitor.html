@@ -97,40 +97,46 @@
             <thead>
                 <tr>
                     <th>{{ _('Type') }}</th>
-                    <th>{{ _('Project') }}</th>
+                    <th class="hidden xl:table-cell">{{ _('Project') }}</th>
                     <th>{{ _('Status') }}</th>
-                    <th>{{ _('Progress') }}</th>
-                    <th>{{ _('Message') }}</th>
-                    <th>{{ _('Attempt') }}</th>
-                    <th>{{ _('Time') }}</th>
-                    <th></th>
+                    <th class="hidden sm:table-cell">{{ _('Progress') }}</th>
+                    <th class="hidden 2xl:table-cell">{{ _('Message') }}</th>
+                    <th class="hidden xl:table-cell">{{ _('Attempt') }}</th>
+                    <th class="hidden xl:table-cell">{{ _('Time') }}</th>
+                    <th><span class="sr-only">{{ _('Actions') }}</span></th>
                 </tr>
             </thead>
             <tbody>
                 {% for j in jobs %}
                 <tr>
-                    <td class="text-xs whitespace-nowrap"><a href="/jobs/{{ j.id }}" class="link link-primary">{{ j.type }}</a></td>
-                    <td class="text-xs opacity-60">{{ j.project[:8] }}</td>
-                    <td><span class="badge badge-sm {{ j.status|status_badge }}">{{ j.status|status_label }}</span></td>
-                    <td class="w-32">
+                    <td class="max-w-28 text-xs"><a href="/jobs/{{ j.id }}" class="link link-primary break-words sm:whitespace-nowrap">{{ j.type }}</a></td>
+                    <td class="hidden text-xs opacity-60 xl:table-cell">{{ j.project[:8] }}</td>
+                    <td>
+                        <span class="badge badge-sm {{ j.status|status_badge }}">{{ j.status|status_label }}</span>
+                        <div class="mt-1 flex items-center gap-1 sm:hidden">
+                            <progress class="progress progress-primary h-1.5 w-14" value="{{ j.progress or 0 }}" max="100" aria-label="{{ _('Progress') }}"></progress>
+                            <span class="text-[0.65rem] tabular-nums">{{ _('%(n)s%%') % {'n': j.progress or 0} }}</span>
+                        </div>
+                    </td>
+                    <td class="hidden w-32 sm:table-cell">
                         <div class="flex items-center gap-2">
                             <progress class="progress progress-primary w-16 h-1.5" value="{{ j.progress or 0 }}" max="100"></progress>
                             <span class="text-xs tabular">{{ _('%(n)s%%') % {'n': j.progress or 0} }}</span>
                         </div>
                     </td>
-                    <td class="text-xs max-w-48">
+                    <td class="hidden max-w-48 text-xs 2xl:table-cell">
                         <p class="truncate">{{ j.progressMessage or '—' }}</p>
                         {% if j.stage %}<p class="opacity-50 text-xs" dir="ltr">{{ j.stage }}</p>{% endif %}
                         {% if j.currentItem and j.totalItems %}<p class="opacity-50">{{ j.currentItem }} / {{ j.totalItems }}</p>{% endif %}
                     </td>
-                    <td class="text-xs tabular">{{ j.attempts or 0 }}/{{ j.maxAttempts or 3 }}</td>
-                    <td class="text-xs opacity-50 whitespace-nowrap">{{ j.created|loc_dt }}</td>
+                    <td class="hidden text-xs tabular xl:table-cell">{{ j.attempts or 0 }}/{{ j.maxAttempts or 3 }}</td>
+                    <td class="hidden whitespace-nowrap text-xs opacity-50 xl:table-cell">{{ j.created|loc_dt }}</td>
                     <td class="whitespace-nowrap">
                         {% if j.status in ['pending', 'retrying', 'running'] %}
-                        <button class="btn btn-ghost btn-xs text-warning"
+                        <button class="btn btn-ghost btn-sm text-warning"
                                 hx-post="/jobs/{{ j.id }}/cancel" hx-swap="none" hx-confirm="{{ _('Cancel this job?') }}">{{ _('Cancel') }}</button>
                         {% elif j.status == 'failed' %}
-                        <button class="btn btn-ghost btn-xs text-primary"
+                        <button class="btn btn-ghost btn-sm text-primary"
                                 hx-post="/jobs/{{ j.id }}/retry" hx-swap="none">{{ _('Retry') }}</button>
                         {% endif %}
                     </td>

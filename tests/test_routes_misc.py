@@ -18,7 +18,9 @@ def test_dashboard_stats_partial_renders():
     req = make_req(pb, make_user("admin1", role="admin"), "")
     resp = D.dashboard_stats_partial(req)
     assert resp.status_code == 200
-    assert resp.body.decode().strip() != ""
+    body = resp.body.decode()
+    assert body.strip() != ""
+    assert body.count('id="stats-row"') == 1
 
 
 def test_manifest_json_is_valid_json():

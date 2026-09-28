@@ -317,6 +317,7 @@ async def test_import_preview_renders_mapping_form(setup):
     assert "\u0645\u0648\u0636\u0648\u0639 \u0627\u0648\u0644" in body  # preview sample row
     assert "\u0628\u062f\u0648\u0646 \u0647\u062f\u0631" in body
     assert 'name="token"' in body
+    assert 'aria-current="step"' in body and "نگاشت ستون‌ها" in body
 
 
 async def test_import_preview_empty_input(setup):
@@ -353,6 +354,7 @@ async def test_import_confirm_creates_topics(setup):
     assert resp.status_code == 200
     body = resp.body.decode()
     assert "\u0627\u0641\u0632\u0648\u062f\u0647 \u0634\u062f" in body
+    assert 'aria-current="step"' in body and "مرور نتایج" in body
     assert TopicRepo(pb).list_for_project(proj["id"], per_page=50)  # non-empty
 
 
@@ -398,3 +400,5 @@ def test_import_form_back_button_partial(setup):
     body = resp.body.decode()
     assert "import/preview" in body
     assert "csv_text" in body
+    assert 'dir="auto"' in body
+    assert 'aria-current="step"' in body and "Add topics" in body
