@@ -66,6 +66,9 @@ def normalize_outline(raw: Any) -> dict[str, Any]:
     return {
         "title": outline.title,
         "slug": slug,
+        "meta_description": outline.meta_description,
+        "search_intent": outline.search_intent,
+        "audience": outline.audience,
         "sections": [
             {
                 "heading": s.heading,
@@ -74,8 +77,14 @@ def normalize_outline(raw: Any) -> dict[str, Any]:
                     {"title": link.title, "url": link.url, "anchor_text": link.anchor_text}
                     for link in s.internal_links
                 ],
+                "key": s.key or f"section-{i + 1}",
+                "purpose": s.purpose,
+                "reader_question": s.reader_question,
+                "required_points": list(s.required_points),
+                "entities": list(s.entities),
+                "evidence": list(s.evidence),
             }
-            for s in outline.sections
+            for i, s in enumerate(outline.sections)
         ],
     }
 

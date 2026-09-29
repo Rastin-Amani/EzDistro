@@ -46,6 +46,13 @@ class ArticleSectionPlan(BaseModel):
     heading: str = Field(min_length=1, max_length=120)
     content_brief: str = Field(min_length=1, max_length=2000)
     internal_links: list[InternalLink] = Field(default_factory=list, max_length=5)
+    # multilingual-engine brief fields (all optional — old outlines stay valid)
+    key: str = Field(default="", max_length=40)
+    purpose: str = Field(default="", max_length=1000)
+    reader_question: str = Field(default="", max_length=500)
+    required_points: list[str] = Field(default_factory=list, max_length=20)
+    entities: list[str] = Field(default_factory=list, max_length=30)
+    evidence: list[str] = Field(default_factory=list, max_length=20)
 
     @field_validator("heading", "content_brief", mode="before")
     @classmethod
@@ -66,6 +73,10 @@ class ArticleOutline(BaseModel):
     title: str = Field(min_length=1, max_length=200)
     slug: str = Field(default="", max_length=200)
     sections: list[ArticleSectionPlan] = Field(min_length=2, max_length=12)
+    # multilingual-engine outline fields (optional — old outlines stay valid)
+    meta_description: str = Field(default="", max_length=500)
+    search_intent: str = Field(default="", max_length=500)
+    audience: str = Field(default="", max_length=500)
 
     @field_validator("title", "slug", mode="before")
     @classmethod

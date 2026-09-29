@@ -85,6 +85,15 @@ DEFAULT_SETTINGS: dict[str, Any] = {
     "minArticleWords": 300,
     "retryPolicy": {"max_attempts": 3, "backoff_base": 30, "backoff_max": 3600},
     "publishingMode": "publish",
+    # localization & brand (multilingual engine: locale/market/voice context)
+    "targetLocale": "",
+    "targetCountry": "",
+    "targetAudience": "",
+    "brandName": "",
+    "preferredTerminology": "",
+    "forbiddenTerminology": "",
+    "urlPolicy": "",
+    "productContext": "",
     # image subsystem defaults (mirror bootstrap_pb project_settings fields)
     "imageCoverProvider": "gemini",
     "imageCoverModel": "gemini-3-pro-image",

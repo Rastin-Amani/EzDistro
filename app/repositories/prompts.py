@@ -22,6 +22,18 @@ PROMPT_TYPES = (
     "validation",
     "image_plan_system",
     "image_plan_user",
+    # multilingual SEO engine (see multilingual-seo-content-engine-prompts.md)
+    "seo_content_contract",
+    "research_system",
+    "research_user",
+    "metadata_system",
+    "metadata_user",
+    "article_qa_system",
+    "article_qa_user",
+    "article_repair_system",
+    "article_repair_user",
+    "output_validation",
+    "content_refresh_system",
 )
 
 
