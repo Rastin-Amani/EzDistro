@@ -8,10 +8,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app ./app
 COPY docs ./docs
+COPY docker-entrypoint.sh .
 
-# Web process (default)
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips", "*"]
+ENV PYTHONUNBUFFERED=1
 
-# Worker process (override CMD):
-#   docker run --rm -e CMD ...  or in compose:
-#   command: ["python", "-m", "app.workers.worker"]
+# Web + a pool of worker processes in one container (Dokploy "Dockerfile" deploy).
+# Scale the pool with the WORKERS env var (default 4) — no rebuild, no replica.
+CMD ["sh", "docker-entrypoint.sh"]
+
+# Worker only (override CMD): docker run --rm ezdistro python -m app.workers.worker
