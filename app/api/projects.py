@@ -361,14 +361,28 @@ def _tab_context(
         from app.domain.prompt_render import variable_labels
 
         context["prompt_types"] = {
+            "brand_voice": _("Brand voice"),
+            "seo_content_contract": _("SEO content contract"),
+            "research_system": _("Research — system"),
+            "research_user": _("Research — user"),
             "outline_system": _("Outline — system"),
             "outline_user": _("Outline — user"),
             "section_system": _("Section — system"),
             "section_user": _("Section — user"),
-            "seo_rules": _("SEO rules"),
             "internal_linking": _("Internal linking"),
-            "brand_voice": _("Brand voice"),
-            "validation": _("Article validation"),
+            "metadata_system": _("Metadata — system"),
+            "metadata_user": _("Metadata — user"),
+            "article_qa_system": _("Article QA — system"),
+            "article_qa_user": _("Article QA — user"),
+            "article_repair_system": _("Article repair — system"),
+            "article_repair_user": _("Article repair — user"),
+            "image_plan_system": _("Image plan — system"),
+            "image_plan_user": _("Image plan — user"),
+            "output_validation": _("Output validation"),
+            "content_refresh_system": _("Content refresh"),
+            # legacy aliases (kept resolving: seo_rules → contract, validation → repair)
+            "seo_rules": _("SEO rules (legacy)"),
+            "validation": _("Article validation (legacy)"),
         }
         repo = PromptRepo(pb)
         context["prompts"] = repo.list_for_project(project_id)
@@ -512,6 +526,14 @@ def save_settings(
     schedule_index_interval: str = Form(""),
     schedule_write_enabled: str = Form(""),
     schedule_write_interval: str = Form(""),
+    target_locale: str = Form(""),
+    target_country: str = Form(""),
+    target_audience: str = Form(""),
+    brand_name: str = Form(""),
+    preferred_terminology: str = Form(""),
+    forbidden_terminology: str = Form(""),
+    url_policy: str = Form(""),
+    product_context: str = Form(""),
 ):
     require_hx(request)
     require_project_access(request, project_id)
@@ -543,6 +565,14 @@ def save_settings(
             "backoff_max": safe_int(retry_backoff_max, 3600),
         },
         "publishingMode": safe_str(publishing_mode, "draft"),
+        "targetLocale": safe_str(target_locale),
+        "targetCountry": safe_str(target_country),
+        "targetAudience": safe_str(target_audience),
+        "brandName": safe_str(brand_name),
+        "preferredTerminology": safe_str(preferred_terminology),
+        "forbiddenTerminology": safe_str(forbidden_terminology),
+        "urlPolicy": safe_str(url_policy),
+        "productContext": safe_str(product_context),
         "autosave": {
             "enabled": safe_bool(autosave_enabled),
             "interval_minutes": safe_int(autosave_interval_minutes, 5),
@@ -920,13 +950,26 @@ def delete_integration(request: Request, project_id: str, record_id: str):
 def save_prompts(
     request: Request,
     project_id: str,
+    brand_voice: str = Form(""),
+    seo_content_contract: str = Form(""),
+    research_system: str = Form(""),
+    research_user: str = Form(""),
     outline_system: str = Form(""),
     outline_user: str = Form(""),
     section_system: str = Form(""),
     section_user: str = Form(""),
-    seo_rules: str = Form(""),
     internal_linking: str = Form(""),
-    brand_voice: str = Form(""),
+    metadata_system: str = Form(""),
+    metadata_user: str = Form(""),
+    article_qa_system: str = Form(""),
+    article_qa_user: str = Form(""),
+    article_repair_system: str = Form(""),
+    article_repair_user: str = Form(""),
+    image_plan_system: str = Form(""),
+    image_plan_user: str = Form(""),
+    output_validation: str = Form(""),
+    content_refresh_system: str = Form(""),
+    seo_rules: str = Form(""),
     validation: str = Form(""),
 ):
     require_hx(request)
@@ -934,13 +977,26 @@ def save_prompts(
     require_project_role(request, project_id)
     user = require_user(request)
     values = {
+        "brand_voice": brand_voice,
+        "seo_content_contract": seo_content_contract,
+        "research_system": research_system,
+        "research_user": research_user,
         "outline_system": outline_system,
         "outline_user": outline_user,
         "section_system": section_system,
         "section_user": section_user,
-        "seo_rules": seo_rules,
         "internal_linking": internal_linking,
-        "brand_voice": brand_voice,
+        "metadata_system": metadata_system,
+        "metadata_user": metadata_user,
+        "article_qa_system": article_qa_system,
+        "article_qa_user": article_qa_user,
+        "article_repair_system": article_repair_system,
+        "article_repair_user": article_repair_user,
+        "image_plan_system": image_plan_system,
+        "image_plan_user": image_plan_user,
+        "output_validation": output_validation,
+        "content_refresh_system": content_refresh_system,
+        "seo_rules": seo_rules,
         "validation": validation,
     }
     from app.domain.prompt_render import PromptRenderError

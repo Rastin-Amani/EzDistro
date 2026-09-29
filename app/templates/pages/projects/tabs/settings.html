@@ -68,6 +68,27 @@
         </div>
     {{ f.section_close() }}
 
+    {{ f.section_open(_('Localization & brand'), _('Market, locale and voice context fed to every prompt.'), _('These values fill the language, locale, audience and brand variables — no prompt editing needed per market.')) }}
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {{ f.text('target_locale', _('Target locale'), settings.targetLocale,
+                _( 'Locale code such as fa-IR, en-US, de-DE. Drives native phrasing, units and examples.' ), dir='ltr', placeholder='fa-IR') }}
+            {{ f.text('target_country', _('Target country/market'), settings.targetCountry,
+                _( 'Market the content is written for (e.g. Iran, Germany).' ), placeholder='Iran') }}
+            {{ f.text('target_audience', _('Target audience'), settings.targetAudience,
+                _( 'Who reads this (e.g. gym owners, beginner gardeners).' )) }}
+            {{ f.text('brand_name', _('Brand name'), settings.brandName,
+                _( 'Site/brand name used by the editorial voice. Defaults to the project name.' )) }}
+            {{ f.text('preferred_terminology', _('Preferred terminology'), settings.preferredTerminology,
+                _( 'Terms real users in this market use — comma separated.' )) }}
+            {{ f.text('forbidden_terminology', _('Forbidden terminology'), settings.forbiddenTerminology,
+                _( 'Wording the model must never use — comma separated.' )) }}
+            {{ f.text('url_policy', _('URL policy'), settings.urlPolicy,
+                _( 'Slug convention for non-Latin scripts (e.g. keep Persian script, or transliterate).' )) }}
+            {{ f.text('product_context', _('Product context'), settings.productContext,
+                _( 'One or two sentences on what the brand sells, so research and examples stay grounded.' )) }}
+        </div>
+    {{ f.section_close() }}
+
     {{ f.section_open(_('Generation & publishing'), _('Set concurrency, minimum length and publish mode.'), '') }}
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
             {{ f.number('generation_concurrency', _('Concurrent section generation'), settings.generationConcurrency,

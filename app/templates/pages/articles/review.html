@@ -181,6 +181,125 @@
 
 
 
+        <div class="ezdistro-panel {{ 'border-success/40' if qa.get('ready') else ('border-warning/40' if qa.get('ran') else '') }}">
+
+            <div class="ezdistro-panel-head">
+
+                <h2 class="ezdistro-panel-title">{{ _('Editorial QA') }}</h2>
+
+                {% if qa.get('ran') %}
+
+                <span class="badge badge-sm {{ 'badge-soft badge-success' if qa.get('ready') else 'badge-soft badge-warning' }}">
+
+                    {{ _('Clean') if qa.get('ready') else _('Needs attention') }}
+
+                </span>
+
+                {% else %}
+
+                <span class="badge badge-sm badge-soft badge-neutral">{{ _('Not audited') }}</span>
+
+                {% endif %}
+
+            </div>
+
+            <div class="p-4 flex flex-col gap-2 text-xs">
+
+                {% if not qa.get('ran') %}
+
+                <p class="opacity-60">{{ _('No LLM audit ran for this article — configure the Article QA prompts to enable it.') }}</p>
+
+                {% else %}
+
+                {% if qa.get('summary') %}<p class="leading-relaxed">{{ qa.get('summary') }}</p>{% endif %}
+
+                {% if qa.get('repaired') %}<p class="text-success">{{ _('Repaired automatically from QA findings and re-validated.') }}</p>{% endif %}
+
+                {% if qa.get('issues') %}
+
+                <ul class="flex flex-col gap-1">
+
+                    {% for issue in qa.get('issues') %}
+
+                    <li class="flex flex-col gap-1 border rounded-lg px-2 py-1 {{ 'border-error/20 bg-error/5' if issue.severity in ('critical', 'high') else 'border-warning/20 bg-warning/5' }}">
+
+                        <div class="flex items-center gap-2">
+
+                            <span class="badge badge-xs badge-soft shrink-0 {{ 'badge-error' if issue.severity in ('critical', 'high') else 'badge-warning' }}">{{ issue.severity }}</span>
+
+                            {% if issue.category %}<span class="opacity-60">{{ issue.category }}</span>{% endif %}
+
+                        </div>
+
+                        {% if issue.location %}<div class="opacity-60">{{ issue.location }}</div>{% endif %}
+
+                        <div>{{ issue.problem }}</div>
+
+                        {% if issue.required_fix %}<div class="opacity-70">{{ _('Fix:') }} {{ issue.required_fix }}</div>{% endif %}
+
+                    </li>
+
+                    {% endfor %}
+
+                </ul>
+
+                {% else %}
+
+                <p class="opacity-60">{{ _('No issues reported.') }}</p>
+
+                {% endif %}
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+
+
+        {% set _intent = research.get('search_intent', {}) %}
+        {% if _intent is mapping %}
+        {% set _primary = _intent.get('primary') %}
+        {% set _reader_job = _intent.get('reader_job') %}
+        {% else %}
+        {% set _primary = _intent %}
+        {% set _reader_job = '' %}
+        {% endif %}
+
+        {% if research %}
+
+        <div class="ezdistro-panel">
+
+            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('Research snapshot') }}</h2></div>
+
+            <div class="p-4 text-xs flex flex-col gap-1.5">
+
+                {% if _primary %}
+
+                <div class="flex justify-between gap-2"><span class="opacity-50 shrink-0">{{ _('Search intent') }}</span><span class="text-right">{{ _primary }}</span></div>
+
+                {% endif %}
+
+                {% if _reader_job %}
+
+                <div class="flex justify-between gap-2"><span class="opacity-50 shrink-0">{{ _('Reader job') }}</span><span class="text-right">{{ _reader_job }}</span></div>
+
+                {% endif %}
+
+                <div class="flex justify-between"><span class="opacity-50">{{ _('Key questions') }}</span><span class="font-mono">{{ (research.get('essential_questions') or [])|length }}</span></div>
+
+                <div class="flex justify-between"><span class="opacity-50">{{ _('Content gaps') }}</span><span class="font-mono">{{ (research.get('content_gaps') or [])|length }}</span></div>
+
+                <div class="flex justify-between"><span class="opacity-50">{{ _('Entities') }}</span><span class="font-mono">{{ (research.get('entities') or [])|length }}</span></div>
+
+            </div>
+
+        </div>
+
+        {% endif %}
+
+
+
         <div class="ezdistro-panel">
 
             <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('Generation info') }}</h2></div>
