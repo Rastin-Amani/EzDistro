@@ -110,15 +110,6 @@ body {
     font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
 }
 
-/* daisyUI's .dropdown-end uses inset-inline-end:0, which pushes the panel
-   BEYOND the trigger's inline-end edge — off-screen when the trigger hugs
-   the viewport edge (our sidebar foot + mobile header, RTL and LTR alike).
-   Anchor the panel's inline-start edge instead so it opens INTO the screen. */
-.dropdown-end .dropdown-content {
-    inset-inline-start: 0;
-    inset-inline-end: auto;
-}
-
 /* ═══════════════════════════════════════════════════════════════════════
    Base layer — typography, focus, scrollbars, rhythm
    ═══════════════════════════════════════════════════════════════════════ */
@@ -781,9 +772,45 @@ body {
     .drawer-side {
         max-width: 85vw;
     }
-    .dropdown-content {
-        max-width: calc(100vw - 2rem);
+
+    /* Mobile bar dropdowns (theme + account): anchor the panel to the
+       full-width sticky header instead of the trigger, so it can never leave
+       the viewport regardless of `.dropdown-end` inline math or text
+       direction. This is the ABSOLUTE variant, not `position: fixed`:
+       `.ezdistro-mobile-header` carries `backdrop-filter` (backdrop-blur-xl)
+       and `position: sticky`, so it is already the containing block for
+       fixed descendants — `position: fixed` would resolve against the 3.5rem
+       header box, not the viewport. `position: static` on the wrapper hands
+       the header to the panel as its containing block. */
+    .ezdistro-mobile-header .dropdown {
+        position: static;
+    }
+    .ezdistro-mobile-header .dropdown-content {
+        position: absolute;
+        inset-inline: 1rem;
+        inset-block-start: calc(100% + 0.5rem);
+        inset-block-end: auto;
+        width: auto;
+        max-width: none;
+        max-height: min(60vh, 24rem);
         overflow: auto;
+        z-index: 60;
+    }
+    /* Kill iOS Safari focus-zoom: tapping a form control whose computed
+       font-size is < 16px zooms the whole viewport (daisyUI .menu is
+       0.875rem/14px). Keep the bar's menus at 16px; scoped here only. */
+    .ezdistro-mobile-header .dropdown-content :is(input, select, textarea, label, button) {
+        font-size: 1rem;
+    }
+}
+
+/* Containment guard: stop any accidental horizontal overflow on phones.
+   `clip`, not `hidden` — `hidden` creates a scroll container that would
+   break the sticky top bar; `clip` does not. */
+@media (max-width: 48rem) {
+    html,
+    body {
+        overflow-x: clip;
     }
 }
 
