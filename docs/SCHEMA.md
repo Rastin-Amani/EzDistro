@@ -23,8 +23,11 @@ Requires:              PocketBase ≥ 0.23
    ciphertext.
 6. Append-only audit: `job_events`, `article_revisions`, `publishing_runs` are
    insert-mostly.
-7. All collection rules require an authenticated user
-   (`@request.auth.id != ''`); project-level authorization lives in the app layer.
+7. All collection API rules are superuser-only (`""` — empty rule);
+   project-level authorization lives in the app layer (`app/api/deps.py`)
+   and all data access goes through the superuser client (`get_admin_pb()` /
+   `get_data_pb()`). Never relax to `@request.auth.id != ''` — any
+   authenticated user could then bypass tenant isolation via direct REST.
 
 ## 2. Collections overview
 
