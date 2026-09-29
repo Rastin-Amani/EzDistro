@@ -14,11 +14,13 @@ from pocketbase import PocketBase
 
 from app.config import settings
 
+# Fail fast when PocketBase is unreachable: the SDK forwards **kwargs to
+# httpx.Client, so an explicit timeout bounds every auth/health/CRUD call.
 # Superuser client cache for request data access (18-A(b)). API rules are
 # superuser-only, so handlers read/write through an admin client while
 # authorization stays in app/api/deps.py. Re-auth happens at most every
-# _DATA_TTL_SECONDS (PocketBase superuser tokens live far longer); the lock
-# prevents a re-auth stampede across concurrent requests.
+# _DATA_TTL_SECONDS; the lock prevents a re-auth stampede.
+_PB_TIMEOUT_SECONDS = 8.0
 _DATA_TTL_SECONDS = 300.0
 _data_lock = threading.Lock()
 _data_pb: PocketBase | None = None
@@ -27,7 +29,7 @@ _data_issued_at = 0.0
 
 def get_pb() -> PocketBase:
     """Unauthenticated client — used for session validation and login."""
-    return PocketBase(settings.pb_url, auto_snake_case=False)
+    return PocketBase(settings.pb_url, auto_snake_case=False, timeout=_PB_TIMEOUT_SECONDS)
 
 
 def get_admin_pb() -> PocketBase:
@@ -37,7 +39,7 @@ def get_admin_pb() -> PocketBase:
             "PB_ADMIN_EMAIL/PB_ADMIN_PASSWORD are required for admin operations "
             "(worker, bootstrap)."
         )
-    pb = PocketBase(settings.pb_url, auto_snake_case=False)
+    pb = PocketBase(settings.pb_url, auto_snake_case=False, timeout=_PB_TIMEOUT_SECONDS)
     # PocketBase >= 0.23 uses _superusers; older versions use _admins.
     try:
         pb.collection("_superusers").auth_with_password(
