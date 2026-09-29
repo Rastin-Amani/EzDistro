@@ -207,23 +207,40 @@ Editable via the AI Models tab's global-defaults form.
 
 ## 5. Prompts
 
-Ten prompt types per project (falling back to global rows):
-`outline_system`, `outline_user`, `section_system`, `section_user`, `seo_rules`,
-`internal_linking`, `brand_voice`, `validation`, `image_plan_system`,
-`image_plan_user` (v1.3.0). The image-plan prompts accept `{{ article.title }}`,
-`{{ topic.keyword }}`, `{{ language }}`, `{{ prompt_language }}`,
-`{{ sections }}`, `{{ style_profile }}`, `{{ max_interior_images }}`,
-`{{ raw_output }}` (repair pass).
+Twenty-one prompt types per project (falling back to global rows), seeded from
+`multilingual-seo-content-engine-prompts.md` via `DEFAULT_PROMPTS` in
+`app/scripts/bootstrap_pb.py`:
+`brand_voice`, `seo_content_contract`, `research_system`, `research_user`,
+`outline_system`, `outline_user`, `section_system`, `section_user`,
+`internal_linking`, `metadata_system`, `metadata_user`, `article_qa_system`,
+`article_qa_user`, `article_repair_system`, `article_repair_user`,
+`image_plan_system`, `image_plan_user`, `output_validation`,
+`content_refresh_system` — plus legacy aliases `seo_rules` (resolves the
+contract) and `validation` (generic JSON repair) kept so existing projects and
+tests keep working. The image-plan prompts accept `{{ article.title }}`,
+`{{ article.content }}`, `{{ topic.keyword }}`, `{{ language }}`,
+`{{ locale }}`, `{{ prompt_language }}`, `{{ sections }}`,
+`{{ style_profile }}`, `{{ max_interior_images }}`; the outline repair pass
+uses `{{ output_schema }}` + `{{ raw_output }}`.
 
 Variables usable inside prompts (unknown names are rejected before any LLM call):
 
 `{{ project.name }}` · `{{ project.slug }}` · `{{ project.language }}` ·
 `{{ topic.title }}` · `{{ topic.keyword }}` · `{{ topic.pillar }}` ·
 `{{ topic.cluster }}` · `{{ topic.type }}` · `{{ article.title }}` ·
-`{{ article.slug }}` · `{{ article.meta_description }}` · `{{ section.heading }}` ·
-`{{ section.content_brief }}` · `{{ retrieved_context }}` · `{{ internal_links }}` ·
-`{{ seo_rules }}` · `{{ internal_linking_rules }}` · `{{ language }}` ·
-`{{ raw_output }}` (validation prompt only).
+`{{ article.slug }}` · `{{ article.meta_description }}` · `{{ article.content }}` ·
+`{{ section.heading }}` · `{{ section.content_brief }}` · `{{ section.position }}` ·
+`{{ retrieved_context }}` · `{{ internal_links }}` ·
+`{{ seo_rules }}` · `{{ internal_linking_rules }}` · `{{ brand_voice }}` ·
+`{{ language }}` · `{{ locale }}` · `{{ audience }}` ·
+`{{ raw_output }}` + `{{ output_schema }}` (output validation only) —
+plus research/intent (`{{ search_intent }}`, `{{ research }}`, `{{ entities }}`…),
+section detail (`{{ section.purpose }}`, `{{ section.required_points }}`…),
+neighbours (`{{ previous_section }}`, `{{ next_section }}`), QA
+(`{{ qa_issues }}`), image planning (`{{ prompt_language }}`, `{{ sections }}`,
+`{{ style_profile }}`, `{{ max_interior_images }}`), site/market context
+(`{{ site_context }}`, `{{ url_policy }}`…) — full registry in
+`variable_labels()` (`app/domain/prompt_render.py`).
 
 Every save appends a new version; activating an old version is the rollback path.
-Bootstrap seeds Persian global defaults for all eight types.
+Bootstrap seeds English global defaults for all types.

@@ -122,6 +122,11 @@ Indexes: UNIQUE slug; status.
 | minArticleWords | num | assembly validation gate (runtime default 300) |
 | retryPolicy | json | `{max_attempts, backoff_base, backoff_max}` (defaults 3 / 30 s / 3600 s) |
 | publishingMode | sel | `draft` \| `publish` |
+| targetLocale / targetCountry / targetAudience | text | market + locale + reader for every prompt |
+| brandName | text | empty = project name |
+| preferredTerminology / forbiddenTerminology | text | comma-separated wording rules |
+| urlPolicy | text | slug convention for non-Latin scripts |
+| productContext | text | brand offering in 1–2 sentences |
 | autosave | json | `{enabled, interval_minutes}` |
 | indexing | json | `{schedule_enabled, schedule_interval_minutes, wp_status}` |
 | imageCoverProvider / imageCoverModel | text | defaults `gemini` / `gemini-3-pro-image` |
@@ -162,9 +167,9 @@ Indexes: (project, category); UNIQUE (project, category, provider, displayName).
 | field | type | notes |
 |---|---|---|
 | project R | projects | empty ⇒ **global default**; project row wins resolution |
-| type* | sel | `outline_system` \| `outline_user` \| `section_system` \| `section_user` \| `seo_rules` \| `internal_linking` \| `brand_voice` \| `validation` \| `image_plan_system` \| `image_plan_user` (v1.3.0) |
+| type* | sel | `brand_voice` \| `seo_content_contract` \| `research_system` \| `research_user` \| `outline_system` \| `outline_user` \| `section_system` \| `section_user` \| `internal_linking` \| `metadata_system` \| `metadata_user` \| `article_qa_system` \| `article_qa_user` \| `article_repair_system` \| `article_repair_user` \| `image_plan_system` \| `image_plan_user` \| `output_validation` \| `content_refresh_system` \| legacy `seo_rules` \| `validation` |
 | name* | text | typically `default` |
-| content* | text | may contain `{{ variable }}` tokens (validated registry) |
+| content* | text (≤20000) | may contain `{{ variable }}` tokens (validated registry) |
 | version* | num | 1-based; each save inserts a NEW row |
 | active | bool | one active per (project, type, name) |
 | variables | json | `{used: [...], duplicatedFrom}` |
@@ -172,9 +177,9 @@ Indexes: (project, category); UNIQUE (project, category, provider, displayName).
 
 Indexes: (project, type, active); UNIQUE (project, type, name, version).
 
-Bootstrap seeds ten global prompts (`brand_voice`, `outline_system`, `outline_user`,
-`section_system`, `section_user`, `seo_rules`, `internal_linking`, `validation`,
-`image_plan_system`, `image_plan_user`) with Persian content — see
+Bootstrap seeds twenty-one global prompts (19 from
+`multilingual-seo-content-engine-prompts.md` plus legacy `seo_rules` /
+`validation` aliases carrying the new contract / repair text) — see
 `DEFAULT_PROMPTS` in `bootstrap_pb.py`. The single source of the type list is
 `PROMPT_TYPES` in `app/repositories/prompts.py`.
 
@@ -205,8 +210,8 @@ Indexes: (project, status, priority); (project, status); (project, week).
 | slug | text | |
 | status* | sel | `draft` \| `outline_ready` \| `generating` \| `review` \| `ready_to_publish` \| `approved` \| `sent_back` \| `publishing` \| `published` \| `failed` |
 | outlineVersion | num | bumped on every outline (re)build |
-| outline | json | immutable validated snapshot `{title, slug, sections[{heading, content_brief, internal_links[{title,url,anchor_text}]}]}` |
-| validation | json | assembler's report `{ok, issues[], stats}` |
+| outline | json | immutable validated snapshot `{title, slug, meta_description, search_intent, audience, sections[{heading, content_brief, internal_links[], key, purpose, reader_question, required_points[], entities[], evidence[]}], research{…}}` |
+| validation | json | assembler's report `{ok, issues[], stats, qa{ran, ready, summary, issues[], strengths[], repaired}}` |
 | finalHtml | text (≤100k) | current displayed/stored content |
 | generatedContent | text (≤100k) | last pipeline output (distinct from manual edits) |
 | lastGeneratedRevision | num | revision id of last generation |
