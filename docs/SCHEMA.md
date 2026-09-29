@@ -23,7 +23,8 @@ Requires:              PocketBase ≥ 0.23
    ciphertext.
 6. Append-only audit: `job_events`, `article_revisions`, `publishing_runs` are
    insert-mostly.
-7. All collection API rules are superuser-only (`""` — empty rule);
+7. All collection API rules are superuser-only (`null` — PocketBase's "locked"
+   state; `""` would mean **public**, guests included, not "locked");
    project-level authorization lives in the app layer (`app/api/deps.py`)
    and all data access goes through the superuser client (`get_admin_pb()` /
    `get_data_pb()`). Never relax to `@request.auth.id != ''` — any

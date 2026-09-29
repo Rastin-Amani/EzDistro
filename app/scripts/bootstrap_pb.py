@@ -34,13 +34,16 @@ def col(
     # Superuser-only API rules (18-A): authorization lives in the app layer
     # (app/api/deps.py) — PocketBase must never be a weaker second layer that
     # lets any logged-in user CRUD records (e.g. project_members) directly.
-    # "" = only superusers can call the REST API; the app always goes through
-    # get_admin_pb()/get_data_pb().
-    list_rule: str = "",
-    view_rule: str = "",
-    create_rule: str = "",
-    update_rule: str = "",
-    delete_rule: str = "",
+    # None = JSON null = "locked" = superusers only (what we want).
+    # "" (empty string) means the OPPOSITE — ANYONE, guests included. Verified
+    # against the PocketBase docs (api-rules-and-filters): the three rule states
+    # are null | "" (public) | non-empty filter expression.
+    # The app always goes through get_admin_pb()/get_data_pb().
+    list_rule: str | None = None,
+    view_rule: str | None = None,
+    create_rule: str | None = None,
+    update_rule: str | None = None,
+    delete_rule: str | None = None,
 ) -> dict[str, Any]:
     return {
         "name": name,
@@ -53,6 +56,20 @@ def col(
         "updateRule": update_rule,
         "deleteRule": delete_rule,
     }
+
+
+# PocketBase rule semantics: None (JSON null) = "locked" = superusers only.
+# "" (empty string) = the OPPOSITE — anyone, guests included. Every collection
+# below is bootstrapped locked; the app reads/writes through the superuser
+# client (app/pb.py), and login/refresh use PB auth endpoints, which do not
+# consult these rules.
+LOCKED_RULES: dict[str, None] = {
+    "listRule": None,
+    "viewRule": None,
+    "createRule": None,
+    "updateRule": None,
+    "deleteRule": None,
+}
 
 
 def _base_field(name: str, ftype: str, *, required: bool = False) -> dict[str, Any]:
@@ -887,12 +904,10 @@ def ensure_users_rules(pb: PocketBase) -> None:
         "updateRule": users.update_rule,
         "deleteRule": users.delete_rule,
     }
-    # None means "no rule" (public in PocketBase); "" means superuser-only.
-    if any(v != "" for v in rules.values()):
-        pb.collections.update(
-            "users",
-            {"listRule": "", "viewRule": "", "createRule": "", "updateRule": "", "deleteRule": ""},
-        )
+    # PocketBase rule semantics: None (JSON null) = "locked" = superusers only.
+    # "" (empty string) = the OPPOSITE — anyone, guests included.
+    if any(v is not None for v in rules.values()):
+        pb.collections.update("users", LOCKED_RULES)
         print("users collection: API rules locked to superuser-only")
 
 

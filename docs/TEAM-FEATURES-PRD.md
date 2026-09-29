@@ -193,10 +193,10 @@ acceptance criterion in §25 holds.
 | Membership bootstrap | Creator becomes `owner` on project creation | `app/api/projects.py:148` |
 | Tabs | `TABS` list (12 tabs) drives `GET /projects/{id}` and `GET /projects/{id}/tabs/{tab}`; tab templates live in `app/templates/pages/projects/tabs/` | `app/api/projects.py:63-76,430-471` |
 | Tab labels | Persian label dict is **inside the template** | `app/templates/pages/projects/detail.html:67-75` |
-| Schema helpers | `col()/t()/num()/boolean()/date()/select()/rel()/json_field()`; default API rules = `AUTH_RULE = "@request.auth.id != ''"` on **every** collection (no collection overrides it) | `app/scripts/bootstrap_pb.py:28-51,67-125` |
+| Schema helpers | `col()/t()/num()/boolean()/date()/select()/rel()/json_field()`; default API rules = locked (`null`, superuser-only) on **every** collection (no collection overrides it). **Never `AUTH_RULE`** — see the §18-A correction | `app/scripts/bootstrap_pb.py:28-51,67-125` |
 | Users schema | `users` gains `role` (`admin`\|`member`) + `displayName` idempotently | `app/scripts/bootstrap_pb.py:913-947` |
 | Schema mirror | `pb_collections_import.json` must be kept in sync with bootstrap | `docs/SCHEMA.md:4-6` |
-| Doc'd security model | "All collection rules require an authenticated user; project-level authorization lives in the app layer" | `docs/SCHEMA.md:26-27` |
+| Doc'd security model | "All collection API rules are locked; the server accesses PocketBase as a superuser and project-level authorization lives in the app layer" | `docs/SCHEMA.md:26-27` |
 | HTMX contract | Mutations: `require_hx` + `@hx_error("message")` + helpers `ok_with_redirect/success_response/error_response/hx_trigger` | `app/api/deps.py:22-25`, `app/api/errors.py`, `app/utils.py` |
 | i18n | `_()` / `ngettext` (Babel); Persian default + `en` catalog; `make i18n-extract/add/update/compile` | `Makefile:31-42`, `app/locales/` |
 | Nav | Sidebar `nav` list + mobile dock, logout in user menu | `app/templates/layouts/platform.html:29-57,143-185` |
@@ -648,6 +648,14 @@ Findings:
    `listRule = createRule = "@request.auth.id != ''"` (same pattern for
    view/update/delete). Confirms any logged-in user can CRUD every
    collection via PB REST.
+   **CORRECTION (later):** this finding is wrong — the artefact actually
+   contained `""`, not `AUTH_RULE`. PocketBase rule semantics are
+   `null` = locked (superusers only) and `""` = **public, guests included**,
+   so every collection was open to the internet, anonymously. The `AUTH_RULE`
+   premise in this section (and the `""`-means-superuser-only reading in #4)
+   is inverted; see `docs/SCHEMA.md:26`. Fixed in the bootstrap defaults,
+   `lock_pb_rules.py`, `pb_collections_import.json` and the assertions in
+   `tests/test_security_hardening.py`.
 3. **PB network exposure (evidence 4)**: `PB_URL=https://db.ezdistro.rastin.cloud`
    is internet-routed (front proxy answers), but the backend was
    **unreachable during inspection**: initial probe returned 200, all
@@ -661,7 +669,8 @@ Findings:
 4. **`users` collection**: not managed by bootstrap's `COLLECTIONS`; only
    `ensure_users_fields()` adds `role`/`displayName`. Its live rules are
    unknown (blocked by #3). Plan: new idempotent `ensure_users_rules()`
-   setting all five rules to `""` (superuser-only). PB auth endpoints
+   setting all five rules to `null` (locked = superuser-only; `""` would have
+   meant public). PB auth endpoints
    (`auth-with-password`, `auth-refresh`) do not consult `listRule`, so
    login/refresh should keep working — **must be verified live**; fallback
    if broken: `listRule/viewRule = "id = @request.auth.id || @request.auth.role = 'admin'"`,

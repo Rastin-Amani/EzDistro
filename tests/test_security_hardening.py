@@ -21,6 +21,11 @@ from tests.fakes import default_unique_fields
 from tests.test_auth_http import _AuthFakePocketBase
 
 RULE_KEYS = ("listRule", "viewRule", "createRule", "updateRule", "deleteRule")
+# PocketBase rule semantics (api-rules-and-filters): null = "locked" =
+# superusers only; "" = the OPPOSITE — anyone, guests included. The app reads
+# data through the superuser client, so EVERY rule must be null. These
+# assertions are deliberately strict: flipping them back to "" makes the whole
+# database publicly writable by guests.
 COL_PARAMS = ("list_rule", "view_rule", "create_rule", "update_rule", "delete_rule")
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 
@@ -33,7 +38,8 @@ def test_col_defaults_are_superuser_only():
 
     sig = inspect.signature(col)
     for param in COL_PARAMS:
-        assert sig.parameters[param].default == "", f"{param} default is not ''"
+        # None (JSON null) = locked; "" would mean PUBLIC.
+        assert sig.parameters[param].default is None, f"{param} default is not None (locked)"
 
 
 def test_all_bootstrap_collections_are_superuser_only():
@@ -42,7 +48,7 @@ def test_all_bootstrap_collections_are_superuser_only():
     assert len(COLLECTIONS) >= 18
     for spec in COLLECTIONS:
         for key in RULE_KEYS:
-            assert spec.get(key) == "", f"{spec['name']}.{key} is not superuser-only"
+            assert spec.get(key, "MISSING") is None, f"{spec['name']}.{key} is not superuser-only"
 
 
 def test_import_json_rules_are_superuser_only():
@@ -50,7 +56,7 @@ def test_import_json_rules_are_superuser_only():
     assert data, "import file has no collections"
     for coll in data:
         for key in RULE_KEYS:
-            assert coll.get(key) == "", f"{coll['name']}.{key} is not superuser-only"
+            assert coll.get(key, "MISSING") is None, f"{coll['name']}.{key} is not superuser-only"
 
 
 # ---------------------------------------------------------------------------

@@ -15,8 +15,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 from pocketbase import PocketBase  # noqa: E402
 
 from app.config import settings  # noqa: E402
+from app.scripts.bootstrap_pb import LOCKED_RULES  # noqa: E402
 
-RULES = {"listRule": "", "viewRule": "", "createRule": "", "updateRule": "", "deleteRule": ""}
+# None = JSON null = "locked" (superuser-only). "" would mean PUBLIC (anyone).
+RULES = LOCKED_RULES
 
 
 def main() -> None:
@@ -32,14 +34,36 @@ def main() -> None:
         pb.collection("_admins").auth_with_password(
             settings.pb_admin_email, settings.pb_admin_password
         )
+
+    def unlocked() -> list[str]:
+        """Collections whose rules are not all null (i.e. still reachable)."""
+        out: list[str] = []
+        for c in pb.collections.get_full_list():
+            cur = {k: getattr(c, k.replace("Rule", "_rule"), None) for k in RULES}
+            if any(v is not None for v in cur.values()):
+                out.append(c.name)
+        return out
+
     fixed: list[str] = []
-    for c in pb.collections.get_full_list():
-        # ponytail: empty rule = superuser-only; never relax to auth-only
-        cur = {k: getattr(c, k.replace("Rule", "_rule"), None) for k in RULES}
-        if any(v != "" for v in cur.values()):
+    for name in unlocked():
+        c = pb.collections.get_one(name)
+        # ponytail: None = locked (superuser-only); never relax to a public
+        # or auth-only rule.
+        try:
             pb.collections.update(c.id, RULES)
-            fixed.append(c.name)
-    print(f"checked, locked: {fixed if fixed else 'already superuser-only'}")
+            fixed.append(name)
+        except Exception as exc:  # some system collections refuse updates
+            print(f"WARN: could not update {name}: {exc}", file=sys.stderr)
+
+    # Re-read instead of trusting the writes: a repair that half-applies and
+    # still prints success is worse than no repair at all.
+    still_open = unlocked()
+    if fixed:
+        print(f"locked: {fixed}")
+    if still_open:
+        print(f"ERROR: still NOT locked: {still_open}", file=sys.stderr)
+        sys.exit(1)
+    print("verified: every collection is superuser-only")
 
 
 if __name__ == "__main__":
