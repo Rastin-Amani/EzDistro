@@ -27,7 +27,8 @@ def test_manifest_json_is_valid_json():
     assert manifest.get("name")
     assert manifest["start_url"] == "/"
     assert manifest["display"] == "standalone"
-    assert len(manifest["icons"]) >= 2
+    assert len(manifest["icons"]) >= 1
+    assert any(i.get("type") == "image/svg+xml" for i in manifest["icons"])
 
 
 def test_service_worker_serves_js():
@@ -47,7 +48,7 @@ def test_offline_page_renders():
 def test_favicon_redirects_to_icon():
     resp = asyncio.run(pwa.dynamic_favicon())
     assert resp.status_code == 307
-    assert resp.headers["location"] == "/static/icons/favicon.ico"
+    assert resp.headers["location"] == "/static/favicon.svg"
 
 
 def test_debug_page_dev_only():

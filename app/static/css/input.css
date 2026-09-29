@@ -53,8 +53,11 @@
     --noise: 0;
 }
 
-/* Dark atlas: same rationing on ink ground — blue brightened one step so
-   live nodes + primary action hold contrast on near-black paper. */
+/* Dark atlas: ink ground, hairlines + surfaces shifted for contrast, but the
+   rationed hues stay in the electric-blue / wireframe-green family — no
+   purple shift. Pure #0000ff as text/icon on #0b0b10 is ~2.3:1, so primary
+   + info are brightened one step to #3333ff (white ink on the fill still
+   clears 4.5:1); accent/success keep #098551 with white ink. */
 @plugin "daisyui/theme" {
     name: "ezdistro-dark";
     default: false;
@@ -66,19 +69,19 @@
     --color-base-300: #2c2e3a;
     --color-base-content: #f5f5f5;
 
-    --color-primary: #5b5bff;
+    --color-primary: #3333ff;
     --color-primary-content: #ffffff;
-    --color-secondary: #b1b7c3;
-    --color-secondary-content: #0b0b10;
-    --color-accent: #3fce7d;
-    --color-accent-content: #06130c;
+    --color-secondary: #323232;
+    --color-secondary-content: #ffffff;
+    --color-accent: #098551;
+    --color-accent-content: #ffffff;
     --color-neutral: #f5f5f5;
     --color-neutral-content: #0b0b10;
 
-    --color-info: #8f8fff;
-    --color-info-content: #0b0b10;
-    --color-success: #3fce7d;
-    --color-success-content: #06130c;
+    --color-info: #3333ff;
+    --color-info-content: #ffffff;
+    --color-success: #098551;
+    --color-success-content: #ffffff;
     --color-warning: #e7bd66;
     --color-warning-content: #2e2410;
     --color-error: #f17b82;
@@ -404,6 +407,12 @@ body {
        appears at scale before a user-initiated action. */
     .ezdistro-logo {
         @apply grid place-items-center rounded-none bg-primary font-black text-white;
+        overflow: hidden;
+    }
+    .ezdistro-logo svg {
+        width: 100%;
+        height: 100%;
+        display: block;
     }
 
     /* App shell — robust flex: sidebar is a normal sticky flow child so RTL
@@ -765,6 +774,16 @@ body {
 @media (min-width: 40rem) {
     .sm\:table.hidden {
         display: table;
+    }
+}
+
+@media (max-width: 48rem) {
+    .drawer-side {
+        max-width: 85vw;
+    }
+    .dropdown-content {
+        max-width: calc(100vw - 2rem);
+        overflow: auto;
     }
 }
 

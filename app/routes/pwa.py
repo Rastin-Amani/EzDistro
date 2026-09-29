@@ -113,16 +113,10 @@ async def dynamic_manifest():
         "theme_color": "#ffffff",
         "icons": [
             {
-                "src": "/static/icons/icon-192x192.png",
-                "sizes": "192x192",
-                "type": "image/png",
-                "purpose": "any maskable",
-            },
-            {
-                "src": "/static/icons/icon-512x512.png",
-                "sizes": "512x512",
-                "type": "image/png",
-                "purpose": "any maskable",
+                "src": "/static/favicon.svg",
+                "sizes": "any",
+                "type": "image/svg+xml",
+                "purpose": "any",
             },
         ],
     }
@@ -131,4 +125,4 @@ async def dynamic_manifest():
 
 @router.get("/favicon.ico", include_in_schema=False)
 async def dynamic_favicon():
-    return RedirectResponse(url="/static/icons/favicon.ico")
+    return RedirectResponse(url="/static/favicon.svg")

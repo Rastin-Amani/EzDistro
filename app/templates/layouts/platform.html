@@ -12,7 +12,7 @@
 
             <a href="/dashboard" class="flex items-center gap-2.5" aria-label="{{ ('EzDistro — Home') }}">
 
-                <span class="ezdistro-logo size-10 text-lg" aria-hidden="true">E</span>
+                <span class="ezdistro-logo size-10" aria-hidden="true">{% include "components/brand_mark.html" %}</span>
 
                 <span class="font-extrabold text-base tracking-tight">{{ app_name }}</span>
 
@@ -34,7 +34,7 @@
 
                 ('/jobs', ( 'Jobs' ), 'M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5'),
 
-                ('/workers', ( 'Workers' ), 'M9.75 17.25v3.375c0 .621.504 1.125 1.125 1.125h2.25c.621 0 1.125-.504 1.125-1.125V17.25m3.75 0h.008v.008h-.008v-.008Zm0-5.25h.008v.008h-.008v-.008Zm0-5.25h.008v.008h-.008v-.008ZM12 2.25c-5.385 0-9.75 4.365-9.75 9.75 0 .414.336.75.75.75h.008c.414 0 .75-.336.75-.75 0-4.26 3.12-7.725 7.2-8.326a.75.75 0 0 0 .61-1.02A10.477 10.477 0 0 0 12 2.25Zm-3.75 14.25h.008v.008h-.008v-.008Zm6.75 0h.008v.008h-.008v-.008Zm-4.5 3.75h.008v.008h-.008v-.008Z'),
+                ('/workers', ( 'Workers' ), 'M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0 15V21m-9-1.5h10.5a2.25 2.25 0 0 0 2.25-2.25V6.75a2.25 2.25 0 0 0-2.25-2.25H6.75A2.25 2.25 0 0 0 4.5 6.75v10.5a2.25 2.25 0 0 0 2.25 2.25Zm.75-12h9v9h-9v-9Z'),
 
                 ('/failed', ( 'Failed jobs' ), 'M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z'),
 
@@ -87,7 +87,7 @@
 
                     </div>
 
-                    <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box border border-base-300/70 w-52 p-2 z-50">
+                    <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box border border-base-300/70 w-52 max-w-[calc(100vw-2rem)] overflow-auto p-2 z-50">
 
                         <li class="menu-title text-xs">{{ user.email or user.id }}</li>
 
@@ -117,7 +117,7 @@
 
             <a href="/dashboard" class="flex items-center gap-2" aria-label="{{ ('EzDistro — Home') }}">
 
-                <span class="ezdistro-logo size-8 text-base" aria-hidden="true">E</span>
+                <span class="ezdistro-logo size-8" aria-hidden="true">{% include "components/brand_mark.html" %}</span>
 
                 <span class="font-extrabold">{{ app_name }}</span>
 
@@ -132,7 +132,7 @@
                     <button type="button" tabindex="0" class="btn btn-ghost btn-circle btn-sm" aria-label="{{ ('Account') }}" aria-haspopup="menu">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" class="size-5"><path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
                     </button>
-                    <ul tabindex="0" role="menu" class="dropdown-content menu z-50 w-52 rounded-box border border-base-300 bg-base-100 p-2">
+                    <ul tabindex="0" role="menu" class="dropdown-content menu z-50 w-52 max-w-[calc(100vw-2rem)] overflow-auto rounded-box border border-base-300 bg-base-100 p-2">
                         <li class="menu-title text-xs">{{ user.email or user.id }}</li>
                         <li><a role="menuitem" href="/logout" hx-post="/logout" hx-swap="none" hx-on:click="setTimeout(()=>location.href='/login',200)">{{ ('Sign out') }}</a></li>
                     </ul>
@@ -179,7 +179,7 @@
 
         <a href="/workers" data-nav="/workers">
 
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17.25v3.375c0 .621.504 1.125 1.125 1.125h2.25c.621 0 1.125-.504 1.125-1.125V17.25m3.75 0h.008v.008h-.008v-.008Zm0-5.25h.008v.008h-.008v-.008Zm0-5.25h.008v.008h-.008v-.008ZM12 2.25c-5.385 0-9.75 4.365-9.75 9.75 0 .414.336.75.75.75h.008c.414 0 .75-.336.75-.75 0-4.26 3.12-7.725 7.2-8.326a.75.75 0 0 0 .61-1.02A10.477 10.477 0 0 0 12 2.25Zm-3.75 14.25h.008v.008h-.008v-.008Zm6.75 0h.008v.008h-.008v-.008Zm-4.5 3.75h.008v.008h-.008v-.008Z" /></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0 15V21m-9-1.5h10.5a2.25 2.25 0 0 0 2.25-2.25V6.75a2.25 2.25 0 0 0-2.25-2.25H6.75A2.25 2.25 0 0 0 4.5 6.75v10.5a2.25 2.25 0 0 0 2.25 2.25Zm.75-12h9v9h-9v-9Z" /></svg>
 
             <span>{{ ('Workers') }}</span>
 
