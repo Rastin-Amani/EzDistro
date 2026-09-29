@@ -1,21 +1,22 @@
 <div id="stats-row"
      hx-get="/dashboard/partial/stats"
      hx-trigger="every 8s"
+     hx-target="this"
      hx-swap="outerHTML" class="flex flex-col gap-4">
     <section class="ezdistro-panel" aria-labelledby="content-pipeline-title">
         <div class="ezdistro-panel-head">
-             <h2 id="content-pipeline-title" class="ezdistro-panel-title">{{ _('روند تولید محتوا') }}</h2>
-             <a href="/projects" class="btn btn-ghost btn-sm">{{ _('مشاهده پروژه‌ها') }}</a>
+             <h2 id="content-pipeline-title" class="ezdistro-panel-title">{{ ('Content pipeline') }}</h2>
+             <a href="/projects" class="btn btn-ghost btn-sm">{{ ('View projects') }}</a>
         </div>
         {% set n_planned = stats.topics_planned|int %}
         {% set n_writing = stats.articles_writing|int %}
         {% set n_review = stats.articles_review|int %}
         {% set n_published = stats.articles_published|int %}
         {% set stages = [
-            (_('Planned topics'), n_planned, 'bg-base-300', false),
-            (_('Articles being written'), n_writing, 'bg-primary', true),
-            (_('Awaiting review'), n_review, 'bg-warning', false),
-            (_('Published'), n_published, 'bg-accent', false),
+            (('Planned topics'), n_planned, 'bg-base-300', false),
+            (('Articles being written'), n_writing, 'bg-primary', true),
+            (('Awaiting review'), n_review, 'bg-warning', false),
+            (('Published'), n_published, 'bg-accent', false),
         ] %}
         {% set maxv = [n_planned, n_writing, n_review, n_published]|max %}
         <ol class="ezdistro-rail-track">
@@ -33,35 +34,57 @@
             </li>
             {% endfor %}
         </ol>
+        {% set n_pending = stats.jobs_pending|int %}
+        {% set n_active = stats.jobs_running|int + stats.jobs_retrying|int %}
+        {% set n_failed = stats.jobs_failed|int %}
+        {% set spark = [
+            (('Planned topics'), n_planned, ''),
+            (('Articles being written'), n_writing, 'is-blue'),
+            (('Awaiting review'), n_review, ''),
+            (('Published'), n_published, 'is-green'),
+            (('Pending jobs'), n_pending, ''),
+            (('Active jobs'), n_active, 'is-blue'),
+            (('Failed jobs'), n_failed, ''),
+        ] %}
+        {% set smax = spark|map(attribute=1)|max %}
+        <div class="px-4 pb-4">
+            <p class="ezdistro-panel-title mb-2">{{ ('Activity') }}</p>
+            <div class="ezdistro-spark" role="img" aria-label="{{ ('Activity mix, sized by count') }}">
+                {% for label, value, cls in spark %}
+                {% set h = (value / smax * 100)|round|int if smax else 0 %}
+                <i class="{{ cls }}" style="height: {{ h if h >= 8 else (8 if value else 3) }}%" title="{{ label }}: {{ value }}"></i>
+                {% endfor %}
+            </div>
+        </div>
     </section>
 
     <details class="ezdistro-panel group">
         <summary class="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-base-content sm:px-5">
-             <span class="font-semibold">{{ _('سلامت سیستم') }}</span>
-            {% if stats.jobs_failed %}<span class="badge badge-soft badge-error">{{ stats.jobs_failed }} {{ _('Failed') }}</span>{% endif %}
+             <span class="font-semibold">{{ ('System health') }}</span>
+            {% if stats.jobs_failed %}<span class="badge badge-soft badge-error">{{ stats.jobs_failed }} {{ ('Failed') }}</span>{% endif %}
             <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="ms-auto size-4 transition-transform group-open:rotate-180"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6" /></svg>
         </summary>
         <dl class="grid grid-cols-1 gap-x-8 border-t border-base-300/70 px-4 py-2 sm:grid-cols-2 sm:px-5">
             <div class="flex items-center justify-between gap-3 border-b border-base-300/60 py-3">
-                <dt class="text-sm text-base-content/65">{{ _('Pending jobs') }}</dt><dd class="font-semibold tabular-nums">{{ stats.jobs_pending }}</dd>
+                <dt class="text-sm text-base-content/65">{{ ('Pending jobs') }}</dt><dd class="font-semibold tabular-nums">{{ stats.jobs_pending }}</dd>
             </div>
             <div class="flex items-center justify-between gap-3 border-b border-base-300/60 py-3">
-                <dt class="text-sm text-base-content/65">{{ _('Running / retrying') }}</dt><dd class="font-semibold tabular-nums">{{ stats.jobs_running + stats.jobs_retrying }}</dd>
+                <dt class="text-sm text-base-content/65">{{ ('Running / retrying') }}</dt><dd class="font-semibold tabular-nums">{{ stats.jobs_running + stats.jobs_retrying }}</dd>
             </div>
             <div class="flex items-center justify-between gap-3 border-b border-base-300/60 py-3">
-                <dt class="text-sm text-base-content/65">{{ _('Failure rate / average (seconds)') }}</dt><dd class="font-semibold tabular-nums">{{ (stats.failure_rate * 100)|round(1) }}% / {{ stats.average_duration_s }}s</dd>
+                <dt class="text-sm text-base-content/65">{{ ('Failure rate / average (seconds)') }}</dt><dd class="font-semibold tabular-nums">{{ (stats.failure_rate * 100)|round(1) }}% / {{ stats.average_duration_s }}s</dd>
             </div>
             <div class="flex items-center justify-between gap-3 border-b border-base-300/60 py-3">
-                <dt class="text-sm text-base-content/65">{{ _('Indexing health') }}</dt><dd class="text-end text-sm"><span class="font-semibold text-success">{{ stats.indexing_ok }}{{ _(' healthy') }}</span><span class="ms-2 text-warning">{{ stats.indexing_failed }}{{ _(' degraded') }}</span></dd>
+                <dt class="text-sm text-base-content/65">{{ ('Indexing health') }}</dt><dd class="text-end text-sm"><span class="font-semibold text-success">{{ stats.indexing_ok }}{{ (' healthy') }}</span><span class="ms-2 text-warning">{{ stats.indexing_failed }}{{ (' degraded') }}</span></dd>
             </div>
             <div class="flex items-center justify-between gap-3 border-b border-base-300/60 py-3">
-                <dt class="text-sm text-base-content/65">{{ _('Provider health') }}</dt><dd class="text-end text-sm"><span class="font-semibold text-success">{{ stats.provider_healthy }}{{ _(' healthy') }}</span><span class="ms-2 text-warning">{{ stats.provider_unhealthy }}{{ _(' unhealthy · ') }}{{ stats.provider_latency_ms }}ms</span></dd>
+                <dt class="text-sm text-base-content/65">{{ ('Provider health') }}</dt><dd class="text-end text-sm"><span class="font-semibold text-success">{{ stats.provider_healthy }}{{ (' healthy') }}</span><span class="ms-2 text-warning">{{ stats.provider_unhealthy }}{{ (' unhealthy · ') }}{{ stats.provider_latency_ms }}ms</span></dd>
             </div>
             <div class="flex items-center justify-between gap-3 border-b border-base-300/60 py-3">
-                <dt class="text-sm text-base-content/65">{{ _('Failed') }}</dt><dd><a href="/failed" class="link link-error font-semibold tabular-nums">{{ stats.jobs_failed }} {{ _('View failed jobs') }}</a></dd>
+                <dt class="text-sm text-base-content/65">{{ ('Failed') }}</dt><dd><a href="/failed" class="link link-error font-semibold tabular-nums">{{ stats.jobs_failed }} {{ ('View failed jobs') }}</a></dd>
             </div>
             <div class="flex items-center justify-between gap-3 py-3">
-                <dt class="text-sm text-base-content/65">{{ _('Worker online') }}</dt><dd><a href="/workers" class="link link-primary font-semibold tabular-nums">{{ stats.workers_active }} {{ _('View worker status →') }}</a></dd>
+                <dt class="text-sm text-base-content/65">{{ ('Worker online') }}</dt><dd><a href="/workers" class="link link-primary font-semibold tabular-nums">{{ stats.workers_active }} {{ ('View worker status →') }}</a></dd>
             </div>
         </dl>
     </details>

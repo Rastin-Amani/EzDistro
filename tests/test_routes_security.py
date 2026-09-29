@@ -118,9 +118,7 @@ def test_mutations_reject_anonymous(fn, build_args, build_kwargs):
         "jobs": len(pb.collection("jobs").get_full_list()),
     }
     resp = call_route(fn, _anon_req(pb, proj_a["id"]), *args, **kwargs)
-    assert "\u0646\u0627\u0645\u0648\u0641\u0642" in toast_message(
-        resp
-    ) or "\u062f\u0633\u062a\u0631\u0633\u06cc" in toast_message(resp)
+    assert "failed" in toast_message(resp) or "access denied" in toast_message(resp)
     # no mutation happened
     assert len(TopicRepo(pb).list_for_project(proj_a["id"], per_page=500)) == before["topics"]
     assert len(pb.collection("articles").get_full_list()) == before["articles"]
@@ -136,9 +134,7 @@ def test_mutations_reject_non_member(fn, build_args, build_kwargs):
     kwargs = build_kwargs()
     req = make_req(pb, make_user("stranger"), proj_a["id"])
     resp = call_route(fn, req, *args, **kwargs)
-    assert "\u0646\u0627\u0645\u0648\u0641\u0642" in toast_message(
-        resp
-    ) or "\u062f\u0633\u062a\u0631\u0633\u06cc" in toast_message(resp)
+    assert "failed" in toast_message(resp) or "access denied" in toast_message(resp)
 
 
 @pytest.mark.parametrize(
@@ -151,9 +147,7 @@ def test_mutations_reject_viewer_role(fn, build_args, build_kwargs):
     kwargs = build_kwargs()
     req = make_req(pb, make_user("v1"), proj_a["id"])
     resp = call_route(fn, req, *args, **kwargs)
-    assert "\u0646\u0627\u0645\u0648\u0641\u0642" in toast_message(
-        resp
-    ) or "\u06a9\u0627\u0641\u06cc" in toast_message(resp)
+    assert "failed" in toast_message(resp) or "role" in toast_message(resp)
 
 
 @pytest.mark.parametrize(
@@ -165,9 +159,7 @@ def test_mutations_reject_missing_hx_header(fn, build_args, build_kwargs):
     kwargs = build_kwargs()
     req = make_req_plain(pb, make_user(), proj_a["id"])
     resp = call_route(fn, req, *args, **kwargs)
-    assert "\u0646\u0627\u0645\u0648\u0641\u0642" in toast_message(
-        resp
-    ) or "\u0641\u0642\u0637" in toast_message(resp)
+    assert "failed" in toast_message(resp) or "HTMX" in toast_message(resp)
 
 
 # ---------------------------------------------------------------------------
@@ -178,7 +170,7 @@ def test_topic_mutations_cannot_touch_foreign_topic():
     foreign = make_topic(pb, proj_b["id"], title="\u0628", status="queued")
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(P.cancel_topic, req, proj_a["id"], foreign["id"])
-    assert "\u06cc\u0627\u0641\u062a \u0646\u0634\u062f" in toast_message(resp)
+    assert "not found" in toast_message(resp)
     assert TopicRepo(pb).get(foreign["id"])["status"] == "queued"
 
 
@@ -187,7 +179,7 @@ def test_article_mutations_cannot_touch_foreign_article():
     foreign = make_article(pb, proj_b["id"], status="review")
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(W.approve_article, req, proj_a["id"], foreign["id"])
-    assert "\u06cc\u0627\u0641\u062a \u0646\u0634\u062f" in toast_message(resp)
+    assert "not found" in toast_message(resp)
     assert ArticleRepo(pb).get(foreign["id"])["status"] == "review"
 
 
@@ -196,7 +188,7 @@ def test_integration_delete_cannot_touch_foreign_integration():
     foreign = make_integration(pb, proj_b["id"])
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(P.delete_integration, req, proj_a["id"], foreign["id"])
-    assert "\u0646\u0627\u0645\u0648\u0641\u0642" in toast_message(resp)
+    assert "failed" in toast_message(resp)
     assert pb.collection("integrations").get_one(foreign["id"]) is not None
 
 
@@ -208,7 +200,7 @@ def test_schedule_cannot_be_created_for_foreign_project_via_id_substitution():
     resp = call_route(
         P.save_schedules, req, proj_a["id"], kind="index", enabled="1", interval_minutes="5"
     )
-    assert "\u0630\u062e\u06cc\u0631\u0647 \u0634\u062f" in toast_message(resp)
+    assert "saved" in toast_message(resp)
     # schedule lands in A (the URL project), never in B
     assert len(pb.collection("schedules").get_full_list()) == 1
     assert pb.collection("schedules").get_full_list()[0]["project"] == proj_a["id"]
@@ -221,5 +213,5 @@ def test_admin_bypasses_project_membership_but_stays_in_project():
     foreign = make_topic(pb, proj_b["id"], title="\u0628")
     req = make_req(pb, make_user("admin1", role="admin"), proj_a["id"])
     resp = call_route(P.write_topic, req, proj_a["id"], foreign["id"])
-    assert "\u06cc\u0627\u0641\u062a \u0646\u0634\u062f" in toast_message(resp)
+    assert "not found" in toast_message(resp)
     assert TopicRepo(pb).get(foreign["id"])["status"] == "planned"

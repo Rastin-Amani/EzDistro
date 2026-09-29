@@ -15,7 +15,6 @@ from app.api.deps import (
 from app.api.errors import hx_error, page_guard
 from app.domain.article_html import slugify
 from app.domain.sanitize import sanitize_html
-from app.i18n import _
 from app.repositories.articles import ArticleRepo, SectionRepo
 from app.repositories.jobs import JobRepo
 from app.repositories.publishing_runs import PublishingRunRepo
@@ -35,7 +34,7 @@ def article_detail(request: Request, project_id: str, article_id: str):
         return templates.TemplateResponse(
             request,
             "pages/articles/not_found.html",
-            {"title": _("Article not found"), "project": project},
+            {"title": ("Article not found"), "project": project},
         )
     sections = SectionRepo(request.state.pb).list_for_article(article_id)
     topic = TopicRepo(request.state.pb).get(article.get("topicId") or "")
@@ -44,7 +43,7 @@ def article_detail(request: Request, project_id: str, article_id: str):
         request,
         "pages/articles/detail.html",
         {
-            "title": article.get("title", _("Article")),
+            "title": article.get("title", ("Article")),
             "project": project,
             "article": article,
             "sections": sections,
@@ -68,14 +67,14 @@ def save_meta(
     require_project_role(request, project_id)
     article = ArticleRepo(request.state.pb).get(article_id)
     if not article:
-        return error_response(_("Article not found"))
+        return error_response("Article not found")
     ensure_record_in_project(article, project_id, "article")
     title = safe_str(title) or article.get("title") or ""
     payload: dict = {"title": title, "metaDescription": safe_str(meta_description)}
     if not article.get("slug"):
         payload["slug"] = slugify(title)
     ArticleRepo(request.state.pb).update(article_id, payload)
-    return success_response(_("Title and description saved"))
+    return success_response("Title and description saved")
 
 
 @router.post("/projects/{project_id}/articles/{article_id}/sections/{section_id}")
@@ -95,7 +94,7 @@ def save_section(
     repo = SectionRepo(request.state.pb)
     section = repo.get(section_id)
     if not section or section.get("article") != article_id:
-        return error_response(_("Section not found"))
+        return error_response("Section not found")
     article = ArticleRepo(request.state.pb).get(article_id)
     ensure_record_in_project(article, project_id, "article")
     clean = sanitize_html(content)
@@ -112,7 +111,7 @@ def save_section(
     # Edited sections invalidate the assembled article → back to review state.
     if article and article.get("status") not in ("published", "publishing"):
         ArticleRepo(request.state.pb).set_status(article_id, "review")
-    return success_response(_("Section saved"), extra_events={"refreshArticle": True})
+    return success_response(("Section saved"), extra_events={"refreshArticle": True})
 
 
 @router.post("/projects/{project_id}/articles/{article_id}/regenerate")
@@ -129,14 +128,14 @@ def regenerate_article(
     require_project_role(request, project_id)
     article = ArticleRepo(request.state.pb).get(article_id)
     if not article or article.get("project") != project_id:
-        return error_response(_("Article not found"))
+        return error_response("Article not found")
 
     if section_id:
         # --- per-section regeneration (workspace editor) ---
         repo = SectionRepo(request.state.pb)
         section = repo.get(section_id)
         if not section or section.get("article") != article_id:
-            return error_response(_("Section not found"))
+            return error_response("Section not found")
         repo.update(section_id, {"status": "pending", "content": "", "error": {}})
         ArticleRepo(request.state.pb).set_status(article_id, "generating")
         JobRepo(request.state.pb).create(
@@ -149,21 +148,21 @@ def regenerate_article(
             entity_id=section_id,
         )
         return success_response(
-            _("Section regeneration scheduled"),
+            ("Section regeneration scheduled"),
             extra_events={"refreshArticle": True, "refreshJobs": True},
         )
 
     # --- full article regeneration (review page: "Full regeneration") ---
     topic_id = article.get("topicId") or ""
     if not topic_id:
-        return error_response(_("Article is not linked to a topic"))
+        return error_response("Article is not linked to a topic")
     # Guard: never queue a second regeneration while one is already running
     # (the topic stays "writing"/the article stays "generating" until done).
     active = JobRepo(request.state.pb).first(
         filter=f'type="write_article" && payload.topicId="{topic_id}" && (status="pending" || status="retrying" || status="running")'
     )
     if active:
-        return error_response(_("Article is being regenerated — try again shortly"))
+        return error_response("Article is being regenerated — try again shortly")
     ArticleRepo(request.state.pb).set_status(article_id, "generating")
     JobRepo(request.state.pb).create(
         project=project_id,
@@ -175,7 +174,7 @@ def regenerate_article(
         entity_id=article_id,
     )
     return success_response(
-        _("Article regeneration started (previous version is preserved)"),
+        ("Article regeneration started (previous version is preserved)"),
         extra_events={"refreshArticle": True, "refreshJobs": True},
     )
 
@@ -209,12 +208,12 @@ def publish_article(request: Request, project_id: str, article_id: str):
     require_project_role(request, project_id)
     article = ArticleRepo(request.state.pb).get(article_id)
     if not article or article.get("project") != project_id:
-        return error_response(_("Article not found"))
+        return error_response("Article not found")
     if not article.get("finalHtml"):
-        return error_response(_("Article has no content yet"))
+        return error_response("Article has no content yet")
     _queue_publish_job(request, project_id, article_id, "publish")
     return success_response(
-        _("Publishing started"), extra_events={"refreshArticle": True, "refreshJobs": True}
+        ("Publishing started"), extra_events={"refreshArticle": True, "refreshJobs": True}
     )
 
 
@@ -227,12 +226,12 @@ def update_article_post(request: Request, project_id: str, article_id: str):
     require_project_role(request, project_id)
     article = ArticleRepo(request.state.pb).get(article_id)
     if not article or article.get("project") != project_id:
-        return error_response(_("Article not found"))
+        return error_response("Article not found")
     if not article.get("wordpressPostId"):
-        return error_response(_("Article is not published on WordPress yet — publish it first"))
+        return error_response("Article is not published on WordPress yet — publish it first")
     _queue_publish_job(request, project_id, article_id, "update")
     return success_response(
-        _("WordPress update started"),
+        ("WordPress update started"),
         extra_events={"refreshArticle": True, "refreshJobs": True},
     )
 
@@ -246,12 +245,12 @@ def unpublish_article_post(request: Request, project_id: str, article_id: str):
     require_project_role(request, project_id)
     article = ArticleRepo(request.state.pb).get(article_id)
     if not article or article.get("project") != project_id:
-        return error_response(_("Article not found"))
+        return error_response("Article not found")
     if not article.get("wordpressPostId"):
-        return error_response(_("Article is not on WordPress"))
+        return error_response("Article is not on WordPress")
     _queue_publish_job(request, project_id, article_id, "unpublish")
     return success_response(
-        _("Unpublish (make private) started"),
+        ("Unpublish (make private) started"),
         extra_events={"refreshArticle": True, "refreshJobs": True},
     )
 
@@ -267,7 +266,7 @@ def retry_publish_run(request: Request, project_id: str, article_id: str, run_id
 
     run = PublishingRunRepo(request.state.pb).get(run_id)
     if not run or run.get("article") != article_id:
-        return error_response(_("Publish attempt not found"))
+        return error_response("Publish attempt not found")
     article = ArticleRepo(request.state.pb).get(article_id)
     ensure_record_in_project(article, project_id, "article")
     mode = str(run.get("mode") or "publish")
@@ -275,5 +274,5 @@ def retry_publish_run(request: Request, project_id: str, article_id: str, run_id
         mode = "publish"
     _queue_publish_job(request, project_id, article_id, mode)
     return success_response(
-        _("Retry scheduled"), extra_events={"refreshArticle": True, "refreshJobs": True}
+        ("Retry scheduled"), extra_events={"refreshArticle": True, "refreshJobs": True}
     )

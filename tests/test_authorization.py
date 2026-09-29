@@ -327,10 +327,7 @@ def test_project_detail_missing_project_renders_not_found(setup):
     req = make_req(setup["pb"], make_user(), "does-not-exist")
     resp = call_route(P.project_detail, req, "does-not-exist")
     assert resp.status_code == 200
-    assert (
-        "\u067e\u0631\u0648\u0698\u0647 \u06cc\u0627\u0641\u062a \u0646\u0634\u062f"
-        in resp.body.decode()
-    )
+    assert "Project not found" in resp.body.decode()
 
 
 def test_project_detail_renders_active_tab_with_context(setup):
@@ -340,9 +337,7 @@ def test_project_detail_renders_active_tab_with_context(setup):
     assert resp.status_code == 200
     body = resp.body.decode()
     assert ">A</h1>" in body  # project name heading
-    assert (
-        "\u062c\u0627\u0633\u0627\u0632\u06cc \u0645\u062a\u0646 (Embedding)" in body
-    )  # settings tab partial rendered inline
+    assert "Text embedding" in body  # settings tab partial rendered inline
     assert '<nav id="project-tabs"' in body
     assert f'href="/projects/{setup["proj_a"]["id"]}?tab=settings"' in body
     assert 'data-tab="settings"' in body and 'aria-current="page"' in body
@@ -384,7 +379,7 @@ def test_save_settings_persists_auto_publish(setup):
         auto_publish_min_score="95",
         auto_publish_max_attempts="2",
     )
-    assert "\u0630\u062e\u06cc\u0631\u0647 \u0634\u062f" in toast_message(resp)
+    assert "saved" in toast_message(resp)
     stored = pb.collection("project_settings").get_first_list_item(f'project="{proj_a["id"]}"')
     assert stored["autoPublish"] == {"enabled": True, "min_score": 95, "max_attempts": 2}
     # and the settings read view reflects it
@@ -410,7 +405,7 @@ def test_save_settings_persists_schedules(setup):
         schedule_write_enabled="0",
         schedule_write_interval="120",
     )
-    assert "\u0630\u062e\u06cc\u0631\u0647 \u0634\u062f" in toast_message(resp)
+    assert "saved" in toast_message(resp)
     index = ScheduleRepo(pb).first(filter=f'project="{proj_a["id"]}" && kind="index"')
     write = ScheduleRepo(pb).first(filter=f'project="{proj_a["id"]}" && kind="write"')
     assert index is not None and index["enabled"] is True and index["intervalMinutes"] == 60
@@ -434,10 +429,7 @@ def test_project_tab_prompts_empty_history_renders(setup):
     req = make_req(setup["pb"], make_user(), setup["proj_a"]["id"])
     resp = call_route(P.project_tab, req, setup["proj_a"]["id"], "prompts")
     assert resp.status_code == 200
-    assert (
-        "\u067e\u06cc\u0634\u200c\u0641\u0631\u0636 \u0633\u0631\u0627\u0633\u0631\u06cc \u0627\u0633\u062a\u0641\u0627\u062f\u0647 \u0645\u06cc\u200c\u0634\u0648\u062f"
-        in resp.body.decode()
-    )
+    assert "Global default is used" in resp.body.decode()
 
 
 # ---------------------------------------------------------------------------

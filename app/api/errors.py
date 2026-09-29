@@ -1,8 +1,8 @@
-"""Centralized HTMX error handling with request-local translations.
+"""Centralized HTMX error handling.
 
-Every mutation route wraps its body with a Persian source-language msgid.
+Every mutation route wraps its body with an English message.
 Unexpected exceptions are logged once (structlog, with the route name) and
-the user receives a localized toast. Nothing leaks an English traceback
+the user receives a toast. Nothing leaks a traceback
 into the UI, and the old ``print("… error:", e)`` noise is gone.
 
 Usage::
@@ -24,7 +24,6 @@ from typing import Any, TypeVar, cast
 from fastapi import Request
 from structlog import get_logger
 
-from app.i18n import _
 from app.utils import error_response
 
 logger = get_logger("app.api.errors")
@@ -36,7 +35,7 @@ def hx_error(fail: str) -> Callable[[F], F]:
     """Wrap an HTMX route with uniform error handling.
 
     Handles both sync and async routes; on any exception it logs the failure
-    with route context and answers with a localized toast instead of a crash.
+    with route context and answers with a toast instead of a crash.
     """
 
     def deco(fn: F) -> F:
@@ -48,7 +47,7 @@ def hx_error(fail: str) -> Callable[[F], F]:
                     return await fn(request, *args, **kwargs)
                 except Exception as exc:
                     logger.warning("route.error", route=fn.__name__, error=str(exc))
-                    return error_response(_(fail))
+                    return error_response(fail)
 
             return cast(F, async_wrapper)
 
@@ -58,7 +57,7 @@ def hx_error(fail: str) -> Callable[[F], F]:
                 return fn(request, *args, **kwargs)
             except Exception as exc:
                 logger.warning("route.error", route=fn.__name__, error=str(exc))
-                return error_response(_(fail))
+                return error_response(fail)
 
         return cast(F, wrapper)
 
@@ -69,7 +68,7 @@ def page_guard(fail: str) -> Callable[[F], F]:
     """Wrap a full-page GET route with graceful error handling.
 
     On any exception the error is logged WITH the full traceback (so the cause
-    can be found in `make web`/`make worker` output) and a localized error
+    can be found in `make web`/`make worker` output) and an error
     page is rendered instead of a white screen. Handles sync and async routes.
     """
 
@@ -87,7 +86,7 @@ def page_guard(fail: str) -> Callable[[F], F]:
         return templates.TemplateResponse(
             request,
             "pages/articles/render_error.html",
-            {"project": project or {"id": project_id or ""}, "message": _(message)},
+            {"project": project or {"id": project_id or ""}, "message": (message)},
         )
 
     def deco(fn: F) -> F:

@@ -1,5 +1,5 @@
 {% import 'macros/forms.html' as f %}
-{{ f.page_header(_('Articles'), _('Articles generated for this project.'), eyebrow=_('Project')) }}
+{{ f.page_header(('Articles'), ('Articles generated for this project.'), eyebrow=('Project')) }}
 <div id="articles-tab">
     {% if articles %}
     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -11,7 +11,7 @@
                     <span class="badge badge-sm shrink-0 {{ a.status|status_badge }}">{{ a.status|status_label }}</span>
                 </div>
                 <div class="flex items-center gap-3 text-xs opacity-50">
-                    <span>{{ _('%(n)s words') % {'n': a.wordCount or 0} }}</span>
+                    <span>{{ ('%(n)s words') % {'n': a.wordCount or 0} }}</span>
                     {% if a.wpUrl %}<span class="truncate" dir="ltr">{{ a.wpUrl }}</span>{% endif %}
                     <span>{{ a.updated|loc_dt }}</span>
                 </div>
@@ -22,7 +22,7 @@
     {% else %}
     <div class="ezdistro-panel">
         <div class="p-4 flex flex-col items-center gap-3 py-8 text-center">
-            <p class="text-sm opacity-50">{{ _('No articles generated yet. Pick a topic from the “Topics” tab.') }}</p>
+            <p class="text-sm opacity-50">{{ ('No articles generated yet. Pick a topic from the “Topics” tab.') }}</p>
         </div>
     </div>
     {% endif %}

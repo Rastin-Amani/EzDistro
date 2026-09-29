@@ -315,19 +315,16 @@ async def test_import_preview_renders_mapping_form(setup):
     body = resp.body.decode()
     assert "col_title" in body
     assert "\u0645\u0648\u0636\u0648\u0639 \u0627\u0648\u0644" in body  # preview sample row
-    assert "\u0628\u062f\u0648\u0646 \u0647\u062f\u0631" in body
+    assert "No header" in body
     assert 'name="token"' in body
-    assert 'aria-current="step"' in body and "نگاشت ستون‌ها" in body
+    assert 'aria-current="step"' in body and "Map columns" in body
 
 
 async def test_import_preview_empty_input(setup):
     req = make_req(setup["pb"], make_user(), setup["proj"]["id"])
     resp = await call_route_async(P.topic_import_preview, req, setup["proj"]["id"], csv_text="")
     assert resp.status_code == 200
-    assert (
-        "\u0645\u062a\u0646 \u06cc\u0627 \u0641\u0627\u06cc\u0644\u06cc \u0648\u0627\u0631\u062f \u0646\u0634\u062f\u0647 \u0627\u0633\u062a"
-        in toast_message(resp)
-    )
+    assert "No text or file provided" in toast_message(resp)
 
 
 async def test_import_confirm_creates_topics(setup):
@@ -353,8 +350,8 @@ async def test_import_confirm_creates_topics(setup):
     resp = await call_route_async(P.topic_import, req, proj["id"])
     assert resp.status_code == 200
     body = resp.body.decode()
-    assert "\u0627\u0641\u0632\u0648\u062f\u0647 \u0634\u062f" in body
-    assert 'aria-current="step"' in body and "مرور نتایج" in body
+    assert "Added" in body
+    assert 'aria-current="step"' in body and "Review results" in body
     assert TopicRepo(pb).list_for_project(proj["id"], per_page=50)  # non-empty
 
 
@@ -375,10 +372,7 @@ async def test_import_confirm_requires_title_column(setup):
     req.form = fake_form
     resp = await call_route_async(P.topic_import, req, proj["id"])
     assert resp.status_code == 200
-    assert (
-        "\u0633\u062a\u0648\u0646 \u0639\u0646\u0648\u0627\u0646 \u0631\u0627 \u0627\u0646\u062a\u062e\u0627\u0628 \u06a9\u0646\u06cc\u062f"
-        in toast_message(resp)
-    )
+    assert "Select the title column" in toast_message(resp)
 
 
 async def test_import_confirm_stale_token(setup):
@@ -390,7 +384,7 @@ async def test_import_confirm_stale_token(setup):
     req.form = fake_form
     resp = await call_route_async(P.topic_import, req, setup["proj"]["id"])
     assert resp.status_code == 200
-    assert "\u0645\u0646\u0642\u0636\u06cc \u0634\u062f\u0647" in toast_message(resp)
+    assert "expired" in toast_message(resp)
 
 
 def test_import_form_back_button_partial(setup):
@@ -401,4 +395,4 @@ def test_import_form_back_button_partial(setup):
     assert "import/preview" in body
     assert "csv_text" in body
     assert 'dir="auto"' in body
-    assert 'aria-current="step"' in body and "Add topics" in body
+    assert 'aria-current="step"' in body and "Preview and map columns" in body

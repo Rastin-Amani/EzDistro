@@ -32,7 +32,6 @@ import time
 from typing import Any
 
 from app.domain.chunker import chunk_text, strip_html
-from app.i18n import _
 from app.jobs.context import JobCancelled, JobContext
 from app.jobs.handlers import register_job
 from app.providers.base import PermanentError, VectorPoint, WPPost
@@ -56,8 +55,8 @@ async def handle_index_project(ctx: JobContext) -> dict[str, Any]:
         "index run started",
         {"trigger": payload.get("trigger", "manual"), "force": force, "full": full},
     )
-    ctx.stage_started("fetch_posts", _("Fetching posts from WordPress"))
-    ctx.progress(2, stage="fetch_posts", message=_("Preparing…"))
+    ctx.stage_started("fetch_posts", ("Fetching posts from WordPress"))
+    ctx.progress(2, stage="fetch_posts", message=("Preparing…"))
 
     publisher = ctx.registry.get_publisher_provider(config.project, config.settings)
     vector = ctx.providers.vector
@@ -109,7 +108,7 @@ async def handle_index_project(ctx: JobContext) -> dict[str, Any]:
             ctx.progress(
                 5,
                 stage="fetch_posts",
-                message=_("Checking %(n)d posts…") % {"n": totals["discovered"]},
+                message=f"Checking {totals['discovered']} posts…",
             )
 
             for post in posts:
@@ -136,7 +135,7 @@ async def handle_index_project(ctx: JobContext) -> dict[str, Any]:
                     ctx.progress(
                         pct,
                         stage="embedding",
-                        message=_("%(n)d posts checked") % {"n": totals["discovered"]},
+                        message=f"{totals['discovered']} posts checked",
                     )
                     processed_since_checkpoint = 0
 
@@ -150,8 +149,8 @@ async def handle_index_project(ctx: JobContext) -> dict[str, Any]:
 
         _checkpoint(run_repo, run_id, totals, after_id)
         run_repo.finish(run_id, "succeeded")
-        ctx.stage_completed("embedding", _("Indexing complete"))
-        ctx.progress(100, stage="done", message=_("Indexing complete"))
+        ctx.stage_completed("embedding", ("Indexing complete"))
+        ctx.progress(100, stage="done", message=("Indexing complete"))
         result = {"runId": run_id, **totals, "staleDeleted": stale_deleted}
         ctx.info("index run finished", result)
         return result
@@ -175,7 +174,7 @@ async def handle_index_document(ctx: JobContext) -> dict[str, Any]:
     config = ctx.config
     project_id = ctx.project_id
     ctx.info("index document started", {"source_id": source_id, "force": force})
-    ctx.progress(5, stage="fetch", message=_("Fetching posts…"))
+    ctx.progress(5, stage="fetch", message=("Fetching posts…"))
 
     publisher = ctx.registry.get_publisher_provider(config.project, config.settings)
     post = await publisher.get_post(int(source_id))
@@ -215,7 +214,7 @@ async def handle_index_document(ctx: JobContext) -> dict[str, Any]:
             seen_sources=seen,
         )
         run_repo.finish(run["id"], "succeeded")
-        ctx.progress(100, stage="done", message=_("Indexing done"))
+        ctx.progress(100, stage="done", message=("Indexing done"))
         return {"runId": run["id"], "sourceId": source_id, **totals}
     except Exception as exc:
         run_repo.finish(run["id"], "failed", {"type": type(exc).__name__, "message": str(exc)})
@@ -391,7 +390,7 @@ async def _update_metadata_only(
 async def _cleanup_stale_vectors(ctx: JobContext, seen_sources: set[str]) -> int:
     """Delete vectors whose source_id was not seen in this full run."""
     project_id = ctx.project_id
-    ctx.stage_started("cleanup", _("Cleaning up old vectors"))
+    ctx.stage_started("cleanup", ("Cleaning up old vectors"))
     try:
         all_points = await ctx.providers.vector.scroll_ids({"project_id": project_id})
         stale = [pid for pid, pl in all_points if str(pl.get("source_id")) not in seen_sources]

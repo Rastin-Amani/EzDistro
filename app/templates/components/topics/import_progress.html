@@ -1,6 +1,6 @@
-<nav aria-label="{{ _('مراحل درون‌ریزی') }}" class="mb-1">
+<nav aria-label="{{ ('Import steps') }}" class="mb-1">
     <ol class="grid grid-cols-3 gap-2">
-        {% set steps = [ _('افزودن موضوع‌ها'), _('نگاشت ستون‌ها'), _('مرور نتایج') ] %}
+        {% set steps = [ ('Add topics'), ('Map columns'), ('Review results') ] %}
         {% for step in steps %}
         <li class="flex min-w-0 flex-col items-center gap-1.5 text-center" {% if loop.index == current_step %}aria-current="step"{% endif %}>
             <span class="grid size-8 place-items-center rounded-full border text-xs font-semibold {{ 'border-primary bg-primary/10 text-base-content' if loop.index <= current_step else 'border-base-300 text-base-content/50' }}">

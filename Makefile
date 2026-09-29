@@ -1,9 +1,5 @@
 .PHONY: install css css-watch bootstrap web worker test lint typecheck check \
-	i18n-extract i18n-add i18n-update i18n-compile \
 	install-worker-service install-web-service
-
-# Babel CLI (pybabel) — same venv interpreter.
-PYBABEL := .venv/bin/pybabel
 
 # The project interpreter lives in .venv (Python 3.12) — bare `python` is NOT
 # on PATH on fresh servers, so every target resolves it explicitly.
@@ -27,20 +23,6 @@ web:
 
 worker:
 	$(PY) -m app.workers.worker
-
-# --- i18n workflow (gettext/Babel) ---
-# msgids are the Persian source strings; catalogs live in app/locales/<code>/LC_MESSAGES/.
-i18n-extract:
-	$(PYBABEL) extract -F babel.cfg -k _ -k ngettext:1,2 -k hx_error -k page_guard -o app/locales/messages.pot app
-
-i18n-add: i18n-extract ## new locale: make i18n-add LOCALE=de
-	$(PYBABEL) init -i app/locales/messages.pot -d app/locales -l $(LOCALE)
-
-i18n-update: i18n-extract ## merge new strings into existing catalogs
-	$(PYBABEL) update -i app/locales/messages.pot -d app/locales
-
-i18n-compile:
-	$(PYBABEL) compile -d app/locales --use-fuzzy
 
 test:
 	$(PY) -m pytest tests/ -q

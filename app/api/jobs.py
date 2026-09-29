@@ -14,7 +14,6 @@ from fastapi.responses import HTMLResponse
 
 from app.api.deps import project_scope, require_hx, require_user
 from app.api.errors import hx_error, page_guard
-from app.i18n import _
 from app.repositories.jobs import JobEventRepo, JobRepo
 from app.repositories.projects import ProjectRepo
 from app.templates import templates
@@ -117,7 +116,7 @@ def jobs_monitor(
         request,
         "pages/jobs/monitor.html",
         {
-            "title": _("Jobs"),
+            "title": ("Jobs"),
             "provider_metrics": provider_metrics,
             "scheduler_heartbeat": scheduler_heartbeat,
             "jobs": rows,
@@ -160,7 +159,7 @@ def failed_jobs(request: Request, page: int = 1):
         request,
         "pages/jobs/failed.html",
         {
-            "title": _("Failed jobs"),
+            "title": ("Failed jobs"),
             "jobs": jobs,
             "total": total,
             "page": max(1, page),
@@ -175,7 +174,7 @@ def job_detail(request: Request, job_id: str):
     job = JobRepo(pb).get(job_id)
     if not job or not _job_accessible(request, job):
         return templates.TemplateResponse(
-            request, "pages/jobs/not_found.html", {"title": _("Job not found")}
+            request, "pages/jobs/not_found.html", {"title": ("Job not found")}
         )
     events = JobEventRepo(pb).list_for_job(job_id, per_page=100)
     project = ProjectRepo(pb).get(job.get("project") or "")
@@ -185,7 +184,7 @@ def job_detail(request: Request, job_id: str):
         request,
         "pages/jobs/detail.html",
         {
-            "title": _("Job %(t)s") % {"t": job.get("type", "")},
+            "title": f"Job {job.get('type', '')}",
             "job": job,
             "events": events,
             "project": project,
@@ -216,10 +215,10 @@ def cancel_job(request: Request, job_id: str):
     require_user(request)
     job = JobRepo(request.state.pb).get(job_id)
     if not _job_accessible(request, job):
-        return error_response(_("Job not found"))
+        return error_response("Job not found")
     JobRepo(request.state.pb).request_cancel(job_id)
     return toast_response(
-        _("Job cancellation requested"), type="warning", extra_events={"refreshJobs": True}
+        ("Job cancellation requested"), type="warning", extra_events={"refreshJobs": True}
     )
 
 
@@ -231,9 +230,9 @@ def retry_job(request: Request, job_id: str):
     require_user(request)
     job = JobRepo(request.state.pb).get(job_id)
     if not _job_accessible(request, job):
-        return error_response(_("Job not found"))
+        return error_response("Job not found")
     if not job or job.get("status") != "failed":
-        return toast_response(_("This job is not in the failed state"), type="warning")
+        return toast_response(("This job is not in the failed state"), type="warning")
     existing = JobRepo(request.state.pb).first(
         filter=f'type="retry_failed_job" && payload.targetJobId="{job_id}" && (status="pending" || status="retrying" || status="running")'
     )
@@ -247,4 +246,4 @@ def retry_job(request: Request, job_id: str):
             entity_type="job",
             entity_id=job_id,
         )
-    return success_response(_("Retry scheduled"), extra_events={"refreshJobs": True})
+    return success_response(("Retry scheduled"), extra_events={"refreshJobs": True})

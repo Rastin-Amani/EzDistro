@@ -198,7 +198,7 @@ acceptance criterion in §25 holds.
 | Schema mirror | `pb_collections_import.json` must be kept in sync with bootstrap | `docs/SCHEMA.md:4-6` |
 | Doc'd security model | "All collection API rules are locked; the server accesses PocketBase as a superuser and project-level authorization lives in the app layer" | `docs/SCHEMA.md:26-27` |
 | HTMX contract | Mutations: `require_hx` + `@hx_error("message")` + helpers `ok_with_redirect/success_response/error_response/hx_trigger` | `app/api/deps.py:22-25`, `app/api/errors.py`, `app/utils.py` |
-| i18n | `_()` / `ngettext` (Babel); Persian default + `en` catalog; `make i18n-extract/add/update/compile` | `Makefile:31-42`, `app/locales/` |
+| i18n | Removed — English-only app, no translation catalogs or locale switching | — |
 | Nav | Sidebar `nav` list + mobile dock, logout in user menu | `app/templates/layouts/platform.html:29-57,143-185` |
 | Tests | Fake PocketBase with unique-constraint + filter emulation; helpers `make_user`, `make_member`, `make_project`; role-matrix tests already exist | `tests/fakes.py`, `tests/helpers.py:23,87`, `tests/test_authorization.py`, `tests/test_routes_security.py` |
 | Email | **No** email/SMTP/notification code anywhere in `app/` | verified by grep |
@@ -834,8 +834,6 @@ long timeout (~3 min suite; rerun the known-flaky
 - `docs/ARCHITECTURE.md`: authorization section — where session validation vs
   data access now happen; new routers.
 - `README.md`: feature bullet (team/roles) if user-facing features are listed.
-- Run `make i18n-extract && make i18n-update` then translate new `en` strings
-  and `make i18n-compile`.
 
 ## 24. Implementation Phases
 

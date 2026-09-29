@@ -16,7 +16,6 @@ from app.api.deps import (
 )
 from app.api.errors import hx_error, page_guard
 from app.domain.article_validation import ArticleValidator
-from app.i18n import _
 from app.repositories.article_images import ArticleImageRepo
 from app.repositories.articles import ArticleRepo, SectionRepo
 from app.repositories.jobs import JobRepo, now_utc
@@ -39,7 +38,7 @@ def article_workspace(request: Request, project_id: str, article_id: str):
         return templates.TemplateResponse(
             request,
             "pages/articles/not_found.html",
-            {"title": _("Article not found"), "project": project},
+            {"title": ("Article not found"), "project": project},
         )
     sections = SectionRepo(request.state.pb).list_for_article(article_id)
     topic = TopicRepo(request.state.pb).get(article.get("topicId") or "")
@@ -50,7 +49,7 @@ def article_workspace(request: Request, project_id: str, article_id: str):
         request,
         "pages/articles/workspace.html",
         {
-            "title": article.get("title", _("Article")),
+            "title": article.get("title", ("Article")),
             "project": project,
             "article": article,
             "sections": sections,
@@ -194,14 +193,14 @@ def set_article_status(request: Request, project_id: str, article_id: str, statu
     require_project_role(request, project_id)
     article = ArticleRepo(request.state.pb).get(article_id)
     if not article or article.get("project") != project_id:
-        return error_response(_("Article not found"))
+        return error_response("Article not found")
     if status == "ready_to_publish" and article.get("status") not in (
         "review",
         "ready_to_publish",
     ):
-        return error_response(_("Article is not ready to publish yet"))
+        return error_response("Article is not ready to publish yet")
     ArticleRepo(request.state.pb).set_status(article_id, status)
-    return success_response(_("Article status updated"), extra_events={"refreshArticle": True})
+    return success_response(("Article status updated"), extra_events={"refreshArticle": True})
 
 
 @router.post("/projects/{project_id}/articles/{article_id}/assemble")
@@ -217,13 +216,13 @@ def queue_assemble(request: Request, project_id: str, article_id: str):
     require_project_role(request, project_id)
     article = ArticleRepo(request.state.pb).get(article_id)
     if not article or article.get("project") != project_id:
-        return error_response(_("Article not found"))
+        return error_response("Article not found")
     active = JobRepo(request.state.pb).first(
         filter=f'type="assemble_article" && payload.articleId="{article_id}" && (status="pending" || status="retrying" || status="running")'
     )
     if active:
         return success_response(
-            _("Article is being built — the page refreshes automatically"),
+            ("Article is being built — the page refreshes automatically"),
             extra_events={"refreshArticle": True},
         )
     JobRepo(request.state.pb).create(
@@ -236,7 +235,7 @@ def queue_assemble(request: Request, project_id: str, article_id: str):
         entity_id=article_id,
     )
     return success_response(
-        _("Article rebuild scheduled"),
+        ("Article rebuild scheduled"),
         extra_events={"refreshArticle": True, "refreshJobs": True},
     )
 
@@ -261,12 +260,12 @@ def outline_move(
     require_project_role(request, project_id)
     article = _load_article(request, project_id, article_id)
     if not article:
-        return error_response(_("Article not found"))
+        return error_response("Article not found")
     try:
         OutlineEditor(request.state.pb).move(article, position, direction)
     except ValueError as e:
         return error_response(str(e))
-    return success_response(_("Section moved"), extra_events={"refreshArticle": True})
+    return success_response(("Section moved"), extra_events={"refreshArticle": True})
 
 
 @router.post("/projects/{project_id}/articles/{article_id}/outline/sections/add")
@@ -283,12 +282,12 @@ def outline_add(
     require_project_role(request, project_id)
     article = _load_article(request, project_id, article_id)
     if not article:
-        return error_response(_("Article not found"))
+        return error_response("Article not found")
     try:
         OutlineEditor(request.state.pb).add(article, safe_str(heading), safe_str(content_brief))
     except ValueError as e:
         return error_response(str(e))
-    return success_response(_("Section added"), extra_events={"refreshArticle": True})
+    return success_response(("Section added"), extra_events={"refreshArticle": True})
 
 
 @router.post("/projects/{project_id}/articles/{article_id}/outline/sections/{position}/delete")
@@ -299,12 +298,12 @@ def outline_delete(request: Request, project_id: str, article_id: str, position:
     require_project_role(request, project_id)
     article = _load_article(request, project_id, article_id)
     if not article:
-        return error_response(_("Article not found"))
+        return error_response("Article not found")
     try:
         OutlineEditor(request.state.pb).delete(article, position)
     except ValueError as e:
         return error_response(str(e))
-    return success_response(_("Section deleted"), extra_events={"refreshArticle": True})
+    return success_response(("Section deleted"), extra_events={"refreshArticle": True})
 
 
 @router.post("/projects/{project_id}/articles/{article_id}/outline/sections/{position}/brief")
@@ -322,7 +321,7 @@ def outline_update_brief(
     require_project_role(request, project_id)
     article = _load_article(request, project_id, article_id)
     if not article:
-        return error_response(_("Article not found"))
+        return error_response("Article not found")
     try:
         OutlineEditor(request.state.pb).update_brief(
             article, position, safe_str(heading), safe_str(content_brief)
@@ -330,7 +329,7 @@ def outline_update_brief(
     except ValueError as e:
         return error_response(str(e))
     return success_response(
-        _("Section brief saved — section marked for regeneration"),
+        ("Section brief saved — section marked for regeneration"),
         extra_events={"refreshArticle": True},
     )
 
@@ -365,7 +364,7 @@ def article_review(request: Request, project_id: str, article_id: str):
         return templates.TemplateResponse(
             request,
             "pages/articles/not_found.html",
-            {"title": _("Article not found"), "project": project},
+            {"title": ("Article not found"), "project": project},
         )
     sections = SectionRepo(request.state.pb).list_for_article(article_id)
     topic = TopicRepo(request.state.pb).get(article.get("topicId") or "")
@@ -382,7 +381,7 @@ def article_review(request: Request, project_id: str, article_id: str):
         request,
         "pages/articles/review.html",
         {
-            "title": _("Review — %(title)s") % {"title": article.get("title", "")},
+            "title": f"Review — {article.get('title', '')}",
             "project": project,
             "article": article,
             "sections": sections,
@@ -405,9 +404,9 @@ def approve_article(request: Request, project_id: str, article_id: str):
     require_project_role(request, project_id)
     article = ArticleRepo(request.state.pb).get(article_id)
     if not article or article.get("project") != project_id:
-        return error_response(_("Article not found"))
+        return error_response("Article not found")
     if article.get("status") != "review":
-        return error_response(_("Only articles in review status can be approved"))
+        return error_response("Only articles in review status can be approved")
     sections = SectionRepo(request.state.pb).list_for_article(article_id)
     topic = TopicRepo(request.state.pb).get(article.get("topicId") or "")
     report = _live_validation(
@@ -415,7 +414,7 @@ def approve_article(request: Request, project_id: str, article_id: str):
     )
     if not report.ok:
         issues = "; ".join(i.message for i in report.issues[:5])
-        return error_response(_("Article failed validation: %(issues)s") % {"issues": issues})
+        return error_response(f"Article failed validation: {issues}")
     RevisionService(request.state.pb).snapshot(
         article,
         "manual",
@@ -424,7 +423,7 @@ def approve_article(request: Request, project_id: str, article_id: str):
     )
     ArticleRepo(request.state.pb).set_approved(article_id)
     return success_response(
-        _("Article approved — publishing enabled"), extra_events={"refreshArticle": True}
+        "Article approved — publishing enabled", extra_events={"refreshArticle": True}
     )
 
 
@@ -437,9 +436,9 @@ def send_back_article(request: Request, project_id: str, article_id: str, note: 
     require_project_role(request, project_id)
     article = ArticleRepo(request.state.pb).get(article_id)
     if not article or article.get("project") != project_id:
-        return error_response(_("Article not found"))
+        return error_response("Article not found")
     if article.get("status") not in ("review", "approved"):
-        return error_response(_("Article is not in a returnable state"))
+        return error_response("Article is not in a returnable state")
     RevisionService(request.state.pb).snapshot(
         article,
         "manual",
@@ -447,7 +446,7 @@ def send_back_article(request: Request, project_id: str, article_id: str, note: 
         created_by=require_user(request).get("id", ""),
     )
     ArticleRepo(request.state.pb).send_back(article_id, safe_str(note))
-    return success_response(_("Article returned"), extra_events={"refreshArticle": True})
+    return success_response(("Article returned"), extra_events={"refreshArticle": True})
 
 
 @router.post("/projects/{project_id}/articles/{article_id}/revisions/{revision_id}/rollback")
@@ -464,4 +463,4 @@ def rollback_article(request: Request, project_id: str, article_id: str, revisio
     except ValueError as e:
         return error_response(str(e))
     ArticleRepo(request.state.pb).set_status(article_id, "review")
-    return success_response(_("Rolled back to version"), extra_events={"refreshArticle": True})
+    return success_response(("Rolled back to version"), extra_events={"refreshArticle": True})

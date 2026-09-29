@@ -6,9 +6,11 @@
 
      hx-trigger="refreshTopics from:body"
 
+     hx-target="this"
+
      hx-swap="outerHTML">
 
-{{ f.page_header(_('Topics'), _('Manage topics and article generation.'), eyebrow=_('Project')) }}
+{{ f.page_header(('Topics'), ('Manage topics and article generation.'), eyebrow=('Project')) }}
 
     <div class="flex flex-col gap-3">
 
@@ -18,13 +20,13 @@
 
                 <a class="join-item btn btn-xs {{ 'btn-primary' if not status_filter }}"
 
-                   hx-get="/projects/{{ project.id }}/tabs/topics?q={{ q }}" hx-target="#tab-content">{{ _('All') }}</a>
+                   hx-get="/projects/{{ project.id }}/tabs/topics?q={{ q }}" hx-target="#tab-content" hx-swap="innerHTML">{{ ('All') }}</a>
 
                 {% for s in ['planned', 'queued', 'planning', 'outline_ready', 'writing', 'review', 'publishing', 'published', 'failed', 'cancelled'] %}
 
                 <a class="join-item btn btn-xs {{ 'btn-primary' if status_filter == s }}"
 
-                   hx-get="/projects/{{ project.id }}/tabs/topics?status={{ s }}&q={{ q }}" hx-target="#tab-content">{{ s|status_label }}</a>
+                   hx-get="/projects/{{ project.id }}/tabs/topics?status={{ s }}&q={{ q }}" hx-target="#tab-content" hx-swap="innerHTML">{{ s|status_label }}</a>
 
                 {% endfor %}
 
@@ -32,17 +34,17 @@
 
             <div class="flex items-center gap-2">
 
-                <a href="/projects/{{ project.id }}/topics" class="btn btn-ghost btn-xs">{{ _('Full view') }}</a>
+                <a href="/projects/{{ project.id }}/topics" class="btn btn-ghost btn-xs">{{ ('Full view') }}</a>
 
-                <button class="btn btn-ghost btn-xs" onclick="document.getElementById('topic-import-modal').showModal()">
+                <button class="btn btn-ghost btn-xs" @click="$store.ui.openModal('topic-import-modal')">
 
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" /></svg>
 
-                    {{ _('CSV / Bulk') }}
+                    {{ ('CSV / Bulk') }}
 
                 </button>
 
-                <button class="btn btn-primary btn-xs" onclick="document.getElementById('new-topic-modal').showModal()">{{ _('+ Topic') }}</button>
+                <button class="btn btn-primary btn-xs" @click="$store.ui.openModal('new-topic-modal')">{{ ('+ Topic') }}</button>
 
             </div>
 
@@ -56,13 +58,13 @@
 
             <input id="topics-tab-search" name="q" type="search" value="{{ q }}" class="input input-sm w-full max-w-64"
 
-                   placeholder="{{ _('Search by title or keyword…') }}" />
+                   placeholder="{{ ('Search by title or keyword…') }}" />
 
             <input type="hidden" name="status" value="{{ status_filter }}" />
 
             {% if q %}
 
-            <a class="btn btn-ghost btn-xs text-error" href="/projects/{{ project.id }}?tab=topics">{{ _('Clear') }}</a>
+            <a class="btn btn-ghost btn-xs text-error" href="/projects/{{ project.id }}?tab=topics">{{ ('Clear') }}</a>
 
             {% endif %}
 
@@ -74,7 +76,7 @@
 
         <div class="ezdistro-panel">
 
-            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('Topics') }}</h2></div>
+            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ ('Topics') }}</h2></div>
 
             <div class="overflow-x-auto">
 
@@ -84,15 +86,15 @@
 
                         <tr class="text-xs opacity-60">
 
-                            <th>{{ _('Title') }}</th>
+                            <th>{{ ('Title') }}</th>
 
-                            <th>{{ _('Keyword') }}</th>
+                            <th>{{ ('Keyword') }}</th>
 
-                            <th>{{ _('Pillar/Cluster') }}</th>
+                            <th>{{ ('Pillar/Cluster') }}</th>
 
-                            <th>{{ _('Status') }}</th>
+                            <th>{{ ('Status') }}</th>
 
-                            <th>{{ _('Priority') }}</th>
+                            <th>{{ ('Priority') }}</th>
 
                             <th></th>
 
@@ -132,13 +134,13 @@
 
                                 <button class="btn btn-ghost btn-xs text-primary"
 
-                                        hx-post="/projects/{{ project.id }}/topics/{{ t.id }}/write" hx-swap="none">{{ _('Write article') }}</button>
+                                        hx-post="/projects/{{ project.id }}/topics/{{ t.id }}/write" hx-swap="none">{{ ('Write article') }}</button>
 
                                 {% endif %}
 
                                 {% if t.articleId %}
 
-                                <a class="btn btn-ghost btn-xs" href="/projects/{{ project.id }}/articles/{{ t.articleId }}">{{ _('Article') }}</a>
+                                <a class="btn btn-ghost btn-xs" href="/projects/{{ project.id }}/articles/{{ t.articleId }}">{{ ('Article') }}</a>
 
                                 {% endif %}
 
@@ -146,7 +148,7 @@
 
                                         hx-post="/projects/{{ project.id }}/topics/{{ t.id }}/delete" hx-swap="none"
 
-                                        hx-confirm="{{ _('Delete this topic? This cannot be undone.') }}">{{ _('Delete') }}</button>
+                                        hx-confirm="{{ ('Delete this topic? This cannot be undone.') }}">{{ ('Delete') }}</button>
 
                             </td>
 
@@ -168,7 +170,7 @@
 
             <div class="p-4 flex flex-col items-center gap-3 py-8 text-center">
 
-                <p class="text-sm opacity-50">{{ _('No topic found.') }}</p>
+                <p class="text-sm opacity-50">{{ ('No topic found.') }}</p>
 
             </div>
 
@@ -188,9 +190,9 @@
 
             <div class="flex items-center justify-between mb-4">
 
-                <h3 class="font-bold text-lg">{{ _('New topic') }}</h3>
+                <h3 class="font-bold text-lg">{{ ('New topic') }}</h3>
 
-                <button type="button" class="btn btn-ghost btn-circle btn-sm" onclick="document.getElementById('new-topic-modal').close()" aria-label="{{ _('Close') }}">
+                <button type="button" class="btn btn-ghost btn-circle btn-sm" @click="$store.ui.closeModal('new-topic-modal')" aria-label="{{ ('Close') }}">
 
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
 
@@ -204,33 +206,33 @@
 
                   class="flex flex-col gap-4">
 
-                {{ f.text('title', _('Topic title'), '', _('The title of the article you want written — the more precise, the better the output.'), _('e.g. Best SEO practices in 1405'), true, hint=_('This title is the primary input for article generation.')) }}
+                {{ f.text('title', ('Topic title'), '', ('The title of the article you want written — the more precise, the better the output.'), ('e.g. Best SEO practices in 1405'), true, hint=('This title is the primary input for article generation.')) }}
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-                    {{ f.text('keyword', _('Keyword'), '', _('The main phrase or keyword this article optimizes for.'), _('e.g. SEO tutorial')) }}
+                    {{ f.text('keyword', ('Keyword'), '', ('The main phrase or keyword this article optimizes for.'), ('e.g. SEO tutorial')) }}
 
-                    {{ f.select('type', _('Type'), [('article', _('Article')), ('pillar_page', _('Pillar page')), ('guide', _('Guide')), ('news', _('News'))], 'article', _('Content type — the pillar page anchors the whole content cluster.')) }}
+                    {{ f.select('type', ('Type'), [('article', ('Article')), ('pillar_page', ('Pillar page')), ('guide', ('Guide')), ('news', ('News'))], 'article', ('Content type — the pillar page anchors the whole content cluster.')) }}
 
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-                    {{ f.text('pillar', _('Pillar'), '', _('The main pillar article this topic relates to (for internal linking).')) }}
+                    {{ f.text('pillar', ('Pillar'), '', ('The main pillar article this topic relates to (for internal linking).')) }}
 
-                    {{ f.text('cluster', _('Cluster'), '', _('Content cluster name for grouping related topics.')) }}
+                    {{ f.text('cluster', ('Cluster'), '', ('Content cluster name for grouping related topics.')) }}
 
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-                    {{ f.number('priority', _('Priority'), '0', _('The higher, the sooner it enters the generation queue.'), min='0') }}
+                    {{ f.number('priority', ('Priority'), '0', ('The higher, the sooner it enters the generation queue.'), min='0') }}
 
-                    {{ f.number('week', _('Week'), '', _('Editorial calendar week (optional).')) }}
+                    {{ f.number('week', ('Week'), '', ('Editorial calendar week (optional).')) }}
 
                 </div>
 
-                {{ f.text('url', _('Article link'), '', _('Published URL (optional).')) }}
+                {{ f.text('url', ('Article link'), '', ('Published URL (optional).')) }}
 
                 <div class="flex gap-3 mt-2">
 
@@ -238,11 +240,11 @@
 
                         <span class="loading loading-spinner loading-xs htmx-indicator"></span>
 
-                        {{ _('Add') }}
+                        {{ ('Add') }}
 
                     </button>
 
-                    <button type="button" class="btn btn-ghost flex-1" onclick="document.getElementById('new-topic-modal').close()">{{ _('Cancel') }}</button>
+                    <button type="button" class="btn btn-ghost flex-1" @click="$store.ui.closeModal('new-topic-modal')">{{ ('Cancel') }}</button>
 
                 </div>
 

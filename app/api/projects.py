@@ -31,7 +31,6 @@ from app.api.deps import (
 )
 from app.api.errors import hx_error
 from app.domain.validation import normalize_base_url
-from app.i18n import _, ngettext
 from app.repositories.articles import ArticleRepo
 from app.repositories.indexing import DocumentRepo, IndexRunRepo
 from app.repositories.integrations import IntegrationRepo
@@ -79,21 +78,21 @@ TABS = [
 def integration_categories() -> dict[str, str]:
     """Lazy (request-time) translations — call this, never index at import time."""
     return {
-        "llm": _("Language model (LLM)"),
-        "embedding": _("Text embedding"),
-        "reranker": _("Reranking"),
-        "vector_store": _("Vector store (Qdrant)"),
-        "publisher": _("Publishing (WordPress)"),
-        "image": _("Image generation (AI Image)"),
+        "llm": ("Language model (LLM)"),
+        "embedding": ("Text embedding"),
+        "reranker": ("Reranking"),
+        "vector_store": ("Vector store (Qdrant)"),
+        "publisher": ("Publishing (WordPress)"),
+        "image": ("Image generation (AI Image)"),
     }
 
 
 def health_labels() -> dict[str, str]:
     return {
-        "unknown": _("Unknown"),
-        "healthy": _("Healthy"),
-        "degraded": _("Degraded"),
-        "unhealthy": _("Unhealthy"),
+        "unknown": ("Unknown"),
+        "healthy": ("Healthy"),
+        "degraded": ("Degraded"),
+        "unhealthy": ("Unhealthy"),
     }
 
 
@@ -114,7 +113,7 @@ def projects_list(request: Request):
     else:
         projects = []
     return templates.TemplateResponse(
-        request, "pages/projects/list.html", {"title": _("Projects"), "projects": projects}
+        request, "pages/projects/list.html", {"title": ("Projects"), "projects": projects}
     )
 
 
@@ -146,7 +145,7 @@ def create_project(
     )
     # Creator becomes owner of the project (authorization).
     MemberRepo(request.state.pb).add(project=project["id"], user=user.get("id", ""), role="owner")
-    return ok_with_redirect(_("Project created"), f"/projects/{project['id']}")
+    return ok_with_redirect(("Project created"), f"/projects/{project['id']}")
 
 
 @router.post("/projects/{project_id}/delete")
@@ -156,7 +155,7 @@ def delete_project(request: Request, project_id: str):
     require_project_access(request, project_id)
     require_project_role(request, project_id, PROJECT_ADMIN_ROLES)
     ProjectRepo(request.state.pb).delete(project_id)
-    return ok_with_redirect(_("Project deleted"), "/projects", type="info")
+    return ok_with_redirect(("Project deleted"), "/projects", type="info")
 
 
 # ---------------------------------------------------------------------------
@@ -182,10 +181,10 @@ def toggle_project_status(request: Request, project_id: str):
     require_project_role(request, project_id, PROJECT_ADMIN_ROLES)
     project = ProjectRepo(request.state.pb).get(project_id)
     if not project:
-        return error_response(_("Project not found"))
+        return error_response("Project not found")
     new_status = "inactive" if project.get("status") == "active" else "active"
     ProjectRepo(request.state.pb).set_status(project_id, new_status)
-    message = _("Project activated") if new_status == "active" else _("Project deactivated")
+    message = ("Project activated") if new_status == "active" else ("Project deactivated")
     return success_response(message, extra_events={"refreshProjectStatus": True})
 
 
@@ -237,7 +236,7 @@ def topics_page(
         request,
         "pages/topics/index.html",
         {
-            "title": _("Topics — %(name)s") % {"name": project.get("name", "")},
+            "title": f"Topics — {project.get('name', '')}",
             "project": project,
             "topics": rows,
             "total": total,
@@ -264,7 +263,7 @@ def topics_bulk(
     require_project_role(request, project_id)
     ids = [i.strip() for i in topic_ids.split(",") if i.strip()]
     if not ids:
-        return error_response(_("No topic selected"))
+        return error_response("No topic selected")
     repo = TopicRepo(request.state.pb)
     jobs = JobRepo(request.state.pb)
     done = 0
@@ -299,7 +298,7 @@ def topics_bulk(
             repo.set_status(topic_id, "cancelled")
             done += 1
     return success_response(
-        ngettext("%(n)d topic updated", "%(n)d topics updated", done) % {"n": done},
+        (f"{done} topic updated" if done == 1 else f"{done} topics updated"),
         extra_events={"refreshTopics": True, "refreshJobs": True},
     )
 
@@ -312,9 +311,9 @@ def cancel_topic(request: Request, project_id: str, topic_id: str):
     require_project_role(request, project_id)
     topic = TopicRepo(request.state.pb).get(topic_id)
     if not topic or topic.get("project") != project_id:
-        return error_response(_("Topic not found"))
+        return error_response("Topic not found")
     TopicRepo(request.state.pb).set_status(topic_id, "cancelled")
-    return success_response(_("Topic cancelled"), extra_events={"refreshTopics": True})
+    return success_response(("Topic cancelled"), extra_events={"refreshTopics": True})
 
 
 # ---------------------------------------------------------------------------
@@ -361,28 +360,28 @@ def _tab_context(
         from app.domain.prompt_render import variable_labels
 
         context["prompt_types"] = {
-            "brand_voice": _("Brand voice"),
-            "seo_content_contract": _("SEO content contract"),
-            "research_system": _("Research — system"),
-            "research_user": _("Research — user"),
-            "outline_system": _("Outline — system"),
-            "outline_user": _("Outline — user"),
-            "section_system": _("Section — system"),
-            "section_user": _("Section — user"),
-            "internal_linking": _("Internal linking"),
-            "metadata_system": _("Metadata — system"),
-            "metadata_user": _("Metadata — user"),
-            "article_qa_system": _("Article QA — system"),
-            "article_qa_user": _("Article QA — user"),
-            "article_repair_system": _("Article repair — system"),
-            "article_repair_user": _("Article repair — user"),
-            "image_plan_system": _("Image plan — system"),
-            "image_plan_user": _("Image plan — user"),
-            "output_validation": _("Output validation"),
-            "content_refresh_system": _("Content refresh"),
+            "brand_voice": ("Brand voice"),
+            "seo_content_contract": ("SEO content contract"),
+            "research_system": ("Research — system"),
+            "research_user": ("Research — user"),
+            "outline_system": ("Outline — system"),
+            "outline_user": ("Outline — user"),
+            "section_system": ("Section — system"),
+            "section_user": ("Section — user"),
+            "internal_linking": ("Internal linking"),
+            "metadata_system": ("Metadata — system"),
+            "metadata_user": ("Metadata — user"),
+            "article_qa_system": ("Article QA — system"),
+            "article_qa_user": ("Article QA — user"),
+            "article_repair_system": ("Article repair — system"),
+            "article_repair_user": ("Article repair — user"),
+            "image_plan_system": ("Image plan — system"),
+            "image_plan_user": ("Image plan — user"),
+            "output_validation": ("Output validation"),
+            "content_refresh_system": ("Content refresh"),
             # legacy aliases (kept resolving: seo_rules → contract, validation → repair)
-            "seo_rules": _("SEO rules (legacy)"),
-            "validation": _("Article validation (legacy)"),
+            "seo_rules": ("SEO rules (legacy)"),
+            "validation": ("Article validation (legacy)"),
         }
         repo = PromptRepo(pb)
         context["prompts"] = repo.list_for_project(project_id)
@@ -408,10 +407,10 @@ def _tab_context(
         context["llm_meta"] = registry.provider_metadata("llm")
         context["global_defaults"] = AppSettingsRepo(pb).get_defaults().get("llm") or {}
         context["roles"] = [
-            ("outline", _("Outline model"), True),
-            ("section", _("Section writer model"), True),
-            ("meta", _("Meta/SEO model (optional)"), False),
-            ("review", _("Review model (optional)"), False),
+            ("outline", ("Outline model"), True),
+            ("section", ("Section writer model"), True),
+            ("meta", ("Meta/SEO model (optional)"), False),
+            ("review", ("Review model (optional)"), False),
         ]
     elif tab == "retrieval":
         context["settings"] = ProjectSettingsRepo(pb).get_for_project(project_id)
@@ -422,7 +421,7 @@ def _tab_context(
         context["settings"] = ProjectSettingsRepo(pb).get_for_project(project_id)
         providers = registry.available_providers("image")
         context["image_provider_options"] = [(p, p) for p in providers]
-        context["image_fallback_options"] = [("", _("No fallback"))] + [(p, p) for p in providers]
+        context["image_fallback_options"] = [("", ("No fallback"))] + [(p, p) for p in providers]
     elif tab == "jobs":
         context["jobs"] = JobRepo(pb).list_for_project(project_id, per_page=30)
     elif tab == "indexing":
@@ -447,7 +446,7 @@ def project_detail(request: Request, project_id: str, tab: str = "settings"):
         project = require_project_access(request, project_id)
     except (PermissionError, ValueError):
         return templates.TemplateResponse(
-            request, "pages/projects/not_found.html", {"title": _("Project not found")}
+            request, "pages/projects/not_found.html", {"title": ("Project not found")}
         )
     active = tab if tab in TABS else "settings"
     context = _tab_context(
@@ -457,7 +456,7 @@ def project_detail(request: Request, project_id: str, tab: str = "settings"):
         status=request.query_params.get("status") or "",
         q=request.query_params.get("q") or "",
     )
-    context["title"] = project.get("name", _("Project"))
+    context["title"] = project.get("name", ("Project"))
     context["active_tab"] = active
     context["tabs"] = TABS
     return templates.TemplateResponse(request, "pages/projects/detail.html", context)
@@ -469,9 +468,9 @@ def project_tab(request: Request, project_id: str, tab: str):
         project = require_project_access(request, project_id)
     except (PermissionError, ValueError):
         if is_hx_request(request):
-            return error_response(_("Project not found or access denied"))
+            return error_response("Project not found or access denied")
         return templates.TemplateResponse(
-            request, "pages/projects/not_found.html", {"title": _("Project not found")}
+            request, "pages/projects/not_found.html", {"title": ("Project not found")}
         )
     if tab not in TABS:
         return HTMLResponse("")
@@ -592,7 +591,7 @@ def save_settings(
     _persist_schedule(
         request.state.pb, project_id, "write", schedule_write_enabled, schedule_write_interval
     )
-    return success_response(_("Settings saved"))
+    return success_response("Settings saved")
 
 
 @router.post("/projects/{project_id}/settings/images")
@@ -655,7 +654,7 @@ def save_image_settings(
     }
     ProjectSettingsRepo(request.state.pb).upsert(project_id, data)
     return success_response(
-        _("Image settings saved"),
+        ("Image settings saved"),
         extra_events={"refreshArticle": True},
     )
 
@@ -683,7 +682,7 @@ async def test_image_generation(request: Request, project_id: str):
         return templates.TemplateResponse(
             request,
             "pages/projects/tabs/_image_test_result.html",
-            {"error": _("Cover image model is not set — save the model first")},
+            {"error": ("Cover image model is not set — save the model first")},
         )
     from app.domain.images import classify_error, dims_for_aspect
     from app.providers.base import ImageRequest, ProviderError
@@ -765,7 +764,7 @@ def _persist_schedule(pb: Any, project_id: str, kind: str, enabled: str, interva
 # ---------------------------------------------------------------------------
 # Schedules
 # ---------------------------------------------------------------------------
-_SCHEDULE_KINDS = {"index": _("Auto-indexing"), "write": _("Auto-writing")}
+_SCHEDULE_KINDS = {"index": ("Auto-indexing"), "write": ("Auto-writing")}
 
 
 @router.post("/projects/{project_id}/schedules")
@@ -783,7 +782,7 @@ def save_schedules(
     # A request without a known kind cannot be a schedule save — refuse instead
     # of silently writing a garbage row (which used to show a success toast).
     if kind not in _SCHEDULE_KINDS:
-        return error_response(_("Invalid schedule type"))
+        return error_response("Invalid schedule type")
     schedule = ScheduleRepo(request.state.pb)
     existing = schedule.first(filter=f'project="{project_id}" && kind="{kind}"')
     interval = max(1, safe_int(interval_minutes, 1440))
@@ -816,7 +815,7 @@ def save_schedules(
         },
     )
     resp.headers.update(
-        hx_trigger({"show-toast": {"message": _("Schedule saved"), "type": "success"}})
+        hx_trigger({"show-toast": {"message": ("Schedule saved"), "type": "success"}})
     )
     return resp
 
@@ -843,7 +842,7 @@ def save_integration(
     require_project_role(request, project_id)
     user = require_user(request)
     if category not in integration_categories():
-        return error_response(_("Invalid category"))
+        return error_response("Invalid category")
     secrets: SecretsService = get_secrets_service()
     repo = IntegrationRepo(request.state.pb)
 
@@ -890,7 +889,7 @@ def save_integration(
             enabled=payload["enabled"],
             created_by=payload["createdBy"],
         )
-    return success_response(_("Connection saved"), extra_events={"refreshIntegrations": True})
+    return success_response(("Connection saved"), extra_events={"refreshIntegrations": True})
 
 
 @router.post("/projects/{project_id}/integrations/{record_id}/toggle")
@@ -902,11 +901,11 @@ def toggle_integration(request: Request, project_id: str, record_id: str):
     repo = IntegrationRepo(request.state.pb)
     integration = repo.get(record_id)
     if not integration:
-        return error_response(_("Connection not found"))
+        return error_response("Connection not found")
     ensure_record_in_project(integration, project_id, "integration")
     repo.set_enabled(record_id, not integration.get("enabled", False))
     return success_response(
-        _("Connection status changed"), extra_events={"refreshIntegrations": True}
+        ("Connection status changed"), extra_events={"refreshIntegrations": True}
     )
 
 
@@ -918,7 +917,7 @@ async def test_integration(request: Request, project_id: str, record_id: str):
     repo = IntegrationRepo(request.state.pb)
     integration = repo.get(record_id)
     if not integration or integration.get("project") != project_id:
-        return error_response(_("Connection not found"))
+        return error_response("Connection not found")
     from app.providers.registry import ProviderRegistry
 
     result = await ProviderRegistry(request.state.pb).test_integration(
@@ -940,7 +939,7 @@ def delete_integration(request: Request, project_id: str, record_id: str):
     integration = IntegrationRepo(request.state.pb).get(record_id)
     ensure_record_in_project(integration, project_id, "integration")
     IntegrationRepo(request.state.pb).delete(record_id)
-    return success_response(_("Connection deleted"), extra_events={"refreshIntegrations": True})
+    return success_response(("Connection deleted"), extra_events={"refreshIntegrations": True})
 
 
 # ---------------------------------------------------------------------------
@@ -1010,11 +1009,11 @@ def save_prompts(
                 raise PromptRenderError(unknown)
     except PromptRenderError as e:
         return error_response(
-            _("Invalid variable(s): ") + ", ".join(e.unknown), extra_events={"refreshPrompts": True}
+            ("Invalid variable(s): ") + ", ".join(e.unknown), extra_events={"refreshPrompts": True}
         )
     for ptype, content in values.items():
         service.save(project_id, ptype, content, author=user.get("id", ""))
-    return success_response(_("Prompts saved"), extra_events={"refreshPrompts": True})
+    return success_response(("Prompts saved"), extra_events={"refreshPrompts": True})
 
 
 # ---------------------------------------------------------------------------
@@ -1030,11 +1029,11 @@ def activate_prompt_version(
     require_project_role(request, project_id)
     version = PromptRepo(request.state.pb).get(version_id)
     if version is None or version.get("type") != ptype:
-        return error_response(_("Version not found"))
+        return error_response("Version not found")
     if str(version.get("project") or "") not in ("", project_id):
-        return error_response(_("Version not found"))
+        return error_response("Version not found")
     PromptService(request.state.pb).activate(project_id, ptype, version_id)
-    return success_response(_("Version activated"), extra_events={"refreshPrompts": True})
+    return success_response(("Version activated"), extra_events={"refreshPrompts": True})
 
 
 @router.post("/projects/{project_id}/prompts/{ptype}/duplicate")
@@ -1048,14 +1047,14 @@ def duplicate_prompt_version(
     user = require_user(request)
     version = PromptRepo(request.state.pb).get(version_id)
     if version is None or version.get("type") != ptype:
-        return error_response(_("Version not found"))
+        return error_response("Version not found")
     if str(version.get("project") or "") not in ("", project_id):
-        return error_response(_("Version not found"))
+        return error_response("Version not found")
     PromptService(request.state.pb).duplicate(
         project_id, ptype, version_id, author=user.get("id", "")
     )
     return success_response(
-        _("Version duplicated (inactive)"), extra_events={"refreshPrompts": True}
+        ("Version duplicated (inactive)"), extra_events={"refreshPrompts": True}
     )
 
 
@@ -1165,7 +1164,7 @@ def create_topic(
     require_project_access(request, project_id)
     require_project_role(request, project_id)
     if not safe_str(title):
-        return error_response(_("Topic title is required"))
+        return error_response("Topic title is required")
     week_value = safe_int(week, 0)
     TopicRepo(request.state.pb).create(
         project=project_id,
@@ -1178,7 +1177,7 @@ def create_topic(
         week=week_value or None,
         url=safe_str(url),
     )
-    return success_response(_("Topic added"), extra_events={"refreshTopics": True})
+    return success_response(("Topic added"), extra_events={"refreshTopics": True})
 
 
 @router.post("/projects/{project_id}/topics/{topic_id}/write")
@@ -1189,7 +1188,7 @@ def write_topic(request: Request, project_id: str, topic_id: str):
     require_project_role(request, project_id)
     topic = TopicRepo(request.state.pb).get(topic_id)
     if not topic or topic.get("project") != project_id:
-        return error_response(_("Topic not found"))
+        return error_response("Topic not found")
     topic = TopicRepo(request.state.pb).set_status(topic_id, "queued")
     JobRepo(request.state.pb).create(
         project=project_id,
@@ -1202,7 +1201,7 @@ def write_topic(request: Request, project_id: str, topic_id: str):
         priority=int(topic.get("priority") or 0),
     )
     return success_response(
-        _("Article generation started"), extra_events={"refreshTopics": True, "refreshJobs": True}
+        ("Article generation started"), extra_events={"refreshTopics": True, "refreshJobs": True}
     )
 
 
@@ -1214,9 +1213,9 @@ def delete_topic(request: Request, project_id: str, topic_id: str):
     require_project_role(request, project_id)
     topic = TopicRepo(request.state.pb).get(topic_id)
     if not topic or topic.get("project") != project_id:
-        return error_response(_("Topic not found"))
+        return error_response("Topic not found")
     TopicRepo(request.state.pb).delete(topic_id)
-    return success_response(_("Topic deleted"), extra_events={"refreshTopics": True})
+    return success_response(("Topic deleted"), extra_events={"refreshTopics": True})
 
 
 # ---------------------------------------------------------------------------
@@ -1258,11 +1257,11 @@ async def topic_import_preview(
         csv_text = _decode_csv_bytes(await file.read())
     csv_text = csv_text.strip()
     if not csv_text:
-        return error_response(_("No text or file provided"))
+        return error_response("No text or file provided")
 
     delimiter, rows = parse_delimited(csv_text)
     if not rows:
-        return error_response(_("No rows found"))
+        return error_response("No rows found")
     has_header = detect_header(rows)
     columns = detect_columns(rows, has_header)
     column_map = build_column_map(columns, has_header)
@@ -1305,7 +1304,7 @@ async def topic_import(request: Request, project_id: str):
     token = str(form.get("token", "") or "")
     entry = get_preview(token)
     if not entry:
-        return error_response(_("Preview expired; please try again"))
+        return error_response("Preview expired; please try again")
 
     mapping: dict[str, int] = {}
     for field in IMPORT_FIELDS:
@@ -1313,7 +1312,7 @@ async def topic_import(request: Request, project_id: str):
         if raw.isdigit():
             mapping[field] = int(raw)
     if "title" not in mapping:
-        return error_response(_("Select the title column"))
+        return error_response("Select the title column")
 
     summary = import_rows(
         request.state.pb,
@@ -1327,7 +1326,7 @@ async def topic_import(request: Request, project_id: str):
         "components/topics/import_result.html",
         {
             "summary": summary,
-            "filename": entry.get("filename", "") or _("Pasted text"),
+            "filename": entry.get("filename", "") or ("Pasted text"),
             "project": require_project_access(request, project_id),
         },
     )
@@ -1367,7 +1366,7 @@ def run_index(request: Request, project_id: str, full: str = Form("0")):
         entity_id=project_id,
     )
     return success_response(
-        _("Full reindex started") if is_full else _("Incremental indexing started"),
+        ("Full reindex started") if is_full else ("Incremental indexing started"),
         extra_events={"refreshIndexing": True, "refreshJobs": True},
     )
 
@@ -1381,7 +1380,7 @@ def reindex_document(request: Request, project_id: str, document_id: str, force:
     require_project_role(request, project_id)
     doc = DocumentRepo(request.state.pb).get(document_id)
     if not doc or doc.get("project") != project_id:
-        return error_response(_("Document not found"))
+        return error_response("Document not found")
     JobRepo(request.state.pb).create(
         project=project_id,
         type="index_document",
@@ -1392,7 +1391,7 @@ def reindex_document(request: Request, project_id: str, document_id: str, force:
         entity_id=document_id,
     )
     return success_response(
-        _("Document indexing started"), extra_events={"refreshIndexing": True, "refreshJobs": True}
+        ("Document indexing started"), extra_events={"refreshIndexing": True, "refreshJobs": True}
     )
 
 
@@ -1405,7 +1404,7 @@ def retry_index_run(request: Request, project_id: str, run_id: str):
     require_project_role(request, project_id)
     run = IndexRunRepo(request.state.pb).get(run_id)
     if not run or run.get("project") != project_id:
-        return error_response(_("Run not found"))
+        return error_response("Run not found")
     JobRepo(request.state.pb).create(
         project=project_id,
         type="index_project",
@@ -1416,7 +1415,7 @@ def retry_index_run(request: Request, project_id: str, run_id: str):
         entity_id=project_id,
     )
     return success_response(
-        _("Indexing run rescheduled"),
+        ("Indexing run rescheduled"),
         extra_events={"refreshIndexing": True, "refreshJobs": True},
     )
 
@@ -1500,7 +1499,7 @@ def save_ai_models(
         )
 
     _audit_model_changes(request, project_id, user, before, settings.get_for_project(project_id))
-    return success_response(_("Models saved"))
+    return success_response("Models saved")
 
 
 def _upsert_llm_integration(
@@ -1640,7 +1639,7 @@ def save_global_llm_defaults(
         current.setdefault(role, {})["provider"] = safe_str(provider)
         current.setdefault(role, {})["model"] = safe_str(model)
     repo.set_llm_defaults(current)
-    return success_response(_("Global defaults saved"))
+    return success_response("Global defaults saved")
 
 
 # ---------------------------------------------------------------------------
@@ -1661,7 +1660,7 @@ async def retrieval_diagnose(
     require_hx(request)
     require_project_access(request, project_id)
     if not safe_str(query):
-        return error_response(_("Search query is required"))
+        return error_response("Search query is required")
     from app.schemas.retrieval import RetrievalOptions
     from app.services.internal_linking import ContextBuilder
     from app.services.retrieval import RetrievalService

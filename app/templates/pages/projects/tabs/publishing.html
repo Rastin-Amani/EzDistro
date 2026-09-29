@@ -1,20 +1,20 @@
 {% import 'macros/forms.html' as f %}
-{{ f.page_header(_('Publish'), _('Article publish history on WordPress.'), eyebrow=_('Project')) }}
+{{ f.page_header(('Publish'), ('Article publish history on WordPress.'), eyebrow=('Project')) }}
 <div id="publishing-tab">
     {% if records %}
     <div class="ezdistro-panel">
-        <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('Publish history') }}</h2></div>
+        <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ ('Publish history') }}</h2></div>
         <div class="overflow-x-auto">
             <table class="table table-sm">
                 <thead>
                     <tr class="text-xs opacity-60">
-                        <th>{{ _('Article') }}</th>
-                        <th>{{ _('Attempt') }}</th>
-                        <th>{{ _('Mode') }}</th>
-                        <th>{{ _('Status') }}</th>
-                        <th>{{ _('Post ID') }}</th>
-                        <th>{{ _('URL') }}</th>
-                        <th>{{ _('Time') }}</th>
+                        <th>{{ ('Article') }}</th>
+                        <th>{{ ('Attempt') }}</th>
+                        <th>{{ ('Mode') }}</th>
+                        <th>{{ ('Status') }}</th>
+                        <th>{{ ('Post ID') }}</th>
+                        <th>{{ ('URL') }}</th>
+                        <th>{{ ('Time') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -38,7 +38,7 @@
     {% else %}
     <div class="ezdistro-panel">
         <div class="p-4 flex flex-col items-center gap-3 py-8 text-center">
-            <p class="text-sm opacity-50">{{ _('No publishes recorded yet.') }}</p>
+            <p class="text-sm opacity-50">{{ ('No publishes recorded yet.') }}</p>
         </div>
     </div>
     {% endif %}

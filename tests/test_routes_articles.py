@@ -58,7 +58,7 @@ def test_article_detail_foreign_article_not_found_page():
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(A.article_detail, req, proj_a["id"], foreign["id"])
     assert resp.status_code == 200
-    assert "\u06cc\u0627\u0641\u062a \u0646\u0634\u062f" in resp.body.decode()
+    assert "not found" in resp.body.decode()
 
 
 def test_article_workspace_renders_with_outline():
@@ -87,9 +87,7 @@ def test_section_status_fragment_renders():
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(W.section_status, req, proj_a["id"], article["id"], section["id"])
     assert resp.status_code == 200
-    assert (
-        "\u0627\u0646\u062c\u0627\u0645 \u0634\u062f" in resp.body.decode()
-    )  # status badge fragment
+    assert "Done" in resp.body.decode()  # status badge fragment
 
 
 def test_review_page_renders_validation_report():
@@ -99,7 +97,7 @@ def test_review_page_renders_validation_report():
     resp = call_route(W.article_review, req, proj_a["id"], article["id"])
     assert resp.status_code == 200
     body = resp.body.decode()
-    assert "\u0628\u0627\u0632\u0628\u06cc\u0646\u06cc" in body
+    assert "Review" in body
     send_back_url = f'hx-post="/projects/{proj_a["id"]}/articles/{article["id"]}/send-back"'
     assert body.count(send_back_url) == 1
 
@@ -118,13 +116,8 @@ def test_review_page_never_white_screens_on_internal_error(monkeypatch):
     resp = call_route(W.article_review, req, proj_a["id"], article["id"])
     assert resp.status_code == 200
     body = resp.body.decode()
-    assert (
-        "\u0645\u0634\u06a9\u0644\u06cc \u062f\u0631 \u0628\u0627\u0631\u06af\u0630\u0627\u0631\u06cc \u0635\u0641\u062d\u0647 \u0628\u0627\u0632\u0628\u06cc\u0646\u06cc"
-        in body
-    )
-    assert (
-        "\u0628\u0627\u0632\u06af\u0634\u062a \u0628\u0647 \u0645\u0642\u0627\u0644\u0647" in body
-    )
+    assert "Something went wrong loading the review page" in body
+    assert "Back to articles" in body
 
 
 # ---------------------------------------------------------------------------
@@ -137,9 +130,7 @@ def test_set_article_status_valid_transition():
     resp = call_route(
         W.set_article_status, req, proj_a["id"], article["id"], status="ready_to_publish"
     )
-    assert "\u0628\u0647\u200c\u0631\u0648\u0632\u0631\u0633\u0627\u0646\u06cc" in toast_message(
-        resp
-    )
+    assert "status updated" in toast_message(resp)
     assert ArticleRepo(pb).get(article["id"])["status"] == "ready_to_publish"
 
 
@@ -150,10 +141,7 @@ def test_set_article_status_rejects_premature_ready_to_publish():
     resp = call_route(
         W.set_article_status, req, proj_a["id"], article["id"], status="ready_to_publish"
     )
-    assert (
-        "\u0622\u0645\u0627\u062f\u0647 \u0627\u0646\u062a\u0634\u0627\u0631 \u0646\u06cc\u0633\u062a"
-        in toast_message(resp)
-    )
+    assert "not ready to publish" in toast_message(resp)
     assert ArticleRepo(pb).get(article["id"])["status"] == "draft"
 
 
@@ -162,7 +150,7 @@ def test_set_article_status_rejects_invalid_status():
     article = make_article(pb, proj_a["id"], status="review")
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(W.set_article_status, req, proj_a["id"], article["id"], status="bogus")
-    assert "\u0646\u0627\u0645\u0648\u0641\u0642" in toast_message(resp)
+    assert "failed" in toast_message(resp)
     assert ArticleRepo(pb).get(article["id"])["status"] == "review"
 
 
@@ -177,7 +165,7 @@ def test_approve_article_passes_validation():
     )
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(W.approve_article, req, proj_a["id"], article["id"])
-    assert "\u062a\u0623\u06cc\u06cc\u062f \u0634\u062f" in toast_message(resp)
+    assert "approved" in toast_message(resp)
     assert ArticleRepo(pb).get(article["id"])["status"] == "approved"
 
 
@@ -186,7 +174,7 @@ def test_approve_article_refused_when_not_review():
     article = make_article(pb, proj_a["id"], status="draft")
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(W.approve_article, req, proj_a["id"], article["id"])
-    assert "\u0628\u0627\u0632\u0628\u06cc\u0646\u06cc" in toast_message(resp)
+    assert "review" in toast_message(resp)
     assert ArticleRepo(pb).get(article["id"])["status"] == "draft"
 
 
@@ -196,9 +184,7 @@ def test_approve_article_refused_when_validation_fails():
     article = make_article(pb, proj_a["id"], status="review", final_html="")
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(W.approve_article, req, proj_a["id"], article["id"])
-    assert "\u0627\u0639\u062a\u0628\u0627\u0631\u0633\u0646\u062c\u06cc" in toast_message(
-        resp
-    ) or "\u067e\u0627\u0633 \u0646\u06a9\u0631\u062f" in toast_message(resp)
+    assert "validation" in toast_message(resp) or "failed" in toast_message(resp)
     assert ArticleRepo(pb).get(article["id"])["status"] == "review"
 
 
@@ -213,10 +199,7 @@ def test_send_back_article_records_note():
         article["id"],
         note="\u0628\u0627\u0632\u0646\u0648\u06cc\u0633\u06cc \u0645\u0642\u062f\u0645\u0647",
     )
-    assert (
-        "\u0628\u0627\u0632\u06af\u0631\u062f\u0627\u0646\u062f\u0647 \u0634\u062f"
-        in toast_message(resp)
-    )
+    assert "returned" in toast_message(resp)
     updated = ArticleRepo(pb).get(article["id"])
     assert updated["status"] == "sent_back"
     assert (
@@ -230,10 +213,7 @@ def test_send_back_article_refused_from_wrong_state():
     article = make_article(pb, proj_a["id"], status="draft")
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(W.send_back_article, req, proj_a["id"], article["id"], note="x")
-    assert (
-        "\u0642\u0627\u0628\u0644 \u0628\u0627\u0632\u06af\u0634\u062a \u0646\u06cc\u0633\u062a"
-        in toast_message(resp)
-    )
+    assert "returnable" in toast_message(resp)
     assert ArticleRepo(pb).get(article["id"])["status"] == "draft"
 
 
@@ -252,7 +232,7 @@ def test_outline_add_section():
         heading="\u0628\u062e\u0634 \u062c\u062f\u06cc\u062f",
         content_brief="\u062e\u0644\u0627\u0635\u0647 \u062c\u062f\u06cc\u062f",
     )
-    assert "\u0627\u0636\u0627\u0641\u0647 \u0634\u062f" in toast_message(resp)
+    assert "Section added" in toast_message(resp)
     sections = SectionRepo(pb).list_for_article(article["id"])
     assert len(sections) == 3
     assert sections[-1]["heading"] == "\u0628\u062e\u0634 \u062c\u062f\u06cc\u062f"
@@ -263,7 +243,7 @@ def test_outline_add_requires_heading():
     article = make_article(pb, proj_a["id"])
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(W.outline_add, req, proj_a["id"], article["id"], heading="  ")
-    assert "\u0627\u0644\u0632\u0627\u0645\u06cc" in toast_message(resp)
+    assert "required" in toast_message(resp)
     assert len(SectionRepo(pb).list_for_article(article["id"])) == 2
 
 
@@ -272,7 +252,7 @@ def test_outline_move_swaps_positions():
     article = make_article(pb, proj_a["id"])
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(W.outline_move, req, proj_a["id"], article["id"], 0, direction="down")
-    assert "\u062c\u0627\u0628\u0647\u200c\u062c\u0627 \u0634\u062f" in toast_message(resp)
+    assert "Section moved" in toast_message(resp)
     sections = sorted(SectionRepo(pb).list_for_article(article["id"]), key=lambda s: s["position"])
     assert sections[0]["heading"] == "\u0628\u062f\u0646\u0647"
 
@@ -282,7 +262,7 @@ def test_outline_move_invalid_position_errors():
     article = make_article(pb, proj_a["id"])
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(W.outline_move, req, proj_a["id"], article["id"], 99, direction="down")
-    assert "\u0646\u0627\u0645\u0639\u062a\u0628\u0631" in toast_message(resp)
+    assert "Invalid" in toast_message(resp)
 
 
 def test_outline_delete_removes_section():
@@ -290,7 +270,7 @@ def test_outline_delete_removes_section():
     article = make_article(pb, proj_a["id"])
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(W.outline_delete, req, proj_a["id"], article["id"], 0)
-    assert "\u062d\u0630\u0641 \u0634\u062f" in toast_message(resp)
+    assert "deleted" in toast_message(resp)
     assert len(SectionRepo(pb).list_for_article(article["id"])) == 1
 
 
@@ -307,7 +287,7 @@ def test_outline_update_brief_marks_regeneration():
         heading="\u0645\u0642\u062f\u0645\u0647",
         content_brief="\u062e\u0644\u0627\u0635\u0647 \u062a\u0627\u0632\u0647",
     )
-    assert "\u0630\u062e\u06cc\u0631\u0647 \u0634\u062f" in toast_message(resp)
+    assert "saved" in toast_message(resp)
     section = sorted(SectionRepo(pb).list_for_article(article["id"]), key=lambda s: s["position"])[
         0
     ]
@@ -323,10 +303,7 @@ def test_queue_assemble_creates_job():
     article = make_article(pb, proj_a["id"])
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(W.queue_assemble, req, proj_a["id"], article["id"])
-    assert (
-        "\u0628\u0631\u0646\u0627\u0645\u0647\u200c\u0631\u06cc\u0632\u06cc \u0634\u062f"
-        in toast_message(resp)
-    )
+    assert "rebuild scheduled" in toast_message(resp)
     jobs = JobRepo(pb).list_for_project(proj_a["id"], per_page=10)
     assert jobs[0]["type"] == "assemble_article"
     assert jobs[0]["payload"] == {"articleId": article["id"]}
@@ -347,10 +324,7 @@ def test_queue_assemble_reuses_active_job():
     )
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(W.queue_assemble, req, proj_a["id"], article["id"])
-    assert (
-        "\u062f\u0631 \u062d\u0627\u0644 \u0633\u0627\u062e\u062a \u0627\u0633\u062a"
-        in toast_message(resp)
-    )
+    assert "being built" in toast_message(resp)
     jobs = JobRepo(pb).list_for_project(proj_a["id"], per_page=10)
     assert len([j for j in jobs if j["type"] == "assemble_article"]) == 1
 
@@ -371,10 +345,7 @@ def test_queue_assemble_reassembles_after_completion():
     pb.collection("jobs").update(completed["id"], {"status": "completed"})
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(W.queue_assemble, req, proj_a["id"], article["id"])
-    assert (
-        "\u0628\u0631\u0646\u0627\u0645\u0647\u200c\u0631\u06cc\u0632\u06cc \u0634\u062f"
-        in toast_message(resp)
-    )
+    assert "rebuild scheduled" in toast_message(resp)
     jobs = JobRepo(pb).list_for_project(proj_a["id"], per_page=10)
     assert len([j for j in jobs if j["type"] == "assemble_article"]) == 2
 
@@ -392,11 +363,8 @@ def test_workspace_generating_shows_progress_and_readonly():
     resp = call_route(W.article_workspace, req, proj_a["id"], article["id"])
     assert resp.status_code == 200
     body = resp.body.decode()
-    assert (
-        "\u062f\u0631 \u062d\u0627\u0644 \u062a\u0648\u0644\u06cc\u062f \u0628\u062e\u0634\u200c\u0647\u0627"
-        in body
-    )
-    assert "1 \u0627\u0632 2 \u0628\u062e\u0634 \u0622\u0645\u0627\u062f\u0647 \u0634\u062f" in body
+    assert "Generating sections" in body
+    assert "1 of 2 ready" in body
     assert "disabled" in body  # in-flight section editor is read-only
 
 
@@ -409,11 +377,8 @@ def test_workspace_generating_all_done_offers_reassemble():
     resp = call_route(W.article_workspace, req, proj_a["id"], article["id"])
     assert resp.status_code == 200
     body = resp.body.decode()
-    assert (
-        "\u0628\u062e\u0634\u200c\u0647\u0627 \u0622\u0645\u0627\u062f\u0647 \u0634\u062f\u0646\u062f \u2014 \u062f\u0631 \u062d\u0627\u0644 \u0633\u0627\u062e\u062a \u0645\u0642\u0627\u0644\u0647 \u0646\u0647\u0627\u06cc\u06cc"
-        in body
-    )
-    assert "\u0628\u0627\u0632\u0633\u0627\u0632\u06cc" in body  # manual assemble available
+    assert "building the final article" in body
+    assert "Rebuild" in body  # manual assemble available
 
 
 def test_regenerate_section_queues_generate_section():
@@ -424,9 +389,7 @@ def test_regenerate_section_queues_generate_section():
     resp = call_route(
         A.regenerate_article, req, proj_a["id"], article["id"], section_id=section["id"]
     )
-    assert "\u0628\u0627\u0632\u062a\u0648\u0644\u06cc\u062f \u0628\u062e\u0634" in toast_message(
-        resp
-    )
+    assert "regeneration scheduled" in toast_message(resp)
     jobs = JobRepo(pb).list_for_project(proj_a["id"], per_page=10)
     assert jobs[0]["type"] == "generate_section"
     assert jobs[0]["payload"] == {"sectionId": section["id"]}
@@ -438,10 +401,7 @@ def test_regenerate_full_article_queues_write_job():
     article = make_article(pb, proj_a["id"])
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(A.regenerate_article, req, proj_a["id"], article["id"])
-    assert (
-        "\u0628\u0627\u0632\u062a\u0648\u0644\u06cc\u062f \u0645\u0642\u0627\u0644\u0647"
-        in toast_message(resp)
-    )
+    assert "regeneration started" in toast_message(resp)
     jobs = JobRepo(pb).list_for_project(proj_a["id"], per_page=10)
     assert jobs[0]["type"] == "write_article"
     assert jobs[0]["payload"]["regenerate"] is True
@@ -463,10 +423,7 @@ def test_regenerate_full_article_rejects_duplicate_inflight():
     )
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(A.regenerate_article, req, proj_a["id"], article["id"])
-    assert (
-        "\u062f\u0631 \u062d\u0627\u0644 \u0628\u0627\u0632\u062a\u0648\u0644\u06cc\u062f \u0627\u0633\u062a"
-        in toast_message(resp)
-    )
+    assert "being regenerated" in toast_message(resp)
 
 
 def test_regenerate_foreign_section_rejected():
@@ -481,7 +438,7 @@ def test_regenerate_foreign_section_rejected():
         foreign_article["id"],
         section_id=foreign_section["id"],
     )
-    assert "\u06cc\u0627\u0641\u062a \u0646\u0634\u062f" in toast_message(resp)
+    assert "not found" in toast_message(resp)
     assert SectionRepo(pb).get(foreign_section["id"])["status"] == "done"
 
 
@@ -493,10 +450,7 @@ def test_publish_article_queues_publish_job():
     article = make_article(pb, proj_a["id"], status="approved", final_html="<p>x</p>")
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(A.publish_article, req, proj_a["id"], article["id"])
-    assert (
-        "\u0627\u0646\u062a\u0634\u0627\u0631 \u0622\u063a\u0627\u0632 \u0634\u062f"
-        in toast_message(resp)
-    )
+    assert "Publishing started" in toast_message(resp)
     jobs = JobRepo(pb).list_for_project(proj_a["id"], per_page=10)
     assert jobs[0]["type"] == "publish_article"
     assert jobs[0]["payload"] == {"articleId": article["id"], "action": "publish"}
@@ -507,10 +461,7 @@ def test_publish_article_requires_content():
     article = make_article(pb, proj_a["id"], status="approved", final_html=None)
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(A.publish_article, req, proj_a["id"], article["id"])
-    assert (
-        "\u0645\u062d\u062a\u0648\u0627\u06cc\u06cc \u0646\u062f\u0627\u0631\u062f"
-        in toast_message(resp)
-    )
+    assert "has no content" in toast_message(resp)
     assert len(JobRepo(pb).list_for_project(proj_a["id"], per_page=10)) == 0
 
 
@@ -534,7 +485,7 @@ def test_update_article_post_requires_wp_id():
     article = make_article(pb, proj_a["id"], status="published", final_html="<p>x</p>")
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(A.update_article_post, req, proj_a["id"], article["id"])
-    assert "\u0645\u0646\u062a\u0634\u0631 \u0646\u0634\u062f\u0647" in toast_message(resp)
+    assert "not published" in toast_message(resp)
 
 
 def test_update_article_post_queues_update():
@@ -542,9 +493,7 @@ def test_update_article_post_queues_update():
     article = make_article(pb, proj_a["id"], status="published", final_html="<p>x</p>", wp_id=42)
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(A.update_article_post, req, proj_a["id"], article["id"])
-    assert "\u0628\u0647\u200c\u0631\u0648\u0632\u0631\u0633\u0627\u0646\u06cc" in toast_message(
-        resp
-    )
+    assert "update started" in toast_message(resp)
     jobs = JobRepo(pb).list_for_project(proj_a["id"], per_page=10)
     assert jobs[0]["payload"]["action"] == "update"
 
@@ -554,10 +503,7 @@ def test_unpublish_requires_wp_id():
     article = make_article(pb, proj_a["id"], status="published", final_html="<p>x</p>")
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(A.unpublish_article_post, req, proj_a["id"], article["id"])
-    assert (
-        "\u062f\u0631 \u0648\u0631\u062f\u067e\u0631\u0633 \u0646\u06cc\u0633\u062a"
-        in toast_message(resp)
-    )
+    assert "not on WordPress" in toast_message(resp)
 
 
 def test_unpublish_queues_unpublish_job():
@@ -565,7 +511,7 @@ def test_unpublish_queues_unpublish_job():
     article = make_article(pb, proj_a["id"], status="published", final_html="<p>x</p>", wp_id=7)
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(A.unpublish_article_post, req, proj_a["id"], article["id"])
-    assert "\u062e\u0635\u0648\u0635\u06cc" in toast_message(resp)
+    assert "private" in toast_message(resp)
     jobs = JobRepo(pb).list_for_project(proj_a["id"], per_page=10)
     assert jobs[0]["payload"]["action"] == "unpublish"
 
@@ -576,7 +522,7 @@ def test_retry_publish_run_queues_matching_mode():
     run = make_publish_run(pb, article["id"], proj_a["id"])
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(A.retry_publish_run, req, proj_a["id"], article["id"], run["id"])
-    assert "\u062a\u0644\u0627\u0634 \u0645\u062c\u062f\u062f" in toast_message(resp)
+    assert "Retry" in toast_message(resp)
     jobs = JobRepo(pb).list_for_project(proj_a["id"], per_page=10)
     assert jobs[0]["payload"]["action"] == "publish"
 
@@ -589,7 +535,7 @@ def test_retry_publish_run_foreign_run_rejected():
     resp = call_route(
         A.retry_publish_run, req, proj_a["id"], foreign_article["id"], foreign_run["id"]
     )
-    assert "\u0646\u0627\u0645\u0648\u0641\u0642" in toast_message(resp)
+    assert "failed" in toast_message(resp)
     assert len(JobRepo(pb).list_for_project(proj_a["id"], per_page=10)) == 0
 
 
@@ -612,10 +558,7 @@ def test_rollback_restores_revision_and_sets_review():
     )
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(W.rollback_article, req, proj_a["id"], article["id"], rev["id"])
-    assert (
-        "\u0628\u0627\u0632\u06af\u0634\u062a \u0628\u0647 \u0646\u0633\u062e\u0647"
-        in toast_message(resp)
-    )
+    assert "Rolled back to version" in toast_message(resp)
     restored = ArticleRepo(pb).get(article["id"])
     assert restored["status"] == "review"
     assert "<p>\u062c\u062f\u06cc\u062f</p>" in (restored.get("finalHtml") or "")
@@ -630,7 +573,7 @@ def test_rollback_foreign_revision_rejected():
     article = make_article(pb, proj_a["id"])
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(W.rollback_article, req, proj_a["id"], article["id"], rev["id"])
-    assert "\u06cc\u0627\u0641\u062a \u0646\u0634\u062f" in toast_message(resp)
+    assert "not found" in toast_message(resp)
 
 
 # ---------------------------------------------------------------------------
@@ -651,7 +594,7 @@ def test_article_mutations_reject_foreign_article(route, fn):
     foreign = make_article(pb, proj_b["id"], final_html="<p>x</p>", wp_id=1)
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(fn, req, proj_a["id"], foreign["id"])
-    assert "\u06cc\u0627\u0641\u062a \u0646\u0634\u062f" in toast_message(resp)
+    assert "not found" in toast_message(resp)
     # the foreign article was not touched
     assert ArticleRepo(pb).get(foreign["id"])["status"] == foreign["status"]
 
@@ -672,6 +615,4 @@ def test_article_mutations_reject_viewer_role(fn):
     article = make_article(pb, proj_a["id"], status="review", final_html="<p>x</p>")
     req = make_req(pb, make_user("v1"), proj_a["id"])
     resp = call_route(fn, req, proj_a["id"], article["id"])
-    assert "\u0646\u0627\u0645\u0648\u0641\u0642" in toast_message(
-        resp
-    ) or "\u06a9\u0627\u0641\u06cc" in toast_message(resp)
+    assert "failed" in toast_message(resp) or "role" in toast_message(resp)

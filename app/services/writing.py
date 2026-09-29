@@ -28,7 +28,6 @@ from app.domain.article_validation import ArticleValidator, SectionValidator
 from app.domain.parsing import extract_json
 from app.domain.sanitize import sanitize_html
 from app.domain.seo_score import seo_score
-from app.i18n import _
 from app.jobs.context import JobCancelled, JobContext
 from app.jobs.handlers import register_job
 from app.providers.base import GenerationParams, ProviderError, TransientError
@@ -139,8 +138,8 @@ async def _write(
             "resuming with saved outline", {"article": article["id"], "version": outline_version}
         )
     else:
-        ctx.stage_started("outline", _("Generating the outline"))
-        ctx.progress(5, stage="outline", message=_("Generating the outline…"))
+        ctx.stage_started("outline", ("Generating the outline"))
+        ctx.progress(5, stage="outline", message=("Generating the outline…"))
         topics.set_status(topic_id, "planning")
         outline = await _generate_outline(ctx, topic)
         if article is None:
@@ -156,7 +155,7 @@ async def _write(
         )
         topics.link_article(topic_id, article["id"])
         topics.set_status(topic_id, "outline_ready")
-        ctx.stage_completed("outline", _("The outline is ready"))
+        ctx.stage_completed("outline", ("The outline is ready"))
 
     article_id = article["id"]
 
@@ -212,8 +211,8 @@ async def _write(
             "assembleJob": assemble["id"],
         },
     )
-    ctx.stage_completed("outline", _("Article generation started"))
-    ctx.progress(100, stage="done", message=_("Section jobs created"))
+    ctx.stage_completed("outline", ("Article generation started"))
+    ctx.progress(100, stage="done", message=("Section jobs created"))
     return {
         "articleId": article_id,
         "outlineVersion": outline_version,
@@ -249,7 +248,7 @@ async def handle_generate_outline(ctx: JobContext) -> dict[str, Any]:
     topics.link_article(topic_id, article["id"])
     _persist_sections(ctx, sections, article["id"], outline)
     topics.set_status(topic_id, "outline_ready")
-    ctx.progress(100, stage="done", message=_("The outline is ready"))
+    ctx.progress(100, stage="done", message=("The outline is ready"))
     return {"topicId": topic_id, "articleId": article["id"], "outlineVersion": version}
 
 
@@ -278,7 +277,7 @@ async def handle_generate_section(ctx: JobContext) -> dict[str, Any]:
     ctx.progress(
         10,
         stage="generating_section",
-        message=_("Generating section: %(heading)s") % {"heading": section.get("heading") or ""},
+        message=f"Generating section: {section.get('heading') or ''}",
     )
     sections.mark_generating(section_id)
 
@@ -316,7 +315,7 @@ async def handle_generate_section(ctx: JobContext) -> dict[str, Any]:
         )
         if not waiting:
             articles.set_status(article.get("id"), "review")
-    ctx.progress(100, stage="done", message=_("Section generated"))
+    ctx.progress(100, stage="done", message=("Section generated"))
     ctx.info("section generated", {"section": section_id, "words": result.get("words", 0)})
     return {"sectionId": section_id, "promptVersion": result["prompt_version"]}
 
@@ -357,8 +356,8 @@ async def handle_assemble_article(ctx: JobContext) -> dict[str, Any]:
             details={"failed_sections": failed_ids},
         )
 
-    ctx.stage_started("assembling", _("Assembling the final article"))
-    ctx.progress(40, stage="assembling", message=_("Assembling the final article…"))
+    ctx.stage_started("assembling", ("Assembling the final article"))
+    ctx.progress(40, stage="assembling", message=("Assembling the final article…"))
 
     outline = article.get("outline") or {}
     ordered = [r for r in rows if r.get("status") == "done"]
@@ -534,8 +533,8 @@ async def handle_assemble_article(ctx: JobContext) -> dict[str, Any]:
                     {"score": score, "attempts": attempts, "article": article_id},
                 )
 
-    ctx.stage_completed("assembling", _("The article is ready for review"))
-    ctx.progress(100, stage="done", message=_("The article is ready for review"))
+    ctx.stage_completed("assembling", ("The article is ready for review"))
+    ctx.progress(100, stage="done", message=("The article is ready for review"))
     return {
         "articleId": article_id,
         "words": word_count_from_html(html),

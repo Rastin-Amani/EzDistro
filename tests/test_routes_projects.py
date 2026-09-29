@@ -76,7 +76,7 @@ def test_create_project_duplicate_slug_returns_error():
     resp = call_route(
         P.create_project, req, name="\u062a\u06a9\u0631\u0627\u0631\u06cc", slug="dup"
     )
-    assert "\u0646\u0627\u0645\u0648\u0641\u0642" in toast_message(resp)
+    assert "failed" in toast_message(resp)
     assert len(pb.collection("projects").get_full_list()) == 1
 
 
@@ -84,9 +84,7 @@ def test_create_project_rejects_non_hx():
     pb = make_pb()
     req = make_req_plain(pb, make_user())
     resp = call_route(P.create_project, req, name="x", slug="x")
-    assert "\u0641\u0642\u0637" in toast_message(
-        resp
-    ) or "\u0646\u0627\u0645\u0648\u0641\u0642" in toast_message(resp)
+    assert "HTMX" in toast_message(resp) or "failed" in toast_message(resp)
     assert len(pb.collection("projects").get_full_list()) == 0
 
 
@@ -98,19 +96,17 @@ def test_toggle_project_status_flips_active_inactive():
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(P.toggle_project_status, req, proj_a["id"])
     assert ProjectRepo(pb).get(proj_a["id"])["status"] == "inactive"
-    assert "\u063a\u06cc\u0631\u0641\u0639\u0627\u0644" in toast_message(resp)
+    assert "deactivated" in toast_message(resp)
     resp = call_route(P.toggle_project_status, req, proj_a["id"])
     assert ProjectRepo(pb).get(proj_a["id"])["status"] == "active"
-    assert "\u0641\u0639\u0627\u0644" in toast_message(resp)
+    assert "activated" in toast_message(resp)
 
 
 def test_toggle_project_status_requires_admin_role():
     pb, proj_a, _ = _setup(role="editor")
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(P.toggle_project_status, req, proj_a["id"])
-    assert "\u06a9\u0627\u0641\u06cc" in toast_message(
-        resp
-    ) or "\u0646\u0627\u0645\u0648\u0641\u0642" in toast_message(resp)
+    assert "role" in toast_message(resp) or "failed" in toast_message(resp)
     assert ProjectRepo(pb).get(proj_a["id"])["status"] == "active"
 
 
@@ -190,7 +186,7 @@ def test_create_topic_persists_full_fields():
         week="12",
         url="https://x.ir/1",
     )
-    assert "\u0627\u0636\u0627\u0641\u0647 \u0634\u062f" in toast_message(resp)
+    assert "Topic added" in toast_message(resp)
     topic = TopicRepo(pb).list_for_project(proj_a["id"], per_page=10)[0]
     assert topic["type"] == "guide"
     assert topic["priority"] == 7
@@ -202,7 +198,7 @@ def test_create_topic_requires_title():
     pb, proj_a, _ = _setup()
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(P.create_topic, req, proj_a["id"], title="  ")
-    assert "\u0627\u0644\u0632\u0627\u0645\u06cc" in toast_message(resp)
+    assert "required" in toast_message(resp)
     assert TopicRepo(pb).list_for_project(proj_a["id"], per_page=10) == []
 
 
@@ -210,9 +206,7 @@ def test_create_topic_invalid_type_rejected():
     pb, proj_a, _ = _setup()
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(P.create_topic, req, proj_a["id"], title="\u062a", type="bogus")
-    assert "\u0646\u0627\u0645\u0648\u0641\u0642" in toast_message(
-        resp
-    ) or "\u0646\u0627\u0645\u0639\u062a\u0628\u0631" in toast_message(resp)
+    assert "failed" in toast_message(resp) or "invalid" in toast_message(resp)
     assert TopicRepo(pb).list_for_project(proj_a["id"], per_page=10) == []
 
 
@@ -228,7 +222,7 @@ def test_topics_bulk_generates_selected():
     resp = call_route(
         P.topics_bulk, req, proj_a["id"], action="generate", topic_ids=f"{t1['id']},{t2['id']}"
     )
-    assert "2 \u0645\u0648\u0636\u0648\u0639" in toast_message(resp)
+    assert "2 topics updated" in toast_message(resp)
     jobs = JobRepo(pb).list_for_project(proj_a["id"], per_page=10)
     assert len(jobs) == 2
     assert all(j["type"] == "write_article" for j in jobs)
@@ -243,7 +237,7 @@ def test_topics_bulk_cancel_skips_published():
     resp = call_route(
         P.topics_bulk, req, proj_a["id"], action="cancel", topic_ids=f"{t1['id']},{t2['id']}"
     )
-    assert "1 \u0645\u0648\u0636\u0648\u0639" in toast_message(resp)
+    assert "1 topic updated" in toast_message(resp)
     assert TopicRepo(pb).get(t1["id"])["status"] == "cancelled"
     assert TopicRepo(pb).get(t2["id"])["status"] == "published"
 
@@ -252,7 +246,7 @@ def test_topics_bulk_empty_selection_errors():
     pb, proj_a, _ = _setup()
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(P.topics_bulk, req, proj_a["id"], action="generate", topic_ids="")
-    assert "\u0627\u0646\u062a\u062e\u0627\u0628" in toast_message(resp)
+    assert "No topic selected" in toast_message(resp)
 
 
 def test_topics_bulk_ignores_foreign_topic_ids():
@@ -260,7 +254,7 @@ def test_topics_bulk_ignores_foreign_topic_ids():
     foreign = make_topic(pb, proj_b["id"], title="\u0628")
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(P.topics_bulk, req, proj_a["id"], action="generate", topic_ids=foreign["id"])
-    assert "0 \u0645\u0648\u0636\u0648\u0639" in toast_message(resp)
+    assert "0 topics updated" in toast_message(resp)
     assert TopicRepo(pb).get(foreign["id"])["status"] == "planned"
 
 
@@ -272,7 +266,7 @@ def test_cancel_topic_sets_cancelled():
     t = make_topic(pb, proj_a["id"], title="\u062a", status="queued")
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(P.cancel_topic, req, proj_a["id"], t["id"])
-    assert "\u0644\u063a\u0648 \u0634\u062f" in toast_message(resp)
+    assert "cancelled" in toast_message(resp)
     assert TopicRepo(pb).get(t["id"])["status"] == "cancelled"
 
 
@@ -281,7 +275,7 @@ def test_cancel_topic_foreign_rejected():
     foreign = make_topic(pb, proj_b["id"], title="\u0628", status="queued")
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(P.cancel_topic, req, proj_a["id"], foreign["id"])
-    assert "\u06cc\u0627\u0641\u062a \u0646\u0634\u062f" in toast_message(resp)
+    assert "not found" in toast_message(resp)
     assert TopicRepo(pb).get(foreign["id"])["status"] == "queued"
 
 
@@ -290,7 +284,7 @@ def test_write_topic_queues_job():
     t = make_topic(pb, proj_a["id"], title="\u062a", priority=5)
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(P.write_topic, req, proj_a["id"], t["id"])
-    assert "\u0622\u063a\u0627\u0632 \u0634\u062f" in toast_message(resp)
+    assert "generation started" in toast_message(resp)
     assert TopicRepo(pb).get(t["id"])["status"] == "queued"
     jobs = JobRepo(pb).list_for_project(proj_a["id"], per_page=10)
     assert len(jobs) == 1
@@ -303,7 +297,7 @@ def test_write_topic_foreign_rejected():
     foreign = make_topic(pb, proj_b["id"], title="\u0628")
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(P.write_topic, req, proj_a["id"], foreign["id"])
-    assert "\u06cc\u0627\u0641\u062a \u0646\u0634\u062f" in toast_message(resp)
+    assert "not found" in toast_message(resp)
     assert len(JobRepo(pb).list_for_project(proj_a["id"], per_page=10)) == 0
 
 
@@ -312,9 +306,7 @@ def test_write_topic_rejects_non_member():
     t = make_topic(pb, proj_a["id"], title="\u062a")
     req = make_req(pb, make_user("stranger"), proj_a["id"])
     resp = call_route(P.write_topic, req, proj_a["id"], t["id"])
-    assert "\u0646\u0627\u0645\u0648\u0641\u0642" in toast_message(
-        resp
-    ) or "\u062f\u0633\u062a\u0631\u0633\u06cc" in toast_message(resp)
+    assert "failed" in toast_message(resp) or "access denied" in toast_message(resp)
     assert TopicRepo(pb).get(t["id"])["status"] == "planned"
 
 
@@ -324,7 +316,5 @@ def test_write_topic_rejects_viewer_role():
     t = make_topic(pb, proj_a["id"], title="\u062a")
     req = make_req(pb, make_user("v1"), proj_a["id"])
     resp = call_route(P.write_topic, req, proj_a["id"], t["id"])
-    assert "\u0646\u0627\u0645\u0648\u0641\u0642" in toast_message(
-        resp
-    ) or "\u06a9\u0627\u0641\u06cc" in toast_message(resp)
+    assert "failed" in toast_message(resp) or "role" in toast_message(resp)
     assert TopicRepo(pb).get(t["id"])["status"] == "planned"

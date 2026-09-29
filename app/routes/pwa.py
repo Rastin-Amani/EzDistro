@@ -3,8 +3,6 @@ from pathlib import Path
 from fastapi import APIRouter
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 
-from app.i18n import get_locale
-
 router = APIRouter()
 
 # Path to SW file relative to project root
@@ -30,24 +28,12 @@ async def service_worker():
 
 @router.get("/offline/", include_in_schema=False, response_class=HTMLResponse)
 async def offline_page():
-    locale = get_locale()
-    if locale.code == "fa":
-        lang, direction = "fa", "rtl"
-        title, heading = (
-            "\u0642\u0637\u0639 \u0627\u0631\u062a\u0628\u0627\u0637 — EzDistro",
-            "\u0634\u0645\u0627 \u0622\u0641\u0644\u0627\u06cc\u0646 \u0647\u0633\u062a\u06cc\u062f",
-        )
-        message, retry = (
-            "\u0635\u0641\u062d\u0647\u200c\u0647\u0627\u06cc\u06cc \u06a9\u0647 \u0642\u0628\u0644\u0627\u064b \u062f\u06cc\u062f\u0647\u200c\u0627\u06cc\u062f \u0647\u0646\u0648\u0632 \u062f\u0631 \u062f\u0633\u062a\u0631\u0633 \u0647\u0633\u062a\u0646\u062f.<br />\u067e\u0633 \u0627\u0632 \u0627\u062a\u0635\u0627\u0644 \u0628\u0647 \u0627\u06cc\u0646\u062a\u0631\u0646\u062a\u060c \u062f\u0648\u0628\u0627\u0631\u0647 \u0627\u0645\u062a\u062d\u0627\u0646 \u06a9\u0646\u06cc\u062f.",
-            "Retry",
-        )
-    else:
-        lang, direction = "en", "ltr"
-        title, heading = "You're offline — EzDistro", "You're offline"
-        message, retry = (
-            "Pages you've already opened may still be available.<br />Reconnect and try again.",
-            "Try again",
-        )
+    lang, direction = "en", "ltr"
+    title, heading = "You're offline — EzDistro", "You're offline"
+    message, retry = (
+        "Pages you've already opened may still be available.<br />Reconnect and try again.",
+        "Try again",
+    )
 
     page = """<!doctype html>
 <html lang="__LANG__" dir="__DIRECTION__">

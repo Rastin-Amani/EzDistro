@@ -8,7 +8,6 @@ import json
 from types import SimpleNamespace
 
 from app.api import dashboard as D
-from app.i18n import get_locale, set_request_locale
 from app.routes import debug, pwa
 from tests.helpers import make_pb, make_req, make_user
 
@@ -43,20 +42,6 @@ def test_offline_page_renders():
     html = asyncio.run(pwa.offline_page())
     assert 'lang="en" dir="ltr"' in html
     assert "You're offline" in html
-
-
-def test_offline_page_respects_persian_locale():
-    previous_locale = get_locale().code
-    set_request_locale("fa")
-    try:
-        html = asyncio.run(pwa.offline_page())
-    finally:
-        set_request_locale(previous_locale)
-    assert 'lang="fa" dir="rtl"' in html
-    assert (
-        "\u0634\u0645\u0627 \u0622\u0641\u0644\u0627\u06cc\u0646 \u0647\u0633\u062a\u06cc\u062f"
-        in html
-    )
 
 
 def test_favicon_redirects_to_icon():

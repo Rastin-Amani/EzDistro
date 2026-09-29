@@ -10,7 +10,7 @@
 
     <div class="flex items-center gap-2.5 min-w-0">
 
-        <a href="/projects" class="btn btn-ghost btn-circle btn-sm shrink-0" aria-label="{{ _('Back') }}">
+        <a href="/projects" class="btn btn-ghost btn-circle btn-sm shrink-0" aria-label="{{ ('Back') }}">
 
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5 ltr:rotate-180"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
 
@@ -36,19 +36,19 @@
 
         {% include "pages/projects/_status_toggle.html" %}
 
-        <span class="tooltip tooltip-bottom" data-tip="{{ _(_( 'Re-indexes only changed documents' )) }}">
+        <span class="tooltip tooltip-bottom" data-tip="{{ (( 'Re-indexes only changed documents' )) }}">
 
             <button class="btn btn-primary btn-sm" hx-post="/projects/{{ project.id }}/run-index" hx-swap="none" hx-disabled-elt="this">
 
                 <span class="loading loading-spinner loading-xs htmx-indicator"></span>
 
-                {{ _('Indexing') }}
+                {{ ('Indexing') }}
 
             </button>
 
         </span>
 
-        <button class="btn btn-ghost btn-sm text-error" onclick="document.getElementById('delete-project-modal').showModal()">{{ _('Delete') }}</button>
+        <button class="btn btn-ghost btn-sm text-error" @click="$store.ui.openModal('delete-project-modal')">{{ ('Delete') }}</button>
 
     </div>
 
@@ -60,17 +60,17 @@
 
 <div class="ezdistro-project-tabs">
 
-    <nav id="project-tabs" aria-label="{{ _('بخش‌های پروژه') }}"
+    <nav id="project-tabs" aria-label="{{ ('Project sections') }}"
 
          class="tabs tabs-box tabs-sm ezdistro-scroll-x overflow-x-auto flex-nowrap">
 
     {% set labels = {
 
-        'settings': _( 'Settings' ), 'integrations': _( 'Connections' ), 'ai_models': _( 'AI models' ), 'prompts': _( 'Prompts' ),
+        'settings': ( 'Settings' ), 'integrations': ( 'Connections' ), 'ai_models': ( 'AI models' ), 'prompts': ( 'Prompts' ),
 
-        'topics': _( 'Topics' ), 'articles': _( 'Articles' ), 'retrieval': _( 'Retrieval' ), 'images': _( 'Images' ), 'jobs': _( 'Jobs' ),
+        'topics': ( 'Topics' ), 'articles': ( 'Articles' ), 'retrieval': ( 'Retrieval' ), 'images': ( 'Images' ), 'jobs': ( 'Jobs' ),
 
-        'indexing': _( 'Indexing' ), 'publishing': _( 'Publish' ), 'logs': _( 'Events' )
+        'indexing': ( 'Indexing' ), 'publishing': ( 'Publish' ), 'logs': ( 'Events' )
 
     } %}
 
@@ -106,7 +106,7 @@
 
 
 
-<span id="tab-indicator" class="htmx-indicator text-xs opacity-60 block py-1">{{ _('Loading…') }}</span>
+<span id="tab-indicator" class="htmx-indicator text-xs opacity-60 block py-1">{{ ('Loading…') }}</span>
 
 
 
@@ -132,21 +132,21 @@
 
             </div>
 
-            <h3 class="font-bold text-lg">{{ _('Delete project') }}</h3>
+            <h3 class="font-bold text-lg">{{ ('Delete project') }}</h3>
 
         </div>
 
-        <p class="text-sm opacity-70 leading-relaxed">{{ _('Project “%(v)s” and all related data will be deleted. This cannot be undone.') % {'v': project.name} }}</p>
+        <p class="text-sm opacity-70 leading-relaxed">{{ ('Project “%(v)s” and all related data will be deleted. This cannot be undone.') % {'v': project.name} }}</p>
 
         <div class="flex gap-3 mt-6">
 
             <form hx-post="/projects/{{ project.id }}/delete" hx-swap="none" class="flex-1">
 
-                <button type="submit" class="btn btn-error w-full">{{ _('Delete project') }}</button>
+                <button type="submit" class="btn btn-error w-full">{{ ('Delete project') }}</button>
 
             </form>
 
-            <button type="button" class="btn btn-ghost" onclick="document.getElementById('delete-project-modal').close()">{{ _('Cancel') }}</button>
+            <button type="button" class="btn btn-ghost" @click="$store.ui.closeModal('delete-project-modal')">{{ ('Cancel') }}</button>
 
         </div>
 

@@ -16,7 +16,7 @@
 
      hx-trigger="refreshArticle from:body{% if article.status == 'generating' or generating %}, every 4s{% endif %}"
 
-     hx-swap="outerHTML" hx-select="#workspace-page">
+     hx-swap="outerHTML" hx-target="this" hx-select="#workspace-page">
 
 
 
@@ -24,7 +24,7 @@
 
     <div class="flex items-center gap-2.5 min-w-0">
 
-        <a href="/projects/{{ project.id }}?tab=articles" class="btn btn-ghost btn-circle btn-sm shrink-0" aria-label="{{ _('Back') }}">
+        <a href="/projects/{{ project.id }}?tab=articles" class="btn btn-ghost btn-circle btn-sm shrink-0" aria-label="{{ ('Back') }}">
 
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5 ltr:rotate-180"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
 
@@ -38,11 +38,11 @@
 
                 <span class="badge badge-sm {{ article.status|status_badge }}">{{ article.status|status_label }}</span>
 
-                <span class="tabular">{{ _('%(n)s words') % {'n': article.wordCount or 0} }}</span>
+                <span class="tabular">{{ ('%(n)s words') % {'n': article.wordCount or 0} }}</span>
 
-                <span>{{ _('Outline v%(n)s') % {'n': article.outlineVersion or 0} }}</span>
+                <span>{{ ('Outline v%(n)s') % {'n': article.outlineVersion or 0} }}</span>
 
-                {% if article.wpUrl %}<a href="{{ article.wpUrl }}" target="_blank" rel="noopener" class="link link-primary" dir="ltr">{{ _('View on WordPress') }}</a>{% endif %}
+                {% if article.wpUrl %}<a href="{{ article.wpUrl }}" target="_blank" rel="noopener" class="link link-primary" dir="ltr">{{ ('View on WordPress') }}</a>{% endif %}
 
             </div>
 
@@ -54,17 +54,17 @@
 
         {% if article.status == 'review' %}
 
-        <a href="/projects/{{ project.id }}/articles/{{ article.id }}/review" class="btn btn-primary btn-sm">{{ _('Review and approve') }}</a>
+        <a href="/projects/{{ project.id }}/articles/{{ article.id }}/review" class="btn btn-primary btn-sm">{{ ('Review and approve') }}</a>
 
         {% elif article.status == 'approved' %}
 
         <button class="btn btn-primary btn-sm" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/publish"
 
-                hx-swap="none" hx-confirm="{{ _(_( 'Send the article to WordPress?' )) }}">
+                hx-swap="none" hx-confirm="{{ (( 'Send the article to WordPress?' )) }}">
 
             <span class="loading loading-spinner loading-xs htmx-indicator"></span>
 
-            {{ _('Publish') }}
+            {{ ('Publish') }}
 
         </button>
 
@@ -72,25 +72,25 @@
 
         <button class="btn btn-ghost btn-sm" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/update"
 
-                hx-swap="none" hx-confirm="{{ _('Update the WordPress post with the current version?') }}">{{ _('Update') }}</button>
+                hx-swap="none" hx-confirm="{{ ('Update the WordPress post with the current version?') }}">{{ ('Update') }}</button>
 
         <button class="btn btn-ghost btn-sm text-warning"
 
                 hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/unpublish"
 
-                hx-swap="none" hx-confirm="{{ _('Make the WordPress post private (unpublish)?') }}">{{ _('Unpublish') }}</button>
+                hx-swap="none" hx-confirm="{{ ('Make the WordPress post private (unpublish)?') }}">{{ ('Unpublish') }}</button>
 
         {% elif article.status in ['sent_back', 'failed'] %}
 
         <button class="btn btn-primary btn-sm" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/regenerate"
 
-                hx-swap="none">{{ _('Regenerate article') }}</button>
+                hx-swap="none">{{ ('Regenerate article') }}</button>
 
         {% endif %}
 
         {% if article.status in ['review', 'approved', 'sent_back'] %}
 
-        <a href="/projects/{{ project.id }}/articles/{{ article.id }}/review" class="btn btn-ghost btn-sm">{{ _('Review') }}</a>
+        <a href="/projects/{{ project.id }}/articles/{{ article.id }}/review" class="btn btn-ghost btn-sm">{{ ('Review') }}</a>
 
         {% endif %}
 
@@ -98,7 +98,7 @@
 
         <button class="btn btn-ghost btn-sm" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/assemble"
 
-                hx-swap="none" title="{{ _('Rebuild the article from the current sections') }}">{{ _('Rebuild') }}</button>
+                hx-swap="none" title="{{ ('Rebuild the article from the current sections') }}">{{ ('Rebuild') }}</button>
 
         {% endif %}
 
@@ -122,15 +122,15 @@
 
             {% if not sections %}
 
-            {{ _('Preparing outline and sections…') }}
+            {{ ('Preparing outline and sections…') }}
 
             {% elif generating %}
 
-            {{ _('Generating sections — %(a)s of %(b)s ready') % {'a': done_count, 'b': sections|length} }}
+            {{ ('Generating sections — %(a)s of %(b)s ready') % {'a': done_count, 'b': sections|length} }}
 
             {% else %}
 
-            {{ _('Sections ready — building the final article') }}
+            {{ ('Sections ready — building the final article') }}
 
             {% endif %}
 
@@ -138,9 +138,9 @@
 
         <p class="text-xs opacity-70 leading-relaxed">
 
-            {{ _('This process is automatic; the page keeps refreshing until the article moves to “Review”.') }}
+            {{ ('This process is automatic; the page keeps refreshing until the article moves to “Review”.') }}
 
-            {{ _('If a section fails, use “Regenerate section”.') }}
+            {{ ('If a section fails, use “Regenerate section”.') }}
 
         </p>
 
@@ -162,9 +162,9 @@
 
         <div class="ezdistro-panel-head">
 
-            <h2 class="ezdistro-panel-title">{{ _('Article outline') }}</h2>
+            <h2 class="ezdistro-panel-title">{{ ('Article outline') }}</h2>
 
-            <span class="text-xs opacity-50">{{ _('%(n)s sections') % {'n': sections|length} }}</span>
+            <span class="text-xs opacity-50">{{ ('%(n)s sections') % {'n': sections|length} }}</span>
 
         </div>
 
@@ -186,7 +186,7 @@
 
         <div class="ezdistro-panel">
 
-            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('Title and meta') }}</h2></div>
+            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ ('Title and meta') }}</h2></div>
 
             <div class="p-4">
 
@@ -194,7 +194,7 @@
 
                     <label class="form-control">
 
-                        <span class="label-text text-xs font-medium">{{ _('Title') }}</span>
+                        <span class="label-text text-xs font-medium">{{ ('Title') }}</span>
 
                         <input id="article-meta-title" hx-preserve="true" name="title" class="input w-full text-base" dir="auto" value="{{ article.title }}" />
 
@@ -202,7 +202,7 @@
 
                     <label class="form-control">
 
-                        <span class="label-text text-xs font-medium">{{ _('Meta description') }}</span>
+                        <span class="label-text text-xs font-medium">{{ ('Meta description') }}</span>
 
                         <textarea id="article-meta-description" hx-preserve="true" name="meta_description" class="textarea w-full" rows="3" dir="auto">{{ article.metaDescription or '' }}</textarea>
 
@@ -214,7 +214,7 @@
 
                             <span class="loading loading-spinner loading-xs htmx-indicator"></span>
 
-                            {{ _('Save') }}
+                            {{ ('Save') }}
 
                         </button>
 
@@ -266,7 +266,7 @@
 
                     {% include "pages/articles/_section_status.html" %}
 
-                    <span class="opacity-60">{{ _('This section is being generated — manual saving is disabled until it finishes.') }}</span>
+                    <span class="opacity-60">{{ ('This section is being generated — manual saving is disabled until it finishes.') }}</span>
 
                 </div>
 
@@ -278,7 +278,7 @@
 
                     <label class="form-control">
 
-                        <span class="label-text text-xs font-medium">{{ _('Section heading') }}</span>
+                        <span class="label-text text-xs font-medium">{{ ('Section heading') }}</span>
 
                         <input id="section-heading-{{ s.id }}" hx-preserve="true" name="heading" class="input w-full" value="{{ s.heading }}" />
 
@@ -288,7 +288,7 @@
 
                     <label class="form-control">
 
-                        <span class="label-text text-xs font-medium">{{ _('Keyword') }}</span>
+                        <span class="label-text text-xs font-medium">{{ ('Keyword') }}</span>
 
                         <input id="section-keyword-{{ s.id }}" hx-preserve="true" name="keyword" class="input w-full" value="{{ s.keyword }}" />
 
@@ -298,7 +298,7 @@
 
                     <label class="form-control">
 
-                        <span class="label-text text-xs font-medium">{{ _('Content brief') }}</span>
+                        <span class="label-text text-xs font-medium">{{ ('Content brief') }}</span>
 
                         <textarea id="section-brief-{{ s.id }}" hx-preserve="true" name="content_brief" class="textarea w-full" rows="3">{{ s.contentBrief or '' }}</textarea>
 
@@ -308,7 +308,7 @@
 
                     <label class="form-control">
 
-                        <span class="label-text text-xs font-medium">{{ _('HTML content') }}</span>
+                        <span class="label-text text-xs font-medium">{{ ('HTML content') }}</span>
 
                         <textarea id="section-content-{{ s.id }}" {% if s.status not in ['pending', 'generating'] %}hx-preserve="true"{% endif %} name="content" class="textarea w-full font-mono text-xs min-h-40" dir="auto" {% if s.status in ['pending', 'generating'] %}disabled{% endif %}>{{ s.content or '' }}</textarea>
 
@@ -320,7 +320,7 @@
 
                         <span class="text-xs opacity-50">
 
-                            {% if s.generationLatency %}{{ _('Last generation: %(n)sms') % {'n': s.generationLatency} }}{% endif %}
+                            {% if s.generationLatency %}{{ ('Last generation: %(n)sms') % {'n': s.generationLatency} }}{% endif %}
 
                             {% if s.model %}<span class="font-mono" dir="ltr">{{ s.provider }}/{{ s.model }}</span>{% endif %}
 
@@ -336,9 +336,9 @@
 
                                     hx-swap="none"
 
-                                    hx-confirm="{{ _('Regenerate this section?') }}">{{ _('Regenerate section') }}</button>
+                                    hx-confirm="{{ ('Regenerate this section?') }}">{{ ('Regenerate section') }}</button>
 
-                            <button type="submit" class="btn btn-primary btn-sm" {% if s.status in ['pending', 'generating'] %}disabled{% endif %}>{{ _('Save section') }}</button>
+                            <button type="submit" class="btn btn-primary btn-sm" {% if s.status in ['pending', 'generating'] %}disabled{% endif %}>{{ ('Save section') }}</button>
 
                         </div>
 
@@ -356,9 +356,9 @@
 
             <div class="ezdistro-empty py-8">
 
-                <p class="font-bold text-base-content/75">{{ _('No sections') }}</p>
+                <p class="font-bold text-base-content/75">{{ ('No sections') }}</p>
 
-                <p class="text-sm text-base-content/50">{{ _('Generate the outline first.') }}</p>
+                <p class="text-sm text-base-content/50">{{ ('Generate the outline first.') }}</p>
 
             </div>
 
@@ -378,7 +378,7 @@
 
         <div class="ezdistro-panel">
 
-            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('Status') }}</h2></div>
+            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ ('Status') }}</h2></div>
 
             <div class="p-4 flex flex-col gap-3">
 
@@ -392,13 +392,13 @@
 
                 <div class="ezdistro-kv">
 
-                    <div><span class="k">{{ _('SEO score') }}</span><span class="v text-primary">{{ article.seoScore or 0 }}/100</span></div>
+                    <div><span class="k">{{ ('SEO score') }}</span><span class="v text-primary">{{ article.seoScore or 0 }}/100</span></div>
 
-                    <div><span class="k">{{ _('Words') }}</span><span class="v tabular">{{ article.wordCount or 0 }}</span></div>
+                    <div><span class="k">{{ ('Words') }}</span><span class="v tabular">{{ article.wordCount or 0 }}</span></div>
 
-                    <div><span class="k">{{ _('Outline version') }}</span><span class="v">v{{ article.outlineVersion or 0 }}</span></div>
+                    <div><span class="k">{{ ('Outline version') }}</span><span class="v">v{{ article.outlineVersion or 0 }}</span></div>
 
-                    <div><span class="k">{{ _('Keyword') }}</span><span class="v">{{ topic.keyword if topic and topic.keyword else '—' }}</span></div>
+                    <div><span class="k">{{ ('Keyword') }}</span><span class="v">{{ topic.keyword if topic and topic.keyword else '—' }}</span></div>
 
                 </div>
 
@@ -412,13 +412,13 @@
 
         <div class="ezdistro-panel {{ 'border-success/40' if article.validation.ok else 'border-error/40' }}">
 
-            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('Validation') }}</h2></div>
+            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ ('Validation') }}</h2></div>
 
             <div class="p-4 flex flex-col gap-2">
 
                 <span class="badge badge-sm {{ 'badge-soft badge-success' if article.validation.ok else 'badge-soft badge-error' }}">
 
-                    {{ _('Valid') if article.validation.ok else _('Invalid') }}
+                    {{ ('Valid') if article.validation.ok else ('Invalid') }}
 
                 </span>
 
@@ -438,7 +438,7 @@
 
         <div class="ezdistro-panel">
 
-            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('Generating sections') }}</h2></div>
+            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ ('Generating sections') }}</h2></div>
 
             <div class="p-4">
 
@@ -474,7 +474,7 @@
 
         <div class="ezdistro-panel">
 
-            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('Internal links') }}</h2></div>
+            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ ('Internal links') }}</h2></div>
 
             <div class="p-4">
 
@@ -490,7 +490,7 @@
 
                 </ul>
 
-                {% else %}<p class="text-xs opacity-50">{{ _('No internal links defined.') }}</p>{% endif %}
+                {% else %}<p class="text-xs opacity-50">{{ ('No internal links defined.') }}</p>{% endif %}
 
             </div>
 
@@ -502,7 +502,7 @@
 
         <div class="ezdistro-panel">
 
-            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('Publish history') }}</h2></div>
+            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ ('Publish history') }}</h2></div>
 
             <div class="p-4 flex flex-col gap-2">
 
@@ -516,7 +516,7 @@
 
                         <span class="badge badge-soft badge-neutral badge-xs">{{ r.mode }}</span>
 
-                        <span class="opacity-40 font-mono hidden sm:inline" title="{{ _('Request ID') }}">#{{ r.requestId or '—' }}</span>
+                        <span class="opacity-40 font-mono hidden sm:inline" title="{{ ('Request ID') }}">#{{ r.requestId or '—' }}</span>
 
                         {% if r.responseStatus %}<span class="opacity-40">HTTP {{ r.responseStatus }}</span>{% endif %}
 
@@ -526,15 +526,15 @@
 
                         <span class="opacity-60 whitespace-nowrap">{{ r.created|loc_dt }}</span>
 
-                        {% if r.wordpressUrl %}<a href="{{ r.wordpressUrl }}" target="_blank" rel="noopener" class="link link-primary" dir="ltr">{{ _('Post %(n)s') % {'n': r.wordpressPostId} }}</a>{% endif %}
+                        {% if r.wordpressUrl %}<a href="{{ r.wordpressUrl }}" target="_blank" rel="noopener" class="link link-primary" dir="ltr">{{ ('Post %(n)s') % {'n': r.wordpressPostId} }}</a>{% endif %}
 
                         {% if r.status == 'failed' %}
 
-                        <button class="btn btn-ghost btn-xs" title="{{ _('Retry') }}"
+                        <button class="btn btn-ghost btn-xs" title="{{ ('Retry') }}"
 
                                 hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/publish-runs/{{ r.id }}/retry"
 
-                                hx-swap="none">{{ _('Retry') }}</button>
+                                hx-swap="none">{{ ('Retry') }}</button>
 
                         {% endif %}
 

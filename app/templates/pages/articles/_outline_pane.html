@@ -6,32 +6,32 @@
             <span class="badge badge-xs shrink-0 {{ s.status|status_badge }}">{{ s.status|status_label }}</span>
         </div>
         <div class="flex items-center gap-1">
-            <a href="#section-{{ s.id }}" class="btn btn-ghost btn-xs p-0 h-5" title="{{ _('Jump to section') }}">{{ _('View') }}</a>
+            <a href="#section-{{ s.id }}" class="btn btn-ghost btn-xs p-0 h-5" title="{{ ('Jump to section') }}">{{ ('View') }}</a>
             <form hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/outline/sections/{{ loop.index0 }}/move"
                   hx-swap="none" class="inline">
                 <input type="hidden" name="direction" value="up" />
-                <button type="submit" class="btn btn-ghost btn-xs p-0 h-5" {{ 'disabled' if loop.first }} title="{{ _('Up') }}">↑</button>
+                <button type="submit" class="btn btn-ghost btn-xs p-0 h-5" {{ 'disabled' if loop.first }} title="{{ ('Up') }}">↑</button>
             </form>
             <form hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/outline/sections/{{ loop.index0 }}/move"
                   hx-swap="none" class="inline">
                 <input type="hidden" name="direction" value="down" />
-                <button type="submit" class="btn btn-ghost btn-xs p-0 h-5" {{ 'disabled' if loop.last }} title="{{ _('Down') }}">↓</button>
+                <button type="submit" class="btn btn-ghost btn-xs p-0 h-5" {{ 'disabled' if loop.last }} title="{{ ('Down') }}">↓</button>
             </form>
             <button class="btn btn-ghost btn-xs p-0 h-5 text-error"
                     hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/outline/sections/{{ loop.index0 }}/delete"
-                    hx-swap="none" hx-confirm="{{ _('Delete this section?') }}" title="{{ _('Delete') }}">✕</button>
+                    hx-swap="none" hx-confirm="{{ ('Delete this section?') }}" title="{{ ('Delete') }}">✕</button>
         </div>
     </div>
     {% else %}
-    <p class="text-xs opacity-50 py-2 text-center">{{ _('No sections yet.') }}</p>
+    <p class="text-xs opacity-50 py-2 text-center">{{ ('No sections yet.') }}</p>
     {% endfor %}
 
     <details class="border border-dashed border-base-300/70 rounded-xl p-2">
-        <summary class="text-xs opacity-70 cursor-pointer">{{ _('+ Add section') }}</summary>
+        <summary class="text-xs opacity-70 cursor-pointer">{{ ('+ Add section') }}</summary>
         <form hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/outline/sections/add" hx-swap="none" class="flex flex-col gap-1.5 mt-2">
-            <input name="heading" class="input input-xs w-full" placeholder="{{ _('Section heading') }}" required />
-            <textarea name="content_brief" class="textarea textarea-xs w-full" rows="2" placeholder="{{ _('Content brief') }}"></textarea>
-            <button type="submit" class="btn btn-primary btn-xs">{{ _('Add') }}</button>
+            <input name="heading" class="input input-xs w-full" placeholder="{{ ('Section heading') }}" required />
+            <textarea name="content_brief" class="textarea textarea-xs w-full" rows="2" placeholder="{{ ('Content brief') }}"></textarea>
+            <button type="submit" class="btn btn-primary btn-xs">{{ ('Add') }}</button>
         </form>
     </details>
 </div>

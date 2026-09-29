@@ -24,9 +24,6 @@ bleach>=6
 # --- Images ---
 Pillow>=10
 
-# --- UI dates ---
-jdatetime>=4
-
 # --- Dev / checks ---
 pytest>=8
 pytest-asyncio>=0.23

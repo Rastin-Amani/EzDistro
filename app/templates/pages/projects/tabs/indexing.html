@@ -6,9 +6,11 @@
 
      hx-trigger="every 10s, refreshIndexing from:body"
 
+     hx-target="this"
+
      hx-swap="outerHTML">
 
-{{ f.page_header(_('Indexing'), _('Indexing status, runs and documents.'), eyebrow=_('Project')) }}
+{{ f.page_header(('Indexing'), ('Indexing status, runs and documents.'), eyebrow=('Project')) }}
 
     <div class="flex flex-col gap-4">
 
@@ -16,17 +18,17 @@
 
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
 
-            {{ f.stat(_('Indexed documents'), metrics.indexed_documents, 'bg-success') }}
+            {{ f.stat(('Indexed documents'), metrics.indexed_documents, 'bg-success') }}
 
-            {{ f.stat(_('Stale documents'), metrics.stale_documents, 'bg-error' if metrics.stale_documents else 'bg-base-300') }}
+            {{ f.stat(('Stale documents'), metrics.stale_documents, 'bg-error' if metrics.stale_documents else 'bg-base-300') }}
 
-            {{ f.stat(_('Generated articles'), metrics.articles_generated) }}
+            {{ f.stat(('Generated articles'), metrics.articles_generated) }}
 
-            {{ f.stat(_('Generated sections'), metrics.sections_generated) }}
+            {{ f.stat(('Generated sections'), metrics.sections_generated) }}
 
-            {{ f.stat(_('Published'), metrics.articles_published, 'bg-success') }}
+            {{ f.stat(('Published'), metrics.articles_published, 'bg-success') }}
 
-            {{ f.stat(_('Failed jobs'), metrics.failed_jobs, 'bg-error' if metrics.failed_jobs else 'bg-base-300') }}
+            {{ f.stat(('Failed jobs'), metrics.failed_jobs, 'bg-error' if metrics.failed_jobs else 'bg-base-300') }}
 
         </div>
 
@@ -36,7 +38,7 @@
 
             <summary class="ezdistro-panel-head cursor-pointer">
 
-                <span class="ezdistro-panel-title">{{ _('Provider metrics') }}</span>
+                <span class="ezdistro-panel-title">{{ ('Provider metrics') }}</span>
 
             </summary>
 
@@ -44,7 +46,7 @@
 
                 <table class="table table-sm">
 
-                    <thead><tr class="text-xs opacity-60"><th>{{ _('Provider') }}</th><th>{{ _('Model') }}</th><th>{{ _('Operation') }}</th><th>{{ _('Count') }}</th><th>{{ _('Success') }}</th><th>{{ _('Average (ms)') }}</th><th>P95 (ms)</th></tr></thead>
+                    <thead><tr class="text-xs opacity-60"><th>{{ ('Provider') }}</th><th>{{ ('Model') }}</th><th>{{ ('Operation') }}</th><th>{{ ('Count') }}</th><th>{{ ('Success') }}</th><th>{{ ('Average (ms)') }}</th><th>P95 (ms)</th></tr></thead>
 
                     <tbody>
 
@@ -60,7 +62,7 @@
 
                             <td class="text-xs">{{ m.requestCount }}</td>
 
-                            <td class="text-xs">{{ _('%(n)s%%') % {'n': (m.successRate * 100)|round(1)} }}</td>
+                            <td class="text-xs">{{ ('%(n)s%%') % {'n': (m.successRate * 100)|round(1)} }}</td>
 
                             <td class="text-xs">{{ m.avgLatencyMs }}</td>
 
@@ -88,21 +90,21 @@
 
             <div class="grid grid-cols-2 gap-3">
 
-                {{ f.stat(_('Indexed documents'), indexed_count) }}
+                {{ f.stat(('Indexed documents'), indexed_count) }}
 
-                {{ f.stat(_('Recent runs'), runs|length) }}
+                {{ f.stat(('Recent runs'), runs|length) }}
 
             </div>
 
             <div class="flex items-center gap-2">
 
-                <span class="tooltip tooltip-top" data-tip="{{ _(_( 'Indexes only changed documents — fast and cheap' )) }}">
+                <span class="tooltip tooltip-top" data-tip="{{ (( 'Indexes only changed documents — fast and cheap' )) }}">
 
                     <button class="btn btn-primary btn-sm" hx-post="/projects/{{ project.id }}/run-index" hx-swap="none" hx-disabled-elt="this">
 
                         <span class="loading loading-spinner loading-xs htmx-indicator"></span>
 
-                        {{ _('Incremental indexing') }}
+                        {{ ('Incremental indexing') }}
 
                     </button>
 
@@ -110,13 +112,13 @@
 
                 <form hx-post="/projects/{{ project.id }}/run-index" hx-swap="none"
 
-                      hx-confirm="{{ _(_( 'Full reindex: every document is re-embedded and old vectors are deleted. Continue?' )) }}">
+                      hx-confirm="{{ (( 'Full reindex: every document is re-embedded and old vectors are deleted. Continue?' )) }}">
 
                     <input type="hidden" name="full" value="1" />
 
-                    <span class="tooltip tooltip-top" data-tip="{{ _(_( 'All documents are re-embedded — required after changing the embedding model/dimensions' )) }}">
+                    <span class="tooltip tooltip-top" data-tip="{{ (( 'All documents are re-embedded — required after changing the embedding model/dimensions' )) }}">
 
-                        <button type="submit" class="btn btn-ghost btn-sm text-warning">{{ _('Full reindex') }}</button>
+                        <button type="submit" class="btn btn-ghost btn-sm text-warning">{{ ('Full reindex') }}</button>
 
                     </span>
 
@@ -132,7 +134,22 @@
 
         <div class="ezdistro-panel">
 
-            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('Indexing runs') }}</h2></div>
+            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ ('Indexing runs') }}</h2></div>
+
+            {% set recent_runs = runs[:7]|reverse|list %}
+            {% set ns = namespace(vals=[]) %}
+            {% for r in recent_runs %}{% set ns.vals = ns.vals + [(r.indexedDocuments or 0)] %}{% endfor %}
+            {% set rmax = ns.vals|max if ns.vals else 0 %}
+            <div class="px-4 pt-3">
+                <p class="ezdistro-panel-title mb-2">{{ ('Recent output') }}</p>
+                <div class="ezdistro-spark" role="img" aria-label="{{ ('Indexed documents per recent run') }}">
+                    {% for r in recent_runs %}
+                    {% set v = r.indexedDocuments or 0 %}
+                    {% set h = (v / rmax * 100)|round|int if rmax else 0 %}
+                    <i class="{{ 'is-green' if r.status == 'completed' else ('is-blue' if r.status == 'running' else '') }}" style="height: {{ h if h >= 8 else (8 if v else 3) }}%" title="{{ r.startedAt|loc_dt }}: {{ v }}"></i>
+                    {% endfor %}
+                </div>
+            </div>
 
             <div class="overflow-x-auto">
 
@@ -142,25 +159,25 @@
 
                         <tr class="text-xs opacity-60">
 
-                            <th>{{ _('Status') }}</th>
+                            <th>{{ ('Status') }}</th>
 
-                            <th>{{ _('Type') }}</th>
+                            <th>{{ ('Type') }}</th>
 
-                            <th>{{ _('Discovered') }}</th>
+                            <th>{{ ('Discovered') }}</th>
 
-                            <th>{{ _('Unchanged') }}</th>
+                            <th>{{ ('Unchanged') }}</th>
 
-                            <th>{{ _('Changed') }}</th>
+                            <th>{{ ('Changed') }}</th>
 
-                            <th>{{ _('Indexed') }}</th>
+                            <th>{{ ('Indexed') }}</th>
 
-                            <th>{{ _('Skipped') }}</th>
+                            <th>{{ ('Skipped') }}</th>
 
-                            <th>{{ _('Error') }}</th>
+                            <th>{{ ('Error') }}</th>
 
-                            <th>{{ _('Duration (s)') }}</th>
+                            <th>{{ ('Duration (s)') }}</th>
 
-                            <th>{{ _('Time') }}</th>
+                            <th>{{ ('Time') }}</th>
 
                             <th></th>
 
@@ -204,7 +221,7 @@
 
                                 <button class="btn btn-ghost btn-xs text-primary"
 
-                                        hx-post="/projects/{{ project.id }}/index-runs/{{ r.id }}/retry" hx-swap="none">{{ _('Retry') }}</button>
+                                        hx-post="/projects/{{ project.id }}/index-runs/{{ r.id }}/retry" hx-swap="none">{{ ('Retry') }}</button>
 
                                 {% endif %}
 
@@ -230,7 +247,7 @@
 
         <div class="ezdistro-panel">
 
-            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('Recent documents') }}</h2></div>
+            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ ('Recent documents') }}</h2></div>
 
             <div class="overflow-x-auto">
 
@@ -240,17 +257,17 @@
 
                         <tr class="text-xs opacity-60">
 
-                            <th>{{ _('Title') }}</th>
+                            <th>{{ ('Title') }}</th>
 
-                            <th>{{ _('Source') }}</th>
+                            <th>{{ ('Source') }}</th>
 
-                            <th>{{ _('Embedding model') }}</th>
+                            <th>{{ ('Embedding model') }}</th>
 
-                            <th>{{ _('Chunks') }}</th>
+                            <th>{{ ('Chunks') }}</th>
 
-                            <th>{{ _('Status') }}</th>
+                            <th>{{ ('Status') }}</th>
 
-                            <th>{{ _('Update') }}</th>
+                            <th>{{ ('Update') }}</th>
 
                             <th></th>
 
@@ -286,7 +303,7 @@
 
                                         hx-swap="none"
 
-                                        hx-confirm="{{ _('Reindex this document?') }}">{{ _('Reindex') }}</button>
+                                        hx-confirm="{{ ('Reindex this document?') }}">{{ ('Reindex') }}</button>
 
                             </td>
 

@@ -13,7 +13,7 @@
             </p>
             {% endif %}
             {% if e.eventType == 'job.retry_scheduled' and e.metadata %}
-            <p class="opacity-60">{{ _('Attempt %(a)s/%(b)s — delay %(c)ss') % {'a': e.metadata.attempt, 'b': e.metadata.max_attempts, 'c': e.metadata.delay_seconds} }}</p>
+            <p class="opacity-60">{{ ('Attempt %(a)s/%(b)s — delay %(c)ss') % {'a': e.metadata.attempt, 'b': e.metadata.max_attempts, 'c': e.metadata.delay_seconds} }}</p>
             {% endif %}
             {% if e.metadata and e.eventType not in ['provider_call', 'job.retry_scheduled'] and e.metadata != {} %}
                 {% if is_admin %}
@@ -27,6 +27,6 @@
         <span class="opacity-40 whitespace-nowrap shrink-0">{{ e.created|loc_dt }}</span>
     </div>
     {% else %}
-    <p class="opacity-50 py-4 text-center">{{ _('No events recorded.') }}</p>
+    <p class="opacity-50 py-4 text-center">{{ ('No events recorded.') }}</p>
     {% endfor %}
 </div>

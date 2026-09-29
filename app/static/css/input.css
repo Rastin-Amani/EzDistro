@@ -5,8 +5,8 @@
 }
 
 @theme {
-    --font-sans: 'Inter', 'Arad', ui-sans-serif, system-ui, sans-serif;
-    --font-brand: 'Inter', 'Arad', ui-sans-serif, system-ui, sans-serif;
+    --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --font-brand: 'Inter', ui-sans-serif, system-ui, sans-serif;
     /* Mono pins every category label + metadata (uppercase, +0.073em). */
     --font-mono: 'JetBrains Mono', 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
@@ -94,15 +94,7 @@
     --noise: 0;
 }
 
-@font-face {
-    font-family: 'Arad';
-    src: url('./assets/Arad-VF.woff2') format('woff2-variations'),
-         url('./assets/Arad-VF.woff2') format('woff2');
-    font-weight: 100 900;
-    font-display: swap;
-}
-
-/* Local variable fonts: Inter is the English UI face; Arad covers Persian. */
+/* Local variable font: Inter is the English UI face. */
 @font-face {
     font-family: 'Inter';
     src: url('./assets/InterVariable.ttf') format('truetype-variations'),
@@ -111,12 +103,8 @@
     font-display: swap;
 }
 
-/* Direction-aware font faces beat the shared `font-sans` utility. */
-html[dir='ltr'] body {
-    font-family: 'Inter', 'Arad', ui-sans-serif, system-ui, sans-serif;
-}
-html[dir='rtl'] body {
-    font-family: 'Arad', 'Inter', ui-sans-serif, system-ui, sans-serif;
+body {
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
 }
 
 /* daisyUI's .dropdown-end uses inset-inline-end:0, which pushes the panel
@@ -267,6 +255,20 @@ html[dir='rtl'] body {
     }
     .form-control {
         @apply gap-1;
+        /* min-w-0: grid children — a long value must never push the
+           column (and the input beside it) past the viewport. */
+        min-width: 0;
+    }
+    /* Form labels stay on one line with ellipsis; the input below keeps
+       its full row instead of wrapping under a two-line label. */
+    .label-text {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    label.input,
+    label.select {
+        overflow: hidden;
     }
 
     /* Tables — legible, dense, with sticky headers and calm row hover */
@@ -287,9 +289,22 @@ html[dir='rtl'] body {
         @apply bg-base-200/50;
     }
 
-    /* Tags: 2px radius per the atlas (badges are labels, not pills). */
+    /* Tags: 2px radius per the atlas (badges are labels, not pills).
+       Mobile: single-line ellipsis so Persian labels never wrap or
+       overflow their row; inline-flex keeps the background on the text. */
     .badge {
         @apply rounded-[2px] border-transparent font-medium;
+        display: inline-flex;
+        align-items: center;
+        line-height: 1.4;
+        white-space: nowrap;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        flex-shrink: 0;
+    }
+    .badge-soft {
+        padding-inline: 0.5rem;
     }
 
     .stat {
@@ -459,34 +474,38 @@ html[dir='rtl'] body {
         @apply border-t border-base-300/70 p-3;
     }
 
-    /* Mobile dock — a floating pill in the thumb zone, safe-area aware.
-       Content scrolls under it; the shell keeps pb-32 clearance. */
+    /* Mobile dock — floating bar in the thumb zone, safe-area aware.
+       Content scrolls under it; the shell keeps pb-32 clearance.
+       Icons are size-11 blocks: the active one is the single solid blue
+       signal, the rest are ghosts. Labels stay truncated below. */
     .ezdistro-dock {
-        @apply pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-3 md:hidden;
-        padding-bottom: calc(0.6rem + env(safe-area-inset-bottom));
+        @apply pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 md:hidden;
+        padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
     }
     .ezdistro-dock-pill {
-        @apply pointer-events-auto flex w-full max-w-md items-stretch gap-1 rounded-2xl border border-base-300/80 bg-base-100/85 p-1 backdrop-blur-xl;
+        @apply pointer-events-auto flex w-full max-w-md items-stretch justify-around gap-2 rounded-2xl border border-base-300/80 bg-base-100/85 p-3 backdrop-blur-xl;
+        padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
     }
     .ezdistro-dock a {
-        @apply relative flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-lg px-0.5 py-2 text-[0.6rem] font-semibold text-base-content/60 transition-colors;
-        min-height: 3.25rem;
+        @apply relative flex min-w-0 flex-none flex-col items-center justify-center gap-1 rounded-xl px-1 py-1 text-[0.6rem] font-semibold text-base-content/60 transition-colors;
+        min-height: 3.5rem;
     }
     .ezdistro-dock a svg {
-        @apply size-[1.15rem];
+        @apply size-11 shrink-0 rounded-xl p-2.5 text-base-content/60 transition-colors;
     }
     .ezdistro-dock a span {
-        @apply w-full truncate text-center;
+        @apply w-full max-w-16 truncate text-center;
     }
-    .ezdistro-dock a:hover {
-        @apply text-primary;
+    .ezdistro-dock a:hover svg {
+        @apply bg-base-200 text-primary;
     }
     /* The single live signal on mobile: solid blue block, white glyph. */
     .ezdistro-dock a.ezdistro-dock-active {
-        @apply bg-primary text-white;
+        @apply text-base-content;
     }
     .ezdistro-dock a.ezdistro-dock-active svg {
-        color: currentColor;
+        @apply bg-primary text-white;
+        color: #ffffff;
     }
     .ezdistro-mobile-header {
         @apply sticky top-0 z-30 flex items-center justify-between border-b border-base-300/70 bg-base-100/85 px-4 backdrop-blur-xl md:hidden;
@@ -631,6 +650,24 @@ html[dir='rtl'] body {
         @apply bg-accent;
     }
 
+    /* Activity sparkline — pure CSS bars over server-rendered counts.
+       Usage: <div class="ezdistro-spark" role="img"><i style="height: 40%"
+       title="Label: 12"></i>…</div> Heights are percentages of the row
+       max, set inline by Jinja. Mist bars, blue/green live nodes. */
+    .ezdistro-spark {
+        @apply flex items-end gap-1 tabular-nums;
+        height: 3.5rem;
+    }
+    .ezdistro-spark > i {
+        @apply block min-h-1 min-w-2 flex-1 rounded-[2px] bg-base-300;
+    }
+    .ezdistro-spark > i.is-blue {
+        @apply bg-primary;
+    }
+    .ezdistro-spark > i.is-green {
+        @apply bg-accent;
+    }
+
     /* Status pills (used alongside daisyui badge-soft) ----------------- */
     .ezdistro-pill {
         @apply inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium;
@@ -693,12 +730,8 @@ html[dir='rtl'] body {
     .num {
         font-variant-numeric: tabular-nums;
     }
-    /* Keep locale direction for native numeric/date controls. */
-    html[dir='rtl'] :is(input[type='number'], input[type='date'], input[type='time'], input[type='datetime-local'], input[type='tel']) {
-        direction: rtl;
-        text-align: right;
-    }
-    html[dir='ltr'] :is(input[type='number'], input[type='date'], input[type='time'], input[type='datetime-local'], input[type='tel']) {
+    /* Native numeric/date controls follow the page direction (always LTR). */
+    :is(input[type='number'], input[type='date'], input[type='time'], input[type='datetime-local'], input[type='tel']) {
         direction: ltr;
         text-align: left;
     }
@@ -732,5 +765,25 @@ html[dir='rtl'] body {
 @media (min-width: 40rem) {
     .sm\:table.hidden {
         display: table;
+    }
+}
+
+/* Mobile tooltips: hover-only bubbles overflow small viewports, so cap
+   them at the viewport, let them wrap, and keep top bubbles centered
+   instead of sliding off-screen at the edges. */
+@media (max-width: 48rem) {
+    .tooltip {
+        overflow: visible;
+    }
+    .tooltip::before,
+    .tooltip::after {
+        white-space: normal;
+        width: max-content;
+        max-width: min(70vw, 260px);
+        text-wrap: balance;
+    }
+    .tooltip-top::before {
+        left: 50%;
+        transform: translateX(-50%);
     }
 }

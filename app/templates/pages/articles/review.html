@@ -10,7 +10,7 @@
 
     <div class="flex items-center gap-2.5 min-w-0">
 
-        <a href="/projects/{{ project.id }}/articles/{{ article.id }}/workspace" class="btn btn-ghost btn-circle btn-sm shrink-0" aria-label="{{ _('Back to workspace') }}">
+        <a href="/projects/{{ project.id }}/articles/{{ article.id }}/workspace" class="btn btn-ghost btn-circle btn-sm shrink-0" aria-label="{{ ('Back to workspace') }}">
 
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5 ltr:rotate-180"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
 
@@ -18,17 +18,17 @@
 
         <div class="min-w-0">
 
-            <h1 class="font-extrabold text-base truncate">{{ _('Review: %(v)s') % {'v': article.title} }}</h1>
+            <h1 class="font-extrabold text-base truncate">{{ ('Review: %(v)s') % {'v': article.title} }}</h1>
 
             <div class="flex items-center gap-2 text-xs opacity-50 flex-wrap">
 
                 <span class="badge badge-sm {{ article.status|status_badge }}">{{ article.status|status_label }}</span>
 
-                <span class="tabular">{{ _('%(n)s words') % {'n': article.wordCount or 0} }}</span>
+                <span class="tabular">{{ ('%(n)s words') % {'n': article.wordCount or 0} }}</span>
 
-                <span>{{ _('Outline v%(n)s') % {'n': article.outlineVersion or 0} }}</span>
+                <span>{{ ('Outline v%(n)s') % {'n': article.outlineVersion or 0} }}</span>
 
-                {% if article.generatedAt %}<span>{{ _('Generated: %(v)s') % {'v': article.generatedAt|loc_dt} }}</span>{% endif %}
+                {% if article.generatedAt %}<span>{{ ('Generated: %(v)s') % {'v': article.generatedAt|loc_dt} }}</span>{% endif %}
 
             </div>
 
@@ -41,29 +41,29 @@
         {% if article.status == 'review' %}
 
         <button type="button" class="btn btn-ghost btn-sm text-warning"
-                onclick="document.getElementById('sendback-note').showModal()">{{ _('Return') }}</button>
+                @click="$store.ui.openModal('sendback-note')">{{ ('Return') }}</button>
 
         <button class="btn btn-primary btn-sm" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/approve" hx-swap="none">
 
             <span class="loading loading-spinner loading-xs htmx-indicator"></span>
 
-            {{ _('Confirm') }}
+            {{ ('Confirm') }}
 
         </button>
 
         {% elif article.status == 'approved' %}
 
-        <span class="badge badge-soft badge-success">{{ _('Approved — publishing enabled') }}</span>
+        <span class="badge badge-soft badge-success">{{ ('Approved — publishing enabled') }}</span>
 
         <button class="btn btn-primary btn-sm" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/publish"
 
-                hx-swap="none" hx-confirm="Send the article to WordPress?">{{ _('Publish') }}</button>
+                hx-swap="none" hx-confirm="Send the article to WordPress?">{{ ('Publish') }}</button>
 
         {% elif article.status == 'sent_back' %}
 
-        <span class="badge badge-soft badge-warning">{{ _('Returned') }}</span>
+        <span class="badge badge-soft badge-warning">{{ ('Returned') }}</span>
 
-        <button class="btn btn-primary btn-sm" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/regenerate" hx-swap="none">{{ _('Regenerate article') }}</button>
+        <button class="btn btn-primary btn-sm" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/regenerate" hx-swap="none">{{ ('Regenerate article') }}</button>
 
         {% endif %}
 
@@ -71,7 +71,7 @@
 
         <button class="btn btn-ghost btn-sm" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/regenerate"
 
-                hx-swap="none" hx-confirm="{{ _('The current version is saved to history; continue full regeneration?') }}">{{ _('Full regeneration') }}</button>
+                hx-swap="none" hx-confirm="{{ ('The current version is saved to history; continue full regeneration?') }}">{{ ('Full regeneration') }}</button>
 
         {% endif %}
 
@@ -95,19 +95,19 @@
 
             </div>
 
-            <h3 class="font-bold text-lg">{{ _('Return article') }}</h3>
+            <h3 class="font-bold text-lg">{{ ('Return article') }}</h3>
 
         </div>
 
         <form hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/send-back" hx-swap="none" class="flex flex-col gap-3">
 
-            <textarea name="note" class="textarea textarea-sm w-full" rows="3" placeholder="{{ _('Reason for returning (recorded in history)…') }}"></textarea>
+            <textarea name="note" class="textarea textarea-sm w-full" rows="3" placeholder="{{ ('Reason for returning (recorded in history)…') }}"></textarea>
 
             <div class="flex gap-3">
 
-                <button type="submit" class="btn btn-warning flex-1">{{ _('Return') }}</button>
+                <button type="submit" class="btn btn-warning flex-1">{{ ('Return') }}</button>
 
-                <button type="button" class="btn btn-ghost" onclick="document.getElementById('sendback-note').close()">{{ _('Cancel') }}</button>
+                <button type="button" class="btn btn-ghost" @click="$store.ui.closeModal('sendback-note')">{{ ('Cancel') }}</button>
 
             </div>
 
@@ -129,11 +129,11 @@
 
             <div class="ezdistro-panel-head">
 
-                <h2 class="ezdistro-panel-title">{{ _('Validation panel') }}</h2>
+                <h2 class="ezdistro-panel-title">{{ ('Validation panel') }}</h2>
 
                 <span class="badge badge-sm {{ 'badge-soft badge-success' if report.ok else 'badge-soft badge-error' }}">
 
-                    {{ _('Passed') if report.ok else _('Error') }}
+                    {{ ('Passed') if report.ok else ('Error') }}
 
                 </span>
 
@@ -143,7 +143,7 @@
 
                 {% if report.ok %}
 
-                <p class="opacity-60">{{ _('All checks passed — the article can be approved.') }}</p>
+                <p class="opacity-60">{{ ('All checks passed — the article can be approved.') }}</p>
 
                 {% else %}
 
@@ -167,11 +167,11 @@
 
                 <div class="grid grid-cols-3 gap-1 opacity-60 border-t border-base-300/70 pt-2">
 
-                    <span>{{ _('%(n)s words') % {'n': report.stats.words} }}</span>
+                    <span>{{ ('%(n)s words') % {'n': report.stats.words} }}</span>
 
-                    <span>{{ _('%(n)s sections') % {'n': report.stats.sections} }}</span>
+                    <span>{{ ('%(n)s sections') % {'n': report.stats.sections} }}</span>
 
-                    <span>{{ _('Minimum %(n)s') % {'n': report.stats.min_words} }}</span>
+                    <span>{{ ('Minimum %(n)s') % {'n': report.stats.min_words} }}</span>
 
                 </div>
 
@@ -185,19 +185,19 @@
 
             <div class="ezdistro-panel-head">
 
-                <h2 class="ezdistro-panel-title">{{ _('Editorial QA') }}</h2>
+                <h2 class="ezdistro-panel-title">{{ ('Editorial QA') }}</h2>
 
                 {% if qa.get('ran') %}
 
                 <span class="badge badge-sm {{ 'badge-soft badge-success' if qa.get('ready') else 'badge-soft badge-warning' }}">
 
-                    {{ _('Clean') if qa.get('ready') else _('Needs attention') }}
+                    {{ ('Clean') if qa.get('ready') else ('Needs attention') }}
 
                 </span>
 
                 {% else %}
 
-                <span class="badge badge-sm badge-soft badge-neutral">{{ _('Not audited') }}</span>
+                <span class="badge badge-sm badge-soft badge-neutral">{{ ('Not audited') }}</span>
 
                 {% endif %}
 
@@ -207,13 +207,13 @@
 
                 {% if not qa.get('ran') %}
 
-                <p class="opacity-60">{{ _('No LLM audit ran for this article — configure the Article QA prompts to enable it.') }}</p>
+                <p class="opacity-60">{{ ('No LLM audit ran for this article — configure the Article QA prompts to enable it.') }}</p>
 
                 {% else %}
 
                 {% if qa.get('summary') %}<p class="leading-relaxed">{{ qa.get('summary') }}</p>{% endif %}
 
-                {% if qa.get('repaired') %}<p class="text-success">{{ _('Repaired automatically from QA findings and re-validated.') }}</p>{% endif %}
+                {% if qa.get('repaired') %}<p class="text-success">{{ ('Repaired automatically from QA findings and re-validated.') }}</p>{% endif %}
 
                 {% if qa.get('issues') %}
 
@@ -235,7 +235,7 @@
 
                         <div>{{ issue.problem }}</div>
 
-                        {% if issue.required_fix %}<div class="opacity-70">{{ _('Fix:') }} {{ issue.required_fix }}</div>{% endif %}
+                        {% if issue.required_fix %}<div class="opacity-70">{{ ('Fix:') }} {{ issue.required_fix }}</div>{% endif %}
 
                     </li>
 
@@ -245,7 +245,7 @@
 
                 {% else %}
 
-                <p class="opacity-60">{{ _('No issues reported.') }}</p>
+                <p class="opacity-60">{{ ('No issues reported.') }}</p>
 
                 {% endif %}
 
@@ -270,27 +270,27 @@
 
         <div class="ezdistro-panel">
 
-            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('Research snapshot') }}</h2></div>
+            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ ('Research snapshot') }}</h2></div>
 
             <div class="p-4 text-xs flex flex-col gap-1.5">
 
                 {% if _primary %}
 
-                <div class="flex justify-between gap-2"><span class="opacity-50 shrink-0">{{ _('Search intent') }}</span><span class="text-right">{{ _primary }}</span></div>
+                <div class="flex justify-between gap-2"><span class="opacity-50 shrink-0">{{ ('Search intent') }}</span><span class="text-right">{{ _primary }}</span></div>
 
                 {% endif %}
 
                 {% if _reader_job %}
 
-                <div class="flex justify-between gap-2"><span class="opacity-50 shrink-0">{{ _('Reader job') }}</span><span class="text-right">{{ _reader_job }}</span></div>
+                <div class="flex justify-between gap-2"><span class="opacity-50 shrink-0">{{ ('Reader job') }}</span><span class="text-right">{{ _reader_job }}</span></div>
 
                 {% endif %}
 
-                <div class="flex justify-between"><span class="opacity-50">{{ _('Key questions') }}</span><span class="font-mono">{{ (research.get('essential_questions') or [])|length }}</span></div>
+                <div class="flex justify-between"><span class="opacity-50">{{ ('Key questions') }}</span><span class="font-mono">{{ (research.get('essential_questions') or [])|length }}</span></div>
 
-                <div class="flex justify-between"><span class="opacity-50">{{ _('Content gaps') }}</span><span class="font-mono">{{ (research.get('content_gaps') or [])|length }}</span></div>
+                <div class="flex justify-between"><span class="opacity-50">{{ ('Content gaps') }}</span><span class="font-mono">{{ (research.get('content_gaps') or [])|length }}</span></div>
 
-                <div class="flex justify-between"><span class="opacity-50">{{ _('Entities') }}</span><span class="font-mono">{{ (research.get('entities') or [])|length }}</span></div>
+                <div class="flex justify-between"><span class="opacity-50">{{ ('Entities') }}</span><span class="font-mono">{{ (research.get('entities') or [])|length }}</span></div>
 
             </div>
 
@@ -302,19 +302,19 @@
 
         <div class="ezdistro-panel">
 
-            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('Generation info') }}</h2></div>
+            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ ('Generation info') }}</h2></div>
 
             <div class="p-4 text-xs flex flex-col gap-1.5">
 
-                <div class="flex justify-between"><span class="opacity-50">{{ _('Latest generation version') }}</span><span class="font-mono">v{{ article.lastGeneratedRevision or '—' }}</span></div>
+                <div class="flex justify-between"><span class="opacity-50">{{ ('Latest generation version') }}</span><span class="font-mono">v{{ article.lastGeneratedRevision or '—' }}</span></div>
 
-                <div class="flex justify-between"><span class="opacity-50">{{ _('Generation time') }}</span><span>{{ article.generatedAt|loc_dt if article.generatedAt else '—' }}</span></div>
+                <div class="flex justify-between"><span class="opacity-50">{{ ('Generation time') }}</span><span>{{ article.generatedAt|loc_dt if article.generatedAt else '—' }}</span></div>
 
-                <div class="flex justify-between"><span class="opacity-50">{{ _('SEO score') }}</span><span class="font-bold text-primary">{{ article.seoScore or 0 }}/100</span></div>
+                <div class="flex justify-between"><span class="opacity-50">{{ ('SEO score') }}</span><span class="font-bold text-primary">{{ article.seoScore or 0 }}/100</span></div>
 
-                {% if topic %}<div class="flex justify-between"><span class="opacity-50">{{ _('Keyword') }}</span><span>{{ topic.keyword or '—' }}</span></div>{% endif %}
+                {% if topic %}<div class="flex justify-between"><span class="opacity-50">{{ ('Keyword') }}</span><span>{{ topic.keyword or '—' }}</span></div>{% endif %}
 
-                <h3 class="font-bold text-xs mt-2 opacity-60">{{ _('Sections (model/prompt version)') }}</h3>
+                <h3 class="font-bold text-xs mt-2 opacity-60">{{ ('Sections (model/prompt version)') }}</h3>
 
                 <ul class="flex flex-col gap-1">
 
@@ -340,7 +340,7 @@
 
                 </ul>
 
-                <h3 class="font-bold text-xs mt-2 opacity-60">{{ _('Internal links') }}</h3>
+                <h3 class="font-bold text-xs mt-2 opacity-60">{{ ('Internal links') }}</h3>
 
                 <ul class="flex flex-col gap-1">
 
@@ -360,7 +360,7 @@
 
         <div class="ezdistro-panel">
 
-            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('Version history') }}</h2></div>
+            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ ('Version history') }}</h2></div>
 
             <div class="p-4">
 
@@ -390,7 +390,7 @@
 
                                 hx-swap="none"
 
-                                hx-confirm="{{ _('Restore this version? The current version is saved to history.') }}">{{ _('Back') }}</button>
+                                hx-confirm="{{ ('Restore this version? The current version is saved to history.') }}">{{ ('Back') }}</button>
 
                         {% endif %}
 
@@ -402,7 +402,7 @@
 
                 {% else %}
 
-                <p class="text-xs opacity-50">{{ _('No history recorded.') }}</p>
+                <p class="text-xs opacity-50">{{ ('No history recorded.') }}</p>
 
                 {% endif %}
 
@@ -420,7 +420,7 @@
 
         <div class="ezdistro-panel">
 
-            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('Title and slug') }}</h2></div>
+            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ ('Title and slug') }}</h2></div>
 
             <div class="p-4 flex flex-col gap-2">
 
@@ -428,9 +428,9 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
 
-                    <div><span class="opacity-50 block">{{ _('Slug') }}</span><code class="font-mono" dir="ltr">{{ article.slug or '—' }}</code></div>
+                    <div><span class="opacity-50 block">{{ ('Slug') }}</span><code class="font-mono" dir="ltr">{{ article.slug or '—' }}</code></div>
 
-                    <div><span class="opacity-50 block">{{ _('Meta description') }}</span><p class="opacity-80">{{ article.metaDescription or '—' }}</p></div>
+                    <div><span class="opacity-50 block">{{ ('Meta description') }}</span><p class="opacity-80">{{ article.metaDescription or '—' }}</p></div>
 
                 </div>
 
@@ -442,7 +442,7 @@
 
         <div class="ezdistro-panel">
 
-            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('Outline') }}</h2></div>
+            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ ('Outline') }}</h2></div>
 
             <div class="p-4">
 
@@ -470,7 +470,7 @@
 
         <div class="ezdistro-panel">
 
-            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('Article body') }}</h2></div>
+            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ ('Article body') }}</h2></div>
 
             <div class="p-4">
 
@@ -480,7 +480,7 @@
 
                 {% else %}
 
-                <p class="text-sm opacity-50 py-6 text-center">{{ _('No content has been generated.') }}</p>
+                <p class="text-sm opacity-50 py-6 text-center">{{ ('No content has been generated.') }}</p>
 
                 {% endif %}
 
@@ -494,11 +494,11 @@
 
         <div class="ezdistro-panel">
 
-            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('Generated version (v%(n)s)') % {'n': article.lastGeneratedRevision} }}</h2></div>
+            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ ('Generated version (v%(n)s)') % {'n': article.lastGeneratedRevision} }}</h2></div>
 
             <div class="p-4 text-xs opacity-60">
 
-                {{ _('Differs from the current version — use history to roll back.') }}
+                {{ ('Differs from the current version — use history to roll back.') }}
 
             </div>
 

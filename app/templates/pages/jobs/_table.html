@@ -1,6 +1,7 @@
 <div id="jobs-table"
      hx-get="/jobs/partial?status={{ status_filter or '' }}"
      hx-trigger="every 5s, refreshJobs from:body"
+     hx-target="this"
      hx-swap="outerHTML">
     {% if jobs %}
     <div class="ezdistro-panel">
@@ -8,13 +9,13 @@
             <table class="table table-sm">
                 <thead>
                     <tr>
-                        <th>{{ _('Type') }}</th>
-                        <th class="max-sm:hidden">{{ _('Project') }}</th>
-                        <th>{{ _('Status') }}</th>
-                        <th>{{ _('Progress') }}</th>
-                        <th>{{ _('Message') }}</th>
-                        <th class="max-sm:hidden">{{ _('Attempt') }}</th>
-                        <th class="max-sm:hidden">{{ _('Time') }}</th>
+                        <th>{{ ('Type') }}</th>
+                        <th class="max-sm:hidden">{{ ('Project') }}</th>
+                        <th>{{ ('Status') }}</th>
+                        <th>{{ ('Progress') }}</th>
+                        <th>{{ ('Message') }}</th>
+                        <th class="max-sm:hidden">{{ ('Attempt') }}</th>
+                        <th class="max-sm:hidden">{{ ('Time') }}</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -27,7 +28,7 @@
                         <td class="w-32">
                             <div class="flex items-center gap-2">
                                 <progress class="progress progress-primary w-16 h-1.5" value="{{ j.progress or 0 }}" max="100"></progress>
-                                <span class="text-xs tabular">{{ _('%(n)s%%') % {'n': j.progress or 0} }}</span>
+                                <span class="text-xs tabular">{{ ('%(n)s%%') % {'n': j.progress or 0} }}</span>
                             </div>
                         </td>
                         <td class="text-xs max-w-48">
@@ -41,10 +42,10 @@
                             {% if j.status in ['pending', 'retrying', 'running'] %}
                             <button class="btn btn-ghost btn-xs text-warning"
                                     hx-post="/jobs/{{ j.id }}/cancel" hx-swap="none"
-                                    hx-confirm="{{ _('Cancel this job?') }}">{{ _('Cancel') }}</button>
+                                    hx-confirm="{{ ('Cancel this job?') }}">{{ ('Cancel') }}</button>
                             {% elif j.status == 'failed' %}
                             <button class="btn btn-ghost btn-xs text-primary"
-                                    hx-post="/jobs/{{ j.id }}/retry" hx-swap="none">{{ _('Retry') }}</button>
+                                    hx-post="/jobs/{{ j.id }}/retry" hx-swap="none">{{ ('Retry') }}</button>
                             {% endif %}
                         </td>
                     </tr>
@@ -56,7 +57,7 @@
     {% else %}
     <div class="ezdistro-panel">
         <div class="ezdistro-empty py-8">
-            <p class="font-bold text-base-content/70">{{ _('No jobs') }}</p>
+            <p class="font-bold text-base-content/70">{{ ('No jobs') }}</p>
         </div>
     </div>
     {% endif %}

@@ -24,7 +24,6 @@ import time
 import uuid
 from typing import Any
 
-from app.i18n import _
 from app.repositories.topics import TOPIC_TYPES, TopicRepo
 
 # --- column targets ---------------------------------------------------------
@@ -34,14 +33,14 @@ IMPORT_FIELDS = ("title", "keyword", "pillar", "cluster", "type", "priority", "w
 def field_labels() -> dict[str, str]:
     """Lazy (request-time) translations for import-mapping UI labels."""
     return {
-        "title": _("Title (required)"),
-        "keyword": _("Keyword"),
-        "pillar": _("Pillar"),
-        "cluster": _("Cluster"),
-        "type": _("Type"),
-        "priority": _("Priority"),
-        "week": _("Week"),
-        "url": _("Link"),
+        "title": ("Title (required)"),
+        "keyword": ("Keyword"),
+        "pillar": ("Pillar"),
+        "cluster": ("Cluster"),
+        "type": ("Type"),
+        "priority": ("Priority"),
+        "week": ("Week"),
+        "url": ("Link"),
     }
 
 
@@ -257,7 +256,7 @@ def _column_name(rows: list[list[str]], index: int, has_header: bool) -> str:
         header = rows[0][index] if index < len(rows[0]) else ""
         if header:
             return header
-    return _("Column %(n)d") % {"n": index + 1}
+    return f"Column {index + 1}"
 
 
 def detect_columns(rows: list[list[str]], has_header: bool) -> list[dict[str, Any]]:
@@ -329,7 +328,7 @@ def build_payload(
     """
     title = _cell(row, column_map, "title")
     if not title:
-        return None, _("Title is empty")
+        return None, ("Title is empty")
     norm_title = normalize_key(title)
     if norm_title in existing_titles or norm_title in batch_titles:
         return None, "duplicate"
@@ -421,9 +420,7 @@ def import_rows(
             created += 1
         except Exception as exc:  # noqa: BLE001 - keep importing the rest
             if len(errors) < max_errors:
-                errors.append(
-                    {"row": line_no, "reason": _("Save failed: %(error)s") % {"error": exc}}
-                )
+                errors.append({"row": line_no, "reason": f"Save failed: {exc}"})
 
     return {
         "total": len(data_rows),

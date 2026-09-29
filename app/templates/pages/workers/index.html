@@ -12,15 +12,17 @@
 
      hx-trigger="every 5s"
 
+     hx-target="this"
+
      hx-swap="outerHTML"
 
      hx-select="#workers-content">
 
 
 
-    {{ f.page_header(_('Workers'), _('Live status of worker processes, the job queue and automatic schedule health.'), _('Operations & monitoring'),
+    {{ f.page_header(('Workers'), ('Live status of worker processes, the job queue and automatic schedule health.'), ('Operations & monitoring'),
 
-        '<span class="badge badge-sm badge-soft badge-info"><span class="loading loading-spinner loading-xs me-1"></span>' ~ _('Auto-refreshes every 5 seconds') ~ '</span>') }}
+        '<span class="badge badge-sm badge-soft badge-info"><span class="loading loading-spinner loading-xs me-1"></span>' ~ ('Auto-refreshes every 5 seconds') ~ '</span>') }}
 
 
 
@@ -28,15 +30,15 @@
 
     <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
 
-        {{ f.stat(_('Worker online'), active_count, 'bg-success', _('Heartbeat within the last 45 seconds')) }}
+        {{ f.stat(('Worker online'), active_count, 'bg-success', ('Heartbeat within the last 45 seconds')) }}
 
-        {{ f.stat(_('Running jobs'), queue.running, 'bg-warning', _('All workers')) }}
+        {{ f.stat(('Running jobs'), queue.running, 'bg-warning', ('All workers')) }}
 
-        {{ f.stat(_('Queued'), queue.pending, 'bg-info', _('Waiting to claim')) }}
+        {{ f.stat(('Queued'), queue.pending, 'bg-info', ('Waiting to claim')) }}
 
-        {{ f.stat(_('Retry'), queue.retrying, 'bg-warning', _('With exponential backoff')) }}
+        {{ f.stat(('Retry'), queue.retrying, 'bg-warning', ('With exponential backoff')) }}
 
-        {{ f.stat(_('Failed'), queue.failed, 'bg-error', _('Needs attention')) }}
+        {{ f.stat(('Failed'), queue.failed, 'bg-error', ('Needs attention')) }}
 
     </div>
 
@@ -60,21 +62,21 @@
 
                     {% if w.status == 'active' %}
 
-                    <span class="badge badge-sm badge-soft badge-success">{{ _('Active') }}</span>
+                    <span class="badge badge-sm badge-soft badge-success">{{ ('Active') }}</span>
 
                     {% elif w.status == 'stale' %}
 
-                    <span class="badge badge-sm badge-soft badge-warning">{{ _('Unknown') }}</span>
+                    <span class="badge badge-sm badge-soft badge-warning">{{ ('Unknown') }}</span>
 
                     {% else %}
 
-                    <span class="badge badge-sm badge-soft badge-neutral">{{ _('Offline') }}</span>
+                    <span class="badge badge-sm badge-soft badge-neutral">{{ ('Offline') }}</span>
 
                     {% endif %}
 
                     {% if w.needs_restart %}
 
-                    <span class="badge badge-sm badge-soft badge-warning" title="{{ _('Worker version differs from the web version') }}">{{ _('Needs restart') }}</span>
+                    <span class="badge badge-sm badge-soft badge-warning" title="{{ ('Worker version differs from the web version') }}">{{ ('Needs restart') }}</span>
 
                     {% endif %}
 
@@ -88,7 +90,7 @@
 
                     <span dir="ltr" class="font-mono min-w-0 max-w-full break-all">{{ w.hostname or '—' }}{% if w.pid %} · pid {{ w.pid }}{% endif %}</span>
 
-                    <span>{{ _('Started: %(v)s') % {'v': w.startedAt|loc_dt if w.startedAt else '—'} }}</span>
+                    <span>{{ ('Started: %(v)s') % {'v': w.startedAt|loc_dt if w.startedAt else '—'} }}</span>
 
                 </div>
 
@@ -96,17 +98,17 @@
 
                 <div class="ezdistro-kv">
 
-                    <div><span class="k">{{ _('Last heartbeat') }}</span><span class="v">{{ w.lastHeartbeatAt|rel_time if w.lastHeartbeatAt else _('never') }}</span></div>
+                    <div><span class="k">{{ ('Last heartbeat') }}</span><span class="v">{{ w.lastHeartbeatAt|rel_time if w.lastHeartbeatAt else ('never') }}</span></div>
 
-                    <div><span class="k">{{ _('Running') }}</span><span class="v tabular text-warning">{{ w.runningJobs or 0 }}</span></div>
+                    <div><span class="k">{{ ('Running') }}</span><span class="v tabular text-warning">{{ w.runningJobs or 0 }}</span></div>
 
-                    <div><span class="k">{{ _('Completed') }}</span><span class="v tabular text-success">{{ w.completedJobs or 0 }}</span></div>
+                    <div><span class="k">{{ ('Completed') }}</span><span class="v tabular text-success">{{ w.completedJobs or 0 }}</span></div>
 
-                    <div><span class="k">{{ _('Failed') }}</span><span class="v tabular {{ 'text-error' if (w.failedJobs or 0) > 0 else '' }}">{{ w.failedJobs or 0 }}</span></div>
+                    <div><span class="k">{{ ('Failed') }}</span><span class="v tabular {{ 'text-error' if (w.failedJobs or 0) > 0 else '' }}">{{ w.failedJobs or 0 }}</span></div>
 
-                    <div><span class="k">{{ _('Concurrency') }}</span><span class="v tabular">{{ w.maxConcurrentJobs or '—' }}</span></div>
+                    <div><span class="k">{{ ('Concurrency') }}</span><span class="v tabular">{{ w.maxConcurrentJobs or '—' }}</span></div>
 
-                    <div><span class="k">{{ _('Version') }}</span><span class="v font-mono" dir="ltr">{{ w.version or '—' }}</span></div>
+                    <div><span class="k">{{ ('Version') }}</span><span class="v font-mono" dir="ltr">{{ w.version or '—' }}</span></div>
 
                 </div>
 
@@ -114,19 +116,19 @@
 
                 <div class="border-t border-base-300/60 pt-2 text-xs flex flex-wrap items-center gap-x-4 gap-y-1">
 
-                    <span class="opacity-60">{{ _('Schedules:') }}</span>
+                    <span class="opacity-60">{{ ('Schedules:') }}</span>
 
                     {% if w.scheduleLastPollAt %}
 
-                    <span>{{ _('Last check %(v)s') % {'v': w.scheduleLastPollAt|rel_time} }}</span>
+                    <span>{{ ('Last check %(v)s') % {'v': w.scheduleLastPollAt|rel_time} }}</span>
 
-                    <span>{{ _('Created:') }} <b class="tabular {{ 'text-success' if (w.scheduleCreated or 0) > 0 }}">{{ w.scheduleCreated or 0 }}</b></span>
+                    <span>{{ ('Created:') }} <b class="tabular {{ 'text-success' if (w.scheduleCreated or 0) > 0 }}">{{ w.scheduleCreated or 0 }}</b></span>
 
-                    {% if w.scheduleFailed %}<span class="text-error break-words max-w-full">{{ _('Errors: %(v)s') % {'v': w.scheduleFailed} }}</span>{% endif %}
+                    {% if w.scheduleFailed %}<span class="text-error break-words max-w-full">{{ ('Errors: %(v)s') % {'v': w.scheduleFailed} }}</span>{% endif %}
 
                     {% else %}
 
-                    <span class="opacity-50">{{ _('Not checked yet') }}</span>
+                    <span class="opacity-50">{{ ('Not checked yet') }}</span>
 
                     {% endif %}
 
@@ -146,9 +148,9 @@
 
         <div class="ezdistro-empty py-10">
 
-            <p class="font-bold text-base-content/75">{{ _('No workers are running') }}</p>
+            <p class="font-bold text-base-content/75">{{ ('No workers are running') }}</p>
 
-            <p class="text-sm text-base-content/50">{{ _('Run the worker process so jobs and schedules are processed.') }}</p>
+            <p class="text-sm text-base-content/50">{{ ('Run the worker process so jobs and schedules are processed.') }}</p>
 
             <code class="mt-3 inline-block bg-base-200 rounded-lg px-3 py-1.5 font-mono text-sm" dir="ltr">make worker</code>
 
@@ -166,31 +168,31 @@
 
         <section class="ezdistro-panel">
 
-            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('Automatic schedules') }}</h2></div>
+            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ ('Automatic schedules') }}</h2></div>
 
             <div class="p-4 text-xs flex flex-col gap-1.5">
 
                 {% if scheduler_heartbeat %}
 
-                <div class="flex justify-between"><span class="opacity-60">{{ _('Last check') }}</span><span>{{ scheduler_heartbeat.lastPollAt|loc_dt }}</span></div>
+                <div class="flex justify-between"><span class="opacity-60">{{ ('Last check') }}</span><span>{{ scheduler_heartbeat.lastPollAt|loc_dt }}</span></div>
 
-                <div class="flex justify-between"><span class="opacity-60">{{ _('Schedules due') }}</span><span class="tabular">{{ scheduler_heartbeat.due or 0 }}</span></div>
+                <div class="flex justify-between"><span class="opacity-60">{{ ('Schedules due') }}</span><span class="tabular">{{ scheduler_heartbeat.due or 0 }}</span></div>
 
-                <div class="flex justify-between"><span class="opacity-60">{{ _('Jobs created') }}</span><span class="tabular {{ 'text-success' if (scheduler_heartbeat.created or 0) > 0 }}">{{ scheduler_heartbeat.created or 0 }}</span></div>
+                <div class="flex justify-between"><span class="opacity-60">{{ ('Jobs created') }}</span><span class="tabular {{ 'text-success' if (scheduler_heartbeat.created or 0) > 0 }}">{{ scheduler_heartbeat.created or 0 }}</span></div>
 
                 {% if scheduler_heartbeat.failed %}
 
-                <p class="text-error mt-1">{{ _('Errors occurred in %(n)s schedule(s) — check the worker log.') % {'n': scheduler_heartbeat.failed} }}</p>
+                <p class="text-error mt-1">{{ ('Errors occurred in %(n)s schedule(s) — check the worker log.') % {'n': scheduler_heartbeat.failed} }}</p>
 
                 {% endif %}
 
                 {% else %}
 
-                <p class="opacity-60">{{ _('The worker has not checked schedules yet.') }}</p>
+                <p class="opacity-60">{{ ('The worker has not checked schedules yet.') }}</p>
 
                 {% endif %}
 
-                <p class="opacity-40 border-t border-base-300/60 pt-2">{{ _('Every 60 seconds the worker checks due schedules and creates jobs.') }}</p>
+                <p class="opacity-40 border-t border-base-300/60 pt-2">{{ ('Every 60 seconds the worker checks due schedules and creates jobs.') }}</p>
 
             </div>
 
@@ -204,9 +206,9 @@
 
             <div class="ezdistro-panel-head">
 
-                <h2 class="ezdistro-panel-title">{{ _('Job queue') }}</h2>
+                <h2 class="ezdistro-panel-title">{{ ('Job queue') }}</h2>
 
-                <a href="/jobs" class="btn btn-ghost btn-xs">{{ _('All jobs') }}</a>
+                <a href="/jobs" class="btn btn-ghost btn-xs">{{ ('All jobs') }}</a>
 
             </div>
 
@@ -214,25 +216,25 @@
 
                 <a href="/jobs?status=pending" class="flex items-center justify-between rounded-lg border border-base-300/70 px-3 py-2 hover:bg-base-200/50">
 
-                    <span>{{ _('Queued (waiting to claim)') }}</span><b class="tabular">{{ queue.pending }}</b>
+                    <span>{{ ('Queued (waiting to claim)') }}</span><b class="tabular">{{ queue.pending }}</b>
 
                 </a>
 
                 <a href="/jobs?status=retrying" class="flex items-center justify-between rounded-lg border border-base-300/70 px-3 py-2 hover:bg-base-200/50">
 
-                    <span>{{ _('Retry') }}</span><b class="tabular">{{ queue.retrying }}</b>
+                    <span>{{ ('Retry') }}</span><b class="tabular">{{ queue.retrying }}</b>
 
                 </a>
 
                 <a href="/jobs?status=running" class="flex items-center justify-between rounded-lg border border-base-300/70 px-3 py-2 hover:bg-base-200/50">
 
-                    <span>{{ _('Running') }}</span><b class="tabular">{{ queue.running }}</b>
+                    <span>{{ ('Running') }}</span><b class="tabular">{{ queue.running }}</b>
 
                 </a>
 
                 <a href="/jobs?status=failed" class="flex items-center justify-between rounded-lg border border-error/20 bg-error/5 px-3 py-2 hover:bg-error/10">
 
-                    <span class="text-error">{{ _('Failed') }}</span><b class="tabular text-error">{{ queue.failed }}</b>
+                    <span class="text-error">{{ ('Failed') }}</span><b class="tabular text-error">{{ queue.failed }}</b>
 
                 </a>
 
@@ -248,15 +250,15 @@
 
     <section class="ezdistro-panel">
 
-        <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('Restart the worker') }}</h2></div>
+        <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ ('Restart the worker') }}</h2></div>
 
         <div class="p-4 flex flex-col gap-3">
 
             <p class="text-xs opacity-60 leading-relaxed">
 
-                {{ _('After every code change the worker must be restarted to run the new version.') }}
+                {{ ('After every code change the worker must be restarted to run the new version.') }}
 
-                {{ _('If a worker\'s version differs from the web version (v%(v)s), it gets a “Needs restart” badge.') % {'v': app_version} }}
+                {{ ('If a worker\'s version differs from the web version (v%(v)s), it gets a “Needs restart” badge.') % {'v': app_version} }}
 
             </p>
 
@@ -280,11 +282,11 @@
 
                         @click="navigator.clipboard.writeText('{{ cmd.command }}'); copied = true; setTimeout(() => copied = false, 1600)"
 
-                        aria-label="{{ _('Copy command') }}">
+                        aria-label="{{ ('Copy command') }}">
 
-                    <span x-show="!copied">{{ _('Copy') }}</span>
+                    <span x-show="!copied">{{ ('Copy') }}</span>
 
-                    <span x-show="copied" class="text-success">{{ _('Copied ✓') }}</span>
+                    <span x-show="copied" class="text-success">{{ ('Copied ✓') }}</span>
 
                 </button>
 
@@ -306,9 +308,9 @@
 
         <div class="ezdistro-panel-head">
 
-            <h2 class="ezdistro-panel-title">{{ _('Recent failures') }}</h2>
+            <h2 class="ezdistro-panel-title">{{ ('Recent failures') }}</h2>
 
-            <a href="/failed" class="btn btn-ghost btn-xs">{{ _('All') }}</a>
+            <a href="/failed" class="btn btn-ghost btn-xs">{{ ('All') }}</a>
 
         </div>
 

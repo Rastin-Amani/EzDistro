@@ -2,20 +2,21 @@
 <div id="jobs-table"
      hx-get="/projects/{{ project.id }}/tabs/jobs"
      hx-trigger="every 5s, refreshJobs from:body"
+     hx-target="this"
      hx-swap="outerHTML">
-{{ f.page_header(_('Jobs'), _('Running jobs and history.'), eyebrow=_('Project')) }}
+{{ f.page_header(('Jobs'), ('Running jobs and history.'), eyebrow=('Project')) }}
     {% if jobs %}
     <div class="ezdistro-panel">
-        <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('Jobs') }}</h2></div>
+        <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ ('Jobs') }}</h2></div>
         <div class="overflow-x-auto">
             <table class="table table-sm">
                 <thead>
                     <tr class="text-xs opacity-60">
-                        <th>{{ _('Type') }}</th>
-                        <th>{{ _('Status') }}</th>
-                        <th>{{ _('Progress') }}</th>
-                        <th>{{ _('Message') }}</th>
-                        <th>{{ _('Attempt') }}</th>
+                        <th>{{ ('Type') }}</th>
+                        <th>{{ ('Status') }}</th>
+                        <th>{{ ('Progress') }}</th>
+                        <th>{{ ('Message') }}</th>
+                        <th>{{ ('Attempt') }}</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -27,7 +28,7 @@
                         <td class="w-32">
                             <div class="flex items-center gap-2">
                                 <progress class="progress progress-primary w-16 h-1.5" value="{{ j.progress or 0 }}" max="100"></progress>
-                                <span class="text-xs">{{ _('%(n)s%%') % {'n': j.progress or 0} }}</span>
+                                <span class="text-xs">{{ ('%(n)s%%') % {'n': j.progress or 0} }}</span>
                             </div>
                         </td>
                         <td class="text-xs max-w-48">
@@ -38,15 +39,15 @@
                         <td class="text-xs">{{ j.attempts or 0 }}/{{ j.maxAttempts or 3 }}</td>
                         <td class="whitespace-nowrap">
                             {% if j.status in ['pending', 'retrying', 'running'] %}
-                            <span class="tooltip tooltip-top" data-tip="{{ _(_( 'Cancellation requested — the job stops at the first opportunity' )) }}">
+                            <span class="tooltip tooltip-top" data-tip="{{ (( 'Cancellation requested — the job stops at the first opportunity' )) }}">
                                 <button class="btn btn-ghost btn-xs text-warning"
                                         hx-post="/jobs/{{ j.id }}/cancel" hx-swap="none"
-                                        hx-confirm="{{ _('Cancel this job?') }}">{{ _('Cancel') }}</button>
+                                        hx-confirm="{{ ('Cancel this job?') }}">{{ ('Cancel') }}</button>
                             </span>
                             {% elif j.status == 'failed' %}
-                            <span class="tooltip tooltip-top" data-tip="{{ _(_( 'Puts the job back into the queue' )) }}">
+                            <span class="tooltip tooltip-top" data-tip="{{ (( 'Puts the job back into the queue' )) }}">
                                 <button class="btn btn-ghost btn-xs text-primary"
-                                        hx-post="/jobs/{{ j.id }}/retry" hx-swap="none">{{ _('Retry') }}</button>
+                                        hx-post="/jobs/{{ j.id }}/retry" hx-swap="none">{{ ('Retry') }}</button>
                             </span>
                             {% endif %}
                         </td>
@@ -59,7 +60,7 @@
     {% else %}
     <div class="ezdistro-panel">
         <div class="p-4 flex flex-col items-center gap-3 py-8 text-center">
-            <p class="text-sm opacity-50">{{ _('No jobs.') }}</p>
+            <p class="text-sm opacity-50">{{ ('No jobs.') }}</p>
         </div>
     </div>
     {% endif %}

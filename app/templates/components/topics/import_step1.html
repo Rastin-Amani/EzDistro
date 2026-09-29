@@ -12,11 +12,11 @@
 
     <label class="form-control w-full">
 
-        <span class="label-text font-medium text-sm">{{ _('Paste text') }}</span>
+        <span class="label-text font-medium text-sm">{{ ('Paste text') }}</span>
 
         <textarea name="csv_text" rows="7" dir="auto" class="textarea w-full font-mono text-xs leading-relaxed"
 
-                  placeholder="{{ _('Title | Keyword | Pillar | Cluster | Type | Priority&#10;…or a full CSV with header (e.g. Week,Title,Keyword,Related Pillar,…)') }}"></textarea>
+                  placeholder="{{ ('Title | Keyword | Pillar | Cluster | Type | Priority&#10;…or a full CSV with header (e.g. Week,Title,Keyword,Related Pillar,…)') }}"></textarea>
 
     </label>
 
@@ -24,7 +24,7 @@
 
         <span class="flex-1 border-t border-base-300/70"></span>
 
-        {{ _('or') }}
+        {{ ('or') }}
 
         <span class="flex-1 border-t border-base-300/70"></span>
 
@@ -32,7 +32,7 @@
 
     <label class="form-control w-full">
 
-        <span class="label-text font-medium text-sm">{{ _('Upload a CSV / TSV file') }}</span>
+        <span class="label-text font-medium text-sm">{{ ('Upload a CSV / TSV file') }}</span>
 
         <input type="file" name="file" accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values"
 
@@ -44,7 +44,7 @@
 
         <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="mt-0.5 size-4 shrink-0 text-primary"><path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" /></svg>
 
-        <span>{{ _('Each line is one topic. Columns are separated by') }} <kbd class="kbd kbd-xs">|</kbd> {{ _('or') }} <kbd class="kbd kbd-xs">Tab</kbd> {{ _(': Title | Keyword | Pillar | Cluster | Type | Priority. Header columns (Week, ID, Title, Keyword, Related Pillar, Cluster, Type, …) are detected automatically and you can adjust the mapping in the next step. Duplicate rows are skipped automatically.') }}</span>
+        <span>{{ ('Each line is one topic. Columns are separated by') }} <kbd class="kbd kbd-xs">|</kbd> {{ ('or') }} <kbd class="kbd kbd-xs">Tab</kbd> {{ (': Title | Keyword | Pillar | Cluster | Type | Priority. Header columns (Week, ID, Title, Keyword, Related Pillar, Cluster, Type, …) are detected automatically and you can adjust the mapping in the next step. Duplicate rows are skipped automatically.') }}</span>
 
     </p>
 
@@ -54,11 +54,11 @@
 
             <span class="loading loading-spinner loading-xs htmx-indicator"></span>
 
-            {{ _('Preview and map columns') }}
+            {{ ('Preview and map columns') }}
 
         </button>
 
-        <button type="button" class="btn btn-ghost" onclick="document.getElementById('topic-import-modal').close()">{{ _('Cancel') }}</button>
+        <button type="button" class="btn btn-ghost" @click="$store.ui.closeModal('topic-import-modal')">{{ ('Cancel') }}</button>
 
     </div>
 

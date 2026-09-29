@@ -1,6 +1,6 @@
 {% import 'macros/forms.html' as f %}
 
-{{ f.page_header(_('Images'), _('Settings for generating and publishing article images (cover and in-text images).'), eyebrow=_('Project')) }}
+{{ f.page_header(('Images'), ('Settings for generating and publishing article images (cover and in-text images).'), eyebrow=('Project')) }}
 
 <div id="images-tab" class="flex flex-col gap-4 w-full">
 
@@ -8,47 +8,47 @@
 
         <div class="ezdistro-panel">
 
-            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('Image generation models') }}</h2></div>
+            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ ('Image generation models') }}</h2></div>
 
             <div class="p-4 flex flex-col gap-4">
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-                    {{ f.select('image_cover_provider', _('Cover provider'), image_provider_options, settings.imageCoverProvider or 'gemini', _('Default: Gemini for the article cover image.')) }}
+                    {{ f.select('image_cover_provider', ('Cover provider'), image_provider_options, settings.imageCoverProvider or 'gemini', ('Default: Gemini for the article cover image.')) }}
 
-                    {{ f.text('image_cover_model', _('Cover model'), settings.imageCoverModel or 'gemini-3-pro-image', _('Model ID — data-driven, never hardcoded in the pipeline.')) }}
+                    {{ f.text('image_cover_model', ('Cover model'), settings.imageCoverModel or 'gemini-3-pro-image', ('Model ID — data-driven, never hardcoded in the pipeline.')) }}
 
-                    {{ f.select('image_interior_provider', _('In-text image provider'), image_provider_options, settings.imageInteriorProvider or 'bfl', _('Default: Black Forest Labs (FLUX) for in-text images.')) }}
+                    {{ f.select('image_interior_provider', ('In-text image provider'), image_provider_options, settings.imageInteriorProvider or 'bfl', ('Default: Black Forest Labs (FLUX) for in-text images.')) }}
 
-                    {{ f.text('image_interior_model', _('In-text image model'), settings.imageInteriorModel or 'flux-2-klein-9b', _('e.g. FLUX.2 Klein 9B — per-megapixel pricing.')) }}
+                    {{ f.text('image_interior_model', ('In-text image model'), settings.imageInteriorModel or 'flux-2-klein-9b', ('e.g. FLUX.2 Klein 9B — per-megapixel pricing.')) }}
 
-                    {{ f.select('image_fallback_provider', _('Fallback provider (optional)'), image_fallback_options, settings.imageFallbackProvider or '', _('Tried when the primary provider fails.')) }}
+                    {{ f.select('image_fallback_provider', ('Fallback provider (optional)'), image_fallback_options, settings.imageFallbackProvider or '', ('Tried when the primary provider fails.')) }}
 
-                    {{ f.text('image_fallback_model', _('Fallback model'), settings.imageFallbackModel or '', _('Empty = no fallback.')) }}
+                    {{ f.text('image_fallback_model', ('Fallback model'), settings.imageFallbackModel or '', ('Empty = no fallback.')) }}
 
                 </div>
 
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
 
-                    {{ f.text('image_cover_aspect_ratio', _('Cover aspect ratio'), settings.imageCoverAspectRatio or '16:9', _('e.g. 16:9')) }}
+                    {{ f.text('image_cover_aspect_ratio', ('Cover aspect ratio'), settings.imageCoverAspectRatio or '16:9', ('e.g. 16:9')) }}
 
-                    {{ f.text('image_interior_aspect_ratio', _('In-text image aspect ratio'), settings.imageInteriorAspectRatio or '16:9', _('e.g. 4:3')) }}
+                    {{ f.text('image_interior_aspect_ratio', ('In-text image aspect ratio'), settings.imageInteriorAspectRatio or '16:9', ('e.g. 4:3')) }}
 
-                    {{ f.number('image_cover_min_width', _('Minimum cover width (px)'), settings.imageCoverMinWidth or 1200, _('At least 1200 recommended for SEO and Google Discover.')) }}
+                    {{ f.number('image_cover_min_width', ('Minimum cover width (px)'), settings.imageCoverMinWidth or 1200, ('At least 1200 recommended for SEO and Google Discover.')) }}
 
-                    {{ f.number('image_max_interior_images', _('Max in-text images'), settings.imageMaxInteriorImages or 4, _('Hard cap; density adapts to the article length.')) }}
+                    {{ f.number('image_max_interior_images', ('Max in-text images'), settings.imageMaxInteriorImages or 4, ('Hard cap; density adapts to the article length.')) }}
 
                 </div>
 
                 <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
 
-                    {{ f.number('image_max_retries', _('Max retries'), settings.imageMaxRetries or 3, _('Job engine attempts for transient errors.')) }}
+                    {{ f.number('image_max_retries', ('Max retries'), settings.imageMaxRetries or 3, ('Job engine attempts for transient errors.')) }}
 
-                    {{ f.select('image_optimization_format', _('Optimization format'), [('webp', 'WebP'), ('avif', 'AVIF'), ('jpeg', 'JPEG')], settings.imageOptimizationFormat or 'webp', _('AVIF when the server supports it; otherwise WebP.')) }}
+                    {{ f.select('image_optimization_format', ('Optimization format'), [('webp', 'WebP'), ('avif', 'AVIF'), ('jpeg', 'JPEG')], settings.imageOptimizationFormat or 'webp', ('AVIF when the server supports it; otherwise WebP.')) }}
 
-                    {{ f.select('image_prompt_language', _('Image prompt language'), [('en', _('English')), ('fa', _('Persian'))], settings.imagePromptLanguage or 'en', _('Independent of the article language — alt and captions are always produced in the article language.')) }}
+                    {{ f.select('image_prompt_language', ('Image prompt language'), [('en', ('English')), ('fa', ('Persian'))], settings.imagePromptLanguage or 'en', ('Independent of the article language — alt and captions are always produced in the article language.')) }}
 
-                    {{ f.select('image_ai_qa_enabled', _('AI visual review'), [('0', _('Inactive')), ('1', _('Active'))], '1' if settings.imageAiQaEnabled else '0', _('Optional validation of the image output with a vision model — extra cost.')) }}
+                    {{ f.select('image_ai_qa_enabled', ('AI visual review'), [('0', ('Inactive')), ('1', ('Active'))], '1' if settings.imageAiQaEnabled else '0', ('Optional validation of the image output with a vision model — extra cost.')) }}
 
                 </div>
 
@@ -60,9 +60,9 @@
 
             <div class="ezdistro-panel-head">
 
-                <h2 class="ezdistro-panel-title">{{ _('Visual style profile') }}</h2>
+                <h2 class="ezdistro-panel-title">{{ ('Visual style profile') }}</h2>
 
-                {{ f.tip(_('The project\'s brand style — added to every image prompt. «Forbidden elements» go into the negative prompt.')) }}
+                {{ f.tip(('The project\'s brand style — added to every image prompt. «Forbidden elements» go into the negative prompt.')) }}
 
             </div>
 
@@ -70,30 +70,30 @@
 
             <div class="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-                {{ f.text('style_tone', _('Tone and feel'), style.tone or '', _('e.g. minimal, professional, warm')) }}
+                {{ f.text('style_tone', ('Tone and feel'), style.tone or '', ('e.g. minimal, professional, warm')) }}
 
-                {{ f.text('style_palette', _('Color palette'), style.palette or '', _('e.g. dark blue and white')) }}
+                {{ f.text('style_palette', ('Color palette'), style.palette or '', ('e.g. dark blue and white')) }}
 
-                {{ f.text('style_lighting', _('Lighting'), style.lighting or '', _('e.g. soft and natural')) }}
+                {{ f.text('style_lighting', ('Lighting'), style.lighting or '', ('e.g. soft and natural')) }}
 
-                {{ f.text('style_negative', _('Global negative prompt'), style.negative_prompt or '', _('Added to the «no text and watermark» default.')) }}
+                {{ f.text('style_negative', ('Global negative prompt'), style.negative_prompt or '', ('Added to the «no text and watermark» default.')) }}
 
-                {{ f.text('style_prohibited', _('Forbidden elements'), style.prohibited or '', _('e.g. logos, specific people\'s faces')) }}
+                {{ f.text('style_prohibited', ('Forbidden elements'), style.prohibited or '', ('e.g. logos, specific people\'s faces')) }}
 
             </div>
 
         </div>
 
-        {{ f.sticky_save(_('Save image settings')) }}
+        {{ f.sticky_save(('Save image settings')) }}
 
     </form>
 
     <div class="ezdistro-panel mt-4" x-data>
         <div class="ezdistro-panel-head">
-            <h2 class="ezdistro-panel-title">{{ _('Image generation test') }}</h2>
+            <h2 class="ezdistro-panel-title">{{ ('Image generation test') }}</h2>
         </div>
         <p class="text-sm opacity-70 mb-2">
-            {{ _('Generates one small test image with the saved cover settings (each click costs money).') }}
+            {{ ('Generates one small test image with the saved cover settings (each click costs money).') }}
         </p>
         <button type="button"
                 class="btn btn-sm btn-outline"
@@ -101,7 +101,7 @@
                 hx-target="#image-test-result"
                 hx-swap="innerHTML"
                 hx-indicator="#image-test-indicator">
-            {{ _('Image generation test') }}
+            {{ ('Image generation test') }}
         </button>
         <span id="image-test-indicator" class="htmx-indicator loading loading-spinner loading-sm ms-2 align-middle"></span>
         <div id="image-test-result" class="mt-1"></div>

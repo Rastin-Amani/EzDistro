@@ -1,5 +1,6 @@
+{% if partial %}{{ self.content() }}{% else %}
 <!doctype html>
-<html lang="{{ locale.code }}" dir="{{ locale.direction }}">
+<html lang="en" dir="ltr">
     <head>
         <meta charset="UTF-8" />
         <script>
@@ -38,17 +39,22 @@
 
         <link
             rel="preload"
-            href="{{ url_for('static', path='/assets/' ~ ('Arad-VF.woff2' if locale.is_rtl else 'InterVariable.ttf')) }}"
+            href="{{ url_for('static', path='/assets/InterVariable.ttf') }}"
             as="font"
-            type="{{ 'font/woff2' if locale.is_rtl else 'font/ttf' }}"
+            type="font/ttf"
             crossorigin
         />
 
-        <title>{{ title or _('EzDistro') }}</title>
+        <title>{{ title or ('EzDistro') }}</title>
         <link rel="stylesheet" href="{{ url_for('static', path='/app.css') }}" />
     </head>
 
-    <body class="bg-base-100 font-sans antialiased" hx-boost="true">
+    <body
+        class="bg-base-100 font-sans antialiased"
+        hx-boost="true"
+        hx-target="#main-content"
+        hx-swap="innerHTML show:window:top"
+    >
         {% block body_start %}{% endblock %}
 
         <!-- Top loading progress bar — HIDDEN for now (kept intact for easy
@@ -80,19 +86,42 @@
                         </svg>
                     </div>
                     <div class="min-w-0">
-                        <h3 class="font-bold text-lg">{{ _('Confirm action') }}</h3>
+                        <h3 class="font-bold text-lg">{{ ('Confirm action') }}</h3>
                         <p class="py-2 text-sm opacity-70 leading-relaxed" data-confirm-text></p>
                     </div>
                 </div>
                 <div class="modal-action flex gap-3">
-                    <button type="button" class="btn btn-ghost flex-1" data-confirm-cancel>{{ _('Cancel') }}</button>
-                    <button type="button" class="btn btn-error flex-1" data-confirm-ok>{{ _('Confirm') }}</button>
+                    <button type="button" class="btn btn-ghost flex-1" data-confirm-cancel>{{ ('Cancel') }}</button>
+                    <button type="button" class="btn btn-error flex-1" data-confirm-ok>{{ ('Confirm') }}</button>
                 </div>
             </div>
             <div class="modal-backdrop bg-black/40 backdrop-blur-sm cursor-pointer" data-confirm-backdrop></div>
         </dialog>
 
         {% block body_end %}{% endblock %}
+
+        <!-- Global UI store: client-only view state (modals, toasts). Server
+             data stays on the server; this lives outside #main-content so it
+             survives boosted navigation. -->
+        <script>
+            document.addEventListener('alpine:init', function () {
+                Alpine.store('ui', {
+                    openModal: function (id) {
+                        var el = document.getElementById(id);
+                        if (el && el.showModal) el.showModal();
+                    },
+                    closeModal: function (id) {
+                        var el = document.getElementById(id);
+                        if (el && el.close) el.close();
+                    },
+                    notify: function (message, type) {
+                        document.dispatchEvent(new CustomEvent('show-toast', {
+                            detail: { message: message, type: type || 'info' },
+                        }));
+                    },
+                });
+            });
+        </script>
 
         <script type="module" src="{{ url_for('static', path='/js/integrations.js') }}"></script>
         <script type="module" src="{{ url_for('static', path='/app.js') }}"></script>
@@ -219,21 +248,21 @@
                 // HTMX failure feedback — network errors and 4xx/5xx must never fail silently
                 document.addEventListener('htmx:sendError', function () {
                     document.dispatchEvent(new CustomEvent('show-toast', {
-                        detail: { message: {{ _('Could not reach the server. Please try again.') | tojson }}, type: 'error' },
+                        detail: { message: {{ ('Could not reach the server. Please try again.') | tojson }}, type: 'error' },
                     }));
                 });
                 document.addEventListener('htmx:responseError', function () {
                     document.dispatchEvent(new CustomEvent('show-toast', {
-                        detail: { message: {{ _('Something went wrong; please try again.') | tojson }}, type: 'error' },
+                        detail: { message: {{ ('Something went wrong; please try again.') | tojson }}, type: 'error' },
                     }));
                 });
 
                 const connectionToast = (message, type) => document.dispatchEvent(new CustomEvent('show-toast', {
                     detail: { message, type },
                 }));
-                const offlineMessage = {{ _('You are offline — showing cached data') | tojson }};
+                const offlineMessage = {{ ('You are offline — showing cached data') | tojson }};
                 window.addEventListener('offline', () => connectionToast(offlineMessage, 'warning'));
-                window.addEventListener('online', () => connectionToast({{ _('Connection restored.') | tojson }}, 'success'));
+                window.addEventListener('online', () => connectionToast({{ ('Connection restored.') | tojson }}, 'success'));
                 if (!navigator.onLine) connectionToast(offlineMessage, 'warning');
 
                 window.toastListenerAttached = true;
@@ -251,7 +280,7 @@
                             newSW.addEventListener('statechange', () => {
                                 if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
                                     document.dispatchEvent(new CustomEvent('show-toast', {
-                                        detail: { message: {{ _('A new version is available.') | tojson }}, type: 'info' },
+                                        detail: { message: {{ ('A new version is available.') | tojson }}, type: 'info' },
                                     }));
                                 }
                             });
@@ -264,3 +293,4 @@
         </script>
     </body>
 </html>
+{% endif %}

@@ -6,7 +6,6 @@ from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 
 from app.api.deps import project_scope
-from app.i18n import _
 from app.services import stats
 from app.templates import templates
 
@@ -20,7 +19,7 @@ def dashboard(request: Request, welcome: bool = False):
         request,
         "pages/dashboard.html",
         {
-            "title": _("Dashboard"),
+            "title": ("Dashboard"),
             "welcome": welcome,
             "stats": stats.global_stats(request.state.pb, scope),
             "recent_jobs": stats.recent_jobs(request.state.pb, scope, limit=8),

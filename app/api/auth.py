@@ -7,7 +7,6 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from pocketbase.errors import ClientResponseError
 
 from app.api.deps import current_user, is_disabled
-from app.i18n import _
 from app.logging_config import logger
 from app.pb import get_pb
 from app.templates import templates
@@ -31,7 +30,7 @@ def login_page(request: Request):
         request,
         "auth/login.html",
         {
-            "title": _("Sign in to EzDistro"),
+            "title": ("Sign in to EzDistro"),
             "error": None,
             # Middleware sends disabled accounts here (18-A(c)).
             "disabled": request.query_params.get("disabled") == "1",
@@ -53,7 +52,7 @@ def login(
     except ClientResponseError as exc:
         if exc.status not in {400, 401}:
             logger.exception("auth.login_pocketbase_unavailable")
-            message = _("Could not reach the server. Please try again.")
+            message = "Could not reach the server. Please try again."
             if request.headers.get("HX-Request"):
                 response = error_response(message)
                 response.status_code = 503
@@ -63,7 +62,7 @@ def login(
         # HX-Request — give them a toast. Native form POSTs (the default now)
         # get the full error page re-rendered.
         if request.headers.get("HX-Request"):
-            return error_response(_("Wrong email or password"))
+            return error_response("Wrong email or password")
         return _login_error(request, email=email)
 
     from app.config import settings
@@ -72,14 +71,14 @@ def login(
         # 18-A(c): refuse at the credential boundary too — a disabled account
         # must never receive a fresh session cookie.
         pb.auth_store.clear()
-        message = _("Your account is disabled")
+        message = "Your account is disabled"
         if request.headers.get("HX-Request"):
             return error_response(message)
         return _login_error(request, message, email)
 
     token = pb.auth_store.token
     if request.headers.get("HX-Request"):
-        response = ok_with_redirect(_("Welcome"), "/dashboard?welcome=1")
+        response = ok_with_redirect(("Welcome"), "/dashboard?welcome=1")
     else:
         # Native form POST → server-side 303. Setting the session cookie on a
         # full-page POST/redirect (a user-gesture top-level navigation) is far
@@ -109,8 +108,8 @@ def _login_error(
 ) -> Response:
     html = templates.get_template("auth/login.html").render(
         request=request,
-        title=_("Sign in to EzDistro"),
-        error=message or _("Wrong email or password"),
+        title=("Sign in to EzDistro"),
+        error=message or ("Wrong email or password"),
         disabled=False,
         email=email,
     )
@@ -119,6 +118,6 @@ def _login_error(
 
 @router.post("/logout")
 def logout(request: Request):
-    response = ok_with_redirect(_("Signed out"), "/login", type="info")
+    response = ok_with_redirect(("Signed out"), "/login", type="info")
     response.delete_cookie("pb_auth")
     return response

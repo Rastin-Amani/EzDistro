@@ -8,16 +8,16 @@
     // Fire after load so the toast listener (attached at the end of <body>) exists.
     window.addEventListener('load', function () {
         document.dispatchEvent(new CustomEvent('show-toast', {
-            detail: { message: _( 'Welcome' ), type: 'success' },
+            detail: { message: ( 'Welcome' ), type: 'success' },
         }));
     });
 </script>
 {% endif %}
 
 {{ f.page_header(
-    _( 'Dashboard' ),
-    _( 'Overall health of content production, indexing and providers' ),
-    _( 'Command center' ),
+    ( 'Dashboard' ),
+    ( 'Overall health of content production, indexing and providers' ),
+    ( 'Command center' ),
     '<span id="last-updated" class="text-xs opacity-50 hidden sm:inline"></span>'
 ) }}
 
@@ -25,16 +25,16 @@
 
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6">
     <!-- Recent jobs -->
-    {{ f.panel(_('Recent jobs'), '<a href="/jobs" class="btn btn-ghost btn-xs">' ~ _('All jobs') ~ '</a>') }}
+    {{ f.panel(('Recent jobs'), '<a href="/jobs" class="btn btn-ghost btn-xs">' ~ ('All jobs') ~ '</a>') }}
         {% if recent_jobs %}
         <div class="overflow-x-auto -mx-4">
             <table class="table table-sm hidden sm:table">
                 <thead>
                     <tr>
-                        <th>{{ _('Type') }}</th>
-                        <th>{{ _('Status') }}</th>
-                        <th>{{ _('Progress') }}</th>
-                        <th>{{ _('Time') }}</th>
+                        <th>{{ ('Type') }}</th>
+                        <th>{{ ('Status') }}</th>
+                        <th>{{ ('Progress') }}</th>
+                        <th>{{ ('Time') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -44,8 +44,8 @@
                         <td><span class="badge badge-sm {{ j.status|status_badge }}">{{ j.status|status_label }}</span></td>
                         <td>
                             <div class="flex items-center gap-2">
-                                <progress class="progress progress-primary w-20 h-1.5" value="{{ j.progress or 0 }}" max="100" aria-label="{{ _('Progress') }}"></progress>
-                                <span class="text-xs tabular">{{ _('%(n)s%%') % {'n': j.progress or 0} }}</span>
+                                <progress class="progress progress-primary w-20 h-1.5" value="{{ j.progress or 0 }}" max="100" aria-label="{{ ('Progress') }}"></progress>
+                                <span class="text-xs tabular">{{ ('%(n)s%%') % {'n': j.progress or 0} }}</span>
                             </div>
                         </td>
                         <td class="text-xs opacity-60 whitespace-nowrap">{{ j.created|loc_dt }}</td>
@@ -66,8 +66,8 @@
                         </span>
                     </span>
                     <span class="flex shrink-0 flex-col items-end gap-1">
-                        <span class="text-xs font-semibold tabular-nums">{{ _('%(n)s%%') % {'n': j.progress or 0} }}</span>
-                        <progress class="progress progress-primary w-16 h-1.5" value="{{ j.progress or 0 }}" max="100" aria-label="{{ _('Progress') }}"></progress>
+                        <span class="text-xs font-semibold tabular-nums">{{ ('%(n)s%%') % {'n': j.progress or 0} }}</span>
+                        <progress class="progress progress-primary w-16 h-1.5" value="{{ j.progress or 0 }}" max="100" aria-label="{{ ('Progress') }}"></progress>
                     </span>
                 </a>
             </li>
@@ -78,13 +78,13 @@
             <div class="ezdistro-empty-icon">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" /></svg>
             </div>
-            <p class="font-bold text-base-content/70">{{ _('No jobs recorded yet') }}</p>
+            <p class="font-bold text-base-content/70">{{ ('No jobs recorded yet') }}</p>
         </div>
         {% endif %}
     {{ f.panel_close() }}
 
     <!-- Recent events -->
-    {{ f.panel(_('Recent events'), '<a href="/logs" class="btn btn-ghost btn-xs">' ~ _('All events') ~ '</a>') }}
+    {{ f.panel(('Recent events'), '<a href="/logs" class="btn btn-ghost btn-xs">' ~ ('All events') ~ '</a>') }}
         {% if recent_events %}
         <ul class="flex flex-col gap-2">
             {% for e in recent_events %}
@@ -99,7 +99,7 @@
         </ul>
         {% else %}
         <div class="ezdistro-empty py-8">
-            <p class="font-bold text-base-content/70">{{ _('No events recorded') }}</p>
+            <p class="font-bold text-base-content/70">{{ ('No events recorded') }}</p>
         </div>
         {% endif %}
     {{ f.panel_close() }}

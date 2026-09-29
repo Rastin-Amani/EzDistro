@@ -22,7 +22,6 @@ from app.api.deps import (
     safe_str,
 )
 from app.api.errors import hx_error
-from app.i18n import _
 from app.repositories.article_images import ArticleImageRepo
 from app.repositories.articles import ArticleRepo
 from app.repositories.jobs import JobRepo
@@ -86,9 +85,9 @@ def queue_image_plan(request: Request, project_id: str, article_id: str):
     require_project_role(request, project_id)
     article = _load_article(request, project_id, article_id)
     if not article:
-        return error_response(_("Article not found"))
+        return error_response("Article not found")
     if not (article.get("finalHtml") or article.get("generatedContent")):
-        return error_response(_("The article has no content yet — generate the article first"))
+        return error_response("The article has no content yet — generate the article first")
     active = JobRepo(request.state.pb).first(
         filter=(
             f'type="plan_article_images" && payload.articleId="{article_id}" && {_ACTIVE_FILTER}'
@@ -96,7 +95,7 @@ def queue_image_plan(request: Request, project_id: str, article_id: str):
     )
     if active:
         return success_response(
-            _("The image plan is already being processed — the page refreshes automatically"),
+            ("The image plan is already being processed — the page refreshes automatically"),
             extra_events={"refreshArticle": True},
         )
     _queue_job(
@@ -109,7 +108,7 @@ def queue_image_plan(request: Request, project_id: str, article_id: str):
         max_attempts=3,
     )
     return success_response(
-        _("Image plan queued for processing"),
+        ("Image plan queued for processing"),
         extra_events={"refreshArticle": True, "refreshJobs": True},
     )
 
@@ -144,7 +143,7 @@ def _queue_generation(
     )
     if active:
         return success_response(
-            _("This image is already queued for generation — the page refreshes automatically"),
+            ("This image is already queued for generation — the page refreshes automatically"),
             extra_events={"refreshArticle": True},
         )
     version = ArticleImageRepo(request.state.pb).next_version(article_id, role, section_key)
@@ -179,25 +178,25 @@ def queue_image_generate(
     require_project_role(request, project_id)
     article = _load_article(request, project_id, article_id)
     if not article:
-        return error_response(_("Article not found"))
+        return error_response("Article not found")
     if not article.get("imagePlan"):
-        return error_response(_("Generate the image plan first"))
+        return error_response("Generate the image plan first")
     role = safe_str(role)
     if role == "cover":
         section_key = "cover"
     elif role == "interior":
         section_key = safe_str(section_key)
         if not _SECTION_KEY_RE.match(section_key):
-            return error_response(_("Invalid section key — it must be in the form section-N"))
+            return error_response("Invalid section key — it must be in the form section-N")
     else:
-        return error_response(_("Invalid image role"))
+        return error_response("Invalid image role")
     return _queue_generation(
         request,
         project_id,
         article_id,
         role=role,
         section_key=section_key,
-        message=_("Image generation queued"),
+        message=("Image generation queued"),
     )
 
 
@@ -209,10 +208,10 @@ def queue_image_regenerate(request: Request, project_id: str, article_id: str, i
     require_project_access(request, project_id)
     require_project_role(request, project_id)
     if not _load_article(request, project_id, article_id):
-        return error_response(_("Article not found"))
+        return error_response("Article not found")
     row = _load_image(request, project_id, article_id, image_id)
     if not row:
-        return error_response(_("Image not found"))
+        return error_response("Image not found")
     role = str(row.get("role") or "")
     section_key = str(row.get("sectionKey") or ("cover" if role == "cover" else ""))
     return _queue_generation(
@@ -221,7 +220,7 @@ def queue_image_regenerate(request: Request, project_id: str, article_id: str, i
         article_id,
         role=role,
         section_key=section_key,
-        message=_("Image regeneration queued (new version)"),
+        message=("Image regeneration queued (new version)"),
     )
 
 
@@ -236,12 +235,12 @@ def select_image_version(request: Request, project_id: str, article_id: str, ima
     require_project_role(request, project_id)
     row = _load_image(request, project_id, article_id, image_id)
     if not row:
-        return error_response(_("Image not found"))
+        return error_response("Image not found")
     if row.get("status") != "ready":
-        return error_response(_("Only ready versions can be selected"))
+        return error_response("Only ready versions can be selected")
     ArticleImageRepo(request.state.pb).set_active(image_id)
     return success_response(
-        _("This image version was selected"), extra_events={"refreshArticle": True}
+        ("This image version was selected"), extra_events={"refreshArticle": True}
     )
 
 
@@ -254,10 +253,10 @@ def remove_image(request: Request, project_id: str, article_id: str, image_id: s
     require_project_role(request, project_id)
     row = _load_image(request, project_id, article_id, image_id)
     if not row:
-        return error_response(_("Image not found"))
+        return error_response("Image not found")
     ArticleImageRepo(request.state.pb).deactivate(image_id)
     return success_response(
-        _("Image removed from the article (the version stays in history)"),
+        ("Image removed from the article (the version stays in history)"),
         extra_events={"refreshArticle": True},
     )
 
@@ -277,17 +276,17 @@ def update_image_metadata(
     require_project_role(request, project_id)
     row = _load_image(request, project_id, article_id, image_id)
     if not row:
-        return error_response(_("Image not found"))
+        return error_response("Image not found")
     alt = safe_str(alt_text)
     if not alt:
-        return error_response(_("Alt text cannot be empty"))
+        return error_response("Alt text cannot be empty")
     try:
         ArticleImageRepo(request.state.pb).update_metadata(
             image_id, alt_text=alt, caption=safe_str(caption) or None
         )
     except ValueError as exc:
         return error_response(str(exc))
-    return success_response(_("Image info saved"), extra_events={"refreshArticle": True})
+    return success_response(("Image info saved"), extra_events={"refreshArticle": True})
 
 
 # ---------------------------------------------------------------------------
@@ -301,9 +300,9 @@ def queue_image_optimize(request: Request, project_id: str, article_id: str, ima
     require_project_role(request, project_id)
     row = _load_image(request, project_id, article_id, image_id)
     if not row:
-        return error_response(_("Image not found"))
+        return error_response("Image not found")
     if not row.get("sourceFile"):
-        return error_response(_("This image has no source file — generate it first"))
+        return error_response("This image has no source file — generate it first")
     active = JobRepo(request.state.pb).first(
         filter=(
             f'type="optimize_article_image" && payload.imageId="{image_id}" && {_ACTIVE_FILTER}'
@@ -311,7 +310,7 @@ def queue_image_optimize(request: Request, project_id: str, article_id: str, ima
     )
     if active:
         return success_response(
-            _("Optimization is already queued"), extra_events={"refreshArticle": True}
+            ("Optimization is already queued"), extra_events={"refreshArticle": True}
         )
     _queue_job(
         request,
@@ -323,7 +322,7 @@ def queue_image_optimize(request: Request, project_id: str, article_id: str, ima
         max_attempts=3,
     )
     return success_response(
-        _("Image re-optimization queued"),
+        ("Image re-optimization queued"),
         extra_events={"refreshArticle": True, "refreshJobs": True},
     )
 
@@ -343,9 +342,9 @@ def queue_image_publish(
     require_project_role(request, project_id)
     row = _load_image(request, project_id, article_id, image_id)
     if not row:
-        return error_response(_("Image not found"))
+        return error_response("Image not found")
     if row.get("status") != "ready":
-        return error_response(_("Only ready images can be uploaded"))
+        return error_response("Only ready images can be uploaded")
     _queue_job(
         request,
         project_id,
@@ -356,6 +355,6 @@ def queue_image_publish(
         max_attempts=3,
     )
     return success_response(
-        _("Image upload to WordPress queued"),
+        ("Image upload to WordPress queued"),
         extra_events={"refreshArticle": True, "refreshJobs": True},
     )

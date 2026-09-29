@@ -1,24 +1,25 @@
 import os
 from datetime import datetime
 
-import jdatetime
 from fastapi.templating import Jinja2Templates
-
-from app.i18n import _, get_locale, locale_proxy, ngettext
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 
-# i18n globals — `_`/`ngettext` read the request-scoped locale (contextvar,
-# set by middleware); `locale` exposes metadata (code/direction/native_name).
-templates.env.globals["_"] = _
-templates.env.globals["ngettext"] = ngettext
-templates.env.globals["locale"] = locale_proxy
+def _hx_partial(request):
+    """`partial` is true for HTMX requests, so the shell layout renders only the
+    swapped page body instead of the whole application chrome."""
+    return {"partial": request.headers.get("HX-Request") == "true"}
+
+
+templates = Jinja2Templates(
+    directory=os.path.join(BASE_DIR, "templates"),
+    context_processors=[_hx_partial],
+)
 
 
 # ---------------------------------------------------------------------------
-# Locale-aware date helpers (fa = Jalali, others = Babel Gregorian)
+# Date helpers (English-only Gregorian via Babel)
 # ---------------------------------------------------------------------------
 def _parse_dt(date_str):
     """Normalize PB timestamps (str or datetime) to a naive UTC datetime."""
@@ -39,45 +40,22 @@ def _parse_dt(date_str):
         return None
 
 
-def to_jalali_year(date_str):
-    parsed = _parse_dt(date_str)
-    if not parsed:
-        return date_str or ""
-    return jdatetime.datetime.fromgregorian(datetime=parsed).year
-
-
-def to_jalali_date(date_str):
-    parsed = _parse_dt(date_str)
-    if not parsed:
-        return date_str or ""
-    return jdatetime.datetime.fromgregorian(datetime=parsed).strftime("%Y/%m/%d")
-
-
-def to_jalali_datetime(date_str):
-    parsed = _parse_dt(date_str)
-    if not parsed:
-        return date_str or ""
-    return jdatetime.datetime.fromgregorian(datetime=parsed).strftime("%Y/%m/%d %H:%M")
-
-
 def _babel_date(parsed, fmt):
     from babel.dates import format_date
 
-    return format_date(parsed, format=fmt, locale=get_locale().code.replace("-", "_"))
+    return format_date(parsed, format=fmt, locale="en")
 
 
 def _babel_datetime(parsed, fmt):
     from babel.dates import format_datetime
 
-    return format_datetime(parsed, format=fmt, locale=get_locale().code.replace("-", "_"))
+    return format_datetime(parsed, format=fmt, locale="en")
 
 
 def loc_year(date_str):
     parsed = _parse_dt(date_str)
     if not parsed:
         return date_str or ""
-    if get_locale().code == "fa":
-        return to_jalali_year(parsed)
     return _babel_date(parsed, "yyyy")
 
 
@@ -85,8 +63,6 @@ def loc_date(date_str):
     parsed = _parse_dt(date_str)
     if not parsed:
         return date_str or ""
-    if get_locale().code == "fa":
-        return to_jalali_date(parsed)
     return _babel_date(parsed, "medium")
 
 
@@ -94,8 +70,6 @@ def loc_datetime(date_str):
     parsed = _parse_dt(date_str)
     if not parsed:
         return date_str or ""
-    if get_locale().code == "fa":
-        return to_jalali_datetime(parsed)
     return _babel_datetime(parsed, "short")
 
 
@@ -163,60 +137,60 @@ def status_badge(status: str) -> str:
 
 def status_label(status: str) -> str:
     labels = {
-        "pending": _("Pending"),
-        "retrying": _("Awaiting retry"),
-        "running": _("Running"),
-        "completed": _("Completed"),
-        "failed": _("Failed"),
-        "cancelled": _("Cancelled"),
-        "planned": _("Planned"),
-        "queued": _("Queued"),
-        "planning": _("Outlining"),
-        "outline_ready": _("Outline ready"),
-        "writing": _("Writing"),
-        "review": _("Review"),
-        "approved": _("Approved"),
-        "sent_back": _("Returned"),
-        "publishing": _("Publishing"),
-        "published": _("Published"),
-        "skipped": _("Rejected"),
-        "skipped_duplicate": _("Duplicate"),
-        "draft": _("Draft"),
-        "generating": _("Generating"),
+        "pending": ("Pending"),
+        "retrying": ("Awaiting retry"),
+        "running": ("Running"),
+        "completed": ("Completed"),
+        "failed": ("Failed"),
+        "cancelled": ("Cancelled"),
+        "planned": ("Planned"),
+        "queued": ("Queued"),
+        "planning": ("Outlining"),
+        "outline_ready": ("Outline ready"),
+        "writing": ("Writing"),
+        "review": ("Review"),
+        "approved": ("Approved"),
+        "sent_back": ("Returned"),
+        "publishing": ("Publishing"),
+        "published": ("Published"),
+        "skipped": ("Rejected"),
+        "skipped_duplicate": ("Duplicate"),
+        "draft": ("Draft"),
+        "generating": ("Generating"),
         # images
-        "optimizing": _("Optimizing"),
-        "ready": _("Ready"),
-        "uploading": _("Uploading"),
-        "done": _("Done"),
-        "indexed": _("Indexed"),
-        "deleted": _("Deleted"),
-        "manual": _("Manual"),
-        "schedule": _("Schedule"),
-        "healthy": _("Healthy"),
-        "degraded": _("Degraded"),
-        "unhealthy": _("Unhealthy"),
-        "unknown": _("Unknown"),
-        "info": _("Info"),
-        "warning": _("Warning"),
-        "error": _("Error"),
-        "debug": _("Debug"),
-        "job.created": _("Job created"),
-        "job.claimed": _("Job claimed"),
-        "job.started": _("Job started"),
-        "job.stage_started": _("Stage started"),
-        "job.stage_completed": _("Stage finished"),
-        "job.retry_scheduled": _("Retry scheduled"),
-        "job.provider_error": _("Provider error"),
-        "job.completed": _("Job completed"),
-        "job.failed": _("Job failed"),
-        "job.cancelled": _("Job cancelled"),
-        "provider_call": _("Provider call"),
+        "optimizing": ("Optimizing"),
+        "ready": ("Ready"),
+        "uploading": ("Uploading"),
+        "done": ("Done"),
+        "indexed": ("Indexed"),
+        "deleted": ("Deleted"),
+        "manual": ("Manual"),
+        "schedule": ("Schedule"),
+        "healthy": ("Healthy"),
+        "degraded": ("Degraded"),
+        "unhealthy": ("Unhealthy"),
+        "unknown": ("Unknown"),
+        "info": ("Info"),
+        "warning": ("Warning"),
+        "error": ("Error"),
+        "debug": ("Debug"),
+        "job.created": ("Job created"),
+        "job.claimed": ("Job claimed"),
+        "job.started": ("Job started"),
+        "job.stage_started": ("Stage started"),
+        "job.stage_completed": ("Stage finished"),
+        "job.retry_scheduled": ("Retry scheduled"),
+        "job.provider_error": ("Provider error"),
+        "job.completed": ("Job completed"),
+        "job.failed": ("Job failed"),
+        "job.cancelled": ("Job cancelled"),
+        "provider_call": ("Provider call"),
     }
     return labels.get(status, status)
 
 
 # ---------------------------------------------------------------------------
-# Relative time (locale-aware)
+# Relative time (English-only)
 # ---------------------------------------------------------------------------
 def to_rel_time(date_str):
     parsed = _parse_dt(date_str)
@@ -226,15 +200,15 @@ def to_rel_time(date_str):
 
     seconds = max(0, int((dt.datetime.now(dt.UTC) - parsed.replace(tzinfo=dt.UTC)).total_seconds()))
     if seconds < 45:
-        return _("just now")
+        return "just now"
     if seconds < 3600:
         n = seconds // 60
-        return ngettext("1 minute ago", "%(n)d minutes ago", n) % {"n": n}
+        return "1 minute ago" if n == 1 else f"{n} minutes ago"
     if seconds < 86400:
         n = seconds // 3600
-        return ngettext("1 hour ago", "%(n)d hours ago", n) % {"n": n}
+        return "1 hour ago" if n == 1 else f"{n} hours ago"
     n = seconds // 86400
-    return ngettext("1 day ago", "%(n)d days ago", n) % {"n": n}
+    return "1 day ago" if n == 1 else f"{n} days ago"
 
 
 # ---------------------------------------------------------------------------

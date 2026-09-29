@@ -2,90 +2,90 @@
 {% block dashboard_content %}
 {% import 'macros/forms.html' as f %}
 
-{{ f.page_header(_('Jobs'), _('Monitor indexing and article generation across all projects'), _('Operations & monitoring'), '<span class="text-xs opacity-50">' ~ total ~ _(' items</span>')) }}
+{{ f.page_header(('Jobs'), ('Monitor indexing and article generation across all projects'), ('Operations & monitoring'), '<span class="text-xs opacity-50">' ~ total ~ (' items</span>')) }}
 
 <!-- Worker scheduler status -->
 {% if scheduler_heartbeat %}
 <div class="ezdistro-panel border-base-300/70">
-    <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ _('Automatic schedules (worker)') }}</h2></div>
+    <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ ('Automatic schedules (worker)') }}</h2></div>
     <div class="p-4 text-xs flex flex-wrap items-center gap-x-6 gap-y-2">
-        <span>{{ _('Last check:') }} <span class="font-bold">{{ scheduler_heartbeat.lastPollAt|loc_dt }}</span></span>
-        <span>{{ _('Schedules due:') }} <span class="font-bold tabular">{{ scheduler_heartbeat.due or 0 }}</span></span>
-        <span>{{ _('Jobs created:') }} <span class="font-bold tabular {{ 'text-success' if (scheduler_heartbeat.created or 0) > 0 }}">{{ scheduler_heartbeat.created or 0 }}</span></span>
+        <span>{{ ('Last check:') }} <span class="font-bold">{{ scheduler_heartbeat.lastPollAt|loc_dt }}</span></span>
+        <span>{{ ('Schedules due:') }} <span class="font-bold tabular">{{ scheduler_heartbeat.due or 0 }}</span></span>
+        <span>{{ ('Jobs created:') }} <span class="font-bold tabular {{ 'text-success' if (scheduler_heartbeat.created or 0) > 0 }}">{{ scheduler_heartbeat.created or 0 }}</span></span>
         {% if scheduler_heartbeat.failed %}
-        <span class="text-error font-bold">{{ _('Errors running %(n)s schedule(s)') % {'n': scheduler_heartbeat.failed} }}</span>
+        <span class="text-error font-bold">{{ ('Errors running %(n)s schedule(s)') % {'n': scheduler_heartbeat.failed} }}</span>
         {% endif %}
         {% if (scheduler_heartbeat.due or 0) > 0 and not (scheduler_heartbeat.created or 0) %}
-        <span class="text-warning">{{ _('Schedules were due but no job was created — check the worker log.') }}</span>
+        <span class="text-warning">{{ ('Schedules were due but no job was created — check the worker log.') }}</span>
         {% endif %}
     </div>
 </div>
 {% else %}
 <div class="ezdistro-panel border-error/40">
-    <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title text-error">{{ _('Automatic schedules (worker)') }}</h2></div>
+    <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title text-error">{{ ('Automatic schedules (worker)') }}</h2></div>
     <div class="p-4 text-xs">
-        <span class="text-error font-bold">{{ _('The worker has not checked schedules yet.') }}</span>
-        <span class="opacity-70"> {{ _('— make sure the worker process') }} <code class="font-mono" dir="ltr">make worker</code> {{ _('is running (and was restarted after the last code change).') }}</span>
+        <span class="text-error font-bold">{{ ('The worker has not checked schedules yet.') }}</span>
+        <span class="opacity-70"> {{ ('— make sure the worker process') }} <code class="font-mono" dir="ltr">make worker</code> {{ ('is running (and was restarted after the last code change).') }}</span>
     </div>
 </div>
 {% endif %}
 
 <!-- Filters -->
-{{ f.panel(_('Filters'), '', '', 'p-4') }}
+{{ f.panel(('Filters'), '', '', 'p-4') }}
     <form method="get" action="/jobs" class="flex flex-col gap-3">
         <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
             <label class="form-control col-span-2 lg:col-span-1">
-                <span class="label-text text-xs font-medium">{{ _('Project') }}</span>
+                <span class="label-text text-xs font-medium">{{ ('Project') }}</span>
                 <select name="project" class="select select-sm">
-                    <option value="">{{ _('All') }}</option>
+                    <option value="">{{ ('All') }}</option>
                     {% for p in projects %}
                     <option value="{{ p.id }}" {{ 'selected' if f.project == p.id }}>{{ p.name }}</option>
                     {% endfor %}
                 </select>
             </label>
             <label class="form-control">
-                <span class="label-text text-xs font-medium">{{ _('Type') }}</span>
+                <span class="label-text text-xs font-medium">{{ ('Type') }}</span>
                 <select name="job_type" class="select select-sm">
-                    <option value="">{{ _('All') }}</option>
+                    <option value="">{{ ('All') }}</option>
                     {% for t in job_types %}
                     <option value="{{ t }}" {{ 'selected' if f.job_type == t }}>{{ t }}</option>
                     {% endfor %}
                 </select>
             </label>
             <label class="form-control">
-                <span class="label-text text-xs font-medium">{{ _('Status') }}</span>
+                <span class="label-text text-xs font-medium">{{ ('Status') }}</span>
                 <select name="status" class="select select-sm">
-                    <option value="">{{ _('All') }}</option>
+                    <option value="">{{ ('All') }}</option>
                     {% for s in statuses %}
                     <option value="{{ s }}" {{ 'selected' if f.status == s }}>{{ s|status_label }}</option>
                     {% endfor %}
                 </select>
             </label>
             <label class="form-control">
-                <span class="label-text text-xs font-medium">{{ _('Error type') }}</span>
+                <span class="label-text text-xs font-medium">{{ ('Error type') }}</span>
                 <select name="failure_type" class="select select-sm">
-                    <option value="">{{ _('All') }}</option>
+                    <option value="">{{ ('All') }}</option>
                     {% for code in error_codes %}
                     <option value="{{ code }}" {{ 'selected' if f.failure_type == code }}>{{ code }}</option>
                     {% endfor %}
                 </select>
             </label>
             <label class="form-control">
-                <span class="label-text text-xs font-medium">{{ _('Worker') }}</span>
+                <span class="label-text text-xs font-medium">{{ ('Worker') }}</span>
                 <input name="worker" class="input input-sm" dir="ltr" value="{{ f.worker }}" placeholder="worker id" />
             </label>
             <label class="form-control">
-                <span class="label-text text-xs font-medium">{{ _('From date') }}</span>
+                <span class="label-text text-xs font-medium">{{ ('From date') }}</span>
                 <input name="date_from" type="date" class="input input-sm" value="{{ f.date_from }}" />
             </label>
             <label class="form-control">
-                <span class="label-text text-xs font-medium">{{ _('To date') }}</span>
+                <span class="label-text text-xs font-medium">{{ ('To date') }}</span>
                 <input name="date_to" type="date" class="input input-sm" value="{{ f.date_to }}" />
             </label>
         </div>
         <div class="flex items-center gap-2">
-            <button type="submit" class="btn btn-primary btn-sm">{{ _('Apply filter') }}</button>
-            <a href="/jobs" class="btn btn-ghost btn-sm">{{ _('Clear') }}</a>
+            <button type="submit" class="btn btn-primary btn-sm">{{ ('Apply filter') }}</button>
+            <a href="/jobs" class="btn btn-ghost btn-sm">{{ ('Clear') }}</a>
         </div>
     </form>
 {{ f.panel_close() }}
@@ -96,14 +96,14 @@
         <table class="table table-sm">
             <thead>
                 <tr>
-                    <th>{{ _('Type') }}</th>
-                    <th class="hidden xl:table-cell">{{ _('Project') }}</th>
-                    <th>{{ _('Status') }}</th>
-                    <th class="hidden sm:table-cell">{{ _('Progress') }}</th>
-                    <th class="hidden 2xl:table-cell">{{ _('Message') }}</th>
-                    <th class="hidden xl:table-cell">{{ _('Attempt') }}</th>
-                    <th class="hidden xl:table-cell">{{ _('Time') }}</th>
-                    <th><span class="sr-only">{{ _('Actions') }}</span></th>
+                    <th>{{ ('Type') }}</th>
+                    <th class="hidden xl:table-cell">{{ ('Project') }}</th>
+                    <th>{{ ('Status') }}</th>
+                    <th class="hidden sm:table-cell">{{ ('Progress') }}</th>
+                    <th class="hidden 2xl:table-cell">{{ ('Message') }}</th>
+                    <th class="hidden xl:table-cell">{{ ('Attempt') }}</th>
+                    <th class="hidden xl:table-cell">{{ ('Time') }}</th>
+                    <th><span class="sr-only">{{ ('Actions') }}</span></th>
                 </tr>
             </thead>
             <tbody>
@@ -114,14 +114,14 @@
                     <td>
                         <span class="badge badge-sm {{ j.status|status_badge }}">{{ j.status|status_label }}</span>
                         <div class="mt-1 flex items-center gap-1 sm:hidden">
-                            <progress class="progress progress-primary h-1.5 w-14" value="{{ j.progress or 0 }}" max="100" aria-label="{{ _('Progress') }}"></progress>
-                            <span class="text-[0.65rem] tabular-nums">{{ _('%(n)s%%') % {'n': j.progress or 0} }}</span>
+                            <progress class="progress progress-primary h-1.5 w-14" value="{{ j.progress or 0 }}" max="100" aria-label="{{ ('Progress') }}"></progress>
+                            <span class="text-[0.65rem] tabular-nums">{{ ('%(n)s%%') % {'n': j.progress or 0} }}</span>
                         </div>
                     </td>
                     <td class="hidden w-32 sm:table-cell">
                         <div class="flex items-center gap-2">
                             <progress class="progress progress-primary w-16 h-1.5" value="{{ j.progress or 0 }}" max="100"></progress>
-                            <span class="text-xs tabular">{{ _('%(n)s%%') % {'n': j.progress or 0} }}</span>
+                            <span class="text-xs tabular">{{ ('%(n)s%%') % {'n': j.progress or 0} }}</span>
                         </div>
                     </td>
                     <td class="hidden max-w-48 text-xs 2xl:table-cell">
@@ -134,15 +134,15 @@
                     <td class="whitespace-nowrap">
                         {% if j.status in ['pending', 'retrying', 'running'] %}
                         <button class="btn btn-ghost btn-sm text-warning"
-                                hx-post="/jobs/{{ j.id }}/cancel" hx-swap="none" hx-confirm="{{ _('Cancel this job?') }}">{{ _('Cancel') }}</button>
+                                hx-post="/jobs/{{ j.id }}/cancel" hx-swap="none" hx-confirm="{{ ('Cancel this job?') }}">{{ ('Cancel') }}</button>
                         {% elif j.status == 'failed' %}
                         <button class="btn btn-ghost btn-sm text-primary"
-                                hx-post="/jobs/{{ j.id }}/retry" hx-swap="none">{{ _('Retry') }}</button>
+                                hx-post="/jobs/{{ j.id }}/retry" hx-swap="none">{{ ('Retry') }}</button>
                         {% endif %}
                     </td>
                 </tr>
                 {% else %}
-                <tr><td colspan="8"><div class="ezdistro-empty py-8"><p class="font-bold text-base-content/70">{{ _('No jobs match these filters') }}</p></div></td></tr>
+                <tr><td colspan="8"><div class="ezdistro-empty py-8"><p class="font-bold text-base-content/70">{{ ('No jobs match these filters') }}</p></div></td></tr>
                 {% endfor %}
             </tbody>
         </table>
@@ -151,14 +151,14 @@
 
 {% if provider_metrics %}
 <details class="ezdistro-panel mt-4" open>
-    <summary class="ezdistro-panel-head cursor-pointer text-sm font-bold select-none">{{ _('Provider metrics (last 7 days)') }}</summary>
+    <summary class="ezdistro-panel-head cursor-pointer text-sm font-bold select-none">{{ ('Provider metrics (last 7 days)') }}</summary>
     <div class="overflow-x-auto p-4">
         <table class="table table-sm">
             <thead>
                 <tr>
-                    <th>{{ _('Provider') }}</th><th>{{ _('Model') }}</th><th>{{ _('Operation') }}</th><th>{{ _('Count') }}</th>
-                    <th>{{ _('Success') }}</th><th>{{ _('Failure') }}</th><th>{{ _('Average (ms)') }}</th><th>P95 (ms)</th>
-                    <th>{{ _('Retry') }}</th><th>{{ _('Tokens') }}</th>
+                    <th>{{ ('Provider') }}</th><th>{{ ('Model') }}</th><th>{{ ('Operation') }}</th><th>{{ ('Count') }}</th>
+                    <th>{{ ('Success') }}</th><th>{{ ('Failure') }}</th><th>{{ ('Average (ms)') }}</th><th>P95 (ms)</th>
+                    <th>{{ ('Retry') }}</th><th>{{ ('Tokens') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -168,8 +168,8 @@
                     <td class="text-xs" dir="ltr">{{ m.model or '—' }}</td>
                     <td class="text-xs" dir="ltr">{{ m.operation }}</td>
                     <td class="text-xs tabular">{{ m.requestCount }}</td>
-                    <td class="text-xs text-success tabular">{{ _('%(n)s%%') % {'n': (m.successRate * 100)|round(1)} }}</td>
-                    <td class="text-xs tabular {{ 'text-error' if m.failureRate else 'opacity-50' }}">{{ _('%(n)s%%') % {'n': (m.failureRate * 100)|round(1)} }}</td>
+                    <td class="text-xs text-success tabular">{{ ('%(n)s%%') % {'n': (m.successRate * 100)|round(1)} }}</td>
+                    <td class="text-xs tabular {{ 'text-error' if m.failureRate else 'opacity-50' }}">{{ ('%(n)s%%') % {'n': (m.failureRate * 100)|round(1)} }}</td>
                     <td class="text-xs tabular">{{ m.avgLatencyMs }}</td>
                     <td class="text-xs font-bold tabular">{{ m.p95LatencyMs }}</td>
                     <td class="text-xs tabular">{{ m.retryCount }}</td>

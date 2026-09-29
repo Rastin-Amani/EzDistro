@@ -6,9 +6,11 @@
 
      hx-trigger="refreshPrompts from:body"
 
+     hx-target="this"
+
      hx-swap="outerHTML">
 
-{{ f.page_header(_('Prompts'), _('Manage prompt versions and run interactive tests.'), eyebrow=_('Project')) }}
+{{ f.page_header(('Prompts'), ('Manage prompt versions and run interactive tests.'), eyebrow=('Project')) }}
 
     <!-- Variables reference -->
 
@@ -16,7 +18,7 @@
 
         <summary class="ezdistro-panel-head cursor-pointer">
 
-            <span class="ezdistro-panel-title">{{ _('Available variables') }}</span>
+            <span class="ezdistro-panel-title">{{ ('Available variables') }}</span>
 
         </summary>
 
@@ -52,11 +54,11 @@
 
             {% if active %}
 
-            <span class="badge badge-soft badge-success badge-sm">{{ _('Active version: v%(n)s') % {'n': active.version} }}</span>
+            <span class="badge badge-soft badge-success badge-sm">{{ ('Active version: v%(n)s') % {'n': active.version} }}</span>
 
             {% else %}
 
-            <span class="badge badge-soft badge-warning badge-sm">{{ _('Global default is used') }}</span>
+            <span class="badge badge-soft badge-warning badge-sm">{{ ('Global default is used') }}</span>
 
             {% endif %}
 
@@ -66,7 +68,7 @@
 
             <form hx-post="/projects/{{ project.id }}/prompts" hx-swap="none" class="flex flex-col gap-2">
 
-                {{ f.textarea(ptype, _('Prompt text'), active.content if active else '', _('Full text of this prompt. You can use the variables listed above.'), 5, false, '', _('Save = new version (v') ~ next_ver ~ ')') }}
+                {{ f.textarea(ptype, ('Prompt text'), active.content if active else '', ('Full text of this prompt. You can use the variables listed above.'), 5, false, '', ('Save = new version (v') ~ next_ver ~ ')') }}
 
                 <div class="flex items-center justify-end">
 
@@ -74,7 +76,7 @@
 
                         <span class="loading loading-spinner loading-xs htmx-indicator"></span>
 
-                        {{ _('Save new version') }}
+                        {{ ('Save new version') }}
 
                     </button>
 
@@ -90,7 +92,7 @@
 
                 <summary class="ezdistro-panel-head cursor-pointer">
 
-                    <span class="ezdistro-panel-title text-xs">{{ _('Interactive prompt test (does not change versions)') }}</span>
+                    <span class="ezdistro-panel-title text-xs">{{ ('Interactive prompt test (does not change versions)') }}</span>
 
                 </summary>
 
@@ -106,15 +108,15 @@
 
                         <div class="label px-0 pb-1">
 
-                            <span class="label-text font-medium text-xs">{{ _('Topic') }}</span>
+                            <span class="label-text font-medium text-xs">{{ ('Topic') }}</span>
 
-                            {{ f.tip(_('Pick a real topic so real retrieval context is built.')) }}
+                            {{ f.tip(('Pick a real topic so real retrieval context is built.')) }}
 
                         </div>
 
                         <select name="topic_id" class="select select-bordered w-full select-sm">
 
-                            <option value="">{{ _('— No topic —') }}</option>
+                            <option value="">{{ ('— No topic —') }}</option>
 
                             {% for t in topics %}
 
@@ -130,9 +132,9 @@
 
                         <div class="label px-0 pb-1">
 
-                            <span class="label-text font-medium text-xs">{{ _('Model') }}</span>
+                            <span class="label-text font-medium text-xs">{{ ('Model') }}</span>
 
-                            {{ f.tip(_('Role of the model the prompt runs with (Outline, Section, Meta or Review).')) }}
+                            {{ f.tip(('Role of the model the prompt runs with (Outline, Section, Meta or Review).')) }}
 
                         </div>
 
@@ -156,7 +158,7 @@
 
                             <span class="loading loading-spinner loading-xs htmx-indicator"></span>
 
-                            {{ _('Test prompt') }}
+                            {{ ('Test prompt') }}
 
                         </button>
 
@@ -184,15 +186,15 @@
 
                         <tr class="text-xs opacity-60">
 
-                            <th>{{ _('Version') }}</th>
+                            <th>{{ ('Version') }}</th>
 
-                            <th>{{ _('Author') }}</th>
+                            <th>{{ ('Author') }}</th>
 
-                            <th>{{ _('Time') }}</th>
+                            <th>{{ ('Time') }}</th>
 
-                            <th>{{ _('Status') }}</th>
+                            <th>{{ ('Status') }}</th>
 
-                            <th>{{ _('Operation') }}</th>
+                            <th>{{ ('Operation') }}</th>
 
                         </tr>
 
@@ -214,11 +216,11 @@
 
                                 {% if v.active %}
 
-                                <span class="badge badge-soft badge-success badge-xs">{{ _('Active') }}</span>
+                                <span class="badge badge-soft badge-success badge-xs">{{ ('Active') }}</span>
 
                                 {% else %}
 
-                                <span class="badge badge-soft badge-neutral badge-xs">{{ _('Inactive') }}</span>
+                                <span class="badge badge-soft badge-neutral badge-xs">{{ ('Inactive') }}</span>
 
                                 {% endif %}
 
@@ -236,7 +238,7 @@
 
                                         hx-swap="none"
 
-                                        hx-confirm="{{ _('Activate this version? The previous version is deactivated.') }}">{{ _('Activate') }}</button>
+                                        hx-confirm="{{ ('Activate this version? The previous version is deactivated.') }}">{{ ('Activate') }}</button>
 
                                 {% endif %}
 
@@ -248,7 +250,7 @@
 
                                         hx-swap="none"
 
-                                        title="{{ _('Copy as a new (inactive) version') }}">{{ _('Duplicate') }}</button>
+                                        title="{{ ('Copy as a new (inactive) version') }}">{{ ('Duplicate') }}</button>
 
                                 {% set other = versions | rejectattr('id', 'equalto', v.id) | first %}
 
@@ -258,7 +260,7 @@
 
                                         hx-get="/projects/{{ project.id }}/prompts/compare?ptype={{ ptype }}&a={{ v.id }}&b={{ other.id }}"
 
-                                        hx-target="#compare-modal" hx-swap="innerHTML">{{ _('Compare') }}</button>
+                                        hx-target="#compare-modal" hx-swap="innerHTML">{{ ('Compare') }}</button>
 
                                 {% endif %}
 

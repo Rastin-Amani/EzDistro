@@ -10,7 +10,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.i18n import _
 from app.repositories.articles import ArticleRepo, SectionRepo
 
 
@@ -25,10 +24,10 @@ class OutlineEditor:
         snapshot = dict(article.get("outline") or {})
         sections = snapshot.get("sections") or []
         if not (0 <= position < len(sections)):
-            raise ValueError(_("Invalid section position"))
+            raise ValueError("Invalid section position")
         target = position - 1 if direction == "up" else position + 1
         if not (0 <= target < len(sections)):
-            raise ValueError(_("Moving in this direction is not possible"))
+            raise ValueError("Moving in this direction is not possible")
         sections[position], sections[target] = sections[target], sections[position]
         return self._commit(article, snapshot)
 
@@ -40,7 +39,7 @@ class OutlineEditor:
         internal_links: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
         if not heading.strip():
-            raise ValueError(_("Section heading is required"))
+            raise ValueError("Section heading is required")
         snapshot = dict(article.get("outline") or {})
         sections = list(snapshot.get("sections") or [])
         sections.append(
@@ -57,7 +56,7 @@ class OutlineEditor:
         snapshot = dict(article.get("outline") or {})
         sections = snapshot.get("sections") or []
         if not (0 <= position < len(sections)):
-            raise ValueError(_("Invalid section position"))
+            raise ValueError("Invalid section position")
         del sections[position]
         snapshot["sections"] = sections
         return self._commit(article, snapshot)
@@ -68,9 +67,9 @@ class OutlineEditor:
         snapshot = dict(article.get("outline") or {})
         sections = snapshot.get("sections") or []
         if not (0 <= position < len(sections)):
-            raise ValueError(_("Invalid section position"))
+            raise ValueError("Invalid section position")
         if not heading.strip():
-            raise ValueError(_("Section heading is required"))
+            raise ValueError("Section heading is required")
         sections[position] = {
             **sections[position],
             "heading": heading.strip(),

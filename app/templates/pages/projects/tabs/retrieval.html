@@ -1,6 +1,6 @@
 {% import 'macros/forms.html' as f %}
 
-{{ f.page_header(_('Retrieval'), _('Diagnose and test the semantic retrieval pipeline.'), eyebrow=_('Project')) }}
+{{ f.page_header(('Retrieval'), ('Diagnose and test the semantic retrieval pipeline.'), eyebrow=('Project')) }}
 
 <div id="retrieval-tab" class="flex flex-col gap-4 w-full">
 
@@ -10,9 +10,9 @@
 
             <div class="flex items-center gap-2">
 
-                <h2 class="ezdistro-panel-title">{{ _('Retrieval diagnostics') }}</h2>
+                <h2 class="ezdistro-panel-title">{{ ('Retrieval diagnostics') }}</h2>
 
-                {{ f.tip(_('Enter a query to run the real retrieval path (embedding → Qdrant search → optional rerank) and inspect the result.')) }}
+                {{ f.tip(('Enter a query to run the real retrieval path (embedding → Qdrant search → optional rerank) and inspect the result.')) }}
 
             </div>
 
@@ -22,25 +22,25 @@
 
             <p class="text-xs opacity-50 leading-relaxed">
 
-                {{ _('Enter a query to run real retrieval and inspect the result. Defaults come from project settings.') }}
+                {{ ('Enter a query to run real retrieval and inspect the result. Defaults come from project settings.') }}
 
             </p>
 
             <form hx-post="/projects/{{ project.id }}/retrieval/diagnose" hx-target="#retrieval-results" hx-swap="innerHTML" class="flex flex-col gap-4">
 
-                {{ f.text('query', _('Search query'), '', _('What we look up while writing the article — e.g. the topic title.'), _('e.g. Best SEO practices'), true) }}
+                {{ f.text('query', ('Search query'), '', ('What we look up while writing the article — e.g. the topic title.'), ('e.g. Best SEO practices'), true) }}
 
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
 
-                    {{ f.number('candidate_count', _('Candidate count'), settings.retrievalTopK or 20, _('Number of candidate chunks before reranking.')) }}
+                    {{ f.number('candidate_count', ('Candidate count'), settings.retrievalTopK or 20, ('Number of candidate chunks before reranking.')) }}
 
-                    {{ f.number('similarity_threshold', _('Similarity threshold'), settings.similarityThreshold or 0.35,
+                    {{ f.number('similarity_threshold', ('Similarity threshold'), settings.similarityThreshold or 0.35,
 
-                        _( 'Minimum similarity score for a chunk to qualify.' ), step='0.05') }}
+                        ( 'Minimum similarity score for a chunk to qualify.' ), step='0.05') }}
 
-                    {{ f.select('rerank_enabled', _('Rerank'), [('0', _('Inactive')), ('1', _('Active'))], '1' if settings.rerankingEnabled else '0', _('Enable a reranker model for better ordering.')) }}
+                    {{ f.select('rerank_enabled', ('Rerank'), [('0', ('Inactive')), ('1', ('Active'))], '1' if settings.rerankingEnabled else '0', ('Enable a reranker model for better ordering.')) }}
 
-                    {{ f.number('rerank_top_n', _('Final results (Top N)'), settings.rerankerTopN or 8, _('Number of final chunks after reranking.')) }}
+                    {{ f.number('rerank_top_n', ('Final results (Top N)'), settings.rerankerTopN or 8, ('Number of final chunks after reranking.')) }}
 
                 </div>
 
@@ -50,7 +50,7 @@
 
                         <span class="loading loading-spinner loading-xs htmx-indicator"></span>
 
-                        {{ _('Run retrieval') }}
+                        {{ ('Run retrieval') }}
 
                     </button>
 

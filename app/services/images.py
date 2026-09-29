@@ -45,7 +45,6 @@ from app.domain.images import (
     style_fingerprint_source,
     validate_publishable_images,
 )
-from app.i18n import _
 from app.jobs.context import JobContext
 from app.jobs.handlers import register_job
 from app.providers.base import ImageRequest, PermanentError, ProviderError, TransientError
@@ -285,7 +284,7 @@ async def _generate_image(ctx: JobContext, *, role: str, section_key: str) -> di
     plan_raw = article.get("imagePlan")
     if not plan_raw:
         raise PermanentError(
-            _("Image plan not created — generate the image plan first"),
+            ("Image plan not created — generate the image plan first"),
             details={"article": article_id},
         )
     plan = ArticleImagePlan.model_validate(plan_raw)
@@ -377,8 +376,8 @@ async def _generate_image(ctx: JobContext, *, role: str, section_key: str) -> di
     image_id = row["id"]
     attempts = repo.bump_attempts(image_id)
 
-    ctx.stage_started("generating", _("Generating the image…"))
-    ctx.progress(10, stage="generating", message=_("Generating the image…"))
+    ctx.stage_started("generating", ("Generating the image…"))
+    ctx.progress(10, stage="generating", message=("Generating the image…"))
     await ctx.check_cancelled()
 
     cache: dict[str, Any] = {}
@@ -436,12 +435,12 @@ async def _generate_image(ctx: JobContext, *, role: str, section_key: str) -> di
             ctx.warning("generated image aspect drifted from plan", {"imageId": image_id})
 
         if imgs["ai_qa_enabled"]:
-            ctx.progress(45, stage="qa", message=_("Checking image quality…"))
+            ctx.progress(45, stage="qa", message=("Checking image quality…"))
             await _ai_qa(ctx, result.data, result.mime_type, spec.prompt)
 
         # optimize + store
-        ctx.stage_started("optimizing", _("Optimizing the image…"))
-        ctx.progress(60, stage="optimizing", message=_("Optimizing the image…"))
+        ctx.stage_started("optimizing", ("Optimizing the image…"))
+        ctx.progress(60, stage="optimizing", message=("Optimizing the image…"))
         repo.mark_optimizing(image_id)
         service = ImageOptimizationService()
         optimized, mime, opt_w, opt_h, small = service.optimize(
@@ -497,12 +496,12 @@ async def _generate_image(ctx: JobContext, *, role: str, section_key: str) -> di
     repo.set_active(image_id)
 
     duration_ms = int((time.monotonic() - started) * 1000)
-    ctx.stage_completed("optimizing", _("Image is ready"))
-    ctx.progress(100, stage="done", message=_("Image is ready"))
+    ctx.stage_completed("optimizing", ("Image is ready"))
+    ctx.progress(100, stage="done", message=("Image is ready"))
     # usage accounting: image_generated (no prompt content — internal event)
     ctx.event(
         "image_generated",
-        _("Image generated"),
+        ("Image generated"),
         {
             "imageId": image_id,
             "role": role,
@@ -558,11 +557,9 @@ async def handle_optimize_article_image(ctx: JobContext) -> dict[str, Any]:
         raise ValueError(f"image not found: {image_id}")
     source = row.get("sourceFile") or ""
     if not source:
-        raise PermanentError(
-            _("This image has no source file — regenerate it before re-optimizing")
-        )
+        raise PermanentError("This image has no source file — regenerate it before re-optimizing")
     imgs = ctx.config.images
-    ctx.stage_started("optimizing", _("Optimizing the image…"))
+    ctx.stage_started("optimizing", ("Optimizing the image…"))
     data = await _download_file(pb_file_url(image_id, source))
     service = ImageOptimizationService()
     optimized, mime, width, height, small = service.optimize(
@@ -590,7 +587,7 @@ async def handle_optimize_article_image(ctx: JobContext) -> dict[str, Any]:
     # serving the pre-re-optimization file until the next publish re-attaches.
     ctx.event(
         "image_optimized",
-        _("Image optimized"),
+        ("Image optimized"),
         {"imageId": image_id, "format": mime, "width": width, "height": height},
     )
     return {"imageId": image_id, "format": mime, "width": width, "height": height}
@@ -608,7 +605,7 @@ async def ensure_wp_media(
         return existing_id, str(row.get("wordpressUrl") or "")
     file_field = row.get("optimizedFile") or row.get("sourceFile") or ""
     if not file_field:
-        raise PermanentError(_("The image has no ready file"), details={"imageId": row["id"]})
+        raise PermanentError(("The image has no ready file"), details={"imageId": row["id"]})
     data = await _download_file(pb_file_url(row["id"], file_field))
     try:
         media = await publisher.upload_media(
@@ -621,7 +618,7 @@ async def ensure_wp_media(
         )
     except ProviderError as exc:
         raise PermanentError(
-            _("Uploading the image to WordPress failed: %(error)s") % {"error": exc},
+            f"Uploading the image to WordPress failed: {exc}",
             details={"category": "wordpress_upload_failure", "imageId": row["id"]},
         ) from exc
     media_id = int(media.get("id") or 0)
@@ -653,9 +650,7 @@ async def handle_publish_article_image(ctx: JobContext) -> dict[str, Any]:
         and not int(article.get("wordpressPostId") or 0)
     ):
         raise PermanentError(
-            _(
-                "The article is not published on WordPress yet — setting the featured image is not possible"
-            )
+            "The article is not published on WordPress yet — setting the featured image is not possible"
         )
     publisher = ctx.providers.publisher
     media_id, url = await ensure_wp_media(ctx, row, article, publisher)
@@ -666,7 +661,7 @@ async def handle_publish_article_image(ctx: JobContext) -> dict[str, Any]:
         featured = True
     ctx.event(
         "image_uploaded",
-        _("Image uploaded to WordPress"),
+        ("Image uploaded to WordPress"),
         {"imageId": image_id, "mediaId": media_id, "url": url, "featured": featured},
     )
     return {"imageId": image_id, "mediaId": media_id, "url": url, "featured": featured}
@@ -713,7 +708,7 @@ async def apply_images_to_html(
     )
     if not ok:
         raise PermanentError(
-            _("Publishing stopped: %(problems)s") % {"problems": "; ".join(problems)},
+            f"Publishing stopped: {'; '.join(problems)}",
             details={"images": problems, "article": article["id"]},
         )
 

@@ -10,7 +10,6 @@ import json
 from types import SimpleNamespace
 from typing import Any
 
-from app.i18n import get_locale, set_request_locale
 from app.repositories.projects import DEFAULT_SETTINGS
 from app.repositories.prompts import PromptRepo
 from app.repositories.topics import TopicRepo
@@ -46,36 +45,26 @@ def make_req_plain(pb: FakePocketBase, user: dict, project_id: str = "") -> Simp
 
 
 def call_route(fn, request, *args, **kwargs):
-    """Invoke a route in Persian for legacy source-language assertions."""
+    """Invoke a route directly (English-only app, no locale setup)."""
     import inspect
 
     from fastapi.params import Form
 
-    previous_locale = get_locale().code
-    set_request_locale("fa")
-    try:
-        for name, param in inspect.signature(fn).parameters.items():
-            if name in kwargs or name == "request":
-                continue
-            if isinstance(param.default, Form):
-                kwargs[name] = ""
-        response = fn(request, *args, **kwargs)
-        getattr(response, "body", None)  # render lazy template responses in this locale
-        return response
-    finally:
-        set_request_locale(previous_locale)
+    for name, param in inspect.signature(fn).parameters.items():
+        if name in kwargs or name == "request":
+            continue
+        if isinstance(param.default, Form):
+            kwargs[name] = ""
+    response = fn(request, *args, **kwargs)
+    getattr(response, "body", None)  # render lazy template responses
+    return response
 
 
 async def call_route_async(fn, request, *args, **kwargs):
-    """Async counterpart for direct route tests that assert Persian copy."""
-    previous_locale = get_locale().code
-    set_request_locale("fa")
-    try:
-        response = await call_route(fn, request, *args, **kwargs)
-        getattr(response, "body", None)
-        return response
-    finally:
-        set_request_locale(previous_locale)
+    """Async counterpart to call_route."""
+    response = await call_route(fn, request, *args, **kwargs)
+    getattr(response, "body", None)
+    return response
 
 
 def toast_message(resp) -> str:

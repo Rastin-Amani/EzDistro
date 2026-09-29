@@ -4,20 +4,20 @@
 
 <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
     <div class="flex items-center gap-2.5 min-w-0">
-        <a href="/projects/{{ project.id }}" class="btn btn-ghost btn-circle btn-sm shrink-0" aria-label="{{ _('Back') }}">
+        <a href="/projects/{{ project.id }}" class="btn btn-ghost btn-circle btn-sm shrink-0" aria-label="{{ ('Back') }}">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5 ltr:rotate-180"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
         </a>
         <div class="min-w-0">
-            <h1 class="font-extrabold text-lg truncate">{{ _('Topics') }}</h1>
-            <span class="text-xs opacity-50">{{ _('%(n)s items · %(v)s') % {'n': total, 'v': project.name} }}</span>
+            <h1 class="font-extrabold text-lg truncate">{{ ('Topics') }}</h1>
+            <span class="text-xs opacity-50">{{ ('%(n)s items · %(v)s') % {'n': total, 'v': project.name} }}</span>
         </div>
     </div>
     <div class="flex items-center gap-2">
-        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('topic-import-modal').showModal()">
+        <button class="btn btn-ghost btn-sm" @click="$store.ui.openModal('topic-import-modal')">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="size-4"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" /></svg>
-            {{ _('CSV / Bulk') }}
+            {{ ('CSV / Bulk') }}
         </button>
-        <button class="btn btn-primary btn-sm" onclick="document.getElementById('new-topic-modal').showModal()">{{ _('+ Topic') }}</button>
+        <button class="btn btn-primary btn-sm" @click="$store.ui.openModal('new-topic-modal')">{{ ('+ Topic') }}</button>
     </div>
 </div>
 
@@ -26,14 +26,14 @@
     <form method="get" action="/projects/{{ project.id }}/topics" class="flex flex-wrap items-center gap-2">
         <input type="hidden" name="status" value="{{ status_filter }}" />
         <input type="hidden" name="sort" value="{{ sort }}" />
-        <input name="q" value="{{ q }}" class="input input-sm w-full sm:w-56" placeholder="{{ _('Search by title or keyword…') }}" />
-        <button type="submit" class="btn btn-ghost btn-sm">{{ _('Search') }}</button>
-        {% if q %}<a href="/projects/{{ project.id }}/topics" class="btn btn-ghost btn-sm text-error">{{ _('Clear') }}</a>{% endif %}
+        <input name="q" value="{{ q }}" class="input input-sm w-full sm:w-56" placeholder="{{ ('Search by title or keyword…') }}" />
+        <button type="submit" class="btn btn-ghost btn-sm">{{ ('Search') }}</button>
+        {% if q %}<a href="/projects/{{ project.id }}/topics" class="btn btn-ghost btn-sm text-error">{{ ('Clear') }}</a>{% endif %}
     </form>
 
     <div class="flex flex-wrap items-center gap-1.5">
         <a href="/projects/{{ project.id }}/topics?q={{ q }}&sort={{ sort }}"
-           class="btn btn-xs rounded-full {{ 'btn-primary' if not status_filter }}">{{ _('All (%(n)s)') % {'n': counts.values()|sum} }}</a>
+           class="btn btn-xs rounded-full {{ 'btn-primary' if not status_filter }}">{{ ('All (%(n)s)') % {'n': counts.values()|sum} }}</a>
         {% for s in statuses %}
         <a href="/projects/{{ project.id }}/topics?status={{ s }}&q={{ q }}&sort={{ sort }}"
            class="btn btn-xs rounded-full {{ 'btn-primary' if status_filter == s }}">
@@ -43,8 +43,8 @@
     </div>
 
     <div class="flex items-center gap-1.5 text-xs opacity-70">
-        <span>{{ _('Sort:') }}</span>
-        {% for key, label in [('priority', _('Priority')), ('priority_asc', _('Priority ↑')), ('created', _('Newest')), ('title', _('Title'))] %}
+        <span>{{ ('Sort:') }}</span>
+        {% for key, label in [('priority', ('Priority')), ('priority_asc', ('Priority ↑')), ('created', ('Newest')), ('title', ('Title'))] %}
         <a href="/projects/{{ project.id }}/topics?sort={{ key }}&status={{ status_filter }}&q={{ q }}"
            class="btn btn-xs rounded-full {{ 'btn-primary' if sort == key }}">{{ label }}</a>
         {% endfor %}
@@ -53,10 +53,10 @@
 
 <!-- Bulk bar -->
 <div class="flex items-center gap-2 mb-3 text-xs px-3 py-2 rounded-xl bg-primary/5 border border-primary/20 text-primary font-medium" id="bulk-bar" hidden>
-    <span id="bulk-count">0</span> {{ _('Selected —') }}
-    <button class="btn btn-primary btn-xs" data-bulk-action="generate">{{ _('Generate article') }}</button>
-    <button class="btn btn-ghost btn-xs" data-bulk-action="retry">{{ _('Retry') }}</button>
-    <button class="btn btn-ghost btn-xs text-warning" data-bulk-action="cancel">{{ _('Cancel') }}</button>
+    <span id="bulk-count">0</span> {{ ('Selected —') }}
+    <button class="btn btn-primary btn-xs" data-bulk-action="generate">{{ ('Generate article') }}</button>
+    <button class="btn btn-ghost btn-xs" data-bulk-action="retry">{{ ('Retry') }}</button>
+    <button class="btn btn-ghost btn-xs text-warning" data-bulk-action="cancel">{{ ('Cancel') }}</button>
 </div>
 <form id="bulk-form" hx-post="/projects/{{ project.id }}/topics/bulk" hx-swap="none" class="hidden">
     <input type="hidden" name="action" id="bulk-action" />
@@ -69,19 +69,19 @@
         <table class="table table-sm">
             <thead>
                 <tr>
-                    <th class="w-8"><input type="checkbox" class="checkbox checkbox-sm" id="check-all" aria-label="{{ _('انتخاب همه موضوع‌ها') }}" /></th>
-                    <th>{{ _('Title') }}</th>
-                    <th class="hidden md:table-cell">{{ _('Keyword') }}</th>
-                    <th class="hidden lg:table-cell">{{ _('Pillar/Cluster') }}</th>
-                    <th>{{ _('Status') }}</th>
-                    <th class="hidden sm:table-cell">{{ _('Priority') }}</th>
-                    <th>{{ _('Operation') }}</th>
+                    <th class="w-8"><input type="checkbox" class="checkbox checkbox-sm" id="check-all" aria-label="{{ ('Select all topics') }}" /></th>
+                    <th>{{ ('Title') }}</th>
+                    <th class="hidden md:table-cell">{{ ('Keyword') }}</th>
+                    <th class="hidden lg:table-cell">{{ ('Pillar/Cluster') }}</th>
+                    <th>{{ ('Status') }}</th>
+                    <th class="hidden sm:table-cell">{{ ('Priority') }}</th>
+                    <th>{{ ('Operation') }}</th>
                 </tr>
             </thead>
             <tbody>
                 {% for t in topics %}
                 <tr>
-                    <td><input type="checkbox" class="checkbox checkbox-sm topic-check" value="{{ t.id }}" aria-label="{{ _('انتخاب موضوع «%(v)s»') % {'v': t.title} }}" /></td>
+                    <td><input type="checkbox" class="checkbox checkbox-sm topic-check" value="{{ t.id }}" aria-label="{{ ('Select topic "%(v)s"') % {'v': t.title} }}" /></td>
                     <td class="max-w-40 text-xs sm:max-w-56">
                         <p class="truncate font-semibold">{{ t.title }}</p>
                         {% if t.type %}<span class="badge badge-soft badge-neutral badge-xs mt-0.5">{{ t.type }}</span>{% endif %}
@@ -94,22 +94,22 @@
                         <div class="flex items-center justify-end gap-1">
                         {% if t.status in ['planned', 'failed', 'cancelled'] %}
                         <button class="btn btn-primary btn-sm"
-                                hx-post="/projects/{{ project.id }}/topics/{{ t.id }}/write" hx-swap="none">{{ _('Generate') }}</button>
+                                hx-post="/projects/{{ project.id }}/topics/{{ t.id }}/write" hx-swap="none">{{ ('Generate') }}</button>
                         {% elif t.articleId %}
-                        <a class="btn btn-ghost btn-sm" href="/projects/{{ project.id }}/articles/{{ t.articleId }}/workspace">{{ _('Article') }}</a>
+                        <a class="btn btn-ghost btn-sm" href="/projects/{{ project.id }}/articles/{{ t.articleId }}/workspace">{{ ('Article') }}</a>
                         {% endif %}
                         <details>
-                            <summary class="btn btn-ghost btn-square btn-sm list-none" aria-label="{{ _('اقدام‌های بیشتر') }}">
+                            <summary class="btn btn-ghost btn-square btn-sm list-none" aria-label="{{ ('More actions') }}">
                                 <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="size-5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h.01M12 12h.01M19 12h.01" /></svg>
                             </summary>
                             <ul class="menu mt-1 w-40 rounded-box border border-base-300 bg-base-100 p-2 text-sm">
                                 {% if t.status in ['planned', 'queued', 'planning', 'outline_ready', 'writing'] %}
-                                <li><button class="text-warning" hx-post="/projects/{{ project.id }}/topics/{{ t.id }}/cancel" hx-swap="none">{{ _('Cancel') }}</button></li>
+                                <li><button class="text-warning" hx-post="/projects/{{ project.id }}/topics/{{ t.id }}/cancel" hx-swap="none">{{ ('Cancel') }}</button></li>
                                 {% endif %}
                                 {% if t.articleId and t.status in ['planned', 'failed', 'cancelled'] %}
-                                <li><a href="/projects/{{ project.id }}/articles/{{ t.articleId }}/workspace">{{ _('Article') }}</a></li>
+                                <li><a href="/projects/{{ project.id }}/articles/{{ t.articleId }}/workspace">{{ ('Article') }}</a></li>
                                 {% endif %}
-                                <li><button class="text-error" hx-post="/projects/{{ project.id }}/topics/{{ t.id }}/delete" hx-swap="none" hx-confirm="{{ _('Delete this topic?') }}">{{ _('Delete') }}</button></li>
+                                <li><button class="text-error" hx-post="/projects/{{ project.id }}/topics/{{ t.id }}/delete" hx-swap="none" hx-confirm="{{ ('Delete this topic?') }}">{{ ('Delete') }}</button></li>
                             </ul>
                         </details>
                         </div>
@@ -121,9 +121,9 @@
                         <div class="ezdistro-empty-icon">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 0 0-1.883 2.542l.857 6a2.25 2.25 0 0 0 2.227 1.932H19.05a2.25 2.25 0 0 0 2.227-1.932l.857-6a2.25 2.25 0 0 0-1.883-2.542m-16.5 0V6A2.25 2.25 0 0 1 6 3.75h12A2.25 2.25 0 0 1 20.25 6v3.776" /></svg>
                         </div>
-                        <p class="font-bold text-base-content/75">{{ _('No topic found') }}</p>
-                        <p class="text-sm text-base-content/50 max-w-xs">{{ _('Add the first topic or use CSV import.') }}</p>
-                        <button class="btn btn-primary btn-sm mt-1" onclick="document.getElementById('new-topic-modal').showModal()">{{ _('+ New topic') }}</button>
+                        <p class="font-bold text-base-content/75">{{ ('No topic found') }}</p>
+                        <p class="text-sm text-base-content/50 max-w-xs">{{ ('Add the first topic or use CSV import.') }}</p>
+                        <button class="btn btn-primary btn-sm mt-1" @click="$store.ui.openModal('new-topic-modal')">{{ ('+ New topic') }}</button>
                     </div>
                 </td></tr>
                 {% endfor %}
@@ -174,50 +174,50 @@
 <dialog id="new-topic-modal" class="modal modal-bottom sm:modal-middle">
     <div class="modal-box bg-base-100">
         <div class="flex items-center justify-between mb-4">
-            <h3 class="font-bold text-lg">{{ _('New topic') }}</h3>
-            <button type="button" class="btn btn-ghost btn-sm btn-circle" onclick="document.getElementById('new-topic-modal').close()" aria-label="{{ _('Close') }}">✕</button>
+            <h3 class="font-bold text-lg">{{ ('New topic') }}</h3>
+            <button type="button" class="btn btn-ghost btn-sm btn-circle" @click="$store.ui.closeModal('new-topic-modal')" aria-label="{{ ('Close') }}">✕</button>
         </div>
         <form hx-post="/projects/{{ project.id }}/topics" hx-swap="none" class="flex flex-col gap-3">
             <label class="form-control">
-                <span class="label-text text-xs font-medium">{{ _('Topic title') }}</span>
-                <input name="title" class="input input-sm" required placeholder="{{ _('e.g. Best SEO practices in 1405') }}" />
+                <span class="label-text text-xs font-medium">{{ ('Topic title') }}</span>
+                <input name="title" class="input input-sm" required placeholder="{{ ('e.g. Best SEO practices in 1405') }}" />
             </label>
             <div class="grid grid-cols-2 gap-3">
                 <label class="form-control">
-                    <span class="label-text text-xs font-medium">{{ _('Keyword') }}</span>
+                    <span class="label-text text-xs font-medium">{{ ('Keyword') }}</span>
                     <input name="keyword" class="input input-sm" />
                 </label>
                 <label class="form-control">
-                    <span class="label-text text-xs font-medium">{{ _('Type') }}</span>
+                    <span class="label-text text-xs font-medium">{{ ('Type') }}</span>
                     <select name="type" class="select select-sm">
-                        <option value="article">{{ _('Article') }}</option>
-                        <option value="pillar_page">{{ _('Pillar page') }}</option>
-                        <option value="guide">{{ _('Guide') }}</option>
-                        <option value="news">{{ _('News') }}</option>
+                        <option value="article">{{ ('Article') }}</option>
+                        <option value="pillar_page">{{ ('Pillar page') }}</option>
+                        <option value="guide">{{ ('Guide') }}</option>
+                        <option value="news">{{ ('News') }}</option>
                     </select>
                 </label>
             </div>
             <div class="grid grid-cols-2 gap-3">
                 <label class="form-control">
-                    <span class="label-text text-xs font-medium">{{ _('Pillar') }}</span>
+                    <span class="label-text text-xs font-medium">{{ ('Pillar') }}</span>
                     <input name="pillar" class="input input-sm" />
                 </label>
                 <label class="form-control">
-                    <span class="label-text text-xs font-medium">{{ _('Cluster') }}</span>
+                    <span class="label-text text-xs font-medium">{{ ('Cluster') }}</span>
                     <input name="cluster" class="input input-sm" />
                 </label>
             </div>
             <label class="form-control">
-                <span class="label-text text-xs font-medium">{{ _('Priority') }}</span>
+                <span class="label-text text-xs font-medium">{{ ('Priority') }}</span>
                 <input name="priority" type="number" class="input input-sm" value="0" />
             </label>
             <label class="form-control">
-                <span class="label-text text-xs font-medium">{{ _('Week') }}</span>
-                <input name="week" type="number" class="input input-sm" placeholder="{{ _('Editorial calendar week (optional)') }}" />
+                <span class="label-text text-xs font-medium">{{ ('Week') }}</span>
+                <input name="week" type="number" class="input input-sm" placeholder="{{ ('Editorial calendar week (optional)') }}" />
             </label>
             <div class="flex gap-3 mt-2">
-                <button type="submit" class="btn btn-primary flex-1">{{ _('Add') }}</button>
-                <button type="button" class="btn btn-ghost" onclick="document.getElementById('new-topic-modal').close()">{{ _('Cancel') }}</button>
+                <button type="submit" class="btn btn-primary flex-1">{{ ('Add') }}</button>
+                <button type="button" class="btn btn-ghost" @click="$store.ui.closeModal('new-topic-modal')">{{ ('Cancel') }}</button>
             </div>
         </form>
     </div>

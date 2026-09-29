@@ -43,10 +43,7 @@ def test_plan_route_requires_content():
     make_article(pb, project["id"], final_html=None)  # another article, empty
     req = make_req(pb, user, project["id"])
     resp = call_route(queue_image_plan, req, project["id"], article["id"])  # article has content
-    assert (
-        toast_message(resp)
-        == "\u0628\u0631\u0646\u0627\u0645\u0647 \u062a\u0635\u0627\u0648\u06cc\u0631 \u062f\u0631 \u0635\u0641 \u067e\u0631\u062f\u0627\u0632\u0634 \u0642\u0631\u0627\u0631 \u06af\u0631\u0641\u062a"
-    )
+    assert toast_message(resp) == "Image plan queued for processing"
     jobs = pb.collection("jobs").get_list(1, 50).items
     assert any(j["type"] == "plan_article_images" for j in jobs)
 
@@ -58,10 +55,7 @@ def test_generate_route_requires_plan():
     resp = call_route(
         queue_image_generate, req, project["id"], article["id"], role="cover", section_key=""
     )
-    assert (
-        "\u0628\u0631\u0646\u0627\u0645\u0647 \u062a\u0635\u0627\u0648\u06cc\u0631"
-        in toast_message(resp)
-    )
+    assert "image plan" in toast_message(resp)
 
 
 def test_generate_route_queues_cover_and_validates_interior_key():
@@ -72,7 +66,7 @@ def test_generate_route_queues_cover_and_validates_interior_key():
     resp = call_route(
         queue_image_generate, req, project["id"], article["id"], role="cover", section_key=""
     )
-    assert "\u062f\u0631 \u0635\u0641" in toast_message(resp)
+    assert "queued" in toast_message(resp)
     resp = call_route(
         queue_image_generate,
         req,
@@ -81,7 +75,7 @@ def test_generate_route_queues_cover_and_validates_interior_key():
         role="interior",
         section_key="section-1",
     )
-    assert "\u062f\u0631 \u0635\u0641" in toast_message(resp)
+    assert "queued" in toast_message(resp)
     # invalid interior key rejected
     resp = call_route(
         queue_image_generate,
@@ -91,10 +85,7 @@ def test_generate_route_queues_cover_and_validates_interior_key():
         role="interior",
         section_key="not-a-key",
     )
-    assert (
-        "\u06a9\u0644\u06cc\u062f \u0628\u062e\u0634 \u0646\u0627\u0645\u0639\u062a\u0628\u0631"
-        in toast_message(resp)
-    )
+    assert "Invalid section key" in toast_message(resp)
 
 
 def test_regenerate_select_remove_metadata_flow():
@@ -131,11 +122,11 @@ def test_regenerate_select_remove_metadata_flow():
     resp = call_route(
         update_image_metadata, req, project["id"], article["id"], row["id"], alt_text="", caption=""
     )
-    assert "alt" in toast_message(resp)
+    assert "Alt text" in toast_message(resp)
 
     # regenerate queues a NEW version job (version=2 payload)
     resp = call_route(queue_image_regenerate, req, project["id"], article["id"], row["id"])
-    assert "\u0646\u0633\u062e\u0647\u0654 \u062c\u062f\u06cc\u062f" in toast_message(resp)
+    assert "(new version)" in toast_message(resp)
     jobs = [
         j
         for j in pb.collection("jobs").get_list(1, 50).items
@@ -145,14 +136,11 @@ def test_regenerate_select_remove_metadata_flow():
 
     # select a non-ready row is rejected; ready rows can be re-selected
     resp = call_route(select_image_version, req, project["id"], article["id"], row["id"])
-    assert (
-        toast_message(resp)
-        == "\u0627\u06cc\u0646 \u0646\u0633\u062e\u0647 \u0627\u0632 \u062a\u0635\u0648\u06cc\u0631 \u0627\u0646\u062a\u062e\u0627\u0628 \u0634\u062f"
-    )
+    assert toast_message(resp) == "This image version was selected"
 
     # remove deactivates but keeps history
     resp = call_route(remove_image, req, project["id"], article["id"], row["id"])
-    assert "\u062a\u0627\u0631\u06cc\u062e\u0686\u0647" in toast_message(resp)
+    assert "history" in toast_message(resp)
     assert ArticleImageRepo(pb).get(row["id"])["active"] in (False, 0)
 
 
@@ -216,7 +204,7 @@ def test_workspace_renders_populated_images_pane(monkeypatch):
         }
     )
     assert ready_row["filename"] in html  # preview src uses the optimized file
-    assert "Ready" in html  # ready badge (en is the default render locale)
+    assert "Ready" in html  # ready badge
     assert ready_row["altText"] in html  # alt text prefilled in the metadata form
 
 

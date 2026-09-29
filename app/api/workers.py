@@ -16,7 +16,6 @@ from fastapi.responses import HTMLResponse
 
 from app.api.errors import page_guard
 from app.config import settings
-from app.i18n import _
 from app.repositories.jobs import JobEventRepo, JobRepo
 from app.repositories.worker_heartbeats import WorkerHeartbeatRepo
 from app.templates import templates
@@ -64,7 +63,7 @@ def workers_page(request: Request):
         request,
         "pages/workers/index.html",
         {
-            "title": _("Workers"),
+            "title": ("Workers"),
             "workers": workers,
             "active_count": active,
             "queue": queue,
@@ -74,14 +73,14 @@ def workers_page(request: Request):
             "app_version": settings.app_version,
             "restart_commands": [
                 {
-                    "label": _("Run the worker (development)"),
+                    "label": ("Run the worker (development)"),
                     "command": "make worker",
-                    "hint": _("After every code change, stop and re-run the worker."),
+                    "hint": ("After every code change, stop and re-run the worker."),
                 },
                 {
-                    "label": _("Run the worker (service)"),
+                    "label": ("Run the worker (service)"),
                     "command": "sudo systemctl restart ezdistro-worker",
-                    "hint": _("If the worker runs as a systemd service."),
+                    "hint": ("If the worker runs as a systemd service."),
                 },
             ],
         },

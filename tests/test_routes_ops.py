@@ -48,7 +48,7 @@ def test_run_index_queues_project_job():
     pb, proj_a, _ = _setup()
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(P.run_index, req, proj_a["id"], full="0")
-    assert "\u0646\u0645\u0627\u06cc\u0647" in toast_message(resp)
+    assert "indexing" in toast_message(resp)
     jobs = JobRepo(pb).list_for_project(proj_a["id"], per_page=10)
     assert jobs[0]["type"] == "index_project"
     assert jobs[0]["payload"]["force"] is False
@@ -58,7 +58,7 @@ def test_run_index_full_force():
     pb, proj_a, _ = _setup()
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(P.run_index, req, proj_a["id"], full="1")
-    assert "\u0628\u0627\u0632\u0646\u0645\u0627\u06cc\u0647" in toast_message(resp)
+    assert "reindex" in toast_message(resp)
     jobs = JobRepo(pb).list_for_project(proj_a["id"], per_page=10)
     assert jobs[0]["payload"]["force"] is True
 
@@ -68,7 +68,7 @@ def test_reindex_document_queues_document_job():
     doc = make_document(pb, proj_a["id"])
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(P.reindex_document, req, proj_a["id"], doc["id"], force="1")
-    assert "\u0646\u0645\u0627\u06cc\u0647" in toast_message(resp)
+    assert "indexing" in toast_message(resp)
     jobs = JobRepo(pb).list_for_project(proj_a["id"], per_page=10)
     assert jobs[0]["type"] == "index_document"
     assert jobs[0]["payload"]["sourceId"] == "100"
@@ -80,7 +80,7 @@ def test_reindex_document_foreign_rejected():
     foreign = make_document(pb, proj_b["id"])
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(P.reindex_document, req, proj_a["id"], foreign["id"])
-    assert "\u06cc\u0627\u0641\u062a \u0646\u0634\u062f" in toast_message(resp)
+    assert "not found" in toast_message(resp)
     assert len(JobRepo(pb).list_for_project(proj_a["id"], per_page=10)) == 0
 
 
@@ -89,10 +89,7 @@ def test_retry_index_run_resumes_from_checkpoint():
     run = make_index_run(pb, proj_a["id"], status="failed")
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(P.retry_index_run, req, proj_a["id"], run["id"])
-    assert (
-        "\u0628\u0631\u0646\u0627\u0645\u0647\u200c\u0631\u06cc\u0632\u06cc \u0634\u062f"
-        in toast_message(resp)
-    )
+    assert "rescheduled" in toast_message(resp)
     jobs = JobRepo(pb).list_for_project(proj_a["id"], per_page=10)
     assert jobs[0]["type"] == "index_project"
     assert jobs[0]["payload"]["resumeFrom"] == "50"
@@ -103,7 +100,7 @@ def test_retry_index_run_foreign_rejected():
     foreign = make_index_run(pb, proj_b["id"])
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(P.retry_index_run, req, proj_a["id"], foreign["id"])
-    assert "\u06cc\u0627\u0641\u062a \u0646\u0634\u062f" in toast_message(resp)
+    assert "not found" in toast_message(resp)
     assert len(JobRepo(pb).list_for_project(proj_a["id"], per_page=10)) == 0
 
 
@@ -116,7 +113,7 @@ def test_save_schedules_creates_and_updates():
     resp = call_route(
         P.save_schedules, req, proj_a["id"], kind="index", enabled="1", interval_minutes="60"
     )
-    assert "\u0630\u062e\u06cc\u0631\u0647 \u0634\u062f" in toast_message(resp)
+    assert "saved" in toast_message(resp)
     sched = ScheduleRepo(pb).first(filter=f'project="{proj_a["id"]}" && kind="index"')
     assert sched["intervalMinutes"] == 60
     assert sched["enabled"] is True
@@ -125,7 +122,7 @@ def test_save_schedules_creates_and_updates():
     resp = call_route(
         P.save_schedules, req, proj_a["id"], kind="index", enabled="0", interval_minutes="120"
     )
-    assert "\u0630\u062e\u06cc\u0631\u0647 \u0634\u062f" in toast_message(resp)
+    assert "saved" in toast_message(resp)
     rows = ScheduleRepo(pb).list_for_project(proj_a["id"])
     assert len(rows) == 1
     assert rows[0]["intervalMinutes"] == 120
@@ -138,7 +135,7 @@ def test_save_schedules_creates_write_schedule():
     resp = call_route(
         P.save_schedules, req, proj_a["id"], kind="write", enabled="1", interval_minutes="30"
     )
-    assert "\u0630\u062e\u06cc\u0631\u0647 \u0634\u062f" in toast_message(resp)
+    assert "saved" in toast_message(resp)
     sched = ScheduleRepo(pb).first(filter=f'project="{proj_a["id"]}" && kind="write"')
     assert sched is not None
 
@@ -151,7 +148,7 @@ def test_save_schedules_returns_rendered_panel_with_saved_values():
     resp = call_route(
         P.save_schedules, req, proj_a["id"], kind="index", enabled="0", interval_minutes="90"
     )
-    assert "\u0630\u062e\u06cc\u0631\u0647 \u0634\u062f" in toast_message(resp)
+    assert "saved" in toast_message(resp)
     body = resp.body.decode()
     assert 'id="sched-index"' in body
     assert 'value="90"' in body  # saved interval rendered
@@ -166,10 +163,7 @@ def test_save_schedules_rejects_unknown_kind():
     resp = call_route(
         P.save_schedules, req, proj_a["id"], kind="", enabled="1", interval_minutes="60"
     )
-    assert (
-        toast_message(resp)
-        == "\u0646\u0648\u0639 \u0632\u0645\u0627\u0646\u200c\u0628\u0646\u062f\u06cc \u0646\u0627\u0645\u0639\u062a\u0628\u0631 \u0627\u0633\u062a"
-    )
+    assert toast_message(resp) == "Invalid schedule type"
     assert ScheduleRepo(pb).first(filter=f'project="{proj_a["id"]}" && kind=""') is None
 
 
@@ -186,7 +180,7 @@ def test_duplicate_prompt_version_creates_inactive_copy():
     resp = call_route(
         P.duplicate_prompt_version, req, proj_a["id"], "outline_user", version_id=version["id"]
     )
-    assert "\u062a\u06a9\u0631\u0627\u0631\u06cc" in toast_message(resp)
+    assert "duplicated" in toast_message(resp)
     copies = PromptRepo(pb).list_for_project(proj_a["id"])
     assert len(copies) == 2
     dup = [v for v in copies if (v.get("variables") or {}).get("duplicatedFrom")]
@@ -202,7 +196,7 @@ def test_duplicate_prompt_version_rejects_foreign():
     resp = call_route(
         P.duplicate_prompt_version, req, proj_a["id"], "outline_user", version_id=version["id"]
     )
-    assert "\u06cc\u0627\u0641\u062a \u0646\u0634\u062f" in toast_message(resp)
+    assert "not found" in toast_message(resp)
     assert len(PromptRepo(pb).list_for_project(proj_a["id"])) == 0
 
 
@@ -249,9 +243,7 @@ def test_activate_prompt_version_flips_active():
     resp = call_route(
         P.activate_prompt_version, req, proj_a["id"], "outline_user", version_id=versions[1]["id"]
     )
-    assert "\u0641\u0639\u0627\u0644" in toast_message(
-        resp
-    ) or "\u0630\u062e\u06cc\u0631\u0647" in toast_message(resp)
+    assert "activated" in toast_message(resp) or "saved" in toast_message(resp)
     active = [v for v in PromptRepo(pb).list_for_project(proj_a["id"]) if v["active"]]
     assert len(active) == 1
     assert active[0]["id"] == versions[1]["id"]
@@ -264,7 +256,7 @@ async def test_retrieval_diagnose_requires_query():
     pb, proj_a, _ = _setup()
     req = make_req(pb, make_user(), proj_a["id"])
     resp = await call_route_async(P.retrieval_diagnose, req, proj_a["id"], query="  ")
-    assert "\u0627\u0644\u0632\u0627\u0645\u06cc" in toast_message(resp)
+    assert "required" in toast_message(resp)
 
 
 # ---------------------------------------------------------------------------
@@ -282,7 +274,7 @@ def test_save_ai_models_persists_and_audits():
         section_provider="openai_compat",
         section_model="gpt-4o-mini",
     )
-    assert "\u0630\u062e\u06cc\u0631\u0647 \u0634\u062f" in toast_message(resp)
+    assert "saved" in toast_message(resp)
     from app.repositories.projects import ProjectSettingsRepo
 
     settings = ProjectSettingsRepo(pb).get_for_project(proj_a["id"])
@@ -295,16 +287,12 @@ def test_save_global_llm_defaults_admin_only():
     # non-admin → rejected
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(P.save_global_llm_defaults, req, proj_a["id"], outline_model="gpt-4o")
-    assert "\u0646\u0627\u0645\u0648\u0641\u0642" in toast_message(
-        resp
-    ) or "\u0627\u062f\u0645\u06cc\u0646" in toast_message(resp)
+    assert "failed" in toast_message(resp) or "admin" in toast_message(resp)
 
     # admin → saved
     req = make_req(pb, make_user("admin1", role="admin"), proj_a["id"])
     resp = call_route(P.save_global_llm_defaults, req, proj_a["id"], outline_model="gpt-4o")
-    assert "\u0630\u062e\u06cc\u0631\u0647" in toast_message(
-        resp
-    ) or "\u067e\u06cc\u0634\u200c\u0641\u0631\u0636" in toast_message(resp)
+    assert "saved" in toast_message(resp) or "defaults" in toast_message(resp)
 
 
 async def test_discover_models_invalid_role_returns_empty():
@@ -340,6 +328,4 @@ async def test_prompt_tester_without_provider_errors_cleanly():
     )
     assert resp.status_code == 200
     # either a rendered result or a safe error toast — never a 500
-    assert "\u067e\u0627\u0633" in toast_message(
-        resp
-    ) or "\u0646\u0627\u0645\u0648\u0641\u0642" in toast_message(resp)
+    assert "response" in toast_message(resp) or "failed" in toast_message(resp)

@@ -2,19 +2,17 @@ import time
 import uuid
 
 from fastapi import Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 from structlog import get_logger
 
 from app.api.deps import is_disabled
-from app.i18n import LOCALE_COOKIE, set_request_locale
 from app.logging_config import bind_request_context, clear_request_context
 from app.pb import LazyDataPb, get_data_pb, get_pb
 
 # Routes anyone can access without a token.
 PUBLIC_PATHS = [
     "/login",
-    "/locale/",
     "/static",
     "/manifest.json",
     "/sw.js",
@@ -30,9 +28,6 @@ logger = get_logger(__name__)
 
 class AuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
-        # ---- Locale resolution (cookie preference, allowlisted, English default) ----
-        set_request_locale(request.cookies.get(LOCALE_COOKIE))
-
         # ---- Request ID for correlation ----
         req_id = str(uuid.uuid4())[:8]
         request.state.req_id = req_id
@@ -76,8 +71,16 @@ class AuthMiddleware(BaseHTTPMiddleware):
         path = request.url.path
         is_public = path == "/" or any(path.startswith(p) for p in PUBLIC_PATHS)
         if not request.state.user and not is_public:
+            login_url = "/login?disabled=1" if disabled else "/login"
+            if request.headers.get("HX-Request") == "true":
+                # A partial swap must not inject the login page into the target:
+                # tell HTMX to navigate the whole browser instead.
+                response = Response(status_code=200, headers={"HX-Redirect": login_url})
+                if disabled:
+                    response.delete_cookie("pb_auth")
+                return response
             if disabled:
-                response = RedirectResponse(url="/login?disabled=1", status_code=303)
+                response = RedirectResponse(url=login_url, status_code=303)
                 # Drop the dead cookie so the browser stops replaying it.
                 response.delete_cookie("pb_auth")
                 return response
