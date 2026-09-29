@@ -3,7 +3,7 @@
 <div class="ezdistro-panel">
     <div class="p-4 flex flex-col items-center gap-3 py-12 text-center">
         <p class="text-sm opacity-60">{{ message or ('Something went wrong loading this page.') }}</p>
-        <a href="/projects/{{ project.id }}?tab=articles" class="btn btn-primary btn-sm mt-2">{{ ('Back to articles') }}</a>
+        <a href="{{ back_url or '/projects/' ~ (project.id or '') ~ '?tab=articles' }}" class="btn btn-primary btn-sm mt-2">{{ back_label or ('Back to articles') }}</a>
     </div>
 </div>
 {% endblock %}

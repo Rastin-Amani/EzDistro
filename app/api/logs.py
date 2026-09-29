@@ -6,19 +6,32 @@ from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 
 from app.api.deps import project_scope
+from app.api.errors import page_guard
 from app.repositories.jobs import JobEventRepo
 from app.templates import templates
 
 router = APIRouter()
 
+# The badge filters offered by feed.html. Anything else in ?level= is ignored
+# rather than interpolated straight into a PocketBase filter — a stray quote
+# ("err\"||x=\"1") made PocketBase reject the query, which surfaced as a 500.
+LEVELS = ("info", "warning", "error")
+
 
 @router.get("/logs", response_class=HTMLResponse)
+@page_guard(
+    "Something went wrong loading the events page — please try again.",
+    back_url="/dashboard",
+    back_label="Back to dashboard",
+)
 def logs_page(request: Request, level: str = ""):
     pb = request.state.pb
     scope = project_scope(request)
     f = ""
-    if level:
+    if level in LEVELS:
         f = f'eventType="{level}"'
+    else:
+        level = ""
     if scope is None:
         pass  # admin — unrestricted
     elif scope:

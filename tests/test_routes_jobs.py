@@ -96,6 +96,46 @@ def test_logs_page_renders():
     assert "Events" in resp.body.decode() or "events" in resp.body.decode()
 
 
+def _capture_filter(monkeypatch) -> dict:
+    captured: dict = {}
+
+    def fake_list(self, **kwargs):
+        captured.update(kwargs)
+        return []
+
+    monkeypatch.setattr(L.JobEventRepo, "list_records", fake_list)
+    return captured
+
+
+def test_logs_level_is_allow_listed(monkeypatch):
+    """A hostile ?level= must never reach the PocketBase filter (it used to 400 → 500)."""
+    captured = _capture_filter(monkeypatch)
+    pb = make_pb()
+    admin = make_user("admin1", role="admin")
+
+    assert L.logs_page(make_req(pb, admin, ""), level='err"||x="1').status_code == 200
+    assert captured["filter"] == ""
+
+    assert L.logs_page(make_req(pb, admin, ""), level="info").status_code == 200
+    assert captured["filter"] == 'eventType="info"'
+
+
+def test_logs_page_failure_renders_error_page_not_500(monkeypatch):
+    """An upstream PocketBase failure must degrade to the guarded error page."""
+
+    def boom(self, **kwargs):
+        raise RuntimeError("pb down")
+
+    monkeypatch.setattr(L.JobEventRepo, "list_records", boom)
+    pb = make_pb()
+    req = make_req(pb, make_user("admin1", role="admin"), "")
+    resp = call_route(L.logs_page, req)
+    body = resp.body.decode()
+    assert resp.status_code == 200
+    assert "please try again" in body
+    assert "/dashboard" in body
+
+
 # ---------------------------------------------------------------------------
 # Job detail + events
 # ---------------------------------------------------------------------------

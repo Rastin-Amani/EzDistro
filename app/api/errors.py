@@ -64,12 +64,15 @@ def hx_error(fail: str) -> Callable[[F], F]:
     return deco
 
 
-def page_guard(fail: str) -> Callable[[F], F]:
+def page_guard(fail: str, back_url: str = "", back_label: str = "") -> Callable[[F], F]:
     """Wrap a full-page GET route with graceful error handling.
 
     On any exception the error is logged WITH the full traceback (so the cause
     can be found in `make web`/`make worker` output) and an error
     page is rendered instead of a white screen. Handles sync and async routes.
+
+    ``back_url``/``back_label`` override the default "Back to articles" action
+    for routes that are not project-scoped (e.g. ``/logs``).
     """
 
     def _error_page(request: Request, project_id: str, message: str) -> Any:
@@ -86,7 +89,12 @@ def page_guard(fail: str) -> Callable[[F], F]:
         return templates.TemplateResponse(
             request,
             "pages/articles/render_error.html",
-            {"project": project or {"id": project_id or ""}, "message": (message)},
+            {
+                "project": project or {"id": project_id or ""},
+                "message": (message),
+                "back_url": back_url,
+                "back_label": back_label,
+            },
         )
 
     def deco(fn: F) -> F:
