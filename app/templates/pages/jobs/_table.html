@@ -9,12 +9,12 @@
                 <thead>
                     <tr>
                         <th>{{ _('Type') }}</th>
-                        <th>{{ _('Project') }}</th>
+                        <th class="max-sm:hidden">{{ _('Project') }}</th>
                         <th>{{ _('Status') }}</th>
                         <th>{{ _('Progress') }}</th>
                         <th>{{ _('Message') }}</th>
-                        <th>{{ _('Attempt') }}</th>
-                        <th>{{ _('Time') }}</th>
+                        <th class="max-sm:hidden">{{ _('Attempt') }}</th>
+                        <th class="max-sm:hidden">{{ _('Time') }}</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -22,7 +22,7 @@
                     {% for j in jobs %}
                     <tr>
                         <td class="text-xs whitespace-nowrap">{{ j.type }}</td>
-                        <td class="text-xs opacity-60">{{ j.project[:8] }}</td>
+                        <td class="text-xs opacity-60 max-sm:hidden">{{ j.project[:8] }}</td>
                         <td><span class="badge badge-sm {{ j.status|status_badge }}">{{ j.status|status_label }}</span></td>
                         <td class="w-32">
                             <div class="flex items-center gap-2">
@@ -35,8 +35,8 @@
                             {% if j.stage %}<p class="opacity-50 text-xs" dir="ltr">{{ j.stage }}</p>{% endif %}
                             {% if j.currentItem and j.totalItems %}<p class="opacity-50">{{ j.currentItem }} / {{ j.totalItems }}</p>{% endif %}
                         </td>
-                        <td class="text-xs tabular">{{ j.attempts or 0 }}/{{ j.maxAttempts or 3 }}</td>
-                        <td class="text-xs opacity-50 whitespace-nowrap">{{ j.created|loc_dt }}</td>
+                        <td class="text-xs tabular max-sm:hidden">{{ j.attempts or 0 }}/{{ j.maxAttempts or 3 }}</td>
+                        <td class="text-xs opacity-50 whitespace-nowrap max-sm:hidden">{{ j.created|loc_dt }}</td>
                         <td class="whitespace-nowrap">
                             {% if j.status in ['pending', 'retrying', 'running'] %}
                             <button class="btn btn-ghost btn-xs text-warning"

@@ -26,13 +26,13 @@
 
     {% for p in projects %}
 
-    <a href="/projects/{{ p.id }}" class="ezdistro-panel group p-4 transition-colors hover:border-primary/40 hover:bg-base-200/40">
+    <a href="/projects/{{ p.id }}" class="ezdistro-panel group p-4 transition-colors hover:border-primary hover:bg-base-200/40">
 
         <div class="flex items-center justify-between gap-2">
 
             <div class="flex items-center gap-3 min-w-0">
 
-                <span class="grid size-11 shrink-0 place-items-center rounded-2xl bg-primary/10 text-primary font-black text-lg">{{ p.name[:1] }}</span>
+                <span class="grid size-11 shrink-0 place-items-center rounded-lg bg-primary text-white font-black text-lg">{{ p.name[:1] }}</span>
 
                 <div class="min-w-0">
 
@@ -58,7 +58,7 @@
 
             {{ _('Open project') }}
 
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" /></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5 ltr:rotate-180"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" /></svg>
 
         </div>
 

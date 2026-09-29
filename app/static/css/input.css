@@ -7,9 +7,13 @@
 @theme {
     --font-sans: 'Inter', 'Arad', ui-sans-serif, system-ui, sans-serif;
     --font-brand: 'Inter', 'Arad', ui-sans-serif, system-ui, sans-serif;
+    /* Mono pins every category label + metadata (uppercase, +0.073em). */
+    --font-mono: 'JetBrains Mono', 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
-/* EzDistro Signal: white paper, ink, and a single lavender action color. */
+/* EzDistro Atlas: white paper, carbon ink, one rationed electric blue.
+   Blue lives only in: logo block, primary action, live data nodes.
+   Hierarchy via hairlines + type scale + spacing — never shadows. */
 @plugin "daisyui/theme" {
     name: "ezdistro";
     default: true;
@@ -17,31 +21,31 @@
     color-scheme: light;
 
     --color-base-100: #ffffff;
-    --color-base-200: #fafafa;
-    --color-base-300: #e8e8e8;
-    --color-base-content: #181925;
+    --color-base-200: #f2f2f2;
+    --color-base-300: #b1b7c3;
+    --color-base-content: #000000;
 
-    --color-primary: #918df6;
-    --color-primary-content: #181925;
-    --color-secondary: #9580ff;
-    --color-secondary-content: #181925;
-    --color-accent: #33c758;
-    --color-accent-content: #102b18;
-    --color-neutral: #181925;
+    --color-primary: #0000ff;
+    --color-primary-content: #ffffff;
+    --color-secondary: #323232;
+    --color-secondary-content: #ffffff;
+    --color-accent: #098551;
+    --color-accent-content: #ffffff;
+    --color-neutral: #000000;
     --color-neutral-content: #ffffff;
 
-    --color-info: #286f9c;
+    --color-info: #0000ff;
     --color-info-content: #ffffff;
-    --color-success: #1e7a36;
+    --color-success: #098551;
     --color-success-content: #ffffff;
     --color-warning: #9a5a00;
     --color-warning-content: #ffffff;
-    --color-error: #b52b3a;
+    --color-error: #c22736;
     --color-error-content: #ffffff;
 
-    --radius-selector: 9999px;
+    --radius-selector: 0.5rem;
     --radius-field: 0.5rem;
-    --radius-box: 1rem;
+    --radius-box: 0.5rem;
     --size-selector: 0.25rem;
     --size-field: 0.25rem;
     --border: 1px;
@@ -49,39 +53,40 @@
     --noise: 0;
 }
 
-/* Dark companion uses the same quiet surfaces and a brighter accessible accent. */
+/* Dark atlas: same rationing on ink ground — blue brightened one step so
+   live nodes + primary action hold contrast on near-black paper. */
 @plugin "daisyui/theme" {
     name: "ezdistro-dark";
     default: false;
     prefersdark: true;
     color-scheme: dark;
 
-    --color-base-100: #22232f;
-    --color-base-200: #181925;
-    --color-base-300: #373845;
+    --color-base-100: #0b0b10;
+    --color-base-200: #14151c;
+    --color-base-300: #2c2e3a;
     --color-base-content: #f5f5f5;
 
-    --color-primary: #b7b3ff;
-    --color-primary-content: #181925;
-    --color-secondary: #b4a6ff;
-    --color-secondary-content: #181925;
-    --color-accent: #55d777;
-    --color-accent-content: #102b18;
-    --color-neutral: #373845;
-    --color-neutral-content: #f5f5f5;
+    --color-primary: #5b5bff;
+    --color-primary-content: #ffffff;
+    --color-secondary: #b1b7c3;
+    --color-secondary-content: #0b0b10;
+    --color-accent: #3fce7d;
+    --color-accent-content: #06130c;
+    --color-neutral: #f5f5f5;
+    --color-neutral-content: #0b0b10;
 
-    --color-info: #78c5ec;
-    --color-info-content: #182532;
-    --color-success: #65cc7b;
-    --color-success-content: #102f18;
+    --color-info: #8f8fff;
+    --color-info-content: #0b0b10;
+    --color-success: #3fce7d;
+    --color-success-content: #06130c;
     --color-warning: #e7bd66;
     --color-warning-content: #2e2410;
     --color-error: #f17b82;
     --color-error-content: #351417;
 
-    --radius-selector: 9999px;
+    --radius-selector: 0.5rem;
     --radius-field: 0.5rem;
-    --radius-box: 1rem;
+    --radius-box: 0.5rem;
     --size-selector: 0.25rem;
     --size-field: 0.25rem;
     --border: 1px;
@@ -152,11 +157,19 @@ html[dir='rtl'] body {
     [onclick] {
         cursor: pointer;
     }
-    /* High-contrast focus ring for keyboard users */
+    /* High-contrast focus ring — electric blue, the rationed action color. */
     :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
-        outline: 2px solid var(--color-base-content);
+        outline: 2px solid var(--color-primary);
         outline-offset: 2px;
         border-radius: 0.5rem;
+    }
+    /* Paper-tinted text selection carries the design into browser chrome. */
+    ::selection {
+        background: var(--color-primary);
+        color: var(--color-primary-content);
+    }
+    :root {
+        caret-color: var(--color-primary);
     }
     /* Subtle, brand-tinted scrollbars */
     * {
@@ -185,20 +198,33 @@ html[dir='rtl'] body {
    ═══════════════════════════════════════════════════════════════════════ */
 @layer components {
     .card {
-        @apply rounded-2xl border border-base-300 bg-base-100;
+        @apply rounded-lg border border-base-300 bg-base-100;
     }
     .card-body {
         @apply gap-4;
     }
 
+    /* Buttons: 8px radius. Primary is THE blue ration — solid fill, white
+       ink, no border. Ghost is paper with a mist hairline. */
     .btn {
-        @apply rounded-full border border-base-300 font-medium;
+        @apply rounded-lg border border-base-300 font-medium;
+    }
+    .btn-primary {
+        @apply border-primary bg-primary text-white;
+    }
+    .btn-primary:hover {
+        @apply brightness-90;
+    }
+    /* Touch targets: smallest button still clears 32px; fields clear 44px. */
+    .btn-xs {
+        @apply min-h-8 px-3;
+    }
+    .input,
+    .select {
+        @apply min-h-11;
     }
     .btn-ghost {
         @apply border-transparent;
-    }
-    .btn-primary {
-        @apply border-primary;
     }
 
     .input,
@@ -261,12 +287,13 @@ html[dir='rtl'] body {
         @apply bg-base-200/50;
     }
 
+    /* Tags: 2px radius per the atlas (badges are labels, not pills). */
     .badge {
-        @apply rounded-full border-transparent font-medium;
+        @apply rounded-[2px] border-transparent font-medium;
     }
 
     .stat {
-        @apply rounded-2xl border border-base-300 bg-base-100 px-4 py-3;
+        @apply rounded-lg border border-base-300 bg-base-100 px-4 py-3;
     }
     .stat-title {
         @apply text-base-content/55;
@@ -276,6 +303,10 @@ html[dir='rtl'] body {
     }
 
     .progress {
+        @apply rounded-full bg-base-200;
+    }
+    .progress::-webkit-progress-value,
+    .progress::-moz-progress-bar {
         @apply rounded-full;
     }
 
@@ -284,15 +315,15 @@ html[dir='rtl'] body {
     }
 
     .alert {
-        @apply rounded-xl border border-base-300;
+        @apply rounded-lg border border-base-300;
     }
 
     .dropdown-content {
-        @apply rounded-2xl border border-base-300 bg-base-100 shadow-none;
+        @apply rounded-lg border border-base-300 bg-base-100 shadow-none;
     }
 
     .modal-box {
-        @apply rounded-2xl border border-base-300 bg-base-100;
+        @apply rounded-lg border border-base-300 bg-base-100;
     }
 
     .tooltip[data-tip] {
@@ -304,29 +335,60 @@ html[dir='rtl'] body {
    EzDistro design vocabulary — shared, reusable building blocks
    ═══════════════════════════════════════════════════════════════════════ */
 @layer components {
-    /* Page frame + header ---------------------------------------------- */
+    /* Page frame + header ----------------------------------------------
+       Atlas opener: mono label pinned above a massive tight-tracked
+       display title; description sits opposite on wide screens. */
     .ezdistro-page {
-        @apply mx-auto w-full max-w-300 px-4 pb-28 pt-5 sm:px-6 sm:pt-7 md:pb-10;
+        @apply mx-auto w-full max-w-300 px-4 pb-32 pt-5 sm:px-6 sm:pt-7 md:pb-10;
+    }
+    /* One orchestrated entrance per navigation: the header rises once, nothing
+       else animates on load. */
+    @media (prefers-reduced-motion: no-preference) {
+        .ezdistro-pagehead {
+            animation: ezdistro-rise 0.4s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+        }
+    }
+    @keyframes ezdistro-rise {
+        from {
+            opacity: 0;
+            transform: translateY(0.5rem);
+        }
+        to {
+            opacity: 1;
+            transform: none;
+        }
     }
     .ezdistro-pagehead {
-        @apply flex flex-wrap items-end justify-between gap-4 mb-6;
+        @apply flex flex-wrap items-end justify-between gap-3 mb-5 sm:mb-7;
     }
+    /* A short rule leads the mono label — a structural anchor, not a badge.
+       No kickers above headings elsewhere: this label IS the section's name. */
     .ezdistro-eyebrow {
-        @apply inline-flex items-center gap-1.5 text-xs font-bold text-primary;
+        @apply inline-flex items-center gap-2 font-mono text-[0.72rem] font-normal uppercase text-base-content/55;
+        letter-spacing: 0.073em;
     }
+    .ezdistro-eyebrow::before {
+        content: "";
+        @apply h-px w-5 bg-primary;
+    }
+    /* Display title: oversized, tight tracking, short line — the atlas voice.
+       Clamped so Persian display type never overflows small viewports. */
     .ezdistro-title {
-        @apply text-2xl font-bold tracking-tight text-base-content sm:text-3xl;
+        @apply font-extrabold leading-[0.95] tracking-[-0.04em] text-base-content;
+        font-size: clamp(2.5rem, 4vw + 1.5rem, 5rem);
     }
     .ezdistro-subtitle {
-        @apply mt-1 max-w-2xl text-sm leading-relaxed text-base-content/65;
+        @apply mt-3 max-w-xl text-base leading-relaxed text-base-content/60;
+        letter-spacing: -0.014em;
     }
     .ezdistro-actions {
         @apply flex items-center gap-2 flex-wrap;
     }
 
-    /* Brand mark — a quiet, typographic signal. */
+    /* Brand mark — the solid blue block. No radius: the one place blue
+       appears at scale before a user-initiated action. */
     .ezdistro-logo {
-        @apply grid place-items-center rounded-xl border border-primary/30 bg-primary text-primary-content font-black;
+        @apply grid place-items-center rounded-none bg-primary font-black text-white;
     }
 
     /* App shell — robust flex: sidebar is a normal sticky flow child so RTL
@@ -334,48 +396,100 @@ html[dir='rtl'] body {
     .ezdistro-shell {
         @apply flex min-h-dvh bg-base-100;
     }
+    /* Fixed rail: 220px, paper canvas, mist hairline at its edge. */
     .ezdistro-sidebar {
-        @apply hidden border-e border-base-300 bg-base-100 md:sticky md:top-0 md:h-dvh md:flex md:w-56 md:flex-none md:flex-col lg:w-64;
+        @apply hidden border-e border-base-300 bg-base-100 md:sticky md:top-0 md:h-dvh md:flex md:w-55 md:flex-none md:flex-col lg:w-60;
     }
     .ezdistro-sidebar-brand {
         @apply flex h-16 items-center gap-2.5 border-b border-base-300/70 px-4;
     }
     .ezdistro-nav {
-        @apply flex-1 overflow-y-auto px-3 py-4 flex flex-col gap-1;
+        @apply flex-1 overflow-y-auto px-3 py-4 flex flex-col gap-0.5;
     }
+    /* Group names are mono index labels, pinned above their items. */
     .ezdistro-nav-group {
-        @apply px-2 pb-1 pt-4 text-[0.65rem] font-bold uppercase tracking-wider text-base-content/40;
+        @apply px-2 pb-1 pt-4 font-mono text-[0.65rem] font-normal uppercase text-base-content/55;
+        letter-spacing: 0.073em;
     }
+    /* Rail items: flat, no background. Hover shifts ink to blue; active
+       pins a 2px blue bar at the inline start + blue label. */
     .ezdistro-navlink {
-        @apply relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-base-content/75 transition-colors hover:bg-base-200 hover:text-base-content;
+        @apply relative flex items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-medium text-base-content/70 transition-colors hover:text-primary;
     }
     .ezdistro-navlink svg {
-        @apply size-5 opacity-70;
+        @apply size-5 opacity-75 transition-opacity;
     }
-    .ezdistro-navlink-active {
-        @apply bg-primary/10 text-base-content hover:bg-primary/15 hover:text-base-content;
-    }
-    .ezdistro-navlink-active svg {
+    .ezdistro-navlink:hover svg {
         @apply opacity-100;
     }
-    /* The active rail — a lavender bar on the inner edge (logical inline-end:
-       right side in RTL, left side in LTR — always toward the content) */
+    .ezdistro-navlink .ezdistro-nav-chev {
+        @apply ms-auto size-3.5 opacity-0 transition-opacity;
+    }
+    .ezdistro-navlink:hover .ezdistro-nav-chev {
+        @apply opacity-60;
+    }
+    .ezdistro-navlink-active {
+        @apply font-bold text-base-content hover:text-primary;
+    }
+    .ezdistro-navlink-active svg {
+        @apply opacity-100 text-primary;
+    }
     .ezdistro-navlink-active::before {
         content: "";
-        @apply absolute inset-y-1.5 end-0 w-1 rounded-full bg-primary;
+        position: absolute;
+        inset-inline-start: 0;
+        top: 0.5rem;
+        bottom: 0.5rem;
+        width: 2px;
+        background: var(--color-primary);
+    }
+    /* Start panel: bottom-anchored, hairline above, blue dot + mono label,
+       one blue primary + stacked ghost actions. */
+    .ezdistro-start {
+        @apply border-t border-base-300 px-3 py-3 flex flex-col gap-2;
+    }
+    .ezdistro-start-label {
+        @apply flex items-center gap-2 font-mono text-[0.65rem] uppercase text-base-content/55;
+        letter-spacing: 0.073em;
+    }
+    .ezdistro-start-dot {
+        @apply size-1.5 rounded-full bg-primary;
     }
     .ezdistro-sidefoot {
         @apply border-t border-base-300/70 p-3;
     }
 
-    /* Mobile dock ----------------------------------------------------- */
+    /* Mobile dock — a floating pill in the thumb zone, safe-area aware.
+       Content scrolls under it; the shell keeps pb-32 clearance. */
     .ezdistro-dock {
-        @apply fixed inset-x-0 bottom-0 z-40 flex items-stretch justify-around border-t border-base-300 bg-base-100/95 backdrop-blur md:hidden;
-        height: calc(4rem + env(safe-area-inset-bottom));
-        padding-bottom: env(safe-area-inset-bottom);
+        @apply pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-3 md:hidden;
+        padding-bottom: calc(0.6rem + env(safe-area-inset-bottom));
+    }
+    .ezdistro-dock-pill {
+        @apply pointer-events-auto flex w-full max-w-md items-stretch gap-1 rounded-2xl border border-base-300/80 bg-base-100/85 p-1 backdrop-blur-xl;
+    }
+    .ezdistro-dock a {
+        @apply relative flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-lg px-0.5 py-2 text-[0.6rem] font-semibold text-base-content/60 transition-colors;
+        min-height: 3.25rem;
+    }
+    .ezdistro-dock a svg {
+        @apply size-[1.15rem];
+    }
+    .ezdistro-dock a span {
+        @apply w-full truncate text-center;
+    }
+    .ezdistro-dock a:hover {
+        @apply text-primary;
+    }
+    /* The single live signal on mobile: solid blue block, white glyph. */
+    .ezdistro-dock a.ezdistro-dock-active {
+        @apply bg-primary text-white;
+    }
+    .ezdistro-dock a.ezdistro-dock-active svg {
+        color: currentColor;
     }
     .ezdistro-mobile-header {
-        @apply sticky top-0 z-30 flex items-center justify-between border-b border-base-300 bg-base-100/95 px-4 backdrop-blur md:hidden;
+        @apply sticky top-0 z-30 flex items-center justify-between border-b border-base-300/70 bg-base-100/85 px-4 backdrop-blur-xl md:hidden;
         height: calc(3.5rem + env(safe-area-inset-top));
         padding-top: env(safe-area-inset-top);
     }
@@ -396,59 +510,125 @@ html[dir='rtl'] body {
             margin-inline: 0;
         }
     }
-    .ezdistro-dock a {
-        @apply relative flex flex-1 flex-col items-center justify-center gap-0.5 text-[0.65rem] font-medium text-base-content/65 transition-colors;
-    }
-    .ezdistro-dock a svg {
-        @apply size-5;
-    }
-    .ezdistro-dock a.ezdistro-dock-active {
-        @apply text-base-content;
-    }
-    .ezdistro-dock a.ezdistro-dock-active::before {
-        content: "";
-        position: absolute;
-        top: 0.45rem;
-        width: 1.5rem;
-        height: 3px;
-        border-radius: 9999px;
-        background: var(--color-primary);
-    }
 
-    /* Cards / panels -------------------------------------------------- */
+    /* Cards / panels: 8px, hairline, flat -------------------------------- */
     .ezdistro-panel {
         /* min-w-0: panels are grid/flex children — a long unbreakable value
            (workerId, hostname, version) must never force the column wider
            than the viewport (RTL blowout). */
-        @apply min-w-0 rounded-2xl border border-base-300 bg-base-100;
+        @apply min-w-0 rounded-lg border border-base-300 bg-base-100;
     }
     .ezdistro-panel-head {
         @apply flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3;
     }
     .ezdistro-panel-title {
-        @apply font-bold text-sm;
+        @apply font-mono text-xs font-normal uppercase text-base-content/55;
+        letter-spacing: 0.073em;
     }
 
     /* Metrics / stats -------------------------------------------------- */
     .ezdistro-metric {
-        @apply min-w-0 rounded-2xl border border-base-300 bg-base-100 p-4 flex flex-col gap-1;
+        @apply min-w-0 rounded-lg border border-base-300 bg-base-100 p-4 flex flex-col gap-1;
     }
     .ezdistro-metric-label {
-        @apply text-xs font-medium text-base-content/55;
+        @apply font-mono text-xs font-normal uppercase text-base-content/55;
+        letter-spacing: 0.073em;
     }
     .ezdistro-metric-value {
-        @apply text-2xl font-extrabold leading-none text-base-content tabular-nums;
+        @apply text-[2rem] font-black leading-none tracking-[-0.04em] text-base-content tabular-nums;
     }
     .ezdistro-metric-swatch {
         @apply size-2.5 rounded-full;
     }
 
-    /* Empty / placeholder states -------------------------------------- */
+    /* Pipeline rail — the dashboard hero: the assembly line itself.
+       Cells split by hairlines; each cell threads a rule through its node
+       row so the stages read as one continuous track (2×2 on mobile,
+       one row from sm up). */
+    .ezdistro-rail-track {
+        @apply relative grid grid-cols-2;
+        background: color-mix(in oklab, var(--color-base-300) 70%, transparent);
+        gap: 1px;
+    }
+    .ezdistro-rail-stage {
+        @apply relative flex min-w-0 flex-col gap-2 bg-base-100 px-4 pt-4 pb-4;
+    }
+    /* Hairline threads the whole cell at node height; labels sit on the
+       next row so the track never runs through text. */
+    .ezdistro-rail-line {
+        position: absolute;
+        top: 1.35rem;
+        inset-inline: 0;
+        height: 1px;
+        background: color-mix(in oklab, var(--color-base-300) 70%, transparent);
+        z-index: 0;
+    }
+    .ezdistro-rail-node {
+        @apply relative z-[1] size-2.5 shrink-0 self-start rounded-full ring-4 ring-base-100;
+    }
+    .ezdistro-rail-label {
+        @apply truncate font-mono text-xs font-normal uppercase text-base-content/55;
+        letter-spacing: 0.073em;
+    }
+    .ezdistro-rail-num {
+        @apply text-[2rem] font-black leading-none tracking-[-0.04em] tabular-nums;
+    }
+    .ezdistro-rail-bar {
+        @apply h-1.5 w-full overflow-hidden rounded-full bg-base-200;
+    }
+    .ezdistro-rail-bar > i {
+        @apply block h-full rounded-full transition-[width] duration-700 ease-out;
+    }
+    /* The single live signal: only the "being written" node breathes. */
+    @media (prefers-reduced-motion: no-preference) {
+        .ezdistro-rail-node-live {
+            animation: ezdistro-breathe 2.6s ease-in-out infinite;
+        }
+    }
+    @keyframes ezdistro-breathe {
+        0%,
+        100% {
+            box-shadow:
+                0 0 0 4px var(--color-base-100),
+                0 0 0 6px color-mix(in oklab, var(--color-primary) 45%, transparent);
+        }
+        50% {
+            box-shadow:
+                0 0 0 4px var(--color-base-100),
+                0 0 0 11px color-mix(in oklab, var(--color-primary) 0%, transparent);
+        }
+    }
+    @media (min-width: 640px) {
+        .ezdistro-rail-track {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+    }
+
+    /* Empty / placeholder states: bars rest on paper, blue dot marks life. */
     .ezdistro-empty {
         @apply flex flex-col items-center justify-center gap-3 py-12 text-center;
     }
     .ezdistro-empty-icon {
-        @apply grid size-14 place-items-center rounded-2xl bg-base-200 text-base-content/40;
+        @apply grid size-14 place-items-center rounded-lg bg-base-200 text-base-content/40;
+    }
+
+    /* Atlas bars — the signature decorative-data strip: hairline vertical
+       bars with occasional blue/green nodes. Pure CSS, no assets.
+       Usage: <div class="ezdistro-bars" aria-hidden="true"><i></i>…</div>
+       Heights come from --h per bar; nodes via .is-blue / .is-green. */
+    .ezdistro-bars {
+        @apply flex items-end gap-[3px] overflow-hidden;
+        height: 64px;
+    }
+    .ezdistro-bars > i {
+        @apply block w-[2px] shrink-0 rounded-none bg-base-300;
+        height: var(--h, 40%);
+    }
+    .ezdistro-bars > i.is-blue {
+        @apply bg-primary;
+    }
+    .ezdistro-bars > i.is-green {
+        @apply bg-accent;
     }
 
     /* Status pills (used alongside daisyui badge-soft) ----------------- */
@@ -458,7 +638,7 @@ html[dir='rtl'] body {
 
     /* Project tab bar — mobile-first scrollable pills ------------------ */
     .ezdistro-tab-active {
-        @apply border-primary/30 bg-primary/10 text-base-content font-semibold;
+        @apply border-primary bg-primary font-semibold text-white;
     }
     .ezdistro-tab-idle {
         @apply border-transparent text-base-content/55 hover:text-base-content hover:bg-base-100;
@@ -481,7 +661,7 @@ html[dir='rtl'] body {
         @apply grid grid-cols-2 gap-2;
     }
     .ezdistro-kv > div {
-        @apply rounded-xl border border-base-300/70 bg-base-200/40 p-2.5 min-w-0;
+        @apply rounded-lg border border-base-300/70 bg-base-200/40 p-2.5 min-w-0;
     }
     .ezdistro-kv .k {
         @apply block text-[0.7rem] text-base-content/50;
@@ -490,18 +670,14 @@ html[dir='rtl'] body {
         @apply block font-bold text-base-content break-words;
     }
 
-    /* Toast — flat paper card with a semantic accent at the logical start. */
+    /* Toast — flat paper card; semantics live in the icon chip, never a
+       side border. */
     .ezdistro-toast {
-        @apply pointer-events-auto flex min-w-0 items-start gap-3 rounded-xl border border-base-300/70 bg-base-100 px-4 py-3 text-base-content max-w-sm w-full;
-        border-inline-start-width: 3px;
+        @apply pointer-events-auto flex min-w-0 items-start gap-3 rounded-lg border border-base-300/70 bg-base-100 px-4 py-3 text-base-content max-w-sm w-full;
     }
     .ezdistro-toast .ezdistro-toast-ico {
-        @apply mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg border border-base-300/70;
+        @apply mt-0.5 grid size-8 shrink-0 place-items-center rounded-md border border-base-300/70;
     }
-    .ezdistro-toast-info { border-inline-start-color: var(--color-info); }
-    .ezdistro-toast-success { border-inline-start-color: var(--color-success); }
-    .ezdistro-toast-error { border-inline-start-color: var(--color-error); }
-    .ezdistro-toast-warning { border-inline-start-color: var(--color-warning); }
     .ezdistro-toast-info .ezdistro-toast-ico { @apply bg-info/15 text-info; }
     .ezdistro-toast-success .ezdistro-toast-ico { @apply bg-success/15 text-success; }
     .ezdistro-toast-error .ezdistro-toast-ico { @apply bg-error/15 text-error; }
@@ -513,17 +689,7 @@ html[dir='rtl'] body {
    Utilities — small, deliberate helpers
    ═══════════════════════════════════════════════════════════════════════ */
 @layer utilities {
-    /* Lavender is a CTA fill; its darker text variant stays readable on paper. */
-    .text-primary,
-    .link-primary,
-    .badge-soft.badge-primary {
-        color: var(--ezdistro-primary-text, #5d58bd);
-    }
-    [data-theme='ezdistro-dark'] .text-primary,
-    [data-theme='ezdistro-dark'] .link-primary,
-    [data-theme='ezdistro-dark'] .badge-soft.badge-primary {
-        color: #c3bfff;
-    }
+    /* Blue is readable as text on paper in both themes — no remapping. */
     .num {
         font-variant-numeric: tabular-nums;
     }
@@ -552,5 +718,19 @@ html[dir='rtl'] body {
             color 0.25s ease,
             fill 0.25s ease,
             stroke 0.25s ease !important;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Unlayered overrides — daisyUI's .table layer beats Tailwind's .hidden
+   layer, so `hidden sm:table` alone never hides the table on mobile.
+   Unlayered CSS wins over every @layer.
+   ═══════════════════════════════════════════════════════════════════════ */
+.table.hidden {
+    display: none;
+}
+@media (min-width: 40rem) {
+    .sm\:table.hidden {
+        display: table;
     }
 }

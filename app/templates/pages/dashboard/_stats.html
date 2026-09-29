@@ -7,19 +7,29 @@
              <h2 id="content-pipeline-title" class="ezdistro-panel-title">{{ _('روند تولید محتوا') }}</h2>
              <a href="/projects" class="btn btn-ghost btn-sm">{{ _('مشاهده پروژه‌ها') }}</a>
         </div>
+        {% set n_planned = stats.topics_planned|int %}
+        {% set n_writing = stats.articles_writing|int %}
+        {% set n_review = stats.articles_review|int %}
+        {% set n_published = stats.articles_published|int %}
         {% set stages = [
-            (_('Planned topics'), stats.topics_planned, 'bg-primary'),
-            (_('Articles being written'), stats.articles_writing, 'bg-warning'),
-            (_('Awaiting review'), stats.articles_review, 'bg-info'),
-            (_('Published'), stats.articles_published, 'bg-success'),
+            (_('Planned topics'), n_planned, 'bg-base-300', false),
+            (_('Articles being written'), n_writing, 'bg-primary', true),
+            (_('Awaiting review'), n_review, 'bg-warning', false),
+            (_('Published'), n_published, 'bg-accent', false),
         ] %}
-        <ol class="grid grid-cols-2 divide-x divide-y divide-base-300/70 sm:grid-cols-4 sm:divide-y-0">
-            {% for label, value, color in stages %}
-            <li class="min-w-0 px-4 py-4 first:border-s-0">
-                <span class="mb-2 flex items-center gap-2 text-xs font-medium text-base-content/65">
-                    <span class="size-2 rounded-full {{ color }}" aria-hidden="true"></span>{{ label }}
+        {% set maxv = [n_planned, n_writing, n_review, n_published]|max %}
+        <ol class="ezdistro-rail-track">
+            {% for label, value, color, live in stages %}
+            <li class="ezdistro-rail-stage">
+                <span class="ezdistro-rail-line" aria-hidden="true"></span>
+                <span class="ezdistro-rail-node {{ color }}{{ ' ezdistro-rail-node-live' if live and value }}" aria-hidden="true"></span>
+                <span class="ezdistro-rail-label">{{ label }}</span>
+                <span class="ezdistro-rail-num">{{ value }}</span>
+                <span class="ezdistro-rail-bar" aria-hidden="true">
+                    {% set w = (value / maxv * 100)|round|int if maxv else 0 %}
+                    {% if value and w < 8 %}{% set w = 8 %}{% endif %}
+                    <i class="{{ color }}" style="width: {{ w }}%"></i>
                 </span>
-                <span class="block text-3xl font-bold tracking-tight tabular-nums">{{ value }}</span>
             </li>
             {% endfor %}
         </ol>
