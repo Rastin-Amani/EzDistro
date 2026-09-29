@@ -114,8 +114,10 @@ async def handle_plan_article_images(ctx: JobContext) -> dict[str, Any]:
     context = {
         "article.title": article.get("title") or "",
         "article.slug": article.get("slug") or "",
+        "article.content": article.get("finalHtml") or article.get("generatedContent") or "",
         "topic.keyword": topic.get("keyword") or "",
         "language": ctx.config.language,
+        "locale": (ctx.config.settings or {}).get("targetLocale") or "",
         "prompt_language": imgs["prompt_language"],
         "sections": "\n".join(
             f"- section-{i}: {s.get('heading') or ''}" for i, s in enumerate(sections)

@@ -24,6 +24,17 @@ from app.repositories.prompts import PromptRepo
 from app.services.settings import ProjectConfig
 
 
+def _fmt_list(value: Any) -> str:
+    """Render a list var for prompts: newline bullets; strings pass through."""
+    if not value:
+        return ""
+    if isinstance(value, str):
+        return value
+    if isinstance(value, list):
+        return "\n".join(f"- {v}" for v in value)
+    return str(value)
+
+
 class PromptService:
     def __init__(self, pb: Any, registry: ProviderRegistry | None = None) -> None:
         self._pb = pb
@@ -42,11 +53,27 @@ class PromptService:
         retrieval_context: str = "",
         internal_links: list[dict[str, Any]] | None = None,
         raw_output: str = "",
+        output_schema: str = "",
+        research: str = "",
+        search_intent: str = "",
+        extra: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         project = config.project
         topic = topic or {}
         article = article or {}
         section = section or {}
+        settings = config.settings or {}
+        article_content = (
+            article.get("finalHtml")
+            or article.get("generatedContent")
+            or article.get("content")
+            or ""
+        )
+        article_metadata = article.get("metadata") or article.get("metaDescription") or ""
+        if isinstance(article_metadata, dict):
+            import json as _json
+
+            article_metadata = _json.dumps(article_metadata, ensure_ascii=False)
         base = {
             "project.name": project.get("name") or "",
             "project.slug": project.get("slug") or "",
@@ -59,22 +86,73 @@ class PromptService:
             "article.title": article.get("title") or "",
             "article.slug": article.get("slug") or "",
             "article.meta_description": article.get("metaDescription") or "",
+            "article.content": article_content,
+            "article.metadata": article_metadata,
+            "article": ((article.get("title") or "") + "\n\n" + article_content).strip(),
             "section.heading": section.get("heading") or "",
             "section.content_brief": section.get("content_brief")
             or section.get("contentBrief")
             or "",
             "section.position": str(section.get("position") or ""),
+            "section.key": str(
+                section.get("key") or f"section-{int(section.get('position') or 0) + 1}"
+            ),
+            "section.purpose": section.get("purpose") or "",
+            "section.reader_question": section.get("reader_question")
+            or section.get("readerQuestion")
+            or "",
+            "section.required_points": _fmt_list(
+                section.get("required_points") or section.get("requiredPoints")
+            ),
+            "section.entities": _fmt_list(section.get("entities")),
+            "section.evidence": _fmt_list(section.get("evidence")),
             "retrieved_context": retrieval_context or "",
             "internal_links": format_internal_links(internal_links),
             "language": config.language,
+            "locale": settings.get("targetLocale") or project.get("locale") or "",
+            "country": settings.get("targetCountry") or "",
+            "audience": settings.get("targetAudience") or "",
             "raw_output": raw_output,
+            "output_schema": output_schema,
+            "brand_name": settings.get("brandName") or project.get("name") or "",
+            "preferred_terminology": settings.get("preferredTerminology") or "",
+            "forbidden_terminology": settings.get("forbiddenTerminology") or "",
+            "search_intent": search_intent or topic.get("searchIntent") or "",
+            "research": research or "",
+            "search_results": "",
+            "competitor_pages": "",
+            "related_queries": "",
+            "questions": "",
+            "entities": _fmt_list(topic.get("entities")),
+            "essential_questions": "",
+            "subtopics": "",
+            "content_gaps": "",
+            "original_value_opportunities": "",
+            "evidence_requirements": "",
+            "site_context": project.get("description") or "",
+            "product_context": settings.get("productContext") or "",
+            "priority_pages": "",
+            "topical_clusters": "",
+            "url_policy": settings.get("urlPolicy") or "",
+            "previous_section": "",
+            "next_section": "",
+            "qa_issues": "",
+            "search_console_queries": "",
+            "search_performance": "",
+            "rankings": "",
         }
+        if extra:
+            for k, v in extra.items():
+                base[k] = v if isinstance(v, str) else _fmt_list(v) if isinstance(v, list) else v
         # rule prompts are data too: resolve them recursively with the same context
-        # (save-time validation guarantees only known variables appear in them)
+        # (save-time validation guarantees only known variables appear in them).
+        # seo_rules prefers the new seo_content_contract, falling back to legacy.
+        contract = config.prompt("seo_content_contract") or config.prompt("seo_rules")
         rules: dict[str, Any] = {}
         for key, raw in (
-            ("seo_rules", config.prompt("seo_rules")),
+            ("seo_rules", contract),
             ("internal_linking_rules", config.prompt("internal_linking")),
+            ("brand_voice", config.prompt("brand_voice")),
         ):
             rules[key] = render_prompt(raw, base) if raw else ""
         return {**base, **rules}
