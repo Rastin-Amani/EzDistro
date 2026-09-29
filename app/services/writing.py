@@ -385,10 +385,19 @@ async def handle_assemble_article(ctx: JobContext) -> dict[str, Any]:
     html = enforced["html"]
     fixed_title = enforced["title"]
     fixed_slug = enforced["slug"]
+
+    # Metadata stage (multilingual-engine pipeline): LLM-generated final
+    # metadata. Skipped when metadata_user is unconfigured; falls back to the
+    # stored meta description (or the title) on any failure.
+    meta_from_llm = await _generate_metadata(ctx, topic, fixed_title, fixed_slug, html, keyword)
+    if meta_from_llm.get("title"):
+        fixed_title = meta_from_llm["title"]
+    if meta_from_llm.get("slug"):
+        fixed_slug = meta_from_llm["slug"]
     if fixed_title != article.get("title") or fixed_slug != article.get("slug"):
         articles.update(article_id, {"title": fixed_title, "slug": fixed_slug})
 
-    meta_description = article.get("metaDescription") or ""
+    meta_description = meta_from_llm.get("meta_description") or article.get("metaDescription") or ""
     if not meta_description.strip():
         meta_description = fixed_title
 
@@ -409,6 +418,26 @@ async def handle_assemble_article(ctx: JobContext) -> dict[str, Any]:
             retryable=False,
             details={"issues": [i.to_dict() for i in report.issues], "stats": report.stats},
         )
+
+    # QA + repair loop (multilingual-engine pipeline, single pass): an LLM
+    # senior-editor audit, then a targeted repair when it reports critical or
+    # high-severity issues. Skipped when the QA prompts are unconfigured; a
+    # repair that fails deterministic re-validation is discarded so an
+    # otherwise-valid article never newly fails. The QA verdict is stored in
+    # the validation record and shown on the review page.
+    html, qa_info = await _qa_and_repair(
+        ctx,
+        topic,
+        outline,
+        ordered,
+        min_words,
+        keyword,
+        fixed_title,
+        fixed_slug,
+        meta_description,
+        html,
+    )
+    articles.set_validation(article_id, {**report.to_dict(), "qa": qa_info})
 
     score = seo_score(
         title=fixed_title,
@@ -524,12 +553,19 @@ async def _generate_outline(ctx: JobContext, topic: dict[str, Any]) -> dict[str,
     from app.services.prompt_service import PromptService
 
     retrieval = await _retrieval_data(ctx, topic)
+    # Research stage (multilingual-engine pipeline): skipped when the
+    # research_user prompt is not configured — the outline then behaves
+    # exactly as before (retrieval context + SEO contract only).
+    research = await _generate_research(ctx, topic, retrieval)
     service = PromptService(ctx.pb, ctx.registry)
     context = service.build_context(
         ctx.config,
         topic=topic,
         retrieval_context=retrieval["context"],
         internal_links=retrieval["links"],
+        research=research.get("json_text") or "",
+        search_intent=research.get("search_intent") or "",
+        extra=research.get("extra") or None,
     )
 
     # Prompts are data: render the stored templates with the variable context.
@@ -569,7 +605,12 @@ async def _generate_outline(ctx: JobContext, topic: dict[str, Any]) -> dict[str,
     # carry the keyword (prompts are best-effort; this is the guarantee).
     from app.domain.seo_enforce import enforce_outline
 
-    return enforce_outline(outline, str(topic.get("keyword") or ""))
+    final = enforce_outline(outline, str(topic.get("keyword") or ""))
+    # Persist the research snapshot with the immutable outline so QA, review
+    # and refresh stages can reuse it without regenerating it.
+    if research.get("data"):
+        final["research"] = research["data"]
+    return final
 
 
 async def _repair_outline(
@@ -577,21 +618,338 @@ async def _repair_outline(
 ) -> dict[str, Any] | None:
     from app.services.prompt_service import PromptService
 
-    validation = ctx.config.prompt("validation")
-    if not validation:
+    validation_tpl = ctx.config.prompt("output_validation") or ctx.config.prompt("validation")
+    if not validation_tpl:
         return None
     try:
         from app.domain.parsing import extract_json as _extract
 
         service = PromptService(ctx.pb, ctx.registry)
-        context = service.build_context(ctx.config, topic=topic, raw_output=raw[:12000])
-        prompt = service.render(validation, context)
+        context = service.build_context(
+            ctx.config,
+            topic=topic,
+            raw_output=raw[:12000],
+            output_schema=_OUTLINE_JSON_SCHEMA,
+        )
+        prompt = service.render(validation_tpl, context)
         params = _generation_params(ctx, "outline")
         repaired_raw = await ctx.providers.llm.generate(system=None, user=prompt, params=params)
-        ctx.warning("outline repaired via validation prompt")
+        ctx.warning("outline repaired via output_validation prompt")
         return normalize_outline(_extract(repaired_raw.text))
     except Exception:
         return None
+
+
+_OUTLINE_JSON_SCHEMA = (
+    '{"title": string, "slug": string, '
+    '"sections": [{"heading": string, "content_brief": string, '
+    '"internal_links": [{"title": string, "url": string, "anchor_text": string}]}]}'
+)
+
+
+async def _generate_research(
+    ctx: JobContext, topic: dict[str, Any], retrieval: dict[str, Any]
+) -> dict[str, Any]:
+    """Research stage: search-intent + gaps + original-value foundation.
+
+    Returns {"json_text", "search_intent", "extra"} — all empty when the
+    research_user prompt is not configured or the call fails, so the outline
+    stage falls back to its pre-research behaviour.
+    """
+    empty: dict[str, Any] = {"json_text": "", "search_intent": "", "extra": {}}
+    user_tpl = ctx.config.prompt("research_user")
+    if not user_tpl:
+        return empty
+    try:
+        from app.domain.parsing import extract_json
+        from app.domain.prompt_render import PromptRenderError
+        from app.services.prompt_service import PromptService
+
+        service = PromptService(ctx.pb, ctx.registry)
+        context = service.build_context(
+            ctx.config,
+            topic=topic,
+            retrieval_context=retrieval["context"],
+            internal_links=retrieval["links"],
+        )
+        try:
+            user = service.render(user_tpl, context)
+        except PromptRenderError as exc:
+            raise _prompt_config_error("research_user", exc) from exc
+        system_raw = ctx.config.prompt("research_system")
+        system = None
+        if system_raw:
+            try:
+                system = service.render(system_raw, context)
+            except PromptRenderError as exc:
+                raise _prompt_config_error("research_system", exc) from exc
+        params = _generation_params(ctx, "outline")
+        raw = await ctx.providers.llm.generate(system=system, user=user, params=params)
+        data = extract_json(raw.text)
+        if not isinstance(data, dict):
+            return empty
+        intent = data.get("search_intent") or {}
+        search_intent = intent.get("primary") if isinstance(intent, dict) else str(intent or "")
+        extra = {
+            key: data.get(key, [])
+            for key in (
+                "essential_questions",
+                "subtopics",
+                "entities",
+                "related_queries",
+                "content_gaps",
+                "original_value_opportunities",
+                "evidence_requirements",
+            )
+        }
+        import json as _json
+
+        ctx.info("research completed", {"topic": topic.get("id") or topic.get("title")})
+        return {
+            "json_text": _json.dumps(data, ensure_ascii=False),
+            "search_intent": search_intent or "",
+            "extra": extra,
+            "data": data,
+        }
+    except Exception as exc:
+        # Never fail the write on research alone (evidence may be absent in
+        # tests and minimal projects) — unless it is a prompt config error.
+        from app.providers.base import ProviderError
+
+        if isinstance(exc, ProviderError) and not exc.retryable:
+            raise
+        ctx.warning("research skipped", {"error": str(exc)[:200]})
+        return empty
+
+
+async def _generate_metadata(
+    ctx: JobContext,
+    topic: dict[str, Any] | None,
+    title: str,
+    slug: str,
+    html: str,
+    keyword: str,
+) -> dict[str, str]:
+    """Metadata stage: LLM-generated final title/slug/meta_description.
+
+    Returns a possibly-empty dict; anything missing falls back to the
+    enforced title/slug and stored meta description. A caller-side keyword
+    guard keeps the deterministic SEO floor: an LLM title that drops the
+    keyword is ignored.
+    """
+    user_tpl = ctx.config.prompt("metadata_user")
+    if not user_tpl:
+        return {}
+    try:
+        from app.domain.parsing import extract_json
+        from app.domain.prompt_render import PromptRenderError
+        from app.services.prompt_service import PromptService
+
+        service = PromptService(ctx.pb, ctx.registry)
+        context = service.build_context(
+            ctx.config,
+            topic=topic,
+            article={"title": title, "slug": slug, "content": html},
+        )
+        try:
+            user = service.render(user_tpl, context)
+        except PromptRenderError as exc:
+            raise _prompt_config_error("metadata_user", exc) from exc
+        system_raw = ctx.config.prompt("metadata_system")
+        system = None
+        if system_raw:
+            try:
+                system = service.render(system_raw, context)
+            except PromptRenderError as exc:
+                raise _prompt_config_error("metadata_system", exc) from exc
+        params = _generation_params(ctx, "meta")
+        raw = await ctx.providers.llm_for("meta").generate(system=system, user=user, params=params)
+        data = extract_json(raw.text)
+        if not isinstance(data, dict):
+            return {}
+        out: dict[str, str] = {}
+        new_title = str(data.get("title") or "").strip()[:200]
+        if new_title and (not keyword or keyword in new_title):
+            out["title"] = new_title
+        new_slug = str(data.get("slug") or "").strip()[:200]
+        if new_slug:
+            out["slug"] = new_slug
+        meta = str(data.get("meta_description") or "").strip()[:500]
+        if meta:
+            out["meta_description"] = meta
+        return out
+    except Exception as exc:
+        from app.providers.base import ProviderError
+
+        if isinstance(exc, ProviderError) and not exc.retryable:
+            raise
+        ctx.warning("metadata generation skipped", {"error": str(exc)[:200]})
+        return {}
+
+
+async def _qa_and_repair(
+    ctx: JobContext,
+    topic: dict[str, Any] | None,
+    outline: dict[str, Any],
+    ordered: list[dict[str, Any]],
+    min_words: int,
+    keyword: str,
+    title: str,
+    slug: str,
+    meta_description: str,
+    html: str,
+) -> tuple[str, dict[str, Any]]:
+    """QA audit + single repair pass. Never fails or degrades the article.
+
+    Returns (html, qa_info) — qa_info is persisted into the article's
+    validation record and shown on the review page.
+    """
+    qa_user_tpl = ctx.config.prompt("article_qa_user")
+    if not qa_user_tpl:
+        return html, {"ran": False, "ready": None, "summary": "", "issues": [], "repaired": False}
+    try:
+        import json as _json
+
+        from app.domain.article_validation import ArticleValidator
+        from app.domain.parsing import extract_json
+        from app.domain.prompt_render import PromptRenderError
+        from app.services.prompt_service import PromptService
+
+        service = PromptService(ctx.pb, ctx.registry)
+        article_ctx = {
+            "title": title,
+            "slug": slug,
+            "metaDescription": meta_description,
+            "content": html,
+            "metadata": {"title": title, "slug": slug, "meta_description": meta_description},
+        }
+        links = _collect_links(outline)
+        stored_research = outline.get("research") or ""
+        if isinstance(stored_research, dict):
+            stored_research = _json.dumps(stored_research, ensure_ascii=False)
+        context = service.build_context(
+            ctx.config,
+            topic=topic,
+            article=article_ctx,
+            internal_links=links,
+            research=stored_research,
+        )
+        try:
+            user = service.render(qa_user_tpl, context)
+        except PromptRenderError as exc:
+            raise _prompt_config_error("article_qa_user", exc) from exc
+        system_raw = ctx.config.prompt("article_qa_system")
+        system = None
+        if system_raw:
+            try:
+                system = service.render(system_raw, context)
+            except PromptRenderError as exc:
+                raise _prompt_config_error("article_qa_system", exc) from exc
+        params = _generation_params(ctx, "review")
+        raw = await ctx.providers.llm_for("review").generate(
+            system=system, user=user, params=params
+        )
+        data = extract_json(raw.text)
+        if not isinstance(data, dict):
+            return html, {
+                "ran": True,
+                "ready": None,
+                "summary": "",
+                "issues": [],
+                "strengths": [],
+                "repaired": False,
+            }
+        issues = _sanitize_qa_issues(data.get("issues") or [])
+        blocking = [i for i in issues if i.get("severity") in ("critical", "high")]
+        ready = bool(data.get("ready", True)) and not blocking
+        strengths = data.get("strengths")
+        qa_info: dict[str, Any] = {
+            "ran": True,
+            "ready": ready,
+            "summary": str(data.get("summary") or ""),
+            "issues": issues,
+            "strengths": strengths if isinstance(strengths, list) else [],
+            "repaired": False,
+        }
+        if ready:
+            ctx.info("article QA passed", {"issues": len(issues)})
+            return html, qa_info
+        ctx.warning(
+            "article QA found blocking issues",
+            {"blocking": len(blocking), "total": len(issues)},
+        )
+        repair_user_tpl = ctx.config.prompt("article_repair_user")
+        if not repair_user_tpl:
+            return html, qa_info
+        repair_context = service.build_context(
+            ctx.config,
+            topic=topic,
+            article=article_ctx,
+            internal_links=links,
+            extra={"qa_issues": _json.dumps(data, ensure_ascii=False)[:12000]},
+        )
+        try:
+            repair_user = service.render(repair_user_tpl, repair_context)
+        except PromptRenderError as exc:
+            raise _prompt_config_error("article_repair_user", exc) from exc
+        repair_system_raw = ctx.config.prompt("article_repair_system")
+        repair_system = None
+        if repair_system_raw:
+            try:
+                repair_system = service.render(repair_system_raw, repair_context)
+            except PromptRenderError as exc:
+                raise _prompt_config_error("article_repair_system", exc) from exc
+        repaired_raw = await ctx.providers.llm_for("review").generate(
+            system=repair_system, user=repair_user, params=params
+        )
+        repaired = sanitize_html(normalize_article_html(repaired_raw.text.strip()))
+        re_report = ArticleValidator(min_words=min_words, keyword=keyword).validate(
+            title=title, slug=slug, outline=outline, sections=ordered, html=repaired
+        )
+        if not re_report.ok:
+            ctx.warning("repaired article failed re-validation — keeping original")
+            return html, qa_info
+        ctx.info("article repaired via QA loop")
+        qa_info["repaired"] = True
+        return repaired, qa_info
+    except Exception as exc:
+        from app.providers.base import ProviderError
+
+        if isinstance(exc, ProviderError) and not exc.retryable:
+            raise
+        ctx.warning("article QA skipped", {"error": str(exc)[:200]})
+        return html, {
+            "ran": False,
+            "ready": None,
+            "summary": "",
+            "issues": [],
+            "strengths": [],
+            "repaired": False,
+        }
+
+
+def _sanitize_qa_issues(issues: Any) -> list[dict[str, Any]]:
+    """Keep only known QA fields so untrusted LLM JSON never reaches storage."""
+    if not isinstance(issues, list):
+        return []
+    clean: list[dict[str, Any]] = []
+    for item in issues:
+        if not isinstance(item, dict):
+            continue
+        severity = str(item.get("severity") or "").lower()
+        if severity not in ("critical", "high", "medium", "low"):
+            severity = "medium"
+        clean.append(
+            {
+                "severity": severity,
+                "category": str(item.get("category") or "")[:40],
+                "location": str(item.get("location") or "")[:200],
+                "problem": str(item.get("problem") or "")[:1000],
+                "why_it_matters": str(item.get("why_it_matters") or "")[:1000],
+                "required_fix": str(item.get("required_fix") or "")[:1000],
+            }
+        )
+    return clean
 
 
 def _persist_sections(
@@ -679,6 +1037,7 @@ async def _generate_section(
         article=article,
         section=plan,
         internal_links=plan.get("internal_links") or [],
+        extra=_neighbour_context(outline, int(plan.get("position") or 0)),
     )
 
     section_user = ctx.config.prompt("section_user")
@@ -734,6 +1093,23 @@ async def _generate_section(
         "prompt_version": prompt_version,
         "words": word_count_from_html(html),
     }
+
+
+def _neighbour_context(outline: dict[str, Any], position: int) -> dict[str, Any]:
+    """Previous/next section summaries for the section writer (may be empty)."""
+
+    def _summary(plan: dict[str, Any]) -> str:
+        heading = str(plan.get("heading") or "")
+        brief = str(plan.get("content_brief") or "")
+        return f"{heading}\n{brief}".strip()
+
+    plans = outline.get("sections") or []
+    extra: dict[str, Any] = {}
+    if 0 < position <= len(plans):
+        extra["previous_section"] = _summary(plans[position - 1])
+    if 0 <= position < len(plans) - 1:
+        extra["next_section"] = _summary(plans[position + 1])
+    return extra
 
 
 def _active_prompt_version(ctx: JobContext, ptype: str) -> int:

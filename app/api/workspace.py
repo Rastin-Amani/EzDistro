@@ -374,6 +374,10 @@ def article_review(request: Request, project_id: str, article_id: str):
         request.state.pb, article, sections, str(topic.get("keyword") or "") if topic else ""
     )
     internal_links = _collect_links(article)
+    stored = article.get("validation") or {}
+    qa = stored.get("qa") if isinstance(stored, dict) else None
+    outline_snapshot = article.get("outline") or {}
+    research = outline_snapshot.get("research") if isinstance(outline_snapshot, dict) else None
     return templates.TemplateResponse(
         request,
         "pages/articles/review.html",
@@ -386,6 +390,8 @@ def article_review(request: Request, project_id: str, article_id: str):
             "revisions": revisions,
             "report": report,
             "internal_links": internal_links,
+            "qa": qa if isinstance(qa, dict) else {},
+            "research": research if isinstance(research, dict) else {},
         },
     )
 
