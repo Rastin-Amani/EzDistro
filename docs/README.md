@@ -21,6 +21,7 @@ ARCHITECTURE §11, SCHEMA §5, and TROUBLESHOOTING §8.
 | A content/SEO operator using the UI | [USER-GUIDE.md](USER-GUIDE.md) | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) |
 | Debugging a failed job | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | [FAILURES.md](FAILURES.md) |
 | Wanting the failure-mode matrix | [FAILURES.md](FAILURES.md) | — |
+| Building/using SEO research (Google Ads, competitors, opportunities) | [SEO_RESEARCH.md](SEO_RESEARCH.md) | [CONFIGURATION.md](CONFIGURATION.md) |
 | Needing every field/collection | [SCHEMA.md](SCHEMA.md) | [CONFIGURATION.md](CONFIGURATION.md) |
 | Onboarding to the code | [ARCHITECTURE.md](ARCHITECTURE.md) §1–§5 | README.md (repo root) |
 
@@ -35,6 +36,7 @@ ARCHITECTURE §11, SCHEMA §5, and TROUBLESHOOTING §8.
 | **OPERATIONS.md** | DevOps, SRE | Deployment, runbook, health, scaling, backups/DR, upgrades | Verified |
 | **TROUBLESHOOTING.md** | Operators, on-call | Symptom → verify → resolution per area (incl. images) | Verified · covers v1.3.0 images pipeline |
 | **FAILURES.md** | Engineers, on-call | Per-dependency failure matrix + crash-simulation guarantees (incl. images) | Verified · refreshed |
+| **SEO_RESEARCH.md** | Engineers, SEO operators, DevOps | Google Ads OAuth + keyword research, WordPress mirror/sync, optional SERP, clustering, opportunity engine, cost/retention | New · research engine |
 
 ## Conventions used across the set
 

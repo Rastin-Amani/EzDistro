@@ -43,12 +43,20 @@ make check      # lint -> typecheck -> test
 ## Architecture rules (conventions that matter)
 
 - **Layering** (per docs/ARCHITECTURE.md): `app/domain/` is pure & I/O-free; `app/repositories/` only talks to PocketBase; `app/providers/` only talks to external APIs; `app/services/` orchestrates. In practice `app/api/` does use repositories (access control) and `projects.py` wires providers (integration health checks). Long-running work must live in **job handlers** (see next bullet), never request handlers.
-- **Job handlers self-register** via `@register_job("type")` in `app/jobs/handlers.py` (imports in `ensure_registered()` trigger the side effects). Job handlers live in `app/services/` (`indexing.py`, `writing.py`, `publishing_service.py`, `retry_service.py`). The worker whitelists the 8 dispatched job types in `app/workers/worker.py` — a new job type must be added there too. Workers claim jobs atomically via unique-constrained `job_leases`; correctness never depends on worker memory.
+- **Job handlers self-register** via `@register_job("type")` in `app/jobs/handlers.py` (imports in `ensure_registered()` trigger the side effects). Job handlers live in `app/services/` (`indexing.py`, `writing.py`, `publishing_service.py`, `retry_service.py`, `wordpress_sync.py`, `research.py`). `JOB_TYPES` in `app/jobs/handlers.py` is the single source of truth — the worker (`app/workers/worker.py`) and `app/api/jobs.py` both derive from it, so a new job type only needs adding there. Workers claim jobs atomically via unique-constrained `job_leases`; correctness never depends on worker memory.
 - **Providers are table-driven**: to add a provider, subclass a protocol in `app/providers/base.py` and register the class in `registry._load_adapters()` (`app/providers/registry.py`) — it then appears in the UI dropdowns. No provider-specific branches elsewhere.
 - **PocketBase clients use `auto_snake_case=False`** (`app/pb.py`) so field names stay **camelCase** end-to-end. Never "fix" them to snake_case. Admin auth falls back `_superusers` → `_admins` for PB < 0.23.
 
 ## UI / frontend
 
 - All mutations are HTMX POST/PUT gated by `require_hx` (`app/api/deps.py`); respond with the helpers in `app/utils.py` (`hx_toast`, `mutation_response`, `ok_with_redirect`, `delayed_redirect`) — not raw JSON/redirects.
-- UI is **Persian, RTL** (`lang="fa" dir="rtl"`); tests assert on Persian strings. New UI strings should be Persian; dates go through the `jalali_*` filters in `app/templates.py`.
+- UI is **English-only** (the gettext/Persian layer was removed); dates go through the `loc_*` filters in `app/templates.py`.
 - `app/static/app.js` is a **committed minified bundle** (htmx 2 + Alpine) — don't hand-edit it and don't expect a JS rebuild script; `package.json` only automates Tailwind. CSS source is `app/static/css/input.css`, build (`make css`) overwrites the committed `app/static/app.css` — rebuild before committing UI changes.
+
+## SEO research engine
+
+- See [`docs/SEO_RESEARCH.md`](docs/SEO_RESEARCH.md). **Facts first, AI second** — never invent search volume, CPC, competition, rankings or existence of content; Google Ads competition is *paid* competition, never organic difficulty.
+- Google Ads is REST/JSON over `httpx` (`app/providers/google_ads.py`) with **zero new dependencies**; developer tokens were sunset (access rides on the Google Cloud project), so there is no developer-token onboarding. Set `GOOGLE_ADS_CLIENT_ID`/`_CLIENT_SECRET`/`_REDIRECT_URI` (+ optional `_API_VERSION`, default `v25`).
+- `SERP_PROVIDER=none` is first-class; every optional capability (SERP, LLM clustering, embeddings) degrades gracefully.
+- New job types: `research_run` and `wordpress_sync` in `app/jobs/handlers.py` `JOB_TYPES` (the worker and `app/api/jobs.py` derive from that single list).
+- OAuth callback is a browser navigation → `RedirectResponse` with a `?ga=…` flag, not `HX-Trigger`. Refresh tokens are Fernet-encrypted via `SecretsService`; never log/render/return secrets.

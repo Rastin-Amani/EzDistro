@@ -69,8 +69,27 @@ Do not rely on it.
 | `EMBEDDING_CONCURRENCY` | `4` | Max concurrent embedding batches |
 | `PUBLISH_CONCURRENCY` | `2` | Max concurrent WordPress publishes |
 
-### Feature flags & misc
+### SEO research engine (optional feature)
 
+| Variable | Default | Effect |
+|---|---|---|
+| `GOOGLE_ADS_CLIENT_ID` | — | Google Cloud OAuth client id (app-level, not per project) |
+| `GOOGLE_ADS_CLIENT_SECRET` | — | OAuth client secret (never exposed client-side) |
+| `GOOGLE_ADS_REDIRECT_URI` | — | Exact callback URL, e.g. `https://…/projects/google-ads/callback` |
+| `GOOGLE_ADS_API_VERSION` | `v25` | Google Ads API version; versions sunset annually, keep configurable |
+| `GOOGLE_ADS_LOGIN_CUSTOMER_ID` | — | Optional manager (MCC) id used as `login-customer-id` |
+| `GOOGLE_ADS_DEVELOPER_TOKEN` | — | Legacy: developer tokens were sunset 2026-09-09; sent only if set, ignored by Google |
+| `RESEARCH_MAX_KEYWORDS_PER_RUN` | `5000` | Google Ads keyword budget per run |
+| `RESEARCH_MAX_COMPETITOR_PAGES` | `200` | Crawl budget per run |
+| `RESEARCH_MAX_SERP_QUERIES` | `0` | Live SERP budget per run (`0` = no live SERP queries) |
+| `RESEARCH_CRAWL_CONCURRENCY` | `4` | Competitor crawl parallelism |
+| `RESEARCH_GOOGLE_ADS_CONCURRENCY` | `2` | Keyword Planning parallelism (tight rate limits) |
+
+`settings.google_ads_configured` is true only when id + secret + redirect are all
+set. All research env vars are optional — the engine works without Google Ads
+(competitor-only) and without a SERP provider. See [SEO_RESEARCH.md](SEO_RESEARCH.md).
+
+### Feature flags & misc
 | Variable | Default | Effect |
 |---|---|---|
 | `OLLAMA_ENABLED` | `0` | `1` exposes Ollama (`/v1`) as a selectable LLM provider |
