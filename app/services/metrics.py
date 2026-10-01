@@ -173,7 +173,7 @@ def query_provider_metrics(pb: Any, project_id: str = "", days: int = 7) -> list
     rows = []
     try:
         records = pb.collection("provider_metrics").get_full_list(
-            {"filter": f, "sort": "provider,model,operation"}
+            query_params={"filter": f, "sort": "provider,model,operation"}
         )
     except Exception:
         return []

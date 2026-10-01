@@ -197,7 +197,9 @@ async def run_load_test(
             await asyncio.sleep(0.01)  # let claimed tasks finish in this loop
             remaining = len(
                 pb.collection("jobs").get_full_list(
-                    {"filter": '(status="pending" || status="retrying" || status="running")'}
+                    query_params={
+                        "filter": '(status="pending" || status="retrying" || status="running")'
+                    }
                 )
             )
             if remaining == 0:

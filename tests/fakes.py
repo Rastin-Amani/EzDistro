@@ -154,7 +154,7 @@ class FakeRecordService:
         start = (max(1, page) - 1) * per_page
         return FakeListResult(records[start : start + per_page], total)
 
-    def get_full_list(self, query_params: dict[str, Any] | None = None):
+    def get_full_list(self, batch: int = 100, query_params: dict[str, Any] | None = None):
         params = query_params or {}
         records = [
             r for r in self._storage.records(self.name) if self._match(r, params.get("filter", ""))

@@ -92,7 +92,7 @@ class BaseRepo:
             params["sort"] = sort
         if fields:
             params["fields"] = fields
-        return [record_to_dict(r) for r in self._coll().get_full_list(params)]
+        return [record_to_dict(r) for r in self._coll().get_full_list(query_params=params)]
 
     def delete_matching(self, *, filter: str) -> int:
         """Delete every record matching `filter`. Used to replace child rows
