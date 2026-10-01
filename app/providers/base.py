@@ -118,6 +118,15 @@ class WPPost:
     link: str
     status: str
     modified: str = ""
+    # Sync-only extras (populated when the caller requests SYNC_FIELDS).
+    slug: str = ""
+    excerpt: str = ""
+    date: str = ""
+    modified_gmt: str = ""
+    author: int = 0
+    featured_media: int = 0
+    categories: list[int] = field(default_factory=list)
+    tags: list[int] = field(default_factory=list)
 
 
 @dataclass
@@ -339,5 +348,125 @@ class PublisherProvider(Protocol):
     async def set_featured_media(self, post_id: int, media_id: int) -> PublishResult:
         """Attach media as the post featured image (WP featured_media)."""
         ...
+
+    async def ping(self) -> None: ...
+
+
+# =============================================================================
+# SEO research providers
+# =============================================================================
+
+
+@dataclass
+class KeywordIdea:
+    """One keyword-idea row from a keyword research provider.
+
+    Metrics are *observed* values straight from the provider. Nothing here is
+    invented: `competition` is Google Ads / paid competition, never an organic
+    difficulty score.
+    """
+
+    text: str
+    avg_monthly_searches: int = 0
+    competition: str = "UNSPECIFIED"  # LOW | MEDIUM | HIGH | UNSPECIFIED
+    competition_index: int = 0
+    average_cpc_micros: int = 0
+    low_top_of_page_bid_micros: int = 0
+    high_top_of_page_bid_micros: int = 0
+    currency_code: str = ""
+    # (year, month, monthly_searches) — discrete monthly observations
+    monthly_volumes: list[tuple[int, int, int]] = field(default_factory=list)
+    source: str = ""
+
+
+@dataclass
+class SEEDKind:
+    """Seed kinds understood by keyword research providers (Google Ads)."""
+
+    KEYWORD = "keyword"
+    URL = "url"
+    SITE = "site"
+    KEYWORD_AND_URL = "keyword_and_url"
+
+
+@dataclass
+class SERPOrganicResult:
+    position: int
+    url: str = ""
+    domain: str = ""
+    title: str = ""
+    snippet: str = ""
+    is_featured_snippet: bool = False
+    is_people_also_ask: bool = False
+
+
+@dataclass
+class SERPObservation:
+    """A time-stamped SERP observation. Never a permanent fact."""
+
+    keyword: str
+    provider: str
+    locale: str = ""
+    location: str = ""
+    device: str = "desktop"
+    results: list[SERPOrganicResult] = field(default_factory=list)
+    features: list[str] = field(default_factory=list)
+    questions: list[str] = field(default_factory=list)  # People Also Ask
+    related_searches: list[str] = field(default_factory=list)
+    raw: dict[str, Any] = field(default_factory=dict)
+    observed_at: str = ""
+
+
+@dataclass
+class AdsCustomer:
+    customer_id: str
+    descriptive_name: str = ""
+    currency_code: str = ""
+    time_zone: str = ""
+    manager_customer_id: str = ""
+    is_manager: bool = False
+    status: str = ""
+
+
+class KeywordResearchProvider(Protocol):
+    """Google Ads Keyword Planning (and any future replacement)."""
+
+    provider_name: str
+
+    async def list_accessible_customers(self) -> list[str]: ...
+
+    async def list_customers(self, customer_id: str | None = None) -> list[AdsCustomer]: ...
+
+    async def generate_keyword_ideas(
+        self,
+        *,
+        customer_id: str,
+        seed_kind: str,
+        keywords: list[str] | None = None,
+        url: str = "",
+        language: str = "languageConstants/1000",
+        geo_targets: list[str] | None = None,
+        network: str = "GOOGLE_SEARCH",
+        include_adult_keywords: bool = False,
+        page_size: int = 1000,
+        max_results: int = 0,
+    ) -> list[KeywordIdea]: ...
+
+    async def ping(self) -> None: ...
+
+
+class SERPProvider(Protocol):
+    """Optional live-SERP provider. `none` is a first-class implementation."""
+
+    provider_name: str
+
+    async def search(
+        self,
+        *,
+        keyword: str,
+        locale: str = "en",
+        location: str = "",
+        device: str = "desktop",
+    ) -> SERPObservation | None: ...
 
     async def ping(self) -> None: ...

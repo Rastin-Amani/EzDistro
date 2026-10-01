@@ -20,6 +20,7 @@ from app.providers.base import (
     VectorPoint,
     WPPost,
 )
+from app.providers.serp import NoneSERPProvider
 
 
 class FakeLLM:
@@ -313,9 +314,14 @@ class FakePublisher:
         self.upload_media_error: Exception | None = None
 
     async def list_posts(
-        self, *, per_page=100, after_id=None, status="publish", fields=None
+        self, *, per_page=100, after_id=None, status="publish", fields=None, modified_after=""
     ) -> list[WPPost]:
-        results = [p for p in self.posts if after_id is None or p.id > after_id]
+        results = [
+            p
+            for p in self.posts
+            if (after_id is None or p.id > after_id)
+            and (not modified_after or (p.modified or "") >= modified_after)
+        ]
         return sorted(results, key=lambda p: p.id)[:per_page]
 
     async def create_post(
@@ -424,6 +430,7 @@ class FakeRegistry:
         self.publisher = FakePublisher()
         self.image = FakeImageProvider()
         self.images: dict[str, FakeImageProvider] = {"primary": self.image}
+        self.serp = NoneSERPProvider()
 
     def get_llm_provider(
         self, project, settings, observer=None, integration=None, role="outline", role_config=None
@@ -457,6 +464,11 @@ class FakeRegistry:
         if name not in self.images:
             self.images[name] = FakeImageProvider(provider_name=name)
         return self.images[name]
+
+    def get_serp_provider(
+        self, project, settings, observer=None, integration=None
+    ) -> NoneSERPProvider:
+        return self.serp
 
 
 class _suppress:

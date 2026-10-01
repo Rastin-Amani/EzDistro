@@ -42,6 +42,7 @@ CATEGORY_RERANKER = "reranker"
 CATEGORY_VECTOR = "vector_store"
 CATEGORY_PUBLISHER = "publisher"
 CATEGORY_IMAGE = "image"
+CATEGORY_SERP = "serp"
 CATEGORIES = (
     CATEGORY_LLM,
     CATEGORY_EMBEDDING,
@@ -49,6 +50,7 @@ CATEGORIES = (
     CATEGORY_VECTOR,
     CATEGORY_PUBLISHER,
     CATEGORY_IMAGE,
+    CATEGORY_SERP,
 )
 
 DEFAULT_PROVIDER: dict[str, str] = {
@@ -58,6 +60,7 @@ DEFAULT_PROVIDER: dict[str, str] = {
     CATEGORY_VECTOR: "qdrant",
     CATEGORY_PUBLISHER: "wordpress",
     CATEGORY_IMAGE: "gemini",
+    CATEGORY_SERP: "none",
 }
 
 SETTINGS_KEY: dict[str, str] = {
@@ -93,6 +96,7 @@ class ProviderRegistry:
         from app.providers.llm.openai_compat import OpenAICompatLLM
         from app.providers.publish.wordpress import WordPressPublisher
         from app.providers.rerank.cohere_compat import CohereCompatReranker
+        from app.providers.serp import NoneSERPProvider, SerperSERPProvider
         from app.providers.vector.qdrant_store import QdrantStore
 
         for cls in (
@@ -106,8 +110,11 @@ class ProviderRegistry:
             GeminiImage,
             FluxImage,
             OpenAICompatImage,
+            NoneSERPProvider,
+            SerperSERPProvider,
         ):
-            self._table[(cls.category, cls.provider_name)] = cls
+            adapter: Any = cls
+            self._table[(adapter.category, adapter.provider_name)] = cls
         # provider aliases with the same adapter but different UI metadata
         self._table[(CATEGORY_LLM, "ollama")] = OpenAICompatLLM
         self._table[(CATEGORY_LLM, "custom")] = OpenAICompatLLM
@@ -209,6 +216,25 @@ class ProviderRegistry:
             role_config=role_config,
         )
 
+    def get_serp_provider(
+        self,
+        project: dict[str, Any],
+        settings: dict[str, Any],
+        observer: CallObserver | None = None,
+        integration: dict[str, Any] | None = None,
+    ) -> Any:
+        """Optional SERP provider. No serp integration → the `none` provider,
+        which reports 'uncollected' instead of fabricating ranking data."""
+        from app.providers.serp import NoneSERPProvider
+
+        integration = integration or self._integrations.get_active(project["id"], CATEGORY_SERP)
+        if not integration:
+            return NoneSERPProvider()
+        provider_name = str(integration.get("provider") or "")
+        if not provider_name or provider_name == "none":
+            return NoneSERPProvider()
+        return self._resolve(CATEGORY_SERP, project, settings, observer, integration)
+
     def active_integration_for_provider(
         self, project_id: str, category: str, provider_name: str
     ) -> dict[str, Any] | None:
@@ -246,6 +272,8 @@ class ProviderRegistry:
                 or settings.get("imageProvider")
                 or DEFAULT_PROVIDER[category]
             )
+        elif category == CATEGORY_SERP:
+            provider_name = str((integration or {}).get("provider") or DEFAULT_PROVIDER[category])
         else:
             provider_name = self._provider_name_for(category, settings)
         cls = self._table.get((category, provider_name))
@@ -298,6 +326,7 @@ class ProviderRegistry:
             CATEGORY_VECTOR: self._config_vector,
             CATEGORY_PUBLISHER: self._config_publisher,
             CATEGORY_IMAGE: self._config_image,
+            CATEGORY_SERP: self._config_serp,
         }
         builder = builders.get(category)
         if builder is None:
@@ -527,6 +556,27 @@ class ProviderRegistry:
             "timeout": 180.0,
         }
 
+    # -- serp (optional) ------------------------------------------------------------
+    def _config_serp(
+        self,
+        project: dict[str, Any],
+        integration: dict[str, Any] | None,
+        settings: dict[str, Any],
+        provider_name: str,
+    ) -> dict[str, Any]:
+        integration = self._integration_or_error(integration, CATEGORY_SERP)
+        base = {
+            "serper": "https://google.serper.dev",
+        }.get(provider_name, "")
+        if not base:
+            raise PermanentError(f"unknown serp provider: {provider_name!r}")
+        return {
+            "base_url": self._safe_url(integration, base),
+            "api_key": self._api_key(integration),
+            "attempts": self._retries(settings),
+            "timeout": 45.0,
+        }
+
     # ---------------------------------------------------------------------------
     # Model discovery (cached)
     # ---------------------------------------------------------------------------
@@ -590,6 +640,7 @@ class ProviderRegistry:
             CATEGORY_VECTOR: self.get_vector_provider,
             CATEGORY_PUBLISHER: self.get_publisher_provider,
             CATEGORY_IMAGE: self.get_image_provider,
+            CATEGORY_SERP: self.get_serp_provider,
         }
         getter = getters.get(category)  # type: ignore[assignment]
         if getter is None:
