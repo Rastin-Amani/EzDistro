@@ -32,7 +32,7 @@ Requires:              PocketBase ≥ 0.23
 
 ## 2. Collections overview
 
-20 base collections (+ built-in `users`, extended with `role` / `displayName`):
+33 base collections (+ built-in `users`, extended with `role` / `displayName`):
 
 > **Note (SEO research engine, 2026-10):** `app/scripts/bootstrap_pb.py` now also
 > defines 13 research collections — `google_ads_connections`, `google_ads_customers`,
@@ -42,7 +42,9 @@ Requires:              PocketBase ≥ 0.23
 > `integrations.category` and WordPress-mirror fields on `articles`
 > (`source`, `syncStatus`, `remoteStatus`, `remoteModified`, `remoteContentHash`,
 > `remoteSlug`, `remoteExcerpt`, `remoteMeta`, `contentHash`). The table below
-> predates them; the bootstrap script is the source of truth. See
+> predates them; the bootstrap script is the source of truth, and
+> `pb_collections_import.json` is generated from it
+> (`python -m app.scripts.bootstrap_pb --export`). See
 > [SEO_RESEARCH.md](SEO_RESEARCH.md).
 
 | Collection | Purpose | Key uniqueness |

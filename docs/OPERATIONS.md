@@ -45,15 +45,22 @@ export PB_ADMIN_EMAIL=… PB_ADMIN_PASSWORD=…   # or put them in .env
 make bootstrap        # python -m app.scripts.bootstrap_pb
 ```
 
-Bootstrap does, in order: import/patch all 20 collections (`delete_missing=False`),
+Bootstrap does, in order: import/patch all 33 collections (`delete_missing=False`),
 add `role`/`displayName` to `users`, seed the `app_settings` singleton + 8 global
 Persian prompts, and create the platform admin if `SEED_ADMIN_PASSWORD` is set.
 It prints explicit confirmation lines for each step; on failure it raises with a
 hint about reachability/credentials/PB version.
 
 An alternative artifact, `pb_collections_import.json`, mirrors the same schema for a
-manual import through the PocketBase Admin UI. Keep it in sync with the code when the
-schema changes.
+manual import through the PocketBase Admin UI. It is generated from the code — after
+any schema change run:
+
+```bash
+.venv/bin/python -m app.scripts.bootstrap_pb --export
+```
+
+`make test` asserts the file stays in sync with `COLLECTIONS`, so hand-editing it
+will fail CI.
 
 ## 3. Running
 
