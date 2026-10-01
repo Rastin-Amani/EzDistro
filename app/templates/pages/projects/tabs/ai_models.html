@@ -216,7 +216,7 @@
 
                 {% if role == 'outline' or role == 'section' %}
 
-                <details class="border border-base-300/70 rounded-xl px-4 py-3" x-show="provider === 'custom' || provider === 'openai_compat'">
+                <details class="border border-base-300/70 rounded-lg px-4 py-3" x-show="provider === 'custom' || provider === 'openai_compat'">
 
                     <summary class="text-xs opacity-70 cursor-pointer">{{ ('Dedicated connection (Base URL + key — optional)') }}</summary>
 
@@ -272,7 +272,7 @@
 
                 {% set g = global_defaults.get(role) or {} %}
 
-                <div class="flex flex-col gap-2 border border-base-300/70 rounded-xl p-3">
+                <div class="flex flex-col gap-2 border border-base-300/70 rounded-lg p-3">
 
                     <span class="text-xs font-semibold">{{ role }}</span>
 

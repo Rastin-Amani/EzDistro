@@ -72,7 +72,7 @@
             <h2 class="ezdistro-panel-title">{{ ('Prompt context (%(a)s chunks — %(b)s characters)') % {'a': context.passages|length, 'b': context.used_chars} }}</h2>
         </div>
         <div class="p-4">
-            <pre class="text-xs bg-base-200/60 rounded-xl p-3 whitespace-pre-wrap max-h-72 overflow-auto">{{ context.format_for_prompt }}</pre>
+            <pre class="text-xs bg-base-200/60 rounded-lg p-3 whitespace-pre-wrap max-h-72 overflow-auto">{{ context.format_for_prompt }}</pre>
         </div>
     </div>
     {% endif %}

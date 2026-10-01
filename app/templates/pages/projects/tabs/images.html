@@ -88,15 +88,12 @@
 
     </form>
 
-    <div class="ezdistro-panel mt-4" x-data>
-        <div class="ezdistro-panel-head">
-            <h2 class="ezdistro-panel-title">{{ ('Image generation test') }}</h2>
-        </div>
-        <p class="text-sm opacity-70 mb-2">
+    {{ f.panel('Image generation test') }}
+        <p class="text-sm opacity-70 mb-3">
             {{ ('Generates one small test image with the saved cover settings (each click costs money).') }}
         </p>
         <button type="button"
-                class="btn btn-sm btn-outline"
+                class="btn btn-sm"
                 hx-post="/projects/{{ project.id }}/settings/images/test"
                 hx-target="#image-test-result"
                 hx-swap="innerHTML"
@@ -105,6 +102,6 @@
         </button>
         <span id="image-test-indicator" class="htmx-indicator loading loading-spinner loading-sm ms-2 align-middle"></span>
         <div id="image-test-result" class="mt-1"></div>
-    </div>
+    {{ f.panel_close() }}
 
 </div>

@@ -8,13 +8,13 @@
             <div class="ezdistro-panel">
                 <div class="p-3">
                     <p class="text-xs font-bold mb-1">{{ ('Version v%(v)s') % {'v': va.version if va else '?'} }} <span class="opacity-50">{{ va.created|loc_dt if va else '' }}</span></p>
-                    <pre class="text-xs font-mono bg-base-200/60 rounded-xl p-3 max-h-96 overflow-auto whitespace-pre-wrap" dir="auto">{{ va.content if va else '—' }}</pre>
+                    <pre class="text-xs font-mono bg-base-200/60 rounded-lg p-3 max-h-96 overflow-auto whitespace-pre-wrap" dir="auto">{{ va.content if va else '—' }}</pre>
                 </div>
             </div>
             <div class="ezdistro-panel">
                 <div class="p-3">
                     <p class="text-xs font-bold mb-1">{{ ('Version v%(v)s') % {'v': vb.version if vb else '?'} }} <span class="opacity-50">{{ vb.created|loc_dt if vb else '' }}</span></p>
-                    <pre class="text-xs font-mono bg-base-200/60 rounded-xl p-3 max-h-96 overflow-auto whitespace-pre-wrap" dir="auto">{{ vb.content if vb else '—' }}</pre>
+                    <pre class="text-xs font-mono bg-base-200/60 rounded-lg p-3 max-h-96 overflow-auto whitespace-pre-wrap" dir="auto">{{ vb.content if vb else '—' }}</pre>
                 </div>
             </div>
         </div>

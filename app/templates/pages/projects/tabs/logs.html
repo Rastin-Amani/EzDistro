@@ -27,7 +27,7 @@
                             {% if e.metadata and e.metadata != {} %}
                             <details class="dropdown dropdown-end">
                                 <summary class="btn btn-ghost btn-xs">JSON</summary>
-                                <div class="dropdown-content bg-base-100 border border-base-300/70 rounded-xl p-3 w-80 text-xs font-mono max-h-48 overflow-auto z-50">
+                                <div class="dropdown-content bg-base-100 border border-base-300/70 rounded-lg p-3 w-80 text-xs font-mono max-h-48 overflow-auto z-50">
                                     <pre>{{ e.metadata|tojson }}</pre>
                                 </div>
                             </details>
