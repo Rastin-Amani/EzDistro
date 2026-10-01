@@ -211,7 +211,7 @@ def test_research_tab_renders_empty():
     resp = _call(P.project_tab, req, project["id"], "research")
     body = resp.body.decode()
     assert resp.status_code == 200
-    assert "No Google Ads connection" in body
+    assert "Google Ads is not set up for this project" in body
     assert "No research runs yet" in body
 
 

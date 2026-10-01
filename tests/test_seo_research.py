@@ -15,6 +15,7 @@ from unittest import mock
 from app.jobs.context import JobContext, ProviderStack
 from app.providers.base import KeywordIdea, PermanentError, WPPost
 from app.providers.serp import NoneSERPProvider
+from app.repositories.integrations import IntegrationRepo
 from app.repositories.jobs import JobEventRepo, JobRepo
 from app.repositories.research import (
     ArticleIdeaRepo,
@@ -24,6 +25,7 @@ from app.repositories.research import (
     ResearchRunRepo,
     ResearchSeedRepo,
 )
+from app.services import google_ads as google_ads_service
 from app.services import research as orchestrator
 from app.services.research_clustering import cluster_run
 from app.services.research_keywords import collect_keywords, merge_ideas, plan_batches
@@ -568,3 +570,66 @@ def test_pipeline_fails_without_a_connection_for_keyword_seeds():
         assert "Google Ads" in str(exc)
     else:  # pragma: no cover - the guard must fire
         raise AssertionError("expected a PermanentError for keyword seeds without a connection")
+
+
+# ---------------------------------------------------------------------------
+# Google Ads credentials come from the project's Connections tab
+# ---------------------------------------------------------------------------
+def _google_ads_integration(pb, project_id: str, *, client_id: str, client_secret: str) -> dict:
+    from app.services.secrets import get_secrets_service
+
+    return IntegrationRepo(pb).create(
+        project=project_id,
+        category="google_ads",
+        provider="google_ads",
+        display_name="Google Ads",
+        configuration={
+            "client_id": client_id,
+            "redirect_uri": "https://app.test/projects/google-ads/callback",
+            "api_version": "v25",
+            "login_customer_id": "",
+            "masked": "",
+        },
+        secrets_enc=get_secrets_service().encrypt(json.dumps({"client_secret": client_secret})),
+        enabled=True,
+        created_by="u1",
+    )
+
+
+def test_google_ads_credentials_resolve_from_the_project_integration():
+    pb, project, _registry = _setup()
+    # No env credentials are configured in tests (settings.google_ads_client_id == "").
+    assert google_ads_service.client_configured(pb, project["id"]) is False
+
+    _google_ads_integration(
+        pb, project["id"], client_id="cid.apps.googleusercontent.com", client_secret="shh"
+    )
+
+    # The project-scoped integration alone makes Google Ads configured.
+    assert google_ads_service.client_configured(pb, project["id"]) is True
+    # An unrelated project stays unconfigured.
+    other = make_project(pb, slug="proj-b", name="B")
+    assert google_ads_service.client_configured(pb, other["id"]) is False
+
+
+def test_google_ads_authorize_url_requires_project_credentials():
+    pb, project, _registry = _setup()
+    state = google_ads_service.make_state(user_id="u1", project_id=project["id"])
+    # No integration and no env creds → a clear, per-project error.
+    try:
+        google_ads_service.authorize_url(
+            state, request_base="https://app.test/", pb=pb, project_id=project["id"]
+        )
+    except PermanentError as exc:
+        assert "Google Ads" in str(exc)
+    else:  # pragma: no cover - the guard must fire
+        raise AssertionError("expected a PermanentError before a Google Ads connection exists")
+
+    _google_ads_integration(
+        pb, project["id"], client_id="cid.apps.googleusercontent.com", client_secret="shh"
+    )
+    url = google_ads_service.authorize_url(
+        state, request_base="https://app.test/", pb=pb, project_id=project["id"]
+    )
+    assert "cid.apps.googleusercontent.com" in url
+    assert "accounts.google.com" in url
