@@ -10,6 +10,7 @@ Requires PB_ADMIN_EMAIL / PB_ADMIN_PASSWORD (env or .env).
 
 from __future__ import annotations
 
+import json
 import os
 import sys
 import time
@@ -1424,6 +1425,90 @@ def seed_admin_user(pb: PocketBase) -> None:
     print(f"seed admin created: {email} (CHANGE THE PASSWORD IMMEDIATELY!)")
 
 
+# ---------------------------------------------------------------------------
+# Manual-import mirror (pb_collections_import.json)
+# ---------------------------------------------------------------------------
+# The Admin UI's collection import takes the same shape as an export: every
+# collection and field carries a fixed id, and relation fields point at the
+# target collection's id. import_collections() derives those ids
+# deterministically, so the mirror is generated from COLLECTIONS rather than
+# hand-maintained — the two files can no longer drift.
+_SYSTEM_FIELD_IDS = {"id": "textbf396750", "created": "dateb23db7b8", "updated": "datec69b96f7"}
+# The built-in auth collection: not in COLLECTIONS, but `users` relations must
+# point at its real id in the import file.
+BUILTIN_COLLECTION_IDS = {"users": "_pb_users_auth_"}
+
+
+def _collection_id(name: str) -> str:
+    return f"pbc_{zlib.crc32(f'base{name}'.encode()):08x}"
+
+
+def _field_id(field_type: str, name: str) -> str:
+    return f"{field_type}{zlib.crc32(name.encode()):08x}"
+
+
+def _system_fields() -> list[dict[str, Any]]:
+    """The id/created/updated fields PocketBase adds to every collection."""
+    return [
+        {
+            "name": "id",
+            "type": "text",
+            "required": False,
+            "system": True,
+            "hidden": False,
+            "presentable": False,
+            "primaryKey": True,
+            "autogeneratePattern": "[a-z0-9]{15}",
+            "pattern": "",
+            "min": 0,
+            "max": 15,
+            "id": _SYSTEM_FIELD_IDS["id"],
+        },
+        {
+            "name": "created",
+            "type": "date",
+            "required": False,
+            "system": True,
+            "hidden": False,
+            "presentable": False,
+            "onCreate": True,
+            "id": _SYSTEM_FIELD_IDS["created"],
+        },
+        {
+            "name": "updated",
+            "type": "date",
+            "required": False,
+            "system": True,
+            "hidden": False,
+            "presentable": False,
+            "onUpdate": True,
+            "id": _SYSTEM_FIELD_IDS["updated"],
+        },
+    ]
+
+
+def export_collections_json(path: str = "pb_collections_import.json") -> None:
+    """Regenerate the manual-import mirror from COLLECTIONS (idempotent)."""
+    ids = {spec["name"]: _collection_id(spec["name"]) for spec in COLLECTIONS}
+    out: list[dict[str, Any]] = []
+    for spec in COLLECTIONS:
+        fields: list[dict[str, Any]] = []
+        for field in spec["fields"]:
+            entry = dict(field)
+            if entry.get("type") == "relation":
+                ref = str(entry.get("collectionId") or "")
+                entry["collectionId"] = ids.get(ref) or BUILTIN_COLLECTION_IDS.get(ref, ref)
+            entry["id"] = _field_id(str(entry["type"]), str(entry["name"]))
+            fields.append(entry)
+        out.append(
+            {**spec, "fields": fields + _system_fields(), "id": ids[spec["name"]], "system": False}
+        )
+    with open(path, "w", encoding="utf-8") as fh:
+        json.dump(out, fh, indent=2, ensure_ascii=False)
+        fh.write("\n")
+    print(f"✓ wrote {path} ({len(out)} collections)")
+
+
 def main() -> None:
     if not settings.pb_admin_email or not settings.pb_admin_password:
         print("ERROR: PB_ADMIN_EMAIL and PB_ADMIN_PASSWORD env vars are required.", file=sys.stderr)
@@ -1448,4 +1533,10 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    if "--export" in sys.argv:
+        rest = sys.argv[sys.argv.index("--export") + 1 :]
+        export_collections_json(
+            rest[0] if rest and not rest[0].startswith("-") else "pb_collections_import.json"
+        )
+    else:
+        main()

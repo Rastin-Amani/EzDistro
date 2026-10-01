@@ -1,4 +1,4 @@
-.PHONY: install css css-watch bootstrap web worker test lint typecheck check \
+.PHONY: install css css-watch bootstrap schema-export web worker test lint typecheck check \
 	install-worker-service install-web-service
 
 # The project interpreter lives in .venv (Python 3.12) — bare `python` is NOT
@@ -17,6 +17,10 @@ css-watch:
 
 bootstrap:
 	$(PY) -m app.scripts.bootstrap_pb
+
+# Regenerate pb_collections_import.json (manual Admin-UI import) from the code.
+schema-export:
+	$(PY) -m app.scripts.bootstrap_pb --export
 
 web:
 	$(PY) -m uvicorn app.main:app --reload --port 8000
