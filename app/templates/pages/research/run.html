@@ -10,7 +10,7 @@
 <div class="w-full space-y-4">
 
   {% if ga %}
-    <div class="alert {{ 'alert-success' if ga == 'connected' else 'alert-warning' }}">
+    <div class="alert alert-soft {{ 'alert-success' if ga == 'connected' else 'alert-warning' }}">
       <span>
         {% if ga == 'connected' %}Google Ads connected.
         {% elif ga == 'unconfigured' %}Google Ads OAuth is not configured on this deployment.
@@ -50,7 +50,7 @@
   {% include "pages/research/_status.html" %}
 
   {% if run.errorMessage %}
-    <div class="alert alert-error text-sm">
+    <div class="alert alert-soft alert-error text-sm">
       <span>{{ run.errorMessage }}</span>
     </div>
   {% endif %}

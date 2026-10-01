@@ -7,7 +7,7 @@
   <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
     {{ f.stat('Keywords', s.keywords|default(0)) }}
     {{ f.stat('With volume', s.keywords_with_volume|default(0)) }}
-    {{ f.stat('Total monthly volume', s.total_monthly_volume|default(0)) }}
+    {{ f.stat('Total monthly volume', s.total_monthly_volume|loc_int) }}
     {{ f.stat('High paid competition', s.high_ads_competition|default(0)) }}
   </div>
 
@@ -40,9 +40,9 @@
             {% set m = row.metric %}
             <tr class="hover">
               <td class="text-sm">{{ row.text }}</td>
-              <td class="text-end text-sm">{{ m.avgMonthlySearches|default(0) }}</td>
+              <td class="text-end text-sm tabular">{{ m.avgMonthlySearches|loc_int }}</td>
               <td class="text-xs">{{ m.competition or '—' }}</td>
-              <td class="text-end text-xs">{{ m.competitionIndex|default(0) }}</td>
+              <td class="text-end text-xs tabular">{{ m.competitionIndex|loc_int }}</td>
               <td class="text-end text-xs">
                 {% if m.averageCpcMicros %}{{ (m.averageCpcMicros / 1000000)|round(2) }} {{ m.currencyCode }}{% else %}—{% endif %}
               </td>

@@ -33,10 +33,10 @@
 
     <div class="flex flex-wrap items-center gap-1.5">
         <a href="/projects/{{ project.id }}/topics?q={{ q }}&sort={{ sort }}"
-           class="btn btn-xs rounded-full {{ 'btn-primary' if not status_filter }}">{{ ('All (%(n)s)') % {'n': counts.values()|sum} }}</a>
+           class="btn btn-xs {{ 'btn-primary' if not status_filter }}">{{ ('All (%(n)s)') % {'n': counts.values()|sum} }}</a>
         {% for s in statuses %}
         <a href="/projects/{{ project.id }}/topics?status={{ s }}&q={{ q }}&sort={{ sort }}"
-           class="btn btn-xs rounded-full {{ 'btn-primary' if status_filter == s }}">
+           class="btn btn-xs {{ 'btn-primary' if status_filter == s }}">
             {{ s|status_label }} ({{ counts.get(s, 0) }})
         </a>
         {% endfor %}
@@ -46,13 +46,13 @@
         <span>{{ ('Sort:') }}</span>
         {% for key, label in [('priority', ('Priority')), ('priority_asc', ('Priority ↑')), ('created', ('Newest')), ('title', ('Title'))] %}
         <a href="/projects/{{ project.id }}/topics?sort={{ key }}&status={{ status_filter }}&q={{ q }}"
-           class="btn btn-xs rounded-full {{ 'btn-primary' if sort == key }}">{{ label }}</a>
+           class="btn btn-xs {{ 'btn-primary' if sort == key }}">{{ label }}</a>
         {% endfor %}
     </div>
 </div>
 
 <!-- Bulk bar -->
-<div class="flex items-center gap-2 mb-3 text-xs px-3 py-2 rounded-xl bg-primary/5 border border-primary/20 text-primary font-medium" id="bulk-bar" hidden>
+<div class="flex items-center gap-2 mb-3 text-xs px-3 py-2 rounded-lg bg-primary/5 border border-primary/20 text-primary font-medium" id="bulk-bar" hidden>
     <span id="bulk-count">0</span> {{ ('Selected —') }}
     <button class="btn btn-primary btn-xs" data-bulk-action="generate">{{ ('Generate article') }}</button>
     <button class="btn btn-ghost btn-xs" data-bulk-action="retry">{{ ('Retry') }}</button>

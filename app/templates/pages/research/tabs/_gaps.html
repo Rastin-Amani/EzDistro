@@ -22,9 +22,9 @@
             <tr>
               <td><span class="badge badge-soft badge-xs">{{ g.gapType }}</span></td>
               <td class="text-sm">{{ g.keyword or '—' }}</td>
-              <td class="text-end text-xs">{{ g.demand|default(0) }}</td>
-              <td class="text-end text-xs">{{ g.competitorCoverage|default(0) }}</td>
-              <td class="text-end text-xs">{{ g.yourCoverage|default(0) }}</td>
+              <td class="text-end text-xs tabular">{{ g.demand|loc_int }}</td>
+              <td class="text-end text-xs tabular">{{ g.competitorCoverage|loc_int }}</td>
+              <td class="text-end text-xs tabular">{{ g.yourCoverage|loc_int }}</td>
               <td class="text-end text-sm">{{ g.score|round(0)|int if g.score else 0 }}</td>
             </tr>
           {% endfor %}

@@ -2,13 +2,15 @@
 <div id="research-opportunities" class="space-y-4">
 
   {% set s = summary or {} %}
+  {# `summary` is a plain dict: reach for .get() — `s.update` would resolve to
+     dict.update and render a bound-method repr. #}
   <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-    {{ f.stat('Total', s.total|default(0)) }}
-    {{ f.stat('Generate', s.generate|default(0)) }}
-    {{ f.stat('Update', s.update|default(0)) }}
-    {{ f.stat('Expand', s.expand|default(0)) }}
-    {{ f.stat('Support', s.support|default(0)) }}
-    {{ f.stat('Rejected', s.reject|default(0)) }}
+    {{ f.stat('Total', s.get('total', 0)) }}
+    {{ f.stat('Generate', s.get('generate', 0)) }}
+    {{ f.stat('Update', s.get('update', 0)) }}
+    {{ f.stat('Expand', s.get('expand', 0)) }}
+    {{ f.stat('Support', s.get('support', 0)) }}
+    {{ f.stat('Rejected', s.get('reject', 0)) }}
   </div>
 
   {{ f.panel('Filters') }}
@@ -27,7 +29,7 @@
     {% if ideas %}
       <div class="space-y-3">
       {% for idea in ideas %}
-        <div class="border border-base-300 p-3">
+        <div class="rounded-lg border border-base-300 p-3">
           <div class="flex flex-wrap items-start justify-between gap-2">
             <div class="min-w-0">
               <div class="text-sm font-medium">{{ idea.title }}</div>
@@ -35,7 +37,7 @@
                 <span class="badge badge-soft badge-xs">{{ idea.action }}</span>
                 {% if idea.intent %}<span>{{ idea.intent }}</span>{% endif %}
                 {% if idea.contentType %}<span>· {{ idea.contentType }}</span>{% endif %}
-                {% if idea.searchVolume %}<span>· {{ idea.searchVolume }} searches/mo</span>{% endif %}
+                {% if idea.searchVolume %}<span>· {{ idea.searchVolume|loc_int }} searches/mo</span>{% endif %}
                 {% if idea.googleAdsCompetition %}<span>· paid comp. {{ idea.googleAdsCompetition }}</span>{% endif %}
                 {% if idea.confidence %}<span>· confidence {{ idea.confidence }}</span>{% endif %}
               </div>

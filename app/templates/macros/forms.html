@@ -32,11 +32,12 @@
     </label>
 {%- endmacro %}
 
-{% macro number(name, label_text, value='', tip_text='', step='', min='', max='', required=false, hint='') -%}
+{% macro number(name, label_text, value='', tip_text='', step='', min='', max='', required=false, hint='', placeholder='') -%}
     <label class="form-control w-full">
         {{ label(label_text, tip_text, required) }}
         <input type="number" name="{{ name }}" value="{{ value }}"
                class="input input-bordered w-full"
+               {% if placeholder %}placeholder="{{ placeholder }}"{% endif %}
                {% if step %}step="{{ step }}"{% endif %}
                {% if min %}min="{{ min }}"{% endif %}
                {% if max %}max="{{ max }}"{% endif %}
@@ -71,6 +72,30 @@
     </label>
 {%- endmacro %}
 
+{% macro checkbox(name, label_text, value='1', checked=false, hint='', tip_text='') -%}
+    {# Wrapping-safe checkbox: the label is the flex child that may shrink,
+       so a long sentence never clips at the viewport edge. #}
+    <label class="flex cursor-pointer items-start gap-2.5 py-1">
+        <input type="checkbox" name="{{ name }}" value="{{ value }}"
+               class="checkbox checkbox-sm mt-0.5 shrink-0" {% if checked %}checked{% endif %} />
+        <span class="min-w-0 text-sm leading-snug">
+            {{ label_text }}
+            {% if hint %}<span class="mt-0.5 block text-xs opacity-50 leading-relaxed">{{ hint }}</span>{% endif %}
+        </span>
+        {{ tip(tip_text) }}
+    </label>
+{%- endmacro %}
+
+{% macro form_section(title, hint='') -%}
+    {# Mono section label + hairline rule — groups fields inside one panel
+       without nesting a card inside a card. #}
+    <div class="flex items-center gap-3">
+        <span class="ezdistro-panel-title shrink-0">{{ title }}</span>
+        {% if hint %}<span class="shrink-0 text-xs opacity-50">{{ hint }}</span>{% endif %}
+        <span class="h-px flex-1 bg-base-300/70" aria-hidden="true"></span>
+    </div>
+{%- endmacro %}
+
 {% macro textarea(name, label_text, value='', tip_text='', rows=4, required=false, placeholder='', hint='', dir='auto', classes='') -%}
     <label class="form-control w-full">
         {{ label(label_text, tip_text, required) }}
@@ -87,7 +112,7 @@
     <section class="card bg-base-100 border border-base-300/70">
         <div class="card-body p-5 gap-4">
             <div class="flex items-center gap-2">
-                <h2 class="font-bold text-sm">{{ title }}</h2>
+                <h2 class="ezdistro-panel-title">{{ title }}</h2>
                 {{ tip(tip_text) }}
             </div>
             {% if description %}<p class="text-xs opacity-50 leading-relaxed -mt-2">{{ description }}</p>{% endif %}

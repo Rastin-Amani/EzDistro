@@ -1,3 +1,20 @@
+{% import 'macros/forms.html' as f %}
+{# `counts` maps each stage to that stage's own summary: flatten the numeric
+   entries into one labelled metric grid (a raw stage dict is never a number,
+   so a plain `is number` filter over the top level renders nothing). #}
+{% set metrics = [] %}
+{% for stage, values in (counts or {}).items() %}
+  {% set stage_label = stage|replace('_', ' ')|title %}
+  {% if values is mapping %}
+    {% for key, value in values.items() %}
+      {% if value is number %}
+        {% set _ = metrics.append((stage_label ~ ' · ' ~ key|replace('_', ' '), value)) %}
+      {% endif %}
+    {% endfor %}
+  {% elif values is number %}
+    {% set _ = metrics.append((stage_label, values)) %}
+  {% endif %}
+{% endfor %}
 <div id="research-status" class="ezdistro-panel"
      {% if run.status in ('pending', 'running') %}
      hx-get="/projects/{{ project.id }}/research/{{ run.id }}/status"
@@ -10,15 +27,10 @@
   <div class="p-4 space-y-3">
     <progress class="progress progress-primary w-full" value="{{ run.progress|int }}" max="100"></progress>
 
-    {% if counts %}
-      <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        {% for key, value in counts.items() %}
-          {% if value is number %}
-            <div class="ezdistro-metric">
-              <div class="ezdistro-metric-label">{{ key }}</div>
-              <div class="text-sm font-medium">{{ value }}</div>
-            </div>
-          {% endif %}
+    {% if metrics %}
+      <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+        {% for label, value in metrics %}
+          {{ f.stat(label, value) }}
         {% endfor %}
       </div>
     {% endif %}

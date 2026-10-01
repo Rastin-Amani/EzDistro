@@ -2,7 +2,7 @@
 <div id="research-serp" class="space-y-4">
 
   {% if not configured %}
-    <div class="alert alert-info text-sm">
+    <div class="alert alert-soft alert-info text-sm">
       <span>
         <b>Research is running in Google Ads + site intelligence mode.</b>
         No paid SERP provider is configured, so live ranking positions, People Also Ask,
@@ -12,20 +12,20 @@
     <div class="grid gap-3 sm:grid-cols-2">
       <div class="ezdistro-panel p-4">
         <div class="ezdistro-panel-title mb-2">Still available</div>
-        <ul class="text-sm space-y-1 opacity-80">
-          <li>✓ Search demand</li>
-          <li>✓ Keyword universe</li>
-          <li>✓ Historical trends</li>
-          <li>✓ Competitor content</li>
+        <ul class="text-sm space-y-1.5 opacity-80">
+          <li class="flex items-center gap-2"><span class="size-1.5 shrink-0 rounded-full bg-success" aria-hidden="true"></span>Search demand</li>
+          <li class="flex items-center gap-2"><span class="size-1.5 shrink-0 rounded-full bg-success" aria-hidden="true"></span>Keyword universe</li>
+          <li class="flex items-center gap-2"><span class="size-1.5 shrink-0 rounded-full bg-success" aria-hidden="true"></span>Historical trends</li>
+          <li class="flex items-center gap-2"><span class="size-1.5 shrink-0 rounded-full bg-success" aria-hidden="true"></span>Competitor content</li>
         </ul>
       </div>
       <div class="ezdistro-panel p-4">
         <div class="ezdistro-panel-title mb-2">Also available</div>
-        <ul class="text-sm space-y-1 opacity-80">
-          <li>✓ Content gaps</li>
-          <li>✓ Semantic clusters</li>
-          <li>✓ New / update opportunities</li>
-          <li>— Ranking &amp; SERP features need a provider</li>
+        <ul class="text-sm space-y-1.5 opacity-80">
+          <li class="flex items-center gap-2"><span class="size-1.5 shrink-0 rounded-full bg-success" aria-hidden="true"></span>Content gaps</li>
+          <li class="flex items-center gap-2"><span class="size-1.5 shrink-0 rounded-full bg-success" aria-hidden="true"></span>Semantic clusters</li>
+          <li class="flex items-center gap-2"><span class="size-1.5 shrink-0 rounded-full bg-success" aria-hidden="true"></span>New / update opportunities</li>
+          <li class="flex items-center gap-2"><span class="size-1.5 shrink-0 rounded-full bg-base-300" aria-hidden="true"></span>Ranking &amp; SERP features need a provider</li>
         </ul>
       </div>
     </div>
@@ -47,7 +47,7 @@
           <tr>
             <td class="text-sm">{{ row.keyword }}</td>
             <td class="text-xs opacity-60">{{ row.provider }}</td>
-            <td class="text-end text-xs">{{ row.resultCount|default(0) }}</td>
+            <td class="text-end text-xs tabular">{{ row.resultCount|loc_int }}</td>
             <td class="text-xs opacity-60">{{ row.observedAt|loc_dt }}</td>
             <td class="text-end">
               <button class="btn btn-xs btn-ghost"

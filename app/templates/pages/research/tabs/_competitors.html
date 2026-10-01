@@ -16,7 +16,7 @@
                 <a class="link text-xs opacity-50" href="{{ p.url }}" target="_blank" rel="noopener">open</a>
               </td>
               <td class="text-xs">{{ p.contentType or '—' }}</td>
-              <td class="text-end text-xs">{{ p.wordCount|default(0) }}</td>
+              <td class="text-end text-xs tabular">{{ p.wordCount|loc_int }}</td>
               <td><span class="badge {{ p.status|status_badge }}">{{ p.status|status_label }}</span></td>
               <td class="text-xs opacity-60">{{ p.fetchedAt|loc_dt }}</td>
               <td class="text-end">

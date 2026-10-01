@@ -44,7 +44,7 @@
 
             </div>
 
-            <span class="badge badge-soft badge-info badge-sm">{{ p.language or 'fa' }}</span>
+            <span class="badge badge-soft badge-info badge-sm">{{ p.language or 'en' }}</span>
 
         </div>
 
@@ -104,77 +104,27 @@
 
             <h3 class="font-bold text-lg">{{ ('New project') }}</h3>
 
-            <button type="button" class="btn btn-ghost btn-sm btn-circle" @click="$store.ui.closeModal('new-project-modal')" aria-label="{{ ('Close') }}">✕</button>
+            <button type="button" class="btn btn-ghost btn-sm btn-circle" @click="$store.ui.closeModal('new-project-modal')" aria-label="{{ ('Close') }}">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+            </button>
 
         </div>
 
         <form hx-post="/projects" hx-swap="none" class="flex flex-col gap-4">
 
-            <label class="floating-label">
+            {{ f.text('name', ('Project name'), placeholder=('e.g. Tech Magazine'), required=true, autocomplete='off') }}
 
-                <span>{{ ('Project name') }}</span>
+            {{ f.text('slug', ('Slug — English'), dir='ltr', placeholder='tech-magazine', hint=('Left empty, it is derived from the name.')) }}
 
-                <input name="name" class="input validator" required placeholder="{{ ('e.g. Tech Magazine') }}" />
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 
-            </label>
+                {{ f.select('language', ('Language'), [('en', 'English'), ('fa', ('Persian')), ('ar', ('Arabic')), ('tr', ('Türkçe'))], selected='en') }}
 
-            <label class="floating-label">
-
-                <span>{{ ('Slug — English') }}</span>
-
-                <input name="slug" class="input" dir="ltr" placeholder="tech-magazine" />
-
-                <span class="text-xs opacity-50">{{ ('Left empty, it is derived from the name') }}</span>
-
-            </label>
-
-            <div class="grid grid-cols-2 gap-3">
-
-                <label class="floating-label">
-
-                    <span>{{ ('Language') }}</span>
-
-                    <select name="language" class="select">
-
-                        <option value="fa">{{ ('Persian') }}</option>
-
-                        <option value="en">English</option>
-
-                        <option value="ar">{{ ('Arabic') }}</option>
-
-                        <option value="tr">Türkçe</option>
-
-                    </select>
-
-                </label>
-
-                <label class="floating-label">
-
-                    <span>{{ ('Timezone') }}</span>
-
-                    <select name="timezone" class="select">
-
-                        <option value="Asia/Tehran">Asia/Tehran</option>
-
-                        <option value="UTC">UTC</option>
-
-                        <option value="Europe/London">Europe/London</option>
-
-                        <option value="America/New_York">America/New_York</option>
-
-                    </select>
-
-                </label>
+                {{ f.select('timezone', ('Timezone'), ['Asia/Tehran', 'UTC', 'Europe/London', 'America/New_York'], selected='Asia/Tehran') }}
 
             </div>
 
-            <label class="floating-label">
-
-                <span>{{ ('Description') }}</span>
-
-                <textarea name="description" class="textarea" rows="2"></textarea>
-
-            </label>
+            {{ f.textarea('description', ('Description'), rows=2, dir='auto') }}
 
             <div class="flex gap-3 mt-1">
 

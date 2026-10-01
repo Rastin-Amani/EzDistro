@@ -73,6 +73,22 @@ def loc_datetime(date_str):
     return _babel_datetime(parsed, "short")
 
 
+def loc_int(value):
+    """Group thousands for every raw count (search volume, SERP results…).
+
+    Facts stay facts — this only makes them legible; never round or abbreviate.
+    """
+    if value is None or value == "":
+        return "—"
+    try:
+        number = int(value)
+    except (TypeError, ValueError):
+        return value
+    from babel.numbers import format_decimal
+
+    return format_decimal(number, format="#,##0", locale="en")
+
+
 # ---------------------------------------------------------------------------
 # Status styling
 # ---------------------------------------------------------------------------
@@ -217,6 +233,7 @@ def to_rel_time(date_str):
 templates.env.filters["loc_year"] = loc_year
 templates.env.filters["loc_date"] = loc_date
 templates.env.filters["loc_dt"] = loc_datetime
+templates.env.filters["loc_int"] = loc_int
 templates.env.filters["status_badge"] = status_badge
 templates.env.filters["status_label"] = status_label
 templates.env.filters["rel_time"] = to_rel_time
