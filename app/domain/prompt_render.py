@@ -90,6 +90,11 @@ def variable_labels() -> dict[str, str]:
         "sections": ("Article section list for image planning"),
         "style_profile": ("Project visual style profile (tone/palette/lighting)"),
         "max_interior_images": ("Maximum allowed number of interior images"),
+        # SEO research engine
+        "keywords": ("Research keyword batch (JSON, from Google Ads)"),
+        "business_goal": ("Business / content goal in the user's own words"),
+        "existing_content": ("Existing site content relevant to the request"),
+        "research_summary": ("Aggregated research counts for this run"),
     }
 
 

@@ -140,6 +140,10 @@ class PromptService:
             "search_console_queries": "",
             "search_performance": "",
             "rankings": "",
+            "keywords": "",
+            "business_goal": "",
+            "existing_content": "",
+            "research_summary": "",
         }
         if extra:
             for k, v in extra.items():
