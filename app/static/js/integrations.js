@@ -25,6 +25,11 @@
                     base_url: '',
                     username: '',
                     secret: '',
+                    client_id: '',
+                    redirect_uri: '',
+                    api_version: '',
+                    login_customer_id: '',
+                    developer_token: '',
                 },
 
                 openEditor(payload, category) {
@@ -41,6 +46,11 @@
                             base_url: payload.baseUrl || '',
                             username: payload.username || '',
                             secret: '',
+                            client_id: payload.clientId || '',
+                            redirect_uri: payload.redirectUri || '',
+                            api_version: payload.apiVersion || '',
+                            login_customer_id: payload.loginCustomerId || '',
+                            developer_token: '',
                         };
                     } else {
                         self.isEdit = false;
@@ -54,6 +64,11 @@
                             base_url: '',
                             username: '',
                             secret: '',
+                            client_id: '',
+                            redirect_uri: '',
+                            api_version: '',
+                            login_customer_id: '',
+                            developer_token: '',
                         };
                     }
                     self.open = true;
@@ -86,6 +101,10 @@
 
                 isPublisher() {
                     return this.form.category === 'publisher';
+                },
+
+                isGoogleAds() {
+                    return this.form.category === 'google_ads';
                 },
                 };
             });

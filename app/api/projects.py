@@ -92,18 +92,21 @@ RESEARCH_LANGUAGES = [
 router = APIRouter()
 
 TABS = [
+    # Ordered as the daily operator flow: configure → research → write →
+    # publish → index → monitor. The tab bar is a workflow trail, not an
+    # alphabetical list.
     "settings",
     "integrations",
     "ai_models",
-    "images",
     "prompts",
-    "topics",
     "research",
+    "topics",
     "articles",
-    "retrieval",
-    "jobs",
-    "indexing",
+    "images",
     "publishing",
+    "retrieval",
+    "indexing",
+    "jobs",
     "logs",
 ]
 
@@ -118,6 +121,7 @@ def integration_categories() -> dict[str, str]:
         "publisher": ("Publishing (WordPress)"),
         "image": ("Image generation (AI Image)"),
         "serp": ("SERP data (optional)"),
+        "google_ads": ("Google Ads (keyword research)"),
     }
 
 
@@ -157,7 +161,7 @@ def create_project(
     request: Request,
     name: str = Form(""),
     slug: str = Form(""),
-    language: str = Form("fa"),
+    language: str = Form("en"),
     timezone: str = Form("Asia/Tehran"),
     description: str = Form(""),
 ):
@@ -172,7 +176,7 @@ def create_project(
     project = ProjectRepo(request.state.pb).create(
         name=safe_str(name),
         slug=slug_value,
-        language=safe_str(language, "fa"),
+        language=safe_str(language, "en"),
         timezone=safe_str(timezone, "Asia/Tehran"),
         description=safe_str(description),
         created_by=user.get("id", ""),
@@ -484,7 +488,7 @@ def _tab_context(
         context["connections"] = connections
         context["customers"] = GoogleAdsCustomerRepo(pb).list_for_project(project_id)
         context["runs"] = ResearchRunRepo(pb).list_for_project(project_id, page=1, per_page=25)
-        context["google_ads_configured"] = client_configured()
+        context["google_ads_configured"] = client_configured(pb, project_id)
         context["serp_configured"] = any(
             integration.get("category") == "serp" and integration.get("enabled")
             for integration in IntegrationRepo(pb).list_all(filter=f'project="{project_id}"')
@@ -893,6 +897,12 @@ def save_integration(
     model: str = Form(""),
     username: str = Form(""),
     secret: str = Form(""),
+    client_secret: str = Form(""),
+    client_id: str = Form(""),
+    redirect_uri: str = Form(""),
+    api_version: str = Form(""),
+    login_customer_id: str = Form(""),
+    developer_token: str = Form(""),
 ):
     require_hx(request)
     require_project_access(request, project_id)
@@ -906,11 +916,62 @@ def save_integration(
     existing = repo.get(record_id) if record_id else None
     if existing:
         ensure_record_in_project(existing, project_id, "integration")
+
+    import json
+
+    existing_cfg: dict[str, Any] = (existing.get("configuration") or {}) if existing else {}
+
+    if category == "google_ads":
+        # Google Ads stores the OAuth client: public fields in `configuration`,
+        # the client secret (+ optional developer token) encrypted in `secretsEnc`.
+        if existing and not client_secret:
+            ga_secrets_enc = existing.get("secretsEnc") or ""
+        else:
+            ga_secrets_enc = secrets.encrypt(
+                json.dumps(
+                    {
+                        "client_secret": client_secret,
+                        "developer_token": safe_str(developer_token),
+                    },
+                    ensure_ascii=False,
+                )
+            )
+        ga_configuration: dict[str, Any] = {
+            "client_id": safe_str(client_id),
+            "redirect_uri": safe_str(redirect_uri),
+            "api_version": safe_str(api_version) or "v25",
+            "login_customer_id": safe_str(login_customer_id),
+            "masked": existing_cfg.get("masked")
+            if existing and not client_secret
+            else (secrets.mask(client_secret) if client_secret else ""),
+        }
+        ga_payload = {
+            "category": category,
+            "provider": "google_ads",
+            "displayName": safe_str(display_name) or "Google Ads",
+            "configuration": ga_configuration,
+            "secretsEnc": ga_secrets_enc,
+            "enabled": bool(existing.get("enabled")) if existing else True,
+            "createdBy": user.get("id", ""),
+        }
+        if existing:
+            repo.update(existing["id"], ga_payload)
+        else:
+            repo.create(
+                project=project_id,
+                category=ga_payload["category"],
+                provider=ga_payload["provider"],
+                display_name=ga_payload["displayName"],
+                configuration=ga_payload["configuration"],
+                secrets_enc=ga_payload["secretsEnc"],
+                enabled=ga_payload["enabled"],
+                created_by=ga_payload["createdBy"],
+            )
+        return success_response(("Connection saved"), extra_events={"refreshIntegrations": True})
+
     if existing and not secret:
         secrets_enc = existing.get("secretsEnc") or ""
     else:
-        import json
-
         secrets_enc = secrets.encrypt(json.dumps({"api_key": secret}, ensure_ascii=False))
 
     configuration: dict[str, Any] = {

@@ -139,11 +139,14 @@ def _seed_rows(
 def google_ads_connect(request: Request, project_id: str = ""):
     """Entry point of the Google consent flow (a browser navigation)."""
     user = require_user(request)
-    if not google_ads_service.client_configured():
+    pb = request.state.pb
+    if not google_ads_service.client_configured(pb, project_id):
         target = f"/projects/{project_id}?tab=research&ga=unconfigured" if project_id else "/"
         return RedirectResponse(target, status_code=303)
     state = google_ads_service.make_state(user_id=user["id"], project_id=project_id)
-    url = google_ads_service.authorize_url(state, request_base=str(request.base_url))
+    url = google_ads_service.authorize_url(
+        state, request_base=str(request.base_url), pb=pb, project_id=project_id
+    )
     return RedirectResponse(url, status_code=303)
 
 
@@ -174,6 +177,7 @@ async def google_ads_callback(
             user_id=str(payload.get("user_id") or ""),
             code=code,
             request_base=str(request.base_url),
+            project_id=project_id,
         )
     except Exception:
         return RedirectResponse(f"{target}&ga=error", status_code=303)

@@ -38,7 +38,10 @@
 
                 </div>
 
-                <button type="button" class="btn btn-primary btn-sm" @click="openEditor(null, '{{ category }}')">{{ ('+ Add') }}</button>
+                <button type="button" class="btn btn-primary btn-sm" @click="openEditor(null, '{{ category }}')">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-4" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                    {{ ('Add') }}
+                </button>
 
             </div>
 
@@ -114,7 +117,7 @@
 
                                                 data-category="{{ category }}"
 
-                                                data-payload='{{ {"id": i.id, "category": category, "displayName": i.displayName, "provider": i.provider, "model": cfg.model or "", "baseUrl": cfg.base_url or "", "username": cfg.username or "", "masked": cfg.masked or ""} | tojson }}'
+                                                data-payload='{{ {"id": i.id, "category": category, "displayName": i.displayName, "provider": i.provider, "model": cfg.model or "", "baseUrl": cfg.base_url or "", "username": cfg.username or "", "masked": cfg.masked or "", "clientId": cfg.client_id or "", "redirectUri": cfg.redirect_uri or "", "apiVersion": cfg.api_version or "", "loginCustomerId": cfg.login_customer_id or ""} | tojson }}'
 
                                                 @click="openEditorFrom($event.currentTarget)">{{ ('Edit') }}</button>
 
@@ -168,7 +171,7 @@
 
                     <p class="font-bold text-base-content/75">{{ ('No connections registered in this category.') }}</p>
 
-                    <p class="text-sm text-base-content/50">{{ ('Create the first connection with “+ Add”.') }}</p>
+                    <p class="text-sm text-base-content/50">{{ ('Create the first connection with “Add”.') }}</p>
 
                 </div>
 
@@ -192,7 +195,10 @@
 
             <div class="flex items-center justify-between mb-4">
 
-                <h3 class="font-bold text-lg" x-text="isEdit ? {{ ('Edit connection')|tojson }} : {{ ('New connection')|tojson }}"></h3>
+                <h3 class="font-bold text-lg">
+                    <span x-show="isEdit">{{ ('Edit connection') }}</span>
+                    <span x-show="!isEdit">{{ ('New connection') }}</span>
+                </h3>
 
                 <button type="button" class="btn btn-ghost btn-circle btn-sm" @click="closeEditor()" aria-label="{{ ('Close') }}">
 
@@ -324,7 +330,77 @@
 
 
 
-                <label class="form-control">
+                <template x-if="isGoogleAds()">
+
+                    <div class="flex flex-col gap-3">
+
+                        <label class="form-control">
+
+                            <div class="label px-0 pb-1">
+
+                                <span class="label-text font-medium text-sm">{{ ('Google Ads client ID') }}</span>
+
+                            </div>
+
+                            <input name="client_id" class="input input-bordered w-full" dir="ltr" autocomplete="off" x-model="form.client_id" placeholder="1234.apps.googleusercontent.com" />
+
+                        </label>
+
+                        <label class="form-control">
+
+                            <div class="label px-0 pb-1">
+
+                                <span class="label-text font-medium text-sm">{{ ('Redirect URI') }}</span>
+
+                            </div>
+
+                            <input name="redirect_uri" class="input input-bordered w-full" dir="ltr" autocomplete="off" x-model="form.redirect_uri" placeholder="https://your-app/projects/google-ads/callback" />
+
+                        </label>
+
+                        <label class="form-control">
+
+                            <div class="label px-0 pb-1">
+
+                                <span class="label-text font-medium text-sm">{{ ('API version (optional)') }}</span>
+
+                            </div>
+
+                            <input name="api_version" class="input input-bordered w-full" dir="ltr" autocomplete="off" x-model="form.api_version" placeholder="v25" />
+
+                        </label>
+
+                        <label class="form-control">
+
+                            <div class="label px-0 pb-1">
+
+                                <span class="label-text font-medium text-sm">{{ ('Login customer ID (optional)') }}</span>
+
+                            </div>
+
+                            <input name="login_customer_id" class="input input-bordered w-full" dir="ltr" autocomplete="off" x-model="form.login_customer_id" placeholder="1234567890" />
+
+                        </label>
+
+                        <label class="form-control">
+
+                            <div class="label px-0 pb-1">
+
+                                <span class="label-text font-medium text-sm">{{ ('Developer token (optional)') }}</span>
+
+                            </div>
+
+                            <input type="password" name="developer_token" class="input input-bordered w-full" dir="ltr" autocomplete="new-password" x-model="form.developer_token" />
+
+                        </label>
+
+                    </div>
+
+                </template>
+
+
+
+                <label class="form-control" x-show="!isGoogleAds()">
 
                     <div class="label px-0 pb-1">
 
