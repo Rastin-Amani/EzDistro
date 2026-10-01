@@ -155,6 +155,11 @@ class FakeRecordService:
         return FakeListResult(records[start : start + per_page], total)
 
     def get_full_list(self, batch: int = 100, query_params: dict[str, Any] | None = None):
+        # Tolerate the legacy positional form (a bare dict) so existing tests that
+        # call `get_full_list({"filter": ...})` keep filtering. New code should pass
+        # query_params by keyword, exactly like the real SDK.
+        if isinstance(batch, dict) and query_params is None:
+            batch, query_params = 100, batch
         params = query_params or {}
         records = [
             r for r in self._storage.records(self.name) if self._match(r, params.get("filter", ""))
