@@ -48,7 +48,7 @@ async def main() -> None:
 
     pb = get_admin_pb()
     ensure_registered()
-    from app.jobs.handlers import get_handler
+    from app.jobs.handlers import JOB_TYPES, get_handler
 
     engine = JobEngine(
         pb,
@@ -59,25 +59,7 @@ async def main() -> None:
         llm_concurrency=settings.llm_concurrency,
         embedding_concurrency=settings.embedding_concurrency,
         publish_concurrency=settings.publish_concurrency,
-        handlers={
-            job_type: get_handler(job_type)
-            for job_type in (
-                "index_project",
-                "index_document",
-                "write_article",
-                "generate_outline",
-                "generate_section",
-                "assemble_article",
-                "publish_article",
-                "retry_failed_job",
-                "plan_article_images",
-                "generate_article_image",
-                "generate_cover_image",
-                "generate_interior_image",
-                "optimize_article_image",
-                "publish_article_image",
-            )
-        },
+        handlers={job_type: get_handler(job_type) for job_type in JOB_TYPES},
     )
 
     stop = asyncio.Event()

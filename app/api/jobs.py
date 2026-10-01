@@ -14,6 +14,7 @@ from fastapi.responses import HTMLResponse
 
 from app.api.deps import project_scope, require_hx, require_user
 from app.api.errors import hx_error, page_guard
+from app.jobs.handlers import JOB_TYPES
 from app.repositories.jobs import JobEventRepo, JobRepo
 from app.repositories.projects import ProjectRepo
 from app.templates import templates
@@ -22,22 +23,6 @@ from app.utils import error_response, success_response, toast_response
 router = APIRouter()
 
 JOB_STATUSES = ["pending", "retrying", "running", "completed", "failed", "cancelled"]
-JOB_TYPES = [
-    "index_project",
-    "index_document",
-    "write_article",
-    "generate_outline",
-    "generate_section",
-    "assemble_article",
-    "publish_article",
-    "retry_failed_job",
-    "plan_article_images",
-    "generate_article_image",
-    "generate_cover_image",
-    "generate_interior_image",
-    "optimize_article_image",
-    "publish_article_image",
-]
 
 
 def _job_accessible(request: Request, job: dict | None) -> bool:
