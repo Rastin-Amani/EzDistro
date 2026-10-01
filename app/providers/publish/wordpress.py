@@ -17,6 +17,37 @@ from app.providers.http import raise_for_provider, with_retry
 
 PROVIDER_NAME = "wordpress"
 DEFAULT_FIELDS = "id,title,link,status,modified,content"
+# Superset used by the WordPress → EZDistro mirror sync (slug/excerpt/dates/taxonomy).
+SYNC_FIELDS = (
+    DEFAULT_FIELDS + ",slug,excerpt,date,modified_gmt,author,featured_media,categories,tags"
+)
+
+
+def _to_wp_post(item: dict[str, Any]) -> WPPost:
+    """Map a WP REST post payload to WPPost (absent fields keep their defaults)."""
+
+    def _ids(key: str) -> list[int]:
+        value = item.get(key)
+        if not isinstance(value, list):
+            return []
+        return [int(v) for v in value if isinstance(v, int | str) and str(v).isdigit()]
+
+    return WPPost(
+        id=int(item.get("id") or 0),
+        title=_rendered(item.get("title")),
+        content_html=_rendered(item.get("content")),
+        link=str(item.get("link") or ""),
+        status=str(item.get("status") or ""),
+        modified=str(item.get("modified") or ""),
+        slug=str(item.get("slug") or ""),
+        excerpt=_rendered(item.get("excerpt")),
+        date=str(item.get("date") or ""),
+        modified_gmt=str(item.get("modified_gmt") or ""),
+        author=int(item.get("author") or 0),
+        featured_media=int(item.get("featured_media") or 0),
+        categories=_ids("categories"),
+        tags=_ids("tags"),
+    )
 
 
 class WordPressPublisher:
@@ -71,11 +102,15 @@ class WordPressPublisher:
         after_id: int | None = None,
         status: str = "publish",
         fields: list[str] | None = None,
+        modified_after: str = "",
     ) -> list[WPPost]:
         """List posts ordered by id ascending; stops early once past `after_id`.
 
         Idempotent resume: with order=asc, a page starting with an id <= after_id
         means every following page is already processed — stop.
+
+        `modified_after` (ISO8601) narrows the listing to recently changed posts
+        for incremental sync.
         """
         per_page = max(1, min(per_page, 100))
         params: dict[str, Any] = {
@@ -85,6 +120,8 @@ class WordPressPublisher:
             "status": status,
             "_fields": ",".join(fields or [DEFAULT_FIELDS]),
         }
+        if modified_after:
+            params["modified_after"] = modified_after
         posts: list[WPPost] = []
         for page in range(1, self._max_pages + 1):
             params["page"] = page
@@ -107,16 +144,7 @@ class WordPressPublisher:
                     continue
                 if after_id is not None and post_id <= after_id:
                     return posts
-                posts.append(
-                    WPPost(
-                        id=post_id,
-                        title=_rendered(item.get("title")),
-                        content_html=_rendered(item.get("content")),
-                        link=str(item.get("link") or ""),
-                        status=str(item.get("status") or status),
-                        modified=str(item.get("modified") or ""),
-                    )
-                )
+                posts.append(_to_wp_post(item))
             if len(data) < per_page:
                 break
         return posts
@@ -134,14 +162,7 @@ class WordPressPublisher:
         data = response.json()
         if not isinstance(data, dict) or not data.get("id"):
             raise PermanentError("wp.get_post: unexpected response shape")
-        return WPPost(
-            id=int(data["id"]),
-            title=_rendered(data.get("title")),
-            content_html=_rendered(data.get("content")),
-            link=str(data.get("link") or ""),
-            status=str(data.get("status") or ""),
-            modified=str(data.get("modified") or ""),
-        )
+        return _to_wp_post(data)
 
     # -- writes ---------------------------------------------------------------------
     async def create_post(
