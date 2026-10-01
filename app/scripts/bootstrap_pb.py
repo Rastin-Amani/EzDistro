@@ -270,7 +270,15 @@ COLLECTIONS: list[dict[str, Any]] = [
             rel("project", "projects", required=True, cascade=True),
             select(
                 "category",
-                ["llm", "embedding", "reranker", "vector_store", "publisher", "image"],
+                [
+                    "llm",
+                    "embedding",
+                    "reranker",
+                    "vector_store",
+                    "publisher",
+                    "image",
+                    "serp",
+                ],
                 required=True,
             ),
             t("provider", required=True),
@@ -316,6 +324,10 @@ COLLECTIONS: list[dict[str, Any]] = [
                     "article_repair_user",
                     "output_validation",
                     "content_refresh_system",
+                    "cluster_system",
+                    "cluster_user",
+                    "opportunity_system",
+                    "opportunity_user",
                 ],
                 required=True,
             ),
@@ -407,6 +419,29 @@ COLLECTIONS: list[dict[str, Any]] = [
             date("publishedAt"),
             num("wordpressPostId"),
             t("wordpressUrl"),
+            # ------------------------------------------------ WordPress mirror
+            # Mirrored WordPress posts live in the same Articles section as
+            # generated drafts. Remote identity (connection + post id) is
+            # authoritative; local edits are never clobbered by remote changes.
+            select("source", ["generated", "wordpress"]),
+            select(
+                "syncStatus",
+                [
+                    "local",
+                    "remote_only",
+                    "synced",
+                    "update_available",
+                    "remote_deleted",
+                    "sync_error",
+                ],
+            ),
+            t("remoteStatus"),
+            date("remoteModified"),
+            t("remoteContentHash"),
+            t("remoteSlug"),
+            t("remoteExcerpt", max_len=4000),
+            json_field("remoteMeta"),
+            t("contentHash"),
             json_field("imagePlan"),  # latest ArticleImagePlan snapshot
             num("imagePlanVersion"),
             rel("lastJob", "jobs"),  # no cascade; audit pointer
@@ -414,6 +449,7 @@ COLLECTIONS: list[dict[str, Any]] = [
         indexes=[
             "CREATE INDEX idx_articles_project_status ON articles (project, status)",
             "CREATE UNIQUE INDEX idx_articles_topic ON articles (topicId)",
+            "CREATE INDEX idx_articles_project_wp ON articles (project, wordpressPostId)",
         ],
     ),
     # -------------------------------------------------------- article_sections
@@ -732,6 +768,366 @@ COLLECTIONS: list[dict[str, Any]] = [
             "CREATE INDEX idx_members_user ON project_members (user)",
         ],
     ),
+    # ==========================================================================
+    # SEO research intelligence (Google Ads keyword research + site/competitor
+    # intelligence + opportunity engine). Facts come from real providers only;
+    # AI interprets, never invents metrics.
+    # ==========================================================================
+    # ------------------------------------------------- google_ads_connections
+    # User-level Google OAuth grant (app client id/secret live in env). The
+    # refresh token is Fernet-encrypted via the project's SecretsService.
+    col(
+        "google_ads_connections",
+        [
+            rel("user", "users", required=True, cascade=True),
+            t("googleAccountId"),
+            t("email"),
+            t("displayName"),
+            t("refreshTokenEnc", max_len=4000),
+            json_field("tokenMetadata"),
+            select("status", ["connected", "expired", "revoked", "error"]),
+            t("lastError"),
+            date("lastVerifiedAt"),
+            t("createdBy"),
+        ],
+        indexes=[
+            "CREATE UNIQUE INDEX idx_gads_conn_user ON google_ads_connections (user)",
+            "CREATE INDEX idx_gads_conn_status ON google_ads_connections (status)",
+        ],
+    ),
+    # --------------------------------------------------- google_ads_customers
+    col(
+        "google_ads_customers",
+        [
+            rel("connection", "google_ads_connections", required=True, cascade=True),
+            rel("project", "projects"),
+            t("customerId", required=True),
+            t("descriptiveName"),
+            t("currencyCode"),
+            t("timeZone"),
+            t("managerCustomerId"),
+            boolean("isManager"),
+            boolean("accessible"),
+            json_field("metadata"),
+        ],
+        indexes=[
+            "CREATE UNIQUE INDEX idx_gads_customer_key ON google_ads_customers (connection, customerId)",
+            "CREATE INDEX idx_gads_customer_project ON google_ads_customers (project)",
+        ],
+    ),
+    # ------------------------------------------------------------ research_runs
+    col(
+        "research_runs",
+        [
+            rel("project", "projects", required=True, cascade=True),
+            t("name"),
+            select("researchType", ["keywords", "site", "competitors", "mixed"]),
+            select(
+                "status",
+                ["pending", "running", "completed", "failed", "cancelled", "partial"],
+            ),
+            select(
+                "currentStage",
+                [
+                    "validate",
+                    "wordpress_sync",
+                    "keyword_collection",
+                    "competitor_crawl",
+                    "serp",
+                    "clustering",
+                    "gaps",
+                    "opportunities",
+                    "finalize",
+                ],
+            ),
+            json_field("config"),
+            json_field("targeting"),
+            num("progress"),
+            json_field("stageState"),
+            json_field("counts"),
+            json_field("providerVersions"),
+            t("errorCode"),
+            t("errorMessage"),
+            json_field("errorDetails"),
+            rel("job", "jobs"),
+            rel("connection", "google_ads_connections"),
+            t("customerId"),
+            t("fingerprint"),
+            date("startedAt"),
+            date("completedAt"),
+            t("createdBy"),
+        ],
+        indexes=[
+            "CREATE INDEX idx_research_project_created ON research_runs (project, created)",
+            "CREATE INDEX idx_research_project_status ON research_runs (project, status)",
+            "CREATE INDEX idx_research_fingerprint ON research_runs (project, fingerprint)",
+        ],
+    ),
+    # ---------------------------------------------------------- research_seeds
+    col(
+        "research_seeds",
+        [
+            rel("run", "research_runs", required=True, cascade=True),
+            select("seedType", ["keyword", "url", "site", "competitor"], required=True),
+            t("value", max_len=2000),
+            t("normalizedValue", max_len=2000),
+        ],
+        indexes=["CREATE INDEX idx_research_seeds_run ON research_seeds (run, seedType)"],
+    ),
+    # ---------------------------------------------------------------- keywords
+    col(
+        "keywords",
+        [
+            rel("project", "projects", required=True, cascade=True),
+            t("normalizedKeyword", required=True),
+            t("displayKeyword"),
+            t("language"),
+            t("locale"),
+            t("locationId"),
+            t("locationName"),
+            t("source"),
+        ],
+        indexes=[
+            "CREATE UNIQUE INDEX idx_keywords_identity ON keywords (project, normalizedKeyword, language, locationId)",
+            "CREATE INDEX idx_keywords_project ON keywords (project, normalizedKeyword)",
+        ],
+    ),
+    # -------------------------------------------------------- keyword_metrics
+    col(
+        "keyword_metrics",
+        [
+            rel("run", "research_runs", required=True, cascade=True),
+            rel("keyword", "keywords", required=True, cascade=True),
+            num("avgMonthlySearches"),
+            t("competition"),
+            num("competitionIndex"),
+            num("averageCpcMicros"),
+            num("lowTopOfPageBidMicros"),
+            num("highTopOfPageBidMicros"),
+            t("currencyCode"),
+            select(
+                "intent",
+                [
+                    "informational",
+                    "commercial",
+                    "transactional",
+                    "navigational",
+                    "local",
+                    "comparison",
+                    "unknown",
+                ],
+            ),
+            num("intentConfidence"),
+            t("intentSource"),
+            rel("cluster", "clusters"),
+            date("observedAt"),
+        ],
+        indexes=[
+            "CREATE UNIQUE INDEX idx_kwmetrics_run_keyword ON keyword_metrics (run, keyword)",
+            "CREATE INDEX idx_kwmetrics_keyword ON keyword_metrics (keyword)",
+            "CREATE INDEX idx_kwmetrics_run_volume ON keyword_metrics (run, avgMonthlySearches)",
+        ],
+    ),
+    # -------------------------------------------------------- keyword_volumes
+    col(
+        "keyword_volumes",
+        [
+            rel("run", "research_runs", required=True, cascade=True),
+            rel("keyword", "keywords", required=True, cascade=True),
+            num("year"),
+            num("month"),
+            num("monthlySearches"),
+        ],
+        indexes=[
+            "CREATE UNIQUE INDEX idx_kwvol_unique ON keyword_volumes (run, keyword, year, month)"
+        ],
+    ),
+    # ---------------------------------------------------------------- clusters
+    col(
+        "clusters",
+        [
+            rel("project", "projects", required=True, cascade=True),
+            rel("run", "research_runs", cascade=True),
+            t("name", required=True),
+            t("slug"),
+            rel("parentCluster", "clusters"),
+            num("size"),
+            t("primaryKeyword"),
+            t("summary", max_len=6000),
+            select("method", ["deterministic", "embedding", "llm", "jev", "mixed"]),
+            num("confidence"),
+            json_field("meta"),
+        ],
+        indexes=[
+            "CREATE INDEX idx_clusters_project_run ON clusters (project, run)",
+            "CREATE INDEX idx_clusters_name ON clusters (project, name)",
+        ],
+    ),
+    # --------------------------------------------------------- competitor_pages
+    col(
+        "competitor_pages",
+        [
+            rel("project", "projects", required=True, cascade=True),
+            rel("run", "research_runs", cascade=True),
+            t("domain"),
+            t("url", max_len=2000),
+            t("canonicalUrl", max_len=2000),
+            t("title", max_len=1000),
+            t("metaDescription", max_len=2000),
+            t("h1", max_len=1000),
+            json_field("headings"),
+            num("wordCount"),
+            t("contentType"),
+            json_field("schemaTypes"),
+            t("language"),
+            t("contentHash"),
+            t("textHash"),
+            select("status", ["pending", "fetched", "failed", "skipped", "unchanged"]),
+            t("error", max_len=2000),
+            date("fetchedAt"),
+            date("lastChangedAt"),
+        ],
+        indexes=[
+            "CREATE UNIQUE INDEX idx_competitor_pages_url ON competitor_pages (project, canonicalUrl)",
+            "CREATE INDEX idx_competitor_pages_run ON competitor_pages (run)",
+        ],
+    ),
+    # ------------------------------------------------------------- content_gaps
+    col(
+        "content_gaps",
+        [
+            rel("project", "projects", required=True, cascade=True),
+            rel("run", "research_runs", cascade=True),
+            select(
+                "gapType",
+                [
+                    "competitor_only",
+                    "you_only",
+                    "under_served",
+                    "expansion",
+                    "update",
+                    "supporting",
+                    "both",
+                ],
+            ),
+            rel("cluster", "clusters"),
+            t("keyword", max_len=500),
+            num("demand"),
+            num("competitorCoverage"),
+            num("yourCoverage"),
+            num("score"),
+            json_field("competitorPages"),
+            json_field("notes"),
+        ],
+        indexes=["CREATE INDEX idx_content_gaps_run ON content_gaps (run, gapType)"],
+    ),
+    # ------------------------------------------------------------ article_ideas
+    col(
+        "article_ideas",
+        [
+            rel("project", "projects", required=True, cascade=True),
+            rel("run", "research_runs", cascade=True),
+            t("title", required=True, max_len=1000),
+            t("suggestedTitle", max_len=1000),
+            t("primaryKeyword", max_len=500),
+            json_field("secondaryKeywords"),
+            rel("cluster", "clusters"),
+            rel("parentCluster", "clusters"),
+            select(
+                "intent",
+                [
+                    "informational",
+                    "commercial",
+                    "transactional",
+                    "navigational",
+                    "local",
+                    "comparison",
+                    "unknown",
+                ],
+            ),
+            num("intentConfidence"),
+            t("contentType"),
+            select("action", ["generate", "update", "expand", "support", "reject"], required=True),
+            num("actionConfidence"),
+            num("businessGoalMatch"),
+            num("opportunityScore"),
+            t("scoreVersion"),
+            json_field("scoreComponents"),
+            num("searchVolume"),
+            json_field("searchTrend"),
+            t("googleAdsCompetition"),
+            num("googleAdsCompetitionIndex"),
+            num("serpOpportunityScore"),
+            num("contentGapScore"),
+            num("businessRelevanceScore"),
+            num("coverageScore"),
+            num("uniquenessScore"),
+            t("recommendedAngle", max_len=4000),
+            t("uniqueValueProposition", max_len=4000),
+            t("targetAudience", max_len=1000),
+            t("contentBrief", max_len=20000),
+            json_field("questions"),
+            json_field("entities"),
+            json_field("internalLinks"),
+            rel("existingArticle", "articles"),
+            t("canonicalExistingUrl", max_len=2000),
+            json_field("evidence"),
+            t("locale"),
+            t("language"),
+            select(
+                "status", ["proposed", "accepted", "roadmap", "rejected", "merged", "generated"]
+            ),
+            select("confidence", ["high", "medium", "low"]),
+            rel("article", "articles"),
+            t("createdBy"),
+        ],
+        indexes=[
+            "CREATE INDEX idx_article_ideas_run ON article_ideas (run, status)",
+            "CREATE INDEX idx_article_ideas_project ON article_ideas (project, status, opportunityScore)",
+            "CREATE INDEX idx_article_ideas_action ON article_ideas (project, action)",
+        ],
+    ),
+    # ------------------------------------------------------------- serp_queries
+    # Optional: present only when a SERP provider is configured. An observation,
+    # never a permanent fact (keyed by provider + observed time).
+    col(
+        "serp_queries",
+        [
+            rel("project", "projects", required=True, cascade=True),
+            rel("run", "research_runs", cascade=True),
+            t("keyword", max_len=500),
+            t("provider"),
+            t("locale"),
+            t("location"),
+            t("device"),
+            num("resultCount"),
+            json_field("features"),
+            json_field("questions"),
+            json_field("relatedSearches"),
+            json_field("raw"),
+            date("observedAt"),
+        ],
+        indexes=[
+            "CREATE UNIQUE INDEX idx_serp_queries_key ON serp_queries (project, keyword, provider, locale, location)",
+            "CREATE INDEX idx_serp_queries_run ON serp_queries (run)",
+        ],
+    ),
+    # ------------------------------------------------------------- serp_results
+    col(
+        "serp_results",
+        [
+            rel("query", "serp_queries", required=True, cascade=True),
+            num("position"),
+            t("url", max_len=2000),
+            t("domain"),
+            t("title", max_len=1000),
+            t("snippet", max_len=3000),
+            boolean("isFeaturedSnippet"),
+            boolean("isPeopleAlsoAsk"),
+            json_field("metadata"),
+        ],
+        indexes=["CREATE INDEX idx_serp_results_query ON serp_results (query, position)"],
+    ),
 ]
 
 
@@ -757,6 +1153,10 @@ DEFAULT_PROMPTS: dict[str, str] = {
     "article_repair_user": "Repair this article using the QA findings.\n\n## ARTICLE\n\n{{ article.content }}\n\n## QA FINDINGS\n\n{{ qa_issues }}\n\n## ARTICLE CONTEXT\n\nTitle:\n{{ article.title }}\n\nPrimary query:\n{{ topic.keyword }}\n\nLanguage:\n{{ language }}\n\nLocale:\n{{ locale }}\n\nAudience:\n{{ audience }}\n\nBrand voice:\n{{ brand_voice }}\n\nResearch:\n{{ research }}\n\nVerified internal links:\n{{ internal_links }}\n\nSEO/content contract:\n{{ seo_rules }}\n\n## REQUIREMENTS\n\nFix every critical and high-severity issue.\n\nFix medium issues when doing so clearly improves quality.\n\nDo not introduce new claims that are not supported by the supplied research.\n\nDo not remove valid information simply to shorten the article.\n\nDo not add keyword repetitions.\n\nDo not add filler.\n\nDo not force headings.\n\nDo not force lists.\n\nDo not force links.\n\nMake the final article sound native to the target language and locale.\n\nReturn ONLY the complete corrected HTML article.",
     "image_plan_system": "You are an editorial art director for a high-quality multilingual publication.\n\nCreate image opportunities that genuinely improve the reader's understanding.\n\n## PRINCIPLE\n\nAn image must earn its place.\n\nPrefer:\n- diagrams\n- process illustrations\n- comparisons\n- conceptual explanations\n- data visualizations\n- product/interface demonstrations\n- meaningful real-world scenes\n\nAvoid:\n- generic stock imagery\n- decorative filler\n- repeated concepts\n- images that merely restate the title\n- images with no information value\n\n## IMAGE SELECTION\n\nFor each possible image, ask:\n\n1. Does this section contain something visual?\n2. Would a reader understand it faster visually?\n3. Can a diagram communicate the idea better?\n4. Is there original data worth visualizing?\n5. Does this image provide information unavailable from surrounding text?\n\nDo not add images merely because a section exists.\n\n## ALT TEXT\n\nAlt text must describe the actual visual content naturally.\n\nDo not:\n- repeat the article title\n- stuff keywords\n- describe the prompt\n- add SEO phrases that don't describe the image\n\n## PROMPT LANGUAGE\n\nVisual generation prompt language:\n{{ prompt_language }}\n\nArticle language:\n{{ language }}\n\nThese are independent.\n\nThe visual prompt must be written naturally for the image-generation model.\n\n## IMAGE TEXT\n\nDo not request text, letters, labels, UI copy, typography, or readable words inside generated images unless the image specifically requires them and the rendering system supports them reliably.\n\n## OUTPUT\n\nReturn JSON only.",
     "image_plan_user": 'Create the image plan for this article.\n\n## ARTICLE\n\nTitle:\n{{ article.title }}\n\nPrimary query:\n{{ topic.keyword }}\n\nLanguage:\n{{ language }}\n\nPrompt language:\n{{ prompt_language }}\n\nLocale:\n{{ locale }}\n\n## CONTENT\n\nSections:\n{{ sections }}\n\nArticle content:\n{{ article.content }}\n\n## DESIGN\n\nStyle profile:\n{{ style_profile }}\n\nMaximum interior images:\n{{ max_interior_images }}\n\n## OUTPUT\n\nReturn ONLY:\n\n{\n  "images": [\n    {\n      "role": "cover",\n      "purpose": "...",\n      "prompt": "...",\n      "aspect_ratio": "16:9",\n      "alt_text": "...",\n      "caption": ""\n    },\n    {\n      "role": "interior",\n      "section_key": "section-1",\n      "purpose": "...",\n      "prompt": "...",\n      "aspect_ratio": "16:9",\n      "alt_text": "...",\n      "caption": ""\n    }\n  ]\n}\n\nRules:\n\nExactly one cover image.\n\nInterior images are optional.\n\nNever exceed:\n{{ max_interior_images }}\n\nOnly create an interior image when it adds genuine informational value.\n\nDo not place interior images in consecutive sections unless clearly justified.\n\nAlt text must describe the actual scene.\n\nAlt text must be written in the article language.\n\nPrompt must be written in {{ prompt_language }}.\n\nNever stuff keywords into alt text.\n\nNever mention the prompt inside alt text.\n\nAvoid decorative or repetitive images.\n\nDo not ask the image model to place arbitrary readable text inside images.\n\nOutput ONLY JSON.',
+    "cluster_system": 'You are an SEO information-architecture specialist.\n\nYou group keyword queries into topical clusters that each deserve the same piece of content.\n\n## PRINCIPLE\n\nA cluster is a set of queries that share the same search intent and the same underlying user need.\n\nQuery variants of the same need belong together:\n- "best gym software" / "top gym software" / "gym software comparison"\n\nDifferent user needs belong apart — even when the wording overlaps:\n- "how much does gym software cost" is its own need, not a variant of the list query above.\n\n## RULES\n\n1. Never invent search volumes, competition, or click data.\n2. Never invent keywords that were not supplied.\n3. Every supplied keyword id must appear in exactly one cluster.\n4. Prefer a small number of meaningful clusters over many near-duplicates.\n5. A cluster label is a short topic phrase in the target language, not a keyword list.\n6. Modifiers that change intent (pricing, comparison, how-to, review, tutorial, local) usually split clusters.\n7. Language: {{ language }}\nLocale: {{ locale }}\nAudience: {{ audience }}\n\nReturn JSON only.\n',
+    "cluster_user": 'Group these keyword queries into topical clusters.\n\n## KEYWORDS\n\n{{ keywords }}\n\n## EXISTING SITE CLUSTERS\n\n{{ topical_clusters }}\n\n## SITE CONTEXT\n\n{{ site_context }}\n\n## OUTPUT\n\nReturn ONLY valid JSON:\n\n{\n  "clusters": [\n    {\n      "label": "short topic phrase",\n      "intent": "informational|commercial|transactional|navigational|local|comparison",\n      "member_ids": ["1", "4", "9"]\n    }\n  ]\n}\n\nEvery supplied id must appear exactly once across all clusters.\n\nDo not invent ids.\n\nUse the shortest accurate label.\n\nOutput ONLY the JSON object.',
+    "opportunity_system": 'You are a senior SEO strategist turning real research data into an editorial roadmap.\n\n## HARD RULES\n\n1. NEVER invent metrics. Search volume, CPC and competition only come from the supplied data.\n2. Google Ads competition is PAID advertising competition. It is never organic difficulty. Never call it difficulty.\n3. Never claim a ranking position. You have no ranking data unless it is supplied.\n4. Never guarantee that a page will rank.\n5. Do not keyword-stuff titles. No fake urgency, no "Ultimate Guide" filler, no invented years.\n6. Do not create one page per keyword variant. Group variants that share one intent.\n7. Do not regenerate content that already exists and is adequate.\n\n## ACTIONS\n\n- generate: no existing page covers this need\n- update: an existing page covers this need and should be improved\n- expand: this belongs inside an existing page rather than a new URL\n- support: a genuinely useful supporting page that builds topical coverage\n- reject: duplicate, low value, off-goal, or cannibalising\n\n## GOAL\n\nThe user goal materially changes what you propose. Commercial and evaluation intent for a lead-generation goal. Pillar/supporting structure for an authority goal. Gaps and freshness for an update goal.\n\n## LANGUAGE\n\nWrite titles, angles and briefs in the target language. Do not translate an English idea.\nLanguage: {{ language }}\nLocale: {{ locale }}\nAudience: {{ audience }}\n\n## EVIDENCE\n\nIf evidence for a claim is absent, leave the field empty rather than filling it with an estimate.\n\nReturn JSON only.\n',
+    "opportunity_user": 'Propose article opportunities from this research evidence.\n\n## BUSINESS GOAL (natural language, from the user)\n\n{{ business_goal }}\n\n## TARGETED KEYWORDS\n\n{{ keywords }}\n\n## EXISTING SITE CONTENT\n\n{{ existing_content }}\n\n## COMPETITOR PAGES OBSERVED\n\n{{ competitor_pages }}\n\n## RELATED QUERIES\n\n{{ related_queries }}\n\n## READER QUESTIONS\n\n{{ questions }}\n\n## EXISTING CLUSTERS\n\n{{ topical_clusters }}\n\n## READING CONTEXT\n\nLanguage: {{ language }}\nLocale: {{ locale }}\nAudience: {{ audience }}\n\n## OUTPUT\n\nReturn ONLY valid JSON:\n\n{\n  "opportunities": [\n    {\n      "title": "proposed article title",\n      "primary_keyword": "one supplied keyword",\n      "secondary_keywords": ["supplied keywords only"],\n      "intent": "informational|commercial|transactional|navigational|local|comparison",\n      "content_type": "guide|tutorial|how-to|comparison|alternatives|best-of list|review|problem/solution|glossary|faq|case study|template|checklist|statistics|commercial supporting article",\n      "action": "generate|update|expand|support|reject",\n      "existing_url": "the existing page this refers to, or empty",\n      "audience": "who this is for",\n      "angle": "the specific angle that makes this page worth publishing",\n      "unique_value": "what this page offers that the existing results do not",\n      "questions": ["questions the page must answer"],\n      "entities": ["entities/concepts to cover"],\n      "brief": "3-6 sentence content brief",\n      "audience_fit": 0.0\n    }\n  ]\n}\n\nRules:\n\nPrimary and secondary keywords MUST come from the supplied keyword list.\n\nNever invent metrics.\n\nIf an existing page already covers a need adequately, use action "reject" or "update" with its url in existing_url.\n\nReturn fewer, better opportunities rather than padding the list.\n\nOutput ONLY the JSON object.',
     "output_validation": "You are a strict structured-output validator.\n\nThe model output below is supposed to match the required JSON schema.\n\nYour job is to repair the output.\n\n## RULES\n\n1. Return valid JSON only.\n2. Preserve valid information.\n3. Remove prose outside the JSON.\n4. Repair malformed JSON.\n5. Normalize incorrect field types.\n6. Remove fields not allowed by the schema.\n7. Do not invent missing factual information.\n8. Do not silently change content meaning.\n9. If a value is genuinely unavailable, use the schema's allowed empty/null representation.\n10. Ensure arrays and objects are syntactically valid.\n\n## EXPECTED SCHEMA\n\n{{ output_schema }}\n\n## INVALID OUTPUT\n\n{{ raw_output }}\n\nReturn ONLY corrected JSON.",
     "validation": "You are a strict structured-output validator.\n\nThe model output below is supposed to match the required JSON schema.\n\nYour job is to repair the output.\n\n## RULES\n\n1. Return valid JSON only.\n2. Preserve valid information.\n3. Remove prose outside the JSON.\n4. Repair malformed JSON.\n5. Normalize incorrect field types.\n6. Remove fields not allowed by the schema.\n7. Do not invent missing factual information.\n8. Do not silently change content meaning.\n9. If a value is genuinely unavailable, use the schema's allowed empty/null representation.\n10. Ensure arrays and objects are syntactically valid.\n\n## EXPECTED SCHEMA\n\n{{ output_schema }}\n\n## INVALID OUTPUT\n\n{{ raw_output }}\n\nReturn ONLY corrected JSON.",
     "content_refresh_system": 'You are a senior SEO content strategist responsible for improving existing articles.\n\nYour task is to identify legitimate opportunities to improve an existing page using actual search and reader evidence.\n\n## PRINCIPLE\n\nDo not update content simply because a new keyword exists.\n\nUpdate content when the evidence indicates that users have a legitimate unanswered or poorly answered need.\n\n## INPUTS\n\nExisting article:\n{{ article }}\n\nSearch Console queries:\n{{ search_console_queries }}\n\nSearch performance:\n{{ search_performance }}\n\nCurrent rankings:\n{{ rankings }}\n\nRelated queries:\n{{ related_queries }}\n\nCurrent research:\n{{ research }}\n\nLanguage:\n{{ language }}\n\nLocale:\n{{ locale }}\n\n## ANALYZE\n\nIdentify:\n\n- questions the page already answers well\n- questions users appear to have that the page does not answer\n- terminology that could improve clarity\n- sections that are outdated\n- claims that require verification\n- opportunities for stronger examples\n- opportunities for better internal links\n- opportunities to clarify search intent\n\n## DO NOT\n\nDo not insert queries mechanically.\n\nDo not add sections for every query.\n\nDo not increase length without adding value.\n\nDo not change dates without substantive content changes.\n\nDo not rewrite strong passages unnecessarily.\n\n## OUTPUT\n\nReturn JSON:\n\n{\n  "update_required": true,\n  "reason": "...",\n  "changes": [\n    {\n      "type": "expand|rewrite|remove|add|link|verify",\n      "section": "...",\n      "reason": "...",\n      "evidence": "...",\n      "action": "..."\n    }\n  ]\n}\n\nOutput ONLY JSON.',

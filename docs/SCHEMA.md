@@ -34,6 +34,17 @@ Requires:              PocketBase ≥ 0.23
 
 20 base collections (+ built-in `users`, extended with `role` / `displayName`):
 
+> **Note (SEO research engine, 2026-10):** `app/scripts/bootstrap_pb.py` now also
+> defines 13 research collections — `google_ads_connections`, `google_ads_customers`,
+> `research_runs`, `research_seeds`, `keywords`, `keyword_metrics`,
+> `keyword_volumes`, `clusters`, `competitor_pages`, `content_gaps`,
+> `article_ideas`, `serp_queries`, `serp_results` — plus a `serp` value on
+> `integrations.category` and WordPress-mirror fields on `articles`
+> (`source`, `syncStatus`, `remoteStatus`, `remoteModified`, `remoteContentHash`,
+> `remoteSlug`, `remoteExcerpt`, `remoteMeta`, `contentHash`). The table below
+> predates them; the bootstrap script is the source of truth. See
+> [SEO_RESEARCH.md](SEO_RESEARCH.md).
+
 | Collection | Purpose | Key uniqueness |
 |---|---|---|
 | `projects` | Workspace root | unique `slug` |
