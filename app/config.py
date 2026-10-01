@@ -52,6 +52,33 @@ class Settings(BaseSettings):
     # record every provider call as a job_event (opt-in; default is debug logs)
     provider_events_enabled: bool = False
 
+    # --- Google Ads (SEO research) ---
+    # Application-level OAuth client (Google Cloud Console, web application).
+    # Developer tokens were sunset 2026-09-09; access level now rides on the
+    # Google Cloud project, so there is no end-user developer-token workflow.
+    google_ads_client_id: str = ""
+    google_ads_client_secret: str = ""
+    google_ads_redirect_uri: str = ""
+    # Sent only if set (back-compat; Google now ignores it).
+    google_ads_developer_token: str = ""
+    google_ads_api_version: str = "v25"
+    google_ads_login_customer_id: str = ""  # optional manager account
+
+    @property
+    def google_ads_configured(self) -> bool:
+        return bool(
+            self.google_ads_client_id
+            and self.google_ads_client_secret
+            and self.google_ads_redirect_uri
+        )
+
+    # --- SEO research defaults ---
+    research_max_keywords_per_run: int = 5000  # conservative default cap
+    research_max_competitor_pages: int = 200
+    research_max_serp_queries: int = 0  # 0 → no live SERP queries
+    research_crawl_concurrency: int = 4
+    research_google_ads_concurrency: int = 2  # Keyword Planning is tightly limited
+
     # --- web ---
     page_size: int = 25  # default pagination for UI lists
 
