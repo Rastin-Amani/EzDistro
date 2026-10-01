@@ -26,12 +26,41 @@ has a deterministic mode). Every optional capability degrades gracefully.
 Developer tokens were **sunset on 2026-09-09**. API access levels now belong to
 the **Google Cloud project** that owns the OAuth client; there is no
 end-user developer token to paste. Do not build a developer-token onboarding
-workflow. `GOOGLE_ADS_DEVELOPER_TOKEN` still exists only for backwards
-compatibility and is sent as a header *only if set*; Google ignores it.
+workflow. The optional `developer_token` field on the Google Ads connection
+(and the `GOOGLE_ADS_DEVELOPER_TOKEN` env fallback) still exists only for
+backwards compatibility and is sent as a header *only if set*; Google ignores it.
 
-### Environment
+### Where the OAuth client lives (Connections tab)
 
-Set these for the deployment (never per project, never client-side):
+The OAuth **client** (client id, client secret, redirect URI) is configured
+**per project** on the project's **Connections** tab (`?tab=integrations`),
+exactly like every other provider in the app — because it may differ from
+project to project.
+
+Add a connection with **category = `Google Ads (keyword research)`** and fill
+in:
+
+| Field | Purpose |
+| --- | --- |
+| `client_id` | Google Cloud OAuth client id |
+| `client_secret` | Google Cloud OAuth client secret (stored encrypted) |
+| `redirect_uri` | Exact callback URL (see below) |
+| `api_version` | Default `v25`; versions sunset annually, keep configurable |
+| `login_customer_id` | Optional manager (MCC) id used as `login-customer-id` |
+| `developer_token` | Optional legacy header, ignored by Google today |
+
+The non-secret fields are stored in the integration's `configuration`; the
+client secret and developer token are Fernet-encrypted into `secretsEnc` and
+never leave the server. The project's research tab reads
+`_credentials(pb, project_id)` ([`app/services/google_ads.py`](../app/services/google_ads.py)),
+which resolves the enabled `google_ads` integration for that project.
+
+> **Projects are self-contained by default.** Env `GOOGLE_ADS_*` is an optional
+> **fallback** used only when a project has no enabled `google_ads` connection —
+> useful for a single shared OAuth client across all projects. Configure it on
+> the Connections tab unless you intentionally share one client everywhere.
+
+If you do use the env fallback, set:
 
 | Variable | Purpose |
 | --- | --- |
@@ -46,9 +75,7 @@ In the Google Cloud Console add the OAuth scope
 `https://www.googleapis.com/auth/adwords` and register the redirect URI exactly
 as configured, e.g. `https://your-app.example.com/projects/google-ads/callback`.
 The redirect must match character-for-character (`redirect_uri_mismatch`
-otherwise). `google_ads_client_id`, `google_ads_client_secret`,
-`google_ads_redirect_uri` are read by [`app/config.py`](../app/config.py);
-`settings.google_ads_configured` is true only when all three are present.
+otherwise).
 
 ### OAuth flow
 
@@ -255,7 +282,7 @@ private prompts or article content to analytics.
 
 | Symptom | Cause / fix |
 | --- | --- |
-| "The application's Google Ads OAuth client is not configured" | Set `GOOGLE_ADS_CLIENT_ID/SECRET/REDIRECT_URI` and restart the web process. |
+| "Google Ads is not configured for this project" | Add a Google Ads connection on the project's **Connections** tab (category `Google Ads (keyword research)`) with the Cloud OAuth client id, client secret and redirect URI. Env `GOOGLE_ADS_*` only acts as a fallback. |
 | `redirect_uri_mismatch` | The redirect URI must match the Google Cloud registration exactly (scheme, host, path). |
 | "Google Ads does not recognise the language '…'" | The language code is not in Google Ads' language constants; use an ISO code like `en`, `fa`, `es`. |
 | Keyword research produces nothing | Check the run's targeting, the chosen customer, and that the account allows Keyword Planning for the Cloud project. Errors are humanised in the run page; the technical error is in the job events. |

@@ -56,7 +56,7 @@ make check      # lint -> typecheck -> test
 ## SEO research engine
 
 - See [`docs/SEO_RESEARCH.md`](docs/SEO_RESEARCH.md). **Facts first, AI second** — never invent search volume, CPC, competition, rankings or existence of content; Google Ads competition is *paid* competition, never organic difficulty.
-- Google Ads is REST/JSON over `httpx` (`app/providers/google_ads.py`) with **zero new dependencies**; developer tokens were sunset (access rides on the Google Cloud project), so there is no developer-token onboarding. Set `GOOGLE_ADS_CLIENT_ID`/`_CLIENT_SECRET`/`_REDIRECT_URI` (+ optional `_API_VERSION`, default `v25`).
+- Google Ads is REST/JSON over `httpx` (`app/providers/google_ads.py`) with **zero new dependencies**; developer tokens were sunset (access rides on the Google Cloud project), so there is no developer-token onboarding. The OAuth **client** is configured **per project on the Connections tab** (integration category `google_ads`: client id / redirect URI / API version / login customer id in `configuration`, client secret + optional developer token encrypted in `secretsEnc`); `GOOGLE_ADS_CLIENT_ID`/`_CLIENT_SECRET`/`_REDIRECT_URI` (+ optional `_API_VERSION`) are only a fallback for a single shared client.
 - `SERP_PROVIDER=none` is first-class; every optional capability (SERP, LLM clustering, embeddings) degrades gracefully.
 - New job types: `research_run` and `wordpress_sync` in `app/jobs/handlers.py` `JOB_TYPES` (the worker and `app/api/jobs.py` derive from that single list).
 - OAuth callback is a browser navigation → `RedirectResponse` with a `?ga=…` flag, not `HX-Trigger`. Refresh tokens are Fernet-encrypted via `SecretsService`; never log/render/return secrets.

@@ -71,11 +71,17 @@ Do not rely on it.
 
 ### SEO research engine (optional feature)
 
+> **Google Ads OAuth client credentials are configured per project on the
+> project's Connections tab** (integration category `google_ads`), not in the
+> environment — they may differ per project. The vars below are an optional
+> **fallback** used only when a project has no enabled Google Ads connection
+> (e.g. one shared client across all projects).
+
 | Variable | Default | Effect |
 |---|---|---|
-| `GOOGLE_ADS_CLIENT_ID` | — | Google Cloud OAuth client id (app-level, not per project) |
-| `GOOGLE_ADS_CLIENT_SECRET` | — | OAuth client secret (never exposed client-side) |
-| `GOOGLE_ADS_REDIRECT_URI` | — | Exact callback URL, e.g. `https://…/projects/google-ads/callback` |
+| `GOOGLE_ADS_CLIENT_ID` | — | Fallback Google Cloud OAuth client id |
+| `GOOGLE_ADS_CLIENT_SECRET` | — | Fallback OAuth client secret (never exposed client-side) |
+| `GOOGLE_ADS_REDIRECT_URI` | — | Fallback callback URL, e.g. `https://…/projects/google-ads/callback` |
 | `GOOGLE_ADS_API_VERSION` | `v25` | Google Ads API version; versions sunset annually, keep configurable |
 | `GOOGLE_ADS_LOGIN_CUSTOMER_ID` | — | Optional manager (MCC) id used as `login-customer-id` |
 | `GOOGLE_ADS_DEVELOPER_TOKEN` | — | Legacy: developer tokens were sunset 2026-09-09; sent only if set, ignored by Google |
@@ -85,9 +91,12 @@ Do not rely on it.
 | `RESEARCH_CRAWL_CONCURRENCY` | `4` | Competitor crawl parallelism |
 | `RESEARCH_GOOGLE_ADS_CONCURRENCY` | `2` | Keyword Planning parallelism (tight rate limits) |
 
-`settings.google_ads_configured` is true only when id + secret + redirect are all
-set. All research env vars are optional — the engine works without Google Ads
-(competitor-only) and without a SERP provider. See [SEO_RESEARCH.md](SEO_RESEARCH.md).
+Google Ads credentials resolve per project via the enabled `google_ads`
+integration (client id / redirect URI / API version / login customer id in
+`configuration`; client secret and developer token encrypted in `secretsEnc`),
+falling back to the env vars above only when no connection exists. All research
+env vars are optional — the engine works without Google Ads (competitor-only)
+and without a SERP provider. See [SEO_RESEARCH.md](SEO_RESEARCH.md).
 
 ### Feature flags & misc
 | Variable | Default | Effect |
