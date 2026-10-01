@@ -19,6 +19,7 @@ INTEGRATION_CATEGORIES = (
     "publisher",
     "image",
     "serp",
+    "google_ads",
 )
 HEALTH_STATUSES = ("unknown", "healthy", "degraded", "unhealthy")
 

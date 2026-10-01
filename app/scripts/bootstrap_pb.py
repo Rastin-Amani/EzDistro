@@ -279,6 +279,7 @@ COLLECTIONS: list[dict[str, Any]] = [
                     "publisher",
                     "image",
                     "serp",
+                    "google_ads",
                 ],
                 required=True,
             ),

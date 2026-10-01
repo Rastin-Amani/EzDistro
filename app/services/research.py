@@ -160,7 +160,7 @@ async def _keyword_stage(
         raise PermanentError(
             "the Google Ads connection for this run no longer exists — reconnect Google Ads"
         )
-    client = client_for_connection(connection)
+    client = client_for_connection(connection, pb=ctx.pb, project_id=ctx.project_id)
     try:
         result = await collect_keywords(
             ctx,

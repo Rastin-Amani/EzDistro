@@ -1136,7 +1136,8 @@
           "vector_store",
           "publisher",
           "image",
-          "serp"
+          "serp",
+          "google_ads"
         ],
         "id": "select064c19c1"
       },

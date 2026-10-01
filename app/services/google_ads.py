@@ -1,12 +1,20 @@
 """Google Ads OAuth + connection service.
 
-The OAuth *client* credentials are application-level (env: GOOGLE_ADS_CLIENT_ID /
-GOOGLE_ADS_CLIENT_SECRET / GOOGLE_ADS_REDIRECT_URI) — users never paste them. Each
-user's refresh token is Fernet-encrypted in `google_ads_connections.refreshTokenEnc`
-and never leaves the server: the browser only ever sees an account label.
+The OAuth *client* credentials live in the project's Connections tab as an
+`integrations` record with `category="google_ads"` (configuration holds
+client_id / redirect_uri / api_version / login_customer_id; `secretsEnc`
+holds the client secret and optional developer token). That makes Google Ads
+behave like every other provider and lets each project use its own Google Cloud
+OAuth client. Application-level env values (GOOGLE_ADS_*) remain a fallback for
+installations that prefer a single shared client.
 
-Developer tokens no longer exist as an onboarding step (sunset 2026-09-09); access
-level rides on the Google Cloud project, so no user-facing token field is offered.
+Each user's refresh token is Fernet-encrypted in
+`google_ads_connections.refreshTokenEnc` and never leaves the server: the
+browser only ever sees an account label.
+
+Developer tokens no longer exist as an onboarding step (sunset 2026-09-09);
+access level rides on the Google Cloud project, so no user-facing token field is
+required (one may still be stored on the integration for API compatibility).
 """
 
 from __future__ import annotations
@@ -26,6 +34,7 @@ from app.config import settings
 from app.providers.base import AdsCustomer, PermanentError, TransientError
 from app.providers.google_ads import GoogleAdsClient
 from app.providers.http import raise_for_provider, with_retry
+from app.repositories.integrations import IntegrationRepo
 from app.repositories.research import GoogleAdsConnectionRepo, GoogleAdsCustomerRepo
 from app.services.secrets import get_secrets_service
 
@@ -36,27 +45,70 @@ AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 TOKEN_URL = "https://oauth2.googleapis.com/token"
 USERINFO_URL = "https://openidconnect.googleapis.com/v1/userinfo"
 STATE_TTL_SECONDS = 900
+GOOGLE_ADS_CATEGORY = "google_ads"
 
 # Token-endpoint errors -> a sentence a human can act on.
 _TOKEN_ERRORS = {
     "invalid_grant": "Google Ads access was revoked or expired. Reconnect Google Ads.",
-    "invalid_client": "Google Ads client credentials are misconfigured. Contact the administrator.",
+    "invalid_client": "Google Ads client credentials are misconfigured. Check the Google Ads connection.",
     "redirect_uri_mismatch": (
-        "The redirect URI does not match the Google Cloud OAuth client. Contact the administrator."
+        "The redirect URI does not match the Google Cloud OAuth client. Check the Google Ads connection."
     ),
     "access_denied": "You declined the Google Ads permission request.",
     "invalid_request": "Google rejected the OAuth request. Try connecting again.",
 }
 
 
-def client_configured() -> bool:
-    return bool(settings.google_ads_configured)
+def _credentials(pb: Any, project_id: str = "") -> dict[str, str]:
+    """Resolve the Google Ads OAuth client for a project.
+
+    Prefers the enabled `google_ads` integration on the project's Connections
+    tab; falls back to the application-level env settings when no integration is
+    configured. The client secret is decrypted on demand and never logged.
+    """
+    creds = {
+        "client_id": settings.google_ads_client_id,
+        "client_secret": settings.google_ads_client_secret,
+        "redirect_uri": settings.google_ads_redirect_uri,
+        "api_version": settings.google_ads_api_version,
+        "login_customer_id": settings.google_ads_login_customer_id,
+        "developer_token": settings.google_ads_developer_token,
+    }
+    if not project_id or pb is None:
+        return creds
+    integration = IntegrationRepo(pb).get_active(project_id, GOOGLE_ADS_CATEGORY)
+    if not integration:
+        return creds
+    config = integration.get("configuration") or {}
+    creds["client_id"] = str(config.get("client_id") or creds["client_id"])
+    creds["redirect_uri"] = str(config.get("redirect_uri") or creds["redirect_uri"])
+    creds["api_version"] = str(config.get("api_version") or creds["api_version"])
+    creds["login_customer_id"] = str(config.get("login_customer_id") or creds["login_customer_id"])
+    encrypted = integration.get("secretsEnc") or ""
+    if encrypted:
+        try:
+            data = json.loads(get_secrets_service().decrypt(encrypted))
+        except ValueError as exc:  # SECRETS_KEY changed / corrupt payload
+            raise PermanentError(
+                "The stored Google Ads credentials cannot be decrypted (SECRETS_KEY changed). "
+                "Re-save the Google Ads connection."
+            ) from exc
+        creds["client_secret"] = str(data.get("client_secret") or creds["client_secret"])
+        creds["developer_token"] = str(data.get("developer_token") or creds["developer_token"])
+    return creds
 
 
-def redirect_uri(request_base: str) -> str:
+def client_configured(pb: Any = None, project_id: str = "") -> bool:
+    """True when a usable OAuth client (integration or env) is available."""
+    creds = _credentials(pb, project_id)
+    return bool(creds["client_id"] and creds["client_secret"])
+
+
+def redirect_uri(request_base: str, *, pb: Any = None, project_id: str = "") -> str:
     """The configured redirect URI, falling back to one derived from the request."""
-    if settings.google_ads_redirect_uri:
-        return settings.google_ads_redirect_uri
+    configured = _credentials(pb, project_id)["redirect_uri"]
+    if configured:
+        return configured
     return request_base.rstrip("/") + "/projects/google-ads/callback"
 
 
@@ -92,15 +144,18 @@ def read_state(state: str) -> dict[str, Any]:
     return payload
 
 
-def authorize_url(state: str, *, request_base: str = "") -> str:
-    if not client_configured():
+def authorize_url(
+    state: str, *, request_base: str = "", pb: Any = None, project_id: str = ""
+) -> str:
+    creds = _credentials(pb, project_id)
+    if not (creds["client_id"] and creds["client_secret"]):
         raise PermanentError(
-            "Google Ads is not configured on this server "
-            "(GOOGLE_ADS_CLIENT_ID / SECRET / REDIRECT_URI are missing)."
+            "Google Ads is not configured for this project. Add a Google Ads connection "
+            "on the Connections tab."
         )
     params = {
-        "client_id": settings.google_ads_client_id,
-        "redirect_uri": redirect_uri(request_base),
+        "client_id": creds["client_id"],
+        "redirect_uri": redirect_uri(request_base, pb=pb, project_id=project_id),
         "response_type": "code",
         "scope": GOOGLE_ADS_SCOPE,
         "access_type": "offline",
@@ -137,26 +192,32 @@ async def _post_token(payload: dict[str, str]) -> dict[str, Any]:
     return await with_retry(call, attempts=2, what="google_ads token")
 
 
-async def exchange_code(code: str, *, request_base: str = "") -> dict[str, Any]:
+async def exchange_code(
+    code: str, *, request_base: str = "", pb: Any = None, project_id: str = ""
+) -> dict[str, Any]:
     if not code:
         raise PermanentError("Google did not return an authorization code.")
+    creds = _credentials(pb, project_id)
     return await _post_token(
         {
             "code": code,
-            "client_id": settings.google_ads_client_id,
-            "client_secret": settings.google_ads_client_secret,
-            "redirect_uri": redirect_uri(request_base),
+            "client_id": creds["client_id"],
+            "client_secret": creds["client_secret"],
+            "redirect_uri": redirect_uri(request_base, pb=pb, project_id=project_id),
             "grant_type": "authorization_code",
         }
     )
 
 
-async def refresh_access_token(refresh_token: str) -> dict[str, Any]:
+async def refresh_access_token(
+    refresh_token: str, *, pb: Any = None, project_id: str = ""
+) -> dict[str, Any]:
+    creds = _credentials(pb, project_id)
     return await _post_token(
         {
             "refresh_token": refresh_token,
-            "client_id": settings.google_ads_client_id,
-            "client_secret": settings.google_ads_client_secret,
+            "client_id": creds["client_id"],
+            "client_secret": creds["client_secret"],
             "grant_type": "refresh_token",
         }
     )
@@ -184,9 +245,11 @@ async def fetch_identity(access_token: str) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 # Connection lifecycle
 # ---------------------------------------------------------------------------
-async def connect(pb: Any, *, user_id: str, code: str, request_base: str = "") -> dict[str, Any]:
+async def connect(
+    pb: Any, *, user_id: str, code: str, request_base: str = "", project_id: str = ""
+) -> dict[str, Any]:
     """Exchange the callback code and store the connection (encrypted at rest)."""
-    tokens = await exchange_code(code, request_base=request_base)
+    tokens = await exchange_code(code, request_base=request_base, pb=pb, project_id=project_id)
     refresh = str(tokens.get("refresh_token") or "")
     if not refresh:
         raise PermanentError(
@@ -222,7 +285,12 @@ def disconnect(pb: Any, connection_id: str) -> None:
 
 
 def client_for_connection(
-    connection: dict[str, Any], *, timeout: float = 60.0, attempts: int = 3
+    connection: dict[str, Any],
+    *,
+    timeout: float = 60.0,
+    attempts: int = 3,
+    pb: Any = None,
+    project_id: str = "",
 ) -> GoogleAdsClient:
     """Build a Google Ads client from a stored connection (decrypts the token)."""
     if not connection:
@@ -237,24 +305,32 @@ def client_for_connection(
             "The stored Google Ads credential cannot be decrypted (SECRETS_KEY changed). "
             "Reconnect Google Ads."
         ) from exc
+    creds = _credentials(pb, project_id)
+    if not (creds["client_id"] and creds["client_secret"]):
+        raise PermanentError(
+            "Google Ads is not configured for this project. Add a Google Ads connection "
+            "on the Connections tab."
+        )
     return GoogleAdsClient(
-        client_id=settings.google_ads_client_id,
-        client_secret=settings.google_ads_client_secret,
+        client_id=creds["client_id"],
+        client_secret=creds["client_secret"],
         refresh_token=refresh_token,
-        developer_token=settings.google_ads_developer_token,
-        api_version=settings.google_ads_api_version,
-        login_customer_id=settings.google_ads_login_customer_id,
+        developer_token=creds["developer_token"],
+        api_version=creds["api_version"],
+        login_customer_id=creds["login_customer_id"],
         timeout=timeout,
         attempts=attempts,
         concurrency=settings.research_google_ads_concurrency,
     )
 
 
-def client_for_user(pb: Any, user_id: str, **kwargs: Any) -> GoogleAdsClient:
+def client_for_user(
+    pb: Any, user_id: str, *, project_id: str = "", **kwargs: Any
+) -> GoogleAdsClient:
     connection = connection_for_user(pb, user_id)
     if not connection:
         raise PermanentError("Connect Google Ads before running research.")
-    return client_for_connection(connection, **kwargs)
+    return client_for_connection(connection, pb=pb, project_id=project_id, **kwargs)
 
 
 async def discover_customers(
@@ -269,7 +345,7 @@ async def discover_customers(
     `customer_id` limits the query to one manager/customer (used for the fresh
     account listing after OAuth); otherwise every accessible customer is probed.
     """
-    client = client_for_connection(connection)
+    client = client_for_connection(connection, pb=pb, project_id=project_id)
     try:
         remote: list[AdsCustomer] = await client.list_customers(customer_id or None)
     finally:

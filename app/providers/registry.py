@@ -43,6 +43,7 @@ CATEGORY_VECTOR = "vector_store"
 CATEGORY_PUBLISHER = "publisher"
 CATEGORY_IMAGE = "image"
 CATEGORY_SERP = "serp"
+CATEGORY_GOOGLE_ADS = "google_ads"
 CATEGORIES = (
     CATEGORY_LLM,
     CATEGORY_EMBEDDING,
@@ -51,6 +52,7 @@ CATEGORIES = (
     CATEGORY_PUBLISHER,
     CATEGORY_IMAGE,
     CATEGORY_SERP,
+    CATEGORY_GOOGLE_ADS,
 )
 
 DEFAULT_PROVIDER: dict[str, str] = {
@@ -61,6 +63,7 @@ DEFAULT_PROVIDER: dict[str, str] = {
     CATEGORY_PUBLISHER: "wordpress",
     CATEGORY_IMAGE: "gemini",
     CATEGORY_SERP: "none",
+    CATEGORY_GOOGLE_ADS: "google_ads",
 }
 
 SETTINGS_KEY: dict[str, str] = {
@@ -89,6 +92,7 @@ class ProviderRegistry:
     def _load_adapters(self) -> None:
         from app.providers.embedding.cohere import CohereEmbedding
         from app.providers.embedding.openai_compat import OpenAICompatEmbedding
+        from app.providers.google_ads_oauth import GoogleAdsOAuthProvider
         from app.providers.image.flux import FluxImage
         from app.providers.image.gemini import GeminiImage
         from app.providers.image.openai_compat import OpenAICompatImage
@@ -112,6 +116,7 @@ class ProviderRegistry:
             OpenAICompatImage,
             NoneSERPProvider,
             SerperSERPProvider,
+            GoogleAdsOAuthProvider,
         ):
             adapter: Any = cls
             self._table[(adapter.category, adapter.provider_name)] = cls
@@ -235,6 +240,25 @@ class ProviderRegistry:
             return NoneSERPProvider()
         return self._resolve(CATEGORY_SERP, project, settings, observer, integration)
 
+    def get_google_ads_provider(
+        self,
+        project: dict[str, Any],
+        settings: dict[str, Any],
+        observer: CallObserver | None = None,
+        integration: dict[str, Any] | None = None,
+    ) -> Any:
+        """Google Ads OAuth client for Keyword Planner research.
+
+        Returns None when the project has no enabled Google Ads connection —
+        callers treat that as "research is not configured for this project".
+        """
+        integration = integration or self._integrations.get_active(
+            project["id"], CATEGORY_GOOGLE_ADS
+        )
+        if not integration:
+            return None
+        return self._resolve(CATEGORY_GOOGLE_ADS, project, settings, observer, integration)
+
     def active_integration_for_provider(
         self, project_id: str, category: str, provider_name: str
     ) -> dict[str, Any] | None:
@@ -327,6 +351,7 @@ class ProviderRegistry:
             CATEGORY_PUBLISHER: self._config_publisher,
             CATEGORY_IMAGE: self._config_image,
             CATEGORY_SERP: self._config_serp,
+            CATEGORY_GOOGLE_ADS: self._config_google_ads,
         }
         builder = builders.get(category)
         if builder is None:
@@ -577,6 +602,27 @@ class ProviderRegistry:
             "timeout": 45.0,
         }
 
+    # -- google ads oauth client (optional) -----------------------------------------
+    def _config_google_ads(
+        self,
+        project: dict[str, Any],
+        integration: dict[str, Any] | None,
+        settings: dict[str, Any],
+        provider_name: str,
+    ) -> dict[str, Any]:
+        integration = self._integration_or_error(integration, CATEGORY_GOOGLE_ADS)
+        config = integration.get("configuration") or {}
+        secrets = self._decrypt_secrets(integration)
+        return {
+            "client_id": str(config.get("client_id") or ""),
+            "client_secret": str(secrets.get("client_secret") or ""),
+            "redirect_uri": str(config.get("redirect_uri") or ""),
+            "api_version": str(config.get("api_version") or "v25"),
+            "login_customer_id": str(config.get("login_customer_id") or ""),
+            "developer_token": str(secrets.get("developer_token") or ""),
+            "timeout": 45.0,
+        }
+
     # ---------------------------------------------------------------------------
     # Model discovery (cached)
     # ---------------------------------------------------------------------------
@@ -641,6 +687,7 @@ class ProviderRegistry:
             CATEGORY_PUBLISHER: self.get_publisher_provider,
             CATEGORY_IMAGE: self.get_image_provider,
             CATEGORY_SERP: self.get_serp_provider,
+            CATEGORY_GOOGLE_ADS: self.get_google_ads_provider,
         }
         getter = getters.get(category)  # type: ignore[assignment]
         if getter is None:
