@@ -1,0 +1,100 @@
+<div class="border border-base-300 p-4">
+  <div class="flex items-start justify-between gap-3">
+    <div>
+      <div class="text-sm font-medium">{{ keyword.displayKeyword or keyword.normalizedKeyword }}</div>
+      <div class="text-xs opacity-60">
+        {{ metric.competition or '—' }} paid competition · index {{ metric.competitionIndex|default(0) }}
+        {% if cluster %} · cluster {{ cluster.name }}{% endif %}
+        {% if metric.intent %} · {{ metric.intent }}{% endif %}
+      </div>
+    </div>
+    <button class="btn btn-xs btn-ghost" onclick="this.closest('.border').remove()">Close</button>
+  </div>
+
+  <div class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+    <div>
+      <div class="text-xs opacity-50">Avg monthly searches</div>
+      <div class="text-lg font-semibold">{{ metric.avgMonthlySearches|default(0) }}</div>
+      <div class="text-xs opacity-40">Google Ads</div>
+    </div>
+    <div>
+      <div class="text-xs opacity-50">Avg CPC</div>
+      <div class="text-sm">
+        {% if metric.averageCpcMicros %}{{ (metric.averageCpcMicros / 1000000)|round(2) }} {{ metric.currencyCode }}{% else %}—{% endif %}
+      </div>
+    </div>
+    <div>
+      <div class="text-xs opacity-50">Top of page bid</div>
+      <div class="text-xs">
+        {% if metric.lowTopOfPageBidMicros %}{{ (metric.lowTopOfPageBidMicros / 1000000)|round(2) }}{% else %}—{% endif %}
+        –
+        {% if metric.highTopOfPageBidMicros %}{{ (metric.highTopOfPageBidMicros / 1000000)|round(2) }}{% else %}—{% endif %}
+        {{ metric.currencyCode }}
+      </div>
+    </div>
+  </div>
+
+  <p class="mt-2 text-xs opacity-50">
+    Google Ads competition reflects <b>paid advertising</b> competition. It is not organic ranking difficulty.
+  </p>
+
+  {% if volumes %}
+    <div class="mt-4">
+      <div class="text-xs opacity-50 mb-1">Monthly search volume (source observations)</div>
+      <div class="flex items-end gap-1 h-16">
+        {% for v in volumes %}
+          {% set h = (100 * (v.monthlySearches or 0) / (max_volume or 1))|round(0)|int %}
+          <div class="flex-1 bg-primary/40 border border-base-300" style="height: {{ h if h > 1 else 1 }}%"
+               title="{{ v.year }}-{{ '%02d'|format(v.month) }}: {{ v.monthlySearches }}"></div>
+        {% endfor %}
+      </div>
+      <div class="mt-1 flex justify-between text-xs opacity-40">
+        <span>{{ volumes[0].year }}</span><span>{{ volumes[-1].year }}</span>
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="mt-4">
+    <div class="text-xs opacity-50 mb-1">Existing content</div>
+    {% if articles %}
+      <ul class="text-xs space-y-1">
+        {% for a in articles %}
+          <li><a class="link" href="/projects/{{ project.id }}/articles/{{ a.id }}">{{ a.title }}</a></li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="text-xs opacity-50">No existing content covers this query.</p>
+    {% endif %}
+  </div>
+
+  <div class="mt-4">
+    <div class="text-xs opacity-50 mb-1">Search engine data</div>
+    {% if observation %}
+      <p class="text-xs opacity-70">
+        Observed via {{ observation.provider }} at {{ observation.observedAt|loc_dt }}
+        · {{ observation.resultCount|default(0) }} results
+      </p>
+      {% if results %}
+        <ol class="mt-2 text-xs space-y-1">
+          {% for r in results[:10] %}
+            <li>
+              <span class="opacity-40">{{ r.position }}.</span>
+              <a class="link" href="{{ r.url }}" target="_blank" rel="noopener">{{ r.title or r.url }}</a>
+              <span class="opacity-50">· {{ r.domain }}</span>
+            </li>
+          {% endfor %}
+        </ol>
+      {% endif %}
+      <form class="mt-2"
+            hx-post="/projects/{{ project.id }}/research/{{ run.id }}/keywords/{{ metric.id }}/serp"
+            hx-swap="none">
+        <button class="btn btn-xs btn-ghost" type="submit">Refresh SERP</button>
+      </form>
+    {% else %}
+      <p class="text-xs opacity-50">
+        SERP data unavailable — live ranking positions, PAA and SERP features are not collected
+        without a SERP provider. Opportunity scoring excludes SERP signals rather than estimating them.
+      </p>
+    {% endif %}
+  </div>
+</div>

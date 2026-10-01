@@ -1,0 +1,83 @@
+{% import 'macros/forms.html' as f %}
+<div id="research-keywords" class="space-y-4">
+
+  {% set s = stats or {} %}
+  {% set cluster_options = [('', 'All clusters')] %}
+  {% for c in clusters %}{% set _ = cluster_options.append((c.id, c.name)) %}{% endfor %}
+  <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+    {{ f.stat('Keywords', s.keywords|default(0)) }}
+    {{ f.stat('With volume', s.keywords_with_volume|default(0)) }}
+    {{ f.stat('Total monthly volume', s.total_monthly_volume|default(0)) }}
+    {{ f.stat('High paid competition', s.high_ads_competition|default(0)) }}
+  </div>
+
+  {{ f.panel('Filters') }}
+    <form hx-get="/projects/{{ project.id }}/research/{{ run.id }}/tab/keywords"
+          hx-target="#research-content" hx-swap="innerHTML" hx-indicator="#research-indicator"
+          class="grid gap-3 sm:grid-cols-3">
+      {{ f.text('q', 'Search keyword', value=q or '') }}
+      {{ f.number('min_volume', 'Minimum monthly searches', value=min_volume or '') }}
+      {{ f.select('cluster', 'Cluster', cluster_options, selected=params.cluster or '') }}
+      <div class="sm:col-span-3 flex items-center gap-2">
+        <button class="btn btn-sm btn-primary" type="submit">Apply</button>
+        <a class="btn btn-sm btn-ghost" href="/projects/{{ project.id }}/research/{{ run.id }}/tab/keywords"
+           hx-get="/projects/{{ project.id }}/research/{{ run.id }}/tab/keywords"
+           hx-target="#research-content" hx-swap="innerHTML">Reset</a>
+      </div>
+    </form>
+  {{ f.panel_close() }}
+
+  {{ f.panel('Keywords', actions='<span class="text-xs opacity-60">' ~ total ~ ' keywords</span>') }}
+    {% if rows %}
+      <div class="overflow-x-auto">
+        <table class="table table-sm">
+          <thead><tr class="text-xs opacity-60">
+            <th>Keyword</th><th class="text-end">Searches</th><th>Paid comp.</th>
+            <th class="text-end">Index</th><th class="text-end">Avg CPC</th><th>Intent</th><th>Cluster</th><th></th>
+          </tr></thead>
+          <tbody>
+          {% for row in rows %}
+            {% set m = row.metric %}
+            <tr class="hover">
+              <td class="text-sm">{{ row.text }}</td>
+              <td class="text-end text-sm">{{ m.avgMonthlySearches|default(0) }}</td>
+              <td class="text-xs">{{ m.competition or '—' }}</td>
+              <td class="text-end text-xs">{{ m.competitionIndex|default(0) }}</td>
+              <td class="text-end text-xs">
+                {% if m.averageCpcMicros %}{{ (m.averageCpcMicros / 1000000)|round(2) }} {{ m.currencyCode }}{% else %}—{% endif %}
+              </td>
+              <td class="text-xs">{{ m.intent or '—' }}</td>
+              <td class="text-xs opacity-60">{{ row.cluster.name if row.cluster else '—' }}</td>
+              <td class="text-end">
+                <button class="btn btn-xs btn-ghost"
+                        hx-get="/projects/{{ project.id }}/research/{{ run.id }}/keywords/{{ m.id }}"
+                        hx-target="#keyword-detail" hx-swap="innerHTML">Details</button>
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      {% if page > 1 or (page * per_page) < total %}
+        <div class="mt-2 flex items-center justify-between text-xs">
+          {% if page > 1 %}
+            <button class="btn btn-xs btn-ghost"
+                    hx-get="/projects/{{ project.id }}/research/{{ run.id }}/tab/keywords?page={{ page - 1 }}"
+                    hx-target="#research-content" hx-swap="innerHTML">Previous</button>
+          {% else %}<span></span>{% endif %}
+          <span class="opacity-50">Page {{ page }}</span>
+          {% if (page * per_page) < total %}
+            <button class="btn btn-xs btn-ghost"
+                    hx-get="/projects/{{ project.id }}/research/{{ run.id }}/tab/keywords?page={{ page + 1 }}"
+                    hx-target="#research-content" hx-swap="innerHTML">Next</button>
+          {% else %}<span></span>{% endif %}
+        </div>
+      {% endif %}
+    {% else %}
+      {{ f.empty('No keywords yet', hint='Keyword data appears here once Google Ads collection finishes. Add keyword, URL or site seeds and start a run.') }}
+    {% endif %}
+  {{ f.panel_close() }}
+
+  <div id="keyword-detail"></div>
+</div>

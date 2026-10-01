@@ -1,0 +1,43 @@
+{% import 'macros/forms.html' as f %}
+<div id="research-competitors" class="space-y-4">
+  {{ f.panel('Competitor pages', actions='<span class="text-xs opacity-60">' ~ total ~ ' pages</span>') }}
+    {% if pages %}
+      <div class="overflow-x-auto">
+        <table class="table table-sm">
+          <thead><tr class="text-xs opacity-60">
+            <th>Domain</th><th>Title</th><th>Type</th><th class="text-end">Words</th><th>Status</th><th>Fetched</th><th></th>
+          </tr></thead>
+          <tbody>
+          {% for p in pages %}
+            <tr>
+              <td class="text-xs opacity-70">{{ p.domain or '—' }}</td>
+              <td class="text-sm">
+                {{ p.title or p.url }}
+                <a class="link text-xs opacity-50" href="{{ p.url }}" target="_blank" rel="noopener">open</a>
+              </td>
+              <td class="text-xs">{{ p.contentType or '—' }}</td>
+              <td class="text-end text-xs">{{ p.wordCount|default(0) }}</td>
+              <td><span class="badge {{ p.status|status_badge }}">{{ p.status|status_label }}</span></td>
+              <td class="text-xs opacity-60">{{ p.fetchedAt|loc_dt }}</td>
+              <td class="text-end">
+                {% if p.headings %}
+                  <div class="dropdown dropdown-end">
+                    <div tabindex="0" role="button" class="btn btn-xs btn-ghost">Headings</div>
+                    <ul tabindex="0" class="dropdown-content menu z-50 w-72 bg-base-100 border border-base-300 p-2 text-xs">
+                      {% for h in (p.headings.h1 or []) %}<li>H1 · {{ h }}</li>{% endfor %}
+                      {% for h in (p.headings.h2 or []) %}<li>H2 · {{ h }}</li>{% endfor %}
+                      {% for h in (p.headings.h3 or []) %}<li>H3 · {{ h }}</li>{% endfor %}
+                    </ul>
+                  </div>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      {{ f.empty('No competitor pages yet', hint='Add competitor domains or URLs as seeds. Competitor analysis works without any paid competitor database.') }}
+    {% endif %}
+  {{ f.panel_close() }}
+</div>

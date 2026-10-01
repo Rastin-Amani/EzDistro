@@ -1,0 +1,68 @@
+{% import 'macros/forms.html' as f %}
+<div id="research-serp" class="space-y-4">
+
+  {% if not configured %}
+    <div class="alert alert-info text-sm">
+      <span>
+        <b>Research is running in Google Ads + site intelligence mode.</b>
+        No paid SERP provider is configured, so live ranking positions, People Also Ask,
+        featured snippets and related searches are simply not collected — nothing else changes.
+      </span>
+    </div>
+    <div class="grid gap-3 sm:grid-cols-2">
+      <div class="ezdistro-panel p-4">
+        <div class="ezdistro-panel-title mb-2">Still available</div>
+        <ul class="text-sm space-y-1 opacity-80">
+          <li>✓ Search demand</li>
+          <li>✓ Keyword universe</li>
+          <li>✓ Historical trends</li>
+          <li>✓ Competitor content</li>
+        </ul>
+      </div>
+      <div class="ezdistro-panel p-4">
+        <div class="ezdistro-panel-title mb-2">Also available</div>
+        <ul class="text-sm space-y-1 opacity-80">
+          <li>✓ Content gaps</li>
+          <li>✓ Semantic clusters</li>
+          <li>✓ New / update opportunities</li>
+          <li>— Ranking &amp; SERP features need a provider</li>
+        </ul>
+      </div>
+    </div>
+    <p class="text-xs opacity-60">
+      Connect a SERP provider in
+      <a class="link" href="/projects/{{ project.id }}?tab=integrations">Connections</a>
+      and re-run with a SERP budget to fill this tab in later — existing research stays valid.
+    </p>
+  {% elif not queries %}
+    {{ f.empty('No SERP observations yet', hint=(reason or 'SERP collection has not run for this research yet, or the SERP budget was zero.')) }}
+  {% else %}
+    <div class="overflow-x-auto">
+      <table class="table table-sm">
+        <thead><tr class="text-xs opacity-60">
+          <th>Keyword</th><th>Provider</th><th class="text-end">Results</th><th>Observed</th><th></th>
+        </tr></thead>
+        <tbody>
+        {% for row in queries %}
+          <tr>
+            <td class="text-sm">{{ row.keyword }}</td>
+            <td class="text-xs opacity-60">{{ row.provider }}</td>
+            <td class="text-end text-xs">{{ row.resultCount|default(0) }}</td>
+            <td class="text-xs opacity-60">{{ row.observedAt|loc_dt }}</td>
+            <td class="text-end">
+              <button class="btn btn-xs btn-ghost"
+                      hx-get="/projects/{{ project.id }}/research/{{ run.id }}/keywords/{{ row.id }}"
+                      hx-target="#keyword-detail" hx-swap="innerHTML">Details</button>
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if count %}
+      <p class="text-xs opacity-60">{{ count }} observed queries. SERP data is time-sensitive — refresh a keyword from its detail drawer.</p>
+    {% endif %}
+  {% endif %}
+
+  <div id="keyword-detail"></div>
+</div>

@@ -1,0 +1,34 @@
+{% import 'macros/forms.html' as f %}
+<div id="research-clusters" class="space-y-4">
+  {{ f.panel('Topic clusters', actions='<span class="text-xs opacity-60">' ~ clusters|length ~ ' clusters</span>') }}
+    {% if clusters %}
+      <div class="overflow-x-auto">
+        <table class="table table-sm">
+          <thead><tr class="text-xs opacity-60">
+            <th>Cluster</th><th class="text-end">Keywords</th><th>Method</th><th>Primary keyword</th><th>Sample queries</th>
+          </tr></thead>
+          <tbody>
+          {% for c in clusters %}
+            <tr>
+              <td class="text-sm">{{ c.name }}</td>
+              <td class="text-end text-xs">{{ c.size|default(0) }}</td>
+              <td class="text-xs opacity-60">{{ c.method or '—' }}</td>
+              <td class="text-xs opacity-70">{{ c.primaryKeyword or '—' }}</td>
+              <td class="text-xs opacity-60">
+                {% set sample = (c.meta or {}).get('sample') or [] %}
+                {{ sample|join(', ') }}
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <p class="mt-2 text-xs opacity-50">
+        A cluster groups queries that share one search intent. Distinct intents (for example pricing
+        versus comparisons) stay in separate clusters rather than becoming separate pages each.
+      </p>
+    {% else %}
+      {{ f.empty('No clusters yet', hint='Clustering runs after keyword collection. It groups keywords by intent so opportunities map to topics, not to keyword variations.') }}
+    {% endif %}
+  {{ f.panel_close() }}
+</div>

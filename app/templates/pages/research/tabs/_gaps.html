@@ -1,0 +1,42 @@
+{% import 'macros/forms.html' as f %}
+<div id="research-gaps" class="space-y-4">
+
+  {% if by_type %}
+    <div class="flex flex-wrap gap-2">
+      {% for gap_type, count in by_type.items() %}
+        <span class="badge badge-soft">{{ gap_type }} · {{ count }}</span>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {{ f.panel('Content gaps', actions='<span class="text-xs opacity-60">' ~ total ~ ' gaps</span>') }}
+    {% if gaps %}
+      <div class="overflow-x-auto">
+        <table class="table table-sm">
+          <thead><tr class="text-xs opacity-60">
+            <th>Type</th><th>Topic / keyword</th><th class="text-end">Demand</th>
+            <th class="text-end">Competitors</th><th class="text-end">You</th><th class="text-end">Score</th>
+          </tr></thead>
+          <tbody>
+          {% for g in gaps %}
+            <tr>
+              <td><span class="badge badge-soft badge-xs">{{ g.gapType }}</span></td>
+              <td class="text-sm">{{ g.keyword or '—' }}</td>
+              <td class="text-end text-xs">{{ g.demand|default(0) }}</td>
+              <td class="text-end text-xs">{{ g.competitorCoverage|default(0) }}</td>
+              <td class="text-end text-xs">{{ g.yourCoverage|default(0) }}</td>
+              <td class="text-end text-sm">{{ g.score|round(0)|int if g.score else 0 }}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <p class="mt-2 text-xs opacity-50">
+        A gap is a topic competitors cover and you do not (or cover thinly) — validated against real
+        search demand, not merely a phrase your competitors happen to mention.
+      </p>
+    {% else %}
+      {{ f.empty('No content gaps computed yet', hint='Gap analysis compares your indexed content against competitor content and the keyword universe. It needs either competitors or existing content to compare.') }}
+    {% endif %}
+  {{ f.panel_close() }}
+</div>

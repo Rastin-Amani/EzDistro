@@ -1,0 +1,196 @@
+{% import 'macros/forms.html' as f %}
+<div id="research-tab">
+
+  {{ f.page_header( 'Research', 'Discover search demand, analyze competitors and turn evidence into an article roadmap.', eyebrow='Project', actions='<a class="btn btn-sm btn-ghost" href="/docs/SEO_RESEARCH.md" target="_blank" rel="noopener">Setup guide</a>' ) }}
+
+  {% if not google_ads_configured %}
+    <div class="alert alert-warning mb-4">
+      <span>Google Ads is not configured for this EZDistro deployment. Add <code>GOOGLE_ADS_CLIENT_ID</code>, <code>GOOGLE_ADS_CLIENT_SECRET</code> and <code>GOOGLE_ADS_REDIRECT_URI</code> to the environment to enable keyword research. Competitor and site research keep working without it.</span>
+    </div>
+  {% endif %}
+
+  {{ f.panel('Google Ads') }}
+    {% if connections %}
+      <div class="overflow-x-auto">
+        <table class="table table-sm">
+          <thead><tr class="text-xs opacity-60">
+            <th>Google account</th><th>Status</th><th>Last verified</th><th></th>
+          </tr></thead>
+          <tbody>
+          {% for c in connections %}
+            <tr>
+              <td class="text-sm">
+                {{ c.email or c.googleAccountId or 'Google Ads account' }}
+                {% if c.displayName %}<span class="block text-xs opacity-50">{{ c.displayName }}</span>{% endif %}
+              </td>
+              <td><span class="badge {{ c.status|status_badge }}">{{ c.status|status_label }}</span></td>
+              <td class="text-xs opacity-60">{{ c.lastVerifiedAt|loc_dt }}</td>
+              <td class="text-end whitespace-nowrap">
+                <button class="btn btn-xs btn-ghost"
+                        hx-post="/projects/{{ project.id }}/google-ads/customers/discover"
+                        hx-swap="none" hx-indicator="#ga-busy">Refresh accounts</button>
+                <button class="btn btn-xs btn-ghost text-error"
+                        hx-post="/projects/{{ project.id }}/google-ads/disconnect"
+                        hx-swap="none" hx-target="#research-tab"
+                        hx-confirm="Disconnect this Google Ads account?">Disconnect</button>
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <span id="ga-busy" class="htmx-indicator text-xs opacity-60">Fetching accounts…</span>
+    {% else %}
+      {{ f.empty('No Google Ads connection', hint='Connect Google Ads to discover keyword ideas, search demand, historical trends, paid competition and CPC ranges.', action='<a class="btn btn-sm btn-primary" href="/projects/google-ads/connect?project_id=' ~ project.id ~ '">Connect Google Ads</a>') }}
+    {% endif %}
+  {{ f.panel_close() }}
+
+  {% if connections %}
+    {{ f.panel('Google Ads accounts') }}
+      {% if customers %}
+        <div class="overflow-x-auto">
+          <table class="table table-sm">
+            <thead><tr class="text-xs opacity-60">
+              <th>Account</th><th>Customer ID</th><th>Currency</th><th>Time zone</th><th></th>
+            </tr></thead>
+            <tbody>
+            {% for c in customers %}
+              <tr>
+                <td class="text-sm">
+                  {{ c.descriptiveName or c.customerId }}
+                  {% if c.isManager %}<span class="badge badge-soft badge-xs ms-1">Manager</span>{% endif %}
+                </td>
+                <td class="font-mono text-xs opacity-70">{{ c.customerId }}</td>
+                <td class="text-xs opacity-60">{{ c.currencyCode or '—' }}</td>
+                <td class="text-xs opacity-60">{{ c.timeZone or '—' }}</td>
+                <td class="text-end">
+                  <button class="btn btn-xs btn-primary"
+                          hx-post="/projects/{{ project.id }}/google-ads/customers/select"
+                          hx-vals='{"customer_record_id": "{{ c.id }}"}'
+                          hx-swap="none">Use for research</button>
+                </td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        {{ f.empty('No accounts yet', hint='Google Ads returned no accessible customers for this connection. Refresh accounts after connecting.') }}
+      {% endif %}
+    {{ f.panel_close() }}
+  {% endif %}
+
+  {{ f.panel('Run research') }}
+    {% if not serp_configured %}
+      <div class="alert alert-info mb-3 text-sm">
+        <span>Search engine (SERP) data is not configured — research still runs in <b>Google Ads + site intelligence</b> mode.</span>
+      </div>
+    {% endif %}
+
+    <form hx-post="/projects/{{ project.id }}/research/start" hx-swap="none" hx-target="#research-tab"
+          class="grid gap-4 md:grid-cols-2">
+
+      <div class="md:col-span-2">
+        {{ f.text('name', 'Research name', placeholder='Gym software — US', hint='Optional. Helps you find this run later.') }}
+      </div>
+
+      <div class="md:col-span-2">
+        {{ f.textarea('keywords', 'Seed keywords', rows=4, placeholder='gym management software\ngym CRM\nfitness studio software', hint='One keyword per line.') }}
+      </div>
+
+      <div>
+        {{ f.text('site', 'Your website', placeholder='https://example.com', hint='Used as a site seed to discover ideas from your own pages.') }}
+      </div>
+
+      <div>
+        {{ f.textarea('urls', 'Specific URLs', rows=2, placeholder='https://example.com/features', hint='One URL per line.') }}
+      </div>
+
+      <div class="md:col-span-2">
+        {{ f.textarea('competitors', 'Competitor domains or URLs', rows=2, placeholder='competitor-a.com\ncompetitor-b.com', hint='Analyzed without any paid competitor database.') }}
+      </div>
+
+      <div>
+        {{ f.select('country', 'Country', countries, selected='US') }}
+      </div>
+
+      <div>
+        {{ f.select('language', 'Language', languages, selected='en') }}
+      </div>
+
+      <div>
+        {{ f.select('network', 'Network', [('GOOGLE_SEARCH', 'Google Search'), ('GOOGLE_SEARCH_AND_PARTNERS', 'Search + partners')], selected='GOOGLE_SEARCH') }}
+      </div>
+
+      <div>
+        {{ f.select('clustering', 'Keyword clustering', [('auto', 'Automatic (recommended)'), ('deterministic', 'Deterministic (free)'), ('embedding', 'Existing embeddings'), ('llm', 'AI assisted')], selected='auto') }}
+      </div>
+
+      <div>
+        {{ f.number('max_keywords', 'Maximum keywords', hint='Cost ceiling for this run.') }}
+      </div>
+
+      <div>
+        {{ f.number('max_competitor_pages', 'Maximum competitor pages', hint='Crawler page ceiling per run.') }}
+      </div>
+
+      <div>
+        {{ f.number('max_serp_queries', 'Maximum SERP queries', hint='0 keeps live SERP collection off.') }}
+      </div>
+
+      <div class="flex flex-col justify-end gap-2 text-sm">
+        <label class="label cursor-pointer justify-start gap-2">
+          <input type="checkbox" name="include_adult" value="1" class="checkbox checkbox-sm">
+          <span>Include adult keywords</span>
+        </label>
+        <label class="label cursor-pointer justify-start gap-2">
+          <input type="checkbox" name="refresh" value="1" class="checkbox checkbox-sm">
+          <span>Refresh — ignore cached research for the same targeting</span>
+        </label>
+      </div>
+
+      <div class="md:col-span-2">
+        {{ f.textarea('goal', 'What do you want to achieve?', rows=3, placeholder='Get qualified US traffic from gym owners, build topical authority around gym management and drive demo requests. Avoid duplicate topics.', hint='Written in your own words. This shapes which opportunities get proposed.') }}
+      </div>
+
+      <input type="hidden" name="connection_id" value="{{ connections[0].id if connections else '' }}">
+      <input type="hidden" name="customer_id" value="{{ customers[0].customerId if customers else '' }}">
+
+      <div class="md:col-span-2 flex items-center gap-3">
+        <button class="btn btn-primary btn-sm" type="submit">Start research</button>
+        <span class="htmx-indicator text-xs opacity-60">Starting…</span>
+        <span class="text-xs opacity-50">Runs in the background — you can leave this page.</span>
+      </div>
+    </form>
+  {{ f.panel_close() }}
+
+  {{ f.panel('Research runs') }}
+    {% if runs %}
+      <div class="overflow-x-auto">
+        <table class="table table-sm">
+          <thead><tr class="text-xs opacity-60">
+            <th>Name</th><th>Type</th><th>Status</th><th>Stage</th><th>Progress</th><th>Created</th><th></th>
+          </tr></thead>
+          <tbody>
+          {% for r in runs %}
+            <tr>
+              <td class="text-sm">{{ r.name or 'Research run' }}</td>
+              <td class="text-xs opacity-60">{{ r.researchType or '—' }}</td>
+              <td><span class="badge {{ r.status|status_badge }}">{{ r.status|status_label }}</span></td>
+              <td class="text-xs opacity-60">{{ r.currentStage or '—' }}</td>
+              <td class="text-xs opacity-70">{{ r.progress|int }}%</td>
+              <td class="text-xs opacity-60">{{ r.created|loc_dt }}</td>
+              <td class="text-end">
+                <a class="btn btn-xs btn-ghost" href="/projects/{{ project.id }}/research/{{ r.id }}">Open</a>
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      {{ f.empty('No research runs yet', hint='Start your first research run above — it collects keywords, analyzes your site and competitors, then proposes article opportunities.') }}
+    {% endif %}
+  {{ f.panel_close() }}
+
+</div>

@@ -1,0 +1,122 @@
+{% import 'macros/forms.html' as f %}
+<div id="research-opportunities" class="space-y-4">
+
+  {% set s = summary or {} %}
+  <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+    {{ f.stat('Total', s.total|default(0)) }}
+    {{ f.stat('Generate', s.generate|default(0)) }}
+    {{ f.stat('Update', s.update|default(0)) }}
+    {{ f.stat('Expand', s.expand|default(0)) }}
+    {{ f.stat('Support', s.support|default(0)) }}
+    {{ f.stat('Rejected', s.reject|default(0)) }}
+  </div>
+
+  {{ f.panel('Filters') }}
+    <form hx-get="/projects/{{ project.id }}/research/{{ run.id }}/tab/opportunities"
+          hx-target="#research-content" hx-swap="innerHTML" hx-indicator="#research-indicator"
+          class="grid gap-3 sm:grid-cols-3">
+      {{ f.select('action', 'Action', [('', 'All actions'), ('generate', 'Generate'), ('update', 'Update'), ('expand', 'Expand'), ('support', 'Support'), ('reject', 'Reject')], selected=action or '') }}
+      {{ f.select('status', 'Status', [('proposed', 'Proposed'), ('accepted', 'Accepted'), ('roadmap', 'Roadmap'), ('rejected', 'Rejected'), ('', 'All statuses')], selected=status or 'proposed') }}
+      <div class="flex items-end gap-2">
+        <button class="btn btn-sm btn-primary" type="submit">Apply</button>
+      </div>
+    </form>
+  {{ f.panel_close() }}
+
+  {{ f.panel('Article opportunities', actions='<span class="text-xs opacity-60">' ~ total ~ ' ideas</span>') }}
+    {% if ideas %}
+      <div class="space-y-3">
+      {% for idea in ideas %}
+        <div class="border border-base-300 p-3">
+          <div class="flex flex-wrap items-start justify-between gap-2">
+            <div class="min-w-0">
+              <div class="text-sm font-medium">{{ idea.title }}</div>
+              <div class="mt-1 flex flex-wrap items-center gap-2 text-xs opacity-60">
+                <span class="badge badge-soft badge-xs">{{ idea.action }}</span>
+                {% if idea.intent %}<span>{{ idea.intent }}</span>{% endif %}
+                {% if idea.contentType %}<span>· {{ idea.contentType }}</span>{% endif %}
+                {% if idea.searchVolume %}<span>· {{ idea.searchVolume }} searches/mo</span>{% endif %}
+                {% if idea.googleAdsCompetition %}<span>· paid comp. {{ idea.googleAdsCompetition }}</span>{% endif %}
+                {% if idea.confidence %}<span>· confidence {{ idea.confidence }}</span>{% endif %}
+              </div>
+              {% if idea.primaryKeyword %}
+                <div class="mt-1 text-xs">Primary keyword: <span class="opacity-70">{{ idea.primaryKeyword }}</span></div>
+              {% endif %}
+            </div>
+            <div class="text-end">
+              <div class="text-lg font-semibold">{{ idea.opportunityScore|round(0)|int if idea.opportunityScore else 0 }}</div>
+              <div class="text-xs opacity-50">score</div>
+            </div>
+          </div>
+
+          {% if idea.recommendedAngle or idea.uniqueValueProposition %}
+            <p class="mt-2 text-xs opacity-70">{{ idea.uniqueValueProposition or '' }}{% if idea.recommendedAngle %} — {{ idea.recommendedAngle }}{% endif %}</p>
+          {% endif %}
+
+          {% if idea.scoreComponents %}
+            <details class="mt-2 text-xs">
+              <summary class="cursor-pointer opacity-60">Why this score?</summary>
+              <div class="mt-1 grid grid-cols-2 gap-1 sm:grid-cols-3">
+                {% for key, value in idea.scoreComponents.items() %}
+                  {% if value is number %}
+                    <div class="flex items-center justify-between gap-2 border-b border-base-200 py-0.5">
+                      <span class="opacity-60">{{ key }}</span><span>{{ value|round(2) }}</span>
+                    </div>
+                  {% endif %}
+                {% endfor %}
+              </div>
+            </details>
+          {% endif %}
+
+          {% if idea.evidence %}
+            <details class="mt-2 text-xs">
+              <summary class="cursor-pointer opacity-60">Evidence / provenance</summary>
+              <pre class="mt-1 overflow-x-auto text-xs opacity-60">{{ idea.evidence | tojson(indent=2) }}</pre>
+            </details>
+          {% endif %}
+
+          <div class="mt-2 flex flex-wrap items-center gap-2">
+            {% if idea.status == 'proposed' %}
+              <button class="btn btn-xs btn-primary"
+                      hx-post="/projects/{{ project.id }}/research/{{ run.id }}/opportunities/{{ idea.id }}/action"
+                      hx-vals='{"action": "accept"}' hx-swap="none">Accept &amp; draft</button>
+              <button class="btn btn-xs btn-ghost"
+                      hx-post="/projects/{{ project.id }}/research/{{ run.id }}/opportunities/{{ idea.id }}/action"
+                      hx-vals='{"action": "roadmap"}' hx-swap="none">Add to roadmap</button>
+              <button class="btn btn-xs btn-ghost text-error"
+                      hx-post="/projects/{{ project.id }}/research/{{ run.id }}/opportunities/{{ idea.id }}/action"
+                      hx-vals='{"action": "reject"}' hx-swap="none">Reject</button>
+            {% else %}
+              <span class="badge {{ idea.status|status_badge }}">{{ idea.status|status_label }}</span>
+              {% if idea.article %}
+                <a class="btn btn-xs btn-ghost" href="/projects/{{ project.id }}/articles/{{ idea.article }}">Open article</a>
+              {% endif %}
+            {% endif %}
+            {% if idea.canonicalExistingUrl %}
+              <a class="link text-xs opacity-60" href="{{ idea.canonicalExistingUrl }}" target="_blank" rel="noopener">existing page</a>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+      </div>
+
+      {% if page > 1 or (page * per_page) < total %}
+        <div class="mt-3 flex items-center justify-between text-xs">
+          {% if page > 1 %}
+            <button class="btn btn-xs btn-ghost"
+                    hx-get="/projects/{{ project.id }}/research/{{ run.id }}/tab/opportunities?page={{ page - 1 }}"
+                    hx-target="#research-content" hx-swap="innerHTML">Previous</button>
+          {% else %}<span></span>{% endif %}
+          <span class="opacity-50">Page {{ page }}</span>
+          {% if (page * per_page) < total %}
+            <button class="btn btn-xs btn-ghost"
+                    hx-get="/projects/{{ project.id }}/research/{{ run.id }}/tab/opportunities?page={{ page + 1 }}"
+                    hx-target="#research-content" hx-swap="innerHTML">Next</button>
+          {% else %}<span></span>{% endif %}
+        </div>
+      {% endif %}
+    {% else %}
+      {{ f.empty('No opportunities yet', hint='Opportunities are generated after clustering and gap analysis, driven by your goal. Add a goal and re-run this research.') }}
+    {% endif %}
+  {{ f.panel_close() }}
+</div>

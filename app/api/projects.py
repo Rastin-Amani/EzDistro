@@ -17,6 +17,7 @@ from starlette.datastructures import UploadFile as StarletteUploadFile
 
 from app.api.deps import (
     PROJECT_ADMIN_ROLES,
+    current_user,
     ensure_record_in_project,
     is_hx_request,
     project_scope,
@@ -57,6 +58,37 @@ from app.services.topic_import import (
 from app.templates import templates
 from app.utils import error_response, hx_trigger, ok_with_redirect, success_response
 
+# Targeting options for the research tab. A short, common list is enough — the
+# Google Ads geo/language ids are resolved from these codes at collection time.
+RESEARCH_COUNTRIES = [
+    ("US", "United States"),
+    ("GB", "United Kingdom"),
+    ("CA", "Canada"),
+    ("AU", "Australia"),
+    ("DE", "Germany"),
+    ("FR", "France"),
+    ("ES", "Spain"),
+    ("IT", "Italy"),
+    ("NL", "Netherlands"),
+    ("BR", "Brazil"),
+    ("IN", "India"),
+    ("TR", "Türkiye"),
+    ("AE", "United Arab Emirates"),
+    ("SA", "Saudi Arabia"),
+]
+RESEARCH_LANGUAGES = [
+    ("en", "English"),
+    ("de", "German"),
+    ("fr", "French"),
+    ("es", "Spanish"),
+    ("it", "Italian"),
+    ("nl", "Dutch"),
+    ("pt", "Portuguese"),
+    ("tr", "Turkish"),
+    ("ar", "Arabic"),
+    ("fa", "Persian"),
+]
+
 router = APIRouter()
 
 TABS = [
@@ -66,6 +98,7 @@ TABS = [
     "images",
     "prompts",
     "topics",
+    "research",
     "articles",
     "retrieval",
     "jobs",
@@ -84,6 +117,7 @@ def integration_categories() -> dict[str, str]:
         "vector_store": ("Vector store (Qdrant)"),
         "publisher": ("Publishing (WordPress)"),
         "image": ("Image generation (AI Image)"),
+        "serp": ("SERP data (optional)"),
     }
 
 
@@ -326,6 +360,7 @@ def _tab_context(
     *,
     status: str = "",
     q: str = "",
+    user: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Build the template context a project tab needs.
 
@@ -436,6 +471,26 @@ def _tab_context(
         context["records"] = PublishingRunRepo(pb).list_for_project(project_id, per_page=30)
     elif tab == "logs":
         context["events"] = JobEventRepo(pb).list_for_project(project_id, per_page=40)
+    elif tab == "research":
+        from app.repositories.research import (
+            GoogleAdsConnectionRepo,
+            GoogleAdsCustomerRepo,
+            ResearchRunRepo,
+        )
+        from app.services.google_ads import client_configured
+
+        user = user or {}
+        connections = GoogleAdsConnectionRepo(pb).for_user(user.get("id") or "")
+        context["connections"] = connections
+        context["customers"] = GoogleAdsCustomerRepo(pb).list_for_project(project_id)
+        context["runs"] = ResearchRunRepo(pb).list_for_project(project_id, page=1, per_page=25)
+        context["google_ads_configured"] = client_configured()
+        context["serp_configured"] = any(
+            integration.get("category") == "serp" and integration.get("enabled")
+            for integration in IntegrationRepo(pb).list_all(filter=f'project="{project_id}"')
+        )
+        context["countries"] = RESEARCH_COUNTRIES
+        context["languages"] = RESEARCH_LANGUAGES
 
     return context
 
@@ -455,6 +510,7 @@ def project_detail(request: Request, project_id: str, tab: str = "settings"):
         active,
         status=request.query_params.get("status") or "",
         q=request.query_params.get("q") or "",
+        user=current_user(request),
     )
     context["title"] = project.get("name", ("Project"))
     context["active_tab"] = active
@@ -480,6 +536,7 @@ def project_tab(request: Request, project_id: str, tab: str):
         tab,
         status=request.query_params.get("status") or "",
         q=request.query_params.get("q") or "",
+        user=current_user(request),
     )
     return templates.TemplateResponse(request, f"pages/projects/tabs/{tab}.html", context)
 

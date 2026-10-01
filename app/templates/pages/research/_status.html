@@ -1,0 +1,30 @@
+<div id="research-status" class="ezdistro-panel"
+     {% if run.status in ('pending', 'running') %}
+     hx-get="/projects/{{ project.id }}/research/{{ run.id }}/status"
+     hx-trigger="every 3s" hx-swap="outerHTML"
+     {% endif %}>
+  <div class="ezdistro-panel-head">
+    <div class="ezdistro-panel-title">Progress</div>
+    <div class="text-xs opacity-60">{{ run.currentStage or '—' }} · {{ run.progress|int }}%</div>
+  </div>
+  <div class="p-4 space-y-3">
+    <progress class="progress progress-primary w-full" value="{{ run.progress|int }}" max="100"></progress>
+
+    {% if counts %}
+      <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        {% for key, value in counts.items() %}
+          {% if value is number %}
+            <div class="ezdistro-metric">
+              <div class="ezdistro-metric-label">{{ key }}</div>
+              <div class="text-sm font-medium">{{ value }}</div>
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    {% if run.status in ('pending', 'running') %}
+      <p class="text-xs opacity-50">This run runs in the background. Progress refreshes automatically.</p>
+    {% endif %}
+  </div>
+</div>

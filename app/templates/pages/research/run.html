@@ -1,0 +1,75 @@
+{% extends "layouts/platform.html" %}
+{% block dashboard_content %}
+
+{% set tab_labels = {
+  'keywords': 'Keywords', 'serp': 'SERP', 'competitors': 'Competitors',
+  'clusters': 'Clusters', 'gaps': 'Content gaps', 'opportunities': 'Opportunities'
+} %}
+{% set running = run.status in ('pending', 'running') %}
+
+<div class="w-full space-y-4">
+
+  {% if ga %}
+    <div class="alert {{ 'alert-success' if ga == 'connected' else 'alert-warning' }}">
+      <span>
+        {% if ga == 'connected' %}Google Ads connected.
+        {% elif ga == 'unconfigured' %}Google Ads OAuth is not configured on this deployment.
+        {% elif ga == 'denied' %}Google Ads access was denied.
+        {% else %}Google Ads connection failed. Try again.{% endif %}
+      </span>
+    </div>
+  {% endif %}
+
+  <div class="flex flex-wrap items-start justify-between gap-3">
+    <div>
+      <div class="ezdistro-eyebrow">{{ project.name }}</div>
+      <h1 class="ezdistro-title">
+        {{ run.name or 'Research run' }}
+        <span class="badge {{ run.status|status_badge }} ms-2 align-middle">{{ run.status|status_label }}</span>
+      </h1>
+      <p class="ezdistro-subtitle">
+        {% set t = run.targeting or {} %}
+        {{ t.locale or 'en' }}
+        {% if t.country %} · {{ t.country }}{% endif %}
+        {% if t.network %} · {{ 'Google Search' if t.network == 'GOOGLE_SEARCH' else 'Search + partners' }}{% endif %}
+        {% set c = run.config or {} %}
+        {% if c.clustering %} · clustering: {{ c.clustering }}{% endif %}
+      </p>
+    </div>
+    <div class="flex items-center gap-2">
+      <a class="btn btn-sm btn-ghost" href="/projects/{{ project.id }}?tab=research">All runs</a>
+      <a class="btn btn-sm btn-ghost" href="/projects/{{ project.id }}/research/{{ run.id }}/opportunities.csv">Export CSV</a>
+      {% if running %}
+        <button class="btn btn-sm btn-ghost text-error"
+                hx-post="/projects/{{ project.id }}/research/{{ run.id }}/cancel"
+                hx-swap="none" hx-confirm="Cancel this research run?">Cancel</button>
+      {% endif %}
+    </div>
+  </div>
+
+  {% include "pages/research/_status.html" %}
+
+  {% if run.errorMessage %}
+    <div class="alert alert-error text-sm">
+      <span>{{ run.errorMessage }}</span>
+    </div>
+  {% endif %}
+
+  <nav id="research-tabs" class="tabs tabs-box tabs-sm ezdistro-scroll-x overflow-x-auto flex-nowrap">
+    {% for tab in tabs %}
+      <a href="?tab={{ tab }}" data-tab="{{ tab }}"
+         class="tab whitespace-nowrap {{ 'tab-active' if tab == active_tab }}"
+         {% if tab == active_tab %}aria-current="page"{% endif %}
+         hx-get="/projects/{{ project.id }}/research/{{ run.id }}/tab/{{ tab }}"
+         hx-target="#research-content" hx-push-url="?tab={{ tab }}"
+         hx-swap="innerHTML" hx-indicator="#research-indicator">{{ tab_labels.get(tab, tab) }}</a>
+    {% endfor %}
+    <span id="research-indicator" class="htmx-indicator self-center text-xs opacity-50 ms-2">Loading…</span>
+  </nav>
+
+  <div id="research-content" class="w-full">
+    {% include "pages/research/tabs/_" ~ active_tab ~ ".html" %}
+  </div>
+
+</div>
+{% endblock %}
