@@ -66,24 +66,41 @@ class BaseRepo:
         page: int = 1,
         per_page: int = 25,
         expand: str = "",
+        fields: str = "",
     ) -> list[dict[str, Any]]:
         params: dict[str, Any] = {"sort": sort, "perPage": per_page}
         if filter:
             params["filter"] = filter
         if expand:
             params["expand"] = expand
+        if fields:
+            params["fields"] = fields
         return [record_to_dict(r) for r in self._coll().get_list(page, per_page, params).items]
 
     def list_all(
-        self, *, filter: str = "", sort: str = "", per_page: int = 500
+        self, *, filter: str = "", sort: str = "", per_page: int = 500, fields: str = ""
     ) -> list[dict[str, Any]]:
-        """Safely page through an entire result set (bounded per-page, no full load)."""
+        """Safely page through an entire result set (bounded per-page, no full load).
+
+        `fields` projects specific columns (PocketBase `fields` param) — use it when
+        scanning large collections whose bodies must not be loaded into memory.
+        """
         params: dict[str, Any] = {"perPage": per_page}
         if filter:
             params["filter"] = filter
         if sort:
             params["sort"] = sort
+        if fields:
+            params["fields"] = fields
         return [record_to_dict(r) for r in self._coll().get_full_list(params)]
+
+    def delete_matching(self, *, filter: str) -> int:
+        """Delete every record matching `filter`. Used to replace child rows
+        (keyword volumes, SERP results, gaps) idempotently on a resumed run."""
+        ids = [r["id"] for r in self.list_all(filter=filter)]
+        for record_id in ids:
+            self.delete(record_id)
+        return len(ids)
 
     def first(self, *, filter: str = "", sort: str = "") -> dict[str, Any] | None:
         params: dict[str, Any] = {"sort": sort or "-created", "perPage": 1}

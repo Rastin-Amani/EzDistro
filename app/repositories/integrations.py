@@ -1,6 +1,6 @@
 """Integrations repository — configurable providers per category.
 
-Categories: llm | embedding | reranker | vector_store | publisher.
+Categories: llm | embedding | reranker | vector_store | publisher | image | serp.
 Secrets live ONLY in `secretsEnc` (Fernet ciphertext); `configuration` JSON is
 non-secret (base_url, model, username, …).
 """
@@ -11,7 +11,15 @@ from typing import Any
 
 from app.repositories.base import BaseRepo
 
-INTEGRATION_CATEGORIES = ("llm", "embedding", "reranker", "vector_store", "publisher", "image")
+INTEGRATION_CATEGORIES = (
+    "llm",
+    "embedding",
+    "reranker",
+    "vector_store",
+    "publisher",
+    "image",
+    "serp",
+)
 HEALTH_STATUSES = ("unknown", "healthy", "degraded", "unhealthy")
 
 

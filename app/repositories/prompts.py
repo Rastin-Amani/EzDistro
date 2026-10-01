@@ -34,6 +34,11 @@ PROMPT_TYPES = (
     "article_repair_user",
     "output_validation",
     "content_refresh_system",
+    # SEO research engine (keyword clustering + article opportunity synthesis)
+    "cluster_system",
+    "cluster_user",
+    "opportunity_system",
+    "opportunity_user",
 )
 
 
