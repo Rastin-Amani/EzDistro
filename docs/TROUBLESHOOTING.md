@@ -276,7 +276,7 @@ Either the id doesn't exist or it belongs to a project outside your scope
 
 Mutations require HTMX; responses drive toasts/events. If JavaScript was blocked the
 action may not apply — retry with scripts enabled. All mutations answer with visible
-Persian toasts; a silent click means the request never reached the server (network)
+toasts; a silent click means the request never reached the server (network)
 or was rejected pre-handler.
 
 ---

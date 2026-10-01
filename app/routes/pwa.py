@@ -45,9 +45,9 @@ async def offline_page():
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
       body {
-        font-family: system-ui, -apple-system, sans-serif;
+        font-family: Inter, system-ui, -apple-system, sans-serif;
         background: #ffffff;
-        color: #181925;
+        color: #000000;
         min-height: 100dvh;
         display: flex;
         flex-direction: column;
@@ -57,24 +57,24 @@ async def offline_page():
         text-align: center;
       }
       .icon {
-        width: 80px; height: 80px; border-radius: 50%;
-        background: #fafafa;
-        border: 1px solid #e8e8e8;
+        width: 80px; height: 80px; border-radius: 8px;
+        background: #f2f2f2;
+        border: 1px solid #b1b7c3;
         display: flex; align-items: center; justify-content: center;
         margin-bottom: 1.5rem;
       }
-      .icon svg { width: 40px; height: 40px; stroke: #666666; fill: none; stroke-width: 1.5; }
-      h1 { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.75rem; }
-      p { color: #666666; line-height: 1.6; margin-bottom: 2rem; max-width: 300px; }
+      .icon svg { width: 40px; height: 40px; stroke: #717886; fill: none; stroke-width: 1.5; }
+      h1 { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 0.75rem; }
+      p { color: #717886; line-height: 1.6; margin-bottom: 2rem; max-width: 300px; }
       .btn {
         display: inline-flex; align-items: center; gap: 0.5rem;
-        padding: 0.75rem 2rem; background: #918df6; color: #181925;
-        border: none; border-radius: 999px; font-size: 0.875rem; font-weight: 600;
+        padding: 0.75rem 2rem; background: #0000ff; color: #ffffff;
+        border: none; border-radius: 8px; font-size: 0.875rem; font-weight: 600;
         cursor: pointer; transition: opacity 0.2s;
       }
       .btn:hover { opacity: 0.85; }
       .btn:active { opacity: 0.7; }
-      .btn:focus-visible { outline: 2px solid #181925; outline-offset: 3px; }
+      .btn:focus-visible { outline: 2px solid #0000ff; outline-offset: 3px; }
     </style>
   </head>
   <body>

@@ -81,7 +81,7 @@
         <dialog id="confirm-dialog" class="modal modal-bottom sm:modal-middle" hx-boost="false">
             <div class="modal-box bg-base-100">
                 <div class="flex items-start gap-4">
-                    <div class="shrink-0 grid size-11 place-items-center rounded-2xl bg-warning/15 text-warning">
+                    <div class="shrink-0 grid size-11 place-items-center rounded-lg bg-warning/15 text-warning">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-6">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
                         </svg>
@@ -185,8 +185,8 @@
                     if (!container) return;
 
                     const toast = document.createElement('div');
-                    const entryOffset = document.documentElement.dir === 'rtl' ? '-translate-x-full' : 'translate-x-full';
-                    const exitOffset = document.documentElement.dir === 'rtl' ? '-translate-x-8' : 'translate-x-8';
+                    const entryOffset = 'translate-x-full';
+                    const exitOffset = 'translate-x-8';
                     toast.className = `ezdistro-toast ${ROLE[type]} ${entryOffset} opacity-0 transition-all duration-300`;
                     toast.setAttribute('role', type === 'error' ? 'alert' : 'status');
                     toast.setAttribute('aria-live', type === 'error' ? 'assertive' : 'polite');

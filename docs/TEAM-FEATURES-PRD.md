@@ -81,7 +81,7 @@ After implementation, an operator can, without touching PocketBase directly:
    project with the invited role.
 4. Owners/admins change roles, remove members, revoke invites, transfer
    ownership; members can leave; every mutation is role-checked and toasted in
-   Persian per existing HTMX conventions.
+   English per existing HTMX conventions.
 5. Global admins can disable a user (session dies on next request), re-enable,
    set a new password, change global role, delete a user (memberships cascade).
 
@@ -192,7 +192,7 @@ acceptance criterion in §25 holds.
 | MemberRepo | `MEMBER_ROLES`, upsert `add()`, `remove()`, `list_for_project`, `list_for_user`, `role_of()` | `app/repositories/members.py` |
 | Membership bootstrap | Creator becomes `owner` on project creation | `app/api/projects.py:148` |
 | Tabs | `TABS` list (12 tabs) drives `GET /projects/{id}` and `GET /projects/{id}/tabs/{tab}`; tab templates live in `app/templates/pages/projects/tabs/` | `app/api/projects.py:63-76,430-471` |
-| Tab labels | Persian label dict is **inside the template** | `app/templates/pages/projects/detail.html:67-75` |
+| Tab labels | label dict is **inside the template** | `app/templates/pages/projects/detail.html:67-75` |
 | Schema helpers | `col()/t()/num()/boolean()/date()/select()/rel()/json_field()`; default API rules = locked (`null`, superuser-only) on **every** collection (no collection overrides it). **Never `AUTH_RULE`** — see the §18-A correction | `app/scripts/bootstrap_pb.py:28-51,67-125` |
 | Users schema | `users` gains `role` (`admin`\|`member`) + `displayName` idempotently | `app/scripts/bootstrap_pb.py:913-947` |
 | Schema mirror | `pb_collections_import.json` must be kept in sync with bootstrap | `docs/SCHEMA.md:4-6` |
@@ -220,7 +220,7 @@ acceptance criterion in §25 holds.
 
 ### User/UX
 
-- R6: All UI strings Persian (`_()`), RTL-safe, dates through `jalali_*`
+- R6: All UI strings English, direction-agnostic layout, dates through `loc_*`
   filters; new strings extracted to `en` catalog.
 - R7: Every mutation answers with the standard toast helpers; destructive
   actions (remove member, delete user, transfer ownership, revoke invite)
@@ -266,7 +266,7 @@ acceptance criterion in §25 holds.
 2. Fills email, display name, role, optional password (else server generates
    one and shows it once).
 3. Server validates (email format, unique, password ≥ 8 chars), creates via
-   admin client, toasts success. Failure: duplicate email → Persian toast,
+   admin client, toasts success. Failure: duplicate email → error toast,
    form state preserved.
 
 ### J2 — Owner invites an existing teammate
@@ -282,12 +282,12 @@ acceptance criterion in §25 holds.
    `/invite/{token}` link + copy button.
 2. Owner shares the link out-of-band (Telegram/email — anything, not the app).
 3. Failures: pending invite already exists for that email → toast + link to
-   revoke/replace; invitee opens expired/revoked/used link → dedicated Persian
+   revoke/replace; invitee opens expired/revoked/used link → dedicated English
    error page states (§14 C-series routes).
 
 ### J4 — Invitee registers and joins
 1. `GET /invite/{token}` (public): valid + pending → landing page showing
-   project name, inviter display name, role, expiry (jalali).
+   project name, inviter display name, role, expiry (Gregorian).
 2. Not logged in, email unregistered → registration form (email readonly and
    server-enforced, display name + password + confirm).
 3. Native form POST → server creates user (admin client), creates membership
@@ -299,7 +299,7 @@ acceptance criterion in §25 holds.
 5. Logged in as the *wrong* account → error: invite belongs to another email;
    offer logout → login-as-invited → reopen link.
 6. Failures: token unknown / revoked / expired / already accepted → distinct
-   Persian messages; no token value echoed back.
+   error messages; no token value echoed back.
 
 ### J5 — Role change / removal / leave
 - Owner/admin changes a role via inline select → POST → toast + row refresh.
@@ -314,7 +314,7 @@ acceptance criterion in §25 holds.
 ### J6 — Global admin disables a user
 1. `/admin/users` → disable → confirm → `users.disabled = true`.
 2. On the victim's next request, `AuthMiddleware` sees `disabled` → clears
-   auth store → behaves as logged out (redirect to `/login` with a Persian
+   auth store → behaves as logged out (redirect to `/login` with a English
    "your account is disabled" notice — not a silent bounce loop).
 3. Failure: attempting to disable the last enabled global admin (including
    self) → blocked.
@@ -467,7 +467,7 @@ render dedicated pages, not JSON.
 
 ### Project scope — new router `teams.py`
 
-| # | Method & route | Auth | Inputs | Success | Failure (Persian toast/page) |
+| # | Method & route | Auth | Inputs | Success | Failure (error toast/page) |
 |---|---|---|---|---|---|
 | T1 | `GET /projects/{pid}/tabs/members` | project member (existing tab guard) | — | members tab fragment | existing not-found path |
 | T2 | `POST /projects/{pid}/members` | owner/admin/global admin | `email`, `role` | toast; `hx-trigger` refresh list; **or** invite-modal fragment when email unknown | not found / already member / role > own / invalid email |
@@ -511,7 +511,7 @@ Add to `PUBLIC_PATHS` (`app/middleware.py:14`): `/invite` (prefix match like
 
 | # | Method & route | Auth | Inputs | Success | Failure |
 |---|---|---|---|---|---|
-| A1 | `GET /admin/users` | `require_admin` | — | full page: table (email, displayName, role, status, created jalali) + create form | non-admin → permission toast |
+| A1 | `GET /admin/users` | `require_admin` | — | full page: table (email, displayName, role, status, created date) + create form | non-admin → permission toast |
 | A2 | `POST /admin/users` | `require_admin` | `email`, `displayName`, `role`, `password?` | toast + refresh; generated password shown once if omitted | duplicate email / invalid |
 | A3 | `POST /admin/users/{uid}/role` | `require_admin` | `role` | toast | I2 (last admin) / self-change I4 |
 | A4 | `POST /admin/users/{uid}/toggle-disabled` | `require_admin` | — | toast + row refresh | I2 |
@@ -541,7 +541,7 @@ Add an "Account" link to the user menu in
   conditional rendering — build labels lazily per request (pattern:
   `health_labels()`, `projects.py:91-97`).
 - Sections in the tab: ① member table (avatar/initials, displayName, email,
-  role badge, joined date `jalali_*`, actions gated by §10), ② invite form
+  role badge, joined date `loc_*`, actions gated by §10), ② invite form
   (email + role select with only grantable options), ③ pending invites table
   (email, role, expiry, revoke), ④ "leave project" button.
 - Role badges: DaisyUI `badge` variants (owner=primary, admin=secondary,
@@ -564,9 +564,9 @@ Add an "Account" link to the user menu in
 | Success (new email) | invite modal with copyable link |
 | Validation error (bad/empty email) | inline error, values preserved |
 | Permission error (editor) | form hidden entirely (server also rejects) |
-| Conflict (already member / pending invite) | specific Persian toast |
-| Server error | `@hx_error` generic Persian toast (existing) |
-| Expired/used invite (C1) | dedicated full-page Persian error states |
+| Conflict (already member / pending invite) | specific error toast |
+| Server error | `@hx_error` generic error toast (existing) |
+| Expired/used invite (C1) | dedicated full-page error states |
 
 ## 16. Background Jobs
 
@@ -701,9 +701,9 @@ Findings:
    patches `app.api.auth.get_pb`.
 9. **(c) disabled enforcement**: after a successful `auth_refresh`,
    `AuthMiddleware` clears the store when the user is disabled (anonymous →
-   existing 303 to `/login`, plus a `?disabled=1` Persian notice);
+   existing 303 to `/login`, plus a `?disabled=1` English notice);
    `POST /login` re-checks the freshly authenticated model and refuses with
-   a distinct Persian error.
+   a distinct English error.
 
 Rollback stays as stated above (config/code only, no data migration).
 
@@ -812,7 +812,7 @@ New files (patterns from `tests/test_routes_security.py`,
   - `next=/invite/x` honored; `next=//evil.com`, `next=/\evil`,
     `next=https://evil` fall back to `/dashboard`.
 - Middleware: disabled user's valid token → treated as logged out.
-- i18n: new UI strings asserted in Persian (existing convention).
+- i18n: new UI strings asserted in English (existing convention).
 
 Also update existing tests only if behavior contracts changed (they should
 not — §6).
@@ -880,7 +880,7 @@ Commit per phase via `git-hygiene` (logically grouped, no drive-by refactors).
 - Acceptance: J1/J6; `tests/test_admin_users.py` green; I2 proven.
 
 **Phase 6 — i18n, CSS, docs (F)**
-- Persian pass over every new string; `make i18n-*`; `make css` only if CSS
+- English pass over every new string; `make i18n-*`; `make css` only if CSS
   changed; all §23 docs.
 - Acceptance: no untranslated literals in new templates (grep for Latin-only
   visible strings); docs consistent with code.
@@ -895,7 +895,7 @@ Commit per phase via `git-hygiene` (logically grouped, no drive-by refactors).
 
 - **AC1** Given a global admin on `/admin/users`, when they create a user,
   then the user can log in with the given/generated password and appears in
-  the list; a duplicate email is rejected with a Persian toast.
+  the list; a duplicate email is rejected with a error toast.
 - **AC2** Given an owner on the members tab, when they submit an unknown
   email with role `editor`, then an `invitations` row exists (status
   `pending`, `tokenHash` only — no raw token anywhere in the DB), and a copy
@@ -908,7 +908,7 @@ Commit per phase via `git-hygiene` (logically grouped, no drive-by refactors).
 - **AC4** Given a viewer session, when they POST T2–T7 (parameterized), then
   every request is rejected and no membership/invite row changes.
 - **AC5** Given a project with one owner, when that owner tries to demote or
-  remove themselves or leave, then the action is blocked with a Persian
+  remove themselves or leave, then the action is blocked with a English
   explanation and the owner count stays 1.
 - **AC6** Given an owner + admin member, when ownership is transferred, then
   afterwards target=owner and initiator=admin (both rows updated), never
@@ -924,8 +924,8 @@ Commit per phase via `git-hygiene` (logically grouped, no drive-by refactors).
   `project_members` directly via the PocketBase REST API with their own
   token, then the write is refused (or, under the fallback, refused for
   `project_members`/`invitations` with the residual risk documented).
-- **AC11** `make check` passes; new templates render Persian/RTL; new
-  strings are in the `en` catalog; docs updated.
+- **AC11** `make check` passes; new templates render correctly at desktop and
+  mobile widths; new strings are plain English; docs updated.
 
 ## 26. Definition of Done
 
@@ -954,8 +954,8 @@ tests, verify, list anything unresolved):
   injection via email filter strings? PB rules per 18-A actually deployed?
   disabled check in middleware?
 - **Jobs/AI**: none added (assert).
-- **UI**: empty/loading/error/permission states all Persian? mobile dock and
-  RTL layouts sane? confirm dialogs on destructive actions? copy-link works
+- **UI**: empty/loading/error/permission states all English? mobile dock and
+  desktop rail sane? confirm dialogs on destructive actions? copy-link works
   without editing `app.js`? tab label wired in both `TABS` and labels dict?
 - **Performance**: no N+1 on members; no `list_all` on users; tab context
   lazy.

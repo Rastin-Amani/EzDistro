@@ -11,17 +11,17 @@ colors:
   electric-blue: "#0000ff"
   wireframe-green: "#098551"
   ink-ground: "#0b0b10"
-  blue-dark: "#5b5bff"
+  blue-dark: "#3333ff"
   green-dark: "#3fce7d"
 typography:
   display:
-    fontFamily: "Arad, Inter, ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif"
     fontSize: "clamp(2.5rem, 4vw + 1.5rem, 5rem)"
     fontWeight: 800
     lineHeight: 0.95
     letterSpacing: "-0.04em"
   body:
-    fontFamily: "Arad, Inter, ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif"
     fontSize: "1rem"
     fontWeight: 400
     lineHeight: 1.5
@@ -32,9 +32,25 @@ typography:
     fontWeight: 400
     lineHeight: 1.43
     letterSpacing: "0.073em"
+  rail-chrome:
+    fontSize: "0.65rem"
+    fontWeight: 400
+    letterSpacing: "0.073em"
+  dock-label:
+    fontSize: "0.6rem"
+    fontWeight: 400
+    letterSpacing: "0.02em"
+  metric-count:
+    fontSize: "2rem"
+    fontWeight: 900
+    lineHeight: 1
+    letterSpacing: "-0.04em"
 rounded:
   tag: "2px"
   surface: "8px"
+  dock: "16px"
+  dock-item: "12px"
+  scrollbar-thumb: "9999px"
 spacing:
   unit: "4px"
   section: "48px"
@@ -62,7 +78,7 @@ components:
 
 ## Overview
 
-EzDistro's interface is a wireframe atlas on white paper: hairline rules form the terrain, oversized tight-tracked display titles carry hierarchy, mono uppercase labels pin every section, and electric blue (`#0000ff`) is rationed to exactly three contexts — the logo block, the primary action, and live data nodes. Surfaces are flat (no shadows, no gradients); structure comes from spacing, hairlines, and type scale. Dark theme translates the same rationing onto an ink ground with a one-step-brightened blue. Persian (RTL) is the source language; English (LTR) mirrors via logical properties.
+EzDistro's interface is a wireframe atlas on white paper: hairline rules form the terrain, oversized tight-tracked display titles carry hierarchy, mono uppercase labels pin every section, and electric blue (`#0000ff`) is rationed to exactly three contexts — the logo block, the primary action, and live data nodes. Surfaces are flat (no shadows, no gradients); structure comes from spacing, hairlines, and type scale. Dark theme translates the same rationing onto an ink ground with a one-step-brightened blue. The interface is English-only, laid out with logical properties so it stays direction-agnostic.
 
 ## Colors
 
@@ -70,20 +86,20 @@ EzDistro's interface is a wireframe atlas on white paper: hairline rules form th
 - Carbon `#000000` primary text and headlines; Graphite `#323232` strong secondary; Slate `#717886` body prose and mono labels.
 - Electric blue `#0000ff`: logo block, primary filled button, live pipeline node, active-nav bar/icon, focus ring, selection. Never body text, icons at rest, or decoration.
 - Wireframe green `#098551`: published/indexed/healthy nodes and success states.
-- Dark (`ezdistro-dark`): ground `#0b0b10`, panel `#14151c`, hairline `#2c2e3a`, ink `#f5f5f5`, blue `#5b5bff`, green `#3fce7d`. Same rationing.
+- Dark (`ezdistro-dark`): ground `#0b0b10`, panel `#14151c`, hairline `#2c2e3a`, ink `#f5f5f5`, blue `#3333ff`, green `#3fce7d`. Same rationing.
 
 ## Typography
 
-- Display: Arad (Persian) / Inter (Latin), 800, `clamp(2.5rem, 4vw + 1.5rem, 5rem)`, `-0.04em`, `0.95` — page titles only (`.ezdistro-title`). Clamp keeps Persian display type inside mobile viewports.
+- Display: Inter, 800, `clamp(2.5rem, 4vw + 1.5rem, 5rem)`, `-0.04em`, `0.95` — page titles only (`.ezdistro-title`). Clamp keeps display type inside mobile viewports.
 - Body: 16px/1.5, `-0.014em`, Slate-tinted secondary text (`.ezdistro-subtitle`).
-- Mono labels: uppercase, `+0.073em` tracking, 12px, Slate — section tags, panel titles (`.ezdistro-panel-title`), metric labels, rail labels, nav groups, always with a short leading rule (`.ezdistro-eyebrow::before`).
-- Data numerals are tabular everywhere (`font-variant-numeric: tabular-nums` on `.stat-value`, `.font-mono`, tables, metrics). Dates render Jalali for `fa`, Gregorian otherwise.
-- Brand faces are committed local variable fonts (Arad + Inter); no webfont deps.
+- Mono labels: uppercase, `+0.073em` tracking, Slate — section tags, panel titles (`.ezdistro-panel-title`), metric labels, rail labels, nav groups, always with a short leading rule (`.ezdistro-eyebrow::before`). Content labels are `0.72rem`; rail chrome steps down to `0.65rem` (`.ezdistro-nav-group`, `.ezdistro-start-label`) and mobile dock labels to `0.6rem` (`.ezdistro-dock a`).
+- Data numerals are tabular everywhere (`font-variant-numeric: tabular-nums` on `.stat-value`, `.font-mono`, tables, metrics). Hero counts step to `2rem` black, `-0.04em` (`.ezdistro-metric-value`, `.ezdistro-rail-num`). Dates render Gregorian through the `loc_*` filters.
+- Brand face: Inter ships as a committed local variable font (`app/static/assets/InterVariable.ttf`, `@font-face` in `input.css`); no webfont deps. 
 
 ## Layout
 
-- Desktop: fixed 220px rail (`md:w-55 lg:w-60`) — blue 40px logo block, flat nav items with chevrons, bottom-anchored Start panel (hairline above, blue dot + mono `START HERE`, one blue primary + ghost actions), then account/theme/locale foot. Content column fills remaining width, max `75rem`.
-- Mobile: sticky blurred top bar (logo + theme/locale/account); floating thumb-zone dock pill (6 items, active = solid blue block); `pb-32` content clearance + safe-area insets. Project tabs become a sticky scrollable strip.
+- Desktop: fixed 220px rail (`md:w-55 lg:w-60`) — blue 40px logo block, flat nav items with chevrons, bottom-anchored Start panel (hairline above, blue dot + mono `START HERE`, one blue primary + ghost actions), then account/theme foot. Content column fills remaining width, max `75rem`.
+- Mobile: sticky blurred top bar (logo + theme switcher + account); floating thumb-zone dock pill (6 items, active = solid blue block); `pb-32` content clearance + safe-area insets. Project tabs become a sticky scrollable strip.
 - Pages open with the atlas header: mono label + display title + slate subhead (+ actions right). Dashboard hero is the pipeline rail: 4 cells split by hairlines, node row threaded by one rule (2×2 mobile → 1 row ≥sm), counts at 32px black with micro bars; only the "being written" node breathes.
 - Signature motif `.ezdistro-bars`: CSS hairline vertical bars (`2px`, mist) with occasional `.is-blue` / `.is-green` nodes for decorative-data strips.
 
@@ -93,7 +109,7 @@ No shadows anywhere (`--depth: 0`, `--noise: 0`). Elevation = paper → ash fill
 
 ## Shapes
 
-- 8px (`rounded-lg`) for cards, panels, buttons, inputs, modals, dropdowns, dock. Tags/badges 2px (`rounded-[2px]`). Logo block and bar nodes: square.
+- 8px (`rounded-lg`) for cards, panels, buttons, inputs, modals, dropdowns. Tags/badges 2px (`rounded-[2px]`). Logo block and bar nodes: square. Mobile dock: `rounded-2xl` pill shell with `rounded-xl` items — the one sanctioned pill shape.
 - Active nav: 2px blue bar at inline-start + blue icon, no background chip. Focus: 2px blue outline. Selection: blue fill, white ink; caret blue.
 
 ## Components
@@ -111,5 +127,5 @@ No shadows anywhere (`--depth: 0`, `--noise: 0`). Elevation = paper → ash fill
 - Do keep backgrounds paper (light) / ink-ground (dark); ash only for secondary fills.
 - Don't add shadows, gradients, glass, or radii other than 8px / 2px / square.
 - Don't use color for hierarchy — use display scale, weight, and Carbon/Slate contrast.
-- Don't break the rail + fluid-content shell; RTL via logical properties only, never offset hacks.
-- Detector-accepted exceptions: Inter/Arad flagged as overused faces — kept as committed brand assets under the DaisyUI-only, no-new-deps constraint (PRODUCT.md).
+- Don't break the rail + fluid-content shell; use logical properties for direction-agnostic layout, never offset hacks.
+- Detector-accepted exceptions: Inter flagged as an overused face — kept as the committed brand asset under the DaisyUI-only, no-new-deps constraint (PRODUCT.md); the themed scrollbar thumb (`border-radius: 9999px` on the UA scrollbar pseudo-element in `input.css` — a browser surface, not a component); the mobile dock's larger radii, pinned by the floating dock-pill brief.

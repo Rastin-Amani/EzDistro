@@ -668,11 +668,6 @@ body {
         @apply bg-accent;
     }
 
-    /* Status pills (used alongside daisyui badge-soft) ----------------- */
-    .ezdistro-pill {
-        @apply inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium;
-    }
-
     /* Project tab bar — mobile-first scrollable pills ------------------ */
     .ezdistro-tab-active {
         @apply border-primary bg-primary font-semibold text-white;
@@ -713,7 +708,7 @@ body {
         @apply pointer-events-auto flex min-w-0 items-start gap-3 rounded-lg border border-base-300/70 bg-base-100 px-4 py-3 text-base-content max-w-sm w-full;
     }
     .ezdistro-toast .ezdistro-toast-ico {
-        @apply mt-0.5 grid size-8 shrink-0 place-items-center rounded-md border border-base-300/70;
+        @apply mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg border border-base-300/70;
     }
     .ezdistro-toast-info .ezdistro-toast-ico { @apply bg-info/15 text-info; }
     .ezdistro-toast-success .ezdistro-toast-ico { @apply bg-success/15 text-success; }

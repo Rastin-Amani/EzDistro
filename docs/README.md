@@ -32,7 +32,7 @@ ARCHITECTURE §11, SCHEMA §5, and TROUBLESHOOTING §8.
 | **ARCHITECTURE.md** | Engineers, operators | System context, process model, job engine deep dive, all pipelines (writer, indexer, images), provider layer, security, known drift | Verified · covers v1.3.0 images pipeline |
 | **SCHEMA.md** | Engineers, integrators | 20-collection PocketBase reference, fields, enums, indexes, cascades, vector payload contract | Verified · covers v1.3.0 images pipeline |
 | **CONFIGURATION.md** | DevOps, operators | Every env var + per-project setting (incl. image generation) + integration/prompt variables | Verified · covers v1.3.0 images pipeline |
-| **USER-GUIDE.md** | Product operators | Task-oriented walkthrough of the Persian UI with English translations of on-screen labels (incl. **Images** tab + images pane) | Verified · covers v1.3.0 images pipeline |
+| **USER-GUIDE.md** | Product operators | Task-oriented walkthrough of the UI with every on-screen label in **bold** (incl. **Images** tab + images pane) | Verified · covers v1.3.0 images pipeline |
 | **OPERATIONS.md** | DevOps, SRE | Deployment, runbook, health, scaling, backups/DR, upgrades | Verified |
 | **TROUBLESHOOTING.md** | Operators, on-call | Symptom → verify → resolution per area (incl. images) | Verified · covers v1.3.0 images pipeline |
 | **FAILURES.md** | Engineers, on-call | Per-dependency failure matrix + crash-simulation guarantees (incl. images) | Verified · refreshed |
@@ -42,7 +42,7 @@ ARCHITECTURE §11, SCHEMA §5, and TROUBLESHOOTING §8.
 
 - **Terminology is consistent**: project, topic, article, section, job, integration,
   prompt, index run, publishing run, schedule, worker, provider.
-- **UI labels use English translations** of the Persian UI labels (e.g. **Write article**, **Approve**); the UI itself remains Persian RTL.
+- **UI labels are quoted verbatim** from the interface (e.g. **Write article**, **Approve**).
 - **Verified vs inferred**: claims come from code/schema/tests/config. Where the docs
   and code disagree, the code wins and the discrepancy is noted rather than hidden.
 - **camelCase field names** are intentional (PocketBase clients run with

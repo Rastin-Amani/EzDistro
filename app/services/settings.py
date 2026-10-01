@@ -32,7 +32,7 @@ class ProjectConfig:
 
     @property
     def language(self) -> str:
-        return str(self.project.get("language") or "fa")
+        return str(self.project.get("language") or "en")
 
     @property
     def timezone(self) -> str:

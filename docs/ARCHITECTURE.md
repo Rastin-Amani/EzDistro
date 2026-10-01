@@ -4,7 +4,7 @@ A production SEO-automation platform: it **indexes** WordPress content into a ve
 database and **writes** complete, SEO-scored articles from topics with an LLM, then
 publishes them back to WordPress through an explicit human review workflow.
 
-Built as a **modular monolith**: one FastAPI web process (HTMX + DaisyUI UI, Persian/RTL),
+Built as a **modular monolith**: one FastAPI web process (HTMX + DaisyUI UI),
 one standalone asyncio worker process, PocketBase as the source of truth, Qdrant for
 vectors. No Redis, no Celery, no n8n.
 
@@ -79,7 +79,7 @@ app/
   config.py          pydantic-settings; all env-driven configuration
   middleware.py      AuthMiddleware: PB cookie auth + req-id correlation + gate
   pb.py              PocketBase client factories (auto_snake_case=False!)
-  templates.py       Jinja2 env + Jalali date filters + status badge styles
+  templates.py       Jinja2 env + locale date/number filters + status badge styles
   utils.py           HTMX response helpers (hx_toast, mutation_response, …)
   api/               HTTP/HTMX routers — auth, dashboard, projects, articles,
                      workspace, jobs, logs (+ dev-only debug)
@@ -126,7 +126,7 @@ Layering conventions (by convention, not enforced):
 3. Mutations are POST/PUT gated by `require_hx` (the `HX-Request` header must be
    present) — a lightweight CSRF mitigation for the HTMX front end.
 4. Responses use the helpers in `app/utils.py` (`hx_toast`, `mutation_response`,
-   `ok_with_redirect`, `delayed_redirect`, `error_response`) — Persian toast messages,
+   `ok_with_redirect`, `delayed_redirect`, `error_response`) — user-facing toast messages,
    HX event triggers, never raw JSON from UI routes.
 
 Authentication is PocketBase-native: `POST /login` calls
@@ -538,7 +538,7 @@ error category — never prompt content.
   (auto) then hard word-split. Size default 500 words (floor 50), overlap default 100
   (clamped below size), `maxChunkCount` caps output.
 - **Prompt rendering**: prompts are data. `{{ variable }}` substitution is pure regex
-  against a fixed variable registry (19 variables, Persian descriptions in the UI);
+  against a fixed variable registry (19 variables, with descriptions in the UI);
   unknown variables fail **before** anything reaches the LLM; unclosed `{{` is an
   error. No template engine, no code execution.
 - **Sanitization**: bleach allowlist — headings h1–h5, paragraphs, lists, emphasis,

@@ -15,7 +15,7 @@ class ProjectRepo(BaseRepo):
         *,
         name: str,
         slug: str,
-        language: str = "fa",
+        language: str = "en",
         timezone: str = "Asia/Tehran",
         description: str = "",
         created_by: str = "",
@@ -26,7 +26,7 @@ class ProjectRepo(BaseRepo):
                 "slug": slug,
                 "description": description,
                 "status": "active",
-                "language": language or "fa",
+                "language": language or "en",
                 "timezone": timezone or "Asia/Tehran",
                 "createdBy": created_by,
             }

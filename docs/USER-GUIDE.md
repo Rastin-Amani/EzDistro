@@ -1,17 +1,15 @@
 # EzDistro Platform — User Guide
 
 A practical, task-oriented guide to operating EzDistro through its web interface.
-The UI itself is Persian (RTL); this guide gives English translations of all
-labels in **bold** so you can match them on screen. No technical background is
-required, although the final sections touch on monitoring tools that power
-users will appreciate.
+The UI is English; labels are shown in **bold** so you can match them on screen. No
+technical background is required, although the final sections touch on monitoring
+tools that power users will appreciate.
 
 ```text
 Documentation status:  Verified against templates & route handlers
                        (post-v1.3.0, images pipeline)
 Last verified:         2026-09-12
-UI language:           Persian (RTL) · English available via the globe
-                       switcher · PWA-enabled
+UI language:           English (LTR) · PWA-enabled
 ```
 
 ---
@@ -133,7 +131,7 @@ side-by-side, and test a prompt against a chosen topic/model from the tester pan
 
 Variables such as `{{ topic.title }}`, `{{ seo_rules }}`, `{{ retrieved_context }}`
 can be inserted; unknown variable names are rejected at save time. Global defaults
-(seed data, Persian) apply whenever a project has no own version of a type.
+(seed data, English) apply whenever a project has no own version of a type.
 
 ## 6. Index your WordPress content (**Indexing**)
 

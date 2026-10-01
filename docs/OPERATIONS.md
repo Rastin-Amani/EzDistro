@@ -47,7 +47,7 @@ make bootstrap        # python -m app.scripts.bootstrap_pb
 
 Bootstrap does, in order: import/patch all 33 collections (`delete_missing=False`),
 add `role`/`displayName` to `users`, seed the `app_settings` singleton + 8 global
-Persian prompts, and create the platform admin if `SEED_ADMIN_PASSWORD` is set.
+default prompts, and create the platform admin if `SEED_ADMIN_PASSWORD` is set.
 It prints explicit confirmation lines for each step; on failure it raises with a
 hint about reachability/credentials/PB version.
 

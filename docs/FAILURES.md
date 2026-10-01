@@ -81,7 +81,7 @@ non-retried errors — approval state is enforced in the handler, not just the U
 
 | Failure | Retry? | Attempts | Backoff | User-visible | Permanent? | Manual recovery |
 |---|---|---|---|---|---|---|
-| transient provider error (timeout, 429, 5xx) | job layer | `max(2, imageMaxRetries)` | jittered (+ Retry-After floor) | provider message (Persian wrapper) | no | none (auto); fallback provider tried when configured |
+| transient provider error (timeout, 429, 5xx) | job layer | `max(2, imageMaxRetries)` | jittered (+ Retry-After floor) | provider message (human-readable wrapper) | no | none (auto); fallback provider tried when configured |
 | permanent provider error (auth, 4xx, bad request) | fallback only | — | — | provider message | **yes** (if fallback also fails) | fix key/model in Integrations or **Images** tab; re-dispatch |
 | provider/integration mismatch (slot provider has no active integration) | **no** — fail fast | — | — | mismatch message | **yes** | fix the **Images** tab mapping |
 | quality-gate rejection (bad dimensions/format) | **no** (`PermanentError`) | — | — | validation message | **yes** | adjust prompt/size config; regenerate |

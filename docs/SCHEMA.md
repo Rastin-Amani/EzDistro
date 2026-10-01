@@ -398,7 +398,7 @@ Index: UNIQUE job; (expiresAt).
 | job R | jobs | nullable (system events), cascade |
 | project* R | projects | denormalized for fast filters |
 | eventType* | text | see event taxonomy in ARCHITECTURE §5.7 |
-| message | text | Persian-safe human summaries |
+| message | text | human-readable summaries |
 | metadata | json | structured detail (stage, provider stats, ids) |
 
 Indexes: (job, created); (project, created).
