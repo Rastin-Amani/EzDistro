@@ -175,47 +175,25 @@
     <div class="modal-box bg-base-100">
         <div class="flex items-center justify-between mb-4">
             <h3 class="font-bold text-lg">{{ ('New topic') }}</h3>
-            <button type="button" class="btn btn-ghost btn-sm btn-circle" @click="$store.ui.closeModal('new-topic-modal')" aria-label="{{ ('Close') }}">✕</button>
+            <button type="button" class="btn btn-ghost btn-sm btn-circle" @click="$store.ui.closeModal('new-topic-modal')" aria-label="{{ ('Close') }}">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+            </button>
         </div>
-        <form hx-post="/projects/{{ project.id }}/topics" hx-swap="none" class="flex flex-col gap-3">
-            <label class="form-control">
-                <span class="label-text text-xs font-medium">{{ ('Topic title') }}</span>
-                <input name="title" class="input input-sm" required placeholder="{{ ('e.g. Best SEO practices in 1405') }}" />
-            </label>
-            <div class="grid grid-cols-2 gap-3">
-                <label class="form-control">
-                    <span class="label-text text-xs font-medium">{{ ('Keyword') }}</span>
-                    <input name="keyword" class="input input-sm" />
-                </label>
-                <label class="form-control">
-                    <span class="label-text text-xs font-medium">{{ ('Type') }}</span>
-                    <select name="type" class="select select-sm">
-                        <option value="article">{{ ('Article') }}</option>
-                        <option value="pillar_page">{{ ('Pillar page') }}</option>
-                        <option value="guide">{{ ('Guide') }}</option>
-                        <option value="news">{{ ('News') }}</option>
-                    </select>
-                </label>
+        <form hx-post="/projects/{{ project.id }}/topics" hx-swap="none" class="flex flex-col gap-4">
+            {{ f.text('title', ('Topic title'), required=true, placeholder=('e.g. Best SEO practices in 2026')) }}
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {{ f.text('keyword', ('Keyword')) }}
+                {{ f.select('type', ('Type'), [('article', ('Article')), ('pillar_page', ('Pillar page')), ('guide', ('Guide')), ('news', ('News'))], selected='article') }}
             </div>
-            <div class="grid grid-cols-2 gap-3">
-                <label class="form-control">
-                    <span class="label-text text-xs font-medium">{{ ('Pillar') }}</span>
-                    <input name="pillar" class="input input-sm" />
-                </label>
-                <label class="form-control">
-                    <span class="label-text text-xs font-medium">{{ ('Cluster') }}</span>
-                    <input name="cluster" class="input input-sm" />
-                </label>
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {{ f.text('pillar', ('Pillar')) }}
+                {{ f.text('cluster', ('Cluster')) }}
             </div>
-            <label class="form-control">
-                <span class="label-text text-xs font-medium">{{ ('Priority') }}</span>
-                <input name="priority" type="number" class="input input-sm" value="0" />
-            </label>
-            <label class="form-control">
-                <span class="label-text text-xs font-medium">{{ ('Week') }}</span>
-                <input name="week" type="number" class="input input-sm" placeholder="{{ ('Editorial calendar week (optional)') }}" />
-            </label>
-            <div class="flex gap-3 mt-2">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {{ f.number('priority', ('Priority'), value=0) }}
+                {{ f.number('week', ('Week'), placeholder=('Calendar week (optional)')) }}
+            </div>
+            <div class="flex gap-3 mt-1">
                 <button type="submit" class="btn btn-primary flex-1">{{ ('Add') }}</button>
                 <button type="button" class="btn btn-ghost" @click="$store.ui.closeModal('new-topic-modal')">{{ ('Cancel') }}</button>
             </div>

@@ -11,11 +11,11 @@
             <option value="0" {{ 'selected' if not sched or not sched.enabled }}>{{ ('Inactive') }}</option>
         </select>
     </div>
-    <label class="form-control">
-        <span class="label-text text-xs font-medium">{{ ('Interval (minutes)') }}</span>
-        <input name="interval_minutes" type="number" class="input input-sm input-bordered w-28"
+    <div class="flex flex-col gap-1 min-w-40">
+        <span class="text-xs font-semibold">{{ ('Interval (minutes)') }}</span>
+        <input name="interval_minutes" type="number" class="input input-sm input-bordered w-full"
                value="{{ sched.intervalMinutes if sched else 1440 }}" />
-    </label>
+    </div>
     <button type="submit" class="btn btn-ghost btn-sm" hx-disabled-elt="this">{{ ('Save') }}</button>
     {% if sched and sched.lastRunAt %}
     <span class="text-xs opacity-40">{{ ('Last run: %(v)s') % {'v': sched.lastRunAt|loc_dt} }}</span>

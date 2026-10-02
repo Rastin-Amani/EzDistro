@@ -248,7 +248,12 @@ body {
         @apply w-full;
     }
     .form-control {
-        @apply gap-1;
+        /* daisyUI 5 dropped .form-control's own layout, so `gap` alone was
+           inert and an inline label shared the line with its control (the
+           control's `w-full` lost for `-sm` sizes). A column flex container
+           puts every child on its own line and stretches it to full width,
+           which is what every field in this app expects. */
+        @apply flex flex-col gap-1;
         /* min-w-0: grid children — a long value must never push the
            column (and the input beside it) past the viewport. */
         min-width: 0;
@@ -705,10 +710,13 @@ body {
     /* Toast — flat paper card; semantics live in the icon chip, never a
        side border. */
     .ezdistro-toast {
-        @apply pointer-events-auto flex min-w-0 items-start gap-3 rounded-lg border border-base-300/70 bg-base-100 px-4 py-3 text-base-content max-w-sm w-full;
+        /* items-center, not items-start: the icon chip is taller than one text
+           line, so top alignment left a dead band under a short message that
+           read as an empty second line. */
+        @apply pointer-events-auto flex min-w-0 items-center gap-3 rounded-lg border border-base-300/70 bg-base-100 px-4 py-3 text-base-content max-w-sm w-full;
     }
     .ezdistro-toast .ezdistro-toast-ico {
-        @apply mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg border border-base-300/70;
+        @apply grid size-7 shrink-0 place-items-center rounded-lg border border-base-300/70;
     }
     .ezdistro-toast-info .ezdistro-toast-ico { @apply bg-info/15 text-info; }
     .ezdistro-toast-success .ezdistro-toast-ico { @apply bg-success/15 text-success; }

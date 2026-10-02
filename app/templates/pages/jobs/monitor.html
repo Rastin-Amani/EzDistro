@@ -36,7 +36,7 @@
         <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
             <label class="form-control col-span-2 lg:col-span-1">
                 <span class="label-text text-xs font-medium">{{ ('Project') }}</span>
-                <select name="project" class="select select-sm">
+                <select name="project" class="select select-sm w-full">
                     <option value="">{{ ('All') }}</option>
                     {% for p in projects %}
                     <option value="{{ p.id }}" {{ 'selected' if f.project == p.id }}>{{ p.name }}</option>
@@ -45,7 +45,7 @@
             </label>
             <label class="form-control">
                 <span class="label-text text-xs font-medium">{{ ('Type') }}</span>
-                <select name="job_type" class="select select-sm">
+                <select name="job_type" class="select select-sm w-full">
                     <option value="">{{ ('All') }}</option>
                     {% for t in job_types %}
                     <option value="{{ t }}" {{ 'selected' if f.job_type == t }}>{{ t }}</option>
@@ -54,7 +54,7 @@
             </label>
             <label class="form-control">
                 <span class="label-text text-xs font-medium">{{ ('Status') }}</span>
-                <select name="status" class="select select-sm">
+                <select name="status" class="select select-sm w-full">
                     <option value="">{{ ('All') }}</option>
                     {% for s in statuses %}
                     <option value="{{ s }}" {{ 'selected' if f.status == s }}>{{ s|status_label }}</option>
@@ -63,7 +63,7 @@
             </label>
             <label class="form-control">
                 <span class="label-text text-xs font-medium">{{ ('Error type') }}</span>
-                <select name="failure_type" class="select select-sm">
+                <select name="failure_type" class="select select-sm w-full">
                     <option value="">{{ ('All') }}</option>
                     {% for code in error_codes %}
                     <option value="{{ code }}" {{ 'selected' if f.failure_type == code }}>{{ code }}</option>
@@ -72,15 +72,15 @@
             </label>
             <label class="form-control">
                 <span class="label-text text-xs font-medium">{{ ('Worker') }}</span>
-                <input name="worker" class="input input-sm" dir="ltr" value="{{ f.worker }}" placeholder="worker id" />
+                <input name="worker" class="input input-sm w-full" dir="ltr" value="{{ f.worker }}" placeholder="worker id" />
             </label>
             <label class="form-control">
                 <span class="label-text text-xs font-medium">{{ ('From date') }}</span>
-                <input name="date_from" type="date" class="input input-sm" value="{{ f.date_from }}" />
+                <input name="date_from" type="date" class="input input-sm w-full" value="{{ f.date_from }}" />
             </label>
             <label class="form-control">
                 <span class="label-text text-xs font-medium">{{ ('To date') }}</span>
-                <input name="date_to" type="date" class="input input-sm" value="{{ f.date_to }}" />
+                <input name="date_to" type="date" class="input input-sm w-full" value="{{ f.date_to }}" />
             </label>
         </div>
         <div class="flex items-center gap-2">
