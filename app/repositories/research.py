@@ -22,18 +22,55 @@ from pocketbase.errors import ClientResponseError
 from app.repositories.base import BaseRepo
 from app.repositories.jobs import now_utc, pb_dt
 
-# Rows per OR-filter lookup. Keeps the filter string well under PocketBase's limit.
-CHUNK = 200
+# OR-filter budgets. PocketBase rejects a filter whose URL grows past a few KB
+# and its own limit is on the *rendered* text, not the number of terms — so we
+# split on a character budget, not a fixed count. `FILTER_BUDGET` is the max
+# rendered `… || …` chain length; `CHUNK` is a hard cap on terms per query so a
+# list of tiny terms can never produce a runaway number of `||` operators.
+CHUNK = 40
+FILTER_BUDGET = 1500
 
 
 def q(value: Any) -> str:
-    """Render a value as a PocketBase filter string literal."""
-    return '"' + str(value).replace("\\", "\\\\").replace('"', '\\"') + '"'
+    """Render a value as a PocketBase filter string literal.
+
+    Besides escaping the delimiter itself, control characters (newlines, tabs —
+    common in imported keyword lists) are collapsed to a space so they can never
+    truncate or corrupt the filter.
+    """
+    text = str(value)
+    for char in ("\r\n", "\r", "\n", "\t"):
+        text = text.replace(char, " ")
+    return '"' + text.replace("\\", "\\\\").replace('"', '\\"') + '"'
 
 
 def chunks(items: Sequence[Any], size: int = CHUNK) -> Iterator[Sequence[Any]]:
     for i in range(0, len(items), size):
         yield items[i : i + size]
+
+
+def filter_chunks(
+    terms: Sequence[str], *, budget: int = FILTER_BUDGET, size: int = CHUNK
+) -> Iterator[list[str]]:
+    """Group already-escaped OR terms so no single query's chain gets too long.
+
+    Yields lists whose joined `" || ".join(...)` length stays under `budget`
+    (and whose length never exceeds `size`). This is the single guard every
+    OR-filter read goes through, so a caller can never build a filter PocketBase
+    will reject — regardless of how long the individual terms are.
+    """
+    group: list[str] = []
+    used = 0
+    for term in terms:
+        cost = len(term) + 4  # " || " separator
+        if group and (used + cost > budget or len(group) >= size):
+            yield group
+            group = []
+            used = 0
+        group.append(term)
+        used += cost
+    if group:
+        yield group
 
 
 def _is_duplicate(exc: Exception) -> bool:
@@ -319,8 +356,8 @@ class KeywordRepo(_BulkCreateMixin, BaseRepo):
     ) -> dict[str, dict[str, Any]]:
         """Batched lookup: normalizedKeyword -> record, for the given keys only."""
         found: dict[str, dict[str, Any]] = {}
-        for chunk in chunks(list(keys)):
-            ors = " || ".join(f"normalizedKeyword={q(k)}" for k in chunk)
+        for chunk in filter_chunks([f"normalizedKeyword={q(k)}" for k in keys]):
+            ors = " || ".join(chunk)
             rows = self.list_all(
                 filter=(
                     f"project={q(project_id)} && language={q(language)} "
@@ -334,8 +371,8 @@ class KeywordRepo(_BulkCreateMixin, BaseRepo):
     def map_by_ids(self, ids: Sequence[str]) -> dict[str, dict[str, Any]]:
         """Batched lookup by record id (one query per CHUNK ids)."""
         found: dict[str, dict[str, Any]] = {}
-        for chunk in chunks(list(ids)):
-            ors = " || ".join(f"id={q(i)}" for i in chunk)
+        for chunk in filter_chunks([f"id={q(i)}" for i in ids]):
+            ors = " || ".join(chunk)
             for row in self.list_all(filter=f"({ors})"):
                 found[row["id"]] = row
         return found
@@ -406,8 +443,8 @@ class KeywordMetricRepo(_BulkCreateMixin, BaseRepo):
         by_keyword = {r["keyword"]: r for r in rows}
         existing: dict[str, dict[str, Any]] = {}
         keys = list(by_keyword)
-        for chunk in chunks(keys):
-            ors = " || ".join(f"keyword={q(k)}" for k in chunk)
+        for chunk in filter_chunks([f"keyword={q(k)}" for k in keys]):
+            ors = " || ".join(chunk)
             for row in self.list_all(filter=f"run={q(run_id)} && ({ors})"):
                 existing[row.get("keyword", "")] = row
         written = 0

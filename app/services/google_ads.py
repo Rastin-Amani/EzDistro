@@ -99,8 +99,17 @@ def _credentials(pb: Any, project_id: str = "") -> dict[str, str]:
 
 
 def client_configured(pb: Any = None, project_id: str = "") -> bool:
-    """True when a usable OAuth client (integration or env) is available."""
-    creds = _credentials(pb, project_id)
+    """True when a usable OAuth client (integration or env) is available.
+
+    A stored-but-undecryptable secret (SECRETS_KEY changed, corrupt payload)
+    counts as *not* configured rather than raising — this is a read-only probe
+    used by page renders, so it must never take the page down. The consumer
+    that actually calls Google Ads surfaces the actionable error.
+    """
+    try:
+        creds = _credentials(pb, project_id)
+    except PermanentError:
+        return False
     return bool(creds["client_id"] and creds["client_secret"])
 
 

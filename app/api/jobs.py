@@ -45,20 +45,6 @@ def _scheduler_heartbeat(pb: Any) -> dict[str, Any] | None:
         return None
 
 
-def _scope_filter(scope: list[str] | None, status: str = "") -> str:
-    """None = unrestricted; [] = match nothing (user has no projects)."""
-    parts = []
-    if status:
-        parts.append(f'status="{status}"')
-    if scope is None:
-        pass  # admin — unrestricted
-    elif scope:
-        parts.append("(" + " || ".join(f'project="{s}"' for s in scope) + ")")
-    else:
-        parts.append('project="__no_access__"')
-    return " && ".join(parts)
-
-
 @router.get("/jobs", response_class=HTMLResponse)
 @page_guard("Something went wrong loading the jobs page — please try again.")
 def jobs_monitor(
@@ -89,9 +75,15 @@ def jobs_monitor(
         per_page=25,
     )
     per_page = 25
-    projects = ProjectRepo(pb).list_records(
-        filter=_scope_filter(scope, "") or "", sort="name", per_page=200
-    )
+    # The scope filter speaks the `jobs` collection's language (`project="id"`),
+    # but this list is the `projects` collection itself — match on `id` instead.
+    if scope is None:
+        project_filter = ""
+    elif scope:
+        project_filter = "(" + " || ".join(f'id="{s}"' for s in scope) + ")"
+    else:
+        project_filter = 'id="__no_access__"'
+    projects = ProjectRepo(pb).list_records(filter=project_filter, sort="name", per_page=200)
     error_codes = JobRepo(pb).error_codes()
     from app.services.metrics import query_provider_metrics
 

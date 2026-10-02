@@ -13,7 +13,7 @@ from typing import Any
 import pytest
 from pocketbase.errors import ClientResponseError
 
-from app.jobs.engine import JobEngine
+from app.jobs.engine import ERROR_MESSAGE_MAX, JobEngine
 from app.jobs.state import JobStateError
 from app.providers.base import PermanentError, ProviderError, TransientError
 from app.repositories.jobs import JobRepo, LeaseRepo, now_utc
@@ -150,6 +150,26 @@ def test_permanent_failure_does_not_retry():
     assert updated["status"] == "failed"
     assert updated["attempts"] == 1
     assert updated["errorDetails"]["retryable"] is False
+
+
+def test_oversized_error_message_is_clipped_before_persisting():
+    """`jobs.errorMessage` is a 5000-char field; a raw PocketBase 400 (which
+    embeds the whole request URL and filter) used to exceed it and make writing
+    the failure itself fail with validation_max_text_constraint."""
+    pb = FakePocketBase(default_unique_fields())
+    project = make_project(pb)
+    job = seed_job(pb, project["id"], maxAttempts=1)
+
+    async def handler(ctx):
+        raise RuntimeError("x" * 20000)
+
+    engine = make_engine(pb, handlers={"test": handler})
+    asyncio.run(engine._run(job))
+
+    updated = pb.collection("jobs").get_one(job["id"])
+    assert updated["status"] == "failed"
+    assert len(updated["errorMessage"]) <= ERROR_MESSAGE_MAX
+    assert updated["errorMessage"].endswith("…")
 
 
 def test_exhausts_retries_then_fails():

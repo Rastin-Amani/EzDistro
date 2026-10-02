@@ -824,7 +824,7 @@ COLLECTIONS: list[dict[str, Any]] = [
         [
             rel("project", "projects", required=True, cascade=True),
             t("name"),
-            select("researchType", ["keywords", "site", "competitors", "mixed"]),
+            select("researchType", ["keywords", "site", "competitors", "mixed", "import"]),
             select(
                 "status",
                 ["pending", "running", "completed", "failed", "cancelled", "partial"],

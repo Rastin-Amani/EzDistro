@@ -27,6 +27,27 @@ def test_import_json_matches_generator(tmp_path):
     assert json.loads(target.read_text()) == _mirror()
 
 
+def _select_values(collection: str, field: str) -> list[str]:
+    for coll in _mirror():
+        if coll["name"] == collection:
+            for spec in coll["fields"]:
+                if spec["name"] == field:
+                    return list(spec.get("values") or [])
+    raise AssertionError(f"{collection}.{field} not found in the mirror")
+
+
+def test_research_type_select_covers_every_written_value():
+    """A run is created with researchType='import' for file imports.
+
+    The live PocketBase collection rejects a value the code writes unless the
+    select already lists it (`validation_invalid_value: import`), so the schema
+    must include every research type the app can persist.
+    """
+    values = _select_values("research_runs", "researchType")
+    for written in ("keywords", "site", "competitors", "mixed", "import"):
+        assert written in values, f"research_runs.researchType is missing {written!r}"
+
+
 def test_import_json_relations_resolve():
     ids = {c["id"] for c in _mirror()}
     for coll in _mirror():

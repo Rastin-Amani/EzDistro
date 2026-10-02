@@ -491,7 +491,10 @@ def _tab_context(
         context["connections"] = [connection] if connection else []
         context["customers"] = GoogleAdsCustomerRepo(pb).list_for_project(project_id)
         context["runs"] = ResearchRunRepo(pb).list_for_project(project_id, page=1, per_page=25)
-        context["google_ads_configured"] = client_configured(pb, project_id)
+        try:
+            context["google_ads_configured"] = client_configured(pb, project_id)
+        except Exception:  # read-only tab must never 500 the project page
+            context["google_ads_configured"] = False
         context["serp_configured"] = any(
             integration.get("category") == "serp" and integration.get("enabled")
             for integration in IntegrationRepo(pb).list_all(filter=f'project="{project_id}"')

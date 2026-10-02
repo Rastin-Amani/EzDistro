@@ -29,6 +29,10 @@ from app.services.settings import ProjectConfig
 
 logger = structlog.get_logger("worker.engine")
 
+# `jobs.errorMessage` is a 5000-char text field (PocketBase's default cap), so a
+# failure message must be clipped before it is written back.
+ERROR_MESSAGE_MAX = 5000
+
 
 class JobEngine:
     def __init__(
@@ -256,6 +260,11 @@ class JobEngine:
             return
         attempts = int(job.get("attempts") or 0) + 1
         max_attempts = int(job.get("maxAttempts") or 1)
+        # errorMessage is a 5000-char text field on the jobs collection; a raw
+        # exception string (a PocketBase 400 embeds the whole request URL and
+        # filter) can blow past it and make writing the failure itself fail.
+        if len(error_message) > ERROR_MESSAGE_MAX:
+            error_message = error_message[: ERROR_MESSAGE_MAX - 1].rstrip() + "…"
         error_details: dict[str, Any] = {"retryable": retryable, "attempts": attempts}
         if details:
             error_details["details"] = details

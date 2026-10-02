@@ -24,6 +24,8 @@ from app.repositories.research import (
     KeywordRepo,
     ResearchRunRepo,
     ResearchSeedRepo,
+    filter_chunks,
+    q,
 )
 from app.services import google_ads as google_ads_service
 from app.services import research as orchestrator
@@ -612,6 +614,44 @@ def test_google_ads_credentials_resolve_from_the_project_integration():
     assert google_ads_service.client_configured(pb, other["id"]) is False
 
 
+def test_google_ads_undecryptable_secret_is_treated_as_unconfigured():
+    pb, project, _registry = _setup()
+    _google_ads_integration(
+        pb, project["id"], client_id="cid.apps.googleusercontent.com", client_secret="shh"
+    )
+    # Corrupt the stored secret so it can no longer be decrypted (SECRETS_KEY change).
+    row = IntegrationRepo(pb).get_active(project["id"], "google_ads")
+    IntegrationRepo(pb).update(row["id"], {"secretsEnc": "not-a-valid-fernet-token"})
+
+    # A read-only probe must degrade to False instead of raising PermanentError.
+    assert google_ads_service.client_configured(pb, project["id"]) is False
+    # Actions that really talk to Google Ads still surface the actionable error.
+    try:
+        google_ads_service.redirect_uri("https://app.test/", pb=pb, project_id=project["id"])
+    except PermanentError as exc:
+        assert "cannot be decrypted" in str(exc)
+    else:  # pragma: no cover - the guard must fire
+        raise AssertionError("expected a PermanentError for an undecryptable secret")
+
+
+def test_research_tab_survives_an_undecryptable_google_ads_secret():
+    import app.api.projects as P
+    from tests.helpers import make_member, make_req, make_user
+
+    pb, project, _registry = _setup()
+    make_member(pb, project["id"], user_id="u1", role="owner")
+    _google_ads_integration(
+        pb, project["id"], client_id="cid.apps.googleusercontent.com", client_secret="shh"
+    )
+    row = IntegrationRepo(pb).get_active(project["id"], "google_ads")
+    IntegrationRepo(pb).update(row["id"], {"secretsEnc": "not-a-valid-fernet-token"})
+
+    req = make_req(pb, make_user(), project["id"])
+    resp = P.project_tab(req, project["id"], "research")
+    assert resp.status_code == 200
+    assert b"research-tab" in resp.body
+
+
 def test_google_ads_authorize_url_requires_project_credentials():
     pb, project, _registry = _setup()
     state = google_ads_service.make_state(user_id="u1", project_id=project["id"])
@@ -865,3 +905,29 @@ def test_google_ads_unauthenticated_error_is_actionable():
     assert caught.value.details["google_status"] == "UNAUTHENTICATED"
     assert caught.value.details["google_error_code"] == "DEVELOPER_TOKEN_NOT_APPROVED"
     assert "not approved" in caught.value.details["google_message"]
+
+
+def test_filter_literal_escapes_quotes_and_control_characters():
+    """Imported keyword lists carry quotes/newlines; an unescaped literal used to
+    produce an invalid PocketBase filter and a 400 on the lookup."""
+    assert q('gym "software"') == '"gym \\"software\\""'
+    assert q("back\\slash") == '"back\\\\slash"'
+    assert q("line\nbreak") == '"line break"'
+    assert q("tab\there") == '"tab here"'
+    assert q("crlf\r\nend") == '"crlf end"'
+
+
+def test_filter_chunks_keeps_every_query_under_the_budget():
+    """A large OR-filter (e.g. ~700 imported keywords) must be split so no single
+    PocketBase filter grows past the safe budget — that was the 400 that stalled
+    an import research run at the keyword-collection stage."""
+    from app.repositories.research import CHUNK, FILTER_BUDGET
+
+    terms = [f"normalizedKeyword={q(f'keyword number {i}')}" for i in range(700)]
+    groups = list(filter_chunks(terms))
+    assert groups
+    assert sum(len(group) for group in groups) == 700
+    assert all(len(group) <= CHUNK for group in groups)
+    assert max(len(" || ".join(group)) for group in groups) <= FILTER_BUDGET + 40
+    # empty input yields no queries at all
+    assert list(filter_chunks([])) == []

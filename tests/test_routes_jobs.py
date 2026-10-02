@@ -77,6 +77,27 @@ def test_jobs_monitor_filters_by_status():
     assert completed_job["id"] not in body
 
 
+def test_jobs_monitor_project_list_filters_by_id_not_project(monkeypatch):
+    """The monitor's project dropdown must query the `projects` collection on `id`.
+
+    It used to reuse the jobs scope filter (`project="…"`), but `projects` has no
+    `project` field, so PocketBase answered 400 and the page errored.
+    """
+    captured: dict = {}
+
+    def fake_list(self, **kwargs):
+        captured.update(kwargs)
+        return []
+
+    monkeypatch.setattr(J.ProjectRepo, "list_records", fake_list)
+    pb, proj_a, _ = _setup()
+    req = make_req(pb, make_user(), proj_a["id"])
+    resp = call_route(J.jobs_monitor, req)
+    assert resp.status_code == 200
+    assert f'id="{proj_a["id"]}"' in captured["filter"]
+    assert "project=" not in captured["filter"]
+
+
 def test_failed_jobs_page_lists_only_failed():
     pb, proj_a, _ = _setup()
     make_job(pb, proj_a["id"], job_type="write_article", status="failed")
