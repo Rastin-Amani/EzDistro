@@ -819,3 +819,49 @@ def test_google_ads_list_customers_dedupes_metadata_rows():
     rows = asyncio.run(client.list_customers())
     assert [c.customer_id for c in rows] == ["111"]
     asyncio.run(client.aclose())
+
+
+def test_google_ads_unauthenticated_error_is_actionable():
+    """UNAUTHENTICATED must point at developer token / API access, not 'expired'.
+
+    Regression: the message told users to reconnect, which can never fix a
+    missing developer token or an unapproved Google Cloud project.
+    """
+    import httpx
+    import pytest
+
+    from app.providers.base import PermanentError
+    from app.providers.google_ads import GoogleAdsClient
+
+    client = GoogleAdsClient(client_id="cid", client_secret="secret", refresh_token="r")
+    response = httpx.Response(
+        401,
+        json={
+            "error": {
+                "code": 401,
+                "message": "Request had invalid authentication credentials.",
+                "status": "UNAUTHENTICATED",
+                "details": [
+                    {
+                        "errors": [
+                            {
+                                "errorCode": {
+                                    "authenticationError": "DEVELOPER_TOKEN_NOT_APPROVED"
+                                },
+                                "message": "The developer token is not approved.",
+                            }
+                        ]
+                    }
+                ],
+            }
+        },
+        request=httpx.Request("GET", "https://googleads.googleapis.com/v25/x"),
+    )
+    with pytest.raises(PermanentError) as caught:
+        client._classify(response, "listAccessibleCustomers")
+    message = str(caught.value)
+    assert "developer token" in message.lower()
+    assert "expired" not in message.lower()
+    assert caught.value.details["google_status"] == "UNAUTHENTICATED"
+    assert caught.value.details["google_error_code"] == "DEVELOPER_TOKEN_NOT_APPROVED"
+    assert "not approved" in caught.value.details["google_message"]

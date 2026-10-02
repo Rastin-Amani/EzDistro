@@ -91,7 +91,7 @@
           </table>
         </div>
       {% else %}
-        {{ f.empty('No accounts yet', hint='Google Ads returned no accessible customers for this connection. Refresh accounts after connecting.') }}
+        {{ f.empty('No accounts yet', hint='No accessible Google Ads customers were returned. Owned accounts must exist under the connected Google account, and the connection needs a valid developer token with Google Ads API access. Use Refresh accounts after fixing it.') }}
       {% endif %}
     {{ f.panel_close() }}
   {% endif %}

@@ -20,6 +20,7 @@ import json
 import time
 from typing import Any
 
+import structlog
 from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
 
@@ -57,6 +58,8 @@ from app.services import google_ads as google_ads_service
 from app.services.serp import refresh_keyword, serp_available
 from app.templates import templates
 from app.utils import error_response, ok_with_redirect, success_response
+
+log = structlog.get_logger(__name__)
 
 
 def _flagged(target: str, flag: str) -> str:
@@ -226,6 +229,9 @@ async def google_ads_discover(request: Request, project_id: str):
             request.state.pb, connection, project_id=project_id
         )
     except PermanentError as exc:
+        log.warning(
+            "google_ads.discover_failed", user_id=user["id"], project_id=project_id, **exc.details
+        )
         return error_response(str(exc))
     return success_response(
         f"Found {len(customers)} Google Ads customer(s).",

@@ -40,7 +40,11 @@ _HUMAN_ERRORS = {
     "PERMISSION_DENIED": (
         "Your connected Google Ads account does not currently allow EZDistro to read this data."
     ),
-    "UNAUTHENTICATED": "The Google Ads connection has expired — reconnect Google Ads.",
+    "UNAUTHENTICATED": (
+        "Google Ads rejected the request. Check that the Google Ads connection has "
+        "a valid developer token and that the Google Cloud project has Google Ads API "
+        "access — or reconnect the account."
+    ),
     "UNAVAILABLE": "Google Ads was unreachable. EZDistro will retry automatically.",
     "DEADLINE_EXCEEDED": "Google Ads took too long to respond. EZDistro will retry automatically.",
     "INTERNAL": "Google Ads reported an internal error. EZDistro will retry automatically.",
@@ -147,6 +151,7 @@ class GoogleAdsClient:
         status = response.status_code
         message = response.text[:500]
         api_status = ""
+        error_code = ""
         request_id = response.headers.get("request-id", "")
         try:
             error = (response.json() or {}).get("error") or {}
@@ -155,14 +160,28 @@ class GoogleAdsClient:
             details = error.get("details") or []
             for block in details:
                 for item in (block or {}).get("errors") or []:
+                    if not error_code:
+                        codes = item.get("errorCode") or {}
+                        if isinstance(codes, dict):
+                            error_code = str(next(iter(codes.values()), "") or "")
                     if item.get("message"):
                         message = str(item["message"])
                         break
         except (ValueError, AttributeError):
             pass
         human = _HUMAN_ERRORS.get(api_status, "")
+        # The API's own message is far more specific than the generic mapping
+        # (e.g. UNAUTHENTICATED usually means "no Ads API access level / missing
+        # developer token", NOT an expired token). Keep both: human first for
+        # the user, the raw message in details for debugging.
         text = human or message
-        details_out: dict[str, Any] = {"status": status, "google_status": api_status}
+        details_out: dict[str, Any] = {
+            "status": status,
+            "google_status": api_status,
+            "google_message": message,
+        }
+        if error_code:
+            details_out["google_error_code"] = error_code
         if request_id:
             details_out["request_id"] = request_id
         if api_status in _TRANSIENT_STATUSES or status == 429 or 500 <= status <= 599:
