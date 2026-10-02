@@ -224,6 +224,38 @@ def test_research_tab_renders_with_run():
     assert "Gym software" in body
 
 
+def test_research_tab_renders_with_a_connection():
+    """Regression: `connections` was a dict, so `connections[0]` blew up."""
+    pb, project, _, _ = _setup()
+    GoogleAdsConnectionRepo(pb).upsert(
+        user="u1",
+        google_account_id="acct",
+        email="me@example.com",
+        display_name="Me",
+        refresh_token_enc="enc",
+        token_metadata={},
+        created_by="u1",
+    )
+    from app.repositories.research import GoogleAdsCustomerRepo
+
+    GoogleAdsCustomerRepo(pb).upsert(
+        connection=GoogleAdsConnectionRepo(pb).for_user("u1")["id"],
+        customer_id="111",
+        descriptive_name="Acme Ads",
+        currency_code="USD",
+        time_zone="America/New_York",
+        is_manager=False,
+        accessible=True,
+        project=project["id"],
+    )
+    req = make_req(pb, make_user(), project["id"])
+    resp = _call(P.project_tab, req, project["id"], "research")
+    body = resp.body.decode()
+    assert resp.status_code == 200
+    assert "me@example.com" in body  # the connection row rendered
+    assert "Acme Ads" in body  # the customer option rendered
+
+
 def test_project_detail_page_renders_research_tab():
     pb, project, _, _ = _setup()
     req = make_req(pb, make_user(), project["id"])

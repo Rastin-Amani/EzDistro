@@ -485,8 +485,10 @@ def _tab_context(
         from app.services.google_ads import client_configured
 
         user = user or {}
-        connections = GoogleAdsConnectionRepo(pb).for_user(user.get("id") or "")
-        context["connections"] = connections
+        connection = GoogleAdsConnectionRepo(pb).for_user(user.get("id") or "")
+        # The repo returns at most one connection per user; the template treats
+        # `connections` as a list, so normalise to a list here.
+        context["connections"] = [connection] if connection else []
         context["customers"] = GoogleAdsCustomerRepo(pb).list_for_project(project_id)
         context["runs"] = ResearchRunRepo(pb).list_for_project(project_id, page=1, per_page=25)
         context["google_ads_configured"] = client_configured(pb, project_id)
