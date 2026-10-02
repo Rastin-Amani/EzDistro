@@ -73,14 +73,22 @@ If you do use the env fallback, set:
 
 In the Google Cloud Console add the OAuth scope
 `https://www.googleapis.com/auth/adwords` and register the redirect URI exactly
-as configured, e.g. `https://your-app.example.com/projects/google-ads/callback`.
+as configured. **Two callback paths are served and are interchangeable:**
+
+- `https://your-app.example.com/auth/google-ads/callback` — the path the app
+  derives by default when no redirect URI is configured.
+- `https://your-app.example.com/projects/google-ads/callback` — the original
+  path, kept so an already-registered URI keeps working.
+
+Register whichever you prefer and use the same exact string in the connection.
 The redirect must match character-for-character (`redirect_uri_mismatch`
 otherwise).
 
 ### OAuth flow
 
 ```
-Connect Google Ads -> Google consent -> /projects/google-ads/callback
+Connect Google Ads -> Google consent -> /auth/google-ads/callback
+                                     (or /projects/google-ads/callback)
   -> exchange code -> store the refresh token ENCRYPTED -> list customers
   -> user picks an account -> connection verified
 ```

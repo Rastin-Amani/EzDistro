@@ -105,11 +105,16 @@ def client_configured(pb: Any = None, project_id: str = "") -> bool:
 
 
 def redirect_uri(request_base: str, *, pb: Any = None, project_id: str = "") -> str:
-    """The configured redirect URI, falling back to one derived from the request."""
+    """The configured redirect URI, falling back to one derived from the request.
+
+    The fallback uses the ``/auth/…`` path — match this in the Google Cloud OAuth
+    client (both ``/auth/google-ads/callback`` and ``/projects/google-ads/callback``
+    are served, so either registered URI works).
+    """
     configured = _credentials(pb, project_id)["redirect_uri"]
     if configured:
         return configured
-    return request_base.rstrip("/") + "/projects/google-ads/callback"
+    return request_base.rstrip("/") + "/auth/google-ads/callback"
 
 
 # ---------------------------------------------------------------------------

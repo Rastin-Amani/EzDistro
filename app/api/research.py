@@ -150,6 +150,7 @@ def google_ads_connect(request: Request, project_id: str = ""):
     return RedirectResponse(url, status_code=303)
 
 
+@router.get("/auth/google-ads/callback", response_class=HTMLResponse)
 @router.get("/projects/google-ads/callback", response_class=HTMLResponse)
 async def google_ads_callback(
     request: Request,

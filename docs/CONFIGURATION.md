@@ -81,7 +81,7 @@ Do not rely on it.
 |---|---|---|
 | `GOOGLE_ADS_CLIENT_ID` | — | Fallback Google Cloud OAuth client id |
 | `GOOGLE_ADS_CLIENT_SECRET` | — | Fallback OAuth client secret (never exposed client-side) |
-| `GOOGLE_ADS_REDIRECT_URI` | — | Fallback callback URL, e.g. `https://…/projects/google-ads/callback` |
+| `GOOGLE_ADS_REDIRECT_URI` | — | Fallback callback URL, e.g. `https://…/auth/google-ads/callback` (both `/auth/google-ads/callback` and `/projects/google-ads/callback` are served) |
 | `GOOGLE_ADS_API_VERSION` | `v25` | Google Ads API version; versions sunset annually, keep configurable |
 | `GOOGLE_ADS_LOGIN_CUSTOMER_ID` | — | Optional manager (MCC) id used as `login-customer-id` |
 | `GOOGLE_ADS_DEVELOPER_TOKEN` | — | Legacy: developer tokens were sunset 2026-09-09; sent only if set, ignored by Google |
