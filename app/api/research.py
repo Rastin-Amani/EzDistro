@@ -14,6 +14,7 @@ difficulty.
 
 from __future__ import annotations
 
+import base64
 import csv
 import io
 import json
@@ -21,7 +22,7 @@ import time
 from typing import Any
 
 import structlog
-from fastapi import APIRouter, Form, Request
+from fastapi import APIRouter, File, Form, Request, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
 
 from app.api.deps import (
@@ -55,6 +56,7 @@ from app.repositories.research import (
     SerpResultRepo,
 )
 from app.services import google_ads as google_ads_service
+from app.services.research_import import parse_keyword_file
 from app.services.serp import refresh_keyword, serp_available
 from app.templates import templates
 from app.utils import error_response, ok_with_redirect, success_response
@@ -80,6 +82,7 @@ RUN_PAGE = 25
 IDEA_PAGE = 25
 KEYWORD_PAGE = 50
 MAX_SEEDS = 200
+MAX_IMPORT_BYTES = 20 * 1024 * 1024
 ACTIONS = ("accept", "reject", "roadmap")
 
 
@@ -368,6 +371,151 @@ def research_start(
     runs.update(run["id"], {"job": job["id"]})
     return ok_with_redirect(
         "Research started — this runs in the background.",
+        f"/projects/{project_id}/research/{run['id']}",
+    )
+
+
+def _store_import(
+    *, filename: str, data: bytes, keywords: str, site: str, competitors: str, goal: str
+) -> dict[str, Any]:
+    """Validate an uploaded file and build the config block for the run."""
+    if not data:
+        raise ValueError("Choose a Keyword Planner file to upload.")
+    if len(data) > MAX_IMPORT_BYTES:
+        raise ValueError("That file is larger than 20 MB — export a smaller date range.")
+    return {
+        "importPayload": base64.b64encode(data).decode("ascii"),
+        "importName": (filename or "keywords")[:120],
+        "importSeeds": {
+            "keywords": keywords[:8000],
+            "site": site[:500],
+            "competitors": competitors[:4000],
+            "goal": goal[:4000],
+        },
+    }
+
+
+@router.post("/projects/{project_id}/research/import/preview", response_class=HTMLResponse)
+@hx_error("Could not read that file — check that it is a Keyword Planner CSV or XLSX export.")
+async def research_import_preview(
+    request: Request,
+    project_id: str,
+    file: UploadFile | None = File(None),
+    mapping_column: str = Form(""),
+):
+    """Detect columns in an uploaded file and report the keyword count."""
+    require_hx(request)
+    require_project_access(request, project_id)
+    require_project_role(request, project_id)
+    if file is None:
+        return error_response("Choose a Keyword Planner file to upload.")
+    data = await file.read()
+    manual: dict[str, int] | None = None
+    if mapping_column.strip():
+        try:
+            manual = {"keyword": int(mapping_column)}
+        except ValueError:
+            manual = None
+    try:
+        ideas, report = parse_keyword_file(data, file.filename or "", mapping=manual)
+    except ValueError as exc:
+        return error_response(str(exc))
+    return templates.TemplateResponse(
+        request,
+        "pages/projects/tabs/research_import_preview.html",
+        {
+            "project": require_project_access(request, project_id),
+            "report": report,
+            "ideas": ideas,
+            "detected": sorted(report.get("columns") or {}),
+            "file_name": file.filename or "",
+            "size": len(data),
+        },
+    )
+
+
+@router.post("/projects/{project_id}/research/import")
+@hx_error("Could not start research from that file.")
+async def research_import_start(
+    request: Request,
+    project_id: str,
+    file: UploadFile | None = File(None),
+    name: str = Form(""),
+    keywords: str = Form(""),
+    site: str = Form(""),
+    competitors: str = Form(""),
+    country: str = Form("US"),
+    language: str = Form("en"),
+    locale: str = Form(""),
+    network: str = Form("GOOGLE_SEARCH"),
+    clustering: str = Form("auto"),
+    goal: str = Form(""),
+    force: str = Form(""),
+):
+    """Create an import research run from an uploaded Keyword Planner file."""
+    require_hx(request)
+    require_project_access(request, project_id)
+    require_project_role(request, project_id)
+    if file is None:
+        return error_response("Choose a Keyword Planner file to upload.")
+    data = await file.read()
+    try:
+        stored = _store_import(
+            filename=file.filename or "",
+            data=data,
+            keywords=keywords,
+            site=site,
+            competitors=competitors,
+            goal=goal,
+        )
+    except ValueError as exc:
+        return error_response(str(exc))
+
+    seeds = _seed_rows(keywords=keywords, site=site, urls="", competitors=competitors)
+    target_country = (safe_str(country) or "US").upper()[:2]
+    target_locale = safe_str(locale) or f"{safe_str(language) or 'en'}-{target_country}"
+    targeting = {
+        "country": target_country,
+        "language": (safe_str(language) or "en").lower()[:5],
+        "locale": target_locale[:10],
+        "network": safe_str(network) or "GOOGLE_SEARCH",
+    }
+    config: dict[str, Any] = {
+        "seeds": seeds,
+        "clustering": safe_str(clustering) or "auto",
+        "goal": safe_str(goal)[:4000],
+        "targeting": targeting,
+        "source": "import",
+        **stored,
+    }
+    if safe_bool(force):
+        config["force"] = True
+
+    runs = ResearchRunRepo(request.state.pb)
+    run = runs.create_run(
+        project=project_id,
+        name=(safe_str(name) or f"Imported {time.strftime('%Y-%m-%d %H:%M')}")[:120],
+        research_type="import",
+        config=config,
+        targeting=targeting,
+        connection="",
+        customer_id="",
+        created_by=str((current_user(request) or {}).get("id") or ""),
+    )
+    if seeds:
+        ResearchSeedRepo(request.state.pb).replace_for_run(run["id"], seeds)
+    job = JobRepo(request.state.pb).create(
+        project=project_id,
+        type="research_run",
+        payload={"runId": run["id"], "force": safe_bool(force)},
+        idempotency_key=f"research_run:{run['id']}",
+        entity_type="research_run",
+        entity_id=run["id"],
+        max_attempts=2,
+    )
+    runs.update(run["id"], {"job": job["id"]})
+    return ok_with_redirect(
+        "Analysing the imported keywords — this runs in the background.",
         f"/projects/{project_id}/research/{run['id']}",
     )
 

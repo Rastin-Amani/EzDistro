@@ -1,0 +1,58 @@
+{% import 'macros/forms.html' as f %}
+
+<div id="research-import-form" class="space-y-4">
+  {{ f.panel('Import a Keyword Planner file') }}
+    <p class="text-sm opacity-70 mb-3">
+      No Google Ads API access? Export your keyword ideas from
+      <span class="font-medium">Google Keyword Planner</span> as a CSV or XLSX file and upload it here.
+      EZDistro keeps the Google metrics exactly as they are and asks AI to classify intent, cluster the
+      keywords and propose article opportunities — the same way the API research path does.
+    </p>
+    <form hx-post="/projects/{{ project.id }}/research/import"
+          hx-encoding="multipart/form-data"
+          hx-swap="none"
+          hx-target="#research-tab"
+          hx-indicator="#import-busy"
+          class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="md:col-span-2">
+        {{ f.text('name', 'Research name', placeholder='e.g. Gym software — US') }}
+      </div>
+      <div class="md:col-span-2">
+        <label class="form-control w-full" for="import-file">
+          <div class="label px-0 pb-1">
+            <span class="label-text font-medium text-sm">Keyword Planner file (CSV or XLSX)</span>
+          </div>
+          <input id="import-file" type="file" name="file" accept=".csv,.xlsx,.xlsm"
+                 class="file-input file-input-bordered w-full" required />
+          <div class="label px-0 pt-1">
+            <span class="label-text-alt opacity-60">Up to 20 MB. Columns are detected automatically.</span>
+          </div>
+        </label>
+      </div>
+      {{ f.textarea('keywords', 'Seed keywords (optional)', rows=3,
+                    hint='One per line — used as context for the AI, not for metrics.') }}
+      {{ f.text('site', 'Your site (optional)', placeholder='https://example.com') }}
+      {{ f.textarea('competitors', 'Competitors (optional)', rows=2,
+                    hint='One domain per line.') }}
+      {{ f.textarea('goal', 'Research goal', rows=3,
+                    placeholder='What do you want this research to achieve?') }}
+      {{ f.select('country', 'Country', countries, 'US') }}
+      {{ f.select('language', 'Language', languages, 'en') }}
+      {{ f.select('network', 'Network', [('GOOGLE_SEARCH', 'Google Search'),
+                                         ('GOOGLE_SEARCH_AND_PARTNERS', 'Search + partners')], 'GOOGLE_SEARCH') }}
+      {{ f.select('clustering', 'Clustering', [('auto', 'Automatic'), ('deterministic', 'Deterministic (free)'),
+                                               ('embedding', 'Embeddings'), ('llm', 'AI model')], 'auto') }}
+      <label class="label cursor-pointer justify-start gap-3 md:col-span-2">
+        <input type="checkbox" name="force" class="checkbox checkbox-sm" />
+        <span class="label-text">Re-analyse even if an identical run exists</span>
+      </label>
+      <div class="md:col-span-2 flex items-center gap-3">
+        <button type="submit" class="btn btn-primary btn-sm">
+          <span id="import-busy" class="loading loading-spinner loading-xs htmx-indicator"></span>
+          Analyse imported keywords
+        </button>
+        <span class="text-xs opacity-60">You can review the detected columns before starting.</span>
+      </div>
+    </form>
+  {{ f.panel_close() }}
+</div>

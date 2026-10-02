@@ -178,6 +178,14 @@
     </form>
   {{ f.panel_close() }}
 
+  <div class="collapse collapse-arrow border border-base-300/70 rounded-box">
+    <input type="checkbox" />
+    <div class="collapse-title text-sm font-medium">No Google Ads API access? Import a Keyword Planner file instead</div>
+    <div class="collapse-content">
+      {% include "pages/projects/tabs/research_import.html" %}
+    </div>
+  </div>
+
   {{ f.panel('Research runs', actions='<span class="text-xs opacity-60">' ~ (runs|length) ~ ' runs</span>') }}
     {% if runs %}
       <div class="overflow-x-auto">

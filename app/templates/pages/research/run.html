@@ -34,6 +34,7 @@
         {% if t.network %} · {{ 'Google Search' if t.network == 'GOOGLE_SEARCH' else 'Search + partners' }}{% endif %}
         {% set c = run.config or {} %}
         {% if c.clustering %} · clustering: {{ c.clustering }}{% endif %}
+        {% if run.researchType == 'import' %} · imported file{% endif %}
       </p>
     </div>
     <div class="flex items-center gap-2">

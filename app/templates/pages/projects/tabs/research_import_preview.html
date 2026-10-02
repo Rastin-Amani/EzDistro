@@ -1,0 +1,55 @@
+{% import 'macros/forms.html' as f %}
+
+{# Column-detection report for an uploaded Keyword Planner file. #}
+<div class="alert {% if report.ok %}alert-success{% else %}alert-warning{% endif %} mb-3">
+  {% if report.ok %}
+    <span>Detected {{ report.ideas }} keyword(s) in <span class="font-mono">{{ file_name }}</span>
+      ({{ detected | join(', ') }}).</span>
+  {% else %}
+    <span>Could not detect a keyword column in <span class="font-mono">{{ file_name }}</span>.
+      {{ ('Add a column named “Keyword” or map it below.') }}</span>
+  {% endif %}
+</div>
+
+{{ f.panel('Detected columns') }}
+  <div class="text-sm space-y-1">
+    <div><span class="opacity-60">Format:</span> {{ report.format }}</div>
+    <div><span class="opacity-60">Rows read:</span> {{ report.ideas }} keywords, {{ report.skipped }} skipped</div>
+    <div><span class="opacity-60">Mapped fields:</span>
+      {% if report.columns %}
+        {% for field, index in report.columns.items() %}
+          <span class="badge badge-soft badge-sm mr-1">{{ field }} → col {{ index }}</span>
+        {% endfor %}
+      {% else %}—{% endif %}
+    </div>
+  </div>
+{{ f.panel_close() }}
+
+{% if ideas %}
+  {{ f.panel('Preview') }}
+    <div class="overflow-x-auto ezdistro-scroll-x">
+      <table class="table table-sm">
+        <thead>
+          <tr class="text-xs opacity-60">
+            <th>Keyword</th><th>Searches</th><th>Paid comp.</th>
+            <th>Index</th><th>Avg CPC</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for idea in ideas[:20] %}
+            <tr>
+              <td>{{ idea.text }}</td>
+              <td>{{ idea.avg_monthly_searches | loc_int }}</td>
+              <td>{{ idea.competition }}</td>
+              <td>{{ idea.competition_index }}</td>
+              <td>{{ idea.average_cpc_micros / 1000000 | round(2) }} {{ idea.currency_code }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if ideas | length > 20 %}
+      <p class="text-xs opacity-60 mt-2">Showing the first 20 of {{ ideas | length }} keywords.</p>
+    {% endif %}
+  {{ f.panel_close() }}
+{% endif %}
