@@ -186,6 +186,7 @@ def _persist(
     locale: str,
     location_name: str,
     ideas: list[KeywordIdea],
+    source: str = "google_ads",
 ) -> int:
     rows = [
         {
@@ -193,7 +194,7 @@ def _persist(
             "displayKeyword": idea.text,
             "locale": locale,
             "locationName": location_name,
-            "source": "google_ads",
+            "source": source,
         }
         for idea in ideas
         if idea.text.strip()

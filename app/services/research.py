@@ -128,7 +128,12 @@ async def _validate(ctx: Any, run: dict[str, Any], seeds: list[dict[str, Any]]) 
         )
     kinds = {str(seed.get("seedType") or "") for seed in seeds}
     notes: list[str] = []
-    if kinds & {"keyword", "url", "site", "keyword_and_url"}:
+    config = dict(run.get("config") or {})
+    if config.get("importPayload"):
+        # Keywords come from an uploaded Keyword Planner export, so no Google
+        # Ads connection or customer is needed.
+        notes.append("keywords imported from a Keyword Planner file")
+    elif kinds & {"keyword", "url", "site", "keyword_and_url"}:
         if not run.get("connection"):
             raise PermanentError(
                 "connect Google Ads before running keyword research, "
@@ -150,9 +155,45 @@ async def _wordpress_stage(ctx: Any) -> dict[str, Any]:
     return dict(result)
 
 
+async def _import_keyword_stage(
+    ctx: Any, run: dict[str, Any], config: dict[str, Any]
+) -> dict[str, Any]:
+    """Persist keywords parsed from an uploaded Keyword Planner file."""
+    import base64
+
+    from app.services.research_import import parse_keyword_file
+    from app.services.research_keywords import _persist
+
+    payload = base64.b64decode(str(config.get("importPayload") or ""))
+    ideas, report = parse_keyword_file(payload, str(config.get("importName") or ""))
+    if not ideas:
+        return {
+            "ideas": 0,
+            "skipped": True,
+            "reason": "no keywords could be read from the imported file",
+            "report": report,
+        }
+    targeting = dict(run.get("targeting") or {})
+    written = _persist(
+        pb=ctx.pb,
+        project_id=ctx.project_id,
+        run_id=run["id"],
+        language=str(targeting.get("language") or "en"),
+        location_id=str(targeting.get("locationId") or targeting.get("country") or ""),
+        locale=str(targeting.get("locale") or ""),
+        location_name=str(targeting.get("locationName") or targeting.get("country") or ""),
+        ideas=ideas,
+        source="keyword_planner_import",
+    )
+    return {"ideas": written, "imported": len(ideas), "report": report}
+
+
 async def _keyword_stage(
     ctx: Any, run: dict[str, Any], seeds: list[dict[str, Any]], *, max_keywords: int
 ) -> dict[str, Any]:
+    config = dict(run.get("config") or {})
+    if config.get("importPayload"):
+        return await _import_keyword_stage(ctx, run, config)
     if not any(str(seed.get("seedType")) != "competitor" for seed in seeds):
         return {"ideas": 0, "skipped": True, "reason": "competitor-only research run"}
     connection = GoogleAdsConnectionRepo(ctx.pb).get(run.get("connection") or "")
