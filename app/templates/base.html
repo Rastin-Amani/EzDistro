@@ -4,21 +4,23 @@
     <head>
         <meta charset="UTF-8" />
         <script>
-            /* First paint defaults to light; OS preference applies only when the
-               user explicitly selects System. */
+            /* First paint follows the OS (Auto) unless the visitor picked a
+               theme; a stored 'light'/'dark' wins over the system preference. */
             (function () {
                 var KEY = 'ezdistro-theme';
-                var choice = 'light';
-                var mode = 'light';
+                var stored = null;
                 try {
-                    var stored = localStorage.getItem(KEY);
-                    if (stored === 'dark') {
-                        choice = mode = 'dark';
-                    } else if (stored === 'system') {
-                        choice = 'system';
-                        if (window.matchMedia('(prefers-color-scheme: dark)').matches) mode = 'dark';
-                    }
+                    stored = localStorage.getItem(KEY);
                 } catch (e) {}
+                var choice = stored === 'dark' || stored === 'light' ? stored : 'system';
+                var mode = choice;
+                if (choice === 'system') {
+                    try {
+                        mode = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                    } catch (e) {
+                        mode = 'light';
+                    }
+                }
                 var el = document.documentElement;
                 el.dataset.theme = mode === 'dark' ? 'ezdistro-dark' : 'ezdistro';
                 el.dataset.themeMode = mode;

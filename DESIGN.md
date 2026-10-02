@@ -105,7 +105,7 @@ EzDistro's interface is a wireframe atlas on white paper: hairline rules form th
 
 ## Elevation & Depth
 
-No shadows anywhere (`--depth: 0`, `--noise: 0`). Elevation = paper → ash fill → blue action surface. One orchestrated entrance per navigation (`.ezdistro-pagehead` rises once, `prefers-reduced-motion` respected); one breathing live node on the rail; theme switch cross-fades in 0.25s.
+No shadows anywhere (`--depth: 0`, `--noise: 0`). Elevation = paper → ash fill → blue action surface. One orchestrated entrance per navigation (`.ezdistro-pagehead` rises once, `prefers-reduced-motion` respected); one breathing live node on the rail; theme switch cross-fades in 0.25s and defaults to **Auto** — the OS colour scheme sets the first paint, while an explicit Light or Dark pick is stored and wins.
 
 ## Shapes
 
