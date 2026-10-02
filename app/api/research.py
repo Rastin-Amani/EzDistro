@@ -58,6 +58,19 @@ from app.services.serp import refresh_keyword, serp_available
 from app.templates import templates
 from app.utils import error_response, ok_with_redirect, success_response
 
+
+def _flagged(target: str, flag: str) -> str:
+    """Append a `ga` status flag to a redirect target.
+
+    `target` may or may not already carry a query string, so the separator has
+    to be chosen: `/?ga=error`, not `/&ga=error` (a bare `/&ga=…` is a path
+    segment and 404s).
+    """
+    sep = "&" if "?" in target else "?"
+    joiner = "" if target.endswith(("?", "&")) else sep
+    return f"{target}{joiner}ga={flag}"
+
+
 router = APIRouter()
 
 RUN_PAGE = 25
@@ -141,8 +154,8 @@ def google_ads_connect(request: Request, project_id: str = ""):
     user = require_user(request)
     pb = request.state.pb
     if not google_ads_service.client_configured(pb, project_id):
-        target = f"/projects/{project_id}?tab=research&ga=unconfigured" if project_id else "/"
-        return RedirectResponse(target, status_code=303)
+        target = f"/projects/{project_id}?tab=research" if project_id else "/"
+        return RedirectResponse(_flagged(target, "unconfigured"), status_code=303)
     state = google_ads_service.make_state(user_id=user["id"], project_id=project_id)
     url = google_ads_service.authorize_url(
         state, request_base=str(request.base_url), pb=pb, project_id=project_id
@@ -169,9 +182,9 @@ async def google_ads_callback(
     target = f"/projects/{project_id}?tab=research" if project_id else "/"
     if error or not code:
         flag = "denied" if error == "access_denied" else "error"
-        return RedirectResponse(f"{target}&ga={flag}", status_code=303)
+        return RedirectResponse(_flagged(target, flag), status_code=303)
     if not payload:
-        return RedirectResponse("/?ga=error", status_code=303)
+        return RedirectResponse(_flagged("/", "error"), status_code=303)
     try:
         await google_ads_service.connect(
             request.state.pb,
@@ -181,8 +194,8 @@ async def google_ads_callback(
             project_id=project_id,
         )
     except Exception:
-        return RedirectResponse(f"{target}&ga=error", status_code=303)
-    return RedirectResponse(f"{target}&ga=connected", status_code=303)
+        return RedirectResponse(_flagged(target, "error"), status_code=303)
+    return RedirectResponse(_flagged(target, "connected"), status_code=303)
 
 
 @router.post("/projects/{project_id}/google-ads/disconnect")
@@ -389,6 +402,7 @@ def research_run_page(request: Request, project_id: str, run_id: str, tab: str =
     )
     context = _run_context(request, project, run, active)
     context["title"] = run.get("name") or "Research"
+    context["ga"] = safe_str(request.query_params.get("ga"))
     return templates.TemplateResponse(request, "pages/research/run.html", context)
 
 

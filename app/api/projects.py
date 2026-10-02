@@ -365,6 +365,7 @@ def _tab_context(
     status: str = "",
     q: str = "",
     user: dict[str, Any] | None = None,
+    ga: str = "",
 ) -> dict[str, Any]:
     """Build the template context a project tab needs.
 
@@ -495,6 +496,7 @@ def _tab_context(
         )
         context["countries"] = RESEARCH_COUNTRIES
         context["languages"] = RESEARCH_LANGUAGES
+        context["ga"] = ga
 
     return context
 
@@ -515,6 +517,7 @@ def project_detail(request: Request, project_id: str, tab: str = "settings"):
         status=request.query_params.get("status") or "",
         q=request.query_params.get("q") or "",
         user=current_user(request),
+        ga=request.query_params.get("ga") or "",
     )
     context["title"] = project.get("name", ("Project"))
     context["active_tab"] = active
@@ -541,6 +544,7 @@ def project_tab(request: Request, project_id: str, tab: str):
         status=request.query_params.get("status") or "",
         q=request.query_params.get("q") or "",
         user=current_user(request),
+        ga=request.query_params.get("ga") or "",
     )
     return templates.TemplateResponse(request, f"pages/projects/tabs/{tab}.html", context)
 

@@ -3,6 +3,17 @@
 
   {{ f.page_header( 'Research', 'Discover search demand, analyze competitors and turn evidence into an article roadmap.', eyebrow='Project', actions='<a class="btn btn-sm btn-ghost" href="/docs/SEO_RESEARCH.md" target="_blank" rel="noopener">Setup guide</a>' ) }}
 
+  {% if ga %}
+    <div class="alert alert-soft {{ 'alert-success' if ga == 'connected' else 'alert-warning' }} mb-4">
+      <span>
+        {% if ga == 'connected' %}Google Ads connected.
+        {% elif ga == 'unconfigured' %}Google Ads OAuth is not configured for this project yet.
+        {% elif ga == 'denied' %}Google Ads access was denied.
+        {% else %}Google Ads connection failed. Try again.{% endif %}
+      </span>
+    </div>
+  {% endif %}
+
   {% set ads_step = '?tab=integrations' %}
 
   {{ f.panel('Google Ads', actions='<a class="btn btn-xs btn-ghost" href="/projects/' ~ project.id ~ ads_step ~ '">Open Connections</a>') }}

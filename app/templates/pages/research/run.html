@@ -13,7 +13,7 @@
     <div class="alert alert-soft {{ 'alert-success' if ga == 'connected' else 'alert-warning' }}">
       <span>
         {% if ga == 'connected' %}Google Ads connected.
-        {% elif ga == 'unconfigured' %}Google Ads OAuth is not configured on this deployment.
+        {% elif ga == 'unconfigured' %}Google Ads OAuth is not configured for this project yet.
         {% elif ga == 'denied' %}Google Ads access was denied.
         {% else %}Google Ads connection failed. Try again.{% endif %}
       </span>
