@@ -178,7 +178,7 @@ async def google_ads_callback(
         payload = google_ads_service.read_state(state)
     except PermanentError:
         payload = {}
-    project_id = str(payload.get("project_id") or "")
+    project_id = str(payload.get("p") or "")
     target = f"/projects/{project_id}?tab=research" if project_id else "/"
     if error or not code:
         flag = "denied" if error == "access_denied" else "error"
@@ -188,7 +188,7 @@ async def google_ads_callback(
     try:
         await google_ads_service.connect(
             request.state.pb,
-            user_id=str(payload.get("user_id") or ""),
+            user_id=str(payload.get("u") or ""),
             code=code,
             request_base=str(request.base_url),
             project_id=project_id,

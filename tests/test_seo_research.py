@@ -677,3 +677,90 @@ def test_ga_flag_uses_the_right_separator():
     assert _flagged("/projects/p1?tab=research&", "denied") == (
         "/projects/p1?tab=research&ga=denied"
     )
+
+
+def test_google_ads_state_round_trips_user_and_project():
+    """The callback reads state["u"]/state["p"] — make_state must store them."""
+    state = google_ads_service.make_state(user_id="u1", project_id="proj-a")
+    payload = google_ads_service.read_state(state)
+    assert payload["u"] == "u1"
+    assert payload["p"] == "proj-a"
+
+
+def test_google_ads_callback_redirects_to_the_project_after_connect():
+    """A completed OAuth callback must land back on the run's project, not `/`.
+
+    Regression: the callback once read state keys that did not exist, so it
+    always redirected to `/` and stored nothing.
+    """
+    import asyncio
+
+    from app.api import research as R
+    from tests.helpers import make_req, make_user
+
+    pb, project, _registry = _setup()
+    state = google_ads_service.make_state(user_id="u1", project_id=project["id"])
+
+    captured: dict[str, object] = {}
+
+    async def fake_connect(pb_, *, user_id, code, request_base="", project_id=""):
+        captured.update(user_id=user_id, code=code, project_id=project_id)
+        return {"id": "conn1"}
+
+    req = make_req(pb, make_user(), project["id"])
+    req.base_url = "https://app.test/"  # callbacks build the redirect from this
+    original = google_ads_service.connect
+    google_ads_service.connect = fake_connect  # type: ignore[assignment]
+    try:
+        resp = asyncio.run(R.google_ads_callback(req, code="auth-code", state=state, error=""))
+    finally:
+        google_ads_service.connect = original  # type: ignore[assignment]
+
+    assert resp.status_code == 303
+    assert resp.headers["location"] == (f"/projects/{project['id']}?tab=research&ga=connected")
+    assert captured["project_id"] == project["id"]
+    assert captured["user_id"] == "u1"
+
+
+def test_google_ads_discover_customers_stores_rows_for_the_project():
+    """After OAuth, discovering customers must populate google_ads_customers.
+
+    Regression: nothing was ever stored because the callback had no user id.
+    """
+    import asyncio
+
+    from app.providers.base import AdsCustomer
+    from app.repositories.research import GoogleAdsConnectionRepo, GoogleAdsCustomerRepo
+    from app.services import google_ads as g
+
+    pb, project, _registry = _setup()
+    connection = GoogleAdsConnectionRepo(pb).upsert(
+        user="u1",
+        google_account_id="acct",
+        email="me@example.com",
+        display_name="Me",
+        refresh_token_enc="enc",
+        token_metadata={},
+        created_by="u1",
+    )
+
+    class StubClient:
+        async def list_customers(self, customer_id=None):
+            return [
+                AdsCustomer("111", "Acme Ads", "USD", "America/New_York"),
+                AdsCustomer("222", "Beta Ads", "EUR", "Europe/Berlin"),
+            ]
+
+        async def aclose(self):
+            return None
+
+    original = g.client_for_connection
+    g.client_for_connection = lambda *a, **k: StubClient()  # type: ignore[assignment]
+    try:
+        rows = asyncio.run(g.discover_customers(pb, connection, project_id=project["id"]))
+    finally:
+        g.client_for_connection = original  # type: ignore[assignment]
+
+    assert {r["customerId"] for r in rows} == {"111", "222"}
+    stored = GoogleAdsCustomerRepo(pb).list_for_project(project["id"])
+    assert {r["customerId"] for r in stored} == {"111", "222"}
