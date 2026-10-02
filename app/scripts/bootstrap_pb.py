@@ -19,6 +19,7 @@ from typing import Any
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
+import httpx  # noqa: E402
 from pocketbase import PocketBase  # noqa: E402
 
 from app.config import settings  # noqa: E402
@@ -1252,6 +1253,71 @@ def import_collections(pb: PocketBase) -> None:
         ) from exc
 
 
+def ensure_select_values(pb: PocketBase) -> None:
+    """Reconcile select-field values on LIVE collections with the code schema.
+
+    ``import_collections`` merges existing collections field-by-field but does
+    NOT replace an existing select field's ``values`` array, so a newly added
+    option (e.g. ``google_ads`` on ``integrations.category``) never reaches a
+    live database that already has the field. PocketBase then rejects records
+    using the new value with ``validation_invalid_value``.
+
+    The write goes through the RAW admin API with camelCase field keys, never
+    through the Python SDK's ``collections.update``: the SDK snake-cases field
+    metadata on read, so round-tripping ``fields`` silently drops keys like
+    ``autogeneratePattern`` on the system ``id`` field — which then makes every
+    create fail with ``id: Cannot be blank``.
+
+    Verified live against PocketBase >= 0.23.
+    """
+    try:
+        live = pb.collections.get_full_list()
+    except Exception:
+        return
+    spec_by_name = {spec["name"]: spec for spec in COLLECTIONS}
+    token = getattr(pb.auth_store, "token", "")
+    base = str(pb.base_url).rstrip("/")
+    headers = {"Authorization": token}
+    for collection in live:
+        spec = spec_by_name.get(collection.name)
+        if not spec:
+            continue
+        wanted: dict[str, list[str]] = {
+            f["name"]: list(f.get("values") or [])
+            for f in spec.get("fields", [])
+            if f.get("type") == "select"
+        }
+        if not wanted:
+            continue
+        # Fetch the raw camelCase field metadata (the SDK read is lossy).
+        resp = httpx.get(f"{base}/api/collections/{collection.name}", headers=headers)
+        if resp.status_code != 200:
+            continue
+        raw_fields = resp.json().get("fields") or []
+        changed = False
+        for field in raw_fields:
+            if field.get("type") != "select" or field.get("name") not in wanted:
+                continue
+            values = list(field.get("values") or [])
+            missing = [v for v in wanted[field["name"]] if v not in values]
+            if missing:
+                field["values"] = values + missing
+                changed = True
+                print(f"{collection.name}.{field['name']}: added select values", missing)
+        if changed:
+            patched = httpx.patch(
+                f"{base}/api/collections/{collection.name}",
+                headers=headers,
+                json={"fields": raw_fields},
+            )
+            if patched.status_code != 200:
+                print(
+                    f"WARNING: could not update {collection.name} select values: "
+                    f"{patched.status_code} {patched.text[:200]}",
+                    file=sys.stderr,
+                )
+
+
 def ensure_users_fields(pb: PocketBase) -> None:
     """Add role + display_name to the built-in users collection if missing."""
     fields = list(pb.collections.get_one("users").fields)
@@ -1526,6 +1592,7 @@ def main() -> None:
 
     import_collections(pb)
     time.sleep(0.5)
+    ensure_select_values(pb)
     ensure_users_fields(pb)
     ensure_users_rules(pb)
     seed_defaults(pb)

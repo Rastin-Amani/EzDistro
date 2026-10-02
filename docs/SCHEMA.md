@@ -38,14 +38,29 @@ Requires:              PocketBase ≥ 0.23
 > defines 13 research collections — `google_ads_connections`, `google_ads_customers`,
 > `research_runs`, `research_seeds`, `keywords`, `keyword_metrics`,
 > `keyword_volumes`, `clusters`, `competitor_pages`, `content_gaps`,
-> `article_ideas`, `serp_queries`, `serp_results` — plus a `serp` value on
-> `integrations.category` and WordPress-mirror fields on `articles`
+> `article_ideas`, `serp_queries`, `serp_results` — plus `serp` and `google_ads`
+> values on `integrations.category` and WordPress-mirror fields on `articles`
 > (`source`, `syncStatus`, `remoteStatus`, `remoteModified`, `remoteContentHash`,
 > `remoteSlug`, `remoteExcerpt`, `remoteMeta`, `contentHash`). The table below
 > predates them; the bootstrap script is the source of truth, and
 > `pb_collections_import.json` is generated from it
 > (`python -m app.scripts.bootstrap_pb --export`). See
 > [SEO_RESEARCH.md](SEO_RESEARCH.md).
+>
+> **Schema drift — always re-run `make bootstrap` after changing `COLLECTIONS`.**
+> `import_collections` adds new *fields* to existing collections, but PocketBase
+> does **not** replace an existing select field's `values` array through the
+> import — so a newly added option (e.g. `google_ads`) silently misses a live DB
+> and record creation then fails with `validation_invalid_value`. To cover this,
+> `bootstrap_pb.main()` runs `ensure_select_values()` right after the import,
+> which unions the code schema's select values into every live collection.
+>
+> `ensure_select_values()` writes through the **raw admin API** with camelCase
+> field keys, never the Python SDK's `collections.update`: the SDK snake-cases
+> field metadata on read, so round-tripping `fields` drops
+> `autogeneratePattern` on the system `id` field, after which every create fails
+> with `id: Cannot be blank`. `ensure_users_rules()` follows the same rule (it
+> sends only rule keys, never `fields`).
 
 | Collection | Purpose | Key uniqueness |
 |---|---|---|

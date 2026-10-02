@@ -6,7 +6,7 @@ EzDistro Platform: FastAPI + HTMX (Jinja2/DaisyUI) SEO automation platform (Word
 
 - **Web**: `make web` → `uvicorn app.main:app --reload --port 8000`
 - **Worker**: `make worker` → `python -m app.workers.worker` (separate process; needs `PB_ADMIN_EMAIL`/`PB_ADMIN_PASSWORD`)
-- Bootstrap the PocketBase schema (idempotent): `make bootstrap` → `python -m app.scripts.bootstrap_pb` (also seeds default prompts + admin user).
+- Bootstrap the PocketBase schema (idempotent): `make bootstrap` → `python -m app.scripts.bootstrap_pb` (also seeds default prompts + admin user). **Re-run it after any change to `COLLECTIONS`**: the import adds new *fields* to existing collections but cannot replace an existing select's `values`, so `main()` also runs `ensure_select_values()` to union newly added select options (e.g. `google_ads` on `integrations.category`) into a live database — without it, creating a record with the new value fails with `validation_invalid_value`. That helper writes through the **raw admin API with camelCase keys**, never the SDK's `collections.update`, because the SDK snake-cases field metadata and round-tripping `fields` drops `autogeneratePattern` on the system `id` field (which then makes every create fail with `id: Cannot be blank`).
 
 **Working directory matters**: both processes must be launched from the repo root. Config is pydantic-settings, which reads `.env` from the *current working directory* — `make web`/`make worker` already do this, but never start them from another folder. On this host, `make install-web-service` / `make install-worker-service` install systemd units (templates in `deploy/`) that run the same commands with `WorkingDirectory=__ROOT__`.
 
