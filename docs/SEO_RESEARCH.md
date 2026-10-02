@@ -124,6 +124,31 @@ Supported seed types (`research_seeds.seedType`): `keyword`, `url`, `site`,
 URL/site/competitor seeds each become their own request. The per-run budget is
 shared across batches (`RESEARCH_MAX_KEYWORDS_PER_RUN`, default 5000).
 
+### File import (no Google Ads API access)
+
+If a user cannot get Google Ads API access, they can export keyword ideas from
+**Google Keyword Planner** (CSV or XLSX) and upload the file in the Research tab.
+This creates a research run with `researchType = "import"` and the file stored
+base64-encoded in `config.importPayload`; the run needs **no** Google Ads
+connection or customer.
+
+- `app/services/research_import.py::parse_keyword_file(data, filename, mapping=None)`
+  parses the file with the standard library only (`csv`; XLSX via `zipfile` +
+  `xml.etree`, so **no new dependency**). It detects columns by alias (Keyword /
+  Avg. monthly searches / Competition / Competition (indexed value) / Avg. CPC /
+  bid ranges / Currency), tolerates preamble rows, handles `1,234` and `1.2K`
+  style numbers, and de-duplicates case-insensitively keeping the larger volume.
+- The parsed rows are persisted by the **existing**
+  `research_keywords._persist(...)` with `source="keyword_planner_import"`, so the
+  API path and the import path share clustering, gaps, opportunities and the
+  topic handoff. Google metrics are never invented or estimated — only
+  classified/summarised by AI later.
+- `POST /projects/{id}/research/import/preview` returns the detected columns and
+  keyword count (and a small preview table) so the user can confirm before
+  starting. `POST /projects/{id}/research/import` starts the run.
+- If no keyword column can be detected, the preview says so and the route accepts
+  a manual `mapping_column` (column index) rather than failing.
+
 ## Caching, idempotency and resumability
 
 - **Run-level cache.** `ResearchRunRepo.fingerprint(targeting, seeds)` hashes
