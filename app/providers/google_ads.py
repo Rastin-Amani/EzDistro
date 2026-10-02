@@ -197,15 +197,39 @@ class GoogleAdsClient:
         return [str(n).replace("customers/", "") for n in names]
 
     async def list_customers(self, customer_id: str | None = None) -> list[AdsCustomer]:
-        """customer_client metadata for a (manager or direct) customer id."""
+        """customer_client metadata for a (manager or direct) customer id.
+
+        With no explicit/manager customer id we list every accessible customer
+        and enrich each with metadata. Metadata is best-effort: a customer whose
+        `customer_client` query is denied (e.g. a direct account that needs no
+        manager) still appears, using the accessible-customer id itself — so a
+        single direct Ads account is never dropped just because the metadata
+        probe failed.
+        """
         target = (customer_id or self._login_customer_id or "").replace("customers/", "")
-        if not target:
-            # No manager configured: resolve metadata per accessible customer.
-            out: list[AdsCustomer] = []
-            for cid in await self.list_accessible_customers():
-                out.extend(await self._customer_metadata(cid))
-            return out
-        return await self._customer_metadata(target)
+        if target:
+            return await self._customer_metadata(target)
+
+        out: list[AdsCustomer] = []
+        emitted: set[str] = set()
+        probed: set[str] = set()
+        for cid in await self.list_accessible_customers():
+            cid = str(cid).replace("customers/", "")
+            if not cid or cid in probed:
+                continue
+            probed.add(cid)
+            try:
+                rows = await self._customer_metadata(cid)
+            except (PermanentError, TransientError):
+                rows = []
+            if not rows:
+                # Metadata unavailable → surface the accessible customer as-is.
+                rows = [AdsCustomer(customer_id=cid)]
+            for row in rows:
+                if row.customer_id and row.customer_id not in emitted:
+                    emitted.add(row.customer_id)
+                    out.append(row)
+        return out
 
     async def search(self, query: str, *, customer_id: str | None = None) -> list[dict[str, Any]]:
         """Run a GAQL query via `googleAds:searchStream` (all pages in one call).
@@ -227,20 +251,16 @@ class GoogleAdsClient:
         return list((data or {}).get("results") or [])
 
     async def _customer_metadata(self, customer_id: str) -> list[AdsCustomer]:
+        customer_id = customer_id.replace("customers/", "")
         query = (
             "SELECT customer_client.id, customer_client.descriptive_name, "
             "customer_client.currency_code, customer_client.time_zone, "
             "customer_client.manager, customer_client.status "
             "FROM customer_client WHERE customer_client.level <= 1"
         )
-        data = await self._request(
-            "POST",
-            f"/customers/{customer_id}/googleAds:search",
-            json={"query": query},
-            customer_id=customer_id,
-        )
+        rows = await self.search(query, customer_id=customer_id)
         out: list[AdsCustomer] = []
-        for row in data.get("results") or []:
+        for row in rows:
             cc = row.get("customerClient") or {}
             cid = str(cc.get("id") or "")
             if not cid:

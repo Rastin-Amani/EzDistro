@@ -764,3 +764,58 @@ def test_google_ads_discover_customers_stores_rows_for_the_project():
     assert {r["customerId"] for r in rows} == {"111", "222"}
     stored = GoogleAdsCustomerRepo(pb).list_for_project(project["id"])
     assert {r["customerId"] for r in stored} == {"111", "222"}
+
+
+def test_google_ads_list_customers_keeps_account_when_metadata_probe_fails():
+    """A denied customer_client probe must not drop the accessible account.
+
+    Regression: one failing metadata lookup aborted the whole listing, so a
+    single direct Ads account produced zero customers.
+    """
+    import asyncio
+
+    from app.providers.base import AdsCustomer, PermanentError
+    from app.providers.google_ads import GoogleAdsClient
+
+    client = GoogleAdsClient(
+        client_id="cid",
+        client_secret="secret",
+        refresh_token="refresh",
+    )
+
+    async def fake_accessible() -> list[str]:
+        return ["1234567890"]
+
+    async def boom(customer_id: str):
+        raise PermanentError("PERMISSION_DENIED")
+
+    client.list_accessible_customers = fake_accessible  # type: ignore[assignment]
+    client._customer_metadata = boom  # type: ignore[assignment]
+
+    rows = asyncio.run(client.list_customers())
+    assert [c.customer_id for c in rows] == ["1234567890"]
+    assert isinstance(rows[0], AdsCustomer)
+    asyncio.run(client.aclose())
+
+
+def test_google_ads_list_customers_dedupes_metadata_rows():
+    """Metadata rows are merged without duplicating the probed customer id."""
+    import asyncio
+
+    from app.providers.base import AdsCustomer
+    from app.providers.google_ads import GoogleAdsClient
+
+    client = GoogleAdsClient(client_id="cid", client_secret="secret", refresh_token="r")
+
+    async def fake_accessible() -> list[str]:
+        return ["111", "111"]
+
+    async def meta(customer_id: str):
+        return [AdsCustomer(customer_id=customer_id, descriptive_name="Acme")]
+
+    client.list_accessible_customers = fake_accessible  # type: ignore[assignment]
+    client._customer_metadata = meta  # type: ignore[assignment]
+
+    rows = asyncio.run(client.list_customers())
+    assert [c.customer_id for c in rows] == ["111"]
+    asyncio.run(client.aclose())
