@@ -633,3 +633,28 @@ def test_google_ads_authorize_url_requires_project_credentials():
     )
     assert "cid.apps.googleusercontent.com" in url
     assert "accounts.google.com" in url
+
+
+def test_google_ads_callback_is_served_on_both_paths():
+    """Google may redirect to either registered URI; both must resolve."""
+    from app.main import app
+
+    paths = {r.path for r in app.routes}
+    assert "/auth/google-ads/callback" in paths
+    assert "/projects/google-ads/callback" in paths
+
+
+def test_google_ads_redirect_uri_falls_back_to_auth_path():
+    pb, project, _registry = _setup()
+    # No connection → the derived fallback (the /auth form Google Cloud expects).
+    fallback = google_ads_service.redirect_uri("https://app.test/", pb=pb, project_id=project["id"])
+    assert fallback == "https://app.test/auth/google-ads/callback"
+
+    # A configured redirect_uri on the connection is used verbatim.
+    _google_ads_integration(
+        pb, project["id"], client_id="cid.apps.googleusercontent.com", client_secret="shh"
+    )
+    configured = google_ads_service.redirect_uri(
+        "https://app.test/", pb=pb, project_id=project["id"]
+    )
+    assert configured == "https://app.test/projects/google-ads/callback"
