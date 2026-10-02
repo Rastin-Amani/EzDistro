@@ -234,6 +234,28 @@ def test_project_detail_page_renders_research_tab():
     assert "Research" in body
 
 
+def test_research_tab_shows_the_google_ads_outcome_banner():
+    """The OAuth callback redirects here, so the outcome must be visible."""
+    pb, project, _, _ = _setup()
+    for ga, expected in (
+        ("connected", "Google Ads connected."),
+        ("unconfigured", "Google Ads OAuth is not configured for this project yet."),
+        ("denied", "Google Ads access was denied."),
+        ("error", "Google Ads connection failed. Try again."),
+    ):
+        req = make_req(pb, make_user(), project["id"])
+        req.query_params = {"tab": "research", "ga": ga}
+        resp = _call(P.project_detail, req, project["id"], tab="research")
+        assert resp.status_code == 200
+        assert expected in resp.body.decode()
+
+    # No flag → no banner at all.
+    req = make_req(pb, make_user(), project["id"])
+    req.query_params = {"tab": "research"}
+    resp = _call(P.project_detail, req, project["id"], tab="research")
+    assert "Google Ads connected." not in resp.body.decode()
+
+
 # ---------------------------------------------------------------------------
 # Run page + fragments
 # ---------------------------------------------------------------------------
@@ -410,7 +432,8 @@ def test_google_ads_connect_redirects_to_connect_when_unconfigured():
     req = make_req(pb, user, "")
     resp = _call(R.google_ads_connect, req, project_id="")
     assert resp.status_code == 303
-    assert resp.headers["location"] == "/"
+    # No project in the URL → root, with the outcome flag as a real query string.
+    assert resp.headers["location"] == "/?ga=unconfigured"
 
 
 def test_opportunity_accept_creates_an_article_and_a_write_job():

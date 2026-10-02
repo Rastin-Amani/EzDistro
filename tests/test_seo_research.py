@@ -658,3 +658,22 @@ def test_google_ads_redirect_uri_falls_back_to_auth_path():
         "https://app.test/", pb=pb, project_id=project["id"]
     )
     assert configured == "https://app.test/projects/google-ads/callback"
+
+
+def test_ga_flag_uses_the_right_separator():
+    """A bare target needs `?`, a target with a query string needs `&`."""
+    from app.api.research import _flagged
+
+    # No project in the OAuth state → the callback redirects to `/`.
+    # `/&ga=error` is a path segment and 404s; it must be `/?ga=error`.
+    assert _flagged("/", "error") == "/?ga=error"
+    assert _flagged("/", "connected") == "/?ga=connected"
+    # A known project already has a query string.
+    assert _flagged("/projects/p1?tab=research", "connected") == (
+        "/projects/p1?tab=research&ga=connected"
+    )
+    # Never double up a separator.
+    assert _flagged("/projects/p1?", "connected") == "/projects/p1?ga=connected"
+    assert _flagged("/projects/p1?tab=research&", "denied") == (
+        "/projects/p1?tab=research&ga=denied"
+    )
