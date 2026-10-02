@@ -635,16 +635,29 @@ class ProviderRegistry:
             return cached[1]
 
         category = integration.get("category") or ""
-        getter: Callable[..., Any] | None = {
+        # Only categories whose providers expose a `/models`-style listing.
+        getters_any: dict[str, Any] = {
             CATEGORY_LLM: self.get_llm_provider,
-        }.get(category)
+            CATEGORY_EMBEDDING: self.get_embedding_provider,
+            CATEGORY_RERANKER: self.get_reranker_provider,
+            CATEGORY_IMAGE: self.get_image_provider,
+        }
+        getter: Any = getters_any.get(category)
         if getter is None:
             return []
         try:
             provider_name = integration.get("provider") or DEFAULT_PROVIDER.get(category, "")
-            probe_settings = {
+            configured_model = (integration.get("configuration") or {}).get("model") or "probe"
+            # LLM resolves the model from a role; other categories read their own
+            # settings key (e.g. embeddingModel); "probe" satisfies the builders.
+            probe_settings: dict[str, Any] = {
                 "defaultLlmProvider": provider_name,
-                "defaultLlmModel": (integration.get("configuration") or {}).get("model") or "probe",
+                "defaultLlmModel": configured_model,
+                "embeddingProvider": provider_name,
+                "embeddingModel": configured_model,
+                "rerankerProvider": provider_name,
+                "rerankModel": configured_model,
+                "imageProvider": provider_name,
             }
             provider = getter(
                 project,
@@ -652,7 +665,7 @@ class ProviderRegistry:
                 None,
                 integration=integration,
                 role="outline",
-                role_config={"provider": provider_name, "model": probe_settings["defaultLlmModel"]},
+                role_config={"provider": provider_name, "model": configured_model},
             )
             try:
                 models = await provider.list_models()

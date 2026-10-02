@@ -246,7 +246,7 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-                    <label class="form-control">
+                    <label class="form-control" x-show="showGeneric()">
 
                         <div class="label px-0 pb-1">
 
@@ -266,13 +266,13 @@
 
                     </label>
 
-                    <label class="form-control">
+                    <label class="form-control" x-show="showGeneric()">
 
                         <div class="label px-0 pb-1">
 
                             <span class="label-text font-medium text-sm">{{ ('Model (optional)') }}</span>
 
-                            <span class="tooltip tooltip-left sm:tooltip-top" data-tip="{{ (( 'Default model for this connection (e.g. gpt-4o-mini) — can be changed in project settings' )) }}">
+                            <span class="tooltip tooltip-left sm:tooltip-top" data-tip="{{ (( 'Default model for this connection (e.g. gpt-4o-mini) — fetch from the provider or type it manually' )) }}">
 
                                 <span class="cursor-help text-base-content/40"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/></svg></span>
 
@@ -280,7 +280,35 @@
 
                         </div>
 
-                        <input name="model" class="input input-bordered w-full" dir="ltr" x-model="form.model" />
+                        <div class="flex gap-2">
+
+                            <input name="model" class="input input-bordered flex-1" dir="ltr" x-model="form.model"
+
+                                   list="int-models" autocomplete="off" placeholder="gpt-4o-mini" />
+
+                            <button type="button" class="btn btn-ghost btn-sm" x-show="isEdit && supportsModels()"
+
+                                    @click="$el.setAttribute('hx-get', '/projects/{{ project.id }}/integrations/' + form.record_id + '/models'); htmx.process($el); htmx.trigger($el, 'fetch-models')"
+
+                                    hx-trigger="fetch-models"
+
+                                    hx-target="#int-models" hx-swap="innerHTML"
+
+                                    title="{{ ('Fetch models from the provider') }}">
+
+                                <span class="loading loading-spinner loading-xs htmx-indicator"></span>
+
+                                {{ ('Fetch') }}
+
+                            </button>
+
+                        </div>
+
+                        <datalist id="int-models"></datalist>
+
+                        <span class="text-xs opacity-40 mt-1" x-show="isEdit && supportsModels()">{{ ('Fetched from the saved connection — you can also type the model ID.') }}</span>
+
+                        <span class="text-xs opacity-40 mt-1" x-show="!isEdit">{{ ('Save first to fetch models, or type the model ID now.') }}</span>
 
                     </label>
 
@@ -288,7 +316,7 @@
 
 
 
-                <label class="form-control">
+                <label class="form-control" x-show="showGeneric()">
 
                     <div class="label px-0 pb-1">
 
@@ -391,6 +419,22 @@
                             </div>
 
                             <input type="password" name="developer_token" class="input input-bordered w-full" dir="ltr" autocomplete="new-password" x-model="form.developer_token" />
+
+                        </label>
+
+                        <label class="form-control">
+
+                            <div class="label px-0 pb-1">
+
+                                <span class="label-text font-medium text-sm">{{ ('Client secret') }}</span>
+
+                            </div>
+
+                            <input type="password" name="client_secret" class="input input-bordered w-full" dir="ltr"
+
+                                   autocomplete="new-password" x-model="form.client_secret"
+
+                                   placeholder="{{ ('If left empty, the previous value is kept') }}" />
 
                         </label>
 

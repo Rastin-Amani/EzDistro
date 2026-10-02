@@ -30,6 +30,7 @@
                     api_version: '',
                     login_customer_id: '',
                     developer_token: '',
+                    client_secret: '',
                 },
 
                 openEditor(payload, category) {
@@ -51,6 +52,7 @@
                             api_version: payload.apiVersion || '',
                             login_customer_id: payload.loginCustomerId || '',
                             developer_token: '',
+                            client_secret: '',
                         };
                     } else {
                         self.isEdit = false;
@@ -69,9 +71,13 @@
                             api_version: '',
                             login_customer_id: '',
                             developer_token: '',
+                            client_secret: '',
                         };
                     }
                     self.open = true;
+                    // Drop stale model options from a previously opened connection.
+                    var modelList = document.getElementById('int-models');
+                    if (modelList) modelList.innerHTML = '';
                     // Read the payload off the clicked row (attribute may be a JSON string).
                     var dialog = document.getElementById('int-editor');
                     if (dialog && typeof dialog.showModal === 'function') {
@@ -105,6 +111,14 @@
 
                 isGoogleAds() {
                     return this.form.category === 'google_ads';
+                },
+                showGeneric() {
+                    // Provider / model / base URL make no sense for an OAuth-client connection.
+                    return !this.isGoogleAds();
+                },
+                supportsModels() {
+                    // Categories whose providers expose a model listing endpoint.
+                    return ['llm', 'embedding', 'reranker', 'image'].indexOf(this.form.category) !== -1;
                 },
                 };
             });

@@ -7,6 +7,8 @@ write_topic — happy paths, validation errors, and role/tenant guards.
 
 from __future__ import annotations
 
+import asyncio
+
 from app.api import projects as P
 from app.repositories.jobs import JobRepo
 from app.repositories.members import MemberRepo
@@ -318,3 +320,55 @@ def test_write_topic_rejects_viewer_role():
     resp = call_route(P.write_topic, req, proj_a["id"], t["id"])
     assert "failed" in toast_message(resp) or "role" in toast_message(resp)
     assert TopicRepo(pb).get(t["id"])["status"] == "planned"
+
+
+# ---------------------------------------------------------------------------
+# integration model discovery (connections tab)
+# ---------------------------------------------------------------------------
+def test_integration_models_returns_options_for_saved_connection():
+    pb, proj_a, _ = _setup()
+    from app.repositories.integrations import IntegrationRepo
+
+    rec = IntegrationRepo(pb).create(
+        project=proj_a["id"],
+        category="llm",
+        provider="openai_compat",
+        display_name="Main",
+        configuration={"base_url": "https://api.test/v1"},
+        secrets_enc="",
+        enabled=True,
+        created_by="u1",
+    )
+    req = make_req(pb, make_user("u1"), proj_a["id"])
+    resp = asyncio.run(P.integration_models(req, proj_a["id"], rec["id"]))
+    assert resp.status_code == 200
+    # No reachable provider in tests → empty datalist, but the route must not error.
+    assert b"<option" in resp.body
+
+
+def test_integration_models_empty_for_unknown_record():
+    pb, proj_a, _ = _setup()
+    req = make_req(pb, make_user("u1"), proj_a["id"])
+    resp = asyncio.run(P.integration_models(req, proj_a["id"], "missing"))
+    assert resp.status_code == 200
+    assert resp.body == b""
+
+
+def test_integration_models_rejects_foreign_connection():
+    pb, proj_a, proj_b = _setup()
+    from app.repositories.integrations import IntegrationRepo
+
+    rec = IntegrationRepo(pb).create(
+        project=proj_b["id"],
+        category="llm",
+        provider="openai_compat",
+        display_name="Other",
+        configuration={},
+        secrets_enc="",
+        enabled=True,
+        created_by="u2",
+    )
+    req = make_req(pb, make_user("u1"), proj_a["id"])
+    resp = asyncio.run(P.integration_models(req, proj_a["id"], rec["id"]))
+    assert resp.status_code == 200
+    assert resp.body == b""

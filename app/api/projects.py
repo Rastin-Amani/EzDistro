@@ -1048,6 +1048,34 @@ async def test_integration(request: Request, project_id: str, record_id: str):
     )
 
 
+@router.get("/projects/{project_id}/integrations/{record_id}/models")
+async def integration_models(request: Request, project_id: str, record_id: str):
+    """Model discovery for a saved connection — returns datalist options.
+
+    Only works for an existing connection because the stored (encrypted) API key
+    is what the provider is queried with; a brand-new connection must be saved
+    first. Returns an empty datalist when the provider can't list models, so the
+    field stays fully typeable.
+    """
+    try:
+        project = require_project_access(request, project_id)
+        if not record_id:
+            return HTMLResponse("")
+        integration = IntegrationRepo(request.state.pb).get(record_id)
+        if not integration or integration.get("project") != project_id:
+            return HTMLResponse("")
+        from app.providers.registry import ProviderRegistry
+
+        models = await ProviderRegistry(request.state.pb).list_models(project, integration)
+        return templates.TemplateResponse(
+            request,
+            "pages/projects/tabs/model_options.html",
+            {"models": models},
+        )
+    except Exception:
+        return HTMLResponse("")
+
+
 @router.post("/projects/{project_id}/integrations/{record_id}/delete")
 @hx_error("Deleting connection failed")
 def delete_integration(request: Request, project_id: str, record_id: str):
