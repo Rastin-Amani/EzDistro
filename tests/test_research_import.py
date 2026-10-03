@@ -156,6 +156,17 @@ def test_import_start_creates_run_and_analyses_keywords():
     volumes = sorted(m["avgMonthlySearches"] for m in metrics)
     assert volumes == [320, 1200, 8100]
 
+    # No LLM is configured in FakeRegistry, so the deterministic fallback must
+    # still produce reviewable ideas instead of an empty opportunities stage.
+    from app.repositories.research import ArticleIdeaRepo
+
+    opp = ResearchRunRepo(pb).get(run["id"])["stageState"]["opportunities"]
+    assert opp["created"] > 0, opp
+    ideas = ArticleIdeaRepo(pb).list_for_run(run["id"], per_page=10)
+    assert ideas
+    assert all((i.get("evidence") or {}).get("source") == "deterministic" for i in ideas)
+    assert all(i["primaryKeyword"] for i in ideas)
+
 
 def test_import_preview_returns_detected_columns():
     from app.api import research as R

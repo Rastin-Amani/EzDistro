@@ -612,7 +612,23 @@ async def generate_opportunities(
     system_template = ctx.config.prompt("opportunity_system")
     user_template = ctx.config.prompt("opportunity_user")
     role = ctx.config.role_llm("meta")
-    llm = ctx.providers.llm_for("meta")
+    try:
+        llm = ctx.providers.llm_for("meta")
+    except Exception:
+        llm = None
+    if llm is None:
+        return await _deterministic_opportunities(
+            ctx,
+            run_id=run_id,
+            goal=goal,
+            limit=limit,
+            locale=locale,
+            language=language,
+            clusters=clusters,
+            grouped=grouped,
+            gaps=gaps,
+            existing=existing,
+        )
     params = GenerationParams(
         temperature=float(role.get("temperature") or 0.3),
         max_tokens=int(role.get("max_tokens") or 4096),
@@ -751,6 +767,20 @@ async def generate_opportunities(
             current=created,
         )
 
+    if created == 0 and order:
+        ctx.warning("opportunity batches failed — falling back to deterministic ideas", {})
+        return await _deterministic_opportunities(
+            ctx,
+            run_id=run_id,
+            goal=goal,
+            limit=limit,
+            locale=locale,
+            language=language,
+            clusters=clusters,
+            grouped=grouped,
+            gaps=gaps,
+            existing=existing,
+        )
     ctx.info(
         "opportunity generation completed",
         {"created": created, "duplicates": duplicates, "skipped": skipped, "batches": batches},
@@ -983,6 +1013,146 @@ def _goal_dict(goal: Goal) -> dict[str, Any]:
         "maxVolume": goal.max_volume,
         "maxOpportunities": goal.max_opportunities,
         "source": goal.source,
+    }
+
+
+async def _deterministic_opportunities(
+    ctx: Any,
+    *,
+    run_id: str,
+    goal: Goal,
+    limit: int,
+    locale: str,
+    language: str,
+    clusters: dict[str, dict[str, Any]],
+    grouped: dict[str, list[dict[str, Any]]],
+    gaps: dict[Any, dict[str, Any]],
+    existing: MatchIndex,
+) -> dict[str, Any]:
+    """One opportunity per cluster, no LLM needed.
+
+    Used when no meta LLM is configured (e.g. a Keyword Planner file import on
+    a project without AI credentials). Every metric stays source data: the
+    primary keyword is always the cluster's top-volume collected keyword, the
+    score is the same transparent ``score_opportunity`` the AI path uses, and
+    the evidence block says ``deterministic`` so the UI never implies AI work.
+    """
+    idea_repo = ArticleIdeaRepo(ctx.pb)
+    accepted = MatchIndex()
+    seen: list[dict[str, Any]] = []
+    created = duplicates = updates = skipped = 0
+    order = sorted(grouped.items(), key=lambda item: -sum(k["volume"] for k in item[1]))
+    for cluster_id, group in order:
+        if created >= limit:
+            break
+        await ctx.check_cancelled()
+        cluster = clusters.get(cluster_id) or {}
+        label = cluster.get("name") or group[0]["text"]
+        primary = group[0]
+        if goal.min_volume and primary["volume"] < goal.min_volume:
+            skipped += 1
+            continue
+        if goal.max_volume and primary["volume"] > goal.max_volume:
+            skipped += 1
+            continue
+        if not goal.allows(f"{label} {primary['text']}"):
+            skipped += 1
+            continue
+        secondary = [item["text"] for item in group[1:6] if item["text"] != primary["text"]]
+        existing_row, existing_similarity = existing.best(primary["text"])
+        action = (
+            "update"
+            if (existing_row is not None and existing_similarity >= CANNIBALIZATION_THRESHOLD)
+            else "generate"
+        )
+        cluster_row = gaps.get(cluster_id) or {}
+        gap_score = float(cluster_row.get("score") or 50.0)
+        intent = _normalize_intent(str(cluster_row.get("intent") or ""))
+        row = {
+            "project": ctx.project_id,
+            "run": run_id,
+            "title": primary["text"][:1000],
+            "suggestedTitle": primary["text"][:1000],
+            "primaryKeyword": primary["text"][:500],
+            "secondaryKeywords": secondary[:15],
+            "cluster": cluster_id,
+            "intent": intent,
+            "contentType": "",
+            "action": action,
+            "actionConfidence": 0.6,
+            "searchVolume": primary["volume"],
+            "googleAdsCompetition": primary["competition"],
+            "googleAdsCompetitionIndex": primary["competitionIndex"],
+            "contentGapScore": gap_score,
+            "businessRelevanceScore": round(
+                _business_score(goal, intent=intent, action=action, content_type="") * 100, 1
+            ),
+            "coverageScore": round(max(0.0, 1.0 - existing_similarity) * 100, 1),
+            "recommendedAngle": f"Cover {primary['text']} for {label}."[:4000],
+            "uniqueValueProposition": ""[:4000],
+            "targetAudience": goal.audience[:1000],
+            "contentBrief": (
+                f"Top collected keyword: {primary['text']} "
+                f"({primary['volume']} avg. monthly searches). "
+                f"Supporting: {', '.join(secondary[:4])}."
+            )[:20000],
+            "questions": [],
+            "entities": [],
+            "internalLinks": [],
+            "existingArticle": (existing_row or {}).get("id") or "",
+            "canonicalExistingUrl": (existing_row or {}).get("wordpressUrl") or "",
+            "evidence": {
+                "source": "deterministic",
+                "promptVersion": 0,
+                "model": "",
+                "provider": "",
+                "clusterId": cluster_id,
+                "keywords": [primary["text"], *secondary[:4]],
+                "existingSimilarity": round(existing_similarity, 3),
+                "audienceFit": "",
+                "serp": "unavailable",
+            },
+            "locale": locale,
+            "language": language,
+            "status": "proposed",
+            "scoreVersion": SCORE_VERSION,
+        }
+        dup_row, dup_score = accepted.best(row["title"], threshold=DUPLICATE_THRESHOLD)
+        if dup_row is not None:
+            duplicates += 1
+            _merge_duplicate(dup_row, row, similarity=dup_score)
+            continue
+        row["uniquenessScore"] = round(max(0.0, 1.0 - _seen_similarity(seen, row)), 3)
+        row["opportunityScore"], row["scoreComponents"] = score_opportunity(
+            volume=row["searchVolume"],
+            intent=row["intent"],
+            action=row["action"],
+            content_type=row["contentType"],
+            goal=goal,
+            gap_score=gap_score,
+            existing_similarity=existing_similarity,
+            uniqueness=row["uniquenessScore"],
+        )
+        row["confidence"] = _confidence(row["opportunityScore"], row["searchVolume"])
+        seen.append(row)
+        accepted.add(row["title"], row)
+        idea_repo.create_many([row])
+        created += 1
+        if action == "update":
+            updates += 1
+    ctx.info(
+        "opportunity generation completed",
+        {"created": created, "duplicates": duplicates, "skipped": skipped, "batches": 0},
+    )
+    return {
+        "clusters": len(order),
+        "batches": 0,
+        "created": created,
+        "skipped": skipped,
+        "duplicates": duplicates,
+        "updates": updates,
+        "errors": [],
+        "goal": _goal_dict(goal),
     }
 
 
