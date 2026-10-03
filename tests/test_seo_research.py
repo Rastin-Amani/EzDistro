@@ -931,3 +931,88 @@ def test_filter_chunks_keeps_every_query_under_the_budget():
     assert max(len(" || ".join(group)) for group in groups) <= FILTER_BUDGET + 40
     # empty input yields no queries at all
     assert list(filter_chunks([])) == []
+
+
+def test_set_status_clears_stale_error_on_completion():
+    """A recovered transient error must not linger on a finished run.
+
+    Regression: the run record kept `errorCode` from a PB 400 that the job
+    survived, so a `completed` run still rendered as failed at the last stage.
+    """
+    from tests.helpers import make_pb
+
+    pb = make_pb()
+    project = make_project(pb)
+    run = ResearchRunRepo(pb).create_run(
+        project=project["id"],
+        name="r",
+        research_type="keywords",
+        config={},
+        targeting={},
+    )
+    ResearchRunRepo(pb).set_status(
+        run["id"],
+        "failed",
+        error_code="ClientResponseError",
+        error_message="Message: Response error. Status code:400",
+    )
+    failed = ResearchRunRepo(pb).get(run["id"])
+    assert failed["errorCode"] == "ClientResponseError"
+
+    ResearchRunRepo(pb).set_status(run["id"], "running")
+    started = ResearchRunRepo(pb).get(run["id"])
+    assert started["errorCode"] == ""
+    assert started["errorMessage"] == ""
+
+    ResearchRunRepo(pb).set_status(run["id"], "completed")
+    done = ResearchRunRepo(pb).get(run["id"])
+    assert done["errorCode"] == ""
+    assert done["errorMessage"] == ""
+    assert done["progress"] == 100
+
+
+def test_map_by_normalized_recovers_from_a_rejected_chunk():
+    """A chunk PocketBase rejects is retried with half the terms, not bubbled.
+
+    Regression: one oversized/transient 400 aborted the whole keyword lookup
+    and failed the run instead of degrading to smaller queries.
+    """
+    from pocketbase.errors import ClientResponseError
+
+    from app.repositories.research import KeywordRepo
+    from tests.helpers import make_pb
+
+    pb = make_pb()
+    project = make_project(pb)
+    repo = KeywordRepo(pb)
+
+    for text in ("alpha", "beta", "gamma", "delta"):
+        repo.create(
+            {
+                "project": project["id"],
+                "language": "en",
+                "locationId": "US",
+                "normalizedKeyword": text,
+                "displayKeyword": text,
+            }
+        )
+
+    real_list_all = repo.list_all
+    calls = {"rejected": 0}
+
+    def flaky_list_all(*, filter: str = "", sort: str = "", per_page: int = 500):
+        # Reject any multi-term OR chain once, forcing a halved retry.
+        if " || " in filter and calls["rejected"] == 0:
+            calls["rejected"] += 1
+            raise ClientResponseError(
+                "Message: Response error. Status code:400",
+                url="https://x/api/collections/keywords/records",
+                status=400,
+                data={"message": "Something went wrong while processing your request."},
+            )
+        return real_list_all(filter=filter, sort=sort, per_page=per_page)
+
+    repo.list_all = flaky_list_all  # type: ignore[method-assign]
+    found = repo.map_by_normalized(project["id"], "en", "US", ["alpha", "beta", "gamma", "delta"])
+    assert calls["rejected"] == 1
+    assert set(found) == {"alpha", "beta", "gamma", "delta"}

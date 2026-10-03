@@ -327,5 +327,5 @@ async def test_prompt_tester_without_provider_errors_cleanly():
         content="JSON \u0628\u0631\u06af\u0631\u062f\u0627\u0646.",
     )
     assert resp.status_code == 200
-    # either a rendered result or a safe error toast — never a 500
-    assert "response" in toast_message(resp) or "failed" in toast_message(resp)
+    # either a rendered result or a safe, human-readable error toast — never a 500
+    assert "response" in toast_message(resp) or "integration" in toast_message(resp)

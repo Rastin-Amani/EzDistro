@@ -150,7 +150,7 @@ def test_set_article_status_rejects_invalid_status():
     article = make_article(pb, proj_a["id"], status="review")
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(W.set_article_status, req, proj_a["id"], article["id"], status="bogus")
-    assert "failed" in toast_message(resp)
+    assert "invalid article status" in toast_message(resp)
     assert ArticleRepo(pb).get(article["id"])["status"] == "review"
 
 
@@ -535,7 +535,7 @@ def test_retry_publish_run_foreign_run_rejected():
     resp = call_route(
         A.retry_publish_run, req, proj_a["id"], foreign_article["id"], foreign_run["id"]
     )
-    assert "failed" in toast_message(resp)
+    assert "not found" in toast_message(resp)
     assert len(JobRepo(pb).list_for_project(proj_a["id"], per_page=10)) == 0
 
 

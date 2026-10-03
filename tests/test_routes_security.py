@@ -188,7 +188,7 @@ def test_integration_delete_cannot_touch_foreign_integration():
     foreign = make_integration(pb, proj_b["id"])
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(P.delete_integration, req, proj_a["id"], foreign["id"])
-    assert "failed" in toast_message(resp)
+    assert "not found" in toast_message(resp)
     assert pb.collection("integrations").get_one(foreign["id"]) is not None
 
 

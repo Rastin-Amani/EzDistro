@@ -219,3 +219,45 @@ def test_import_start_without_file_is_rejected():
     )
     assert "show-toast" in resp.headers.get("HX-Trigger", "")
     assert ResearchRunRepo(pb).list_for_project(project["id"], page=1, per_page=5) == []
+
+
+def test_import_file_only_passes_validate_and_completes():
+    from app.api import research as R
+    from app.services.research import research_pipeline
+    from tests.fake_providers import FakeRegistry
+    from tests.helpers import make_member, make_pb, make_project, make_req, make_user
+    from tests.test_wordpress_publishing import make_ctx
+
+    pb = make_pb()
+    project = make_project(pb, slug="proj-a", name="A")
+    make_member(pb, project["id"], user_id="u1", role="owner")
+    req = make_req(pb, make_user(), project["id"])
+
+    resp = asyncio.run(
+        R.research_import_start(
+            req,
+            project["id"],
+            file=_fake_upload(CSV_EXPORT, "export.csv"),
+            name="file only",
+            keywords="",
+            site="",
+            competitors="",
+            country="US",
+            language="en",
+            locale="",
+            network="GOOGLE_SEARCH",
+            clustering="deterministic",
+            goal="grow organic traffic",
+            force="",
+        )
+    )
+    assert "delayed-redirect" in resp.headers.get("HX-Trigger", "")
+    run = ResearchRunRepo(pb).list_for_project(project["id"], page=1, per_page=5)[0]
+    assert run["config"]["seeds"] == []
+
+    job = {"id": "j1", "project": project["id"], "payload": {"runId": run["id"]}}
+    summary = asyncio.run(research_pipeline(make_ctx(pb, FakeRegistry(), job), run=run))
+    assert "validate" in summary["stages"]
+    final = ResearchRunRepo(pb).get(run["id"])
+    assert final["status"] == "completed"
+    assert final["stageState"]["keyword_collection"]["ideas"] == 3
