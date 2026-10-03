@@ -37,6 +37,7 @@ from app.services.research_opportunities import (
 )
 from app.services.serp import collect_serp, serp_available
 from app.services.wordpress_sync import sync_posts
+from app.utils import humanize_error
 
 STAGE_PERCENT = {
     "validate": 5,
@@ -50,6 +51,15 @@ STAGE_PERCENT = {
     "finalize": 100,
 }
 SERP_KEYWORD_LIMIT = 200
+
+
+def _stage_start_percent(stage: str) -> int:
+    """Progress to show while a stage runs: the previous stage's completion."""
+    order = list(STAGE_PERCENT)
+    if stage not in order:
+        return 0
+    index = order.index(stage)
+    return STAGE_PERCENT[order[index - 1]] if index else 0
 
 
 def _cap(value: Any, default: int, *, minimum: int = 0) -> int:
@@ -78,6 +88,12 @@ class StageTracker:
     def start(self, stage: str, message: str = "") -> None:
         self.ctx.stage_started(stage, message or f"{stage} started")
         self.ctx.progress(STAGE_PERCENT.get(stage, 0), stage=stage, message=message or f"{stage}…")
+        # Persist the run (not just the job) so the progress page moves the moment
+        # a stage starts — previously run.progress only advanced when a stage
+        # finished, which is why a long stage looked stuck.
+        ResearchRunRepo(self.ctx.pb).set_stage(
+            self.run_id, stage, progress=_stage_start_percent(stage)
+        )
 
     def record(self, stage: str, summary: dict[str, Any], message: str = "") -> None:
         self.state[stage] = summary
@@ -122,13 +138,19 @@ async def _run_stage(
 
 
 async def _validate(ctx: Any, run: dict[str, Any], seeds: list[dict[str, Any]]) -> dict[str, Any]:
+    config = dict(run.get("config") or {})
+    if config.get("importPayload"):
+        # Keywords come from an uploaded Keyword Planner export, so the run is
+        # valid even when no typed seeds were entered alongside the file.
+        import_kinds = {str(seed.get("seedType") or "") for seed in seeds}
+        import_notes = ["keywords imported from a Keyword Planner file"]
+        return {"seeds": len(seeds), "kinds": sorted(import_kinds), "notes": import_notes}
     if not seeds:
         raise PermanentError(
             "this research run has no seeds: add at least one keyword, URL or competitor"
         )
     kinds = {str(seed.get("seedType") or "") for seed in seeds}
     notes: list[str] = []
-    config = dict(run.get("config") or {})
     if config.get("importPayload"):
         # Keywords come from an uploaded Keyword Planner export, so no Google
         # Ads connection or customer is needed.
@@ -202,6 +224,15 @@ async def _keyword_stage(
             "the Google Ads connection for this run no longer exists — reconnect Google Ads"
         )
     client = client_for_connection(connection, pb=ctx.pb, project_id=ctx.project_id)
+
+    low = _stage_start_percent("keyword_collection")
+    span = STAGE_PERCENT.get("keyword_collection", low) - low
+
+    def _on_progress(index: int, total: int) -> None:
+        pct = low + int(span * index / max(1, total))
+        ResearchRunRepo(ctx.pb).set_stage(run["id"], "keyword_collection", progress=pct)
+        ctx.info(f"Keyword batch {index}/{total} collected")
+
     try:
         result = await collect_keywords(
             ctx,
@@ -211,6 +242,7 @@ async def _keyword_stage(
             targeting=dict(run.get("targeting") or {}),
             seeds=seeds,
             max_keywords=max_keywords,
+            on_progress=_on_progress,
         )
     finally:
         await client.aclose()
@@ -431,7 +463,7 @@ def _register() -> None:
                 run_id,
                 "failed",
                 error_code="permanent_error",
-                error_message=str(exc)[:500],
+                error_message=humanize_error(exc, "This research run cannot continue.")[:500],
             )
             raise
         except Exception as exc:
@@ -439,7 +471,9 @@ def _register() -> None:
                 run_id,
                 "failed",
                 error_code=type(exc).__name__,
-                error_message=str(exc)[:500],
+                error_message=humanize_error(
+                    exc, "The research run failed unexpectedly. Please try again."
+                )[:500],
             )
             raise
 

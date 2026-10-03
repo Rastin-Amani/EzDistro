@@ -6,9 +6,8 @@ pipeline. `accept_opportunity` does the smallest thing that connects the two:
 - ``generate``/``support`` → a topic (status ``planned``, which is what the
   existing writer treats as "ready to write") + a draft article + a
   ``write_article`` job, so the EXISTING generation pipeline runs unchanged;
-- ``update``/``expand`` with a matched existing article → the research brief is
-  attached to that article as its ``metaDescription`` context and the topic is
-  linked to it; no new article is created, no duplicate URL is generated;
+- ``update``/``expand`` with a matched existing article → the topic is linked
+  to that article; no new article is created and no duplicate URL is generated;
 - ``reject`` → nothing is created (the caller just stores the status).
 
 Idempotent: re-accepting the same idea reuses its topic/article and never
@@ -26,24 +25,13 @@ from app.repositories.articles import ArticleRepo
 from app.repositories.jobs import JobRepo
 from app.repositories.topics import TopicRepo
 
-BRIEF_MAX = 2000  # metaDescription is short — store the brief, not the essay
 LINKED_ACTIONS = frozenset({"update", "expand"})
 WRITE_ACTIONS = frozenset({"generate", "support"})
 
 
-def _clean(value: Any, limit: int = BRIEF_MAX) -> str:
+def _clean(value: Any, limit: int = 2000) -> str:
     text = re.sub(r"\s+", " ", str(value or "")).strip()
     return text[:limit]
-
-
-def _brief(idea: dict[str, Any]) -> str:
-    """A compact, human-readable brief for the article record."""
-    parts = [
-        _clean(idea.get("uniqueValueProposition")),
-        _clean(idea.get("recommendedAngle")),
-        _clean(idea.get("contentBrief"), 1200),
-    ]
-    return _clean(" — ".join(part for part in parts if part), BRIEF_MAX)
 
 
 def _cluster_name(pb: Any, idea: dict[str, Any]) -> str:
@@ -73,7 +61,6 @@ def accept_opportunity(
     if not title:
         raise ValueError("opportunity has no title")
     keyword = _clean(idea.get("primaryKeyword"), 500)
-    brief = _brief(idea)
     cluster_name = _cluster_name(pb, idea)
 
     articles = ArticleRepo(pb)
@@ -84,11 +71,6 @@ def accept_opportunity(
     if action in LINKED_ACTIONS and existing_id:
         article = articles.get(existing_id)
         if article:
-            updates: dict[str, Any] = {}
-            if brief and not article.get("metaDescription"):
-                updates["metaDescription"] = brief
-            if updates:
-                articles.update(existing_id, updates)
             topic_id = str(article.get("topicId") or "")
             if topic_id:
                 topics.update(
@@ -115,11 +97,6 @@ def accept_opportunity(
         slug=slugify(title, fallback="research-article"),
     )
     topics.link_article(topic["id"], article["id"])
-    updates = {}
-    if brief:
-        updates["metaDescription"] = brief
-    if updates:
-        articles.update(article["id"], updates)
 
     if action in WRITE_ACTIONS:
         JobRepo(pb).create(
@@ -135,11 +112,7 @@ def accept_opportunity(
 
 
 def _demo() -> None:
-    """Self-check: brief building + action routing are deterministic."""
-    assert _brief({"recommendedAngle": "Compare   pricing", "contentBrief": "x" * 5000}).startswith(
-        "Compare pricing"
-    )
-    assert len(_brief({"contentBrief": "y" * 5000})) <= BRIEF_MAX
+    """Self-check: action routing is deterministic."""
     assert frozenset({"update", "expand"}) == LINKED_ACTIONS
     assert frozenset({"generate", "support"}) == WRITE_ACTIONS
     assert "reject" not in LINKED_ACTIONS | WRITE_ACTIONS

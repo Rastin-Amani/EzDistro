@@ -13,6 +13,7 @@ resolved the run fails loudly instead of mis-targeting.
 from __future__ import annotations
 
 import time
+from collections.abc import Callable
 from typing import Any
 
 from app.domain.keywords import normalize_keyword
@@ -227,9 +228,7 @@ def _persist(
         if idea.monthly_volumes:
             volumes[record["id"]] = idea.monthly_volumes
     KeywordMetricRepo(pb).upsert_many(metrics)
-    volume_repo = KeywordVolumeRepo(pb)
-    for keyword_id, points in volumes.items():
-        volume_repo.replace_for_keyword(run_id, keyword_id, points)
+    KeywordVolumeRepo(pb).replace_many(run_id, volumes)
     return len(metrics)
 
 
@@ -278,6 +277,7 @@ async def collect_keywords(
     targeting: dict[str, Any],
     seeds: list[dict[str, Any]],
     max_keywords: int = 5_000,
+    on_progress: Callable[[int, int], None] | None = None,
 ) -> dict[str, Any]:
     """Collect, normalize and persist keyword ideas for one research run.
 
@@ -308,6 +308,8 @@ async def collect_keywords(
             current=index,
             total=len(batches),
         )
+        if on_progress is not None:
+            on_progress(index, len(batches))
         try:
             found = await provider.generate_keyword_ideas(
                 customer_id=customer_id,
@@ -330,16 +332,20 @@ async def collect_keywords(
         done += 1
         fresh = merge_ideas(store, found)
         if fresh:
-            _persist(
-                pb=ctx.pb,
-                project_id=project_id,
-                run_id=run_id,
-                language=resolved["language"],
-                location_id=resolved["locationId"],
-                locale=resolved["locale"],
-                location_name=resolved["locationName"],
-                ideas=fresh,
-            )
+            try:
+                _persist(
+                    pb=ctx.pb,
+                    project_id=project_id,
+                    run_id=run_id,
+                    language=resolved["language"],
+                    location_id=resolved["locationId"],
+                    locale=resolved["locale"],
+                    location_name=resolved["locationName"],
+                    ideas=fresh,
+                )
+            except Exception as exc:  # one failed batch must not lose the run
+                errors.append(f"persist batch {index}: {exc}")
+                ctx.warning("keyword persist failed", {"batch": index, "error": str(exc)})
 
     ctx.info(
         "keyword collection finished",

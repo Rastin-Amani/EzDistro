@@ -51,7 +51,7 @@ LLM_SOURCE = "opportunity_v1"
 LLM_CLUSTERS_PER_BATCH = 6
 KEYWORDS_PER_CLUSTER = 12
 COMPETITORS_PER_CLUSTER = 8
-MAX_OPPORTUNITIES = 500
+MAX_OPPORTUNITIES = 0  # 0 → no cap; more opportunities is better
 MAX_CANDIDATES = 400
 
 # Similarity at which a candidate is considered to describe an existing page
@@ -240,7 +240,7 @@ def parse_goal(
         preferred_content_types=[str(v).lower() for v in data.get("contentTypes") or []],
         min_volume=max(min_volume, int(data.get("minVolume") or 0)),
         max_volume=max(max_volume, int(data.get("maxVolume") or 0)),
-        max_opportunities=max(1, int(data.get("maxOpportunities") or limit)),
+        max_opportunities=max(0, int(data.get("maxOpportunities") or limit)),
         include_supporting=bool(data.get("includeSupporting", True)),
     )
     for intent in data.get("priorityIntents") or []:
@@ -643,7 +643,7 @@ async def generate_opportunities(
     created = duplicates = updates = skipped = batches = 0
 
     for start in range(0, len(order), LLM_CLUSTERS_PER_BATCH):
-        if created >= limit:
+        if limit and created >= limit:
             break
         await ctx.check_cancelled()
         batch = order[start : start + LLM_CLUSTERS_PER_BATCH]
@@ -711,7 +711,7 @@ async def generate_opportunities(
         batches += 1
         rows: list[dict[str, Any]] = []
         for item in raw:
-            if not isinstance(item, dict) or created + len(rows) >= limit:
+            if not isinstance(item, dict) or (limit and created + len(rows) >= limit):
                 continue
             row, reason = _build_row(
                 item,
@@ -1043,7 +1043,7 @@ async def _deterministic_opportunities(
     created = duplicates = updates = skipped = 0
     order = sorted(grouped.items(), key=lambda item: -sum(k["volume"] for k in item[1]))
     for cluster_id, group in order:
-        if created >= limit:
+        if limit and created >= limit:
             break
         await ctx.check_cancelled()
         cluster = clusters.get(cluster_id) or {}

@@ -45,7 +45,7 @@ EMBED_BATCH = 256
 LLM_BATCH = 120
 LLM_LABEL_MAX = 120
 LOAD_PAGE = 500
-MAX_KEYWORDS = 20_000
+MAX_KEYWORDS = 100_000
 METHODS = ("auto", "deterministic", "embedding", "llm")
 DETERMINISTIC_SOURCE = "deterministic_v1"
 LLM_SOURCE = "llm_cluster_v1"
@@ -412,7 +412,7 @@ def persist_clusters(
     """
     repo = ClusterRepo(pb)
     existing: dict[str, dict[str, Any]] = {}
-    for cluster_row in repo.list_for_run(run_id, per_page=500):
+    for cluster_row in repo.list_for_run(run_id):
         existing[cluster_row.get("slug") or ""] = cluster_row
 
     metrics = KeywordMetricRepo(pb)
@@ -447,7 +447,7 @@ def persist_clusters(
         }
         row = existing.get(slug)
         if row is None:
-            row = repo.create(payload)
+            row = repo.create({**payload, "status": "proposed"})
             existing[slug] = row
         else:
             repo.update(row["id"], payload)

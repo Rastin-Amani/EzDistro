@@ -24,6 +24,7 @@ from typing import Any
 from urllib.parse import urljoin, urlparse, urlunparse
 
 import httpx
+from pocketbase.errors import ClientResponseError
 
 from app.domain.chunker import strip_html
 from app.domain.validation import validate_url
@@ -33,8 +34,8 @@ from app.repositories.research import CompetitorPageRepo
 
 USER_AGENT = "EZDistroBot/0.1 (+https://ezdistro.space/bot)"
 MAX_HTML_BYTES = 2_000_000
-SITEMAP_FILES_PER_DOMAIN = 15
-SITEMAP_URLS_PER_DOMAIN = 2_000
+SITEMAP_FILES_PER_DOMAIN = 50
+SITEMAP_URLS_PER_DOMAIN = 20_000
 COMPETITOR_TTL_SECONDS = 30 * 86_400
 HEADINGS_PER_LEVEL = 40
 
@@ -436,10 +437,23 @@ async def _process_url(
     }
     if existing and existing.get("contentHash") and existing["contentHash"] != content_hash:
         payload["lastChangedAt"] = pb_dt(now_utc())
-    if existing:
-        pages.update(existing["id"], payload)
-        return "fetched" if existing.get("contentHash") != content_hash else "unchanged"
-    pages.create(payload)
+    # Unique index is (project, canonicalUrl); two requested URLs can resolve to
+    # the same canonical, so look the record up by canonical before writing.
+    canonical = payload["canonicalUrl"]
+    stored = existing if canonical == url else pages.get_for_canonical(ctx.project_id, canonical)
+    if stored:
+        pages.update(stored["id"], payload)
+        return "fetched" if stored.get("contentHash") != content_hash else "unchanged"
+    try:
+        pages.create(payload)
+    except ClientResponseError as exc:
+        if exc.status not in (400, 409):
+            raise
+        # A concurrent worker created this canonical first — fold into it.
+        stored = pages.get_for_canonical(ctx.project_id, canonical)
+        if stored is None:
+            raise
+        pages.update(stored["id"], payload)
     return "fetched"
 
 
