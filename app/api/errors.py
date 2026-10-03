@@ -24,7 +24,7 @@ from typing import Any, TypeVar, cast
 from fastapi import Request
 from structlog import get_logger
 
-from app.utils import error_response
+from app.utils import error_response, humanize_error
 
 logger = get_logger("app.api.errors")
 
@@ -47,7 +47,7 @@ def hx_error(fail: str) -> Callable[[F], F]:
                     return await fn(request, *args, **kwargs)
                 except Exception as exc:
                     logger.warning("route.error", route=fn.__name__, error=str(exc))
-                    return error_response(fail)
+                    return error_response(humanize_error(exc, fail))
 
             return cast(F, async_wrapper)
 
@@ -57,7 +57,7 @@ def hx_error(fail: str) -> Callable[[F], F]:
                 return fn(request, *args, **kwargs)
             except Exception as exc:
                 logger.warning("route.error", route=fn.__name__, error=str(exc))
-                return error_response(fail)
+                return error_response(humanize_error(exc, fail))
 
         return cast(F, wrapper)
 

@@ -68,3 +68,37 @@ def ok_with_redirect(message: str, url: str, *, type: str = "success") -> Respon
             "delayed-redirect": {"url": url},
         }
     )
+
+
+def humanize_error(exc: Exception, fallback: str) -> str:
+    """Turn an exception into a short, actionable sentence for the user.
+
+    PocketBase validation errors become "Please fix: <field>: <reason>".
+    Expected domain errors (ValueError, PermanentError) surface their message.
+    Anything else falls back to the route's generic sentence — never a traceback.
+    """
+    import re
+
+    data = getattr(exc, "data", None)
+    if isinstance(data, dict):
+        details = data.get("data")
+        parts: list[str] = []
+        if isinstance(details, dict):
+            for field, detail in details.items():
+                if isinstance(detail, dict):
+                    reason = detail.get("message") or detail.get("code") or "invalid"
+                else:
+                    reason = str(detail)
+                label = re.sub(r"(?<!^)(?=[A-Z])", " ", str(field)).strip().lower()
+                parts.append(f"{label}: {reason}")
+        if parts:
+            return "Please fix " + "; ".join(parts) + "."
+        message = data.get("message")
+        if isinstance(message, str) and message.strip():
+            return message.strip()
+
+    if type(exc).__name__ == "PermanentError" or isinstance(exc, ValueError):
+        text = str(exc).strip()
+        if text:
+            return text
+    return fallback
