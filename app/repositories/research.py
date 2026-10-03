@@ -77,6 +77,39 @@ def _is_duplicate(exc: Exception) -> bool:
     return isinstance(exc, ClientResponseError) and exc.status in (400, 409)
 
 
+def _list_chunked(
+    repo: Any,
+    terms: Sequence[str],
+    *,
+    prefix: str = "",
+) -> Iterator[dict[str, Any]]:
+    """Yield rows matching an OR chain of `terms`, self-healing on rejection.
+
+    `filter_chunks` keeps chains small, but PocketBase can still reject an
+    individual chunk (its rendered-length limit, a transient 400 under load).
+    Rather than fail the whole read, retry that chunk with half the terms, down
+    to a single term — one rejected query then costs a few retries instead of
+    aborting the run.
+    """
+    for chunk in filter_chunks(terms):
+        yield from _list_or(repo, chunk, prefix=prefix)
+
+
+def _list_or(repo: Any, terms: list[str], *, prefix: str = "") -> Iterator[dict[str, Any]]:
+    ors = " || ".join(terms)
+    query = f"({ors})"
+    if prefix:
+        query = f"{prefix} && {query}"
+    try:
+        yield from repo.list_all(filter=query)
+    except ClientResponseError as exc:
+        if len(terms) <= 1 or not _is_duplicate(exc):
+            raise
+        mid = len(terms) // 2
+        yield from _list_or(repo, terms[:mid], prefix=prefix)
+        yield from _list_or(repo, terms[mid:], prefix=prefix)
+
+
 class _BulkCreateMixin:
     """Create rows, treating unique-constraint violations as already-present."""
 
@@ -296,6 +329,14 @@ class ResearchRunRepo(BaseRepo):
             payload["completedAt"] = pb_dt(now_utc())
             if status == "completed":
                 payload["progress"] = 100
+        # A new attempt starts clean and a success clears any earlier failure:
+        # without this, a transient error that a later retry recovered leaves a
+        # stale errorCode/errorMessage on a completed run and the UI keeps
+        # showing a failure that no longer applies.
+        if status in ("running", "completed"):
+            payload["errorCode"] = ""
+            payload["errorMessage"] = ""
+            payload["errorDetails"] = {}
         if error_code or error_message:
             payload["errorCode"] = error_code
             payload["errorMessage"] = error_message[:500]
@@ -356,25 +397,17 @@ class KeywordRepo(_BulkCreateMixin, BaseRepo):
     ) -> dict[str, dict[str, Any]]:
         """Batched lookup: normalizedKeyword -> record, for the given keys only."""
         found: dict[str, dict[str, Any]] = {}
-        for chunk in filter_chunks([f"normalizedKeyword={q(k)}" for k in keys]):
-            ors = " || ".join(chunk)
-            rows = self.list_all(
-                filter=(
-                    f"project={q(project_id)} && language={q(language)} "
-                    f"&& locationId={q(location_id)} && ({ors})"
-                )
-            )
-            for row in rows:
-                found[row.get("normalizedKeyword", "")] = row
+        prefix = f"project={q(project_id)} && language={q(language)} && locationId={q(location_id)}"
+        terms = [f"normalizedKeyword={q(k)}" for k in keys]
+        for row in _list_chunked(self, terms, prefix=prefix):
+            found[row.get("normalizedKeyword", "")] = row
         return found
 
     def map_by_ids(self, ids: Sequence[str]) -> dict[str, dict[str, Any]]:
         """Batched lookup by record id (one query per CHUNK ids)."""
         found: dict[str, dict[str, Any]] = {}
-        for chunk in filter_chunks([f"id={q(i)}" for i in ids]):
-            ors = " || ".join(chunk)
-            for row in self.list_all(filter=f"({ors})"):
-                found[row["id"]] = row
+        for row in _list_chunked(self, [f"id={q(i)}" for i in ids]):
+            found[row["id"]] = row
         return found
 
     def ensure_many(
@@ -443,10 +476,9 @@ class KeywordMetricRepo(_BulkCreateMixin, BaseRepo):
         by_keyword = {r["keyword"]: r for r in rows}
         existing: dict[str, dict[str, Any]] = {}
         keys = list(by_keyword)
-        for chunk in filter_chunks([f"keyword={q(k)}" for k in keys]):
-            ors = " || ".join(chunk)
-            for row in self.list_all(filter=f"run={q(run_id)} && ({ors})"):
-                existing[row.get("keyword", "")] = row
+        terms = [f"keyword={q(k)}" for k in keys]
+        for row in _list_chunked(self, terms, prefix=f"run={q(run_id)}"):
+            existing[row.get("keyword", "")] = row
         written = 0
         for keyword_id, row in by_keyword.items():
             current = existing.get(keyword_id)
@@ -473,6 +505,13 @@ class KeywordMetricRepo(_BulkCreateMixin, BaseRepo):
         if filter:
             f += f" && ({filter})"
         return self.list_records(filter=f, sort=sort, page=page, per_page=per_page)
+
+    def list_all_for_run(self, run_id: str, *, filter: str = "") -> list[dict[str, Any]]:
+        """Every metric row for a run (no page cap) — used by cluster grouping."""
+        f = f"run={q(run_id)}"
+        if filter:
+            f += f" && ({filter})"
+        return self.list_all(filter=f, sort="-avgMonthlySearches")
 
     def count_for_run(self, run_id: str, *, filter: str = "") -> int:
         f = f"run={q(run_id)}"
@@ -515,10 +554,6 @@ class KeywordMetricRepo(_BulkCreateMixin, BaseRepo):
             if len(batch) < 500:
                 break
             page += 1
-            # ponytail: full scan for demand stats; swap for a PB aggregate view if
-            # runs grow past ~100k keywords and this shows up in profiling.
-            if page > 500:
-                break
         return {
             "keywords": rows,
             "keywords_with_volume": total,
@@ -550,6 +585,32 @@ class KeywordVolumeRepo(_BulkCreateMixin, BaseRepo):
             filter=f"run={q(run_id)} && keyword={q(keyword_id)}", sort="year,month"
         )
 
+    def replace_many(self, run_id: str, volumes: dict[str, list[tuple[int, int, int]]]) -> int:
+        """Replace the trend rows for many keywords in one pass.
+
+        One delete per chunked OR filter (not one per keyword) plus a single bulk
+        create. The old per-keyword delete+create produced tens of thousands of
+        sequential PocketBase round trips, which starved the remote PocketBase
+        and made the whole app unresponsive while a run was going.
+        """
+        keys = list(volumes)
+        if not keys:
+            return 0
+        for chunk in filter_chunks([f"keyword={q(k)}" for k in keys]):
+            self.delete_matching(filter=f"run={q(run_id)} && (" + " || ".join(chunk) + ")")
+        rows = (
+            {
+                "run": run_id,
+                "keyword": keyword_id,
+                "year": year,
+                "month": month,
+                "monthlySearches": count,
+            }
+            for keyword_id, points in volumes.items()
+            for year, month, count in points
+        )
+        return self.create_many(rows)
+
 
 # ---------------------------------------------------------------------------
 # Clusters, competitor pages, gaps
@@ -557,8 +618,23 @@ class KeywordVolumeRepo(_BulkCreateMixin, BaseRepo):
 class ClusterRepo(_BulkCreateMixin, BaseRepo):
     collection = "clusters"
 
-    def list_for_run(self, run_id: str, *, per_page: int = 200) -> list[dict[str, Any]]:
-        return self.list_records(filter=f"run={q(run_id)}", sort="-size", per_page=per_page)
+    def list_for_run(
+        self,
+        run_id: str,
+        *,
+        status: str = "",
+        search: str = "",
+        page: int = 1,
+        per_page: int = 0,
+    ) -> list[dict[str, Any]]:
+        f = f"run={q(run_id)}"
+        if status:
+            f += f" && status={q(status)}"
+        if search:
+            f += f" && name~{q(search)}"
+        if per_page:
+            return self.list_records(filter=f, sort="-size", page=page, per_page=per_page)
+        return self.list_all(filter=f, sort="-size")
 
     def map_for_run(self, run_id: str) -> dict[str, dict[str, Any]]:
         return {row["id"]: row for row in self.list_all(filter=f"run={q(run_id)}")}
@@ -581,18 +657,23 @@ class CompetitorPageRepo(_BulkCreateMixin, BaseRepo):
         run_id: str,
         *,
         status: str = "",
+        search: str = "",
         page: int = 1,
         per_page: int = 25,
     ) -> list[dict[str, Any]]:
         f = f"run={q(run_id)}"
         if status:
             f += f" && status={q(status)}"
+        if search:
+            f += f" && (domain~{q(search)} || title~{q(search)} || url~{q(search)})"
         return self.list_records(filter=f, sort="-wordCount", page=page, per_page=per_page)
 
-    def count_for_run(self, run_id: str, *, status: str = "") -> int:
+    def count_for_run(self, run_id: str, *, status: str = "", search: str = "") -> int:
         f = f"run={q(run_id)}"
         if status:
             f += f" && status={q(status)}"
+        if search:
+            f += f" && (domain~{q(search)} || title~{q(search)} || url~{q(search)})"
         return self.count(filter=f)
 
     def list_for_project(self, project_id: str) -> list[dict[str, Any]]:
@@ -743,14 +824,18 @@ class SerpQueryRepo(BaseRepo):
         return self.create(payload)
 
     def list_for_run(
-        self, run_id: str, *, page: int = 1, per_page: int = 25
+        self, run_id: str, *, search: str = "", page: int = 1, per_page: int = 25
     ) -> list[dict[str, Any]]:
-        return self.list_records(
-            filter=f"run={q(run_id)}", sort="-observedAt", page=page, per_page=per_page
-        )
+        f = f"run={q(run_id)}"
+        if search:
+            f += f" && keyword~{q(search)}"
+        return self.list_records(filter=f, sort="-observedAt", page=page, per_page=per_page)
 
-    def count_for_run(self, run_id: str) -> int:
-        return self.count(filter=f"run={q(run_id)}")
+    def count_for_run(self, run_id: str, *, search: str = "") -> int:
+        f = f"run={q(run_id)}"
+        if search:
+            f += f" && keyword~{q(search)}"
+        return self.count(filter=f)
 
 
 class SerpResultRepo(_BulkCreateMixin, BaseRepo):

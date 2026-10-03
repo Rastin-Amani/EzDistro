@@ -958,6 +958,7 @@ COLLECTIONS: list[dict[str, Any]] = [
             t("primaryKeyword"),
             t("summary", max_len=6000),
             select("method", ["deterministic", "embedding", "llm", "jev", "mixed"]),
+            select("status", ["proposed", "accepted", "rejected"]),
             num("confidence"),
             json_field("meta"),
         ],

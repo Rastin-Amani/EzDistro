@@ -73,8 +73,8 @@ class Settings(BaseSettings):
         )
 
     # --- SEO research defaults ---
-    research_max_keywords_per_run: int = 5000  # conservative default cap
-    research_max_competitor_pages: int = 200
+    research_max_keywords_per_run: int = 50_000  # 0/negative → uncapped by the pipeline
+    research_max_competitor_pages: int = 5_000
     research_max_serp_queries: int = 0  # 0 → no live SERP queries
     research_crawl_concurrency: int = 4
     research_google_ads_concurrency: int = 2  # Keyword Planning is tightly limited

@@ -6767,6 +6767,22 @@
         "id": "select5e593a60"
       },
       {
+        "name": "status",
+        "type": "select",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSelect": 1,
+        "values": [
+          "proposed",
+          "accepted",
+          "rejected"
+        ],
+        "id": "select7b00651c"
+      },
+      {
         "name": "confidence",
         "type": "number",
         "required": false,
