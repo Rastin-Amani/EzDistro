@@ -1,0 +1,18 @@
+{# Research tab nav. Rendered on its own so the active tab can be swapped
+   out-of-band when an HTMX tab request replaces #research-content. #}
+{% set tab_labels = {
+  'keywords': 'Keywords', 'serp': 'SERP', 'competitors': 'Competitors',
+  'clusters': 'Clusters', 'gaps': 'Content gaps', 'opportunities': 'Opportunities'
+} %}
+<nav id="research-tabs" class="tabs tabs-box tabs-sm ezdistro-scroll-x overflow-x-auto flex-nowrap"
+     {% if oob %}hx-swap-oob="outerHTML:#research-tabs"{% endif %}>
+  {% for tab in tabs %}
+    <a href="?tab={{ tab }}" data-tab="{{ tab }}"
+       class="tab whitespace-nowrap {{ 'tab-active' if tab == active_tab }}"
+       {% if tab == active_tab %}aria-current="page"{% endif %}
+       hx-get="/projects/{{ project.id }}/research/{{ run.id }}/tab/{{ tab }}"
+       hx-target="#research-content" hx-push-url="?tab={{ tab }}"
+       hx-swap="innerHTML" hx-indicator="#research-indicator">{{ tab_labels.get(tab, tab) }}</a>
+  {% endfor %}
+  <span id="research-indicator" class="htmx-indicator self-center text-xs opacity-50 ms-2">Loading…</span>
+</nav>

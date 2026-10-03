@@ -1,31 +1,95 @@
 {% import 'macros/forms.html' as f %}
 <div id="research-clusters" class="space-y-4">
+  {% set c = counts or {} %}
+  <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+    {{ f.stat('Clusters', c.get('total', clusters|length)) }}
+    {{ f.stat('Proposed', c.get('proposed', 0)) }}
+    {{ f.stat('Accepted', c.get('accepted', 0)) }}
+    {{ f.stat('Rejected', c.get('rejected', 0)) }}
+  </div>
+
+  {{ f.panel('Filters') }}
+    <form id="research-filters"
+          hx-get="/projects/{{ project.id }}/research/{{ run.id }}/tab/clusters"
+          hx-target="#research-content" hx-swap="innerHTML" hx-indicator="#research-indicator"
+          class="grid gap-3 sm:grid-cols-3">
+      {{ f.text('q', 'Search cluster', value=q or '') }}
+      {{ f.select('status', 'Decision',
+          [('', 'All clusters'), ('proposed', 'Proposed'), ('accepted', 'Accepted'), ('rejected', 'Rejected')],
+          selected=status or '') }}
+      <div class="flex items-end gap-2">
+        <button class="btn btn-sm btn-primary" type="submit">Apply</button>
+      </div>
+    </form>
+  {{ f.panel_close() }}
+
   {{ f.panel('Topic clusters', actions='<span class="text-xs opacity-60">' ~ clusters|length ~ ' clusters</span>') }}
     {% if clusters %}
-      <div class="overflow-x-auto">
-        <table class="table table-sm">
-          <thead><tr class="text-xs opacity-60">
-            <th>Cluster</th><th class="text-end">Keywords</th><th>Method</th><th>Primary keyword</th><th>Sample queries</th>
-          </tr></thead>
-          <tbody>
-          {% for c in clusters %}
-            <tr>
-              <td class="text-sm">{{ c.name }}</td>
-              <td class="text-end text-xs">{{ c.size|default(0) }}</td>
-              <td class="text-xs opacity-60">{{ c.method or '—' }}</td>
-              <td class="text-xs opacity-70">{{ c.primaryKeyword or '—' }}</td>
-              <td class="text-xs opacity-60">
-                {% set sample = (c.meta or {}).get('sample') or [] %}
-                {{ sample|join(', ') }}
-              </td>
-            </tr>
-          {% endfor %}
-          </tbody>
-        </table>
+      <div class="mb-3 flex flex-wrap items-center gap-2">
+        <form hx-post="/projects/{{ project.id }}/research/{{ run.id }}/clusters/bulk"
+              hx-target="#research-content" hx-swap="innerHTML" hx-indicator="#research-indicator"
+              hx-confirm="Accept every proposed cluster (they are related ideas)?">
+          <input type="hidden" name="action" value="accept">
+          <input type="hidden" name="all" value="1">
+          <button class="btn btn-sm btn-primary">Accept all proposed</button>
+        </form>
       </div>
+
+      <form hx-post="/projects/{{ project.id }}/research/{{ run.id }}/clusters/bulk"
+            hx-target="#research-content" hx-swap="innerHTML" hx-indicator="#research-indicator">
+        <div class="flex flex-wrap items-center gap-2">
+          <button class="btn btn-xs btn-primary" name="action" value="accept">Accept selected</button>
+          <button class="btn btn-xs btn-ghost text-error" name="action" value="reject">Reject selected</button>
+        </div>
+
+        <div class="mt-2 overflow-x-auto">
+          <table class="table table-sm">
+            <thead><tr class="text-xs opacity-60">
+              <th></th><th>Cluster</th><th class="text-end">Keywords</th><th>Method</th>
+              <th>Primary keyword</th><th>Decision</th><th>Sample queries</th><th></th>
+            </tr></thead>
+            <tbody>
+            {% for c in clusters %}
+              {% set decision = c.status or 'proposed' %}
+              <tr>
+                <td>
+                  {% if decision == 'proposed' %}
+                    <input type="checkbox" name="cluster_id" value="{{ c.id }}" class="checkbox checkbox-xs">
+                  {% endif %}
+                </td>
+                <td class="text-sm">{{ c.name }}</td>
+                <td class="text-end text-xs">{{ c.size|default(0) }}</td>
+                <td class="text-xs opacity-60">{{ c.method or '—' }}</td>
+                <td class="text-xs opacity-70">{{ c.primaryKeyword or '—' }}</td>
+                <td><span class="badge {{ decision|status_badge }}">{{ decision|status_label }}</span></td>
+                <td class="text-xs opacity-60">
+                  {% set sample = (c.meta or {}).get('sample') or [] %}
+                  {{ sample|join(', ') }}
+                </td>
+                <td class="text-end whitespace-nowrap">
+                  {% if decision == 'proposed' %}
+                    <button type="button" class="btn btn-xs btn-primary"
+                            hx-post="/projects/{{ project.id }}/research/{{ run.id }}/clusters/{{ c.id }}/action"
+                            hx-vals='{"action": "accept"}' hx-swap="none">Accept</button>
+                    <button type="button" class="btn btn-xs btn-ghost text-error"
+                            hx-post="/projects/{{ project.id }}/research/{{ run.id }}/clusters/{{ c.id }}/action"
+                            hx-vals='{"action": "reject"}' hx-swap="none">Reject</button>
+                  {% else %}
+                    <button type="button" class="btn btn-xs btn-ghost"
+                            hx-post="/projects/{{ project.id }}/research/{{ run.id }}/clusters/{{ c.id }}/action"
+                            hx-vals='{"action": "reset"}' hx-swap="none">Reset</button>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </form>
+
       <p class="mt-2 text-xs opacity-50">
-        A cluster groups queries that share one search intent. Distinct intents (for example pricing
-        versus comparisons) stay in separate clusters rather than becoming separate pages each.
+        A cluster groups queries that share one search intent. Accept the ones that are genuinely
+        related ideas; reject the rest so they stop feeding opportunities.
       </p>
     {% else %}
       {{ f.empty('No clusters yet', hint='Clustering runs after keyword collection. It groups keywords by intent so opportunities map to topics, not to keyword variations.') }}

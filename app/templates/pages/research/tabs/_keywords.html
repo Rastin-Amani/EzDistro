@@ -12,12 +12,13 @@
   </div>
 
   {{ f.panel('Filters') }}
-    <form hx-get="/projects/{{ project.id }}/research/{{ run.id }}/tab/keywords"
+    <form id="research-filters"
+          hx-get="/projects/{{ project.id }}/research/{{ run.id }}/tab/keywords"
           hx-target="#research-content" hx-swap="innerHTML" hx-indicator="#research-indicator"
           class="grid gap-3 sm:grid-cols-3">
       {{ f.text('q', 'Search keyword', value=q or '') }}
       {{ f.number('min_volume', 'Minimum monthly searches', value=min_volume or '') }}
-      {{ f.select('cluster', 'Cluster', cluster_options, selected=params.cluster or '') }}
+      {{ f.select('cluster', 'Cluster', cluster_options, selected=cluster or '') }}
       <div class="sm:col-span-3 flex items-center gap-2">
         <button class="btn btn-sm btn-primary" type="submit">Apply</button>
         <a class="btn btn-sm btn-ghost" href="/projects/{{ project.id }}/research/{{ run.id }}/tab/keywords"
@@ -59,17 +60,15 @@
         </table>
       </div>
 
-      {% if page > 1 or (page * per_page) < total %}
+      {% if prev_url or next_url %}
         <div class="mt-2 flex items-center justify-between text-xs">
-          {% if page > 1 %}
-            <button class="btn btn-xs btn-ghost"
-                    hx-get="/projects/{{ project.id }}/research/{{ run.id }}/tab/keywords?page={{ page - 1 }}"
+          {% if prev_url %}
+            <button class="btn btn-xs btn-ghost" hx-get="{{ prev_url }}"
                     hx-target="#research-content" hx-swap="innerHTML">Previous</button>
           {% else %}<span></span>{% endif %}
           <span class="opacity-50">Page {{ page }}</span>
-          {% if (page * per_page) < total %}
-            <button class="btn btn-xs btn-ghost"
-                    hx-get="/projects/{{ project.id }}/research/{{ run.id }}/tab/keywords?page={{ page + 1 }}"
+          {% if next_url %}
+            <button class="btn btn-xs btn-ghost" hx-get="{{ next_url }}"
                     hx-target="#research-content" hx-swap="innerHTML">Next</button>
           {% else %}<span></span>{% endif %}
         </div>

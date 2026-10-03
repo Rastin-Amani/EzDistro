@@ -1,5 +1,21 @@
 {% import 'macros/forms.html' as f %}
 <div id="research-competitors" class="space-y-4">
+
+  {{ f.panel('Filters') }}
+    <form id="research-filters"
+          hx-get="/projects/{{ project.id }}/research/{{ run.id }}/tab/competitors"
+          hx-target="#research-content" hx-swap="innerHTML" hx-indicator="#research-indicator"
+          class="grid gap-3 sm:grid-cols-3">
+      {{ f.text('q', 'Search domain or title', value=q or '') }}
+      {{ f.select('status', 'Status',
+          [('', 'All statuses'), ('fetched', 'Fetched'), ('unchanged', 'Unchanged'), ('skipped', 'Skipped'), ('failed', 'Failed')],
+          selected=status or '') }}
+      <div class="flex items-end gap-2">
+        <button class="btn btn-sm btn-primary" type="submit">Apply</button>
+      </div>
+    </form>
+  {{ f.panel_close() }}
+
   {{ f.panel('Competitor pages', actions='<span class="text-xs opacity-60">' ~ total ~ ' pages</span>') }}
     {% if pages %}
       <div class="overflow-x-auto">
@@ -36,6 +52,20 @@
           </tbody>
         </table>
       </div>
+
+      {% if prev_url or next_url %}
+        <div class="mt-2 flex items-center justify-between text-xs">
+          {% if prev_url %}
+            <button class="btn btn-xs btn-ghost" hx-get="{{ prev_url }}"
+                    hx-target="#research-content" hx-swap="innerHTML">Previous</button>
+          {% else %}<span></span>{% endif %}
+          <span class="opacity-50">Page {{ page }}</span>
+          {% if next_url %}
+            <button class="btn btn-xs btn-ghost" hx-get="{{ next_url }}"
+                    hx-target="#research-content" hx-swap="innerHTML">Next</button>
+          {% else %}<span></span>{% endif %}
+        </div>
+      {% endif %}
     {% else %}
       {{ f.empty('No competitor pages yet', hint='Add competitor domains or URLs as seeds. Competitor analysis works without any paid competitor database.') }}
     {% endif %}

@@ -1,0 +1,5 @@
+{# Response for an HTMX tab request: the tab body plus the tab nav swapped
+   out-of-band so the active-tab styling follows the content. #}
+{% set oob = true %}
+{% include "pages/research/tabs/_" ~ active_tab ~ ".html" %}
+{% include "pages/research/_tabs.html" %}

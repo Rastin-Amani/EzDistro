@@ -1,10 +1,6 @@
 {% extends "layouts/platform.html" %}
 {% block dashboard_content %}
 
-{% set tab_labels = {
-  'keywords': 'Keywords', 'serp': 'SERP', 'competitors': 'Competitors',
-  'clusters': 'Clusters', 'gaps': 'Content gaps', 'opportunities': 'Opportunities'
-} %}
 {% set running = run.status in ('pending', 'running') %}
 
 <div class="w-full space-y-4">
@@ -39,7 +35,8 @@
     </div>
     <div class="flex items-center gap-2">
       <a class="btn btn-sm btn-ghost" href="/projects/{{ project.id }}?tab=research">All runs</a>
-      <a class="btn btn-sm btn-ghost" href="/projects/{{ project.id }}/research/{{ run.id }}/opportunities.csv">Export CSV</a>
+      <a class="btn btn-sm btn-ghost" href="/projects/{{ project.id }}/research/{{ run.id }}/opportunities.csv"
+         download hx-boost="false">Export CSV</a>
       {% if running %}
         <button class="btn btn-sm btn-ghost text-error"
                 hx-post="/projects/{{ project.id }}/research/{{ run.id }}/cancel"
@@ -56,17 +53,12 @@
     </div>
   {% endif %}
 
-  <nav id="research-tabs" class="tabs tabs-box tabs-sm ezdistro-scroll-x overflow-x-auto flex-nowrap">
-    {% for tab in tabs %}
-      <a href="?tab={{ tab }}" data-tab="{{ tab }}"
-         class="tab whitespace-nowrap {{ 'tab-active' if tab == active_tab }}"
-         {% if tab == active_tab %}aria-current="page"{% endif %}
-         hx-get="/projects/{{ project.id }}/research/{{ run.id }}/tab/{{ tab }}"
-         hx-target="#research-content" hx-push-url="?tab={{ tab }}"
-         hx-swap="innerHTML" hx-indicator="#research-indicator">{{ tab_labels.get(tab, tab) }}</a>
-    {% endfor %}
-    <span id="research-indicator" class="htmx-indicator self-center text-xs opacity-50 ms-2">Loading…</span>
-  </nav>
+  {% include "pages/research/_tabs.html" %}
+
+  {# Reload the active tab (filters preserved) when an action fires refreshResearch. #}
+  <div class="hidden" hx-get="/projects/{{ project.id }}/research/{{ run.id }}/tab/{{ active_tab }}"
+       hx-trigger="refreshResearch from:body" hx-target="#research-content" hx-swap="innerHTML"
+       hx-include="#research-filters"></div>
 
   <div id="research-content" class="w-full">
     {% include "pages/research/tabs/_" ~ active_tab ~ ".html" %}

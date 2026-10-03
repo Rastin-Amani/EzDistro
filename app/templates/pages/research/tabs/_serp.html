@@ -37,6 +37,14 @@
   {% elif not queries %}
     {{ f.empty('No SERP observations yet', hint=(reason or 'SERP collection has not run for this research yet, or the SERP budget was zero.')) }}
   {% else %}
+    <form id="research-filters"
+          hx-get="/projects/{{ project.id }}/research/{{ run.id }}/tab/serp"
+          hx-target="#research-content" hx-swap="innerHTML" hx-indicator="#research-indicator"
+          class="flex flex-wrap items-end gap-3">
+      <div class="w-full sm:w-80">{{ f.text('q', 'Search keyword', value=q or '') }}</div>
+      <button class="btn btn-sm btn-primary" type="submit">Apply</button>
+    </form>
+
     <div class="overflow-x-auto">
       <table class="table table-sm">
         <thead><tr class="text-xs opacity-60">
@@ -59,6 +67,21 @@
         </tbody>
       </table>
     </div>
+
+    {% if prev_url or next_url %}
+      <div class="flex items-center justify-between text-xs">
+        {% if prev_url %}
+          <button class="btn btn-xs btn-ghost" hx-get="{{ prev_url }}"
+                  hx-target="#research-content" hx-swap="innerHTML">Previous</button>
+        {% else %}<span></span>{% endif %}
+        <span class="opacity-50">Page {{ page }}</span>
+        {% if next_url %}
+          <button class="btn btn-xs btn-ghost" hx-get="{{ next_url }}"
+                  hx-target="#research-content" hx-swap="innerHTML">Next</button>
+        {% else %}<span></span>{% endif %}
+      </div>
+    {% endif %}
+
     {% if count %}
       <p class="text-xs opacity-60">{{ count }} observed queries. SERP data is time-sensitive — refresh a keyword from its detail drawer.</p>
     {% endif %}

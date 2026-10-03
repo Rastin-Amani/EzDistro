@@ -1,13 +1,32 @@
 {% import 'macros/forms.html' as f %}
 <div id="research-gaps" class="space-y-4">
 
+  {% set gap_labels = {
+    'competitor_only': 'Competitor only', 'under_served': 'Under-served', 'expansion': 'Expansion',
+    'update': 'Update', 'supporting': 'Supporting', 'you_only': 'You only', 'both': 'Both'
+  } %}
+  {% set gap_options = [('', 'All gap types')] %}
+  {% for key, label in gap_labels.items() %}{% set _ = gap_options.append((key, label)) %}{% endfor %}
+
   {% if by_type %}
     <div class="flex flex-wrap gap-2">
-      {% for gap_type, count in by_type.items() %}
-        <span class="badge badge-soft">{{ gap_type }} · {{ count }}</span>
+      {% for type_key, count in by_type.items() %}
+        <span class="badge badge-soft">{{ gap_labels.get(type_key, type_key) }} · {{ count }}</span>
       {% endfor %}
     </div>
   {% endif %}
+
+  {{ f.panel('Filters') }}
+    <form id="research-filters"
+          hx-get="/projects/{{ project.id }}/research/{{ run.id }}/tab/gaps"
+          hx-target="#research-content" hx-swap="innerHTML" hx-indicator="#research-indicator"
+          class="grid gap-3 sm:grid-cols-3">
+      {{ f.select('gap_type', 'Gap type', gap_options, selected=gap_type or '') }}
+      <div class="flex items-end gap-2">
+        <button class="btn btn-sm btn-primary" type="submit">Apply</button>
+      </div>
+    </form>
+  {{ f.panel_close() }}
 
   {{ f.panel('Content gaps', actions='<span class="text-xs opacity-60">' ~ total ~ ' gaps</span>') }}
     {% if gaps %}
@@ -20,7 +39,7 @@
           <tbody>
           {% for g in gaps %}
             <tr>
-              <td><span class="badge badge-soft badge-xs">{{ g.gapType }}</span></td>
+              <td><span class="badge badge-soft badge-xs">{{ gap_labels.get(g.gapType, g.gapType) }}</span></td>
               <td class="text-sm">{{ g.keyword or '—' }}</td>
               <td class="text-end text-xs tabular">{{ g.demand|loc_int }}</td>
               <td class="text-end text-xs tabular">{{ g.competitorCoverage|loc_int }}</td>
@@ -31,6 +50,21 @@
           </tbody>
         </table>
       </div>
+
+      {% if prev_url or next_url %}
+        <div class="mt-2 flex items-center justify-between text-xs">
+          {% if prev_url %}
+            <button class="btn btn-xs btn-ghost" hx-get="{{ prev_url }}"
+                    hx-target="#research-content" hx-swap="innerHTML">Previous</button>
+          {% else %}<span></span>{% endif %}
+          <span class="opacity-50">Page {{ page }}</span>
+          {% if next_url %}
+            <button class="btn btn-xs btn-ghost" hx-get="{{ next_url }}"
+                    hx-target="#research-content" hx-swap="innerHTML">Next</button>
+          {% else %}<span></span>{% endif %}
+        </div>
+      {% endif %}
+
       <p class="mt-2 text-xs opacity-50">
         A gap is a topic competitors cover and you do not (or cover thinly) — validated against real
         search demand, not merely a phrase your competitors happen to mention.

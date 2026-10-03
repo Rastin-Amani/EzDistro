@@ -39,7 +39,7 @@ from app.api.errors import hx_error, page_guard
 from app.domain.keywords import normalize_keyword
 from app.providers.base import PermanentError
 from app.repositories.articles import ArticleRepo
-from app.repositories.jobs import JobRepo
+from app.repositories.jobs import JobEventRepo, JobRepo
 from app.repositories.research import (
     ArticleIdeaRepo,
     ClusterRepo,
@@ -580,16 +580,28 @@ def _run_context(
     if active == "keywords":
         context.update(_keywords_context(pb, run, params or {}))
     elif active == "serp":
-        context.update(_serp_context(pb, run))
+        context.update(_serp_context(pb, run, params or {}))
     elif active == "competitors":
-        context.update(_competitors_context(pb, run))
+        context.update(_competitors_context(pb, run, params or {}))
     elif active == "clusters":
-        context.update(_clusters_context(pb, run))
+        context.update(_clusters_context(pb, run, params or {}))
     elif active == "gaps":
-        context.update(_gaps_context(pb, run))
+        context.update(_gaps_context(pb, run, params or {}))
     elif active == "opportunities":
         context.update(_opportunities_context(pb, run, params or {}))
     return context
+
+
+def _tab_url(run: dict[str, Any], tab: str, params: dict[str, Any], page: int | None = None) -> str:
+    """Tab URL carrying the active filters, so pagination never drops them."""
+    from urllib.parse import urlencode
+
+    query = {k: str(v) for k, v in params.items() if v not in (None, "") and k != "page"}
+    if page is not None:
+        query["page"] = str(page)
+    base = f"/projects/{run.get('project')}/research/{run.get('id')}/tab/{tab}"
+    qs = urlencode(query)
+    return f"{base}?{qs}" if qs else base
 
 
 def _keywords_context(pb: Any, run: dict[str, Any], params: dict[str, Any]) -> dict[str, Any]:
@@ -619,7 +631,10 @@ def _keywords_context(pb: Any, run: dict[str, Any], params: dict[str, Any]) -> d
                 "q": query,
                 "min_volume": min_volume,
                 "page": 1,
+                "per_page": KEYWORD_PAGE,
                 "clusters": ClusterRepo(pb).list_for_run(run_id),
+                "prev_url": None,
+                "next_url": None,
             }
         filters.append("(" + " || ".join(f"keyword={_q(i)}" for i in ids) + ")")
     page = max(1, safe_int(params.get("page"), 1))
@@ -651,19 +666,36 @@ def _keywords_context(pb: Any, run: dict[str, Any], params: dict[str, Any]) -> d
         "clusters": ClusterRepo(pb).list_for_run(run_id),
         "q": query,
         "min_volume": min_volume,
+        "cluster": safe_str(params.get("cluster")),
         "page": page,
         "per_page": KEYWORD_PAGE,
+        "prev_url": _tab_url(run, "keywords", params, page - 1) if page > 1 else None,
+        "next_url": (
+            _tab_url(run, "keywords", params, page + 1)
+            if page * KEYWORD_PAGE < metrics.count_for_run(run_id, filter=" && ".join(filters))
+            else None
+        ),
     }
 
 
-def _serp_context(pb: Any, run: dict[str, Any]) -> dict[str, Any]:
+def _serp_context(pb: Any, run: dict[str, Any], params: dict[str, Any]) -> dict[str, Any]:
     run_id = run["id"]
-    queries = SerpQueryRepo(pb).list_for_run(run_id, per_page=50)
+    search = safe_str(params.get("q"))
+    page = max(1, safe_int(params.get("page"), 1))
+    per_page = 50
+    repo = SerpQueryRepo(pb)
+    queries = repo.list_for_run(run_id, search=search, page=page, per_page=per_page)
+    total = repo.count_for_run(run_id, search=search)
     return {
         "queries": queries,
         "available": bool(queries),
         "configured": _project_serp_configured(pb, run),
-        "count": SerpQueryRepo(pb).count_for_run(run_id),
+        "count": total,
+        "q": search,
+        "page": page,
+        "per_page": per_page,
+        "prev_url": _tab_url(run, "serp", params, page - 1) if page > 1 else None,
+        "next_url": _tab_url(run, "serp", params, page + 1) if page * per_page < total else None,
     }
 
 
@@ -679,28 +711,79 @@ def _project_serp_configured(pb: Any, run: dict[str, Any]) -> bool:
     return serp_available(provider)
 
 
-def _competitors_context(pb: Any, run: dict[str, Any]) -> dict[str, Any]:
-    rows = CompetitorPageRepo(pb).list_for_run(run["id"], per_page=50)
-    return {"pages": rows, "total": CompetitorPageRepo(pb).count_for_run(run["id"])}
+def _competitors_context(pb: Any, run: dict[str, Any], params: dict[str, Any]) -> dict[str, Any]:
+    run_id = run["id"]
+    status = safe_str(params.get("status"))
+    search = safe_str(params.get("q"))
+    page = max(1, safe_int(params.get("page"), 1))
+    per_page = 50
+    repo = CompetitorPageRepo(pb)
+    rows = repo.list_for_run(run_id, status=status, search=search, page=page, per_page=per_page)
+    total = repo.count_for_run(run_id, status=status, search=search)
+    return {
+        "pages": rows,
+        "total": total,
+        "status": status,
+        "q": search,
+        "page": page,
+        "per_page": per_page,
+        "prev_url": _tab_url(run, "competitors", params, page - 1) if page > 1 else None,
+        "next_url": _tab_url(run, "competitors", params, page + 1)
+        if page * per_page < total
+        else None,
+    }
 
 
-def _clusters_context(pb: Any, run: dict[str, Any]) -> dict[str, Any]:
-    clusters = ClusterRepo(pb).list_for_run(run["id"])
-    metrics = KeywordMetricRepo(pb).list_for_run(run["id"], per_page=500)
+def _clusters_context(pb: Any, run: dict[str, Any], params: dict[str, Any]) -> dict[str, Any]:
+    run_id = run["id"]
+    status = safe_str(params.get("status"))
+    search = safe_str(params.get("q"))
+    all_clusters = ClusterRepo(pb).list_for_run(run_id, search=search)
+    counts = {
+        "total": len(all_clusters),
+        "proposed": sum(1 for c in all_clusters if (c.get("status") or "proposed") == "proposed"),
+        "accepted": sum(1 for c in all_clusters if c.get("status") == "accepted"),
+        "rejected": sum(1 for c in all_clusters if c.get("status") == "rejected"),
+    }
+    # Rows created before the status field existed have an empty status; treat
+    # empty as "proposed" so they are not silently hidden.
+    if status == "proposed":
+        clusters = [c for c in all_clusters if (c.get("status") or "proposed") == "proposed"]
+    elif status:
+        clusters = [c for c in all_clusters if c.get("status") == status]
+    else:
+        clusters = all_clusters
+    metrics = KeywordMetricRepo(pb).list_all_for_run(run_id)
     by_cluster: dict[str, list[dict[str, Any]]] = {}
     for row in metrics:
         by_cluster.setdefault(row.get("cluster") or "", []).append(row)
-    return {"clusters": clusters, "by_cluster": by_cluster}
+    return {
+        "clusters": clusters,
+        "by_cluster": by_cluster,
+        "status": status,
+        "q": search,
+        "counts": counts,
+    }
 
 
-def _gaps_context(pb: Any, run: dict[str, Any]) -> dict[str, Any]:
-    rows = ContentGapRepo(pb).list_for_run(run["id"], per_page=50)
+def _gaps_context(pb: Any, run: dict[str, Any], params: dict[str, Any]) -> dict[str, Any]:
+    run_id = run["id"]
+    gap_type = safe_str(params.get("gap_type"))
+    page = max(1, safe_int(params.get("page"), 1))
+    per_page = 50
     gaps = ContentGapRepo(pb)
+    rows = gaps.list_for_run(run_id, gap_type=gap_type, page=page, per_page=per_page)
+    total = gaps.count_for_run(run_id, gap_type=gap_type)
     return {
         "gaps": rows,
-        "total": gaps.count_for_run(run["id"]),
+        "total": total,
+        "gap_type": gap_type,
+        "page": page,
+        "per_page": per_page,
+        "prev_url": _tab_url(run, "gaps", params, page - 1) if page > 1 else None,
+        "next_url": _tab_url(run, "gaps", params, page + 1) if page * per_page < total else None,
         "by_type": {
-            gap_type: gaps.count_for_run(run["id"], gap_type=gap_type)
+            gap_type: gaps.count_for_run(run_id, gap_type=gap_type)
             for gap_type in (
                 "competitor_only",
                 "under_served",
@@ -735,14 +818,20 @@ def _opportunities_context(pb: Any, run: dict[str, Any], params: dict[str, Any])
         page=page,
         per_page=IDEA_PAGE,
     )
+    total = ideas.count_for_run(run_id, filter=" && ".join(filters))
     return {
         "ideas": rows,
-        "total": ideas.count_for_run(run_id, filter=" && ".join(filters)),
+        "total": total,
         "summary": ideas.summarize_run(run_id),
         "action": action,
         "status": status,
+        "sort": safe_str(params.get("sort")),
         "page": page,
         "per_page": IDEA_PAGE,
+        "prev_url": _tab_url(run, "opportunities", params, page - 1) if page > 1 else None,
+        "next_url": (
+            _tab_url(run, "opportunities", params, page + 1) if page * IDEA_PAGE < total else None
+        ),
     }
 
 
@@ -761,10 +850,12 @@ def research_status(request: Request, project_id: str, run_id: str):
         return HTMLResponse("")
     counts = dict(run.get("counts") or {})
     ideas = ArticleIdeaRepo(request.state.pb).summarize_run(run_id)
+    job_id = str(run.get("job") or "")
+    logs = JobEventRepo(request.state.pb).list_for_job(job_id, per_page=40) if job_id else []
     return templates.TemplateResponse(
         request,
         "pages/research/_status.html",
-        {"project": project, "run": run, "counts": counts, "summary": ideas},
+        {"project": project, "run": run, "counts": counts, "summary": ideas, "logs": logs},
     )
 
 
@@ -780,6 +871,8 @@ def research_tab(
     status: str = "",
     min_volume: str = "",
     sort: str = "",
+    cluster: str = "",
+    gap_type: str = "",
 ):
     """HTMX fragment for one workspace tab."""
     project = _project_or_none(request, project_id)
@@ -795,9 +888,13 @@ def research_tab(
         "status": status,
         "min_volume": min_volume,
         "sort": sort,
+        "cluster": cluster,
+        "gap_type": gap_type,
     }
     context = _run_context(request, project, run, tab, params=params)
-    return templates.TemplateResponse(request, f"pages/research/tabs/_{tab}.html", context)
+    # `_tab_response` renders the tab body and swaps the tab nav out-of-band so
+    # the active-tab highlight follows the content.
+    return templates.TemplateResponse(request, "pages/research/_tab_response.html", context)
 
 
 @router.get(
@@ -927,6 +1024,131 @@ def opportunity_action(
     ideas.update(idea_id, {"status": "accepted", "article": article["id"]})
     return success_response(
         f"Draft queued in Articles: {article.get('title')}",
+        extra_events={"refreshResearch": True},
+    )
+
+
+def _apply_idea_action(pb: Any, idea: dict[str, Any], action: str, project_id: str) -> str:
+    """Apply one opportunity action. Returns 'rejected'|'roadmap'|article title."""
+    ideas = ArticleIdeaRepo(pb)
+    if action == "reject":
+        ideas.update(idea["id"], {"status": "rejected"})
+        return "rejected"
+    if action == "roadmap":
+        ideas.update(idea["id"], {"status": "roadmap"})
+        return "roadmap"
+    from app.services.research_handoff import accept_opportunity
+
+    article = accept_opportunity(pb, idea=idea, config={"project": project_id})
+    ideas.update(idea["id"], {"status": "accepted", "article": article["id"]})
+    return str(article.get("title") or "draft")
+
+
+@router.post("/projects/{project_id}/research/{run_id}/opportunities/bulk")
+@hx_error("Could not update those opportunities.")
+def opportunities_bulk(
+    request: Request,
+    project_id: str,
+    run_id: str,
+    action: str = Form(""),
+    all: str = Form(""),
+    idea_id: list[str] = Form([]),
+):
+    """Bulk accept / roadmap / reject. `all=1` targets every proposed idea."""
+    require_hx(request)
+    require_project_access(request, project_id)
+    require_project_role(request, project_id)
+    run = _run_or_none(request, project_id, run_id)
+    if run is None:
+        return error_response("Research run not found.")
+    action = safe_str(action).lower()
+    if action not in ACTIONS:
+        return error_response("Unknown action.")
+    pb = request.state.pb
+    ideas = ArticleIdeaRepo(pb)
+    if safe_bool(all):
+        targets = ideas.all_for_run(run_id, status="proposed")
+    else:
+        wanted = {str(identifier) for identifier in idea_id if identifier}
+        targets = [idea for idea in ideas.all_for_run(run_id) if idea["id"] in wanted]
+    if not targets:
+        return error_response("Select at least one opportunity first.")
+    for idea in targets:
+        _apply_idea_action(pb, idea, action, project_id)
+    label = {"accept": "accepted", "roadmap": "added to the roadmap", "reject": "rejected"}[action]
+    count = len(targets)
+    return success_response(
+        f"{count} opportunit{'y' if count == 1 else 'ies'} {label}.",
+        extra_events={"refreshResearch": True},
+    )
+
+
+@router.post("/projects/{project_id}/research/{run_id}/clusters/{cluster_id}/action")
+@hx_error("Could not update that cluster.")
+def cluster_action(
+    request: Request,
+    project_id: str,
+    run_id: str,
+    cluster_id: str,
+    action: str = Form(""),
+):
+    """Accept (related) / reject (not related) a keyword cluster."""
+    require_hx(request)
+    require_project_access(request, project_id)
+    require_project_role(request, project_id)
+    run = _run_or_none(request, project_id, run_id)
+    if run is None:
+        return error_response("Research run not found.")
+    action = safe_str(action).lower()
+    if action not in ("accept", "reject", "reset"):
+        return error_response("Unknown action.")
+    clusters = ClusterRepo(request.state.pb)
+    cluster = clusters.get(cluster_id)
+    if cluster is None or cluster.get("run") != run_id:
+        return error_response("Cluster not found.")
+    status = {"accept": "accepted", "reject": "rejected", "reset": "proposed"}[action]
+    clusters.update(cluster_id, {"status": status})
+    return success_response(f"Cluster marked {status}.", extra_events={"refreshResearch": True})
+
+
+@router.post("/projects/{project_id}/research/{run_id}/clusters/bulk")
+@hx_error("Could not update those clusters.")
+def clusters_bulk(
+    request: Request,
+    project_id: str,
+    run_id: str,
+    action: str = Form(""),
+    all: str = Form(""),
+    cluster_id: list[str] = Form([]),
+):
+    """Bulk accept / reject clusters. `all=1` targets every proposed cluster."""
+    require_hx(request)
+    require_project_access(request, project_id)
+    require_project_role(request, project_id)
+    run = _run_or_none(request, project_id, run_id)
+    if run is None:
+        return error_response("Research run not found.")
+    action = safe_str(action).lower()
+    if action not in ("accept", "reject"):
+        return error_response("Unknown action.")
+    clusters = ClusterRepo(request.state.pb)
+    status = "accepted" if action == "accept" else "rejected"
+    if safe_bool(all):
+        targets = [
+            c
+            for c in clusters.list_for_run(run_id)
+            if (c.get("status") or "proposed") == "proposed"
+        ]
+    else:
+        wanted = {str(identifier) for identifier in cluster_id if identifier}
+        targets = [c for c in clusters.list_for_run(run_id) if c["id"] in wanted]
+    if not targets:
+        return error_response("Select at least one cluster first.")
+    for cluster in targets:
+        clusters.update(cluster["id"], {"status": status})
+    count = len(targets)
+    return success_response(
+        f"{count} cluster{'s' if count != 1 else ''} {status}.",
         extra_events={"refreshResearch": True},
     )
 
