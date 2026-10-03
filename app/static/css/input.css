@@ -391,6 +391,11 @@ body {
         @apply font-extrabold leading-[0.95] tracking-[-0.04em] text-base-content;
         font-size: clamp(2.5rem, 4vw + 1.5rem, 5rem);
     }
+    /* Status badges sit inside the display title, which carries tight negative
+       tracking; reset it so the badge label stays readable. */
+    .ezdistro-title .badge {
+        letter-spacing: normal;
+    }
     .ezdistro-subtitle {
         @apply mt-3 max-w-xl text-base leading-relaxed text-base-content/60;
         letter-spacing: -0.014em;
