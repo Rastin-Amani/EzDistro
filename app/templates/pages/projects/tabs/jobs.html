@@ -1,10 +1,11 @@
 {% import 'macros/forms.html' as f %}
+{{ f.page_header(('Jobs'), ('Running jobs and history.'), eyebrow=('Project')) }}
 <div id="jobs-table"
      hx-get="/projects/{{ project.id }}/tabs/jobs"
      hx-trigger="every 5s, refreshJobs from:body"
      hx-target="this"
-     hx-swap="outerHTML">
-{{ f.page_header(('Jobs'), ('Running jobs and history.'), eyebrow=('Project')) }}
+     hx-swap="outerHTML"
+     hx-select="#jobs-table">
     {% if jobs %}
     <div class="ezdistro-panel">
         <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ ('Jobs') }}</h2></div>

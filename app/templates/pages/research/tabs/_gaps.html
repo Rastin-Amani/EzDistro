@@ -44,7 +44,7 @@
               <td class="text-end text-xs tabular">{{ g.demand|loc_int }}</td>
               <td class="text-end text-xs tabular">{{ g.competitorCoverage|loc_int }}</td>
               <td class="text-end text-xs tabular">{{ g.yourCoverage|loc_int }}</td>
-              <td class="text-end text-sm">{{ g.score|round(0)|int if g.score else 0 }}</td>
+              <td class="text-end text-sm tabular">{{ g.score|round(0)|int if g.score else 0 }}</td>
             </tr>
           {% endfor %}
           </tbody>

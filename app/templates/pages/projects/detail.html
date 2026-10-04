@@ -42,7 +42,7 @@
 
                 <span class="loading loading-spinner loading-xs htmx-indicator"></span>
 
-                {{ ('Indexing') }}
+                {{ ('Index now') }}
 
             </button>
 
@@ -142,7 +142,7 @@
 
             <form hx-post="/projects/{{ project.id }}/delete" hx-swap="none" class="flex-1">
 
-                <button type="submit" class="btn btn-error w-full">{{ ('Delete project') }}</button>
+                <button type="submit" class="btn btn-error w-full" hx-disabled-elt="this">{{ ('Delete project') }}</button>
 
             </form>
 

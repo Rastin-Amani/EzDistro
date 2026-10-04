@@ -35,6 +35,11 @@ templates.env.globals["app_name"] = settings.app_name
 # static files
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
+# Committed docs (docs/) served as plain text. Not in PUBLIC_PATHS, so the auth
+# middleware gates /help exactly like every other in-app page. The Research
+# tab's "Setup guide" links here (was /docs/... which no route ever served).
+app.mount("/help", StaticFiles(directory="docs"), name="help")
+
 
 # auth + correlation middleware (was previously dead code)
 app.add_middleware(AuthMiddleware)

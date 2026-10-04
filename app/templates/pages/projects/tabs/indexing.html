@@ -1,5 +1,10 @@
 {% import 'macros/forms.html' as f %}
 
+{{ f.page_header(('Indexing'), ('Indexing status, runs and documents.'), eyebrow=('Project'),
+    actions='<span class="tooltip tooltip-bottom" data-tip="' ~ (( 'Indexes only changed documents — fast and cheap' )) ~ '"><button class="btn btn-primary btn-sm" hx-post="/projects/' ~ project.id ~ '/run-index" hx-swap="none" hx-disabled-elt="this"><span class="loading loading-spinner loading-xs htmx-indicator"></span>' ~ (( 'Incremental indexing' )) ~ '</button></span>'
+      ~ '<form hx-post="/projects/' ~ project.id ~ '/run-index" hx-swap="none" hx-confirm="' ~ (( 'Full reindex: every document is re-embedded and old vectors are deleted. Continue?' )) ~ '"><input type="hidden" name="full" value="1" /><span class="tooltip tooltip-bottom" data-tip="' ~ (( 'All documents are re-embedded — required after changing the embedding model/dimensions' )) ~ '"><button type="submit" class="btn btn-ghost btn-sm text-warning">' ~ (( 'Full reindex' )) ~ '</button></span></form>'
+) }}
+
 <div id="indexing-tab"
 
      hx-get="/projects/{{ project.id }}/tabs/indexing"
@@ -8,12 +13,9 @@
 
      hx-target="this"
 
-     hx-swap="outerHTML">
+     hx-swap="outerHTML"
 
-{{ f.page_header(('Indexing'), ('Indexing status, runs and documents.'), eyebrow=('Project'),
-    actions='<span class="tooltip tooltip-bottom" data-tip="' ~ (( 'Indexes only changed documents — fast and cheap' )) ~ '"><button class="btn btn-primary btn-sm" hx-post="/projects/' ~ project.id ~ '/run-index" hx-swap="none" hx-disabled-elt="this"><span class="loading loading-spinner loading-xs htmx-indicator"></span>' ~ (( 'Incremental indexing' )) ~ '</button></span>'
-      ~ '<form hx-post="/projects/' ~ project.id ~ '/run-index" hx-swap="none" hx-confirm="' ~ (( 'Full reindex: every document is re-embedded and old vectors are deleted. Continue?' )) ~ '"><input type="hidden" name="full" value="1" /><span class="tooltip tooltip-bottom" data-tip="' ~ (( 'All documents are re-embedded — required after changing the embedding model/dimensions' )) ~ '"><button type="submit" class="btn btn-ghost btn-sm text-warning">' ~ (( 'Full reindex' )) ~ '</button></span></form>'
-) }}
+     hx-select="#indexing-tab">
 
     <div class="flex flex-col gap-4">
 

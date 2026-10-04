@@ -1,5 +1,7 @@
 {% import 'macros/forms.html' as f %}
 
+{{ f.page_header(('Topics'), ('Manage topics and article generation.'), eyebrow=('Project')) }}
+
 <div id="topics-tab"
 
      hx-get="/projects/{{ project.id }}/tabs/topics"
@@ -8,9 +10,9 @@
 
      hx-target="this"
 
-     hx-swap="outerHTML">
+     hx-swap="outerHTML"
 
-{{ f.page_header(('Topics'), ('Manage topics and article generation.'), eyebrow=('Project')) }}
+     hx-select="#topics-tab">
 
     <div class="flex flex-col gap-3">
 
@@ -58,7 +60,7 @@
 
             <input id="topics-tab-search" name="q" type="search" value="{{ q }}" class="input input-sm w-full max-w-64"
 
-                   placeholder="{{ ('Search by title or keyword…') }}" />
+                   placeholder="{{ ('Search by title or keyword…') }}" aria-label="{{ ('Search topics by title or keyword') }}" />
 
             <input type="hidden" name="status" value="{{ status_filter }}" />
 

@@ -128,7 +128,7 @@
 
             <div class="flex gap-3 mt-1">
 
-                <button type="submit" class="btn btn-primary flex-1">{{ ('Create') }}</button>
+                <button type="submit" class="btn btn-primary flex-1" hx-disabled-elt="this">{{ ('Create') }}</button>
 
                 <button type="button" class="btn btn-ghost" @click="$store.ui.closeModal('new-project-modal')">{{ ('Cancel') }}</button>
 

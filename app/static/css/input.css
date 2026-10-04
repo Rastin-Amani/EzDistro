@@ -529,9 +529,18 @@ body {
         margin-inline: -1rem;
         padding: 0.5rem 1rem;
         margin-bottom: 0.5rem;
-        border-bottom: 1px solid color-mix(in oklab, var(--color-base-300) 70%, transparent);
         background: color-mix(in oklab, var(--color-base-100) 95%, transparent);
         backdrop-filter: blur(12px);
+    }
+    /* The hairline under the tab bar is drawn at the tab box's own width, so
+       the rule and the tab strip share the same edges (never wider). */
+    .ezdistro-project-tabs::after {
+        content: "";
+        position: absolute;
+        inset-inline: 1rem;
+        bottom: 0;
+        height: 1px;
+        background: color-mix(in oklab, var(--color-base-300) 70%, transparent);
     }
     @media (min-width: 768px) {
         .ezdistro-project-tabs {

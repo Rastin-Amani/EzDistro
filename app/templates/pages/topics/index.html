@@ -26,7 +26,7 @@
     <form method="get" action="/projects/{{ project.id }}/topics" class="flex flex-wrap items-center gap-2">
         <input type="hidden" name="status" value="{{ status_filter }}" />
         <input type="hidden" name="sort" value="{{ sort }}" />
-        <input name="q" value="{{ q }}" class="input input-sm w-full sm:w-56" placeholder="{{ ('Search by title or keyword…') }}" />
+        <input name="q" value="{{ q }}" class="input input-sm w-full sm:w-56" placeholder="{{ ('Search by title or keyword…') }}" aria-label="{{ ('Search topics by title or keyword') }}" />
         <button type="submit" class="btn btn-ghost btn-sm">{{ ('Search') }}</button>
         {% if q %}<a href="/projects/{{ project.id }}/topics" class="btn btn-ghost btn-sm text-error">{{ ('Clear') }}</a>{% endif %}
     </form>
@@ -54,9 +54,9 @@
 <!-- Bulk bar -->
 <div class="flex items-center gap-2 mb-3 text-xs px-3 py-2 rounded-lg bg-primary/5 border border-primary/20 text-primary font-medium" id="bulk-bar" hidden>
     <span id="bulk-count">0</span> {{ ('Selected —') }}
-    <button class="btn btn-primary btn-xs" data-bulk-action="generate">{{ ('Generate article') }}</button>
-    <button class="btn btn-ghost btn-xs" data-bulk-action="retry">{{ ('Retry') }}</button>
-    <button class="btn btn-ghost btn-xs text-warning" data-bulk-action="cancel">{{ ('Cancel') }}</button>
+    <button class="btn btn-primary btn-xs" data-bulk-action="generate" data-confirm="{{ ('Generate articles for the selected topics? This queues writing jobs.') }}">{{ ('Generate article') }}</button>
+    <button class="btn btn-ghost btn-xs" data-bulk-action="retry" data-confirm="{{ ('Retry the selected topics?') }}">{{ ('Retry') }}</button>
+    <button class="btn btn-ghost btn-xs text-warning" data-bulk-action="cancel" data-confirm="{{ ('Cancel the selected topics? Any generation in progress will stop.') }}">{{ ('Cancel') }}</button>
 </div>
 <form id="bulk-form" hx-post="/projects/{{ project.id }}/topics/bulk" hx-swap="none" class="hidden">
     <input type="hidden" name="action" id="bulk-action" />
@@ -164,6 +164,7 @@
                 if (!selected.length) return;
                 document.getElementById('bulk-action').value = btn.dataset.bulkAction;
                 document.getElementById('bulk-ids').value = selected.join(',');
+                document.getElementById('bulk-form').setAttribute('hx-confirm', btn.dataset.confirm || 'Apply this action?');
                 document.getElementById('bulk-form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
             });
         });

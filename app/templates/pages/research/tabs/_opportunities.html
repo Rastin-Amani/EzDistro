@@ -44,7 +44,7 @@
         <div class="flex flex-wrap items-center gap-2">
           <button class="btn btn-xs btn-primary" name="action" value="accept">Accept selected</button>
           <button class="btn btn-xs btn-ghost" name="action" value="roadmap">Roadmap selected</button>
-          <button class="btn btn-xs btn-ghost text-error" name="action" value="reject">Reject selected</button>
+          <button class="btn btn-xs btn-ghost text-error" name="action" value="reject" hx-confirm="Reject the selected opportunities?">Reject selected</button>
         </div>
 
         {% for idea in ideas %}
@@ -71,7 +71,7 @@
                 </div>
               </div>
               <div class="text-end">
-                <div class="text-lg font-semibold">{{ idea.opportunityScore|round(0)|int if idea.opportunityScore else 0 }}</div>
+                <div class="text-lg font-semibold tabular">{{ idea.opportunityScore|round(0)|int if idea.opportunityScore else 0 }}</div>
                 <div class="text-xs opacity-50">score</div>
               </div>
             </div>

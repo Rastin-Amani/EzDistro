@@ -1,7 +1,9 @@
 {% import 'macros/forms.html' as f %}
 <div id="research-tab">
 
-  {{ f.page_header( 'Research', 'Discover search demand, analyze competitors and turn evidence into an article roadmap.', eyebrow='Project', actions='<a class="btn btn-sm btn-ghost" href="/docs/SEO_RESEARCH.md" target="_blank" rel="noopener">Setup guide</a>' ) }}
+  {{ f.page_header( 'Research', 'Discover search demand, analyze competitors and turn evidence into an article roadmap.', eyebrow='Project', actions='<a class="btn btn-sm btn-ghost" href="/help/SEO_RESEARCH.md" target="_blank" rel="noopener">Setup guide</a>' ) }}
+
+  <div class="flex flex-col gap-4">
 
   {% if ga %}
     <div class="alert alert-soft {{ 'alert-success' if ga == 'connected' else 'alert-warning' }} mb-4">
@@ -54,9 +56,9 @@
       <span id="ga-busy" class="htmx-indicator text-xs opacity-60">Fetching accounts…</span>
     {% else %}
       {% if google_ads_configured %}
-        {{ f.empty('No Google Ads connection', hint='The OAuth client is ready. Connect the account to discover keyword ideas, search demand, historical trends, paid competition and CPC ranges.', action='<a class="btn btn-sm btn-primary" href="/projects/google-ads/connect?project_id=' ~ project.id ~ '">Connect Google Ads</a>') }}
+        {{ f.empty('No Google Ads connection', hint='Connect an account to pull keyword ideas, search demand, competition and CPC.', action='<a class="btn btn-sm btn-primary" href="/projects/google-ads/connect?project_id=' ~ project.id ~ '">Connect Google Ads</a>', compact=true) }}
       {% else %}
-        {{ f.empty('Google Ads is not set up for this project', hint='Add the Google Ads OAuth client on the Connections tab, then connect the account here. Until then, research still runs on site and competitor seeds.', action='<a class="btn btn-sm btn-primary" href="/projects/' ~ project.id ~ ads_step ~ '">Configure Google Ads</a>') }}
+        {{ f.empty('Google Ads is not set up', hint='Add the OAuth client on the Connections tab. Until then, research still runs on site and competitor seeds.', action='<a class="btn btn-sm btn-primary" href="/projects/' ~ project.id ~ ads_step ~ '">Configure Google Ads</a>', compact=true) }}
       {% endif %}
     {% endif %}
   {{ f.panel_close() }}
@@ -91,7 +93,7 @@
           </table>
         </div>
       {% else %}
-        {{ f.empty('No accounts yet', hint='No accessible Google Ads customers were returned. Owned accounts must exist under the connected Google account, and the connection needs a valid developer token with Google Ads API access. Use Refresh accounts after fixing it.') }}
+        {{ f.empty('No accounts yet', hint='No accessible Google Ads customers were returned. Check the connection and developer token, then Refresh accounts.', compact=true) }}
       {% endif %}
     {{ f.panel_close() }}
   {% endif %}
@@ -171,7 +173,7 @@
       <input type="hidden" name="connection_id" value="{{ connections[0].id if connections else '' }}" />
 
       <div class="flex flex-wrap items-center gap-3">
-        <button class="btn btn-primary btn-sm" type="submit">Start research</button>
+        <button class="btn btn-primary btn-sm" type="submit" hx-disabled-elt="this">Start research</button>
         <span class="htmx-indicator text-xs opacity-60">Starting…</span>
         <span class="text-xs opacity-50">Runs in the background — you can leave this page.</span>
       </div>
@@ -215,4 +217,5 @@
     {% endif %}
   {{ f.panel_close() }}
 
+  </div>
 </div>

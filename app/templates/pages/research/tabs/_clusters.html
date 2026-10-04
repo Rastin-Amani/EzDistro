@@ -39,7 +39,7 @@
             hx-target="#research-content" hx-swap="innerHTML" hx-indicator="#research-indicator">
         <div class="flex flex-wrap items-center gap-2">
           <button class="btn btn-xs btn-primary" name="action" value="accept">Accept selected</button>
-          <button class="btn btn-xs btn-ghost text-error" name="action" value="reject">Reject selected</button>
+          <button class="btn btn-xs btn-ghost text-error" name="action" value="reject" hx-confirm="Reject the selected clusters?">Reject selected</button>
         </div>
 
         <div class="mt-2 overflow-x-auto">
@@ -58,7 +58,7 @@
                   {% endif %}
                 </td>
                 <td class="text-sm">{{ c.name }}</td>
-                <td class="text-end text-xs">{{ c.size|default(0) }}</td>
+                <td class="text-end text-xs tabular">{{ c.size|default(0) }}</td>
                 <td class="text-xs opacity-60">{{ c.method or '—' }}</td>
                 <td class="text-xs opacity-70">{{ c.primaryKeyword or '—' }}</td>
                 <td><span class="badge {{ decision|status_badge }}">{{ decision|status_label }}</span></td>

@@ -1,5 +1,7 @@
 {% import 'macros/forms.html' as f %}
 
+{{ f.page_header(('Prompts'), ('Manage prompt versions and run interactive tests.'), eyebrow=('Project')) }}
+
 <div id="prompts-tab" class="flex flex-col gap-4"
 
      hx-get="/projects/{{ project.id }}/tabs/prompts"
@@ -8,9 +10,9 @@
 
      hx-target="this"
 
-     hx-swap="outerHTML">
+     hx-swap="outerHTML"
 
-{{ f.page_header(('Prompts'), ('Manage prompt versions and run interactive tests.'), eyebrow=('Project')) }}
+     hx-select="#prompts-tab">
 
     <!-- Variables reference -->
 

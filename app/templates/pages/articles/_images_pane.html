@@ -79,7 +79,7 @@
                 <figure class="flex flex-col gap-1">
 
                     <img src="{{ row.id|pb_file(row.optimizedFile) }}" alt="{{ row.altText or spec.alt_text or '' }}"
-                         width="{{ row.width or 0 }}" height="{{ row.height or 0 }}"
+                         {% if row.width %}width="{{ row.width }}"{% endif %} {% if row.height %}height="{{ row.height }}"{% endif %}
                          class="rounded-lg w-full object-cover border border-base-300/50"
                          {% if not is_cover %}loading="lazy"{% endif %} decoding="async">
 

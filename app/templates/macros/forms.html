@@ -7,16 +7,16 @@
 
 {# ── Field macros ────────────────────────────────────────────────────── #}
 {% macro tip(tip_text) -%}
-    {% if tip_text %}<span class="tooltip tooltip-left sm:tooltip-top" data-tip="{{ tip_text }}"><span class="cursor-help text-base-content/40 hover:text-base-content/70"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/></svg></span></span>{% endif %}
+    {% if tip_text %}<span class="tooltip tooltip-left sm:tooltip-top" data-tip="{{ tip_text }}"><span class="cursor-help text-base-content/40 hover:text-base-content/70" tabindex="0" role="img" aria-label="{{ tip_text }}"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/></svg></span></span>{% endif %}
 {%- endmacro %}
 
 {% macro label(label_text, tip_text='', required=false) -%}
-    <div class="label px-0 pb-1.5">
+    <span class="label px-0 pb-1.5">
         <span class="label-text font-medium text-sm text-base-content/80">
             {{ label_text }}{% if required %} <span class="text-error">*</span>{% endif %}
         </span>
         {{ tip(tip_text) }}
-    </div>
+    </span>
 {%- endmacro %}
 
 {% macro text(name, label_text, value='', tip_text='', placeholder='', required=false, dir='', hint='', autocomplete='off') -%}
@@ -145,7 +145,7 @@
         <h1 class="ezdistro-title">{{ title }}</h1>
         {% if subtitle %}<p class="ezdistro-subtitle">{{ subtitle }}</p>{% endif %}
     </div>
-    {% if actions %}<div class="ezdistro-actions">{{ actions|safe }}</div>{% endif %}
+    {% if actions %}<div class="ezdistro-actions ms-auto">{{ actions|safe }}</div>{% endif %}
 </header>
 {%- endmacro %}
 
@@ -165,8 +165,8 @@
 </section>
 {%- endmacro %}
 
-{% macro empty(title, hint='', icon='', action='') -%}
-<div class="ezdistro-empty">
+{% macro empty(title, hint='', icon='', action='', compact=false) -%}
+<div class="ezdistro-empty{{ ' py-6' if compact else '' }}">
     {% if icon %}<div class="ezdistro-empty-icon">{{ icon|safe }}</div>{% endif %}
     <p class="font-bold text-base-content/75">{{ title }}</p>
     {% if hint %}<p class="text-sm text-base-content/50 max-w-sm leading-relaxed">{{ hint }}</p>{% endif %}

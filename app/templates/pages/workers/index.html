@@ -6,6 +6,10 @@
 
 
 
+{{ f.page_header(('Workers'), ('Live status of worker processes, the job queue and automatic schedule health.'), ('Operations & monitoring'),
+
+    '<span class="badge badge-sm badge-soft badge-info"><span class="loading loading-spinner loading-xs me-1"></span>' ~ ('Auto-refreshes every 5 seconds') ~ '</span>') }}
+
 <div id="workers-content" class="flex flex-col gap-4"
 
      hx-get="/workers"
@@ -17,12 +21,6 @@
      hx-swap="outerHTML"
 
      hx-select="#workers-content">
-
-
-
-    {{ f.page_header(('Workers'), ('Live status of worker processes, the job queue and automatic schedule health.'), ('Operations & monitoring'),
-
-        '<span class="badge badge-sm badge-soft badge-info"><span class="loading loading-spinner loading-xs me-1"></span>' ~ ('Auto-refreshes every 5 seconds') ~ '</span>') }}
 
 
 

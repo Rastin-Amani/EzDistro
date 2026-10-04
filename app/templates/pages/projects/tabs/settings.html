@@ -39,13 +39,13 @@
 
     {{ f.section_open(('Chunking'), ('Documents are split into small chunks for retrieval.'), ('Persian text is first split on paragraph/sentence boundaries and only falls back to word limits when a hard cap is hit — never mid-word.')) }}
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {{ f.number('chunk_size', ('Chunk size (words)'), settings.chunkSize,
+            {{ f.number('chunk_size', ('Chunk size (words)'), settings.chunkSize or 500,
                 ( 'Desired words per chunk for retrieval. Smaller = more precise, more expensive.' )) }}
-            {{ f.number('chunk_overlap', ('Overlap'), settings.chunkOverlap,
+            {{ f.number('chunk_overlap', ('Overlap'), settings.chunkOverlap or 100,
                 ( 'Words shared between adjacent chunks so context is not lost. Usually 15–20% of chunk size.' )) }}
             {{ f.select('separator_strategy', ('Splitter strategy'),
                 [('auto', ( 'Auto (paragraph → sentence)' )), ('paragraph', ( 'Paragraph' )), ('sentence', ( 'Sentence' )), ('word', ( 'Word' ))],
-                settings.separatorStrategy,
+                settings.separatorStrategy or 'auto',
                 ( 'Text split boundary: auto tries paragraph first, then sentence.' )) }}
             {{ f.number('max_chunk_count', ('Max chunks (0 = unlimited)'), settings.maxChunkCount or 0,
                 ( 'Cap on chunks per document; 0 means unlimited. Useful for cost control.' )) }}

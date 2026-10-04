@@ -89,7 +89,7 @@
         <ul class="flex flex-col gap-2">
             {% for e in recent_events %}
             <li class="flex items-start gap-2.5 text-sm">
-                <span class="badge badge-xs mt-1 {{ e.level|status_badge }}">{{ e.level|status_label }}</span>
+                <span class="badge badge-xs mt-1 {{ e.eventType|status_badge }}">{{ e.eventType|status_label }}</span>
                 <div class="min-w-0">
                     <p class="truncate">{{ e.message }}</p>
                     <p class="text-xs text-base-content/55">{{ e.created|loc_dt }}</p>
