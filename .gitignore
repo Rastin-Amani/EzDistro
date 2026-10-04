@@ -79,3 +79,6 @@ Thumbs.db
 
 # Uploads
 app/static/uploads/
+
+# OpenChamber local project state (screenshots, per-project actions)
+.openchamber/
