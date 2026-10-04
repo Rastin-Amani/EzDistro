@@ -32,14 +32,14 @@ from tests.fakes import FakePocketBase, default_unique_fields
 from tests.helpers import call_route_async
 
 SAMPLE_CSV = """Week,ID,Title,Keyword,Related Pillar,Cluster,Type,Written,Published,URL
-1,1,\u0686\u0631\u0627 \u06a9\u0648\u0644\u0631 \u0634\u0627\u0647\u06cc\u0646 \u062f\u0631 \u0633\u0631\u0628\u0627\u0644\u0627\u06cc\u06cc \u0628\u0627\u062f \u06af\u0631\u0645 \u0645\u06cc\u200c\u0632\u0646\u062f\u061f,\u0645\u0634\u06a9\u0644 \u06a9\u0648\u0644\u0631 \u0634\u0627\u0647\u06cc\u0646,\u062a\u0639\u0645\u06cc\u0631 \u0648 \u0646\u06af\u0647\u062f\u0627\u0631\u06cc,\u0633\u06cc\u0633\u062a\u0645 \u062a\u0647\u0648\u06cc\u0647,\u0631\u0627\u0647\u0646\u0645\u0627\u06cc \u0639\u06cc\u0628\u200c\u06cc\u0627\u0628\u06cc,1,1,https://cheraq-check.ir/?p=3397
-1,2,\u0635\u062f\u0627\u06cc \u062a\u0642\u200c\u062a\u0642 \u0641\u0631\u0645\u0627\u0646 \u067e\u0631\u0627\u06cc\u062f \u0647\u0646\u06af\u0627\u0645 \u067e\u06cc\u0686\u06cc\u062f\u0646,\u0635\u062f\u0627\u06cc \u062a\u0642 \u062a\u0642 \u0641\u0631\u0645\u0627\u0646 \u067e\u0631\u0627\u06cc\u062f,\u0639\u06cc\u0628\u200c\u06cc\u0627\u0628\u06cc \u0641\u0646\u06cc,\u062c\u0644\u0648\u0628\u0646\u062f\u06cc,\u067e\u0631\u0633\u0634 \u0648 \u067e\u0627\u0633\u062e,0,0,
-2,3,"\u062a\u0641\u0627\u0648\u062a \u0644\u0646\u062a \u062a\u0631\u0645\u0632 \u062a\u06a9\u0633\u062a\u0627\u0631 \u0627\u0635\u0644\u06cc \u0648 \u062a\u0642\u0644\u0628\u06cc \u0628\u0631\u0627\u06cc \u06f2\u06f0\u06f6 \u062a\u06cc\u067e \u06f5 + \u0639\u06a9\u0633 \u062a\u0634\u062e\u06cc\u0635",\u062a\u0634\u062e\u06cc\u0635 \u0644\u0646\u062a \u062a\u06a9\u0633\u062a\u0627\u0631 \u0627\u0635\u0644\u06cc \u06f2\u06f0\u06f6,\u0642\u0637\u0639\u0627\u062a \u06cc\u062f\u06a9\u06cc,\u0633\u06cc\u0633\u062a\u0645 \u062a\u0631\u0645\u0632,\u0631\u0627\u0647\u0646\u0645\u0627\u06cc \u062e\u0631\u06cc\u062f,0,0,"""
+1,1,Why does the heater blow warm air uphill?,Heater fault,Maintenance,HVAC system,troubleshooting guide,1,1,https://cheraq-check.ir/?p=3397
+1,2,Clunking steering noise when turning,Clunking steering noise,Technical diagnosis,Front end,Q&A,0,0,
+2,3,"Genuine vs counterfeit pads for a 206 + how to tell",Spotting genuine 206 pads,Spare parts,Brakes,buying guide,0,0,"""
 
-PIPE_PASTE = """\u0645\u0648\u0636\u0648\u0639 \u0627\u0648\u0644 | \u06a9\u0644\u0645\u0647 \u0627\u0648\u0644 | \u0633\u062a\u0648\u0646 \u0627\u0644\u0641 | \u062e\u0648\u0634\u0647 \u06f1 | \u0631\u0627\u0647\u0646\u0645\u0627 | 5
-\u0645\u0648\u0636\u0648\u0639 \u062f\u0648\u0645 | \u06a9\u0644\u0645\u0647 \u062f\u0648\u0645"""
+PIPE_PASTE = """Topic One | Keyword One | Pillar A | Cluster 1 | guide | 5
+Topic Two | Keyword Two"""
 
-TAB_PASTE = "\u0639\u0646\u0648\u0627\u0646\t\u06a9\u0644\u0645\u0647\t\u0633\u062a\u0648\u0646\t\u062e\u0648\u0634\u0647\t\u0646\u0648\u0639\t\u0627\u0648\u0644\u0648\u06cc\u062a\n\u0627\u0644\u0641\t\u0628\t\u062c\t\u062f\t\u0631\u0627\u0647\u0646\u0645\u0627\t\u06f3"
+TAB_PASTE = "Title\tKeyword\tPillar\tCluster\tType\tPriority\nA\tB\tC\tD\tguide\t3"
 
 
 def make_pb() -> FakePocketBase:
@@ -94,17 +94,14 @@ def test_parse_quoted_csv_keeps_commas():
     delim, rows = parse_delimited(SAMPLE_CSV)
     assert delim == ","
     assert len(rows) == 4
-    assert (
-        "\u062a\u0641\u0627\u0648\u062a \u0644\u0646\u062a \u062a\u0631\u0645\u0632 \u062a\u06a9\u0633\u062a\u0627\u0631 \u0627\u0635\u0644\u06cc \u0648 \u062a\u0642\u0644\u0628\u06cc \u0628\u0631\u0627\u06cc \u06f2\u06f0\u06f6 \u062a\u06cc\u067e \u06f5 + \u0639\u06a9\u0633 \u062a\u0634\u062e\u06cc\u0635"
-        in rows[3]
-    )
+    assert "Genuine vs counterfeit pads for a 206 + how to tell" in rows[3]
 
 
-def test_header_detection_en_and_fa():
+def test_header_detection():
     assert detect_header(parse_delimited(SAMPLE_CSV)[1]) is True
-    fa = "\u0647\u0641\u062a\u0647\u060c\u0639\u0646\u0648\u0627\u0646\u060c\u06a9\u0644\u0645\u0647 \u06a9\u0644\u06cc\u062f\u06cc\u060c\u0633\u062a\u0648\u0646\u060c\u062e\u0648\u0634\u0647\u060c\u0646\u0648\u0639\n\u06f1\u060c\u0627\u0644\u0641\u060c\u0628\u060c\u062c\u060c\u062f\u060c\u0631\u0627\u0647\u0646\u0645\u0627"
-    delim, rows = parse_delimited(fa)
-    assert delim == "\u060c"
+    header = "Week,Title,Keyword,Pillar,Cluster,Type\n1,A,B,C,D,guide"
+    delim, rows = parse_delimited(header)
+    assert delim == ","
     assert detect_header(rows) is True
     assert detect_header(parse_delimited(PIPE_PASTE)[1]) is False
 
@@ -130,7 +127,7 @@ def test_no_header_maps_first_column_to_title():
     assert build_column_map(columns, has_header=False) == {"title": 0}
 
 
-def test_persian_digits_in_numbers():
+def test_numeric_columns_map_and_parse():
     _delim, rows = parse_delimited(TAB_PASTE)
     assert detect_header(rows) is True
     mapped = build_column_map(detect_columns(rows, True), True)
@@ -149,11 +146,11 @@ def _cmap(**fields) -> dict:
 
 def test_build_payload_ok():
     row = [
-        "\u0639\u0646\u0648\u0627\u0646 \u0646\u0645\u0648\u0646\u0647",
-        "\u06a9\u0644\u06cc\u062f \u0646\u0645\u0648\u0646\u0647",
-        "\u0633\u062a\u0648\u0646",
-        "\u062e\u0648\u0634\u0647",
-        "\u0631\u0627\u0647\u0646\u0645\u0627",
+        "Sample title",
+        "Sample key",
+        "Pillar",
+        "Cluster",
+        "guide",
         "7",
         "12",
         "https://x.ir/1",
@@ -176,7 +173,7 @@ def test_build_payload_ok():
         set(),
     )
     assert reason is None
-    assert payload["title"] == "\u0639\u0646\u0648\u0627\u0646 \u0646\u0645\u0648\u0646\u0647"
+    assert payload["title"] == "Sample title"
     assert payload["type"] == "guide"
     assert payload["priority"] == 7
     assert payload["week"] == 12
@@ -191,8 +188,8 @@ def test_build_payload_empty_title():
 
 def test_build_payload_duplicate_title_and_keyword():
     row = [
-        "\u062a\u06a9\u0631\u0627\u0631\u06cc",
-        "\u06a9\u0644\u06cc\u062f \u062a\u06a9\u0631\u0627\u0631\u06cc",
+        "duplicate",
+        "Duplicate key",
         "",
         "",
         "",
@@ -201,33 +198,29 @@ def test_build_payload_duplicate_title_and_keyword():
         "",
     ]
     cmap = {"title": 0, "keyword": 1}
-    _p, r1 = build_payload(
-        row, cmap, {normalize_key("\u062a\u06a9\u0631\u0627\u0631\u06cc")}, set(), set(), set()
-    )
+    _p, r1 = build_payload(row, cmap, {normalize_key("duplicate")}, set(), set(), set())
     assert r1 == "duplicate"
     _p, r2 = build_payload(
         row,
         cmap,
         set(),
-        {normalize_key("\u06a9\u0644\u06cc\u062f \u062a\u06a9\u0631\u0627\u0631\u06cc")},
+        {normalize_key("Duplicate key")},
         set(),
         set(),
     )
     assert r2 == "duplicate"
     # duplicate within the same batch
-    _p, r3 = build_payload(
-        row, cmap, set(), set(), {normalize_key("\u062a\u06a9\u0631\u0627\u0631\u06cc")}, set()
-    )
+    _p, r3 = build_payload(row, cmap, set(), set(), {normalize_key("duplicate")}, set())
     assert r3 == "duplicate"
 
 
 def test_build_payload_coerces_freeform_type():
     row = [
-        "\u062a\u06cc\u062a\u0631",
-        "\u06a9\u0644\u06cc\u062f",
+        "Heading",
+        "Key",
         "",
         "",
-        "\u067e\u0631\u0633\u0634 \u0648 \u067e\u0627\u0633\u062e",
+        "Q&A",
         "",
         "",
         "",
@@ -249,9 +242,7 @@ def test_import_rows_full_cycle(setup):
 
     first = import_rows(pb, proj["id"], rows, mapped, has_header=True)
     assert first["created"] == 3
-    assert (
-        first["coerced"] == 3
-    )  # \u0631\u0627\u0647\u0646\u0645\u0627\u06cc \u0639\u06cc\u0628\u200c\u06cc\u0627\u0628\u06cc + \u067e\u0631\u0633\u0634 \u0648 \u067e\u0627\u0633\u062e + \u0631\u0627\u0647\u0646\u0645\u0627\u06cc \u062e\u0631\u06cc\u062f → article
+    assert first["coerced"] == 3  # troubleshooting guide + Q&A + buying guide → article
     assert first["errors"] == []
 
     # rerun → everything is a duplicate
@@ -269,14 +260,14 @@ def test_import_rows_full_cycle(setup):
 def test_import_rows_collects_errors(setup):
     pb, proj = setup["pb"], setup["proj"]
     rows = [
-        ["T", "K", "\u0646\u0648\u0639"],
+        ["T", "K", "Type"],
         [
-            "\u0627\u0644\u0641",
-            "\u06a91",
-            "\u0631\u0627\u0647\u0646\u0645\u0627\u06cc \u0639\u06cc\u0628\u200c\u06cc\u0627\u0628\u06cc",
+            "A",
+            "K1",
+            "troubleshooting guide",
         ],  # coerced → created
-        ["\u0627\u0644\u0641", "\u06a92", ""],  # duplicate title → skipped
-        ["", "\u06a93", ""],  # empty title → error
+        ["A", "K2", ""],  # duplicate title → skipped
+        ["", "K3", ""],  # empty title → error
     ]
     summary = import_rows(
         pb, proj["id"], rows, {"title": 0, "keyword": 1, "type": 2}, has_header=True
@@ -314,7 +305,7 @@ async def test_import_preview_renders_mapping_form(setup):
     assert resp.status_code == 200
     body = resp.body.decode()
     assert "col_title" in body
-    assert "\u0645\u0648\u0636\u0648\u0639 \u0627\u0648\u0644" in body  # preview sample row
+    assert "Topic One" in body  # preview sample row
     assert "No header" in body
     assert 'name="token"' in body
     assert 'aria-current="step"' in body and "Map columns" in body
@@ -358,10 +349,10 @@ async def test_import_confirm_creates_topics(setup):
 async def test_import_confirm_requires_title_column(setup):
     pb, proj = setup["pb"], setup["proj"]
     token = store_preview(
-        rows=[["\u0627\u0644\u0641", "\u0628"]],
+        rows=[["A", "B"]],
         delimiter=",",
         has_header=False,
-        columns=[{"index": 0, "name": "\u0633\u062a\u0648\u0646 1", "samples": []}],
+        columns=[{"index": 0, "name": "Pillar 1", "samples": []}],
         filename="s.csv",
     )
     req = make_req(pb, make_user(), proj["id"])

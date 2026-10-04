@@ -25,9 +25,9 @@ from tests.fakes import FakePocketBase, default_unique_fields
 def make_project(pb: FakePocketBase) -> dict[str, Any]:
     project = pb.collection("projects").create(
         {
-            "name": "\u067e",
+            "name": "P",
             "slug": "perf",
-            "language": "fa",
+            "language": "en",
             "status": "active",
             "timezone": "Asia/Tehran",
         }
@@ -36,11 +36,11 @@ def make_project(pb: FakePocketBase) -> dict[str, Any]:
     for ptype, content in (
         (
             "brand_voice",
-            "\u062a\u0648 \u0646\u0648\u06cc\u0633\u0646\u062f\u0647 \u0633\u0626\u0648 \u0647\u0633\u062a\u06cc.",
+            "You are an SEO writer.",
         ),
-        ("outline_user", "JSON \u0628\u0631\u06af\u0631\u062f\u0627\u0646."),
-        ("section_user", "HTML \u0628\u0631\u06af\u0631\u062f\u0627\u0646."),
-        ("seo_rules", "\u0642\u0648\u0627\u0646\u06cc\u0646."),
+        ("outline_user", "Return JSON."),
+        ("section_user", "Return HTML."),
+        ("seo_rules", "Rules."),
     ):
         PromptRepo(pb).save_version(
             project_id=project["id"], ptype=ptype, name="default", content=content
@@ -85,7 +85,7 @@ def test_concurrent_generations_respect_llm_concurrency_limit(monkeypatch):
     pb = FakePocketBase(default_unique_fields())
     project = make_project(pb)
     topics = [
-        TopicRepo(pb).create(project=project["id"], title=f"\u062a{i}", keyword=f"\u06a9{i}")
+        TopicRepo(pb).create(project=project["id"], title=f"T{i}", keyword=f"K{i}")
         for i in range(4)
     ]
 
@@ -99,14 +99,10 @@ def test_concurrent_generations_respect_llm_concurrency_limit(monkeypatch):
         self.calls.append({"json_mode": json_mode, "user": user})
         if "JSON" in user or "json" in user:
             sections = ",".join(
-                f'{{"heading": "\u0628 {s}", "content_brief": "\u062e"}}' for s in range(1, 5)
+                f'{{"heading": "B {s}", "content_brief": "X"}}' for s in range(1, 5)
             )
-            return '{"title": "\u062a", "slug": "t", "sections": [' + sections + "]}"
-        return (
-            "<p>"
-            + ("\u06a9\u0644\u0645\u0647 \u0645\u062d\u062a\u0648\u0627 " * 120).strip()
-            + "</p>"
-        )
+            return '{"title": "T", "slug": "t", "sections": [' + sections + "]}"
+        return "<p>" + ("content word " * 120).strip() + "</p>"
 
     monkeypatch.setattr(FakeLLM, "_next", syn_next)
 
@@ -162,7 +158,7 @@ def test_graceful_degradation_with_slow_providers(monkeypatch):
         pb.collection("project_settings").get_first_list_item(f'project="{project["id"]}"')["id"],
         {"retryPolicy": {"max_attempts": 3, "backoff_base": 2, "backoff_max": 60}},
     )
-    topic = TopicRepo(pb).create(project=project["id"], title="\u062a", keyword="\u06a9")
+    topic = TopicRepo(pb).create(project=project["id"], title="T", keyword="K")
 
     registry = SlowRegistry()
     registry.llm = FakeLLM([], delay=0.15)
@@ -172,14 +168,10 @@ def test_graceful_degradation_with_slow_providers(monkeypatch):
         self.calls.append({"json_mode": json_mode, "user": user})
         if "JSON" in user or "json" in user:
             sections = ",".join(
-                f'{{"heading": "\u0628 {s}", "content_brief": "\u062e"}}' for s in range(1, 4)
+                f'{{"heading": "B {s}", "content_brief": "X"}}' for s in range(1, 4)
             )
-            return '{"title": "\u062a", "slug": "t", "sections": [' + sections + "]}"
-        return (
-            "<p>"
-            + ("\u06a9\u0644\u0645\u0647 \u0645\u062d\u062a\u0648\u0627 " * 120).strip()
-            + "</p>"
-        )
+            return '{"title": "T", "slug": "t", "sections": [' + sections + "]}"
+        return "<p>" + ("content word " * 120).strip() + "</p>"
 
     monkeypatch.setattr(FakeLLM, "_next", syn_next)
 
@@ -253,7 +245,7 @@ def test_retrieval_dedupe_keeps_best_score_per_url_and_unlinked():
     results = [
         RetrievalResult(
             document_id="a",
-            title="\u0627\u0644\u0641",
+            title="A",
             source_url="https://s.test/1",
             snippet="x",
             vector_score=0.5,
@@ -261,7 +253,7 @@ def test_retrieval_dedupe_keeps_best_score_per_url_and_unlinked():
         ),
         RetrievalResult(
             document_id="b",
-            title="\u0627\u0644\u0641",
+            title="A",
             source_url="https://s.test/1/",
             snippet="y",
             vector_score=0.9,
@@ -269,7 +261,7 @@ def test_retrieval_dedupe_keeps_best_score_per_url_and_unlinked():
         ),  # same URL
         RetrievalResult(
             document_id="c",
-            title="\u0628\u062f\u0648\u0646 \u0644\u06cc\u0646\u06a9",
+            title="without links",
             source_url="",
             snippet="z",
             vector_score=0.3,
@@ -312,6 +304,23 @@ def test_stats_cache_reduces_queries():
     assert pb.storage.query_count > 0
 
 
+def test_list_all_uses_large_batch(monkeypatch):
+    """Full scans must page at the requested size, not the SDK's default 100."""
+    from tests.fakes import FakeRecordService
+
+    pb = FakePocketBase(default_unique_fields())
+    captured: dict[str, int] = {}
+    original = FakeRecordService.get_full_list
+
+    def spy(self, batch=100, query_params=None):
+        captured["batch"] = batch
+        return original(self, batch=batch, query_params=query_params)
+
+    monkeypatch.setattr(FakeRecordService, "get_full_list", spy)
+    TopicRepo(pb).list_all()
+    assert captured["batch"] == 500
+
+
 # ---------------------------------------------------------------------------
 # Embedding batching
 # ---------------------------------------------------------------------------
@@ -346,8 +355,8 @@ def test_retrieval_service_dedupe_integration():
             payload={
                 "project_id": project["id"],
                 "source_url": "https://s.test/1",
-                "title": "\u0627\u0644\u0641",
-                "chunk_text": "\u0645\u062a\u0646 \u0627\u0644\u0641",
+                "title": "A",
+                "chunk_text": "Text A",
             },
         ),
         "x:2": VectorPoint(
@@ -356,8 +365,8 @@ def test_retrieval_service_dedupe_integration():
             payload={
                 "project_id": project["id"],
                 "source_url": "https://s.test/1",
-                "title": "\u0627\u0644\u0641",
-                "chunk_text": "\u0645\u062a\u0646 \u0627\u0644\u0641 \u0628\u0647\u062a\u0631",
+                "title": "A",
+                "chunk_text": "Text A is better",
             },
         ),
         "x:3": VectorPoint(
@@ -366,8 +375,8 @@ def test_retrieval_service_dedupe_integration():
             payload={
                 "project_id": project["id"],
                 "source_url": "https://s.test/2",
-                "title": "\u0628",
-                "chunk_text": "\u0645\u062a\u0646 \u0628",
+                "title": "B",
+                "chunk_text": "Text B",
             },
         ),
     }
@@ -376,7 +385,7 @@ def test_retrieval_service_dedupe_integration():
     results = asyncio.run(
         service.retrieve(
             config,
-            "\u0633\u0626\u0648",
+            "seo",
             RetrievalOptions(candidate_count=10, similarity_threshold=None),
         )
     )

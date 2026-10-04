@@ -74,7 +74,7 @@ def openai_handler(request: httpx.Request) -> httpx.Response:
             b"data: [DONE]\n\n",
         )
     else:
-        content = "\u0633\u0644\u0627\u0645 \u062f\u0646\u06cc\u0627"
+        content = "hello world"
     return httpx.Response(
         200,
         json={
@@ -99,7 +99,7 @@ def test_openai_generate_and_metrics():
     result = asyncio.run(
         llm.generate(system="sys", user="hello", params=GenerationParams(max_tokens=100))
     )
-    assert result.text == "\u0633\u0644\u0627\u0645 \u062f\u0646\u06cc\u0627"
+    assert result.text == "hello world"
     assert result.provider == "openai_compat"
     assert result.model == "gpt-test"
     assert result.usage == {"prompt_tokens": 12, "completion_tokens": 7}
@@ -173,11 +173,7 @@ def gemini_handler(request: httpx.Request) -> httpx.Response:
     assert body["systemInstruction"]["parts"][0]["text"] == "sys"
     assert body["generationConfig"]["maxOutputTokens"] == 100
     json_mode = body["generationConfig"].get("responseMimeType") == "application/json"
-    content = (
-        '{"title": "gem"}'
-        if json_mode
-        else "\u067e\u0627\u0633\u062e \u062c\u0645\u06cc\u0646\u06cc"
-    )
+    content = '{"title": "gem"}' if json_mode else "Gemini response"
     return httpx.Response(
         200,
         json={
@@ -199,7 +195,7 @@ def test_gemini_generate_and_json():
     result = asyncio.run(
         llm.generate(system="sys", user="hi", params=GenerationParams(max_tokens=100))
     )
-    assert result.text == "\u067e\u0627\u0633\u062e \u062c\u0645\u06cc\u0646\u06cc"
+    assert result.text == "Gemini response"
     assert result.provider == "gemini"
     assert result.usage == {"prompt_tokens": 5, "completion_tokens": 9}
 
@@ -269,19 +265,17 @@ def test_reranker_preserves_scores_and_metadata():
         transport=transport_for(handler),
     )
     docs = [
-        "\u0645\u062a\u0646 \u0627\u0648\u0644",
-        "\u0645\u062a\u0646 \u062f\u0648\u0645",
-        "\u0645\u062a\u0646 \u0633\u0648\u0645",
+        "first text",
+        "second text",
+        "third text",
     ]
     meta = [{"url": "/1"}, {"url": "/2"}, {"url": "/3"}]
-    results = asyncio.run(
-        reranker.rerank(query="\u0633\u0626\u0648", documents=docs, top_n=2, metadata=meta)
-    )
+    results = asyncio.run(reranker.rerank(query="seo", documents=docs, top_n=2, metadata=meta))
 
     assert len(results) == 2
     assert results[0].index == 0
     assert results[0].score > results[1].score
-    assert results[0].document == "\u0645\u062a\u0646 \u0627\u0648\u0644"  # original text preserved
+    assert results[0].document == "first text"  # original text preserved
     assert results[0].metadata == {"url": "/1"}  # caller metadata preserved
     asyncio.run(reranker.aclose())
 
@@ -338,22 +332,16 @@ def test_publisher_create_update_get():
         transport=transport_for(handler),
     )
     created = asyncio.run(
-        pub.create_post(
-            title="\u0639\u0646\u0648\u0627\u0646", html="<p>x</p>", status="draft", slug="onvan"
-        )
+        pub.create_post(title="Title", html="<p>x</p>", status="draft", slug="onvan")
     )
     assert created.post_id == 1001
 
-    updated = asyncio.run(
-        pub.update_post(
-            1001, status="publish", title="\u0639\u0646\u0648\u0627\u0646 \u062c\u062f\u06cc\u062f"
-        )
-    )
+    updated = asyncio.run(pub.update_post(1001, status="publish", title="New title"))
     assert updated.link == "https://s.test/?p=1001"
 
     fetched = asyncio.run(pub.get_post(1001))
     assert fetched is not None
-    assert fetched.title == "\u0639\u0646\u0648\u0627\u0646 \u062c\u062f\u06cc\u062f"
+    assert fetched.title == "New title"
     assert fetched.status == "publish"
 
     asyncio.run(pub.ping())  # /wp-json probe

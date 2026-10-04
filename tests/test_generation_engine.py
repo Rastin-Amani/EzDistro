@@ -27,26 +27,20 @@ from tests.fake_providers import FakeRegistry
 from tests.fakes import FakePocketBase, default_unique_fields
 
 OUTLINE_JSON = (
-    '{"title": "\u0631\u0627\u0647\u0646\u0645\u0627\u06cc \u0633\u0626\u0648", "slug": "rahnama-seo", "sections": ['
-    '{"heading": "\u0645\u0642\u062f\u0645\u0647", "content_brief": "\u0646\u06a9\u062a\u0647 \u06f1", "internal_links": [{"title": "\u0645\u0642\u0627\u0644\u0647 \u0645\u0631\u062a\u0628\u0637", "url": "https://site.test/1", "anchor_text": "\u0645\u0642\u0627\u0644\u0647 \u0645\u0631\u062a\u0628\u0637"}]},'
-    '{"heading": "\u062a\u06a9\u0646\u06cc\u06a9\u0647\u0627", "content_brief": "\u0646\u06a9\u062a\u0647 \u06f2"},'
-    '{"heading": "\u0646\u062a\u06cc\u062c\u0647\u06af\u06cc\u0631\u06cc", "content_brief": "\u062c\u0645\u0639\u0628\u0646\u062f\u06cc"}]}'
+    '{"title": "SEO Guide", "slug": "rahnama-seo", "sections": ['
+    '{"heading": "Introduction", "content_brief": "note 1", "internal_links": [{"title": "Related article", "url": "https://site.test/1", "anchor_text": "Related article"}]},'
+    '{"heading": "Techniques", "content_brief": "note 2"},'
+    '{"heading": "Conclusion", "content_brief": "Summary"}]}'
 )
-SECTION_HTML = (
-    "<p>"
-    + (
-        "\u06a9\u0644\u0645\u0647 \u0645\u062d\u062a\u0648\u0627\u06cc \u0628\u062e\u0634 " * 40
-    ).strip()
-    + "</p>"
-)
+SECTION_HTML = "<p>" + ("section content word " * 40).strip() + "</p>"
 
 
 def make_project(pb: FakePocketBase) -> dict[str, Any]:
     project = pb.collection("projects").create(
         {
-            "name": "\u067e",
+            "name": "P",
             "slug": "proj-a",
-            "language": "fa",
+            "language": "en",
             "status": "active",
             "timezone": "Asia/Tehran",
         }
@@ -55,11 +49,11 @@ def make_project(pb: FakePocketBase) -> dict[str, Any]:
     for ptype, content in (
         (
             "brand_voice",
-            "\u062a\u0648 \u0646\u0648\u06cc\u0633\u0646\u062f\u0647 \u0633\u0626\u0648 \u0647\u0633\u062a\u06cc.",
+            "You are an SEO writer.",
         ),
-        ("outline_user", "JSON \u0628\u0631\u06af\u0631\u062f\u0627\u0646."),
-        ("section_user", "HTML \u0628\u0631\u06af\u0631\u062f\u0627\u0646."),
-        ("seo_rules", "\u0642\u0648\u0627\u0646\u06cc\u0646."),
+        ("outline_user", "Return JSON."),
+        ("section_user", "Return HTML."),
+        ("seo_rules", "Rules."),
     ):
         PromptRepo(pb).save_version(
             project_id=project["id"], ptype=ptype, name="default", content=content
@@ -117,36 +111,32 @@ def project_of(pb: FakePocketBase, topic_id: str) -> str:
 # SectionValidator
 # ---------------------------------------------------------------------------
 def test_section_validator_rejects_dangerous_output():
-    issues = SectionValidator().validate("<p>\u0645\u062a\u0646</p><script>alert(1)</script>")
+    issues = SectionValidator().validate("<p>text</p><script>alert(1)</script>")
     codes = {i.code for i in issues}
     assert "script" in codes
 
-    issues = SectionValidator().validate('<p onclick="x()">\u0645\u062a\u0646</p>')
+    issues = SectionValidator().validate('<p onclick="x()">text</p>')
     assert "event_handler" in {i.code for i in issues}
 
-    issues = SectionValidator().validate(
-        "<h1>\u062a\u06cc\u062a\u0631</h1><p>\u0645\u062a\u0646</p>"
-    )
+    issues = SectionValidator().validate("<h1>Heading</h1><p>text</p>")
     assert "h1_in_section" in {i.code for i in issues}
 
     issues = SectionValidator().validate("<p>```json\n{}\n```</p>")
     assert "markdown_fence" in {i.code for i in issues}
 
-    issues = SectionValidator().validate("<p>\u06a9\u0648\u062a\u0627\u0647</p>")
+    issues = SectionValidator().validate("<p>short</p>")
     assert "too_short" in {i.code for i in issues}
 
     assert SectionValidator().validate("")[0].code == "empty"
 
 
 def test_section_validator_accepts_clean_output():
-    html = (
-        "<p>" + ("\u06a9\u0644\u0645\u0647 \u0645\u062d\u062a\u0648\u0627 " * 15).strip() + "</p>"
-    )
+    html = "<p>" + ("content word " * 15).strip() + "</p>"
     assert SectionValidator().validate(html) == []
 
 
 def test_section_validator_detects_unbalanced_tags():
-    html = "<p>\u0645\u062a\u0646 <strong>\u0628\u0648\u0644\u062f</p>"
+    html = "<p>text <strong>bold</p>"
     issues = SectionValidator().validate(html)
     assert any(i.code == "html_structure" for i in issues)
 
@@ -158,22 +148,20 @@ def test_article_validator_checks():
     validator = ArticleValidator(min_words=100)
     good_sections = [
         {
-            "heading": "\u0627\u0644\u0641",
-            "content": "<p>" + ("\u06a9\u0644\u0645\u0647 " * 60).strip() + "</p>",
+            "heading": "A",
+            "content": "<p>" + ("word " * 60).strip() + "</p>",
         },
         {
-            "heading": "\u0628",
-            "content": "<p>" + ("\u06a9\u0644\u0645\u0647 " * 60).strip() + "</p>",
+            "heading": "B",
+            "content": "<p>" + ("word " * 60).strip() + "</p>",
         },
     ]
     report = validator.validate(
-        title="\u0639\u0646\u0648\u0627\u0646",
+        title="Title",
         slug="onvan",
         outline={"sections": []},
         sections=good_sections,
-        html=build_article_html(
-            title="\u0639\u0646\u0648\u0627\u0646", slug="onvan", sections=good_sections
-        ),
+        html=build_article_html(title="Title", slug="onvan", sections=good_sections),
     )
     assert report.ok is True
 
@@ -181,8 +169,8 @@ def test_article_validator_checks():
         title="",
         slug="",
         outline={"sections": []},
-        sections=[{"heading": "\u0627\u0644\u0641", "content": ""}],
-        html="<p>\u06a9\u0648\u062a\u0627\u0647</p>",
+        sections=[{"heading": "A", "content": ""}],
+        html="<p>short</p>",
     )
     assert bad.ok is False
     codes = {i.code for i in bad.issues}
@@ -196,8 +184,8 @@ def test_article_validator_missing_intended_link():
     validator = ArticleValidator(min_words=50)
     sections = [
         {
-            "heading": "\u0627\u0644\u0641",
-            "content": "<p>" + ("\u06a9\u0644\u0645\u0647 " * 40).strip() + "</p>",
+            "heading": "A",
+            "content": "<p>" + ("word " * 40).strip() + "</p>",
         }
     ]
     outline = {
@@ -205,18 +193,16 @@ def test_article_validator_missing_intended_link():
             {
                 "internal_links": [
                     {
-                        "title": "\u0644\u06cc\u0646\u06a9",
+                        "title": "link",
                         "url": "https://site.test/9",
-                        "anchor_text": "\u0644\u06cc\u0646\u06a9",
+                        "anchor_text": "link",
                     }
                 ]
             }
         ]
     }
-    html = build_article_html(title="\u062a", slug="t", sections=sections)  # link NOT included
-    report = validator.validate(
-        title="\u062a", slug="t", outline=outline, sections=sections, html=html
-    )
+    html = build_article_html(title="T", slug="t", sections=sections)  # link NOT included
+    report = validator.validate(title="T", slug="t", outline=outline, sections=sections, html=html)
     assert any(i.code == "missing_internal_link" for i in report.issues)
 
 
@@ -225,36 +211,34 @@ def test_article_validator_missing_intended_link():
 # ---------------------------------------------------------------------------
 def test_assembly_order_dedupe_links_no_separators():
     html = build_article_html(
-        title="\u0639\u0646\u0648\u0627\u0646",
+        title="Title",
         slug="onvan",
         sections=[
             {
-                "heading": "\u062a\u06a9\u0631\u0627\u0631",
-                "content": "<p>\u0627\u0648\u0644\u06cc\u0646</p>",
+                "heading": "Duplicate",
+                "content": "<p>first</p>",
             },
             {
-                "heading": "\u062a\u06a9\u0631\u0627\u0631",
-                "content": "<p>\u062f\u0648\u0645\u06cc\u0646</p>",
+                "heading": "Duplicate",
+                "content": "<p>second</p>",
             },
         ],
         internal_links=[
             {
-                "title": "\u0644\u06cc\u0646\u06a9",
+                "title": "link",
                 "url": "https://site.test/1",
-                "anchor_text": "\u0644\u06cc\u0646\u06a9",
+                "anchor_text": "link",
             }
         ],
     )
-    assert html.index("<h2>\u062a\u06a9\u0631\u0627\u0631</h2>") < html.index(
-        "<h2>\u062a\u06a9\u0631\u0627\u0631 (2)</h2>"
-    )
+    assert html.index("<h2>Duplicate</h2>") < html.index("<h2>Duplicate (2)</h2>")
     assert 'href="https://site.test/1"' in html
     assert "<br>" not in html and "<hr>" not in html
-    assert "\u0645\u0637\u0627\u0644\u0628 \u0645\u0631\u062a\u0628\u0637" in html
+    assert "Related" in html
 
 
 def test_assembly_normalizes_fences_and_whitespace():
-    raw = "<p>\u0645\u062a\u0646   \u0627\u0648\u0644</p>\n\n\n\n<p>\u062f\u0648\u0645</p>"
+    raw = "<p>text   first</p>\n\n\n\n<p>second</p>"
     assert "   " not in normalize_article_html(raw)
     assert "\n\n\n\n" not in normalize_article_html(raw)
 
@@ -264,9 +248,7 @@ def test_write_article_accepts_queued_topic():
     write_article, so the handler must accept it as a start state."""
     pb = FakePocketBase(default_unique_fields())
     project = make_project(pb)
-    topic = TopicRepo(pb).create(
-        project=project["id"], title="\u062a", keyword="\u0633\u0626\u0648"
-    )
+    topic = TopicRepo(pb).create(project=project["id"], title="T", keyword="seo")
     TopicRepo(pb).set_status(topic["id"], "queued")
     registry = FakeRegistry()
     registry.llm.responses = [OUTLINE_JSON] + [SECTION_HTML] * 3
@@ -287,15 +269,13 @@ def test_write_article_accepts_queued_topic():
 def test_section_failure_does_not_affect_other_sections():
     pb = FakePocketBase(default_unique_fields())
     project = make_project(pb)
-    topic = TopicRepo(pb).create(
-        project=project["id"], title="\u062a", keyword="\u0633\u0626\u0648"
-    )
+    topic = TopicRepo(pb).create(project=project["id"], title="T", keyword="seo")
     registry = FakeRegistry()
     # outline + section 1 ok + section 2 garbage (validation-failing) + section 3 ok
     registry.llm.responses = [
         OUTLINE_JSON,
         SECTION_HTML,
-        "<p>\u062e\u0627\u0644\u06cc</p>",
+        "<p>empty</p>",
         SECTION_HTML,
     ]
 
@@ -333,9 +313,7 @@ def test_section_failure_does_not_affect_other_sections():
 def test_assembler_waits_for_pending_sections():
     pb = FakePocketBase(default_unique_fields())
     project = make_project(pb)
-    topic = TopicRepo(pb).create(
-        project=project["id"], title="\u062a", keyword="\u0633\u0626\u0648"
-    )
+    topic = TopicRepo(pb).create(project=project["id"], title="T", keyword="seo")
     registry = FakeRegistry()
     registry.llm.responses = [OUTLINE_JSON] + [SECTION_HTML] * 3
 
@@ -358,9 +336,7 @@ def test_assembler_waits_for_pending_sections():
 def test_sections_record_prompt_version():
     pb = FakePocketBase(default_unique_fields())
     project = make_project(pb)
-    topic = TopicRepo(pb).create(
-        project=project["id"], title="\u062a", keyword="\u0633\u0626\u0648"
-    )
+    topic = TopicRepo(pb).create(project=project["id"], title="T", keyword="seo")
     registry = FakeRegistry()
     registry.llm.responses = [OUTLINE_JSON] + [SECTION_HTML] * 3
 
@@ -378,9 +354,7 @@ def test_validate_publish_only_when_requested():
     """The pipeline never auto-publishes; publish is a separate explicit job."""
     pb = FakePocketBase(default_unique_fields())
     project = make_project(pb)
-    topic = TopicRepo(pb).create(
-        project=project["id"], title="\u062a", keyword="\u0633\u0626\u0648"
-    )
+    topic = TopicRepo(pb).create(project=project["id"], title="T", keyword="seo")
     registry = FakeRegistry()
     registry.llm.responses = [OUTLINE_JSON] + [SECTION_HTML] * 3
 

@@ -19,15 +19,15 @@ from app.services.writing import handle_write_article
 from tests.fake_providers import FakePublisher, FakeRegistry
 from tests.fakes import FakePocketBase, default_unique_fields
 
-LONG_TEXT = ("\u06a9\u0644\u0645\u0647 " * 600).strip()  # ~600 words
+LONG_TEXT = ("word " * 600).strip()  # ~600 words
 
 
 def make_project(pb: FakePocketBase) -> dict[str, Any]:
     project = pb.collection("projects").create(
         {
-            "name": "\u067e\u0631\u0648\u0698\u0647",
+            "name": "Project",
             "slug": "proj-a",
-            "language": "fa",
+            "language": "en",
             "status": "active",
             "timezone": "Asia/Tehran",
         }
@@ -36,11 +36,11 @@ def make_project(pb: FakePocketBase) -> dict[str, Any]:
     for ptype, content in (
         (
             "brand_voice",
-            "\u062a\u0648 \u0646\u0648\u06cc\u0633\u0646\u062f\u0647 \u0633\u0626\u0648 \u0647\u0633\u062a\u06cc.",
+            "You are an SEO writer.",
         ),
-        ("outline_user", "JSON \u0628\u0631\u06af\u0631\u062f\u0627\u0646."),
-        ("section_user", "HTML \u0628\u0631\u06af\u0631\u062f\u0627\u0646."),
-        ("seo_rules", "\u0642\u0648\u0627\u0646\u06cc\u0646 \u0633\u0626\u0648."),
+        ("outline_user", "Return JSON."),
+        ("section_user", "Return HTML."),
+        ("seo_rules", "SEO rules."),
     ):
         PromptRepo(pb).save_version(
             project_id=project["id"], ptype=ptype, name="default", content=content
@@ -91,15 +91,15 @@ async def test_index_run_indexes_posts_and_is_idempotent():
         posts=[
             WPPost(
                 1,
-                "\u067e\u0633\u062a \u0627\u0648\u0644",
+                "first post",
                 f"<p>{LONG_TEXT}</p>",
                 "https://site.test/1",
                 "publish",
             ),
             WPPost(
                 2,
-                "\u067e\u0633\u062a \u062f\u0648\u0645",
-                f"<p>\u0645\u062a\u0646 \u062f\u0648\u0645 {LONG_TEXT}</p>",
+                "second post",
+                f"<p>second text {LONG_TEXT}</p>",
                 "https://site.test/2",
                 "publish",
             ),
@@ -150,9 +150,9 @@ async def test_index_run_resumes_from_checkpoint_after_crash():
     registry = FakeRegistry()
     registry.publisher = FakePublisher(
         posts=[
-            WPPost(1, "\u0627\u0648\u0644", f"<p>{LONG_TEXT}</p>", "https://s.test/1", "publish"),
-            WPPost(2, "\u062f\u0648\u0645", f"<p>{LONG_TEXT}</p>", "https://s.test/2", "publish"),
-            WPPost(3, "\u0633\u0648\u0645", f"<p>{LONG_TEXT}</p>", "https://s.test/3", "publish"),
+            WPPost(1, "first", f"<p>{LONG_TEXT}</p>", "https://s.test/1", "publish"),
+            WPPost(2, "second", f"<p>{LONG_TEXT}</p>", "https://s.test/2", "publish"),
+            WPPost(3, "third", f"<p>{LONG_TEXT}</p>", "https://s.test/3", "publish"),
         ]
     )
     job = make_job(pb, project["id"], "index_project", {"trigger": "manual"}, "index:r1")
@@ -169,7 +169,7 @@ async def test_index_run_resumes_from_checkpoint_after_crash():
             "project": project["id"],
             "sourceType": "wordpress",
             "sourceId": "1",
-            "title": "\u0627\u0648\u0644",
+            "title": "first",
             "sourceUrl": "https://s.test/1",
             "contentHash": "abc",
             "embeddingProvider": "openai_compat",
@@ -209,23 +209,17 @@ async def test_index_run_resumes_from_checkpoint_after_crash():
 # Writing
 # ---------------------------------------------------------------------------
 OUTLINE_JSON = """{
-  "title": "\u0631\u0627\u0647\u0646\u0645\u0627\u06cc \u0633\u0626\u0648",
+  "title": "SEO Guide",
   "slug": "rahnama-seo",
   "sections": [
-    {"heading": "\u0645\u0642\u062f\u0645\u0647", "content_brief": "\u0646\u06a9\u062a\u0647 \u06f1", "internal_links": [{"title": "\u0645\u0642\u0627\u0644\u0647 \u0645\u0631\u062a\u0628\u0637", "url": "https://site.test/1", "anchor_text": "\u0645\u0642\u0627\u0644\u0647 \u0645\u0631\u062a\u0628\u0637"}]},
-    {"heading": "\u062a\u06a9\u0646\u06cc\u06a9\u0647\u0627", "content_brief": "\u0646\u06a9\u062a\u0647 \u06f2"},
-    {"heading": "\u0646\u062a\u06cc\u062c\u0647\u06af\u06cc\u0631\u06cc", "content_brief": "\u062c\u0645\u0639\u0628\u0646\u062f\u06cc"}
+    {"heading": "Introduction", "content_brief": "note 1", "internal_links": [{"title": "Related article", "url": "https://site.test/1", "anchor_text": "Related article"}]},
+    {"heading": "Techniques", "content_brief": "note 2"},
+    {"heading": "Conclusion", "content_brief": "Summary"}
   ]
 }"""
 
 
-SECTION_HTML = (
-    "<p>"
-    + (
-        "\u06a9\u0644\u0645\u0647 \u0645\u062d\u062a\u0648\u0627\u06cc \u0628\u062e\u0634 " * 40
-    ).strip()
-    + "</p>"
-)
+SECTION_HTML = "<p>" + ("section content word " * 40).strip() + "</p>"
 
 
 async def test_write_article_full_flow():
@@ -235,8 +229,8 @@ async def test_write_article_full_flow():
     project = make_project(pb)
     topic = TopicRepo(pb).create(
         project=project["id"],
-        title="\u0631\u0627\u0647\u0646\u0645\u0627\u06cc \u0633\u0626\u0648",
-        keyword="\u0633\u0626\u0648",
+        title="SEO Guide",
+        keyword="seo",
         priority=5,
     )
 
@@ -246,9 +240,9 @@ async def test_write_article_full_flow():
         id="proj-a:1:0",
         vector=[0.5] * 8,
         payload={
-            "title": "\u0645\u0642\u0627\u0644\u0647 \u0645\u0631\u062a\u0628\u0637",
+            "title": "Related article",
             "url": "https://site.test/1",
-            "chunk_text": "\u0645\u062a\u0646 \u0645\u0631\u062a\u0628\u0637",
+            "chunk_text": "relevant text",
         },
     )
 
@@ -265,11 +259,8 @@ async def test_write_article_full_flow():
     sections = pb.collection("article_sections").get_full_list({"sort": "position"})
     assert len(sections) == 3
     assert all(s["status"] == "pending" for s in sections)
-    assert sections[0]["contentBrief"] == "\u0646\u06a9\u062a\u0647 \u06f1"
-    assert (
-        sections[0]["internalLinks"][0]["anchor_text"]
-        == "\u0645\u0642\u0627\u0644\u0647 \u0645\u0631\u062a\u0628\u0637"
-    )
+    assert sections[0]["contentBrief"] == "note 1"
+    assert sections[0]["internalLinks"][0]["anchor_text"] == "Related article"
 
     section_jobs = pb.collection("jobs").get_full_list({"filter": 'type="generate_section"'})
     assert len(section_jobs) == 3
@@ -320,19 +311,17 @@ async def test_write_article_llm_garbage_outline_is_repaired_by_validation_promp
         project_id=project["id"],
         ptype="validation",
         name="default",
-        content="\u062e\u0631\u0648\u062c\u06cc \u0645\u0639\u06cc\u0648\u0628 \u0627\u0633\u062a. JSON \u0627\u0635\u0644\u0627\u062d\u200c\u0634\u062f\u0647 \u0631\u0627 \u0628\u0631\u06af\u0631\u062f\u0627\u0646: {raw_output}",
+        content="Invalid output. Return the corrected JSON: {raw_output}",
     )
-    topic = TopicRepo(pb).create(
-        project=project["id"], title="\u062a\u0633\u062a", keyword="\u062a\u0633\u062a"
-    )
+    topic = TopicRepo(pb).create(project=project["id"], title="test", keyword="test")
 
     registry = FakeRegistry()
     registry.llm.responses = [
-        "\u0627\u06cc\u0646 \u062e\u0631\u0648\u062c\u06cc JSON \u0646\u06cc\u0633\u062a",  # garbage outline
+        "this is not JSON output",  # garbage outline
         OUTLINE_JSON,  # repaired by validation pass
-        "<p>\u0645\u0642\u062f\u0645\u0647</p>",
-        "<p>\u062a\u06a9\u0646\u06cc\u06a9\u200c\u0647\u0627</p>",
-        "<p>\u0646\u062a\u06cc\u062c\u0647</p>",
+        "<p>Introduction</p>",
+        "<p>Techniques</p>",
+        "<p>Conclusion</p>",
     ]
 
     job = make_job(pb, project["id"], "write_article", {"topicId": topic["id"]}, "write:g1")
@@ -343,10 +332,7 @@ async def test_write_article_llm_garbage_outline_is_repaired_by_validation_promp
     assert article["status"] == "generating"
     # keyword enforcement: the outline title is prefixed so the H1 always
     # carries the keyword (score floor), even after the repair pass.
-    assert (
-        article["outline"]["title"]
-        == "\u062a\u0633\u062a | \u0631\u0627\u0647\u0646\u0645\u0627\u06cc \u0633\u0626\u0648"
-    )
+    assert article["outline"]["title"] == "test | SEO Guide"
     # validation prompt was used → outline garbage (1) + repair (1); sections are
     # separate jobs and were not executed here
     assert len(registry.llm.calls) == 2
@@ -355,14 +341,12 @@ async def test_write_article_llm_garbage_outline_is_repaired_by_validation_promp
 async def test_write_article_unrepairable_outline_fails_cleanly():
     pb = FakePocketBase(default_unique_fields())
     project = make_project(pb)
-    topic = TopicRepo(pb).create(
-        project=project["id"], title="\u062a\u0633\u062a", keyword="\u062a\u0633\u062a"
-    )
+    topic = TopicRepo(pb).create(project=project["id"], title="test", keyword="test")
 
     registry = FakeRegistry()
     registry.llm.responses = [
-        "\u0627\u06cc\u0646 \u062e\u0631\u0648\u062c\u06cc JSON \u0646\u06cc\u0633\u062a",
-        "\u0647\u0646\u0648\u0632 \u0647\u0645 JSON \u0646\u06cc\u0633\u062a",
+        "this is not JSON output",
+        "still not JSON",
     ]
 
     job = make_job(pb, project["id"], "write_article", {"topicId": topic["id"]}, "write:g2")
@@ -380,18 +364,16 @@ async def test_write_article_unrepairable_outline_fails_cleanly():
 async def test_publish_article_publishes_once_and_guards_duplicates():
     pb = FakePocketBase(default_unique_fields())
     project = make_project(pb)
-    topic = TopicRepo(pb).create(
-        project=project["id"], title="\u0639\u0646\u0648\u0627\u0646", keyword="\u06a9"
-    )
+    topic = TopicRepo(pb).create(project=project["id"], title="Title", keyword="K")
     article = pb.collection("articles").create(
         {
             "project": project["id"],
             "topicId": topic["id"],
-            "title": "\u0639\u0646\u0648\u0627\u0646 \u0645\u0642\u0627\u0644\u0647",
+            "title": "Article title",
             "slug": "onvan",
             "status": "approved",
-            "finalHtml": "<h1>\u0639\u0646\u0648\u0627\u0646</h1><p>\u0645\u062d\u062a\u0648\u0627</p>",
-            "metaDescription": "\u062e\u0644\u0627\u0635\u0647",
+            "finalHtml": "<h1>Title</h1><p>content</p>",
+            "metaDescription": "Summary",
             "wordCount": 10,
             "outlineVersion": 1,
         }
@@ -404,11 +386,11 @@ async def test_publish_article_publishes_once_and_guards_duplicates():
     assert result["postId"]
     assert len(registry.publisher.created) == 1
     created = registry.publisher.created[0]
-    assert created["title"] == "\u0639\u0646\u0648\u0627\u0646 \u0645\u0642\u0627\u0644\u0647"
+    assert created["title"] == "Article title"
     assert created["status"] == "publish"  # default publishing mode
     # WP renders the title itself — the leading <h1> must not be sent
     assert "<h1>" not in created["html"]
-    assert "<p>\u0645\u062d\u062a\u0648\u0627</p>" in created["html"]
+    assert "<p>content</p>" in created["html"]
 
     runs = pb.collection("publishing_runs").get_full_list()
     assert len(runs) == 1
@@ -441,16 +423,14 @@ async def test_publish_article_publishes_once_and_guards_duplicates():
 async def test_publish_article_failure_records_attempt_and_fails():
     pb = FakePocketBase(default_unique_fields())
     project = make_project(pb)
-    topic = TopicRepo(pb).create(
-        project=project["id"], title="\u0639\u0646\u0648\u0627\u0646", keyword="\u06a9"
-    )
+    topic = TopicRepo(pb).create(project=project["id"], title="Title", keyword="K")
     article = pb.collection("articles").create(
         {
             "project": project["id"],
             "topicId": topic["id"],
-            "title": "\u0639\u0646\u0648\u0627\u0646",
+            "title": "Title",
             "status": "approved",
-            "finalHtml": "<p>\u0645\u062d\u062a\u0648\u0627</p>",
+            "finalHtml": "<p>content</p>",
             "outlineVersion": 1,
         }
     )

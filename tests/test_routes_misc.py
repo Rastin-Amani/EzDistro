@@ -48,7 +48,7 @@ def test_offline_page_renders():
 def test_favicon_redirects_to_icon():
     resp = asyncio.run(pwa.dynamic_favicon())
     assert resp.status_code == 307
-    assert resp.headers["location"] == "/static/favicon.svg"
+    assert resp.headers["location"] == "/static/brand/ezdistro/favicon.ico"
 
 
 def test_debug_page_dev_only():

@@ -47,20 +47,20 @@ def _anon_req(pb, project_id):
 
 MUTATIONS = [
     # (route fn, path args builder, form kwargs builder)
-    (P.create_topic, lambda pb, a, b: (a["id"],), lambda: {"title": "\u062a"}),
+    (P.create_topic, lambda pb, a, b: (a["id"],), lambda: {"title": "T"}),
     (
         P.write_topic,
-        lambda pb, a, b: (a["id"], make_topic(pb, a["id"], title="\u062a")["id"]),
+        lambda pb, a, b: (a["id"], make_topic(pb, a["id"], title="T")["id"]),
         lambda: {},
     ),
     (
         P.cancel_topic,
-        lambda pb, a, b: (a["id"], make_topic(pb, a["id"], title="\u062a", status="queued")["id"]),
+        lambda pb, a, b: (a["id"], make_topic(pb, a["id"], title="T", status="queued")["id"]),
         lambda: {},
     ),
     (
         P.delete_topic,
-        lambda pb, a, b: (a["id"], make_topic(pb, a["id"], title="\u062a")["id"]),
+        lambda pb, a, b: (a["id"], make_topic(pb, a["id"], title="T")["id"]),
         lambda: {},
     ),
     (P.topics_bulk, lambda pb, a, b: (a["id"],), lambda: {"action": "generate", "topic_ids": "x"}),
@@ -91,7 +91,7 @@ MUTATIONS = [
     (
         W.outline_add,
         lambda pb, a, b: (a["id"], make_article(pb, a["id"])["id"]),
-        lambda: {"heading": "\u062c", "content_brief": "\u062e"},
+        lambda: {"heading": "C", "content_brief": "X"},
     ),
     (A.regenerate_article, lambda pb, a, b: (a["id"], make_article(pb, a["id"])["id"]), lambda: {}),
     (
@@ -167,7 +167,7 @@ def test_mutations_reject_missing_hx_header(fn, build_args, build_kwargs):
 # ---------------------------------------------------------------------------
 def test_topic_mutations_cannot_touch_foreign_topic():
     pb, proj_a, proj_b = _setup()
-    foreign = make_topic(pb, proj_b["id"], title="\u0628", status="queued")
+    foreign = make_topic(pb, proj_b["id"], title="B", status="queued")
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(P.cancel_topic, req, proj_a["id"], foreign["id"])
     assert "not found" in toast_message(resp)
@@ -210,7 +210,7 @@ def test_admin_bypasses_project_membership_but_stays_in_project():
     """Global admins can access any project, but record-level guards still
     prevent writing foreign records."""
     pb, proj_a, proj_b = _setup()
-    foreign = make_topic(pb, proj_b["id"], title="\u0628")
+    foreign = make_topic(pb, proj_b["id"], title="B")
     req = make_req(pb, make_user("admin1", role="admin"), proj_a["id"])
     resp = call_route(P.write_topic, req, proj_a["id"], foreign["id"])
     assert "not found" in toast_message(resp)

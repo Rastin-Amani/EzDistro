@@ -114,9 +114,9 @@ def test_provider_paginated_fetch_stops_at_end():
 def make_project(pb: FakePocketBase) -> dict[str, Any]:
     project = pb.collection("projects").create(
         {
-            "name": "\u067e",
+            "name": "P",
             "slug": "p1",
-            "language": "fa",
+            "language": "en",
             "status": "active",
             "timezone": "Asia/Tehran",
         }
@@ -143,17 +143,17 @@ def make_article(
     pb: FakePocketBase, project_id: str, *, wp_id: int | None = None
 ) -> dict[str, Any]:
     topic = pb.collection("topics").create(
-        {"project": project_id, "title": "\u062a", "keyword": "\u06a9", "status": "published"}
+        {"project": project_id, "title": "T", "keyword": "K", "status": "published"}
     )
     article = pb.collection("articles").create(
         {
             "project": project_id,
             "topicId": topic["id"],
-            "title": "\u0639\u0646\u0648\u0627\u0646",
+            "title": "Title",
             "slug": "onvan",
             "status": "approved",
-            "finalHtml": "<h1>\u0639\u0646\u0648\u0627\u0646</h1><p>\u0645\u062d\u062a\u0648\u0627</p>",
-            "metaDescription": "\u0645",
+            "finalHtml": "<h1>Title</h1><p>content</p>",
+            "metaDescription": "M",
             "outlineVersion": 1,
         }
     )

@@ -30,7 +30,7 @@ def make_pb() -> FakePocketBase:
 
 
 def make_project(pb: FakePocketBase, **overrides: Any) -> dict[str, Any]:
-    project = ProjectRepo(pb).create(name="\u067e", slug="proj", language="fa")
+    project = ProjectRepo(pb).create(name="P", slug="proj", language="en")
     settings = {**DEFAULT_SETTINGS, **overrides}
     pb.collection("project_settings").create({"project": project["id"], **settings})
     return project

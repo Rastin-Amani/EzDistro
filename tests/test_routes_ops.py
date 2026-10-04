@@ -324,7 +324,7 @@ async def test_prompt_tester_without_provider_errors_cleanly():
         req,
         proj_a["id"],
         ptype="outline_user",
-        content="JSON \u0628\u0631\u06af\u0631\u062f\u0627\u0646.",
+        content="Return JSON.",
     )
     assert resp.status_code == 200
     # either a rendered result or a safe, human-readable error toast — never a 500

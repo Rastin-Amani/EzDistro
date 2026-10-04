@@ -27,17 +27,9 @@ def _restore_fake_llm_next():
 
 def syn_next(self: FakeLLM, json_mode: bool = False, user: str = "") -> str:
     if "JSON" in user or "json" in user:
-        sections = ",".join(
-            f'{{"heading": "\u0628 {i}", "content_brief": "\u062e"}}' for i in range(1, 4)
-        )
-        return (
-            '{"title": "\u0645\u0642\u0627\u0644\u0647 \u062f\u0645\u0648", "slug": "demo-post", "sections": ['
-            + sections
-            + "]}"
-        )
-    return (
-        "<p>" + ("\u06a9\u0644\u0645\u0647 \u0645\u062d\u062a\u0648\u0627 " * 150).strip() + "</p>"
-    )
+        sections = ",".join(f'{{"heading": "B {i}", "content_brief": "X"}}' for i in range(1, 4))
+        return '{"title": "article DMand", "slug": "demo-post", "sections": [' + sections + "]}"
+    return "<p>" + ("content word " * 150).strip() + "</p>"
 
 
 def make_engine(pb: FakePocketBase, registry: FakeRegistry, worker_id: str) -> JobEngine:
@@ -111,13 +103,8 @@ def test_sample_indexing_generation_publishing_succeeds():
         posts=[
             WPPost(
                 id=i + 1,
-                title=f"\u0645\u0646\u0628\u0639 {i}",
-                content_html="<p>"
-                + (
-                    "\u0645\u062d\u062a\u0648\u0627 \u0628\u0631\u0627\u06cc \u0646\u0645\u0627\u06cc\u0647\u200c\u0633\u0627\u0632\u06cc "
-                    * 40
-                )
-                + "</p>",
+                title=f"source {i}",
+                content_html="<p>" + ("content for indexing " * 40) + "</p>",
                 link=f"https://s/?p={i + 1}",
                 status="publish",
             )
@@ -139,8 +126,8 @@ def test_sample_indexing_generation_publishing_succeeds():
         project = pb.collection("projects").get_full_list()[0]
         topic = TopicRepo(pb).create(
             project=project["id"],
-            title="\u0645\u0648\u0636\u0648\u0639 \u062f\u0645\u0648",
-            keyword="\u06a9\u0644\u0645\u0647",
+            title="Topic DMand",
+            keyword="word",
         )
         JobRepo(pb).create(
             project=project["id"],
@@ -196,7 +183,7 @@ def test_sample_batch_survives_worker_restart():
     pb, registry = _prepare()
     project = pb.collection("projects").get_full_list()[0]
     topics = [
-        TopicRepo(pb).create(project=project["id"], title=f"\u062a {i}", keyword=f"k{i}")
+        TopicRepo(pb).create(project=project["id"], title=f"T {i}", keyword=f"k{i}")
         for i in range(3)
     ]
     for i, topic in enumerate(topics):

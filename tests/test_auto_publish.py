@@ -22,26 +22,20 @@ from tests.fake_providers import FakeRegistry
 from tests.fakes import FakePocketBase, default_unique_fields
 
 OUTLINE_JSON = (
-    '{"title": "\u0631\u0627\u0647\u0646\u0645\u0627\u06cc \u0633\u0626\u0648", "slug": "rahnama-seo", "sections": ['
-    '{"heading": "\u0645\u0642\u062f\u0645\u0647", "content_brief": "\u0646\u06a9\u062a\u0647 \u06f1"},'
-    '{"heading": "\u062a\u06a9\u0646\u06cc\u06a9\u0647\u0627", "content_brief": "\u0646\u06a9\u062a\u0647 \u06f2"},'
-    '{"heading": "\u0646\u062a\u06cc\u062c\u0647\u06af\u06cc\u0631\u06cc", "content_brief": "\u062c\u0645\u0639\u0628\u0646\u062f\u06cc"}]}'
+    '{"title": "SEO Guide", "slug": "rahnama-seo", "sections": ['
+    '{"heading": "Introduction", "content_brief": "note 1"},'
+    '{"heading": "Techniques", "content_brief": "note 2"},'
+    '{"heading": "Conclusion", "content_brief": "Summary"}]}'
 )
-SECTION_HTML = (
-    "<p>"
-    + (
-        "\u06a9\u0644\u0645\u0647 \u0645\u062d\u062a\u0648\u0627\u06cc \u0628\u062e\u0634 " * 40
-    ).strip()
-    + "</p>"
-)
+SECTION_HTML = "<p>" + ("section content word " * 40).strip() + "</p>"
 
 
 def _project(pb: FakePocketBase, *, auto: dict[str, Any] | None = None) -> dict[str, Any]:
     project = pb.collection("projects").create(
         {
-            "name": "\u067e\u0631\u0648\u0698\u0647",
+            "name": "Project",
             "slug": "proj-a",
-            "language": "fa",
+            "language": "en",
             "status": "active",
             "timezone": "Asia/Tehran",
         }
@@ -53,11 +47,11 @@ def _project(pb: FakePocketBase, *, auto: dict[str, Any] | None = None) -> dict[
     for ptype, content in (
         (
             "brand_voice",
-            "\u062a\u0648 \u0646\u0648\u06cc\u0633\u0646\u062f\u0647 \u0633\u0626\u0648 \u0647\u0633\u062a\u06cc.",
+            "You are an SEO writer.",
         ),
-        ("outline_user", "JSON \u0628\u0631\u06af\u0631\u062f\u0627\u0646."),
-        ("section_user", "HTML \u0628\u0631\u06af\u0631\u062f\u0627\u0646."),
-        ("seo_rules", "\u0642\u0648\u0627\u0646\u06cc\u0646 \u0633\u0626\u0648."),
+        ("outline_user", "Return JSON."),
+        ("section_user", "Return HTML."),
+        ("seo_rules", "SEO rules."),
     ):
         PromptRepo(pb).save_version(
             project_id=project["id"], ptype=ptype, name="default", content=content
@@ -117,9 +111,7 @@ def _jobs_of(pb: FakePocketBase, job_type: str) -> list[dict[str, Any]]:
 def test_auto_publish_publishes_when_score_ok():
     pb = FakePocketBase(default_unique_fields())
     project = _project(pb, auto={"enabled": True, "min_score": 90, "max_attempts": 3})
-    topic = TopicRepo(pb).create(
-        project=project["id"], title="\u0633\u0626\u0648", keyword="\u0633\u0626\u0648"
-    )
+    topic = TopicRepo(pb).create(project=project["id"], title="seo", keyword="seo")
     registry = FakeRegistry()
     registry.llm.responses = [OUTLINE_JSON] + [SECTION_HTML] * 3
 
@@ -140,9 +132,7 @@ def test_auto_publish_rewrites_when_score_too_low():
     pb = FakePocketBase(default_unique_fields())
     # min_score above the possible maximum → the score can never pass
     project = _project(pb, auto={"enabled": True, "min_score": 101, "max_attempts": 3})
-    topic = TopicRepo(pb).create(
-        project=project["id"], title="\u0633\u0626\u0648", keyword="\u0633\u0626\u0648"
-    )
+    topic = TopicRepo(pb).create(project=project["id"], title="seo", keyword="seo")
     registry = FakeRegistry()
     registry.llm.responses = [OUTLINE_JSON] + [SECTION_HTML] * 3
 
@@ -164,9 +154,7 @@ def test_auto_publish_rewrites_when_score_too_low():
 def test_auto_publish_gives_up_after_max_attempts():
     pb = FakePocketBase(default_unique_fields())
     project = _project(pb, auto={"enabled": True, "min_score": 101, "max_attempts": 3})
-    topic = TopicRepo(pb).create(
-        project=project["id"], title="\u0633\u0626\u0648", keyword="\u0633\u0626\u0648"
-    )
+    topic = TopicRepo(pb).create(project=project["id"], title="seo", keyword="seo")
     registry = FakeRegistry()
     registry.llm.responses = [OUTLINE_JSON] + [SECTION_HTML] * 3
 
@@ -183,9 +171,7 @@ def test_auto_publish_gives_up_after_max_attempts():
 def test_auto_publish_ignored_for_manual_trigger():
     pb = FakePocketBase(default_unique_fields())
     project = _project(pb, auto={"enabled": True, "min_score": 90, "max_attempts": 3})
-    topic = TopicRepo(pb).create(
-        project=project["id"], title="\u0633\u0626\u0648", keyword="\u0633\u0626\u0648"
-    )
+    topic = TopicRepo(pb).create(project=project["id"], title="seo", keyword="seo")
     registry = FakeRegistry()
     registry.llm.responses = [OUTLINE_JSON] + [SECTION_HTML] * 3
 
@@ -200,9 +186,7 @@ def test_auto_publish_ignored_for_manual_trigger():
 def test_auto_publish_disabled_leaves_review():
     pb = FakePocketBase(default_unique_fields())
     project = _project(pb)  # autoPublish default: disabled
-    topic = TopicRepo(pb).create(
-        project=project["id"], title="\u0633\u0626\u0648", keyword="\u0633\u0626\u0648"
-    )
+    topic = TopicRepo(pb).create(project=project["id"], title="seo", keyword="seo")
     registry = FakeRegistry()
     registry.llm.responses = [OUTLINE_JSON] + [SECTION_HTML] * 3
 

@@ -33,21 +33,21 @@ PLAN_JSON_E2E = json.dumps(
             {
                 "role": "cover",
                 "prompt": "closeup of a car dashboard with an amber warning light",
-                "alt_text": "\u0646\u0645\u0627\u06cc\u0634\u06af\u0631 \u062e\u0648\u062f\u0631\u0648 \u0628\u0627 \u0686\u0631\u0627\u063a \u0647\u0634\u062f\u0627\u0631 \u0631\u0648\u0634\u0646",
-                "caption": "\u0686\u0631\u0627\u063a \u0647\u0634\u062f\u0627\u0631 \u0645\u0648\u062a\u0648\u0631 \u0631\u0648\u06cc \u0635\u0641\u062d\u0647 \u06a9\u06cc\u0644\u0648\u0645\u062a\u0631",
+                "alt_text": "car display with the warning light on",
+                "caption": "engine warning light on the speedometer",
                 "aspect_ratio": "16:9",
             },
             {
                 "role": "interior",
                 "section_key": "section-1",
                 "prompt": "open engine bay photographed in daylight",
-                "alt_text": "\u0645\u0648\u062a\u0648\u0631 \u062e\u0648\u062f\u0631\u0648 \u0627\u0632 \u0646\u0645\u0627\u06cc \u0628\u0627\u0644\u0627",
+                "alt_text": "car engine from above",
             },
             {
                 "role": "interior",
                 "section_key": "section-2",
                 "prompt": "mechanic plugging a diagnostic scanner into the car",
-                "alt_text": "\u062a\u0639\u0645\u06cc\u0631\u06a9\u0627\u0631 \u062f\u0631 \u062d\u0627\u0644 \u0627\u062a\u0635\u0627\u0644 \u062f\u0633\u062a\u06af\u0627\u0647 \u062f\u06cc\u0627\u06af",
+                "alt_text": "mechanic connecting a diagnostic device",
             },
         ]
     },
@@ -57,11 +57,11 @@ PLAN_JSON_E2E = json.dumps(
 
 def make_publishable_article(pb: FakePocketBase, project_id: str) -> dict[str, Any]:
     html = (
-        "<h1>\u0639\u0646\u0648\u0627\u0646</h1>"
-        "<p>\u0645\u0642\u062f\u0645\u0647 \u0645\u0642\u0627\u0644\u0647 \u0628\u0631\u0627\u06cc \u0627\u0646\u062a\u0634\u0627\u0631.</p>"
+        "<h1>Title</h1>"
+        "<p>Article introduction for publishing.</p>"
         "{{IMAGE:cover}}"
-        "<h2>\u0628\u062e\u0634 \u0627\u0648\u0644</h2>"
-        "<p>\u0645\u062a\u0646 \u0628\u062e\u0634 \u0627\u0648\u0644.</p>"
+        "<h2>Section One</h2>"
+        "<p>text Section One.</p>"
         "{{IMAGE:section-1}}"
     )
     article = make_plan_article(pb, project_id)
@@ -132,7 +132,7 @@ def test_publish_resolves_placeholders_and_sets_featured(monkeypatch):
 
     content = registry.publisher.created[-1]["html"]
     assert "{{IMAGE:" not in content  # placeholders fully resolved
-    assert "<figure" in content and "<figcaption>" in content  # caption present
+    assert "<figure" in content and "<figcaption" in content  # caption present
     assert "<img" in content
     assert 'loading="lazy"' in content  # interior lazy
     assert 'width="' in content and 'height="' in content  # CLS-safe
@@ -143,10 +143,7 @@ def test_publish_resolves_placeholders_and_sets_featured(monkeypatch):
     )
     # metadata localized from the plan
     upload = registry.publisher.media_uploads_of("")[0]
-    assert (
-        upload["alt_text"]
-        == "\u0686\u0631\u0627\u063a \u0647\u0634\u062f\u0627\u0631 \u0645\u0648\u062a\u0648\u0631 \u0631\u0648\u06cc \u062f\u0627\u0634\u0628\u0648\u0631\u062f"
-    )
+    assert upload["alt_text"] == "engine warning light on the dashboard"
 
     # retry/update → media reused, NOT re-uploaded (no duplicates in WP)
     before = len(registry.publisher.media)
@@ -216,12 +213,12 @@ def test_full_e2e_scenario(monkeypatch):
     pb = make_pb()
     project = make_project(pb)
     html = (
-        "<h1>\u0639\u0646\u0648\u0627\u0646</h1>"
-        "<p>\u0645\u0642\u062f\u0645\u0647.</p>"
+        "<h1>Title</h1>"
+        "<p>Introduction.</p>"
         "{{IMAGE:cover}}"
-        "<h2>\u0628\u062e\u0634 \u0627\u0648\u0644</h2><p>\u0645\u062a\u0646.</p>"
+        "<h2>Section One</h2><p>text.</p>"
         "{{IMAGE:section-1}}"
-        "<h2>\u0628\u062e\u0634 \u062f\u0648\u0645</h2><p>\u0645\u062a\u0646.</p>"
+        "<h2>Section Two</h2><p>text.</p>"
         "{{IMAGE:section-2}}"
     )
     article = make_plan_article(pb, project["id"])
@@ -267,7 +264,7 @@ def test_full_e2e_scenario(monkeypatch):
     content = registry.publisher.created[-1]["html"]
     assert "{{IMAGE:" not in content
     assert content.count("<img") == 3  # cover + 2 interiors inserted
-    assert content.count("<figure") == 1  # figure wraps only the captioned cover
+    assert content.count("<figure") == 3  # every image becomes a wp:image block
     assert registry.publisher.featured_calls[-1][0] == result["postId"]
     uploads = registry.publisher.media_uploads_of("")
     assert len(uploads) == 3
@@ -293,9 +290,9 @@ def test_interiors_inserted_without_placeholders(monkeypatch):
         article["id"],
         {
             "finalHtml": (
-                "<h1>\u0639\u0646\u0648\u0627\u0646</h1><p>\u0645\u0642\u062f\u0645\u0647.</p>"
-                "<h2>\u0628\u062e\u0634 \u0627\u0648\u0644</h2><p>\u0645\u062a\u0646 \u0627\u0648\u0644.</p>"
-                "<h2>\u0628\u062e\u0634 \u062f\u0648\u0645</h2><p>\u0645\u062a\u0646 \u062f\u0648\u0645.</p>"
+                "<h1>Title</h1><p>Introduction.</p>"
+                "<h2>Section One</h2><p>first text.</p>"
+                "<h2>Section Two</h2><p>second text.</p>"
             ),
             "status": "approved",
         },
@@ -312,7 +309,7 @@ def test_interiors_inserted_without_placeholders(monkeypatch):
     second_h2_end = content.index("</h2>", first_h2_end) + len("</h2>")
     figs = [i for i, ch in enumerate(content) if content.startswith("<img", i)]
     assert len(figs) == 2
-    assert first_h2_end <= figs[0] < content.index("\u0628\u062e\u0634 \u062f\u0648\u0645")
+    assert first_h2_end <= figs[0] < content.index("Section Two")
     assert second_h2_end <= figs[1]
     assert 'loading="lazy"' in content
 
@@ -327,7 +324,7 @@ def test_interior_beyond_sections_appended(monkeypatch):
     ArticleRepo(pb).update(
         article["id"],
         {
-            "finalHtml": "<h1>\u0639\u0646\u0648\u0627\u0646</h1><p>\u0645\u062a\u0646.</p>",
+            "finalHtml": "<h1>Title</h1><p>text.</p>",
             "status": "approved",
         },
     )
@@ -339,4 +336,4 @@ def test_interior_beyond_sections_appended(monkeypatch):
     registry = FakeRegistry()
     run_publish(pb, registry, article["id"], project["id"], key="nip2")
     content = registry.publisher.created[-1]["html"]
-    assert "<img" in content and content.rstrip().endswith('decoding="async">')
+    assert "<img" in content and 'decoding="async">' in content

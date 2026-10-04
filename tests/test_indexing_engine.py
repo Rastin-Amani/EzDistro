@@ -20,15 +20,15 @@ from app.services.settings import ProjectConfig
 from tests.fake_providers import FakeEmbedding, FakePublisher, FakeRegistry, FakeVectorStore
 from tests.fakes import FakePocketBase, default_unique_fields
 
-LONG_TEXT = ("\u06a9\u0644\u0645\u0647 " * 600).strip()  # ~600 words → several chunks
+LONG_TEXT = ("word " * 600).strip()  # ~600 words → several chunks
 
 
 def make_project(pb: FakePocketBase) -> dict[str, Any]:
     project = pb.collection("projects").create(
         {
-            "name": "\u067e\u0631\u0648\u0698\u0647",
+            "name": "Project",
             "slug": "proj-a",
-            "language": "fa",
+            "language": "en",
             "status": "active",
             "timezone": "Asia/Tehran",
         }
@@ -37,11 +37,11 @@ def make_project(pb: FakePocketBase) -> dict[str, Any]:
     for ptype, content in (
         (
             "brand_voice",
-            "\u062a\u0648 \u0646\u0648\u06cc\u0633\u0646\u062f\u0647 \u0633\u0626\u0648 \u0647\u0633\u062a\u06cc.",
+            "You are an SEO writer.",
         ),
-        ("outline_user", "JSON \u0628\u0631\u06af\u0631\u062f\u0627\u0646."),
-        ("section_user", "HTML \u0628\u0631\u06af\u0631\u062f\u0627\u0646."),
-        ("seo_rules", "\u0642\u0648\u0627\u0646\u06cc\u0646 \u0633\u0626\u0648."),
+        ("outline_user", "Return JSON."),
+        ("section_user", "Return HTML."),
+        ("seo_rules", "SEO rules."),
     ):
         PromptRepo(pb).save_version(
             project_id=project["id"], ptype=ptype, name="default", content=content
@@ -81,12 +81,12 @@ def make_ctx(pb: FakePocketBase, registry: FakeRegistry, job: dict[str, Any]) ->
     )
 
 
-def posts(*ids: int, title_prefix: str = "\u067e\u0633\u062a") -> list[WPPost]:
+def posts(*ids: int, title_prefix: str = "post") -> list[WPPost]:
     return [
         WPPost(
             i,
             f"{title_prefix} {i}",
-            f"<p>{LONG_TEXT}</p><h2>\u062a\u06cc\u062a\u0631</h2><p>\u0645\u062a\u0646 {i}</p>",
+            f"<p>{LONG_TEXT}</p><h2>Heading</h2><p>text {i}</p>",
             f"https://site.test/{i}",
             "publish",
         )
@@ -128,9 +128,7 @@ def test_metadata_only_change_updates_without_reembedding():
     embed_calls = len(registry.embedding.requests)
 
     # title changes on WordPress, content identical → metadata-only path
-    registry.publisher.posts = posts(
-        1, title_prefix="\u0639\u0646\u0648\u0627\u0646 \u062c\u062f\u06cc\u062f"
-    )
+    registry.publisher.posts = posts(1, title_prefix="New title")
     job2 = make_job(pb, project["id"], "index_project", {"trigger": "manual"}, "m2")
     result2 = asyncio_run(handle_index_project(make_ctx(pb, registry, job2)))
 
@@ -141,14 +139,11 @@ def test_metadata_only_change_updates_without_reembedding():
 
     # PocketBase metadata updated
     doc = pb.collection("documents").get_first_list_item('sourceId="1"')
-    assert doc["title"] == "\u0639\u0646\u0648\u0627\u0646 \u062c\u062f\u06cc\u062f 1"
+    assert doc["title"] == "New title 1"
     assert doc["indexStatus"] == "indexed"
 
     # vector payload updated via set_payload (metadata preserved in Qdrant too)
-    assert any(
-        p.payload["title"] == "\u0639\u0646\u0648\u0627\u0646 \u062c\u062f\u06cc\u062f 1"
-        for p in registry.vector.points.values()
-    )
+    assert any(p.payload["title"] == "New title 1" for p in registry.vector.points.values())
 
 
 def test_content_change_triggers_reembedding():
@@ -164,8 +159,8 @@ def test_content_change_triggers_reembedding():
     registry.publisher.posts = [
         WPPost(
             1,
-            "\u067e\u0633\u062a 1",
-            f"<p>{LONG_TEXT} \u0645\u062d\u062a\u0648\u0627\u06cc \u06a9\u0627\u0645\u0644\u0627\u064b \u062c\u062f\u06cc\u062f \u0627\u0633\u062a</p>",
+            "post 1",
+            f"<p>{LONG_TEXT} completely new content</p>",
             "https://site.test/1",
             "publish",
         )
@@ -310,7 +305,7 @@ def test_pending_document_from_crashed_run_is_reindexed():
             "project": project["id"],
             "sourceType": "wordpress",
             "sourceId": "1",
-            "title": "\u067e\u0633\u062a 1",
+            "title": "post 1",
             "sourceUrl": "https://site.test/1",
             "contentHash": "deadbeef",
             "embeddingProvider": "cohere",
@@ -339,10 +334,8 @@ def test_run_counters_and_vector_payload_contract():
     # post 2 has empty content → skipped
     registry.publisher = FakePublisher(
         posts=[
-            WPPost(
-                1, "\u067e\u0633\u062a 1", f"<p>{LONG_TEXT}</p>", "https://site.test/1", "publish"
-            ),
-            WPPost(2, "\u062e\u0627\u0644\u06cc", "<p>   </p>", "https://site.test/2", "publish"),
+            WPPost(1, "post 1", f"<p>{LONG_TEXT}</p>", "https://site.test/1", "publish"),
+            WPPost(2, "empty", "<p>   </p>", "https://site.test/2", "publish"),
         ]
     )
     job = make_job(pb, project["id"], "index_project", {"trigger": "manual"}, "ct1")
@@ -360,10 +353,10 @@ def test_run_counters_and_vector_payload_contract():
         assert payload["document_id"]  # PB document record id
         assert payload["source_id"] == "1"
         assert payload["source_url"] == "https://site.test/1"
-        assert payload["title"] == "\u067e\u0633\u062a 1"
+        assert payload["title"] == "post 1"
         assert payload["chunk_index"] >= 0
         assert payload["content_hash"]
-        assert payload["language"] == "fa"
+        assert payload["language"] == "en"
         assert payload["created_at"]
 
     # all documents recorded with counters
@@ -382,31 +375,32 @@ def test_queries_filter_by_project_id():
     pb = FakePocketBase(default_unique_fields())
     project = make_project(pb)
     registry = FakeRegistry()
+    # make both points score identically: the test is about project filtering,
+    # not similarity, so the stored vectors match the query embedding exactly.
+    query_vector = FakeEmbedding()._embed(["seo seo"], "query")[0]
     registry.vector.points["proj-a:1:0"] = VectorPoint(
         id="proj-a:1:0",
-        vector=[0.5] * 8,
+        vector=query_vector,
         payload={
             "project_id": project["id"],
             "source_id": "1",
-            "title": "\u0645\u0642\u0627\u0644\u0647 \u062e\u0648\u062f\u0645\u0627\u0646",
+            "title": "our article",
             "url": "https://site.test/1",
-            "chunk_text": "\u0645\u062a\u0646 \u0645\u0631\u062a\u0628\u0637 \u062e\u0648\u062f\u0645\u0627\u0646",
+            "chunk_text": "our own relevant text",
         },
     )
     registry.vector.points["other:9:0"] = VectorPoint(
         id="other:9:0",
-        vector=[0.9] * 8,
+        vector=query_vector,
         payload={
             "project_id": "OTHER",
             "source_id": "9",
-            "title": "\u0645\u0642\u0627\u0644\u0647 \u062f\u06cc\u06af\u0631\u0627\u0646",
+            "title": "someone else's article",
             "url": "https://other.test/9",
-            "chunk_text": "\u0645\u062a\u0646 \u067e\u0631\u0648\u0698\u0647 \u062f\u06cc\u06af\u0631",
+            "chunk_text": "other project text",
         },
     )
-    topic = TopicRepo(pb).create(
-        project=project["id"], title="\u0633\u0626\u0648", keyword="\u0633\u0626\u0648"
-    )
+    topic = TopicRepo(pb).create(project=project["id"], title="seo", keyword="seo")
     job = make_job(pb, project["id"], "index_project", {}, "qf1")
     ctx = make_ctx(pb, registry, job)
 
@@ -414,13 +408,8 @@ def test_queries_filter_by_project_id():
 
     data = asyncio.run(_retrieval_data(ctx, topic))
     context = data["context"]
-    assert (
-        "\u0645\u062a\u0646 \u0645\u0631\u062a\u0628\u0637 \u062e\u0648\u062f\u0645\u0627\u0646"
-        in context
-    )
-    assert (
-        "\u0645\u062a\u0646 \u067e\u0631\u0648\u0698\u0647 \u062f\u06cc\u06af\u0631" not in context
-    )  # foreign project excluded
+    assert "our own relevant text" in context
+    assert "other project text" not in context  # foreign project excluded
 
 
 def asyncio_run(coro):
@@ -447,8 +436,8 @@ def test_embedding_model_switch_triggers_reindex():
         posts=[
             WPPost(
                 id=1,
-                title="\u067e",
-                content_html="<p>\u0645\u062a\u0646</p>" * 30,
+                title="P",
+                content_html="<p>text</p>" * 30,
                 link="https://s.test/?p=1",
                 status="publish",
             )

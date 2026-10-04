@@ -94,7 +94,7 @@ def pb(monkeypatch):
             "email": "ok@x.com",
             "password": "pw123456",
             "role": "member",
-            "displayName": "\u06a9\u0627\u0631\u0628\u0631 \u0641\u0639\u0627\u0644",
+            "displayName": "active user",
             "disabled": False,
         }
     )
@@ -104,7 +104,7 @@ def pb(monkeypatch):
             "email": "off@x.com",
             "password": "pw123456",
             "role": "member",
-            "displayName": "\u06a9\u0627\u0631\u0628\u0631 \u063a\u06cc\u0631\u0641\u0639\u0627\u0644",
+            "displayName": "inactive user",
             "disabled": True,
         }
     )

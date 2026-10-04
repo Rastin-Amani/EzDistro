@@ -27,9 +27,9 @@ from tests.fakes import FakePocketBase, default_unique_fields
 def make_project(pb: FakePocketBase) -> dict[str, Any]:
     project = pb.collection("projects").create(
         {
-            "name": "\u067e",
+            "name": "P",
             "slug": "p1",
-            "language": "fa",
+            "language": "en",
             "status": "active",
             "timezone": "Asia/Tehran",
         }
@@ -39,39 +39,37 @@ def make_project(pb: FakePocketBase) -> dict[str, Any]:
 
 
 def make_article(pb: FakePocketBase, project_id: str, status: str = "review") -> dict[str, Any]:
-    topic = TopicRepo(pb).create(
-        project=project_id, title="\u0633\u0626\u0648", keyword="\u0633\u0626\u0648"
-    )
+    topic = TopicRepo(pb).create(project=project_id, title="seo", keyword="seo")
     article = pb.collection("articles").create(
         {
             "project": project_id,
             "topicId": topic["id"],
-            "title": "\u0631\u0627\u0647\u0646\u0645\u0627\u06cc \u0633\u0626\u0648",
+            "title": "SEO Guide",
             "slug": "rahnama-seo",
             "status": status,
             "outlineVersion": 1,
             "outline": {
-                "title": "\u0631\u0627\u0647\u0646\u0645\u0627\u06cc \u0633\u0626\u0648",
+                "title": "SEO Guide",
                 "slug": "rahnama-seo",
                 "sections": [
                     {
-                        "heading": "\u0645\u0642\u062f\u0645\u0647",
-                        "content_brief": "\u062e\u0644\u0627\u0635\u0647 \u0645\u0642\u062f\u0645\u0647",
+                        "heading": "Introduction",
+                        "content_brief": "Introduction summary",
                         "internal_links": [],
                     },
                     {
-                        "heading": "\u062a\u06a9\u0646\u06cc\u06a9\u0647\u0627",
-                        "content_brief": "\u062e\u0644\u0627\u0635\u0647 \u062a\u06a9\u0646\u06cc\u06a9\u0647\u0627",
+                        "heading": "Techniques",
+                        "content_brief": "Techniques summary",
                         "internal_links": [],
                     },
                 ],
             },
-            "finalHtml": "<h1>\u0631\u0627\u0647\u0646\u0645\u0627\u06cc \u0633\u0626\u0648</h1><h2>\u0645\u0642\u062f\u0645\u0647</h2><p>"
-            + ("\u06a9\u0644\u0645\u0647 " * 200).strip()
-            + "</p><h2>\u062a\u06a9\u0646\u06cc\u06a9\u0647\u0627</h2><p>"
-            + ("\u06a9\u0644\u0645\u0647 " * 200).strip()
+            "finalHtml": "<h1>SEO Guide</h1><h2>Introduction</h2><p>"
+            + ("word " * 200).strip()
+            + "</p><h2>Techniques</h2><p>"
+            + ("word " * 200).strip()
             + "</p>",
-            "metaDescription": "\u062e\u0644\u0627\u0635\u0647",
+            "metaDescription": "Summary",
             "wordCount": 400,
             "seoScore": 70,
         }
@@ -85,7 +83,7 @@ def make_article(pb: FakePocketBase, project_id: str, status: str = "review") ->
                 "contentBrief": plan["content_brief"],
                 "internalLinks": [],
                 "status": "done",
-                "content": "<p>" + ("\u06a9\u0644\u0645\u0647 " * 200).strip() + "</p>",
+                "content": "<p>" + ("word " * 200).strip() + "</p>",
                 "generationAttempts": 1,
                 "promptVersion": 1,
                 "provider": "openai_compat",
@@ -115,15 +113,15 @@ def make_ctx(pb: FakePocketBase, registry: FakeRegistry, job: dict[str, Any]) ->
 # ---------------------------------------------------------------------------
 def test_validator_flags_duplicate_headings_broken_links_suspicious():
     html = (
-        "<h2>\u062a\u06a9\u0631\u0627\u0631</h2><p>\u0645\u062a\u0646</p><h2>\u062a\u06a9\u0631\u0627\u0631</h2><p>\u0645\u062a\u0646</p>"
+        "<h2>Duplicate</h2><p>text</p><h2>Duplicate</h2><p>text</p>"
         '<a href="javascript:alert(1)">x</a>'
         "<p>{{ unrendered }}</p><p>lorem ipsum</p>"
     )
     report = ArticleValidator(min_words=10).validate(
-        title="\u062a",
+        title="T",
         slug="t",
         outline={},
-        sections=[{"heading": "\u0627\u0644\u0641", "content": "<p>\u0645\u062a\u0646</p>"}],
+        sections=[{"heading": "A", "content": "<p>text</p>"}],
         html=html,
     )
     codes = {i.code for i in report.issues}
@@ -133,12 +131,12 @@ def test_validator_flags_duplicate_headings_broken_links_suspicious():
 
 
 def test_validator_keyword_requirements():
-    html = "<h2>\u0628\u062e\u0634</h2><p>" + ("\u06a9\u0644\u0645\u0647 " * 50).strip() + "</p>"
-    report = ArticleValidator(min_words=10, keyword="\u0633\u0626\u0648").validate(
-        title="\u0628\u062f\u0648\u0646 \u06a9\u0644\u06cc\u062f\u0648\u0627\u0698\u0647",
+    html = "<h2>Section</h2><p>" + ("word " * 50).strip() + "</p>"
+    report = ArticleValidator(min_words=10, keyword="seo").validate(
+        title="without a keyword",
         slug="t",
         outline={},
-        sections=[{"heading": "\u0628", "content": "<p>x</p>"}],
+        sections=[{"heading": "B", "content": "<p>x</p>"}],
         html=html,
     )
     codes = {i.code for i in report.issues}
@@ -160,8 +158,8 @@ def test_revision_snapshot_and_rollback_never_destroys_previous():
     pb.collection("articles").update(
         article["id"],
         {
-            "title": "\u0639\u0646\u0648\u0627\u0646 \u062c\u062f\u06cc\u062f",
-            "finalHtml": "<h1>\u062c\u062f\u06cc\u062f</h1>",
+            "title": "New title",
+            "finalHtml": "<h1>New</h1>",
         },
     )
     changed = pb.collection("articles").get_one(article["id"])
@@ -173,10 +171,8 @@ def test_revision_snapshot_and_rollback_never_destroys_previous():
 
     # rollback to v1 restores the old title + sections
     restored = service.rollback(article["id"], v1["id"], created_by="reviewer")
-    assert restored["title"] == "\u0631\u0627\u0647\u0646\u0645\u0627\u06cc \u0633\u0626\u0648"
-    assert "\u0631\u0627\u0647\u0646\u0645\u0627\u06cc \u0633\u0626\u0648" in (
-        restored.get("finalHtml") or ""
-    )
+    assert restored["title"] == "SEO Guide"
+    assert "SEO Guide" in (restored.get("finalHtml") or "")
     # rollback itself is recorded (3 revisions now)
     assert len(service.list(article["id"])) == 3
     # sections restored with content
@@ -232,9 +228,9 @@ def test_publish_requires_approved_state():
 # Regeneration preserves history
 # ---------------------------------------------------------------------------
 OUTLINE_JSON = (
-    '{"title": "\u0631\u0627\u0647\u0646\u0645\u0627\u06cc \u0633\u0626\u0648", "slug": "rahnama-seo", "sections": ['
-    '{"heading": "\u0645\u0642\u062f\u0645\u0647", "content_brief": "\u062e\u0644\u0627\u0635\u0647 \u0645\u0642\u062f\u0645\u0647"},'
-    '{"heading": "\u062a\u06a9\u0646\u06cc\u06a9\u0647\u0627", "content_brief": "\u062e\u0644\u0627\u0635\u0647 \u062a\u06a9\u0646\u06cc\u06a9\u0647\u0627"}]}'
+    '{"title": "SEO Guide", "slug": "rahnama-seo", "sections": ['
+    '{"heading": "Introduction", "content_brief": "Introduction summary"},'
+    '{"heading": "Techniques", "content_brief": "Techniques summary"}]}'
 )
 
 
@@ -244,11 +240,11 @@ def test_regenerate_article_preserves_previous_version():
     for ptype, content in (
         (
             "brand_voice",
-            "\u062a\u0648 \u0646\u0648\u06cc\u0633\u0646\u062f\u0647 \u0633\u0626\u0648 \u0647\u0633\u062a\u06cc.",
+            "You are an SEO writer.",
         ),
-        ("outline_user", "JSON \u0628\u0631\u06af\u0631\u062f\u0627\u0646."),
-        ("section_user", "HTML \u0628\u0631\u06af\u0631\u062f\u0627\u0646."),
-        ("seo_rules", "\u0642\u0648\u0627\u0646\u06cc\u0646."),
+        ("outline_user", "Return JSON."),
+        ("section_user", "Return HTML."),
+        ("seo_rules", "Rules."),
     ):
         PromptRepo(pb).save_version(
             project_id=project["id"], ptype=ptype, name="default", content=content
@@ -258,14 +254,12 @@ def test_regenerate_article_preserves_previous_version():
     pb.collection("articles").update(
         article["id"],
         {
-            "finalHtml": "<h1>\u0646\u0633\u062e\u0647 \u0642\u0628\u0644\u06cc</h1>",
-            "title": "\u0646\u0633\u062e\u0647 \u0642\u0628\u0644\u06cc",
+            "finalHtml": "<h1>previous version</h1>",
+            "title": "previous version",
         },
     )
     registry = FakeRegistry()
-    registry.llm.responses = [OUTLINE_JSON] + [
-        "<p>" + ("\u06a9\u0644\u0645\u0647 " * 200).strip() + "</p>"
-    ] * 2
+    registry.llm.responses = [OUTLINE_JSON] + ["<p>" + ("word " * 200).strip() + "</p>"] * 2
 
     # regenerate from sent_back
     job = JobRepo(pb).create(
@@ -283,10 +277,8 @@ def test_regenerate_article_preserves_previous_version():
     kinds = [r["kind"] for r in revisions]
     assert "checkpoint" in kinds
     checkpoint = next(r for r in revisions if r["kind"] == "checkpoint")
-    assert checkpoint["snapshot"]["title"] == "\u0646\u0633\u062e\u0647 \u0642\u0628\u0644\u06cc"
-    assert (
-        "\u0646\u0633\u062e\u0647 \u0642\u0628\u0644\u06cc" in checkpoint["snapshot"]["finalHtml"]
-    )
+    assert checkpoint["snapshot"]["title"] == "previous version"
+    assert "previous version" in checkpoint["snapshot"]["finalHtml"]
 
 
 def test_regenerate_from_review_proceeds_not_already_written():
@@ -298,11 +290,11 @@ def test_regenerate_from_review_proceeds_not_already_written():
     for ptype, content in (
         (
             "brand_voice",
-            "\u062a\u0648 \u0646\u0648\u06cc\u0633\u0646\u062f\u0647 \u0633\u0626\u0648 \u0647\u0633\u062a\u06cc.",
+            "You are an SEO writer.",
         ),
-        ("outline_user", "JSON \u0628\u0631\u06af\u0631\u062f\u0627\u0646."),
-        ("section_user", "HTML \u0628\u0631\u06af\u0631\u062f\u0627\u0646."),
-        ("seo_rules", "\u0642\u0648\u0627\u0646\u06cc\u0646."),
+        ("outline_user", "Return JSON."),
+        ("section_user", "Return HTML."),
+        ("seo_rules", "Rules."),
     ):
         PromptRepo(pb).save_version(
             project_id=project["id"], ptype=ptype, name="default", content=content
@@ -313,9 +305,7 @@ def test_regenerate_from_review_proceeds_not_already_written():
     TopicRepo(pb).set_status(article["topicId"], "review")
 
     registry = FakeRegistry()
-    registry.llm.responses = [OUTLINE_JSON] + [
-        "<p>" + ("\u06a9\u0644\u0645\u0647 " * 200).strip() + "</p>"
-    ] * 2
+    registry.llm.responses = [OUTLINE_JSON] + ["<p>" + ("word " * 200).strip() + "</p>"] * 2
     job = JobRepo(pb).create(
         project=project["id"],
         type="write_article",
@@ -340,11 +330,11 @@ def test_section_regeneration_restores_article_status():
     for ptype, content in (
         (
             "brand_voice",
-            "\u062a\u0648 \u0646\u0648\u06cc\u0633\u0646\u062f\u0647 \u0633\u0626\u0648 \u0647\u0633\u062a\u06cc.",
+            "You are an SEO writer.",
         ),
-        ("outline_user", "JSON \u0628\u0631\u06af\u0631\u062f\u0627\u0646."),
-        ("section_user", "HTML \u0628\u0631\u06af\u0631\u062f\u0627\u0646."),
-        ("seo_rules", "\u0642\u0648\u0627\u0646\u06cc\u0646."),
+        ("outline_user", "Return JSON."),
+        ("section_user", "Return HTML."),
+        ("seo_rules", "Rules."),
     ):
         PromptRepo(pb).save_version(
             project_id=project["id"], ptype=ptype, name="default", content=content
@@ -356,7 +346,7 @@ def test_section_regeneration_restores_article_status():
     pb.collection("article_sections").update(section["id"], {"status": "pending", "content": ""})
 
     registry = FakeRegistry()
-    registry.llm.responses = ["<p>" + ("\u06a9\u0644\u0645\u0647 " * 200).strip() + "</p>"]
+    registry.llm.responses = ["<p>" + ("word " * 200).strip() + "</p>"]
     job = JobRepo(pb).create(
         project=project["id"],
         type="generate_section",
@@ -381,7 +371,7 @@ def test_approve_requires_valid_article():
     pb.collection("articles").update(article["id"], {"finalHtml": "", "title": ""})
     broken = pb.collection("articles").get_one(article["id"])
     sections = SectionRepo(pb).list_for_article(article["id"])
-    report = _live_validation(pb, broken, sections, "\u0633\u0626\u0648")
+    report = _live_validation(pb, broken, sections, "seo")
     assert report.ok is False
     codes = {i.code for i in report.issues}
     assert "missing_title" in codes

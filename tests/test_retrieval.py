@@ -21,9 +21,9 @@ from tests.fakes import FakePocketBase, default_unique_fields
 def make_project(pb: FakePocketBase) -> dict[str, Any]:
     project = pb.collection("projects").create(
         {
-            "name": "\u067e\u0631\u0648\u0698\u0647",
+            "name": "Project",
             "slug": "proj-a",
-            "language": "fa",
+            "language": "en",
             "status": "active",
             "timezone": "Asia/Tehran",
         }
@@ -42,12 +42,11 @@ def seed_points(registry: FakeRegistry, project_id: str, n: int = 5) -> None:
                 "document_id": f"doc-{i}",
                 "source_id": str(i),
                 "source_url": f"https://site.test/{i}",
-                "title": f"\u0645\u0642\u0627\u0644\u0647 {i}",
+                "title": f"article {i}",
                 "chunk_index": 0,
                 "content_hash": f"hash-{i}",
-                "language": "fa",
-                "chunk_text": f"\u0645\u062a\u0646 \u0645\u0631\u062a\u0628\u0637 \u0645\u0642\u0627\u0644\u0647 {i} "
-                * 20,
+                "language": "en",
+                "chunk_text": f"relevant article text {i} " * 20,
             },
         )
 
@@ -60,10 +59,7 @@ def make_config(pb: FakePocketBase, project: dict[str, Any]) -> ProjectConfig:
 # normalize_query
 # ---------------------------------------------------------------------------
 def test_normalize_query():
-    assert (
-        normalize_query("  <p>\u0633\u0626\u0648</p>  \u0648  \u0633\u0626\u0648  ")
-        == "\u0633\u0626\u0648 \u0648 \u0633\u0626\u0648"
-    )
+    assert normalize_query("  <p>seo</p>  and  seo  ") == "seo and seo"
     assert normalize_query("") == ""
     assert normalize_query("   ") == ""
 
@@ -82,7 +78,7 @@ def test_retrieve_defaults_and_filters():
     results = asyncio.run(
         service.retrieve(
             config,
-            "\u0633\u0626\u0648",
+            "seo",
             RetrievalOptions(candidate_count=20, similarity_threshold=None),
         )
     )
@@ -114,9 +110,9 @@ def test_retrieve_passes_project_filter_and_threshold():
         payload={
             "project_id": "OTHER",
             "document_id": "x",
-            "title": "\u062e\u0627\u0631\u062c\u06cc",
+            "title": "external",
             "source_url": "https://x.test",
-            "chunk_text": "\u062e\u0627\u0631\u062c\u06cc",
+            "chunk_text": "external",
         },
     )
     config = make_config(pb, project)
@@ -125,7 +121,7 @@ def test_retrieve_passes_project_filter_and_threshold():
     results = asyncio.run(
         service.retrieve(
             config,
-            "\u0633\u0626\u0648",
+            "seo",
             RetrievalOptions(candidate_count=3, similarity_threshold=0.5),
         )
     )
@@ -145,7 +141,7 @@ def test_retrieve_with_rerank_uses_larger_pool_and_sets_scores():
     results = asyncio.run(
         service.retrieve(
             config,
-            "\u0633\u0626\u0648",
+            "seo",
             RetrievalOptions(candidate_count=6, rerank=True, rerank_top_n=3),
         )
     )
@@ -169,9 +165,7 @@ def test_retrieve_rerank_falls_back_when_no_reranker():
     service = RetrievalService(pb, registry)
 
     results = asyncio.run(
-        service.retrieve(
-            config, "\u0633\u0626\u0648", RetrievalOptions(rerank=True, rerank_top_n=2)
-        )
+        service.retrieve(config, "seo", RetrievalOptions(rerank=True, rerank_top_n=2))
     )
     assert len(results) == 5  # vector order stands — reranking never mandatory
     assert all(r.rerank_score is None for r in results)
@@ -188,7 +182,7 @@ def test_retrieve_empty_query_or_no_results():
     seed_points(registry, project["id"])
     # threshold above all scores → empty
     results = asyncio.run(
-        service.retrieve(config, "\u0633\u0626\u0648", RetrievalOptions(similarity_threshold=0.99))
+        service.retrieve(config, "seo", RetrievalOptions(similarity_threshold=0.99))
     )
     assert results == []
 
@@ -199,9 +193,9 @@ def test_retrieve_empty_query_or_no_results():
 def _results(**overrides) -> list[RetrievalResult]:
     base = RetrievalResult(
         document_id="d",
-        title="\u0645\u0642\u0627\u0644\u0647",
+        title="article",
         source_url="https://site.test/1",
-        snippet="\u0645\u062a\u0646",
+        snippet="text",
         vector_score=0.5,
         final_score=0.5,
     )
@@ -212,7 +206,7 @@ def test_internal_linking_filters_and_ranks():
     results = [
         RetrievalResult(
             document_id="1",
-            title="\u0627\u0644\u0641",
+            title="A",
             source_url="https://s.test/a",
             snippet="x",
             vector_score=0.9,
@@ -220,7 +214,7 @@ def test_internal_linking_filters_and_ranks():
         ),
         RetrievalResult(
             document_id="2",
-            title="\u0628",
+            title="B",
             source_url="https://s.test/b",
             snippet="x",
             vector_score=0.7,
@@ -236,7 +230,7 @@ def test_internal_linking_filters_and_ranks():
         ),  # no title → dropped
         RetrievalResult(
             document_id="4",
-            title="\u062f",
+            title="D",
             source_url="",
             snippet="x",
             vector_score=0.8,
@@ -244,7 +238,7 @@ def test_internal_linking_filters_and_ranks():
         ),  # no url → dropped
         RetrievalResult(
             document_id="5",
-            title="\u06a9\u0645",
+            title="low",
             source_url="https://s.test/low",
             snippet="x",
             vector_score=0.1,
@@ -252,14 +246,14 @@ def test_internal_linking_filters_and_ranks():
         ),  # below min score
     ]
     links = InternalLinkingService().build(results, max_links=5, min_score=0.5)
-    assert [link.title for link in links] == ["\u0627\u0644\u0641", "\u0628"]
+    assert [link.title for link in links] == ["A", "B"]
 
 
 def test_internal_linking_removes_current_article_and_dedupes():
     results = [
         RetrievalResult(
             document_id="1",
-            title="\u062e\u0648\u062f\u0645\u0627\u0646",
+            title="ours",
             source_url="https://s.test/current",
             snippet="x",
             vector_score=0.99,
@@ -267,7 +261,7 @@ def test_internal_linking_removes_current_article_and_dedupes():
         ),
         RetrievalResult(
             document_id="2",
-            title="\u062a\u06a9\u0631\u0627\u0631\u06cc",
+            title="duplicate",
             source_url="https://s.test/dup",
             snippet="x",
             vector_score=0.7,
@@ -275,7 +269,7 @@ def test_internal_linking_removes_current_article_and_dedupes():
         ),
         RetrievalResult(
             document_id="3",
-            title="\u062a\u06a9\u0631\u0627\u0631\u06cc",
+            title="duplicate",
             source_url="https://s.test/dup/",
             snippet="x",
             vector_score=0.95,
@@ -283,7 +277,7 @@ def test_internal_linking_removes_current_article_and_dedupes():
         ),  # same URL (trailing slash)
         RetrievalResult(
             document_id="4",
-            title="\u0645\u0642\u0627\u0644\u0647 \u062f\u06cc\u06af\u0631",
+            title="another article",
             source_url="https://s.test/other",
             snippet="x",
             vector_score=0.6,
@@ -294,9 +288,9 @@ def test_internal_linking_removes_current_article_and_dedupes():
         results, current_url="https://s.test/current", max_links=5
     )
     titles = [link.title for link in links]
-    assert "\u062e\u0648\u062f\u0645\u0627\u0646" not in titles  # current article removed
-    assert titles.count("\u062a\u06a9\u0631\u0627\u0631\u06cc") == 1  # deduped, highest score kept
-    dup = next(link for link in links if link.title == "\u062a\u06a9\u0631\u0627\u0631\u06cc")
+    assert "ours" not in titles  # current article removed
+    assert titles.count("duplicate") == 1  # deduped, highest score kept
+    dup = next(link for link in links if link.title == "duplicate")
     assert dup.relevance_score == 0.95
 
 
@@ -304,7 +298,7 @@ def test_internal_linking_caps_max_links():
     results = [
         RetrievalResult(
             document_id=str(i),
-            title=f"\u062a{i}",
+            title=f"T{i}",
             source_url=f"https://s.test/{i}",
             snippet="x",
             vector_score=(10 - i) / 10,
@@ -324,16 +318,16 @@ def test_context_builder_respects_budget():
     results = [
         RetrievalResult(
             document_id=str(i),
-            title=f"\u062a{i}",
+            title=f"T{i}",
             source_url=f"https://s.test/{i}",
-            snippet=("\u06a9\u0644\u0645\u0647 " * 300).strip(),
+            snippet=("word " * 300).strip(),
             vector_score=1.0,
             final_score=1.0,
         )
         for i in range(6)
     ]
     builder = ContextBuilder(max_links=2, max_passages=2, max_chars=800)
-    context = builder.build("\u0633\u0626\u0648", results, current_title="")
+    context = builder.build("seo", results, current_title="")
 
     assert len(context.links) == 2
     assert len(context.passages) == 2
@@ -341,17 +335,14 @@ def test_context_builder_respects_budget():
     assert all(len(p) <= 400 for p in context.passages)  # per-passage share
 
     formatted = builder.format_for_prompt(context)
-    assert (
-        "\u0645\u0642\u0627\u0644\u0627\u062a \u0645\u0648\u062c\u0648\u062f \u062f\u0631 \u0633\u0627\u06cc\u062a"
-        in formatted
-    )
-    assert "\u0628\u062e\u0634\u200c\u0647\u0627\u06cc \u0645\u0631\u062a\u0628\u0637" in formatted
+    assert "Existing site pages" in formatted
+    assert "Relevant sections from existing pages" in formatted
     assert len(formatted) <= 800 + 200  # formatting overhead is small
 
 
 def test_context_builder_metadata_rules_and_empty():
     builder = ContextBuilder(max_links=0, max_passages=0, max_chars=0)
-    context = builder.build("\u0633\u0626\u0648", [], current_title="")
+    context = builder.build("seo", [], current_title="")
     assert context.links == []
     assert context.passages == []
     assert context.used_chars == 0
@@ -370,15 +361,16 @@ def test_writer_outline_prompt_contains_budgeted_context():
     for ptype, content in (
         (
             "brand_voice",
-            "\u062a\u0648 \u0646\u0648\u06cc\u0633\u0646\u062f\u0647 \u0633\u0626\u0648 \u0647\u0633\u062a\u06cc.",
+            "You are an SEO writer.",
         ),
         # variable-driven prompt: retrieval data injected via {{ }} tokens
         (
             "outline_user",
-            "JSON \u0628\u0631\u06af\u0631\u062f\u0627\u0646.\n\u0645\u0648\u0636\u0648\u0639: {{ topic.title }}\n\u0645\u0642\u0627\u0644\u0627\u062a \u0645\u0648\u062c\u0648\u062f \u062f\u0631 \u0633\u0627\u06cc\u062a:\n{{ internal_links }}\n\u0632\u0645\u06cc\u0646\u0647:\n{{ retrieved_context }}",
+            "Return JSON.\nTopic: {{ topic.title }}\nExisting site pages:\n"
+            "{{ internal_links }}\nContext:\n{{ retrieved_context }}",
         ),
-        ("section_user", "HTML \u0628\u0631\u06af\u0631\u062f\u0627\u0646."),
-        ("seo_rules", "\u0642\u0648\u0627\u0646\u06cc\u0646."),
+        ("section_user", "Return HTML."),
+        ("seo_rules", "Rules."),
     ):
         PromptRepo(pb).save_version(
             project_id=project["id"], ptype=ptype, name="default", content=content
@@ -388,20 +380,16 @@ def test_writer_outline_prompt_contains_budgeted_context():
     seed_points(registry, project["id"], n=6)
     # FakeLLM: outline JSON then section HTMLs
     registry.llm.responses = [
-        '{"title": "\u062a", "slug": "t", "sections": [{"heading": "\u0627\u0644\u0641", "content_brief": "\u062e\u0644\u0627\u0635\u0647"}, {"heading": "\u0628", "content_brief": "\u062e\u0644\u0627\u0635\u0647"}]}',
-        "<p>"
-        + ("\u06a9\u0644\u0645\u0647 \u0628\u062e\u0634 \u0627\u0644\u0641 " * 15).strip()
-        + "</p>",
-        "<p>" + ("\u06a9\u0644\u0645\u0647 \u0628\u062e\u0634 \u0628 " * 15).strip() + "</p>",
+        '{"title": "T", "slug": "t", "sections": [{"heading": "A", "content_brief": "Summary"}, {"heading": "B", "content_brief": "Summary"}]}',
+        "<p>" + ("word of section A " * 15).strip() + "</p>",
+        "<p>" + ("word of section B " * 15).strip() + "</p>",
     ]
     # threshold 0 so retrieval returns regardless of score luck
     pb.collection("project_settings").update(
         pb.collection("project_settings").get_first_list_item(f'project="{project["id"]}"')["id"],
         {"similarityThreshold": 0},
     )
-    topic = TopicRepo(pb).create(
-        project=project["id"], title="\u0633\u0626\u0648", keyword="\u0633\u0626\u0648"
-    )
+    topic = TopicRepo(pb).create(project=project["id"], title="seo", keyword="seo")
     job = JobRepo(pb).create(
         project=project["id"],
         type="write_article",
@@ -425,13 +413,7 @@ def test_writer_outline_prompt_contains_budgeted_context():
     # the LLM prompt contained link candidates + budgeted passages, not full docs
     outline_call = registry.llm.calls[0]["user"]
     assert "https://site.test/" in outline_call  # internal link candidates present
-    assert (
-        "\u0645\u0642\u0627\u0644\u0627\u062a \u0645\u0648\u062c\u0648\u062f \u062f\u0631 \u0633\u0627\u06cc\u062a"
-        in outline_call
-    )
+    assert "Existing site pages" in outline_call
     # passages are snippet-length, NOT the full 20x-repeated text
-    assert (
-        "\u0645\u062a\u0646 \u0645\u0631\u062a\u0628\u0637 \u0645\u0642\u0627\u0644\u0647"
-        in outline_call
-    )
+    assert "relevant article text" in outline_call
     assert len(outline_call) < 6000  # context budget enforced (not full documents)

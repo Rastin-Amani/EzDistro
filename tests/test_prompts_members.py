@@ -18,14 +18,14 @@ def make_pb() -> FakePocketBase:
 
 def test_prompt_save_versioning_appends_and_activates():
     pb = make_pb()
-    project = ProjectRepo(pb).create(name="\u067e", slug="p1")
+    project = ProjectRepo(pb).create(name="P", slug="p1")
     repo = PromptRepo(pb)
 
     first = repo.save_version(
         project_id=project["id"],
         ptype="seo_rules",
         name="default",
-        content="\u0646\u0633\u062e\u0647 \u06f1",
+        content="version 1",
     )
     assert first["version"] == 1
     assert first["active"] is True
@@ -34,7 +34,7 @@ def test_prompt_save_versioning_appends_and_activates():
         project_id=project["id"],
         ptype="seo_rules",
         name="default",
-        content="\u0646\u0633\u062e\u0647 \u06f2",
+        content="version 2",
     )
     assert second["version"] == 2
     assert second["active"] is True
@@ -48,33 +48,27 @@ def test_prompt_save_versioning_appends_and_activates():
 
 def test_prompt_resolution_project_wins_over_global():
     pb = make_pb()
-    project = ProjectRepo(pb).create(name="\u067e", slug="p2")
+    project = ProjectRepo(pb).create(name="P", slug="p2")
     repo = PromptRepo(pb)
 
     repo.save_version(
         project_id=None,
         ptype="brand_voice",
         name="default",
-        content="\u0635\u062f\u0627\u06cc \u062c\u0647\u0627\u0646\u06cc",
+        content="Global brand voice",
     )
     repo.save_version(
         project_id=project["id"],
         ptype="brand_voice",
         name="default",
-        content="\u0635\u062f\u0627\u06cc \u067e\u0631\u0648\u0698\u0647",
+        content="Project brand voice",
     )
 
-    assert (
-        repo.resolve(project["id"], "brand_voice")
-        == "\u0635\u062f\u0627\u06cc \u067e\u0631\u0648\u0698\u0647"
-    )
+    assert repo.resolve(project["id"], "brand_voice") == "Project brand voice"
 
     # project without a row falls back to the global default
-    project2 = ProjectRepo(pb).create(name="\u067e\u06f2", slug="p3")
-    assert (
-        repo.resolve(project2["id"], "brand_voice")
-        == "\u0635\u062f\u0627\u06cc \u062c\u0647\u0627\u0646\u06cc"
-    )
+    project2 = ProjectRepo(pb).create(name="P2", slug="p3")
+    assert repo.resolve(project2["id"], "brand_voice") == "Global brand voice"
 
     # unknown type → empty
     assert repo.resolve(project["id"], "validation") == ""
@@ -82,7 +76,7 @@ def test_prompt_resolution_project_wins_over_global():
 
 def test_prompt_invalid_type_rejected():
     pb = make_pb()
-    project = ProjectRepo(pb).create(name="\u067e", slug="p4")
+    project = ProjectRepo(pb).create(name="P", slug="p4")
     import pytest
 
     with pytest.raises(ValueError):
@@ -91,7 +85,7 @@ def test_prompt_invalid_type_rejected():
 
 def test_membership_unique_and_role_update():
     pb = make_pb()
-    project = ProjectRepo(pb).create(name="\u067e", slug="p5")
+    project = ProjectRepo(pb).create(name="P", slug="p5")
     user = pb.collection("users").create(
         {"email": "b@x.com", "password": "x", "passwordConfirm": "x", "role": "member"}
     )

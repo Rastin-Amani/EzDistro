@@ -34,15 +34,15 @@ PLAN_JSON = json.dumps(
             {
                 "role": "cover",
                 "prompt": "closeup of a car dashboard with an amber warning light",
-                "alt_text": "\u0646\u0645\u0627\u06cc\u0634\u06af\u0631 \u062e\u0648\u062f\u0631\u0648 \u0628\u0627 \u0686\u0631\u0627\u063a \u0647\u0634\u062f\u0627\u0631 \u0631\u0648\u0634\u0646",
-                "caption": "\u0686\u0631\u0627\u063a \u0647\u0634\u062f\u0627\u0631 \u0645\u0648\u062a\u0648\u0631 \u0631\u0648\u06cc \u0635\u0641\u062d\u0647 \u06a9\u06cc\u0644\u0648\u0645\u062a\u0631",
+                "alt_text": "car display with the warning light on",
+                "caption": "engine warning light on the speedometer",
                 "aspect_ratio": "16:9",
             },
             {
                 "role": "interior",
                 "section_key": "section-1",
                 "prompt": "open engine bay photographed in daylight",
-                "alt_text": "\u0645\u0648\u062a\u0648\u0631 \u062e\u0648\u062f\u0631\u0648 \u0627\u0632 \u0646\u0645\u0627\u06cc \u0628\u0627\u0644\u0627",
+                "alt_text": "car engine from above",
             },
         ]
     }
@@ -53,15 +53,14 @@ def make_plan_article(pb: FakePocketBase, project_id: str) -> dict[str, Any]:
     article = make_article(
         pb,
         project_id,
-        final_html="<h1>\u0639\u0646\u0648\u0627\u0646</h1><p>\u0645\u062a\u0646 \u0645\u0642\u0627\u0644\u0647</p>",
+        final_html="<h1>Title</h1><p>article text</p>",
     )
     ArticleRepo(pb).set_final_content(
         article["id"],
-        html=article.get("finalHtml")
-        or "<h1>\u0639\u0646\u0648\u0627\u0646</h1><p>\u0645\u062a\u0646 \u0645\u0642\u0627\u0644\u0647</p>",
+        html=article.get("finalHtml") or "<h1>Title</h1><p>article text</p>",
         word_count=600,
         seo_score=80,
-        meta_description="\u0645",
+        meta_description="M",
     )
     return pb.collection("articles").get_one(article["id"])
 
@@ -72,8 +71,8 @@ def set_plan(pb: FakePocketBase, article_id: str, sections: list[str]) -> dict[s
         {
             "role": "cover",
             "prompt": "amber check-engine warning on a dashboard",
-            "alt_text": "\u0686\u0631\u0627\u063a \u0647\u0634\u062f\u0627\u0631 \u0645\u0648\u062a\u0648\u0631 \u0631\u0648\u06cc \u062f\u0627\u0634\u0628\u0648\u0631\u062f",
-            "caption": "\u0686\u0631\u0627\u063a \u0647\u0634\u062f\u0627\u0631 \u0645\u0648\u062a\u0648\u0631 \u0647\u0646\u06af\u0627\u0645 \u0631\u0648\u0634\u0646 \u0634\u062f\u0646 \u062e\u0648\u062f\u0631\u0648",
+            "alt_text": "engine warning light on the dashboard",
+            "caption": "engine warning light when the car starts",
             "aspect_ratio": "16:9",
         }
     ]
@@ -83,7 +82,7 @@ def set_plan(pb: FakePocketBase, article_id: str, sections: list[str]) -> dict[s
                 "role": "interior",
                 "section_key": key,
                 "prompt": f"photo illustrating {key}",
-                "alt_text": "\u062a\u0635\u0648\u06cc\u0631 \u0628\u062e\u0634 \u0645\u0631\u0628\u0648\u0637\u0647",
+                "alt_text": "image of the relevant section",
             }
         )
     plan = ArticleImagePlan.model_validate({"version": 1, "style": {}, "images": images})
@@ -209,10 +208,7 @@ def test_generate_cover_happy_path():
     # generation actually hit the provider at planned dims
     assert img_provider(registry, "gemini").calls[0].width == row["width"]
     # metadata (alt/caption) came from the plan
-    assert (
-        row["altText"]
-        == "\u0686\u0631\u0627\u063a \u0647\u0634\u062f\u0627\u0631 \u0645\u0648\u062a\u0648\u0631 \u0631\u0648\u06cc \u062f\u0627\u0634\u0628\u0648\u0631\u062f"
-    )
+    assert row["altText"] == "engine warning light on the dashboard"
 
 
 def test_generation_is_idempotent_via_fingerprint():
@@ -406,10 +402,7 @@ def test_publish_article_image_uploads_once_and_sets_featured(monkeypatch):
 
     uploads = registry.publisher.media_uploads_of("")
     assert len(uploads) == 1  # idempotent: stored media id reused, no duplicate
-    assert (
-        uploads[0]["alt_text"]
-        == "\u0686\u0631\u0627\u063a \u0647\u0634\u062f\u0627\u0631 \u0645\u0648\u062a\u0648\u0631 \u0631\u0648\u06cc \u062f\u0627\u0634\u0628\u0648\u0631\u062f"
-    )
+    assert uploads[0]["alt_text"] == "engine warning light on the dashboard"
     # featured set for the published post (repeat calls are WP-idempotent, same id)
     assert uploads[0]["id"] == 5001
     assert registry.publisher.featured_calls[-1] == (42, 5001)

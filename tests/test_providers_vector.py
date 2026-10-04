@@ -17,10 +17,7 @@ def make_store(**kwargs) -> QdrantStore:
 
 def test_project_key_namespacing():
     assert project_key("My Project", "embed-v4.0") == "ezdistro-my-project-embed-v4-0"
-    assert (
-        project_key("\u067e\u0631\u0648\u0698\u0647", "\u0645\u062f\u0644")
-        == "ezdistro-project-model"
-    )
+    assert project_key("Project", "model") == "ezdistro-project-model"
     assert len(project_key("a" * 100, "b" * 100)) <= 63
 
 

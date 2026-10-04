@@ -804,7 +804,10 @@ def test_google_ads_callback_is_served_on_both_paths():
     """Google may redirect to either registered URI; both must resolve."""
     from app.main import app
 
-    paths = {r.path for r in app.routes}
+    # Newer FastAPI stores included routers as opaque `_IncludedRouter` objects
+    # on `app.routes` (no `.path`), so read the generated OpenAPI schema — the
+    # authoritative list of every served path.
+    paths = set(app.openapi().get("paths", {}))
     assert "/auth/google-ads/callback" in paths
     assert "/projects/google-ads/callback" in paths
 

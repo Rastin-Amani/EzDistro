@@ -61,20 +61,18 @@ def setup():
     MemberRepo(pb).add(project=proj_a["id"], user="u1", role="owner")
     MemberRepo(pb).add(project=proj_a["id"], user="u2", role="viewer")
 
-    topic_b = TopicRepo(pb).create(
-        project=proj_b["id"], title="\u0645\u0648\u0636\u0648\u0639 B", keyword="kb"
-    )
+    topic_b = TopicRepo(pb).create(project=proj_b["id"], title="Topic B", keyword="kb")
     article_b = pb.collection("articles").create(
         {
             "project": proj_b["id"],
             "topicId": topic_b["id"],
-            "title": "\u0645\u0642\u0627\u0644\u0647 B",
+            "title": "article B",
             "slug": "art-b",
             "status": "outline_ready",
         }
     )
     section_b = SectionRepo(pb).create(
-        article=article_b["id"], position=0, heading="\u0628", content_brief="\u062e"
+        article=article_b["id"], position=0, heading="B", content_brief="X"
     )
     int_b = IntegrationRepo(pb).create(
         project=proj_b["id"],
@@ -108,11 +106,11 @@ def test_save_meta_cannot_modify_foreign_article(setup):
         req,
         setup["proj_a"]["id"],
         setup["article_b"]["id"],
-        title="\u0647\u06a9",
+        title="hack",
         meta_description="",
     )
     article = ArticleRepo(setup["pb"]).get(setup["article_b"]["id"])
-    assert article["title"] == "\u0645\u0642\u0627\u0644\u0647 B"  # untouched
+    assert article["title"] == "article B"  # untouched
 
 
 def test_save_section_cannot_modify_foreign_section(setup):
@@ -123,12 +121,12 @@ def test_save_section_cannot_modify_foreign_section(setup):
         setup["proj_a"]["id"],
         setup["article_b"]["id"],
         setup["section_b"]["id"],
-        heading="\u0647\u06a9",
+        heading="hack",
         content_brief="",
-        content="<p>\u0647\u06a9</p>",
+        content="<p>hack</p>",
     )
     section = SectionRepo(setup["pb"]).get(setup["section_b"]["id"])
-    assert section["heading"] == "\u0628"  # untouched
+    assert section["heading"] == "B"  # untouched
 
 
 def test_delete_topic_cannot_delete_foreign_topic(setup):
@@ -292,9 +290,7 @@ def test_viewer_cannot_delete_project(setup):
 
 def test_viewer_cannot_publish(setup):
     # give project A an approved article
-    topic_a = TopicRepo(setup["pb"]).create(
-        project=setup["proj_a"]["id"], title="\u062a", keyword="k"
-    )
+    topic_a = TopicRepo(setup["pb"]).create(project=setup["proj_a"]["id"], title="T", keyword="k")
     article_a = (
         setup["pb"]
         .collection("articles")
@@ -302,7 +298,7 @@ def test_viewer_cannot_publish(setup):
             {
                 "project": setup["proj_a"]["id"],
                 "topicId": topic_a["id"],
-                "title": "\u0627\u0644\u0641",
+                "title": "A",
                 "slug": "a",
                 "status": "approved",
                 "finalHtml": "<p>x</p>",

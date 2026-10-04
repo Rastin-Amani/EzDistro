@@ -25,9 +25,9 @@ from tests.fakes import FakePocketBase, default_unique_fields
 def make_project(pb: FakePocketBase, slug: str = "test-proj") -> dict[str, Any]:
     project = pb.collection("projects").create(
         {
-            "name": "\u067e\u0631\u0648\u0698\u0647",
+            "name": "Project",
             "slug": slug,
-            "language": "fa",
+            "language": "en",
             "status": "active",
             "timezone": "Asia/Tehran",
         }
@@ -36,11 +36,11 @@ def make_project(pb: FakePocketBase, slug: str = "test-proj") -> dict[str, Any]:
     for ptype, content in (
         (
             "brand_voice",
-            "\u062a\u0648 \u0646\u0648\u06cc\u0633\u0646\u062f\u0647 \u0633\u0626\u0648 \u0647\u0633\u062a\u06cc.",
+            "You are an SEO writer.",
         ),
-        ("outline_user", "JSON \u0628\u0631\u06af\u0631\u062f\u0627\u0646."),
-        ("section_user", "HTML \u0628\u0631\u06af\u0631\u062f\u0627\u0646."),
-        ("seo_rules", "\u0642\u0648\u0627\u0646\u06cc\u0646."),
+        ("outline_user", "Return JSON."),
+        ("section_user", "Return HTML."),
+        ("seo_rules", "Rules."),
     ):
         PromptRepo(pb).save_version(
             project_id=project["id"], ptype=ptype, name="default", content=content
@@ -408,7 +408,7 @@ def test_progress_stage_and_items_persisted():
         ctx.progress(
             35,
             stage="writing_sections",
-            message="\u0628\u062e\u0634 7 \u0627\u0632 20",
+            message="Section 7 of 20",
             current=7,
             total=20,
         )
@@ -429,7 +429,7 @@ def test_progress_stage_and_items_persisted():
         ctx.progress(
             35,
             stage="writing_sections",
-            message="\u0628\u062e\u0634 7 \u0627\u0632 20",
+            message="Section 7 of 20",
             current=7,
             total=20,
         )
@@ -502,12 +502,10 @@ def test_generate_outline_handler():
 
     pb = FakePocketBase(default_unique_fields())
     project = make_project(pb)
-    topic = TopicRepo(pb).create(
-        project=project["id"], title="\u0633\u0626\u0648", keyword="\u0633\u0626\u0648"
-    )
+    topic = TopicRepo(pb).create(project=project["id"], title="seo", keyword="seo")
     registry = FakeRegistry()
     registry.llm.responses = [
-        '{"title": "\u062a", "slug": "t", "sections": [{"heading": "\u0627\u0644\u0641", "content_brief": "\u062e\u0644\u0627\u0635\u0647 \u0627\u0644\u0641"}, {"heading": "\u0628", "content_brief": "\u062e\u0644\u0627\u0635\u0647 \u0628"}]}'
+        '{"title": "T", "slug": "t", "sections": [{"heading": "A", "content_brief": "Summary A"}, {"heading": "B", "content_brief": "Summary B"}]}'
     ]
     config = ProjectConfig.load(pb, project["id"])
     job = seed_job(pb, project["id"], type="generate_outline", payload={"topicId": topic["id"]})
@@ -537,21 +535,21 @@ def test_generate_section_handler():
 
     pb = FakePocketBase(default_unique_fields())
     project = make_project(pb)
-    topic = TopicRepo(pb).create(project=project["id"], title="\u062a", keyword="")
+    topic = TopicRepo(pb).create(project=project["id"], title="T", keyword="")
     article = pb.collection("articles").create(
         {
             "project": project["id"],
             "topicId": topic["id"],
-            "title": "\u062a",
+            "title": "T",
             "status": "outline_ready",
             "outlineVersion": 1,
             "outline": {
-                "title": "\u062a",
+                "title": "T",
                 "slug": "t",
                 "sections": [
                     {
-                        "heading": "\u0628\u062e\u0634 \u0627\u0648\u0644",
-                        "content_brief": "- \u0646\u06a9\u062a\u0647",
+                        "heading": "Section One",
+                        "content_brief": "- note",
                         "internal_links": [],
                     }
                 ],
@@ -562,21 +560,15 @@ def test_generate_section_handler():
         {
             "article": article["id"],
             "position": 0,
-            "heading": "\u0628\u062e\u0634 \u0627\u0648\u0644",
-            "contentBrief": "- \u0646\u06a9\u062a\u0647",
+            "heading": "Section One",
+            "contentBrief": "- note",
             "status": "pending",
             "generationAttempts": 0,
             "internalLinks": [],
         }
     )
     registry = FakeRegistry()
-    registry.llm.responses = [
-        "<p>"
-        + (
-            "\u06a9\u0644\u0645\u0647 \u0645\u062d\u062a\u0648\u0627\u06cc \u0628\u062e\u0634 " * 15
-        ).strip()
-        + "</p>"
-    ]
+    registry.llm.responses = ["<p>" + ("section content word " * 15).strip() + "</p>"]
     config = ProjectConfig.load(pb, project["id"])
     job = seed_job(pb, project["id"], type="generate_section", payload={"sectionId": section["id"]})
     ctx = JobContext(
@@ -610,51 +602,47 @@ def test_assemble_article_handler():
         pb.collection("project_settings").get_first_list_item(f'project="{project["id"]}"')["id"],
         {"minArticleWords": 10},
     )
-    topic = TopicRepo(pb).create(
-        project=project["id"], title="\u062a", keyword="\u0633\u0626\u0648"
-    )
+    topic = TopicRepo(pb).create(project=project["id"], title="T", keyword="seo")
     article = pb.collection("articles").create(
         {
             "project": project["id"],
             "topicId": topic["id"],
-            "title": "\u0639\u0646\u0648\u0627\u0646",
+            "title": "Title",
             "slug": "onvan",
             "status": "outline_ready",
             "outlineVersion": 1,
             "outline": {
-                "title": "\u0639\u0646\u0648\u0627\u0646",
+                "title": "Title",
                 "slug": "onvan",
                 "sections": [
                     {
-                        "heading": "\u0627\u0644\u0641",
-                        "content_brief": "\u062e\u0644\u0627\u0635\u0647",
+                        "heading": "A",
+                        "content_brief": "Summary",
                         "internal_links": [
                             {
-                                "title": "\u0644\u06cc\u0646\u06a9",
+                                "title": "link",
                                 "url": "https://site.test/1",
-                                "anchor_text": "\u0644\u06cc\u0646\u06a9",
+                                "anchor_text": "link",
                             }
                         ],
                     },
                     {
-                        "heading": "\u0628",
-                        "content_brief": "\u062e\u0644\u0627\u0635\u0647",
+                        "heading": "B",
+                        "content_brief": "Summary",
                         "internal_links": [],
                     },
                 ],
             },
         }
     )
-    for i, heading in enumerate(["\u0627\u0644\u0641", "\u0628"]):
+    for i, heading in enumerate(["A", "B"]):
         pb.collection("article_sections").create(
             {
                 "article": article["id"],
                 "position": i,
                 "heading": heading,
                 "status": "done",
-                "content": "<p>"
-                + ("\u06a9\u0644\u0645\u0647 \u0645\u062d\u062a\u0648\u0627\u06cc " * 10).strip()
-                + "</p>",
+                "content": "<p>" + ("content word " * 10).strip() + "</p>",
                 "internalLinks": [],
             }
         )
@@ -676,7 +664,7 @@ def test_assemble_article_handler():
     assert updated["status"] == "review"
     assert updated["validation"]["ok"] is True
     # keyword enforcement: the title/H1 must contain the keyword (score floor)
-    assert "<h1>\u0633\u0626\u0648 | \u0639\u0646\u0648\u0627\u0646</h1>" in updated["finalHtml"]
+    assert "<h1>seo | Title</h1>" in updated["finalHtml"]
     assert "https://site.test/1" in updated["finalHtml"]  # intended link preserved
     assert updated["seoScore"] >= 90
     assert result["seoScore"] == updated["seoScore"]
@@ -696,8 +684,8 @@ def test_index_document_handler():
         posts=[
             WPPost(
                 7,
-                "\u062a\u06a9 \u0646\u0648\u0634\u062a\u0647",
-                "<p>\u0645\u062a\u0646 \u06a9\u0648\u062a\u0627\u0647 \u0628\u0631\u0627\u06cc \u0646\u0645\u0627\u06cc\u0647</p>",
+                "single post",
+                "<p>short text for indexing</p>",
                 "https://s.test/7",
                 "publish",
             )

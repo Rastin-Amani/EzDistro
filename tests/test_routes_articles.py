@@ -68,7 +68,7 @@ def test_article_workspace_renders_with_outline():
     resp = call_route(W.article_workspace, req, proj_a["id"], article["id"])
     assert resp.status_code == 200
     body = resp.body.decode()
-    assert "\u0645\u0642\u062f\u0645\u0647" in body  # outline section heading rendered
+    assert "Introduction" in body  # outline section heading rendered
 
 
 def test_outline_pane_fragment_renders():
@@ -77,7 +77,7 @@ def test_outline_pane_fragment_renders():
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(W.article_outline_pane, req, proj_a["id"], article["id"])
     assert resp.status_code == 200
-    assert "\u0645\u0642\u062f\u0645\u0647" in resp.body.decode()
+    assert "Introduction" in resp.body.decode()
 
 
 def test_section_status_fragment_renders():
@@ -92,7 +92,7 @@ def test_section_status_fragment_renders():
 
 def test_review_page_renders_validation_report():
     pb, proj_a, _ = _setup()
-    article = make_article(pb, proj_a["id"], final_html="<p>\u0645\u062d\u062a\u0648\u0627</p>")
+    article = make_article(pb, proj_a["id"], final_html="<p>content</p>")
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(W.article_review, req, proj_a["id"], article["id"])
     assert resp.status_code == 200
@@ -106,7 +106,7 @@ def test_review_page_never_white_screens_on_internal_error(monkeypatch):
     """A data/render error in the review pipeline must surface a friendly
     error page (200 + Persian message), never a blank 500."""
     pb, proj_a, _ = _setup()
-    article = make_article(pb, proj_a["id"], final_html="<p>\u0645\u062d\u062a\u0648\u0627</p>")
+    article = make_article(pb, proj_a["id"], final_html="<p>content</p>")
     req = make_req(pb, make_user(), proj_a["id"])
 
     def boom(*args, **kwargs):
@@ -156,12 +156,12 @@ def test_set_article_status_rejects_invalid_status():
 
 def test_approve_article_passes_validation():
     pb, proj_a, _ = _setup()
-    words = " ".join(f"\u06a9\u0644\u0645\u0647 {i}" for i in range(320))
+    words = " ".join(f"word {i}" for i in range(320))
     article = make_article(
         pb,
         proj_a["id"],
         status="review",
-        final_html=f"<h2>\u0645\u0642\u062f\u0645\u0647</h2><p>{words}</p>",
+        final_html=f"<h2>Introduction</h2><p>{words}</p>",
     )
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(W.approve_article, req, proj_a["id"], article["id"])
@@ -197,15 +197,12 @@ def test_send_back_article_records_note():
         req,
         proj_a["id"],
         article["id"],
-        note="\u0628\u0627\u0632\u0646\u0648\u06cc\u0633\u06cc \u0645\u0642\u062f\u0645\u0647",
+        note="Rewrite the introduction",
     )
     assert "returned" in toast_message(resp)
     updated = ArticleRepo(pb).get(article["id"])
     assert updated["status"] == "sent_back"
-    assert (
-        updated["reviewNote"]
-        == "\u0628\u0627\u0632\u0646\u0648\u06cc\u0633\u06cc \u0645\u0642\u062f\u0645\u0647"
-    )
+    assert updated["reviewNote"] == "Rewrite the introduction"
 
 
 def test_send_back_article_refused_from_wrong_state():
@@ -229,13 +226,13 @@ def test_outline_add_section():
         req,
         proj_a["id"],
         article["id"],
-        heading="\u0628\u062e\u0634 \u062c\u062f\u06cc\u062f",
-        content_brief="\u062e\u0644\u0627\u0635\u0647 \u062c\u062f\u06cc\u062f",
+        heading="New section",
+        content_brief="New summary",
     )
     assert "Section added" in toast_message(resp)
     sections = SectionRepo(pb).list_for_article(article["id"])
     assert len(sections) == 3
-    assert sections[-1]["heading"] == "\u0628\u062e\u0634 \u062c\u062f\u06cc\u062f"
+    assert sections[-1]["heading"] == "New section"
 
 
 def test_outline_add_requires_heading():
@@ -254,7 +251,7 @@ def test_outline_move_swaps_positions():
     resp = call_route(W.outline_move, req, proj_a["id"], article["id"], 0, direction="down")
     assert "Section moved" in toast_message(resp)
     sections = sorted(SectionRepo(pb).list_for_article(article["id"]), key=lambda s: s["position"])
-    assert sections[0]["heading"] == "\u0628\u062f\u0646\u0647"
+    assert sections[0]["heading"] == "Body"
 
 
 def test_outline_move_invalid_position_errors():
@@ -284,14 +281,14 @@ def test_outline_update_brief_marks_regeneration():
         proj_a["id"],
         article["id"],
         0,
-        heading="\u0645\u0642\u062f\u0645\u0647",
-        content_brief="\u062e\u0644\u0627\u0635\u0647 \u062a\u0627\u0632\u0647",
+        heading="Introduction",
+        content_brief="Fresh summary",
     )
     assert "saved" in toast_message(resp)
     section = sorted(SectionRepo(pb).list_for_article(article["id"]), key=lambda s: s["position"])[
         0
     ]
-    assert section["contentBrief"] == "\u062e\u0644\u0627\u0635\u0647 \u062a\u0627\u0632\u0647"
+    assert section["contentBrief"] == "Fresh summary"
     assert section["status"] == "pending"
 
 
@@ -544,9 +541,7 @@ def test_retry_publish_run_foreign_run_rejected():
 # ---------------------------------------------------------------------------
 def test_rollback_restores_revision_and_sets_review():
     pb, proj_a, _ = _setup()
-    article = make_article(
-        pb, proj_a["id"], status="approved", final_html="<p>\u062c\u062f\u06cc\u062f</p>"
-    )
+    article = make_article(pb, proj_a["id"], status="approved", final_html="<p>new</p>")
     # snapshot current state as a revision
     from app.services.revisions import RevisionService
 
@@ -554,14 +549,14 @@ def test_rollback_restores_revision_and_sets_review():
     # mutate content
     ArticleRepo(pb).update(
         article["id"],
-        {"finalHtml": "<p>\u067e\u0633 \u0627\u0632 \u062a\u063a\u06cc\u06cc\u0631</p>"},
+        {"finalHtml": "<p>after the change</p>"},
     )
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(W.rollback_article, req, proj_a["id"], article["id"], rev["id"])
     assert "Rolled back to version" in toast_message(resp)
     restored = ArticleRepo(pb).get(article["id"])
     assert restored["status"] == "review"
-    assert "<p>\u062c\u062f\u06cc\u062f</p>" in (restored.get("finalHtml") or "")
+    assert "<p>new</p>" in (restored.get("finalHtml") or "")
 
 
 def test_rollback_foreign_revision_rejected():

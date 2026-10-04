@@ -27,9 +27,9 @@ def make_pb() -> FakePocketBase:
 def make_project(pb: FakePocketBase) -> dict[str, Any]:
     return pb.collection("projects").create(
         {
-            "name": "\u067e",
+            "name": "P",
             "slug": "proj",
-            "language": "fa",
+            "language": "en",
             "status": "active",
             "timezone": "Asia/Tehran",
         }

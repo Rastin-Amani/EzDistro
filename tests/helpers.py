@@ -82,7 +82,7 @@ def make_project(pb: FakePocketBase, slug: str = "proj-a", name: str = "A") -> d
         {
             "name": name,
             "slug": slug,
-            "language": "fa",
+            "language": "en",
             "status": "active",
             "timezone": "Asia/Tehran",
             "description": "",
@@ -135,19 +135,19 @@ def make_article(
         "slug": "onvan",
         "status": status,
         "outlineVersion": 1,
-        "metaDescription": "\u0645",
+        "metaDescription": "M",
         "outline": {
             "title": "Article title",
             "slug": "onvan",
             "sections": [
                 {
-                    "heading": "\u0645\u0642\u062f\u0645\u0647",
-                    "content_brief": "\u062e\u0644\u0627\u0635\u0647",
+                    "heading": "Introduction",
+                    "content_brief": "Summary",
                     "internal_links": [],
                 },
                 {
-                    "heading": "\u0628\u062f\u0646\u0647",
-                    "content_brief": "\u062e\u0644\u0627\u0635\u0647",
+                    "heading": "Body",
+                    "content_brief": "Summary",
                     "internal_links": [],
                 },
             ],
@@ -159,7 +159,7 @@ def make_article(
         data["wordpressPostId"] = wp_id
         data["wordpressUrl"] = f"https://s.test/?p={wp_id}"
     article = pb.collection("articles").create(data)
-    body_words = " ".join(f"\u06a9\u0644\u0645\u0647 {i}" for i in range(60))
+    body_words = " ".join(f"word {i}" for i in range(60))
     for i, plan in enumerate(data["outline"]["sections"]):
         pb.collection("article_sections").create(
             {
@@ -184,8 +184,8 @@ def make_section(pb: FakePocketBase, article_id: str, *, position: int = 0) -> d
         {
             "article": article_id,
             "position": position,
-            "heading": "\u0628\u062e\u0634",
-            "contentBrief": "\u062e\u0644\u0627\u0635\u0647",
+            "heading": "Section",
+            "contentBrief": "Summary",
             "internalLinks": [],
             "status": "pending",
             "content": "",
@@ -238,7 +238,7 @@ def make_document(pb: FakePocketBase, project_id: str) -> dict[str, Any]:
             "project": project_id,
             "sourceType": "wordpress",
             "sourceId": "100",
-            "title": "\u0645\u0633\u062a\u0646\u062f",
+            "title": "document",
             "sourceUrl": "https://s.test/?p=100",
             "contentHash": "abc",
             "indexStatus": "indexed",
@@ -286,7 +286,7 @@ def make_prompt(pb: FakePocketBase, project_id: str, ptype: str = "outline_user"
         project_id=project_id,
         ptype=ptype,
         name="default",
-        content="JSON \u0628\u0631\u06af\u0631\u062f\u0627\u0646.",
+        content="Return JSON.",
     )
 
 
@@ -302,7 +302,7 @@ def make_integration(pb: FakePocketBase, project_id: str) -> dict[str, Any]:
             "project": project_id,
             "category": "llm",
             "provider": "openai_compat",
-            "displayName": "LLM \u0627\u0635\u0644\u06cc",
+            "displayName": "Primary LLM",
             "configuration": {},
             "secretsEnc": "",
             "enabled": True,

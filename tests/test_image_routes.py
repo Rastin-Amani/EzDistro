@@ -109,14 +109,11 @@ def test_regenerate_select_remove_metadata_flow():
         project["id"],
         article["id"],
         row["id"],
-        alt_text="\u0646\u0645\u0627\u06cc \u0646\u0632\u062f\u06cc\u06a9 \u062f\u0627\u0634\u0628\u0648\u0631\u062f \u062e\u0648\u062f\u0631\u0648",
-        caption="\u062a\u0648\u0636\u06cc\u062d \u062a\u0635\u0648\u06cc\u0631",
+        alt_text="close-up of the car dashboard",
+        caption="image caption",
     )
     assert toast_message(resp)
-    assert (
-        ArticleImageRepo(pb).get(row["id"])["altText"]
-        == "\u0646\u0645\u0627\u06cc \u0646\u0632\u062f\u06cc\u06a9 \u062f\u0627\u0634\u0628\u0648\u0631\u062f \u062e\u0648\u062f\u0631\u0648"
-    )
+    assert ArticleImageRepo(pb).get(row["id"])["altText"] == "close-up of the car dashboard"
 
     # empty alt rejected
     resp = call_route(

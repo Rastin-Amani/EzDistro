@@ -88,7 +88,7 @@ def fake_pb(monkeypatch):
             "email": "owner@x.com",
             "password": "s3cret",
             "role": "member",
-            "displayName": "\u0645\u0627\u0644\u06a9",
+            "displayName": "owner",
         }
     )
     pb.collection("users").create(
@@ -97,7 +97,7 @@ def fake_pb(monkeypatch):
             "email": "admin@x.com",
             "password": "adm1n",
             "role": "admin",
-            "displayName": "\u0627\u062f\u0645\u06cc\u0646",
+            "displayName": "admin",
         }
     )
     monkeypatch.setattr("app.middleware.get_pb", lambda: pb)
@@ -246,3 +246,46 @@ def test_admin_role_passes_through_middleware(fake_pb):
     with TestClient(app) as client:
         client.post("/login", data={"email": "admin@x.com", "password": "adm1n"})
         assert client.get("/projects").status_code == 200
+
+
+def test_session_cache_avoids_repeat_auth_refresh(fake_pb, monkeypatch):
+    """Repeated requests from one token validate against PocketBase only once
+    (within the TTL) — the per-request auth_refresh round trip was the main
+    request-latency floor."""
+    from app.middleware import clear_session_cache
+
+    clear_session_cache()
+    calls = {"n": 0}
+    original = _AuthUsersService.auth_refresh
+
+    def counting(self):
+        calls["n"] += 1
+        return original(self)
+
+    monkeypatch.setattr(_AuthUsersService, "auth_refresh", counting)
+    with TestClient(app) as client:
+        client.cookies.set("pb_auth", "tok-u1")
+        assert client.get("/projects").status_code == 200
+        assert client.get("/projects").status_code == 200
+        assert client.get("/dashboard").status_code == 200
+    assert calls["n"] == 1
+
+
+def test_static_assets_skip_session_validation(fake_pb, monkeypatch):
+    """Assets/probes must not pay a PocketBase auth round trip."""
+    from app.middleware import clear_session_cache
+
+    clear_session_cache()
+    calls = {"n": 0}
+    original = _AuthUsersService.auth_refresh
+
+    def counting(self):
+        calls["n"] += 1
+        return original(self)
+
+    monkeypatch.setattr(_AuthUsersService, "auth_refresh", counting)
+    with TestClient(app) as client:
+        client.cookies.set("pb_auth", "tok-u1")
+        client.get("/static/app.css")
+        client.get("/manifest.json")
+    assert calls["n"] == 0

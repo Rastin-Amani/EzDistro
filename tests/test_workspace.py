@@ -21,9 +21,9 @@ from tests.fakes import FakePocketBase, default_unique_fields
 def make_project(pb: FakePocketBase) -> dict[str, Any]:
     project = pb.collection("projects").create(
         {
-            "name": "\u067e",
+            "name": "P",
             "slug": "p1",
-            "language": "fa",
+            "language": "en",
             "status": "active",
             "timezone": "Asia/Tehran",
         }
@@ -33,32 +33,32 @@ def make_project(pb: FakePocketBase) -> dict[str, Any]:
 
 
 def make_article(pb: FakePocketBase, project_id: str, status: str = "review") -> dict[str, Any]:
-    topic = TopicRepo(pb).create(project=project_id, title="\u062a", keyword="\u06a9")
+    topic = TopicRepo(pb).create(project=project_id, title="T", keyword="K")
     article = pb.collection("articles").create(
         {
             "project": project_id,
             "topicId": topic["id"],
-            "title": "\u0639\u0646\u0648\u0627\u0646",
+            "title": "Title",
             "slug": "onvan",
             "status": status,
             "outlineVersion": 1,
             "outline": {
-                "title": "\u0639\u0646\u0648\u0627\u0646",
+                "title": "Title",
                 "slug": "onvan",
                 "sections": [
                     {
-                        "heading": "\u0645\u0642\u062f\u0645\u0647",
-                        "content_brief": "\u062e\u0644\u0627\u0635\u0647 \u0645\u0642\u062f\u0645\u0647",
+                        "heading": "Introduction",
+                        "content_brief": "Introduction summary",
                         "internal_links": [],
                     },
                     {
-                        "heading": "\u0628\u062f\u0646\u0647",
-                        "content_brief": "\u062e\u0644\u0627\u0635\u0647 \u0628\u062f\u0646\u0647",
+                        "heading": "Body",
+                        "content_brief": "Body summary",
                         "internal_links": [],
                     },
                     {
-                        "heading": "\u0646\u062a\u06cc\u062c\u0647",
-                        "content_brief": "\u062e\u0644\u0627\u0635\u0647 \u0646\u062a\u06cc\u062c\u0647",
+                        "heading": "Conclusion",
+                        "content_brief": "Conclusion summary",
                         "internal_links": [],
                     },
                 ],
@@ -74,7 +74,7 @@ def make_article(pb: FakePocketBase, project_id: str, status: str = "review") ->
                 "contentBrief": plan["content_brief"],
                 "internalLinks": [],
                 "status": "done",
-                "content": f"<h2>{plan['heading']}</h2><p>\u0645\u062d\u062a\u0648\u0627 {i}</p>",
+                "content": f"<h2>{plan['heading']}</h2><p>content {i}</p>",
                 "generationAttempts": 1,
                 "promptVersion": 1,
                 "provider": "openai_compat",
@@ -95,23 +95,23 @@ def test_outline_move_keeps_content_and_bumps_version():
     article = make_article(pb, project["id"])
     editor = OutlineEditor(pb)
 
-    updated = editor.move(article, 0, "down")  # \u0645\u0642\u062f\u0645\u0647 → position 1
+    updated = editor.move(article, 0, "down")  # Introduction → position 1
     assert updated["outlineVersion"] == 2
     assert [s["heading"] for s in updated["outline"]["sections"]] == [
-        "\u0628\u062f\u0646\u0647",
-        "\u0645\u0642\u062f\u0645\u0647",
-        "\u0646\u062a\u06cc\u062c\u0647",
+        "Body",
+        "Introduction",
+        "Conclusion",
     ]
 
     rows = SectionRepo(pb).list_for_article(article["id"])
     assert [r["heading"] for r in rows] == [
-        "\u0628\u062f\u0646\u0647",
-        "\u0645\u0642\u062f\u0645\u0647",
-        "\u0646\u062a\u06cc\u062c\u0647",
+        "Body",
+        "Introduction",
+        "Conclusion",
     ]
     # content preserved on pure moves
     assert all(r["status"] == "done" for r in rows)
-    assert rows[1]["content"]  # \u0645\u0642\u062f\u0645\u0647 kept its content
+    assert rows[1]["content"]  # Introduction kept its content
 
 
 def test_outline_add_appends_pending_section():
@@ -122,21 +122,15 @@ def test_outline_add_appends_pending_section():
 
     updated = editor.add(
         article,
-        "\u0633\u0648\u0627\u0644\u0627\u062a \u0645\u062a\u062f\u0627\u0648\u0644",
-        "\u067e\u0627\u0633\u062e \u0628\u0647 \u0633\u0648\u0627\u0644\u0627\u062a",
+        "FAQ",
+        "Answers to the questions",
     )
     assert updated["outlineVersion"] == 2
-    assert (
-        updated["outline"]["sections"][-1]["heading"]
-        == "\u0633\u0648\u0627\u0644\u0627\u062a \u0645\u062a\u062f\u0627\u0648\u0644"
-    )
+    assert updated["outline"]["sections"][-1]["heading"] == "FAQ"
     rows = SectionRepo(pb).list_for_article(article["id"])
     assert len(rows) == 4
     assert rows[-1]["status"] == "pending"
-    assert (
-        rows[-1]["contentBrief"]
-        == "\u067e\u0627\u0633\u062e \u0628\u0647 \u0633\u0648\u0627\u0644\u0627\u062a"
-    )
+    assert rows[-1]["contentBrief"] == "Answers to the questions"
 
 
 def test_outline_delete_removes_section_and_renumbers():
@@ -145,11 +139,11 @@ def test_outline_delete_removes_section_and_renumbers():
     article = make_article(pb, project["id"])
     editor = OutlineEditor(pb)
 
-    updated = editor.delete(article, 1)  # \u062d\u0630\u0641 «\u0628\u062f\u0646\u0647»
+    updated = editor.delete(article, 1)  # delete «Body»
     assert updated["outlineVersion"] == 2
     assert [s["heading"] for s in updated["outline"]["sections"]] == [
-        "\u0645\u0642\u062f\u0645\u0647",
-        "\u0646\u062a\u06cc\u062c\u0647",
+        "Introduction",
+        "Conclusion",
     ]
     rows = SectionRepo(pb).list_for_article(article["id"])
     assert len(rows) == 2
@@ -165,15 +159,12 @@ def test_outline_brief_edit_resets_section_for_regeneration():
     updated = editor.update_brief(
         article,
         0,
-        "\u0645\u0642\u062f\u0645\u0647",
-        "\u062e\u0644\u0627\u0635\u0647 \u062c\u062f\u06cc\u062f \u0645\u0642\u062f\u0645\u0647",
+        "Introduction",
+        "New introduction summary",
     )
     assert updated["outlineVersion"] == 2
     rows = SectionRepo(pb).list_for_article(article["id"])
-    assert (
-        rows[0]["contentBrief"]
-        == "\u062e\u0644\u0627\u0635\u0647 \u062c\u062f\u06cc\u062f \u0645\u0642\u062f\u0645\u0647"
-    )
+    assert rows[0]["contentBrief"] == "New introduction summary"
     assert rows[0]["status"] == "pending"  # must regenerate
     assert rows[0]["content"] == ""
     assert rows[1]["status"] == "done"  # other sections untouched
@@ -192,7 +183,7 @@ def test_outline_ops_validate_positions():
     with pytest.raises(ValueError):
         editor.update_brief(article, 5, "x", "y")
     with pytest.raises(ValueError):
-        editor.add(article, "   ", "\u062e\u0644\u0627\u0635\u0647")
+        editor.add(article, "   ", "Summary")
 
 
 # ---------------------------------------------------------------------------
@@ -233,16 +224,10 @@ def test_mark_generating_records_started_at():
 def test_workspace_stats_aggregates_pipeline():
     pb = FakePocketBase(default_unique_fields())
     project = make_project(pb)
-    pb.collection("topics").create(
-        {"project": project["id"], "title": "\u062a\u06f1", "status": "planned"}
-    )
-    pb.collection("topics").create(
-        {"project": project["id"], "title": "\u062a\u06f2", "status": "failed"}
-    )
+    pb.collection("topics").create({"project": project["id"], "title": "T1", "status": "planned"})
+    pb.collection("topics").create({"project": project["id"], "title": "T2", "status": "failed"})
     for status in ("generating", "approved", "published"):
-        topic = TopicRepo(pb).create(
-            project=project["id"], title=f"\u062a {status}", keyword="\u06a9"
-        )
+        topic = TopicRepo(pb).create(project=project["id"], title=f"T {status}", keyword="K")
         TopicRepo(pb).set_status(
             topic["id"],
             "writing"
@@ -325,11 +310,11 @@ def test_workspace_template_renders_section_statuses():
 
     context = {
         "request": FakeRequest(),
-        "title": "\u062a\u0633\u062a",
-        "project": {"id": "p1", "slug": "p1", "name": "\u067e\u0631\u0648\u0698\u0647"},
+        "title": "test",
+        "project": {"id": "p1", "slug": "p1", "name": "Project"},
         "article": {
             "id": "a1",
-            "title": "\u0645\u0642\u0627\u0644\u0647",
+            "title": "article",
             "status": "review",
             "wordCount": 888,
             "outlineVersion": 1,
@@ -338,7 +323,7 @@ def test_workspace_template_renders_section_statuses():
         "sections": [
             {
                 "id": "s1",
-                "heading": "\u0645\u0642\u062f\u0645\u0647",
+                "heading": "Introduction",
                 "status": "done",
                 "generationLatency": 120,
                 "model": "deepseek-v3.2",
@@ -350,7 +335,7 @@ def test_workspace_template_renders_section_statuses():
             },
             {
                 "id": "s2",
-                "heading": "\u0628\u062f\u0646\u0647",
+                "heading": "Body",
                 "status": "generating",
                 "generationLatency": 0,
                 "model": "deepseek-v3.2",
@@ -362,7 +347,7 @@ def test_workspace_template_renders_section_statuses():
             },
             {
                 "id": "s3",
-                "heading": "\u0646\u062a\u06cc\u062c\u0647",
+                "heading": "Conclusion",
                 "status": "failed",
                 "generationLatency": 0,
                 "model": "",
@@ -374,7 +359,7 @@ def test_workspace_template_renders_section_statuses():
                 "error": {"message": "too short", "type": "SectionValidationError"},
             },
         ],
-        "topic": {"title": "\u0645\u0648\u0636\u0648\u0639", "keyword": "\u0633\u0626\u0648"},
+        "topic": {"title": "Topic", "keyword": "seo"},
         "publish_runs": [],
         "internal_links": [],
     }

@@ -31,14 +31,14 @@ def make_plan(**overrides):
     cover = {
         "role": "cover",
         "prompt": "dashboard warning light close-up",
-        "alt_text": "\u0686\u0631\u0627\u063a \u0647\u0634\u062f\u0627\u0631 \u0645\u0648\u062a\u0648\u0631 \u0631\u0648\u06cc \u062f\u0627\u0634\u0628\u0648\u0631\u062f",
+        "alt_text": "engine warning light on the dashboard",
         "section_key": "",
     }
     interior = {
         "role": "interior",
         "section_key": "section-1",
         "prompt": "mechanic inspecting engine bay",
-        "alt_text": "\u0645\u06a9\u0627\u0646\u06cc\u06a9 \u062f\u0631 \u062d\u0627\u0644 \u0628\u0627\u0632\u062f\u06cc\u062f \u0645\u0648\u062a\u0648\u0631 \u062e\u0648\u062f\u0631\u0648",
+        "alt_text": "mechanic inspecting a car engine",
     }
     images = [PlannedImage.model_validate({**cover, **overrides.get("cover", {})})]
     if not overrides.get("no_interior"):
@@ -97,7 +97,7 @@ class TestPlanValidation:
                 )
             )
         problems = validate_plan(plan, max_interior=4)
-        assert any("interior" in p.lower() or "\u062f\u0627\u062e\u0644" in p for p in problems)
+        assert any("interior" in p.lower() or "interior" in p for p in problems)
 
     def test_long_prompt_rejected(self):
         plan = make_plan(cover={"role": "cover", "prompt": "x" * 5000})
@@ -114,13 +114,11 @@ class TestPlanValidation:
     def test_parse_llm_tolerant(self):
         raw = {
             "images": [
-                {"role": "cover", "prompt": "c", "alt_text": "\u062fltdk"},
+                {"role": "cover", "prompt": "c", "alt_text": "dltdk"},
                 {"role": "interior", "section_key": "section-2", "prompt": "i"},
             ]
         }
-        plan = ArticleImagePlan.parse_llm(
-            raw, version=3, style={"tone": "\u0645\u06cc\u0646\u06cc\u0645\u0627\u0644"}
-        )
+        plan = ArticleImagePlan.parse_llm(raw, version=3, style={"tone": "minimal"})
         assert plan.version == 3
         assert len(plan.images) == 2
 
@@ -171,9 +169,9 @@ class TestFingerprintAndFiles:
         )
         assert name == "guide-section-2.webp"
 
-    def test_persian_title_falls_back_to_id(self):
+    def test_non_ascii_title_falls_back_to_id(self):
         name = image_filename(
-            article_title="\u0686\u0631\u0627\u063a \u0686\u06a9 \u062e\u0648\u062f\u0631\u0648",
+            article_title="🚀🔧",
             article_id="a1b2c3d4e5",
             role="interior",
             section_key="section-1",
@@ -284,15 +282,15 @@ class TestPlaceholdersAndFigures:
     def test_figure_html_cls_and_lazy(self):
         html = figure_html(
             src="https://x/y.webp",
-            alt="alt \u0645\u062a\u0646\u06cc",
+            alt="alt text",
             width=1600,
             height=896,
-            caption="\u062a\u0648\u0636\u06cc\u062d",
+            caption="caption",
         )
         assert 'src="https://x/y.webp"' in html
         assert 'width="1600"' in html and 'height="896"' in html
         assert 'loading="lazy"' in html and 'decoding="async"' in html
-        assert "<figcaption>\u062a\u0648\u0636\u06cc\u062d</figcaption>" in html
+        assert "<figcaption>caption</figcaption>" in html
 
     def test_figure_html_cover_eager(self):
         html = figure_html(
@@ -309,7 +307,7 @@ class TestPlaceholdersAndFigures:
             alt="alt",
             width=100,
             height=50,
-            caption="\u06a9\u067e\u0634\u0646",
+            caption="caption",
         )
         cleaned = sanitize_html(html)
         assert "<img" in cleaned and "figcaption" in cleaned
@@ -317,14 +315,14 @@ class TestPlaceholdersAndFigures:
 
 
 class TestAltTextRules:
-    TITLE = "\u0631\u0627\u0647\u0646\u0645\u0627\u06cc \u06a9\u0627\u0645\u0644 \u0686\u0631\u0627\u063a \u0686\u06a9 \u062e\u0648\u062f\u0631\u0648"
+    TITLE = "Complete check-engine light guide"
     PROMPT = "a close-up photo of a car dashboard warning light"
 
     def test_valid_fa_alt(self):
         problems = validate_alt_text(
-            "\u0686\u0631\u0627\u063a \u0647\u0634\u062f\u0627\u0631 \u0645\u0648\u062a\u0648\u0631 \u06a9\u0647 \u0631\u0648\u06cc \u062f\u0627\u0634\u0628\u0648\u0631\u062f \u062e\u0648\u062f\u0631\u0648 \u0631\u0648\u0634\u0646 \u0634\u062f\u0647 \u0627\u0633\u062a",
+            "the engine warning light that is on the car dashboard",
             article_title=self.TITLE,
-            keyword="\u0686\u0631\u0627\u063a \u0686\u06a9",
+            keyword="check-engine light",
         )
         assert problems == []
 
@@ -337,11 +335,11 @@ class TestAltTextRules:
         assert problems == []
 
     def test_too_short(self):
-        problems = validate_alt_text("\u06a9\u0648\u062a\u0627\u0647", article_title=self.TITLE)
+        problems = validate_alt_text("short", article_title=self.TITLE)
         assert problems
 
     def test_too_long(self):
-        problems = validate_alt_text("\u062a" * 250, article_title=self.TITLE)
+        problems = validate_alt_text("T" * 250, article_title=self.TITLE)
         assert problems
 
     def test_title_repeat_rejected(self):
@@ -354,9 +352,9 @@ class TestAltTextRules:
 
     def test_keyword_stuffing_rejected(self):
         problems = validate_alt_text(
-            "\u0686\u0631\u0627\u063a \u0686\u06a9 \u0631\u0648\u0634\u0646 \u0634\u062f\u060c \u0686\u0631\u0627\u063a \u0686\u06a9 \u06cc\u0639\u0646\u06cc \u062e\u0637\u0627\u060c \u0686\u0631\u0627\u063a \u0686\u06a9 \u0631\u0627 \u062c\u062f\u06cc \u0628\u06af\u06cc\u0631\u06cc\u062f",
+            "the check-engine light came on; the check-engine light means a fault; take the check-engine light seriously",
             article_title=self.TITLE,
-            keyword="\u0686\u0631\u0627\u063a \u0686\u06a9",
+            keyword="check-engine light",
         )
         assert problems
 
@@ -374,7 +372,7 @@ class TestPublishGate:
             "height": 896,
             "altText": kw.get(
                 "alt",
-                "\u062a\u0648\u0636\u06cc\u062d \u062c\u0627\u06cc\u06af\u0632\u06cc\u0646 \u062a\u0635\u0648\u06cc\u0631 \u0628\u0631\u0627\u06cc \u062f\u0633\u062a\u0631\u0633\u200c\u067e\u0630\u06cc\u0631\u06cc",
+                "alternative description of the image for accessibility",
             ),
             "caption": "",
         }

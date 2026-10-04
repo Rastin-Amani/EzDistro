@@ -66,25 +66,25 @@ def make_embedding(scenario: str):
 @pytest.mark.asyncio
 async def test_embedding_timeout_is_transient_retryable():
     with pytest.raises(TransientError):
-        await make_embedding("timeout").embed_documents(["\u0633\u0644\u0627\u0645"])
+        await make_embedding("timeout").embed_documents(["hello"])
 
 
 @pytest.mark.asyncio
 async def test_embedding_429_is_transient_retryable():
     with pytest.raises(TransientError):
-        await make_embedding("429").embed_documents(["\u0633\u0644\u0627\u0645"])
+        await make_embedding("429").embed_documents(["hello"])
 
 
 @pytest.mark.asyncio
 async def test_embedding_500_is_transient_retryable():
     with pytest.raises(TransientError):
-        await make_embedding("500").embed_documents(["\u0633\u0644\u0627\u0645"])
+        await make_embedding("500").embed_documents(["hello"])
 
 
 @pytest.mark.asyncio
 async def test_embedding_malformed_response_is_permanent():
     with pytest.raises(PermanentError):
-        await make_embedding("malformed").embed_documents(["\u0633\u0644\u0627\u0645"])
+        await make_embedding("malformed").embed_documents(["hello"])
 
 
 # ---------------------------------------------------------------------------
@@ -235,7 +235,7 @@ async def test_qdrant_dimension_mismatch_is_permanent(monkeypatch):
     registry.publisher.posts = [
         WPPost(
             id=1,
-            title="\u067e",
+            title="P",
             content_html="<p>x</p>",
             link="https://s.test/?p=1",
             status="publish",
@@ -435,27 +435,23 @@ def _restore_fake_llm_next():
 def syn_next(self: FakeLLM, json_mode: bool = False, user: str = "") -> str:
     self.calls.append({"json_mode": json_mode, "user": user})
     if "JSON" in user or "json" in user:
-        sections = ",".join(
-            f'{{"heading": "\u0628 {s}", "content_brief": "\u062e"}}' for s in range(1, 4)
-        )
-        return '{"title": "\u062a", "slug": "t", "sections": [' + sections + "]}"
-    return (
-        "<p>" + ("\u06a9\u0644\u0645\u0647 \u0645\u062d\u062a\u0648\u0627 " * 120).strip() + "</p>"
-    )
+        sections = ",".join(f'{{"heading": "B {s}", "content_brief": "X"}}' for s in range(1, 4))
+        return '{"title": "T", "slug": "t", "sections": [' + sections + "]}"
+    return "<p>" + ("content word " * 120).strip() + "</p>"
 
 
 def make_article_setup(pb: FakePocketBase):
     project = make_project(pb)
-    topic = TopicRepo(pb).create(project=project["id"], title="\u062a", keyword="\u06a9")
+    topic = TopicRepo(pb).create(project=project["id"], title="T", keyword="K")
     article = pb.collection("articles").create(
         {
             "project": project["id"],
             "topicId": topic["id"],
-            "title": "\u0639\u0646\u0648\u0627\u0646 \u0645\u0642\u0627\u0644\u0647",
+            "title": "Article title",
             "slug": "onvan",
             "status": "approved",
-            "finalHtml": "<h1>\u0639\u0646\u0648\u0627\u0646</h1><p>\u0645\u062d\u062a\u0648\u0627</p>",
-            "metaDescription": "\u062e\u0644\u0627\u0635\u0647",
+            "finalHtml": "<h1>Title</h1><p>content</p>",
+            "metaDescription": "Summary",
             "wordCount": 10,
             "outlineVersion": 1,
         }
@@ -491,7 +487,7 @@ async def test_pb_temporary_unavailability_retries_job_until_success():
     ensure_registered()
     pb = FlakyPocketBase(unique_fields=default_unique_fields())
     project = make_project(pb)
-    topic = TopicRepo(pb).create(project=project["id"], title="\u062a", keyword="\u06a9")
+    topic = TopicRepo(pb).create(project=project["id"], title="T", keyword="K")
     registry = FakeRegistry()
     FakeLLM._next = syn_next  # type: ignore[method-assign]
 
@@ -524,7 +520,7 @@ async def test_pb_outage_during_config_load_is_retryable():
     ensure_registered()
     pb = FlakyPocketBase(unique_fields=default_unique_fields())
     project = make_project(pb)
-    topic = TopicRepo(pb).create(project=project["id"], title="\u062a", keyword="\u06a9")
+    topic = TopicRepo(pb).create(project=project["id"], title="T", keyword="K")
     registry = FakeRegistry()
     FakeLLM._next = syn_next  # type: ignore[method-assign]
     job = JobRepo(pb).create(
@@ -561,7 +557,7 @@ async def test_stale_running_job_with_expired_lease_is_recovered():
     ensure_registered()
     pb = FakePocketBase(default_unique_fields())
     project = make_project(pb)
-    topic = TopicRepo(pb).create(project=project["id"], title="\u062a", keyword="\u06a9")
+    topic = TopicRepo(pb).create(project=project["id"], title="T", keyword="K")
     registry = FakeRegistry()
     registry.llm = FakeLLM([], delay=0.01)
     FakeLLM._next = syn_next  # type: ignore[method-assign]
@@ -669,8 +665,8 @@ async def test_crash_during_indexing_no_duplicate_points():
         posts=[
             WPPost(
                 id=i + 1,
-                title=f"\u067e\u0633\u062a {i}",
-                content_html=("<p>\u0645\u062d\u062a\u0648\u0627</p>" * 40),
+                title=f"post {i}",
+                content_html=("<p>content</p>" * 40),
                 link=f"https://site.test/?p={i + 1}",
                 status="publish",
             )
@@ -801,7 +797,7 @@ async def test_full_batch_crash_and_restart_everything_recovers():
         {"retryPolicy": {"max_attempts": 3, "backoff_base": 2, "backoff_max": 60}},
     )
     topics = [
-        TopicRepo(pb).create(project=project["id"], title=f"\u062a {i}", keyword=f"k{i}")
+        TopicRepo(pb).create(project=project["id"], title=f"T {i}", keyword=f"k{i}")
         for i in range(3)
     ]
     registry = FakeRegistry()

@@ -22,14 +22,12 @@ from app.repositories.prompts import PromptRepo
 from tests.fakes import FakePocketBase, default_unique_fields
 
 
-def make_project(
-    pb: FakePocketBase, name: str = "\u067e\u0631\u0648\u0698\u0647 \u062a\u0633\u062a"
-) -> dict[str, Any]:
+def make_project(pb: FakePocketBase, name: str = "Test Project") -> dict[str, Any]:
     project = pb.collection("projects").create(
         {
             "name": name,
             "slug": "test-proj",
-            "language": "fa",
+            "language": "en",
             "status": "active",
             "timezone": "Asia/Tehran",
         }
