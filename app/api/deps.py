@@ -28,6 +28,9 @@ def require_hx(request: Request) -> None:
 # ---------------------------------------------------------------------------
 # Auth helpers
 # ---------------------------------------------------------------------------
+_SCOPE_UNSET: Any = object()
+
+
 def current_user(request: Request) -> dict[str, Any] | None:
     user = getattr(request.state, "user", None)
     if user is None:
@@ -69,12 +72,21 @@ def project_scope(request: Request) -> list[str] | None:
     project ids the user belongs to — which may be EMPTY, meaning the user has
     NO access anywhere. Treating [] as "unrestricted" was an auth bypass
     (a user with zero memberships could reach every project).
+
+    Memoized per request: routes call this several times (often once per
+    helper), and each non-admin call is a PocketBase query.
     """
+    cached = getattr(request.state, "project_scope_cache", _SCOPE_UNSET)
+    if cached is not _SCOPE_UNSET:
+        return cached
     user = require_user(request)
     if user.get("role") == "admin":
-        return None
-    memberships = MemberRepo(request.state.pb).list_for_user(user.get("id", ""))
-    return [str(m["project"]) for m in memberships if m.get("project")]
+        result: list[str] | None = None
+    else:
+        memberships = MemberRepo(request.state.pb).list_for_user(user.get("id", ""))
+        result = [str(m["project"]) for m in memberships if m.get("project")]
+    request.state.project_scope_cache = result
+    return result
 
 
 def can_access_project(request: Request, project_id: str) -> bool:

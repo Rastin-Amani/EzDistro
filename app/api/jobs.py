@@ -18,7 +18,7 @@ from app.jobs.handlers import JOB_TYPES
 from app.repositories.jobs import JobEventRepo, JobRepo
 from app.repositories.projects import ProjectRepo
 from app.templates import templates
-from app.utils import error_response, success_response, toast_response
+from app.utils import error_response, fanout, success_response, toast_response
 
 router = APIRouter()
 
@@ -63,17 +63,6 @@ def jobs_monitor(
     # non-admins can only filter by their own projects
     if scope is not None and project not in scope:
         project = ""
-    rows, total = JobRepo(pb).search(
-        project_id=project or (scope[0] if scope and len(scope) == 1 else ""),
-        job_type=job_type,
-        status=status,
-        worker=worker,
-        failure_type=failure_type,
-        date_from=date_from,
-        date_to=date_to,
-        page=max(1, page),
-        per_page=25,
-    )
     per_page = 25
     # The scope filter speaks the `jobs` collection's language (`project="id"`),
     # but this list is the `projects` collection itself — match on `id` instead.
@@ -83,12 +72,34 @@ def jobs_monitor(
         project_filter = "(" + " || ".join(f'id="{s}"' for s in scope) + ")"
     else:
         project_filter = 'id="__no_access__"'
-    projects = ProjectRepo(pb).list_records(filter=project_filter, sort="name", per_page=200)
-    error_codes = JobRepo(pb).error_codes()
     from app.services.metrics import query_provider_metrics
 
-    provider_metrics = query_provider_metrics(pb, project_id=project, days=7)
-    scheduler_heartbeat = _scheduler_heartbeat(pb)
+    loaded = fanout(
+        {
+            "search": lambda: JobRepo(pb).search(
+                project_id=project or (scope[0] if scope and len(scope) == 1 else ""),
+                job_type=job_type,
+                status=status,
+                worker=worker,
+                failure_type=failure_type,
+                date_from=date_from,
+                date_to=date_to,
+                page=max(1, page),
+                per_page=per_page,
+            ),
+            "projects": lambda: ProjectRepo(pb).list_records(
+                filter=project_filter, sort="name", per_page=200
+            ),
+            "error_codes": lambda: JobRepo(pb).error_codes(),
+            "provider_metrics": lambda: query_provider_metrics(pb, project_id=project, days=7),
+            "scheduler_heartbeat": lambda: _scheduler_heartbeat(pb),
+        }
+    )
+    rows, total = loaded["search"]
+    projects = loaded["projects"]
+    error_codes = loaded["error_codes"]
+    provider_metrics = loaded["provider_metrics"]
+    scheduler_heartbeat = loaded["scheduler_heartbeat"]
     return templates.TemplateResponse(
         request,
         "pages/jobs/monitor.html",

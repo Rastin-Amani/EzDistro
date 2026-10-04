@@ -15,6 +15,7 @@ router = APIRouter()
 @router.get("/dashboard", response_class=HTMLResponse)
 def dashboard(request: Request, welcome: bool = False):
     scope = project_scope(request)
+    extra = stats.dashboard_extra(request.state.pb, scope, limit=8)
     return templates.TemplateResponse(
         request,
         "pages/dashboard.html",
@@ -22,8 +23,8 @@ def dashboard(request: Request, welcome: bool = False):
             "title": ("Dashboard"),
             "welcome": welcome,
             "stats": stats.global_stats(request.state.pb, scope),
-            "recent_jobs": stats.recent_jobs(request.state.pb, scope, limit=8),
-            "recent_events": stats.recent_events(request.state.pb, scope, limit=8),
+            "recent_jobs": extra["recent_jobs"],
+            "recent_events": extra["recent_events"],
         },
     )
 

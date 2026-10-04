@@ -3,6 +3,7 @@
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.gzip import GZipMiddleware
 
 from app.api import (
     articles,
@@ -37,6 +38,11 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 # auth + correlation middleware (was previously dead code)
 app.add_middleware(AuthMiddleware)
+
+# Compress text responses (HTML, CSS, JS, JSON) at the app layer. Without this
+# the app serves a ~200 KB CSS bundle and 60 KB+ pages uncompressed on every
+# cache-miss load. Added last so it wraps auth and compresses its responses.
+app.add_middleware(GZipMiddleware, minimum_size=1024)
 
 # routers
 app.include_router(auth.router)

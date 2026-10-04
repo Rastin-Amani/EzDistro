@@ -52,6 +52,20 @@ class BaseRepo:
                 return None
             raise
 
+    def get_fields(self, record_id: str, fields: str) -> dict[str, Any] | None:
+        """Single record, projected to `fields` — skips large unneeded blobs.
+
+        PocketBase supports nested projections (e.g. ``config.clustering``), so a
+        caller can fetch the few sub-keys it renders while dropping hundred-KB
+        JSON payloads living beside them.
+        """
+        try:
+            return record_to_dict(self._coll().get_one(record_id, {"fields": fields}))
+        except ClientResponseError as exc:
+            if _is_not_found(exc):
+                return None
+            raise
+
     def get_many(self, record_ids: Iterable[str]) -> list[dict[str, Any]]:
         return [r for r in (self.get(i) for i in record_ids) if r]
 
@@ -101,15 +115,23 @@ class BaseRepo:
 
         `fields` projects specific columns (PocketBase `fields` param) — use it when
         scanning large collections whose bodies must not be loaded into memory.
+
+        `batch=` (not a `perPage` query param) is what controls the page size:
+        the SDK's ``get_full_list`` uses its own ``batch`` argument and overrides
+        any ``perPage`` passed in ``query_params`` — leaving it at the SDK's
+        default of 100 made every full scan page 100 rows at a time.
         """
-        params: dict[str, Any] = {"perPage": per_page}
+        params: dict[str, Any] = {}
         if filter:
             params["filter"] = filter
         if sort:
             params["sort"] = sort
         if fields:
             params["fields"] = fields
-        return [record_to_dict(r) for r in self._coll().get_full_list(query_params=params)]
+        return [
+            record_to_dict(r)
+            for r in self._coll().get_full_list(batch=per_page, query_params=params)
+        ]
 
     def delete_matching(self, *, filter: str) -> int:
         """Delete every record matching `filter`. Used to replace child rows

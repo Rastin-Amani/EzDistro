@@ -304,6 +304,21 @@ class ResearchRunRepo(BaseRepo):
             f += f" && status={q(status)}"
         return self.list_records(filter=f, sort="-created", page=page, per_page=per_page)
 
+    # Only the list-render columns — research_runs carry multi-hundred-KB
+    # config/targeting/report blobs that the projects tab never displays.
+    SUMMARY_FIELDS = "id,name,researchType,status,currentStage,progress,created"
+
+    def list_summaries_for_project(
+        self, project_id: str, per_page: int = 50
+    ) -> list[dict[str, Any]]:
+        return self.list_records(
+            filter=f"project={q(project_id)}",
+            sort="-created",
+            page=1,
+            per_page=per_page,
+            fields=self.SUMMARY_FIELDS,
+        )
+
     def count_for_project(self, project_id: str) -> int:
         return self.count(filter=f"project={q(project_id)}")
 
@@ -528,7 +543,12 @@ class KeywordMetricRepo(_BulkCreateMixin, BaseRepo):
         return self.first(filter=f"run={q(run_id)} && keyword={q(keyword_id)}")
 
     def stats_for_run(self, run_id: str) -> dict[str, float]:
-        """Aggregate demand stats with one paged pass (bounded per_page)."""
+        """Aggregate demand stats with one paged pass.
+
+        Pages at PB's practical maximum so a run with thousands of keyword
+        metrics costs a couple of round trips, not six-plus.
+        """
+        page_size = 2000
         total = 0
         volume = 0
         high_competition = 0
@@ -539,7 +559,10 @@ class KeywordMetricRepo(_BulkCreateMixin, BaseRepo):
                 filter=f"run={q(run_id)}",
                 sort="-avgMonthlySearches",
                 page=page,
-                per_page=500,
+                per_page=page_size,
+                # Projection only: the aggregation needs two columns, but a run
+                # can hold thousands of metric rows (full rows are ~0.5 KB each).
+                fields="id,avgMonthlySearches,competition",
             )
             if not batch:
                 break
@@ -551,7 +574,7 @@ class KeywordMetricRepo(_BulkCreateMixin, BaseRepo):
                     total += 1
                 if str(row.get("competition") or "").upper() == "HIGH":
                     high_competition += 1
-            if len(batch) < 500:
+            if len(batch) < page_size:
                 break
             page += 1
         return {
@@ -749,13 +772,15 @@ class ArticleIdeaRepo(_BulkCreateMixin, BaseRepo):
         return self.list_records(filter=f, sort="-created", per_page=per_page)
 
     def summarize_run(self, run_id: str) -> dict[str, int]:
+        from app.utils import fanout
+
         base = f"run={q(run_id)}"
-        out: dict[str, int] = {"total": self.count(filter=base)}
+        tasks: dict[str, Any] = {"total": lambda: self.count(filter=base)}
         for action in ("generate", "update", "expand", "support", "reject"):
-            out[action] = self.count(filter=f"{base} && action={q(action)}")
+            tasks[action] = lambda action=action: self.count(filter=f"{base} && action={q(action)}")
         for status in ("proposed", "accepted", "roadmap", "rejected", "merged", "generated"):
-            out[status] = self.count(filter=f"{base} && status={q(status)}")
-        return out
+            tasks[status] = lambda status=status: self.count(filter=f"{base} && status={q(status)}")
+        return fanout(tasks)
 
     @staticmethod
     def _run_filter(run_id: str, *, status: str = "", action: str = "", extra: str = "") -> str:

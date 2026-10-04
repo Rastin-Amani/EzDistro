@@ -26,6 +26,25 @@ class FakeListResult:
         self.total_items = total
 
 
+def _project(record: dict, fields: str) -> dict:
+    """Emulate PocketBase's `fields` projection (comma list, `parent.child` allowed)."""
+    if not fields:
+        return record
+    out: dict = {}
+    for spec in fields.split(","):
+        spec = spec.strip()
+        if not spec:
+            continue
+        if "." in spec:
+            parent, child = spec.split(".", 1)
+            src = record.get(parent)
+            if isinstance(src, dict) and child in src:
+                out.setdefault(parent, {})[child] = src[child]
+        elif spec in record:
+            out[spec] = record[spec]
+    return out
+
+
 class FakeRecordService:
     def __init__(self, storage: FakeStorage, name: str) -> None:
         self._storage = storage
@@ -166,11 +185,11 @@ class FakeRecordService:
         ]
         return self._sorted(records, params.get("sort", ""))
 
-    def get_one(self, record_id: str):
+    def get_one(self, record_id: str, query_params: dict[str, Any] | None = None):
         record = self._storage.get(self.name, record_id)
         if record is None:
             raise ClientResponseError("not found", status=404)
-        return record
+        return _project(record, (query_params or {}).get("fields", ""))
 
     def get_first_list_item(self, filter: str, query_params: dict[str, Any] | None = None):
         params = dict(query_params or {})

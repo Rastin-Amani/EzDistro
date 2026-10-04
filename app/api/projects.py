@@ -56,7 +56,7 @@ from app.services.topic_import import (
     store_preview,
 )
 from app.templates import templates
-from app.utils import error_response, hx_trigger, ok_with_redirect, success_response
+from app.utils import error_response, fanout, hx_trigger, ok_with_redirect, success_response
 
 # Targeting options for the research tab. A short, common list is enough — the
 # Google Ads geo/language ids are resolved from these codes at collection time.
@@ -424,11 +424,25 @@ def _tab_context(
             "validation": ("Article validation (legacy)"),
         }
         repo = PromptRepo(pb)
-        context["prompts"] = repo.list_for_project(project_id)
-        context["history"] = {
-            ptype: repo.history(project_id, ptype, limit=20) for ptype in context["prompt_types"]
-        }
-        context["topics"] = TopicRepo(pb).list_for_project(project_id, per_page=50)
+        loaded = fanout(
+            {
+                "prompts": lambda: repo.list_for_project(project_id),
+                "topics": lambda: TopicRepo(pb).list_for_project(project_id, per_page=50),
+                # One scan grouped in Python — was 21 history queries (one per type).
+                "history_rows": lambda: repo.list_all(
+                    filter=f'project="{project_id}" && name="default"',
+                    sort="type,-version",
+                ),
+            }
+        )
+        context["prompts"] = loaded["prompts"]
+        context["topics"] = loaded["topics"]
+        history: dict[str, list[dict[str, Any]]] = {ptype: [] for ptype in context["prompt_types"]}
+        for row in loaded["history_rows"]:
+            bucket = history.get(row.get("type"))
+            if bucket is not None and len(bucket) < 20:
+                bucket.append(row)
+        context["history"] = history
         context["variables"] = variable_labels()
     elif tab == "topics":
         topic_repo = TopicRepo(pb)
@@ -485,19 +499,35 @@ def _tab_context(
         from app.services.google_ads import client_configured
 
         user = user or {}
-        connection = GoogleAdsConnectionRepo(pb).for_user(user.get("id") or "")
+
+        def _safe_configured() -> bool:
+            # read-only tab must never 500 the project page
+            try:
+                return client_configured(pb, project_id)
+            except Exception:
+                return False
+
+        loaded = fanout(
+            {
+                "connection": lambda: GoogleAdsConnectionRepo(pb).for_user(user.get("id") or ""),
+                "customers": lambda: GoogleAdsCustomerRepo(pb).list_for_project(project_id),
+                "runs": lambda: ResearchRunRepo(pb).list_summaries_for_project(project_id),
+                "google_ads_configured": _safe_configured,
+                "integrations": lambda: IntegrationRepo(pb).list_all(
+                    filter=f'project="{project_id}"'
+                ),
+            }
+        )
+        connection = loaded["connection"]
         # The repo returns at most one connection per user; the template treats
         # `connections` as a list, so normalise to a list here.
         context["connections"] = [connection] if connection else []
-        context["customers"] = GoogleAdsCustomerRepo(pb).list_for_project(project_id)
-        context["runs"] = ResearchRunRepo(pb).list_for_project(project_id, page=1, per_page=25)
-        try:
-            context["google_ads_configured"] = client_configured(pb, project_id)
-        except Exception:  # read-only tab must never 500 the project page
-            context["google_ads_configured"] = False
+        context["customers"] = loaded["customers"]
+        context["runs"] = loaded["runs"]
+        context["google_ads_configured"] = loaded["google_ads_configured"]
         context["serp_configured"] = any(
             integration.get("category") == "serp" and integration.get("enabled")
-            for integration in IntegrationRepo(pb).list_all(filter=f'project="{project_id}"')
+            for integration in loaded["integrations"]
         )
         context["countries"] = RESEARCH_COUNTRIES
         context["languages"] = RESEARCH_LANGUAGES

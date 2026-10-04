@@ -19,6 +19,7 @@ from app.config import settings
 from app.repositories.jobs import JobEventRepo, JobRepo
 from app.repositories.worker_heartbeats import WorkerHeartbeatRepo
 from app.templates import templates
+from app.utils import fanout
 
 router = APIRouter()
 
@@ -30,34 +31,47 @@ STALE_AFTER_S = 300  # 5 min without a beat → effectively offline
 @page_guard("Something went wrong loading the workers page — please try again.")
 def workers_page(request: Request):
     pb = request.state.pb
-    try:
-        heartbeats = WorkerHeartbeatRepo(pb).list_recent(limit=50)
-    except Exception:
-        # collection missing (bootstrap not run yet) → clean empty state
-        heartbeats = []
 
-    now = dt.datetime.now(dt.UTC)
-    workers = [_decorate(w, now) for w in heartbeats]
-    active = sum(1 for w in workers if w["status"] == "active")
+    def _heartbeats() -> list[dict[str, Any]]:
+        try:
+            return WorkerHeartbeatRepo(pb).list_recent(limit=50)
+        except Exception:
+            # collection missing (bootstrap not run yet) → clean empty state
+            return []
 
     jobs = JobRepo(pb)
-    queue = {
-        "pending": jobs.count(filter='status="pending"'),
-        "retrying": jobs.count(filter='status="retrying"'),
-        "running": jobs.count(filter='status="running"'),
-        "failed": jobs.count(filter='status="failed"'),
-    }
-
-    recent_failed = jobs.list_records(filter='status="failed"', sort="-created", page=1, per_page=6)
-
-    recent_errors = JobEventRepo(pb).list_records(
-        filter='eventType="job.failed" || eventType="provider_error" || eventType="job.provider_error"',
-        sort="-created",
-        page=1,
-        per_page=8,
+    loaded = fanout(
+        {
+            "heartbeats": _heartbeats,
+            "q_pending": lambda: jobs.count(filter='status="pending"'),
+            "q_retrying": lambda: jobs.count(filter='status="retrying"'),
+            "q_running": lambda: jobs.count(filter='status="running"'),
+            "q_failed": lambda: jobs.count(filter='status="failed"'),
+            "recent_failed": lambda: jobs.list_records(
+                filter='status="failed"', sort="-created", page=1, per_page=6
+            ),
+            "recent_errors": lambda: JobEventRepo(pb).list_records(
+                filter='eventType="job.failed" || eventType="provider_error" || eventType="job.provider_error"',
+                sort="-created",
+                page=1,
+                per_page=8,
+            ),
+            "scheduler_heartbeat": lambda: _scheduler_heartbeat(pb),
+        }
     )
 
-    scheduler_heartbeat = _scheduler_heartbeat(pb)
+    now = dt.datetime.now(dt.UTC)
+    workers = [_decorate(w, now) for w in loaded["heartbeats"]]
+    active = sum(1 for w in workers if w["status"] == "active")
+    queue = {
+        "pending": loaded["q_pending"],
+        "retrying": loaded["q_retrying"],
+        "running": loaded["q_running"],
+        "failed": loaded["q_failed"],
+    }
+    recent_failed = loaded["recent_failed"]
+    recent_errors = loaded["recent_errors"]
+    scheduler_heartbeat = loaded["scheduler_heartbeat"]
 
     return templates.TemplateResponse(
         request,

@@ -12,6 +12,7 @@ from app.repositories.jobs import JobEventRepo, JobRepo
 from app.repositories.projects import ProjectRepo
 from app.repositories.topics import TopicRepo
 from app.repositories.worker_heartbeats import WorkerHeartbeatRepo
+from app.utils import fanout
 
 # Dashboard aggregates are derived, read-only data: a short TTL cache collapses
 # repeated poll queries (multiple users × 8s polling). Mutable article state is
@@ -49,37 +50,59 @@ def _compute_stats(pb: Any, project_scope: list[str] | None = None) -> dict[str,
     scope_filter = _scope_filter(project_scope, "project")
     proj_filter = _scope_filter(project_scope, "id")
 
-    result = {
-        "projects": projects.count(filter=proj_filter) if proj_filter else projects.count(),
-        "jobs_pending": jobs.count(filter=f'status="pending"{_and(scope_filter)}'),
-        "jobs_retrying": jobs.count(filter=f'status="retrying"{_and(scope_filter)}'),
-        "jobs_running": jobs.count(filter=f'status="running"{_and(scope_filter)}'),
-        "jobs_failed": jobs.count(filter=f'status="failed"{_and(scope_filter)}'),
-        "jobs_completed": jobs.count(filter=f'status="completed"{_and(scope_filter)}'),
-        "average_duration_s": _average_duration(pb, project_scope),
-        "failure_rate": _failure_rate(pb, project_scope),
-        "provider_latency_ms": _provider_latency(pb, project_scope),
-        "topics_planned": _count_topics(pb, project_scope, "planned"),
-        "articles_writing": _count_articles(pb, project_scope, ("outline_ready", "generating")),
-        "articles_review": _count_articles(pb, project_scope, ("review", "approved")),
-        "articles_published": _count_articles(pb, project_scope, ("published",)),
-        "indexing_ok": 0,
-        "indexing_failed": 0,
-        "provider_healthy": 0,
-        "provider_unhealthy": 0,
-        "provider_unknown": 0,
-        "workers_active": 0,
-    }
-    indexing_ok, indexing_failed = _indexing_health(pb, project_scope)
-    provider_healthy, provider_unhealthy, provider_unknown = _provider_health(pb, project_scope)
-    result["indexing_ok"], result["indexing_failed"] = indexing_ok, indexing_failed
-    result["provider_healthy"], result["provider_unhealthy"], result["provider_unknown"] = (
-        provider_healthy,
-        provider_unhealthy,
-        provider_unknown,
+    def jobs_count(status: str) -> int:
+        return jobs.count(filter=f'status="{status}"{_and(scope_filter)}')
+
+    computed = fanout(
+        {
+            "projects": lambda: (
+                projects.count(filter=proj_filter) if proj_filter else projects.count()
+            ),
+            "jobs_pending": lambda: jobs_count("pending"),
+            "jobs_retrying": lambda: jobs_count("retrying"),
+            "jobs_running": lambda: jobs_count("running"),
+            "jobs_failed": lambda: jobs_count("failed"),
+            "jobs_completed": lambda: jobs_count("completed"),
+            "average_duration_s": lambda: _average_duration(pb, project_scope),
+            "provider_latency_ms": lambda: _provider_latency(pb, project_scope),
+            "topics_planned": lambda: _count_topics(pb, project_scope, "planned"),
+            "articles_writing": lambda: _count_articles(
+                pb, project_scope, ("outline_ready", "generating")
+            ),
+            "articles_review": lambda: _count_articles(pb, project_scope, ("review", "approved")),
+            "articles_published": lambda: _count_articles(pb, project_scope, ("published",)),
+            "indexing": lambda: _indexing_health(pb, project_scope),
+            "provider_health": lambda: _provider_health(pb, project_scope),
+            "workers_active": lambda: _active_workers(pb),
+        }
     )
-    result["workers_active"] = _active_workers(pb)
-    return result
+
+    indexing_ok, indexing_failed = computed.pop("indexing")
+    provider_healthy, provider_unhealthy, provider_unknown = computed.pop("provider_health")
+    failed = computed["jobs_failed"]
+    completed = computed["jobs_completed"]
+    total = failed + completed
+    return {
+        **computed,
+        "failure_rate": round(failed / total, 3) if total else 0.0,
+        "indexing_ok": indexing_ok,
+        "indexing_failed": indexing_failed,
+        "provider_healthy": provider_healthy,
+        "provider_unhealthy": provider_unhealthy,
+        "provider_unknown": provider_unknown,
+    }
+
+
+def dashboard_extra(
+    pb: Any, project_scope: list[str] | None = None, limit: int = 8
+) -> dict[str, Any]:
+    """Recent jobs + events for the dashboard, fetched concurrently (1 round trip)."""
+    return fanout(
+        {
+            "recent_jobs": lambda: recent_jobs(pb, project_scope, limit),
+            "recent_events": lambda: recent_events(pb, project_scope, limit),
+        }
+    )
 
 
 def _active_workers(pb: Any) -> int:
@@ -162,13 +185,36 @@ def _average_duration(pb: Any, scope: list[str] | None) -> float:
     return round(sum(durations) / len(durations), 1) if durations else 0.0
 
 
-def _failure_rate(pb: Any, scope: list[str] | None) -> float:
-    jobs = JobRepo(pb)
-    f = _scope_filter(scope, "project")
-    failed = jobs.count(filter=f'status="failed"{_and(f)}')
-    completed = jobs.count(filter=f'status="completed"{_and(f)}')
-    total = failed + completed
-    return round(failed / total, 3) if total else 0.0
+def _indexing_health(pb: Any, scope: list[str] | None) -> tuple[int, int]:
+    """Per project: latest index run → ok (succeeded) or failed (failed).
+
+    One scan instead of one query per project (was an N+1). Runs are sorted
+    newest-first so the first row seen per project is its latest. ponytail:
+    bounded to the 1000 newest runs; if a project's latest run is older than
+    that global window it is simply not counted — add per-project queries
+    back if run volume ever makes that possible.
+    """
+    projects = ProjectRepo(pb).list_records(
+        filter=_scope_filter(scope, "id"), sort="name", per_page=500
+    )
+    if not projects:
+        return 0, 0
+    wanted = {p["id"] for p in projects}
+    runs = IndexRunRepo(pb).list_records(
+        filter=_scope_filter(scope, "project"),
+        sort="-created",
+        page=1,
+        per_page=1000,
+        fields="project,status",
+    )
+    latest: dict[str, str] = {}
+    for run in runs:
+        pid = run.get("project")
+        if isinstance(pid, str) and pid in wanted and pid not in latest:
+            latest[pid] = run.get("status") or ""
+    ok = sum(1 for s in latest.values() if s == "succeeded")
+    failed = sum(1 for s in latest.values() if s == "failed")
+    return ok, failed
 
 
 def _provider_latency(pb: Any, scope: list[str] | None) -> float:
@@ -205,24 +251,6 @@ def _count_articles(pb: Any, scope: list[str] | None, statuses: tuple[str, ...])
     f = _scope_filter(scope, "project")
     parts = " || ".join(f'status="{s}"' for s in statuses)
     return ArticleRepo(pb).count(filter=f"({parts}){_and(f)}")
-
-
-def _indexing_health(pb: Any, scope: list[str] | None) -> tuple[int, int]:
-    """Per project: latest index run → ok (succeeded) or failed (failed)."""
-    projects = ProjectRepo(pb).list_records(
-        filter=_scope_filter(scope, "id"), sort="name", per_page=200
-    )
-    runs = IndexRunRepo(pb)
-    ok = failed = 0
-    for project in projects:
-        latest = runs.first(filter=f'project="{project["id"]}"', sort="-created")
-        if not latest:
-            continue
-        if latest.get("status") == "succeeded":
-            ok += 1
-        elif latest.get("status") == "failed":
-            failed += 1
-    return ok, failed
 
 
 def _provider_health(pb: Any, scope: list[str] | None) -> tuple[int, int, int]:

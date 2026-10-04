@@ -59,7 +59,7 @@ from app.services import google_ads as google_ads_service
 from app.services.research_import import parse_keyword_file
 from app.services.serp import refresh_keyword, serp_available
 from app.templates import templates
-from app.utils import error_response, ok_with_redirect, success_response
+from app.utils import error_response, fanout, ok_with_redirect, success_response
 
 log = structlog.get_logger(__name__)
 
@@ -93,8 +93,17 @@ def _project_or_none(request: Request, project_id: str) -> dict[str, Any] | None
         return None
 
 
+# Everything the research UI renders, minus the multi-hundred-KB
+# `config.importPayload` blob. Nested projection keeps `config.clustering`.
+_RUN_SUMMARY_FIELDS = (
+    "id,project,name,researchType,status,currentStage,progress,config.clustering,"
+    "targeting,errorCode,errorMessage,counts,stageState,job,connection,customerId,"
+    "fingerprint,providerVersions,created,updated,startedAt,completedAt,createdBy"
+)
+
+
 def _run_or_none(request: Request, project_id: str, run_id: str) -> dict[str, Any] | None:
-    run = ResearchRunRepo(request.state.pb).get(run_id)
+    run = ResearchRunRepo(request.state.pb).get_fields(run_id, _RUN_SUMMARY_FIELDS)
     if run is None or run.get("project") != project_id:
         return None
     return run
@@ -668,15 +677,26 @@ def _keywords_context(pb: Any, run: dict[str, Any], params: dict[str, Any]) -> d
             }
         filters.append("(" + " || ".join(f"keyword={_q(i)}" for i in ids) + ")")
     page = max(1, safe_int(params.get("page"), 1))
-    rows = metrics.list_for_run(
-        run_id,
-        filter=" && ".join(filters),
-        sort=safe_str(params.get("sort")) or "-avgMonthlySearches",
-        page=page,
-        per_page=KEYWORD_PAGE,
+    run_filter = " && ".join(filters)
+    # Independent reads fan out; the keyword-text lookup depends on the rows.
+    loaded = fanout(
+        {
+            "rows": lambda: metrics.list_for_run(
+                run_id,
+                filter=run_filter,
+                sort=safe_str(params.get("sort")) or "-avgMonthlySearches",
+                page=page,
+                per_page=KEYWORD_PAGE,
+            ),
+            "total": lambda: metrics.count_for_run(run_id, filter=run_filter),
+            "stats": lambda: metrics.stats_for_run(run_id),
+            "clusters": lambda: ClusterRepo(pb).map_for_run(run_id),
+        }
     )
+    rows = loaded["rows"]
+    total = loaded["total"]
+    clusters = loaded["clusters"]
     keyword_rows = KeywordRepo(pb).map_by_ids([row.get("keyword") or "" for row in rows])
-    clusters = ClusterRepo(pb).map_for_run(run_id)
     table: list[dict[str, Any]] = []
     for row in rows:
         keyword_row = keyword_rows.get(row.get("keyword") or "") or {}
@@ -691,9 +711,9 @@ def _keywords_context(pb: Any, run: dict[str, Any], params: dict[str, Any]) -> d
         )
     return {
         "rows": table,
-        "total": metrics.count_for_run(run_id, filter=" && ".join(filters)),
-        "stats": metrics.stats_for_run(run_id),
-        "clusters": ClusterRepo(pb).list_for_run(run_id),
+        "total": total,
+        "stats": loaded["stats"],
+        "clusters": list(clusters.values()),
         "q": query,
         "min_volume": min_volume,
         "cluster": safe_str(params.get("cluster")),
@@ -701,9 +721,7 @@ def _keywords_context(pb: Any, run: dict[str, Any], params: dict[str, Any]) -> d
         "per_page": KEYWORD_PAGE,
         "prev_url": _tab_url(run, "keywords", params, page - 1) if page > 1 else None,
         "next_url": (
-            _tab_url(run, "keywords", params, page + 1)
-            if page * KEYWORD_PAGE < metrics.count_for_run(run_id, filter=" && ".join(filters))
-            else None
+            _tab_url(run, "keywords", params, page + 1) if page * KEYWORD_PAGE < total else None
         ),
     }
 
@@ -714,12 +732,21 @@ def _serp_context(pb: Any, run: dict[str, Any], params: dict[str, Any]) -> dict[
     page = max(1, safe_int(params.get("page"), 1))
     per_page = 50
     repo = SerpQueryRepo(pb)
-    queries = repo.list_for_run(run_id, search=search, page=page, per_page=per_page)
-    total = repo.count_for_run(run_id, search=search)
+    loaded = fanout(
+        {
+            "queries": lambda: repo.list_for_run(
+                run_id, search=search, page=page, per_page=per_page
+            ),
+            "total": lambda: repo.count_for_run(run_id, search=search),
+            "configured": lambda: _project_serp_configured(pb, run),
+        }
+    )
+    queries = loaded["queries"]
+    total = loaded["total"]
     return {
         "queries": queries,
         "available": bool(queries),
-        "configured": _project_serp_configured(pb, run),
+        "configured": loaded["configured"],
         "count": total,
         "q": search,
         "page": page,
@@ -748,8 +775,16 @@ def _competitors_context(pb: Any, run: dict[str, Any], params: dict[str, Any]) -
     page = max(1, safe_int(params.get("page"), 1))
     per_page = 50
     repo = CompetitorPageRepo(pb)
-    rows = repo.list_for_run(run_id, status=status, search=search, page=page, per_page=per_page)
-    total = repo.count_for_run(run_id, status=status, search=search)
+    loaded = fanout(
+        {
+            "rows": lambda: repo.list_for_run(
+                run_id, status=status, search=search, page=page, per_page=per_page
+            ),
+            "total": lambda: repo.count_for_run(run_id, status=status, search=search),
+        }
+    )
+    rows = loaded["rows"]
+    total = loaded["total"]
     return {
         "pages": rows,
         "total": total,
@@ -783,13 +818,8 @@ def _clusters_context(pb: Any, run: dict[str, Any], params: dict[str, Any]) -> d
         clusters = [c for c in all_clusters if c.get("status") == status]
     else:
         clusters = all_clusters
-    metrics = KeywordMetricRepo(pb).list_all_for_run(run_id)
-    by_cluster: dict[str, list[dict[str, Any]]] = {}
-    for row in metrics:
-        by_cluster.setdefault(row.get("cluster") or "", []).append(row)
     return {
         "clusters": clusters,
-        "by_cluster": by_cluster,
         "status": status,
         "q": search,
         "counts": counts,
@@ -802,8 +832,24 @@ def _gaps_context(pb: Any, run: dict[str, Any], params: dict[str, Any]) -> dict[
     page = max(1, safe_int(params.get("page"), 1))
     per_page = 50
     gaps = ContentGapRepo(pb)
-    rows = gaps.list_for_run(run_id, gap_type=gap_type, page=page, per_page=per_page)
-    total = gaps.count_for_run(run_id, gap_type=gap_type)
+    gap_types = (
+        "competitor_only",
+        "under_served",
+        "expansion",
+        "update",
+        "supporting",
+        "you_only",
+        "both",
+    )
+    tasks: dict[str, Any] = {
+        "rows": lambda: gaps.list_for_run(run_id, gap_type=gap_type, page=page, per_page=per_page),
+        "total": lambda: gaps.count_for_run(run_id, gap_type=gap_type),
+    }
+    for gtype in gap_types:
+        tasks[f"type_{gtype}"] = lambda gtype=gtype: gaps.count_for_run(run_id, gap_type=gtype)
+    loaded = fanout(tasks)
+    rows = loaded["rows"]
+    total = loaded["total"]
     return {
         "gaps": rows,
         "total": total,
@@ -812,18 +858,7 @@ def _gaps_context(pb: Any, run: dict[str, Any], params: dict[str, Any]) -> dict[
         "per_page": per_page,
         "prev_url": _tab_url(run, "gaps", params, page - 1) if page > 1 else None,
         "next_url": _tab_url(run, "gaps", params, page + 1) if page * per_page < total else None,
-        "by_type": {
-            gap_type: gaps.count_for_run(run_id, gap_type=gap_type)
-            for gap_type in (
-                "competitor_only",
-                "under_served",
-                "expansion",
-                "update",
-                "supporting",
-                "you_only",
-                "both",
-            )
-        },
+        "by_type": {gtype: loaded[f"type_{gtype}"] for gtype in gap_types},
     }
 
 
@@ -841,18 +876,27 @@ def _opportunities_context(pb: Any, run: dict[str, Any], params: dict[str, Any])
     # Only 'proposed' ideas are managed here; accepted ones live in Articles.
     if not status:
         filters.append('status="proposed"')
-    rows = ideas.list_for_run(
-        run_id,
-        filter=" && ".join(filters),
-        sort=safe_str(params.get("sort")) or "-opportunityScore",
-        page=page,
-        per_page=IDEA_PAGE,
+    run_filter = " && ".join(filters)
+    loaded = fanout(
+        {
+            "rows": lambda: ideas.list_for_run(
+                run_id,
+                filter=run_filter,
+                sort=safe_str(params.get("sort")) or "-opportunityScore",
+                page=page,
+                per_page=IDEA_PAGE,
+            ),
+            "total": lambda: ideas.count_for_run(run_id, filter=run_filter),
+        }
     )
-    total = ideas.count_for_run(run_id, filter=" && ".join(filters))
+    rows = loaded["rows"]
+    total = loaded["total"]
+    # summarize_run fans out internally — keep it out of the outer fanout.
+    summary = ideas.summarize_run(run_id)
     return {
         "ideas": rows,
         "total": total,
-        "summary": ideas.summarize_run(run_id),
+        "summary": summary,
         "action": action,
         "status": status,
         "sort": safe_str(params.get("sort")),

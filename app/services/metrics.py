@@ -245,21 +245,30 @@ def project_metrics(pb: Any, project_id: str) -> dict[str, Any]:
     from app.repositories.articles import ArticleRepo, SectionRepo
     from app.repositories.indexing import DocumentRepo
     from app.repositories.jobs import JobRepo
+    from app.utils import fanout
 
     docs = DocumentRepo(pb)
     articles = ArticleRepo(pb)
     jobs = JobRepo(pb)
-    indexed = docs.count(filter=f'project="{project_id}" && indexStatus="indexed"')
-    stale = docs.count(filter=f'project="{project_id}" && indexStatus="deleted"')
     # article_sections has no `project` field — scope through the article relation.
-    sections_done = SectionRepo(pb).count(filter=f'article.project="{project_id}" && status="done"')
-    return {
-        "indexed_documents": indexed,
-        "stale_documents": stale,
-        "articles_generated": articles.count(filter=f'project="{project_id}" && generatedAt != ""'),
-        "sections_generated": sections_done,
-        "articles_published": articles.count(
-            filter=f'project="{project_id}" && status="published"'
-        ),
-        "failed_jobs": jobs.count(filter=f'project="{project_id}" && status="failed"'),
-    }
+    counts = fanout(
+        {
+            "indexed_documents": lambda: docs.count(
+                filter=f'project="{project_id}" && indexStatus="indexed"'
+            ),
+            "stale_documents": lambda: docs.count(
+                filter=f'project="{project_id}" && indexStatus="deleted"'
+            ),
+            "sections_generated": lambda: SectionRepo(pb).count(
+                filter=f'article.project="{project_id}" && status="done"'
+            ),
+            "articles_generated": lambda: articles.count(
+                filter=f'project="{project_id}" && generatedAt != ""'
+            ),
+            "articles_published": lambda: articles.count(
+                filter=f'project="{project_id}" && status="published"'
+            ),
+            "failed_jobs": lambda: jobs.count(filter=f'project="{project_id}" && status="failed"'),
+        }
+    )
+    return counts

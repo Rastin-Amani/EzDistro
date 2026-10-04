@@ -8,11 +8,14 @@ import pytest
 @pytest.fixture(autouse=True)
 def _clear_caches():
     """Isolate process-global caches between tests."""
+    from app.middleware import clear_session_cache
     from app.services.stats import clear_stats_cache
 
     clear_stats_cache()
+    clear_session_cache()
     yield
     clear_stats_cache()
+    clear_session_cache()
 
 
 @pytest.fixture(autouse=True)
