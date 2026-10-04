@@ -1413,40 +1413,53 @@ def backfill_integration_models(pb: PocketBase) -> None:
 
 
 def ensure_users_fields(pb: PocketBase) -> None:
-    """Add role + display_name to the built-in users collection if missing."""
-    fields = list(pb.collections.get_one("users").fields)
-    names = {f.get("name") for f in fields}
-    additions = [
-        {
-            "name": "role",
-            "type": "select",
-            "required": False,
-            "system": False,
-            "hidden": False,
-            "presentable": False,
-            "help": "",
-            "maxSelect": 1,
-            "values": ["admin", "member"],
-        },
-        {
-            "name": "displayName",
-            "type": "text",
-            "required": False,
-            "system": False,
-            "hidden": False,
-            "presentable": False,
-            "help": "",
-            "primaryKey": False,
-            "autogeneratePattern": "",
-            "pattern": "",
-            "min": 0,
-            "max": 0,
-        },
-    ]
-    added = [f for f in additions if f["name"] not in names]
-    if added:
-        pb.collections.update("users", {"fields": fields + added})
-        print("users collection: added", [f["name"] for f in added])
+    """Ensure users.role/displayName exist AND system id/tokenKey keep their
+    autogenerate patterns.
+
+    Uses the RAW admin API with camelCase keys, never the SDK's
+    ``collections.update``: the SDK snake-cases field metadata on read and
+    round-tripping ``fields`` silently drops ``autogeneratePattern`` on the
+    system ``id``/``tokenKey`` fields — after which every user create fails
+    with ``id: Cannot be blank``. (Same rationale as ``ensure_select_values``.)
+    This also REPAIRS a database already damaged that way.
+    """
+    base = str(pb.base_url).rstrip("/")
+    headers = {"Authorization": getattr(pb.auth_store, "token", "")}
+    url = f"{base}/api/collections/users"
+    response = httpx.get(url, headers=headers, timeout=15)
+    if response.status_code != 200:
+        raise RuntimeError(
+            f"Could not read the users schema (HTTP {response.status_code}): {response.text[:200]}"
+        )
+    fields = response.json().get("fields") or []
+    names = {field.get("name") for field in fields}
+    changed = False
+
+    # Repair the system-field defaults the SDK round-trip can have wiped.
+    for field in fields:
+        if field.get("name") == "id" and not field.get("autogeneratePattern"):
+            field["autogeneratePattern"] = "[a-z0-9]{15}"
+            field["max"] = 15
+            changed = True
+        if field.get("name") == "tokenKey" and not field.get("autogeneratePattern"):
+            field["autogeneratePattern"] = "[a-zA-Z0-9]{50}"
+            changed = True
+
+    additions = [t("displayName"), select("role", ["admin", "member"])]
+    for field in additions:
+        if field["name"] not in names:
+            field["id"] = _field_id(str(field["type"]), str(field["name"]))
+            fields.append(field)
+            changed = True
+
+    if changed:
+        patched = httpx.patch(url, headers=headers, json={"fields": fields}, timeout=15)
+        if patched.status_code != 200:
+            raise RuntimeError(
+                f"Could not update the users schema (HTTP {patched.status_code}): "
+                f"{patched.text[:300]}"
+            )
+        print("users collection: role/displayName and system patterns ensured")
 
 
 def ensure_users_rules(pb: PocketBase) -> None:
