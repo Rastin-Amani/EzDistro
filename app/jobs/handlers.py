@@ -36,6 +36,7 @@ JOB_TYPES = (
     "publish_article_image",
     "wordpress_sync",
     "research_run",
+    "analyze_landing_page",
 )
 
 
@@ -75,6 +76,7 @@ def ensure_registered() -> None:
             image_planning,
             images,
             indexing,
+            landing_page,
             publishing_service,
             research,
             retry_service,
