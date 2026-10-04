@@ -45,6 +45,9 @@ def article_workspace(request: Request, project_id: str, article_id: str):
     runs = PublishingRunRepo(request.state.pb).list_for_article(article_id, per_page=10)
     internal_links = _collect_links(article)
     images = ArticleImageRepo(request.state.pb).list_for_article(article_id)
+    from app.api.articles import find_resume_job, resume_job_label
+
+    resume_job = find_resume_job(request.state.pb, article)
     return templates.TemplateResponse(
         request,
         "pages/articles/workspace.html",
@@ -57,6 +60,8 @@ def article_workspace(request: Request, project_id: str, article_id: str):
             "publish_runs": runs,
             "internal_links": internal_links,
             "image_slots": _image_slots(article, images),
+            "resume_job": resume_job,
+            "resume_label": resume_job_label(resume_job) if resume_job else "",
         },
     )
 

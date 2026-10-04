@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse
 
@@ -39,6 +41,7 @@ def article_detail(request: Request, project_id: str, article_id: str):
     sections = SectionRepo(request.state.pb).list_for_article(article_id)
     topic = TopicRepo(request.state.pb).get(article.get("topicId") or "")
     runs = PublishingRunRepo(request.state.pb).list_for_article(article_id, per_page=10)
+    resume_job = find_resume_job(request.state.pb, article)
     return templates.TemplateResponse(
         request,
         "pages/articles/detail.html",
@@ -49,6 +52,8 @@ def article_detail(request: Request, project_id: str, article_id: str):
             "sections": sections,
             "topic": topic,
             "publish_runs": runs,
+            "resume_job": resume_job,
+            "resume_label": resume_job_label(resume_job) if resume_job else "",
         },
     )
 
@@ -122,7 +127,7 @@ def regenerate_article(
     """Regenerate one section (when `section_id` is given) or the whole
     article. NOTE: this is the single handler for this path — a duplicate
     route in workspace.py used to shadow/be shadowed; the review page's
-    «\u0628\u0627\u0632\u062a\u0648\u0644\u06cc\u062f \u06a9\u0627\u0645\u0644» hits this with no section_id."""
+    "Full regenerate" hits this with no section_id."""
     require_hx(request)
     require_project_access(request, project_id)
     require_project_role(request, project_id)
@@ -177,6 +182,42 @@ def regenerate_article(
         ("Article regeneration started (previous version is preserved)"),
         extra_events={"refreshArticle": True, "refreshJobs": True},
     )
+
+
+def resume_job_label(job: dict) -> str:
+    """Human stage name for the last failed job, for the Resume affordance."""
+    return {
+        "publish_article": "publishing",
+        "assemble_article": "assembling the article",
+        "generate_section": "section generation",
+        "write_article": "writing",
+        "research_run": "research",
+        "index_document": "indexing",
+    }.get(str(job.get("type") or ""), str(job.get("type") or "job"))
+
+
+def find_resume_job(pb: Any, article: dict) -> dict | None:
+    """Most recent failed job belonging to this article (entity or payload link).
+
+    Used by the article UI so a failure can be continued from the exact stage
+    instead of regenerating everything.
+    """
+    article_id = article.get("id") or ""
+    if not article_id:
+        return None
+    topic_id = article.get("topicId") or ""
+    filters = [
+        f'entityType="article" && entityId="{article_id}"',
+        f'payload.articleId="{article_id}"',
+    ]
+    if topic_id:
+        filters.append(f'payload.topicId="{topic_id}"')
+    repo = JobRepo(pb)
+    for base in filters:
+        job = repo.first(filter=f'{base} && status="failed"', sort="-created")
+        if job:
+            return job
+    return None
 
 
 def _queue_publish_job(request: Request, project_id: str, article_id: str, action: str) -> None:
@@ -253,6 +294,46 @@ def unpublish_article_post(request: Request, project_id: str, article_id: str):
         ("Unpublish (make private) started"),
         extra_events={"refreshArticle": True, "refreshJobs": True},
     )
+
+
+@router.post("/projects/{project_id}/articles/{article_id}/resume")
+@hx_error("Resuming the article failed")
+def resume_article(request: Request, project_id: str, article_id: str):
+    """Continue a failed article from the stage that failed.
+
+    Reuses the last failed job (writing, section, assembly or publishing) so no
+    content is regenerated; falls back to publishing/assembling/regenerating
+    only when there is no failed job to resume.
+    """
+    require_hx(request)
+    require_project_access(request, project_id)
+    require_project_role(request, project_id)
+    article = ArticleRepo(request.state.pb).get(article_id)
+    if not article or article.get("project") != project_id:
+        return error_response("Article not found")
+
+    job = find_resume_job(request.state.pb, article)
+    if job:
+        JobRepo(request.state.pb).reset_for_retry(job["id"])
+        return success_response(
+            f"Resuming from {resume_job_label(job)}",
+            extra_events={"refreshArticle": True, "refreshJobs": True},
+        )
+
+    # Nothing failed to resume — pick the sensible next step from current state.
+    if article.get("wordpressPostId"):
+        _queue_publish_job(request, project_id, article_id, "update")
+        return success_response(
+            "No failed step found — updating the WordPress post",
+            extra_events={"refreshArticle": True, "refreshJobs": True},
+        )
+    if article.get("finalHtml"):
+        _queue_publish_job(request, project_id, article_id, "publish")
+        return success_response(
+            "No failed step found — publishing the article",
+            extra_events={"refreshArticle": True, "refreshJobs": True},
+        )
+    return error_response("Nothing to resume — regenerate the article instead")
 
 
 @router.post("/projects/{project_id}/articles/{article_id}/publish-runs/{run_id}/retry")

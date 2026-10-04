@@ -43,7 +43,7 @@
         <button type="button" class="btn btn-ghost btn-sm text-warning"
                 @click="$store.ui.openModal('sendback-note')">{{ ('Return') }}</button>
 
-        <button class="btn btn-primary btn-sm" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/approve" hx-swap="none">
+        <button class="btn btn-primary btn-sm" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/approve" hx-swap="none" hx-disabled-elt="this">
 
             <span class="loading loading-spinner loading-xs htmx-indicator"></span>
 
@@ -57,13 +57,11 @@
 
         <button class="btn btn-primary btn-sm" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/publish"
 
-                hx-swap="none" hx-confirm="Send the article to WordPress?">{{ ('Publish') }}</button>
+                hx-swap="none" hx-disabled-elt="this" hx-confirm="Send the article to WordPress?">{{ ('Publish') }}</button>
 
         {% elif article.status == 'sent_back' %}
 
         <span class="badge badge-soft badge-warning">{{ ('Returned') }}</span>
-
-        <button class="btn btn-primary btn-sm" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/regenerate" hx-swap="none">{{ ('Regenerate article') }}</button>
 
         {% endif %}
 
@@ -71,7 +69,7 @@
 
         <button class="btn btn-ghost btn-sm" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/regenerate"
 
-                hx-swap="none" hx-confirm="{{ ('The current version is saved to history; continue full regeneration?') }}">{{ ('Full regeneration') }}</button>
+                hx-swap="none" hx-disabled-elt="this" hx-confirm="{{ ('The current version is saved to history; continue full regeneration?') }}">{{ ('Full regeneration') }}</button>
 
         {% endif %}
 
@@ -101,7 +99,7 @@
 
         <form hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/send-back" hx-swap="none" class="flex flex-col gap-3">
 
-            <textarea name="note" class="textarea textarea-sm w-full" rows="3" placeholder="{{ ('Reason for returning (recorded in history)…') }}"></textarea>
+            <textarea name="note" class="textarea textarea-sm w-full" rows="3" placeholder="{{ ('Reason for returning (recorded in history)…') }}" aria-label="{{ ('Reason for returning this article') }}"></textarea>
 
             <div class="flex gap-3">
 

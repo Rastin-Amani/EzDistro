@@ -38,9 +38,23 @@
 
     </div>
 
+    {% if article.status == 'failed' and resume_job %}
+
+    <button class="btn btn-primary btn-sm" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/resume" hx-swap="none" hx-disabled-elt="this"
+
+            title="{{ ('Continue from the last failed step without regenerating content') }}">
+
+        <span class="loading loading-spinner loading-xs htmx-indicator"></span>
+
+        {{ ('Resume %(stage)s') % {'stage': resume_label} }}
+
+    </button>
+
+    {% endif %}
+
     {% if article.finalHtml and article.status not in ['published', 'publishing'] %}
 
-    <button class="btn btn-primary btn-sm" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/publish" hx-swap="none" hx-confirm="{{ (( 'Send the article to WordPress?' )) }}">
+    <button class="btn btn-primary btn-sm" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/publish" hx-swap="none" hx-disabled-elt="this" hx-confirm="{{ (( 'Send the article to WordPress?' )) }}">
 
         <span class="loading loading-spinner loading-xs htmx-indicator"></span>
 
