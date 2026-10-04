@@ -3,10 +3,10 @@
 Mirrors the original n8n Indexer behaviour and extends it into a configurable
 pipeline:
 
-- strip HTML → clean plain text (Persian-aware: ZWNJ handling)
+- strip HTML → clean plain text (ZWNJ handling)
 - split into semantic units first (paragraphs → sentences), THEN pack units
   into word-budgeted chunks with overlap
-- never blindly split Persian text at arbitrary character boundaries:
+- never split text at arbitrary character boundaries:
   paragraph-aware → sentence-aware → word-level hard fallback
 - `max_chunk_count` caps the output (0 = unlimited)
 """
@@ -21,11 +21,10 @@ _SCRIPT_RE = re.compile(r"<(script|style|noscript|iframe)[^>]*>.*?</\1>", re.IGN
 _WS_RE = re.compile(r"\s+")
 _TRAILING_HYPHEN_RE = re.compile(r"\s*[-\u2014\u2013]\s*$")
 _PARAGRAPH_RE = re.compile(r"\n\s*\n")
-# Persian-aware sentence boundaries: . ! ? \u061f ! \u061b ; whitespace after a
-# sentence end, or a line break itself.
-_SENTENCE_RE = re.compile(r"(?<=[.!?\u061f!\u061b])\s+|\r?\n+")
+# Sentence boundaries: . ! ? ; whitespace after a sentence end, or a line break.
+_SENTENCE_RE = re.compile(r"(?<=[.!?])\s+|\r?\n+")
 # sentence-ending punctuation (used to decide hard-split points)
-_SENTENCE_END = re.compile(r"[.!?\u061f!\u061b]$")
+_SENTENCE_END = re.compile(r"[.!?]$")
 
 SEPARATOR_STRATEGIES = ("auto", "paragraph", "sentence", "word")
 
@@ -41,7 +40,7 @@ def strip_html(raw: str) -> str:
 
 
 def normalize_whitespace(text: str) -> str:
-    text = text.replace("\u200c", " ")  # ZWNJ → space so Persian words split correctly
+    text = text.replace("\u200c", " ")  # ZWNJ → space so joined words split correctly
     text = _WS_RE.sub(" ", text)
     text = _TRAILING_HYPHEN_RE.sub("", text)
     return text.strip()
@@ -69,7 +68,7 @@ def split_paragraphs(text: str) -> list[str]:
 
 
 def split_sentences(text: str) -> list[str]:
-    """Persian-aware sentence split: . ! ? \u061f ! \u061b and newlines as boundaries."""
+    """Sentence split: . ! ? and newlines as boundaries."""
     parts = _SENTENCE_RE.split(text)
     sentences: list[str] = []
     for part in parts:

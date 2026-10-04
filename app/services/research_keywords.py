@@ -62,7 +62,7 @@ def _resource(row: dict[str, Any], key: str, plural: str) -> str:
 
 
 async def resolve_language(provider: Any, code: str) -> str:
-    """Language code ('en', 'fa', 'es') → 'languageConstants/1000'."""
+    """Language code ('en', 'es', 'de') → 'languageConstants/1000'."""
     code = (code or "").strip().lower()
     if not code or not code.replace("-", "").isalpha():
         raise PermanentError(f"research: invalid language code {code!r}")
@@ -81,7 +81,7 @@ async def resolve_language(provider: Any, code: str) -> str:
             return name
     raise PermanentError(
         f"Google Ads does not recognise the language '{code}'. "
-        "Use an ISO language code such as 'en', 'fa' or 'es'."
+        "Use an ISO language code such as 'en', 'es' or 'de'."
     )
 
 

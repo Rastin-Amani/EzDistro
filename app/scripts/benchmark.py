@@ -39,21 +39,14 @@ from tests.fake_providers import (  # noqa: E402
 from tests.fakes import FakePocketBase, default_unique_fields  # noqa: E402
 
 OUTLINE_JSON = (
-    '{"title": "\u0645\u0642\u0627\u0644\u0647 \u0634\u0645\u0627\u0631\u0647 {n}", "slug": "article-{n}", "sections": ['
+    '{"title": "Article {n}", "slug": "article-{n}", "sections": ['
     + ",".join(
-        '{"heading": "\u0628\u062e\u0634 {s}", "content_brief": "\u062e\u0644\u0627\u0635\u0647 \u0628\u062e\u0634 {s}"}'
+        '{"heading": "Section {s}", "content_brief": "Summary of section {s}"}'
         for s in range(1, 11)
     )
     + "]}"
 )
-SECTION_HTML = (
-    "<p>"
-    + (
-        "\u06a9\u0644\u0645\u0647 \u0645\u062d\u062a\u0648\u0627\u06cc \u0627\u06cc\u0646 \u0628\u062e\u0634 \u0628\u0631\u0627\u06cc \u0622\u0632\u0645\u0648\u0646 \u0628\u0627\u0631 "
-        * 40
-    ).strip()
-    + "</p>"
-)
+SECTION_HTML = "<p>" + ("content word for this section, load test " * 40).strip() + "</p>"
 
 
 def seed_environment(pb: FakePocketBase, project_id: str, n_topics: int) -> list[str]:
@@ -61,15 +54,15 @@ def seed_environment(pb: FakePocketBase, project_id: str, n_topics: int) -> list
     for ptype, content in (
         (
             "brand_voice",
-            "\u062a\u0648 \u0646\u0648\u06cc\u0633\u0646\u062f\u0647 \u0633\u0626\u0648 \u0647\u0633\u062a\u06cc.",
+            "You are an SEO writer.",
         ),
         (
             "outline_user",
-            "JSON \u0628\u0631\u06af\u0631\u062f\u0627\u0646 \u0628\u0631\u0627\u06cc \u0645\u0648\u0636\u0648\u0639 «{{ topic.title }}».",
+            "Return JSON for the topic \u00ab{{ topic.title }}\u00bb.",
         ),
-        ("section_user", "HTML \u0628\u0631\u06af\u0631\u062f\u0627\u0646."),
-        ("seo_rules", "\u0642\u0648\u0627\u0646\u06cc\u0646."),
-        ("internal_linking", "\u0644\u06cc\u0646\u06a9 \u062f\u0627\u062e\u0644\u06cc."),
+        ("section_user", "Return HTML."),
+        ("seo_rules", "Rules."),
+        ("internal_linking", "Internal links."),
     ):
         PromptRepo(pb).save_version(
             project_id=project_id, ptype=ptype, name="default", content=content
@@ -78,8 +71,8 @@ def seed_environment(pb: FakePocketBase, project_id: str, n_topics: int) -> list
     for i in range(n_topics):
         topic = TopicRepo(pb).create(
             project=project_id,
-            title=f"\u0645\u0648\u0636\u0648\u0639 {i}",
-            keyword=f"\u06a9\u0644\u06cc\u062f {i}",
+            title=f"Topic {i}",
+            keyword=f"Keyword {i}",
         )
         topics.append(topic["id"])
     return topics
@@ -96,7 +89,7 @@ class SyntheticLLM(FakeLLM):
         self.calls.append({"json_mode": json_mode, "user": user})
         if "JSON" in user or "json" in user:
             sections = ",".join(
-                f'{{"heading": "\u0628\u062e\u0634 {s}", "content_brief": "\u062e\u0644\u0627\u0635\u0647 \u0628\u062e\u0634 {s}"}}'
+                f'{{"heading": "Section {s}", "content_brief": "Summary of section {s}"}}'
                 for s in range(1, self.n_sections + 1)
             )
             return '{"title": "Article", "slug": "article", "sections": [' + sections + "]}"
@@ -127,9 +120,9 @@ async def run_load_test(
     pb = FakePocketBase(default_unique_fields())
     project = pb.collection("projects").create(
         {
-            "name": "\u067e",
+            "name": "Bench Project",
             "slug": "bench",
-            "language": "fa",
+            "language": "en",
             "status": "active",
             "timezone": "Asia/Tehran",
         }
@@ -145,8 +138,8 @@ async def run_load_test(
             payload={
                 "project_id": project["id"],
                 "source_url": f"https://site.test/{i}",
-                "title": f"\u0645\u0633\u062a\u0646\u062f {i}",
-                "chunk_text": "\u0645\u062a\u0646 \u0645\u0631\u062a\u0628\u0637 \u0628\u0631\u0627\u06cc \u0628\u0627\u0632\u06cc\u0627\u0628\u06cc",
+                "title": f"Doc {i}",
+                "chunk_text": "relevant text for retrieval",
             },
         )
         for i in range(1000)

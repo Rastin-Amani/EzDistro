@@ -68,26 +68,6 @@ STOPWORDS: frozenset[str] = frozenset(
         "with",
         "you",
         "your",
-        "از",
-        "برای",
-        "با",
-        "به",
-        "در",
-        "را",
-        "که",
-        "چی",
-        "چه",
-        "این",
-        "آن",
-        "هم",
-        "یا",
-        "و",
-        "یک",
-        "می",
-        "های",
-        "ها",
-        "است",
-        "بود",
     }
 )
 
@@ -207,7 +187,6 @@ def _demo() -> None:
     assert similarity("gym software", "restaurant accounting") < 0.2
     assert similarity("gym software", "gym software") == 1.0
     assert head_term("best gym management software") in {"management", "software"}
-    assert tokens("کلاس مدیریت باشگاه")[:2] == ["کلاس", "مدیریت"]
 
 
 if __name__ == "__main__":

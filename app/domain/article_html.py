@@ -25,12 +25,12 @@ _BLANK_RE = re.compile(r"\n{3,}")
 
 
 def slugify(text: str, fallback: str = "post") -> str:
-    """Persian/ASCII-aware slug: keep letters/digits/ZWNJ, others → '-', lowercase."""
+    """Unicode-aware slug: keep letters/digits, others → '-', lowercase."""
     if not text:
         return fallback
     text = unicodedata.normalize("NFKC", text.strip())
     text = text.replace("\u200c", "-")
-    text = re.sub(r"[^\w\u0600-\u06FF-]+", "-", text, flags=re.UNICODE)
+    text = re.sub(r"[^\w-]+", "-", text, flags=re.UNICODE)
     text = re.sub(r"-{2,}", "-", text).strip("-")
     return (text or fallback).lower()[:120]
 
@@ -117,7 +117,7 @@ def build_article_html(
     for i, section in enumerate(sections, start=1):
         heading = normalize_article_html(section.get("heading") or "")
         if not heading:
-            heading = f"\u0628\u062e\u0634 {i}"
+            heading = f"Section {i}"
         heading = _dedupe_heading(heading, used_headings)
         raw = normalize_article_html(section.get("content") or "")
         content = sanitize_html(raw) if sanitize else raw
@@ -128,7 +128,7 @@ def build_article_html(
 
     links = _valid_internal_links(internal_links or [])
     if links:
-        parts.append("<h2>\u0645\u0637\u0627\u0644\u0628 \u0645\u0631\u062a\u0628\u0637</h2>")
+        parts.append("<h2>Related</h2>")
         items = "".join(
             f'<li><a href="{_escape(link["url"])}" target="_blank" rel="noopener">{_escape(link["anchor_text"] or link["title"])}</a></li>'
             for link in links

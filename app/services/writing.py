@@ -577,10 +577,7 @@ async def _generate_outline(ctx: JobContext, topic: dict[str, Any]) -> dict[str,
     else:
         user = _OUTLINE_TASK_FALLBACK
         if retrieval["context"]:
-            user += (
-                "\n\n## \u0632\u0645\u06cc\u0646\u0647 \u0628\u0627\u0632\u06cc\u0627\u0628\u06cc (\u0641\u0642\u0637 \u0646\u062a\u0627\u06cc\u062c \u0645\u0631\u062a\u0628\u0637)\n"
-                + retrieval["context"]
-            )
+            user += "\n\n## Retrieval context (relevant results only)\n" + retrieval["context"]
 
     system_raw = ctx.config.prompt("outline_system") or ctx.config.prompt("brand_voice")
     system = None
@@ -1049,10 +1046,7 @@ async def _generate_section(
         user = _SECTION_TASK_FALLBACK
         links = context["internal_links"]
         if links:
-            user += (
-                "\n\n## \u0644\u06cc\u0646\u06a9\u200c\u0647\u0627\u06cc \u062f\u0627\u062e\u0644\u06cc \u0627\u06cc\u0646 \u0628\u062e\u0634 (\u062f\u0631 \u0635\u0648\u0631\u062a \u0646\u06cc\u0627\u0632 \u0627\u0633\u062a\u0641\u0627\u062f\u0647 \u06a9\u0646)\n"
-                + links
-            )
+            user += "\n\n## Internal links for this section (use only if needed)\n" + links
 
     system_raw = ctx.config.prompt("section_system") or ctx.config.prompt("brand_voice")
     system = None
@@ -1127,20 +1121,21 @@ def _generation_params(ctx: JobContext, role: str = "outline") -> GenerationPara
 
 
 _OUTLINE_TASK_FALLBACK = (
-    "\u062e\u0631\u0648\u062c\u06cc \u0631\u0627 \u0641\u0642\u0637 \u0628\u0647\u200c\u0635\u0648\u0631\u062a JSON \u0645\u0639\u062a\u0628\u0631 \u0628\u0627 \u0627\u06cc\u0646 \u0633\u0627\u062e\u062a\u0627\u0631 \u0628\u062f\u0647:\n"
+    "Return only valid JSON in this structure:\n"
     '{"title": string, "slug": string, "sections": ['
     '{"heading": string, "content_brief": string, "internal_links": [{"title": string, "url": string, "anchor_text": string}]}'
     "]}\n"
-    "\u0633\u0631\u0641\u0635\u0644\u200c\u0647\u0627 \u0645\u062e\u062a\u0635\u0631 \u0648 \u062d\u0627\u0648\u06cc \u06a9\u0644\u0645\u0647 \u06a9\u0644\u06cc\u062f\u06cc \u0628\u0627\u0634\u0646\u062f\u061b title \u0628\u0627\u06cc\u062f \u0639\u06cc\u0646\u0627\u064b \u0634\u0627\u0645\u0644 \u06a9\u0644\u0645\u0647 \u06a9\u0644\u06cc\u062f\u06cc \u0628\u0627\u0634\u062f \u0648 slug \u0627\u0632 \u0631\u0648\u06cc \u0622\u0646 "
-    "\u0633\u0627\u062e\u062a\u0647 \u0634\u0648\u062f \u062a\u0627 URL \u062d\u0627\u0648\u06cc \u06a9\u0644\u0645\u0647 \u06a9\u0644\u06cc\u062f\u06cc \u0628\u0627\u0634\u062f\u061b \u062f\u0633\u062a\u200c\u06a9\u0645 \u06cc\u06a9 \u062a\u06cc\u062a\u0631 \u0628\u062e\u0634 \u062d\u0627\u0648\u06cc \u06a9\u0644\u0645\u0647 \u06a9\u0644\u06cc\u062f\u06cc \u0628\u0627\u0634\u062f\u061b "
-    "\u0647\u06cc\u0686 \u062a\u0648\u0636\u06cc\u062d\u06cc \u062e\u0627\u0631\u062c \u0627\u0632 JSON \u0646\u0646\u0648\u06cc\u0633."
+    "Headings must be concise and contain the keyword; the title must contain the keyword verbatim and the slug must be derived from it "
+    "so the URL contains the keyword; at least one section heading must contain the keyword; "
+    "Write no explanation outside the JSON."
 )
 
 _SECTION_TASK_FALLBACK = (
-    "\u0641\u0642\u0637 HTML \u0645\u0639\u062a\u0628\u0631 \u0628\u0631\u0627\u06cc \u0628\u062e\u0634 \u0628\u0631\u06af\u0631\u062f\u0627\u0646: \u062a\u06cc\u062a\u0631 \u0628\u0627 <h2> \u0648 \u0645\u062d\u062a\u0648\u0627 \u0628\u0627 <p>/<ul>/<ol>/<strong>/<em>/<a>\u061b "
-    "\u0628\u062f\u0648\u0646 \u0627\u0633\u062a\u0627\u06cc\u0644 inline\u060c \u0628\u062f\u0648\u0646 \u062a\u06cc\u062a\u0631 <h1>\u060c \u0628\u062f\u0648\u0646 fence \u0648 \u0628\u062f\u0648\u0646 \u062a\u0648\u0636\u06cc\u062d \u0627\u0636\u0627\u0641\u0647. "
-    "\u0647\u0631 \u0628\u062e\u0634 \u062f\u0633\u062a\u200c\u06a9\u0645 \u06f1\u06f5\u06f0 \u06a9\u0644\u0645\u0647 \u0648 \u062f\u0633\u062a\u200c\u06a9\u0645 \u06cc\u06a9 \u0644\u06cc\u0633\u062a (ul/ol) \u062f\u0627\u0634\u062a\u0647 \u0628\u0627\u0634\u062f\u061b \u0628\u062e\u0634 \u0627\u0648\u0644 \u0645\u0642\u0627\u0644\u0647 \u0628\u0627\u06cc\u062f \u0627\u0648\u0644\u06cc\u0646 \u062c\u0645\u0644\u0647\u200c\u0627\u0634 \u0631\u0627 "
-    "\u0628\u0627 \u06a9\u0644\u0645\u0647 \u06a9\u0644\u06cc\u062f\u06cc \u0634\u0631\u0648\u0639 \u06a9\u0646\u062f\u061b \u06a9\u0644\u0645\u0647 \u06a9\u0644\u06cc\u062f\u06cc \u0631\u0627 \u0637\u0628\u06cc\u0639\u06cc \u0648 \u062d\u062f\u0648\u062f \u06f1 \u062a\u0627 \u06f2 \u0628\u0627\u0631 \u062f\u0631 \u0647\u0631 \u06f1\u06f0\u06f0 \u06a9\u0644\u0645\u0647 \u062a\u06a9\u0631\u0627\u0631 \u06a9\u0646."
+    "Return only valid HTML for the section: heading in <h2> and content in <p>/<ul>/<ol>/<strong>/<em>/<a>; "
+    "use <table> only when a real comparison genuinely helps, and <blockquote> only for a genuine quotation; "
+    "No inline styles, no <h1>, no code fences and no extra explanation. "
+    "Each section must have at least 150 words and at least one list (ul/ol); the first section must start its first sentence "
+    "with the keyword; repeat the keyword naturally about 1 to 2 times per 100 words."
 )
 
 

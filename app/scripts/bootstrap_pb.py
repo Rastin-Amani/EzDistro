@@ -1579,7 +1579,7 @@ def seed_admin_user(pb: PocketBase) -> None:
             "password": password,
             "passwordConfirm": password,
             "role": "admin",
-            "displayName": "\u0645\u062f\u06cc\u0631 EzDistro",
+            "displayName": "EzDistro Admin",
             "verified": True,
         }
     )

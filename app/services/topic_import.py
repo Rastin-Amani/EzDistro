@@ -4,8 +4,8 @@ Pure, testable parsing layer plus a thin PocketBase write path:
 
 - ``parse_delimited``: auto-detects tab/comma/semicolon/pipe CSV (quote aware)
   and returns header-inclusive rows.
-- ``detect_columns`` / ``build_column_map``: recognizes Persian/English header
-  aliases (Title/\u0639\u0646\u0648\u0627\u0646, Related Pillar/\u0633\u062a\u0648\u0646, …) so pasted Excel/CSV columns map
+- ``detect_columns`` / ``build_column_map``: recognizes English header
+  aliases (Title, Related Pillar, …) so pasted Excel/CSV columns map
   without manual setup; every column can still be re-mapped by the user.
 - ``import_rows``: creates topics, skipping rows whose normalized title or
   keyword already exists in the project (or earlier in the same batch), and
@@ -52,60 +52,32 @@ HEADER_ALIASES: dict[str, set[str]] = {
         "Topic title",
         "title",
         "topic",
-        "\u062a\u06cc\u062a\u0631",
-        "\u0639\u0646\u0648\u0627\u0646",
-        "\u0639\u0646\u0648\u0627\u0646 \u0645\u0642\u0627\u0644\u0647",
-        "\u0639\u0646\u0648\u0627\u0646 \u0645\u0648\u0636\u0648\u0639",
-        "\u0645\u0648\u0636\u0648\u0639",
-        "\u0645\u0648\u0636\u0648\u0639 \u0645\u0642\u0627\u0644\u0647",
     },
     "keyword": {
         "Key",
         "Keyword",
         "keyword",
-        "\u06a9\u0644\u0645\u0647 \u06a9\u0644\u06cc\u062f\u06cc",
-        "\u06a9\u0644\u064a\u062f\u0648\u0627\u0698\u0647",
-        "\u06a9\u0644\u06cc\u062f",
-        "\u06a9\u0644\u06cc\u062f \u0648\u0627\u0698\u0647",
-        "\u06a9\u0644\u06cc\u062f\u0648\u0627\u0698\u0647",
     },
     "pillar": {
         "pillar",
         "pillar page",
         "related pillar",
-        "\u0633\u062a\u0648\u0646",
-        "\u0633\u062a\u0648\u0646 \u0627\u0635\u0644\u06cc",
-        "\u0633\u062a\u0648\u0646 \u0645\u0631\u062a\u0628\u0637",
-        "\u067e\u06cc\u0644\u0627\u0631",
     },
     "cluster": {
         "Topic cluster",
         "cluster",
-        "\u062e\u0648\u0634\u0647",
-        "\u062e\u0648\u0634\u0647 \u0645\u062d\u062a\u0648\u0627",
-        "\u062e\u0648\u0634\u0647 \u0645\u0648\u0636\u0648\u0639",
-        "\u06a9\u0644\u0627\u0633\u062a\u0631",
     },
     "type": {
         "Type",
         "type",
-        "\u0646\u0648\u0639",
-        "\u0646\u0648\u0639 \u0645\u062d\u062a\u0648\u0627",
-        "\u0646\u0648\u0639 \u0645\u0642\u0627\u0644\u0647",
     },
     "priority": {
         "Priority",
         "priority",
-        "\u0627\u0644\u0648\u06cc\u062a",
-        "\u0627\u0648\u0644\u0648\u06cc\u062a",
-        "\u0627\u0648\u0644\u0648\u06cc\u062a \u0627\u0646\u062a\u0634\u0627\u0631",
     },
     "week": {
         "Week",
         "week",
-        "\u0647\u0641\u062a\u0647",
-        "\u0647\u0641\u062a\u0647 \u0627\u0646\u062a\u0634\u0627\u0631",
-        "\u0647\u0641\u062a\u0647 \u0628\u0631\u0646\u0627\u0645\u0647",
     },
     "url": {
         "Link",
@@ -113,10 +85,6 @@ HEADER_ALIASES: dict[str, set[str]] = {
         "link",
         "permalink",
         "url",
-        "\u0622\u062f\u0631\u0633",
-        "\u0622\u062f\u0631\u0633 \u0645\u0642\u0627\u0644\u0647",
-        "\u0644\u06cc\u0646\u06a9",
-        "\u067e\u06cc\u0648\u0646\u062f",
     },
 }
 
@@ -131,37 +99,14 @@ _IGNORABLE_HEADERS = {
     "published",
     "status",
     "written",
-    "\u0627\u06cc \u062f\u06cc",
-    "\u0631\u062f\u06cc\u0641",
-    "\u0634\u0646\u0627\u0633\u0647",
-    "\u0645\u0646\u062a\u0634\u0631 \u0634\u062f\u0647",
-    "\u0645\u0646\u062a\u0634\u0631\u0634\u062f\u0647",
-    "\u0646\u0648\u0634\u062a\u0647 \u0634\u062f\u0647",
-    "\u0646\u0648\u0634\u062a\u0647\u0634\u062f\u0647",
-    "\u0648\u0636\u0639\u06cc\u062a",
 }
 
 TYPE_LABELS = {
     "Article": "article",
     "Pillar page": "pillar_page",
-    "\u067e\u06cc\u0644\u0627\u0631 \u067e\u06cc\u062c": "pillar_page",
     "Guide": "guide",
-    "\u0635\u0641\u062d\u0647 \u0631\u0627\u0647\u0646\u0645\u0627": "guide",
     "News": "news",
-    "\u0627\u062e\u0628\u0627\u0631": "news",
-    "\u0645\u0642\u0627\u0644\u0647 \u0639\u0644\u0645\u06cc": "article",
-    "\u0645\u0642\u0627\u0644\u0647 \u062a\u062d\u0644\u06cc\u0644\u06cc": "article",
-    "\u0645\u0642\u0627\u0644\u0647 \u0622\u0645\u0648\u0632\u0634\u06cc": "article",
-    "\u0645\u0642\u0627\u0644\u0647": "article",
-    "\u0635\u0641\u062d\u0647 \u0633\u062a\u0648\u0646": "pillar_page",
-    "\u0631\u0627\u0647\u0646\u0645\u0627": "guide",
-    "\u062e\u0628\u0631": "news",
 }
-
-_FA_DIGITS = str.maketrans(
-    "\u06f0\u06f1\u06f2\u06f3\u06f4\u06f5\u06f6\u06f7\u06f8\u06f9\u0660\u0661\u0662\u0663\u0664\u0665\u0666\u0667\u0668\u0669",
-    "01234567890123456789",
-)
 
 
 # ---------------------------------------------------------------------------
@@ -169,9 +114,7 @@ _FA_DIGITS = str.maketrans(
 # ---------------------------------------------------------------------------
 def _normalize_alias(value: str) -> str:
     """Normalize a header cell for alias matching (lowercase, no spaces)."""
-    return " ".join(
-        str(value).strip().lower().replace("\u064a", "\u06cc").replace("\u0643", "\u06a9").split()
-    )
+    return " ".join(str(value).strip().lower().split())
 
 
 _ALIAS_LOOKUP: dict[str, str] = {}
@@ -181,8 +124,8 @@ for _field, _aliases in HEADER_ALIASES.items():
 
 
 def _to_int(value: Any) -> int | None:
-    """Parse a CSV cell into an int (Persian digits, stray symbols tolerated)."""
-    text = str(value or "").translate(_FA_DIGITS).strip()
+    """Parse a CSV cell into an int (stray symbols tolerated)."""
+    text = str(value or "").strip()
     if not text:
         return None
     digits = "".join(ch for ch in text if ch.isdigit())
@@ -212,14 +155,6 @@ def detect_delimiter(text: str) -> str:
             (";", _count_outside_quotes(line, ";")),
             ("|", _count_outside_quotes(line, "|")),
         ]
-        # Persian \u060c / \u061b separators (Excel-pasted Persian CSVs). Trusted when
-        # the line has no ASCII spaces OR the comma appears ≥2 times — a
-        # sentence with a single \u060c must stay one column, but a 5-column
-        # Persian header row (\u0647\u0641\u062a\u0647\u060c\u0639\u0646\u0648\u0627\u0646\u060c…) is unambiguous.
-        fa_comma = _count_outside_quotes(line, "\u060c")
-        if " " not in line or fa_comma >= 2:
-            counts.append(("\u060c", fa_comma))
-            counts.append(("\u061b", _count_outside_quotes(line, "\u061b")))
         # tab wins on any tab; otherwise the most frequent of the rest
         if counts[0][1] > 0:
             return "\t"
@@ -343,8 +278,6 @@ def build_payload(
     if topic_type:
         topic_type = TYPE_LABELS.get(topic_type, topic_type)
         if topic_type not in TOPIC_TYPES:
-            # Editorial CSVs carry free-form type labels (\u0631\u0627\u0647\u0646\u0645\u0627\u06cc \u0639\u06cc\u0628\u200c\u06cc\u0627\u0628\u06cc,
-            # \u067e\u0631\u0633\u0634 \u0648 \u067e\u0627\u0633\u062e\u060c …). Coerce to the default instead of failing the
             # row; the import summary reports how many rows were coerced.
             topic_type = "article"
             coerced = True

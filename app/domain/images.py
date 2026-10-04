@@ -246,7 +246,7 @@ def image_filename(
     role_part = "" if section_part else role
     parts = [p for p in (base, role_part, section_part) if p]
     if not base:
-        # Persian-only title: fall back to ids so the URL stays ASCII.
+        # Non-ASCII-only title: fall back to ids so the URL stays ASCII.
         parts = [ascii_slug(f"image-{article_id[:8]}", fallback="image"), role]
     name = "-".join(parts)
     if image_id:
