@@ -132,6 +132,11 @@ async def handle_publish_article(ctx: JobContext) -> dict[str, Any]:
             publisher,
             allow_missing_cover=bool(ctx.payload().get("publishWithoutCover")),
         )
+        # Convert to Gutenberg blocks so tables, quotes, images and the Related
+        # list obey the WordPress theme instead of rendering as raw text.
+        from app.domain.gutenberg import to_gutenberg_blocks
+
+        html = to_gutenberg_blocks(html)
         existing_wp_id = int(article.get("wordpressPostId") or 0)
         if existing_wp_id:
             # Safe publishing: UPDATE the existing post instead of creating a duplicate.
