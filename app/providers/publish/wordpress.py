@@ -53,6 +53,12 @@ def _to_wp_post(item: dict[str, Any]) -> WPPost:
 class WordPressPublisher:
     category = "publisher"
     provider_name = PROVIDER_NAME
+    PROVIDER_META: dict[str, Any] = {
+        "description": "WordPress REST API — publishes posts with an Application Password",
+        "requires_api_key": True,
+        "supports_model_listing": False,
+        "default_base_url": "",
+    }
 
     def __init__(
         self,

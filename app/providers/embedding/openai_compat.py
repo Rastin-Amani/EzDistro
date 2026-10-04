@@ -25,6 +25,12 @@ BATCH_SIZE = 32
 class OpenAICompatEmbedding(MetricMixin):
     category = "embedding"
     provider_name = PROVIDER_NAME
+    PROVIDER_META: dict[str, Any] = {
+        "description": "OpenAI-compatible /embeddings (OpenAI, 9Router, Ollama, any compatible endpoint)",
+        "requires_api_key": True,
+        "supports_model_listing": False,
+        "default_base_url": DEFAULT_BASE,
+    }
 
     def __init__(
         self,

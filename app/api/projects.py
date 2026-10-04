@@ -132,6 +132,58 @@ def _default_provider_for(category: str) -> str:
     return DEFAULT_PROVIDER.get(category, "openai_compat")
 
 
+def _connection_option(integration: dict[str, Any]) -> dict[str, Any]:
+    """One Connections-tab row as a pickable provider option."""
+    config = integration.get("configuration") or {}
+    return {
+        "id": integration.get("id") or "",
+        "provider": integration.get("provider") or "",
+        "name": integration.get("displayName") or integration.get("provider") or "",
+        "model": integration.get("model") or config.get("model") or "",
+    }
+
+
+def _connection_options(
+    integrations: list[dict[str, Any]], category: str, *, active_only: bool = True
+) -> list[dict[str, Any]]:
+    return [
+        _connection_option(i)
+        for i in integrations
+        if i.get("category") == category and (i.get("enabled") or not active_only)
+    ]
+
+
+def _provider_select_options(
+    connections: list[dict[str, Any]], stored: str
+) -> list[dict[str, Any]]:
+    """Connection options for a provider select, tolerant of legacy adapter names.
+
+    A stored adapter name (``openai_compat``) selects the first connection using
+    that adapter; a stored connection id selects itself. Anything else is kept as
+    a legacy option so a saved value is never silently dropped.
+    """
+    stored = str(stored or "")
+    options: list[dict[str, Any]] = []
+    matched_id = ""
+    if stored:
+        for c in connections:
+            if stored == c["id"]:
+                matched_id = c["id"]
+                break
+        if not matched_id:
+            for c in connections:
+                if stored == c["provider"]:
+                    matched_id = c["id"]
+                    break
+    for c in connections:
+        options.append({**c, "selected": c["id"] == matched_id})
+    if stored and not matched_id:
+        options.append(
+            {"id": stored, "provider": "", "name": stored, "model": "", "selected": True}
+        )
+    return options
+
+
 def health_labels() -> dict[str, str]:
     return {
         "unknown": ("Unknown"),
@@ -388,14 +440,47 @@ def _tab_context(
         from app.providers.registry import ProviderRegistry
 
         registry = ProviderRegistry(pb)
-        context["settings"] = ProjectSettingsRepo(pb).get_for_project(project_id)
-        context["schedules"] = ScheduleRepo(pb).list_for_project(project_id)
+        loaded = fanout(
+            {
+                "settings": lambda: ProjectSettingsRepo(pb).get_for_project(project_id),
+                "schedules": lambda: ScheduleRepo(pb).list_for_project(project_id),
+                "integrations": lambda: IntegrationRepo(pb).list_for_project(project_id),
+            }
+        )
+        settings = loaded["settings"]
+        integrations = loaded["integrations"]
+        context["settings"] = settings
+        context["schedules"] = loaded["schedules"]
         context["llm_providers"] = registry.available_providers("llm")
         context["reranker_providers"] = registry.available_providers("reranker")
+        context["reranker_connections"] = _provider_select_options(
+            _connection_options(integrations, "reranker"), settings.get("rerankerProvider") or ""
+        )
+        context["embedding_connection"] = next(
+            iter(_connection_options(integrations, "embedding")), None
+        )
+        from app.providers.registry import EMBEDDING_MODEL_DIMENSIONS
+
+        context["embedding_model_dimensions"] = EMBEDDING_MODEL_DIMENSIONS
+        from app.domain.geo import country_options, locale_options
+
+        context["countries"] = country_options(settings.get("targetCountry") or "")
+        context["locales"] = locale_options(settings.get("targetLocale") or "")
     elif tab == "integrations":
         context["integrations"] = IntegrationRepo(pb).list_for_project(project_id)
         context["categories"] = integration_categories()
         context["health_labels"] = health_labels()
+        from app.providers.registry import ProviderRegistry
+
+        registry = ProviderRegistry(pb)
+        context["provider_meta"] = {
+            category: registry.provider_metadata(category) for category in context["categories"]
+        }
+        from app.providers.registry import DEFAULT_PROVIDER
+
+        context["provider_defaults"] = {
+            category: DEFAULT_PROVIDER.get(category, "") for category in context["categories"]
+        }
     elif tab == "prompts":
         from app.domain.prompt_render import variable_labels
 
@@ -457,9 +542,24 @@ def _tab_context(
         from app.repositories.app_settings import AppSettingsRepo
 
         registry = ProviderRegistry(pb)
-        context["settings"] = ProjectSettingsRepo(pb).get_for_project(project_id)
+
+        loaded = fanout(
+            {
+                "settings": lambda: ProjectSettingsRepo(pb).get_for_project(project_id),
+                "global_defaults": lambda: AppSettingsRepo(pb).get_defaults().get("llm") or {},
+                "integrations": lambda: IntegrationRepo(pb).list_for_project(project_id),
+            }
+        )
+        settings = loaded["settings"]
+        context["settings"] = settings
         context["llm_meta"] = registry.provider_metadata("llm")
-        context["global_defaults"] = AppSettingsRepo(pb).get_defaults().get("llm") or {}
+        context["global_defaults"] = loaded["global_defaults"]
+        connections = _connection_options(loaded["integrations"], "llm")
+        context["llm_connections"] = connections
+        context["role_options"] = {
+            role: _provider_select_options(connections, settings.get(f"{role}Provider") or "")
+            for role in ("outline", "section", "meta", "review")
+        }
         context["roles"] = [
             ("outline", ("Outline model"), True),
             ("section", ("Section writer model"), True),
@@ -472,20 +572,40 @@ def _tab_context(
         from app.providers.registry import ProviderRegistry
 
         registry = ProviderRegistry(pb)
-        context["settings"] = ProjectSettingsRepo(pb).get_for_project(project_id)
+        loaded = fanout(
+            {
+                "settings": lambda: ProjectSettingsRepo(pb).get_for_project(project_id),
+                "integrations": lambda: IntegrationRepo(pb).list_for_project(project_id),
+            }
+        )
+        settings = loaded["settings"]
+        context["settings"] = settings
         providers = registry.available_providers("image")
         context["image_provider_options"] = [(p, p) for p in providers]
         context["image_fallback_options"] = [("", ("No fallback"))] + [(p, p) for p in providers]
+        connections = _connection_options(loaded["integrations"], "image")
+        context["image_connections"] = connections
+        context["image_role_options"] = {
+            field: _provider_select_options(connections, settings.get(field) or "")
+            for field in ("imageCoverProvider", "imageInteriorProvider", "imageFallbackProvider")
+        }
     elif tab == "jobs":
         context["jobs"] = JobRepo(pb).list_for_project(project_id, per_page=30)
     elif tab == "indexing":
         from app.services.metrics import project_metrics, query_provider_metrics
 
-        context["runs"] = IndexRunRepo(pb).list_for_project(project_id, per_page=10)
-        context["documents"] = DocumentRepo(pb).list_for_project(project_id, per_page=10)
-        context["indexed_count"] = DocumentRepo(pb).count_indexed(project_id)
+        loaded = fanout(
+            {
+                "runs": lambda: IndexRunRepo(pb).list_for_project(project_id, per_page=10),
+                "documents": lambda: DocumentRepo(pb).list_for_project(project_id, per_page=10),
+                "indexed_count": lambda: DocumentRepo(pb).count_indexed(project_id),
+                "provider_metrics": lambda: query_provider_metrics(
+                    pb, project_id=project_id, days=7
+                ),
+            }
+        )
+        context.update(loaded)
         context["metrics"] = project_metrics(pb, project_id)
-        context["provider_metrics"] = query_provider_metrics(pb, project_id=project_id, days=7)
     elif tab == "publishing":
         context["records"] = PublishingRunRepo(pb).list_for_project(project_id, per_page=30)
     elif tab == "logs":
@@ -1640,9 +1760,6 @@ def save_ai_models(
     meta_model: str = Form(""),
     review_provider: str = Form(""),
     review_model: str = Form(""),
-    # optional inline connection (custom/openai-compat endpoints)
-    base_url: str = Form(""),
-    api_key: str = Form(""),
 ):
     """Save per-role AI model configuration.
 
@@ -1683,63 +1800,22 @@ def save_ai_models(
     }
     settings.upsert(project_id, data)
 
-    # inline connection (custom/openai-compat endpoints): upsert an llm integration
-    if base_url or api_key:
-        _upsert_llm_integration(
-            request, project_id, outline_provider or section_provider, base_url, api_key, user
-        )
-
     _audit_model_changes(request, project_id, user, before, settings.get_for_project(project_id))
     return success_response("Models saved")
 
 
-def _upsert_llm_integration(
-    request: Request,
-    project_id: str,
-    provider: str,
-    base_url: str,
-    api_key: str,
-    user: dict[str, Any],
-) -> None:
-    """Create/update an llm integration for the given provider (secrets encrypted)."""
-    from app.services.secrets import get_secrets_service as _secrets
-
-    secrets = _secrets()
-    repo = IntegrationRepo(request.state.pb)
-    provider_name = safe_str(provider) or "custom"
-    existing = repo.first(
-        filter=f'project="{project_id}" && category="llm" && provider="{provider_name}"'
-    )
-    configuration: dict[str, Any] = {
-        "base_url": normalize_base_url(safe_str(base_url)),
-        "model": "",
-    }
-    if api_key:
-        import json
-
-        secrets_enc = secrets.encrypt(json.dumps({"api_key": api_key}, ensure_ascii=False))
-        configuration["masked"] = secrets.mask(api_key)
-    else:
-        secrets_enc = existing.get("secretsEnc") or "" if existing else ""
-        configuration["masked"] = (
-            (existing.get("configuration") or {}).get("masked") if existing else ""
-        )
-    if existing:
-        repo.update(
-            existing["id"],
-            {"configuration": configuration, "secretsEnc": secrets_enc, "enabled": True},
-        )
-    else:
-        repo.create(
-            project=project_id,
-            category="llm",
-            provider=provider_name,
-            display_name=f"LLM ({provider_name})",
-            configuration=configuration,
-            secrets_enc=secrets_enc,
-            enabled=True,
-            created_by=user.get("id", ""),
-        )
+def _provider_display(pb: Any, value: str) -> str:
+    """Connection display name for a stored provider value (id or adapter name)."""
+    value = str(value or "")
+    if not value:
+        return ""
+    try:
+        integration = IntegrationRepo(pb).get(value)
+    except Exception:
+        integration = None
+    if integration:
+        return str(integration.get("displayName") or value)
+    return value
 
 
 def _audit_model_changes(
@@ -1751,14 +1827,17 @@ def _audit_model_changes(
 ) -> None:
     """Append-only audit event per role whose provider/model changed."""
     events = JobEventRepo(request.state.pb)
+    pb = request.state.pb
     for role in ("outline", "section", "meta", "review"):
         p_old, p_new = before.get(f"{role}Provider") or "", after.get(f"{role}Provider") or ""
         m_old, m_new = before.get(f"{role}Model") or "", after.get(f"{role}Model") or ""
         if (p_old, m_old) != (p_new, m_new):
+            old_label = _provider_display(pb, p_old) or "—"
+            new_label = _provider_display(pb, p_new) or "—"
             events.add(
                 project=project_id,
                 event_type="config.model_changed",
-                message=f"model changed for {role}: {p_old or '—'}/{m_old or '—'} → {p_new or '—'}/{m_new or '—'}",
+                message=f"model changed for {role}: {old_label}/{m_old or '—'} → {new_label}/{m_new or '—'}",
                 metadata={
                     "role": role,
                     "previous": {"provider": p_old, "model": m_old},

@@ -48,6 +48,12 @@ class QdrantStore:
 
     category = "vector_store"
     provider_name = PROVIDER_NAME
+    PROVIDER_META: dict[str, Any] = {
+        "description": "Qdrant vector database — stores the project's chunk vectors",
+        "requires_api_key": False,
+        "supports_model_listing": False,
+        "default_base_url": "http://127.0.0.1:6333",
+    }
 
     def __init__(
         self,

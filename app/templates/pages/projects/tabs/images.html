@@ -14,17 +14,101 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-                    {{ f.select('image_cover_provider', ('Cover provider'), image_provider_options, settings.imageCoverProvider or 'gemini', ('Default: Gemini for the article cover image.')) }}
+                    {% set cover_opts = image_role_options.imageCoverProvider %}
 
-                    {{ f.text('image_cover_model', ('Cover model'), settings.imageCoverModel or 'gemini-3-pro-image', ('Model ID — data-driven, never hardcoded in the pipeline.')) }}
+                    {% set cover_sel = (cover_opts | selectattr('selected') | first) if cover_opts else none %}
 
-                    {{ f.select('image_interior_provider', ('In-text image provider'), image_provider_options, settings.imageInteriorProvider or 'bfl', ('Default: Black Forest Labs (FLUX) for in-text images.')) }}
+                    <label class="form-control w-full">
 
-                    {{ f.text('image_interior_model', ('In-text image model'), settings.imageInteriorModel or 'flux-2-klein-9b', ('e.g. FLUX.2 Klein 9B — per-megapixel pricing.')) }}
+                        <div class="label px-0 pb-1.5"><span class="label-text font-medium text-sm text-base-content/80">{{ ('Cover provider') }}</span></div>
 
-                    {{ f.select('image_fallback_provider', ('Fallback provider (optional)'), image_fallback_options, settings.imageFallbackProvider or '', ('Tried when the primary provider fails.')) }}
+                        <select name="image_cover_provider" class="select select-bordered w-full" data-provider-model="#image_cover_model">
 
-                    {{ f.text('image_fallback_model', ('Fallback model'), settings.imageFallbackModel or '', ('Empty = no fallback.')) }}
+                            <option value="">{{ ('— Select a connection —') }}</option>
+
+                            {% for opt in cover_opts %}
+
+                            <option value="{{ opt.id }}" data-model="{{ opt.model }}" {{ 'selected' if opt.selected }}>{{ opt.name }} — {{ opt.provider }}</option>
+
+                            {% endfor %}
+
+                        </select>
+
+                        {% if not cover_opts %}<p class="text-xs opacity-50 mt-1">{{ ('No image connection yet — add one on the Connections tab.') }}</p>{% endif %}
+
+                    </label>
+
+                    <label class="form-control w-full">
+
+                        <div class="label px-0 pb-1.5"><span class="label-text font-medium text-sm text-base-content/80">{{ ('Cover model') }}</span></div>
+
+                        <input id="image_cover_model" name="image_cover_model" class="input input-bordered w-full" dir="ltr" value="{{ settings.imageCoverModel or (cover_sel.model if cover_sel else '') }}" placeholder="gemini-3-pro-image" />
+
+                    </label>
+
+
+
+                    {% set interior_opts = image_role_options.imageInteriorProvider %}
+
+                    {% set interior_sel = (interior_opts | selectattr('selected') | first) if interior_opts else none %}
+
+                    <label class="form-control w-full">
+
+                        <div class="label px-0 pb-1.5"><span class="label-text font-medium text-sm text-base-content/80">{{ ('In-text image provider') }}</span></div>
+
+                        <select name="image_interior_provider" class="select select-bordered w-full" data-provider-model="#image_interior_model">
+
+                            <option value="">{{ ('— Select a connection —') }}</option>
+
+                            {% for opt in interior_opts %}
+
+                            <option value="{{ opt.id }}" data-model="{{ opt.model }}" {{ 'selected' if opt.selected }}>{{ opt.name }} — {{ opt.provider }}</option>
+
+                            {% endfor %}
+
+                        </select>
+
+                        {% if not interior_opts %}<p class="text-xs opacity-50 mt-1">{{ ('No image connection yet — add one on the Connections tab.') }}</p>{% endif %}
+
+                    </label>
+
+                    <label class="form-control w-full">
+
+                        <div class="label px-0 pb-1.5"><span class="label-text font-medium text-sm text-base-content/80">{{ ('In-text image model') }}</span></div>
+
+                        <input id="image_interior_model" name="image_interior_model" class="input input-bordered w-full" dir="ltr" value="{{ settings.imageInteriorModel or (interior_sel.model if interior_sel else '') }}" placeholder="flux-2-klein-9b" />
+
+                    </label>
+
+
+
+                    {% set fallback_opts = image_role_options.imageFallbackProvider %}
+
+                    <label class="form-control w-full">
+
+                        <div class="label px-0 pb-1.5"><span class="label-text font-medium text-sm text-base-content/80">{{ ('Fallback provider (optional)') }}</span></div>
+
+                        <select name="image_fallback_provider" class="select select-bordered w-full" data-provider-model="#image_fallback_model">
+
+                            <option value="">{{ ('No fallback') }}</option>
+
+                            {% for opt in fallback_opts %}
+
+                            <option value="{{ opt.id }}" data-model="{{ opt.model }}" {{ 'selected' if opt.selected }}>{{ opt.name }} — {{ opt.provider }}</option>
+
+                            {% endfor %}
+
+                        </select>
+
+                    </label>
+
+                    <label class="form-control w-full">
+
+                        <div class="label px-0 pb-1.5"><span class="label-text font-medium text-sm text-base-content/80">{{ ('Fallback model') }}</span></div>
+
+                        <input id="image_fallback_model" name="image_fallback_model" class="input input-bordered w-full" dir="ltr" value="{{ settings.imageFallbackModel or '' }}" placeholder="{{ ('Empty = no fallback') }}" />
+
+                    </label>
 
                 </div>
 
@@ -97,6 +181,7 @@
                 hx-post="/projects/{{ project.id }}/settings/images/test"
                 hx-target="#image-test-result"
                 hx-swap="innerHTML"
+                hx-disabled-elt="this"
                 hx-indicator="#image-test-indicator">
             {{ ('Image generation test') }}
         </button>

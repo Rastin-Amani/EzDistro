@@ -8,11 +8,13 @@
 
         {% for role, label, with_params in roles %}
 
-        {% set sel_provider = settings[role ~ 'Provider'] or '' %}
-
         {% set sel_model = settings[role ~ 'Model'] or '' %}
 
-        <section class="ezdistro-panel" x-data="{ provider: '{{ sel_provider }}' }">
+        {% set opts = role_options[role] %}
+
+        {% set selected_opt = (opts | selectattr('selected') | first) if opts else none %}
+
+        <section class="ezdistro-panel">
 
             <div class="ezdistro-panel-head">
 
@@ -40,19 +42,29 @@
 
                         </div>
 
-                        <select name="{{ role }}_provider" class="select select-bordered w-full" x-model="provider">
+                        <select name="{{ role }}_provider" class="select select-bordered w-full"
+
+                                data-provider-model="#model-{{ role }}">
 
                             <option value="">{{ ('— Global default —') }}</option>
 
-                            {% for meta in llm_meta %}
+                            {% for opt in opts %}
 
-                            <option value="{{ meta.provider }}" {{ 'selected' if sel_provider == meta.provider }}>{{ meta.provider }}</option>
+                            <option value="{{ opt.id }}" data-model="{{ opt.model }}" {{ 'selected' if opt.selected }}>
+
+                                {{ opt.name }} — {{ opt.provider }}
+
+                            </option>
 
                             {% endfor %}
 
                         </select>
 
-                        <span class="text-xs opacity-40 mt-1 leading-relaxed">{{ llm_meta | selectattr('provider', 'equalto', sel_provider) | map(attribute='description') | first | default('') }}</span>
+                        <span class="text-xs opacity-40 mt-1 leading-relaxed">
+
+                            {% if opts %}{{ ('A connection from the Connections tab. Its saved model is used as the default.') }}{% else %}{{ ('No LLM connection yet — add one on the Connections tab.') }}{% endif %}
+
+                        </span>
 
                     </label>
 
@@ -70,7 +82,7 @@
 
                         <div class="flex gap-2">
 
-                            <input name="{{ role }}_model" class="input input-bordered flex-1" dir="ltr" value="{{ sel_model }}"
+                            <input id="model-{{ role }}" name="{{ role }}_model" class="input input-bordered flex-1" dir="ltr" value="{{ sel_model or (selected_opt.model if selected_opt else '') }}"
 
                                    placeholder="{{ global_defaults[role].model if global_defaults.get(role) else '' }}" list="models-{{ role }}" />
 
@@ -126,9 +138,9 @@
 
                 {% if with_params %}
 
-                <div class="grid grid-cols-2 sm:grid-cols-5 gap-3" x-show="provider !== 'meta' && provider !== 'review'">
+                <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
 
-                    <label class="form-control" x-show="provider !== 'custom'">
+                    <label class="form-control">
 
                         <div class="label px-0 pb-1">
 
@@ -214,23 +226,6 @@
 
 
 
-                {% if role == 'outline' or role == 'section' %}
-
-                <details class="border border-base-300/70 rounded-lg px-4 py-3" x-show="provider === 'custom' || provider === 'openai_compat'">
-
-                    <summary class="text-xs opacity-70 cursor-pointer">{{ ('Dedicated connection (Base URL + key — optional)') }}</summary>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
-
-                        {{ f.text('base_url', 'Base URL', '', ('Custom OpenAI-compatible URL — usually ends with /v1.'), 'https://api.example.com/v1', dir='ltr') }}
-
-                        {{ f.password('api_key', ('API key (empty = keep existing)'), '', ('API key for this connection — stored encrypted and never displayed.')) }}
-
-                    </div>
-
-                </details>
-
-                {% endif %}
 
             </div>
 

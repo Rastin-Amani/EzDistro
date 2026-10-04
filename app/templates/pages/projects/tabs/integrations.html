@@ -1,8 +1,10 @@
 {% import 'macros/forms.html' as f %}
 
+{{ f.page_header(('Connections'), ('Manage provider connections.'), eyebrow=('Project')) }}
+
 <div id="integrations-tab"
 
-     x-data="integrationsEditor()"
+     x-data='integrationsEditor({{ provider_meta | tojson }}, {{ provider_defaults | tojson }})'
 
      hx-get="/projects/{{ project.id }}/tabs/integrations"
 
@@ -10,9 +12,9 @@
 
      hx-target="this"
 
-     hx-swap="outerHTML">
+     hx-swap="outerHTML"
 
-{{ f.page_header(('Connections'), ('Manage provider connections.'), eyebrow=('Project')) }}
+     hx-select="#integrations-tab">
 
     <div class="flex flex-col gap-5">
 
@@ -246,9 +248,31 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-                    <input type="hidden" name="provider" x-model="form.provider" />
+                    <label class="form-control">
 
-                    <label class="form-control" x-show="['llm', 'embedding', 'reranker', 'image'].includes(form.category)">
+                        <div class="label px-0 pb-1">
+
+                            <span class="label-text font-medium text-sm">{{ ('Provider') }} <span class="text-error">*</span></span>
+
+                        </div>
+
+                        <select name="provider" class="select select-bordered w-full" x-model="form.provider" @change="onProviderChange()">
+
+                            <template x-for="p in providersFor(form.category)" :key="p.provider">
+
+                                <option :value="p.provider" x-text="p.provider"></option>
+
+                            </template>
+
+                        </select>
+
+                        <span class="text-xs opacity-50 mt-1 leading-relaxed" x-text="providerDescription()"></span>
+
+                    </label>
+
+
+
+                    <label class="form-control" x-show="requiresModel()">
 
                         <div class="label px-0 pb-1">
 
@@ -266,7 +290,7 @@
 
                             <input name="model" class="input input-bordered flex-1" dir="ltr" x-model="form.model"
 
-                                   list="int-models" autocomplete="off" placeholder="Enter the provider's model ID" :required="['llm', 'embedding', 'reranker', 'image'].includes(form.category)" />
+                                   list="int-models" autocomplete="off" placeholder="Enter the provider's model ID" :required="requiresModel()" />
 
                             <button type="button" class="btn btn-ghost btn-sm" x-show="isEdit && supportsModels()"
 
@@ -298,7 +322,7 @@
 
 
 
-                <label class="form-control" x-show="showGeneric()">
+                <label class="form-control" x-show="showBaseUrl()">
 
                     <div class="label px-0 pb-1">
 
@@ -314,7 +338,7 @@
 
                     <input name="base_url" class="input input-bordered w-full" dir="ltr" x-model="form.base_url"
 
-                           placeholder="https://api.openai.com/v1" />
+                           :placeholder="baseUrlPlaceholder()" />
 
                 </label>
 
@@ -426,11 +450,11 @@
 
 
 
-                <label class="form-control" x-show="!isGoogleAds()">
+                <label class="form-control" x-show="showSecret()">
 
                     <div class="label px-0 pb-1">
 
-                        <span class="label-text font-medium text-sm">{{ ('API key') }}</span>
+                        <span class="label-text font-medium text-sm" x-text="secretLabel()"></span>
 
                         <span class="tooltip tooltip-left sm:tooltip-top" data-tip="{{ (( 'When editing, leave empty to keep the existing key. The key is never stored or displayed in plaintext — only an encrypted version is kept' )) }}">
 

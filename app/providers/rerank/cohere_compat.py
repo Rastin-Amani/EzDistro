@@ -23,6 +23,12 @@ DEFAULT_MODEL = "rerank-v4.0"
 class CohereCompatReranker(MetricMixin):
     category = "reranker"
     provider_name = PROVIDER_NAME
+    PROVIDER_META: dict[str, Any] = {
+        "description": "Cohere-compatible /rerank (Cohere, Jina, local rerankers)",
+        "requires_api_key": True,
+        "supports_model_listing": False,
+        "default_base_url": DEFAULT_BASE,
+    }
 
     def __init__(
         self,

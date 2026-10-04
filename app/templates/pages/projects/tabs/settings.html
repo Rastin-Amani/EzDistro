@@ -4,12 +4,28 @@
 
     {{ f.section_open(('Text embedding'), ('Set the embedding model, the text-to-vector converter. Changing it creates a new vector space in Qdrant.'), ('The embedding model converts text to vectors; used for semantic retrieval.')) }}
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {{ f.text('embedding_model', ('Model'), settings.embeddingModel,
-                ( 'OpenAI-compatible embedding model ID, e.g. text-embedding-3-small.' ),
-                dir='ltr', placeholder='text-embedding-3-small') }}
-            {{ f.number('embedding_dimensions', ('Dimensions'), settings.embeddingDimensions,
-                ( 'Number of output vector dimensions — must match the model (text-embedding-3-small = 1536).' ),
-                hint=( 'Changing the model or dimensions = a new vector space; a full reindex is required.' )) }}
+            {% set embedding_model = settings.embeddingModel or (embedding_connection.model if embedding_connection else '') %}
+            {% set embedding_dims = settings.embeddingDimensions or (embedding_model_dimensions.get(embedding_model) or 1536) %}
+            <label class="form-control w-full">
+                <div class="label px-0 pb-1.5">
+                    <span class="label-text font-medium text-sm text-base-content/80">{{ ('Model') }}</span>
+                </div>
+                <input data-embedding-model data-embedding-dims="#embedding_dimensions" name="embedding_model" class="input input-bordered w-full" dir="ltr"
+                       value="{{ embedding_model }}" placeholder="text-embedding-3-small" list="embedding-model-list" />
+                <datalist id="embedding-model-list">
+                    {% for model, dims in embedding_model_dimensions.items() %}
+                    <option value="{{ model }}" label="{{ dims }} dims"></option>
+                    {% endfor %}
+                </datalist>
+                {% if embedding_connection %}<p class="text-xs opacity-50 mt-1">{{ ('Active connection:') }} {{ embedding_connection.name }} — {{ ('its saved model is used as the default.') }}</p>{% endif %}
+            </label>
+            <label class="form-control w-full">
+                <div class="label px-0 pb-1.5">
+                    <span class="label-text font-medium text-sm text-base-content/80">{{ ('Dimensions') }}</span>
+                </div>
+                <input id="embedding_dimensions" name="embedding_dimensions" type="number" class="input input-bordered w-full" value="{{ embedding_dims }}" />
+                <p class="text-xs opacity-50 mt-1 leading-relaxed">{{ ('Auto-filled from known models. Changing the model or dimensions = a new vector space; a full reindex is required.') }}</p>
+            </label>
         </div>
     {{ f.section_close() }}
 
@@ -38,19 +54,29 @@
 
     {{ f.section_open(('Retrieval'), ('Semantic search and result ranking.'), ('While writing an article, the most relevant document chunks are retrieved and fed to the model.')) }}
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {{ f.number('retrieval_top_k', ('Candidates (Top K)'), settings.retrievalTopK,
+            {{ f.number('retrieval_top_k', ('Candidates (Top K)'), settings.retrievalTopK or 20,
                 ( 'Candidate chunks fetched from Qdrant before reranking.' )) }}
-            {{ f.number('similarity_threshold', ('Similarity threshold'), settings.similarityThreshold,
+            {{ f.number('similarity_threshold', ('Similarity threshold'), settings.similarityThreshold or 0.35,
                 ( 'Minimum similarity score for a chunk to qualify (0–1). Higher = fewer, more precise results.' ), step='0.05') }}
             {{ f.select('reranking_enabled', ('Rerank'),
                 [('0', ( 'Inactive' )), ('1', ( 'Active' ))], '1' if settings.rerankingEnabled else '0',
                 ( 'With a reranker, candidates are re-ordered so the most relevant rise to the top.' )) }}
             {{ f.number('reranker_top_n', ('Results after rerank'), settings.rerankerTopN or 8,
                 ( 'Final number of chunks fed to the model after reranking.' )) }}
-            {{ f.text('reranker_model', ('Rerank model'), settings.rerankerModel,
-                ( 'Rerank model ID (e.g. rerank-v4.0 from Cohere).' ), dir='ltr', placeholder='rerank-v4.0') }}
-            {{ f.select('reranker_provider', ('Rerank provider'), reranker_providers, settings.rerankerProvider,
-                ( 'Reranking service provider — must have an active connection.' )) }}
+            <label class="form-control w-full">
+                <div class="label px-0 pb-1.5"><span class="label-text font-medium text-sm text-base-content/80">{{ ('Rerank model') }}</span></div>
+                <input id="reranker_model" name="reranker_model" class="input input-bordered w-full" dir="ltr" value="{{ settings.rerankerModel or 'rerank-v4.0' }}" placeholder="rerank-v4.0" />
+            </label>
+            <label class="form-control w-full">
+                <div class="label px-0 pb-1.5"><span class="label-text font-medium text-sm text-base-content/80">{{ ('Rerank provider') }}</span></div>
+                <select name="reranker_provider" class="select select-bordered w-full" data-provider-model="#reranker_model">
+                    <option value="">{{ ('— Select a connection —') }}</option>
+                    {% for opt in reranker_connections %}
+                    <option value="{{ opt.id }}" data-model="{{ opt.model }}" {{ 'selected' if opt.selected }}>{{ opt.name }} — {{ opt.provider }}</option>
+                    {% endfor %}
+                </select>
+                {% if not reranker_connections %}<p class="text-xs opacity-50 mt-1">{{ ('No reranker connection yet — add one on the Connections tab.') }}</p>{% endif %}
+            </label>
         </div>
     {{ f.section_close() }}
 

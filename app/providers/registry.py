@@ -49,6 +49,28 @@ CATEGORY_GOOGLE_ADS = "google_ads"
 DEFAULT_EMBEDDING_MODEL = "text-embedding-3-small"
 DEFAULT_EMBEDDING_DIMENSIONS = 1536
 
+# Known output dimensions for common embedding models. Used to auto-fill the
+# Dimensions field when a model is picked. Unknown models are left untouched —
+# the provider is always the source of truth, this is only a convenience map.
+EMBEDDING_MODEL_DIMENSIONS: dict[str, int] = {
+    "text-embedding-3-small": 1536,
+    "text-embedding-3-large": 3072,
+    "text-embedding-ada-002": 1536,
+    "text-embedding-004": 768,
+    "gemini-embedding-001": 3072,
+    "embedding-001": 768,
+    "nomic-embed-text": 768,
+    "mxbai-embed-large": 1024,
+    "all-minilm": 384,
+    "bge-large-en": 1024,
+    "bge-base-en": 768,
+    "bge-small-en": 384,
+    "e5-large": 1024,
+    "e5-base": 768,
+    "e5-small": 384,
+    "multilingual-e5-large": 1024,
+}
+
 
 def _integration_model(integration: dict[str, Any]) -> str:
     """Read the dedicated DB field, retaining compatibility with old JSON rows."""
@@ -272,14 +294,46 @@ class ProviderRegistry:
     def active_integration_for_provider(
         self, project_id: str, category: str, provider_name: str
     ) -> dict[str, Any] | None:
-        """Active integration whose provider matches; else the active one of the category."""
+        """Resolve the connection selected for a category.
+
+        ``provider_name`` may be either an adapter name (``openai_compat``) or a
+        concrete connection id (the Connections-based selection used by the UI).
+        An id wins so two connections that share an adapter stay distinguishable.
+        """
         if provider_name:
             matched = self._integrations.first(
                 filter=f'project="{project_id}" && category="{category}" && provider="{provider_name}" && enabled=true'
             )
             if matched:
                 return matched
+            by_id = self._integrations.get(provider_name)
+            if (
+                by_id
+                and by_id.get("project") == project_id
+                and by_id.get("category") == category
+                and by_id.get("enabled")
+            ):
+                return by_id
         return self._integrations.get_active(project_id, category)
+
+    def _adapter_name(
+        self, category: str, provider_ref: str, integration: dict[str, Any] | None
+    ) -> str:
+        """Map a stored provider value (adapter name OR connection id) to an adapter.
+
+        A connection carries its adapter in ``provider``; the id is only accepted
+        when it actually names the resolved integration, so an unknown provider
+        still fails loudly instead of silently falling back.
+        """
+        if (category, provider_ref) in self._table:
+            return provider_ref
+        if (
+            integration
+            and integration.get("provider")
+            and str(integration.get("id") or "") == provider_ref
+        ):
+            return str(integration["provider"])
+        return provider_ref
 
     # ---------------------------------------------------------------------------
     # Generic resolution — table-driven, no per-provider branches
@@ -295,29 +349,33 @@ class ProviderRegistry:
         role_config: dict[str, Any] | None = None,
     ) -> Any:
         if category == CATEGORY_LLM:
-            provider_name = str(
+            provider_ref = str(
                 (role_config or {}).get("provider")
                 or settings.get("defaultLlmProvider")
                 or DEFAULT_PROVIDER[category]
             )
         elif category == CATEGORY_IMAGE:
-            provider_name = str(
+            provider_ref = str(
                 (role_config or {}).get("provider")
                 or settings.get("imageProvider")
                 or DEFAULT_PROVIDER[category]
             )
         elif category == CATEGORY_SERP:
-            provider_name = str((integration or {}).get("provider") or DEFAULT_PROVIDER[category])
+            provider_ref = str((integration or {}).get("provider") or DEFAULT_PROVIDER[category])
         else:
-            provider_name = self._provider_name_for(category, settings)
-        cls = self._table.get((category, provider_name))
-        if cls is None:
-            raise PermanentError(f"unknown {category} provider: {provider_name!r}")
+            provider_ref = self._provider_name_for(category, settings)
 
         if integration is None:
             integration = self.active_integration_for_provider(
-                project["id"], category, provider_name
+                project["id"], category, provider_ref
             )
+
+        # Normalise an integration-id selection to the adapter backing that
+        # connection before looking up the class / building config.
+        provider_name = self._adapter_name(category, provider_ref, integration)
+        cls = self._table.get((category, provider_name))
+        if cls is None:
+            raise PermanentError(f"unknown {category} provider: {provider_ref!r}")
         config = self._config_for(
             category,
             project,

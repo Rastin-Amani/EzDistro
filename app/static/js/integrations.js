@@ -5,14 +5,19 @@
    every connection. Edit buttons carry a JSON payload (safe fields only —
    never the encrypted secret) in `data-payload`; Alpine fills the form via
    x-model. Registered before Alpine starts, so it survives htmx re-renders.
+
+   The provider list + field visibility come from the server (`provider_meta`)
+   so the form follows the provider schema instead of a generic LLM form.
    ═══════════════════════════════════════════════════════════════════════ */
 (function () {
     'use strict';
 
     function register() {
         if (window.Alpine && typeof window.Alpine.data === 'function') {
-            window.Alpine.data('integrationsEditor', function () {
+            window.Alpine.data('integrationsEditor', function (providerMeta, providerDefaults) {
                 return {
+                meta: providerMeta || {},
+                defaults: providerDefaults || {},
                 open: false,
                 isEdit: false,
                 hasSecret: false,
@@ -31,6 +36,65 @@
                     login_customer_id: '',
                     developer_token: '',
                     client_secret: '',
+                },
+
+                providersFor(category) {
+                    return this.meta[category] || [];
+                },
+
+                selectedMeta() {
+                    var list = this.providersFor(this.form.category);
+                    return list.find((p) => p.provider === this.form.provider) || {};
+                },
+
+                providerDescription() {
+                    return this.selectedMeta().description || '';
+                },
+
+                baseUrlPlaceholder() {
+                    return this.selectedMeta().default_base_url || 'https://api.example.com/v1';
+                },
+
+                // Categories whose provider exposes a default model.
+                requiresModel() {
+                    return ['llm', 'embedding', 'reranker', 'image'].indexOf(this.form.category) !== -1;
+                },
+
+                supportsModels() {
+                    return this.requiresModel() && this.selectedMeta().supports_model_listing !== false;
+                },
+
+                showBaseUrl() {
+                    if (this.isGoogleAds() || this.form.provider === 'none') return false;
+                    if (['publisher', 'vector_store', 'serp'].indexOf(this.form.category) !== -1) return true;
+                    return this.requiresModel();
+                },
+
+                showSecret() {
+                    if (this.isGoogleAds() || this.form.provider === 'none') return false;
+                    return true;
+                },
+
+                secretLabel() {
+                    if (this.isPublisher()) return 'Application password';
+                    if (this.form.category === 'vector_store') return 'API key (optional)';
+                    return 'API key';
+                },
+
+                onProviderChange() {
+                    // Keep the model only when the provider already carries a default;
+                    // never invent one — the user can fetch/type it.
+                    var meta = this.selectedMeta();
+                    if (!this.requiresModel()) {
+                        this.form.model = '';
+                    }
+                    if (meta.default_base_url && !this.isEdit) {
+                        this.form.base_url = meta.default_base_url;
+                    }
+                },
+
+                defaultProvider(category) {
+                    return this.defaults[category] || '';
                 },
 
                 openEditor(payload, category) {
@@ -61,7 +125,7 @@
                             record_id: '',
                             category: category || '',
                             display_name: '',
-                            provider: '',
+                            provider: self.defaultProvider(category),
                             model: '',
                             base_url: '',
                             username: '',
@@ -73,12 +137,12 @@
                             developer_token: '',
                             client_secret: '',
                         };
+                        self.onProviderChange();
                     }
                     self.open = true;
                     // Drop stale model options from a previously opened connection.
                     var modelList = document.getElementById('int-models');
                     if (modelList) modelList.innerHTML = '';
-                    // Read the payload off the clicked row (attribute may be a JSON string).
                     var dialog = document.getElementById('int-editor');
                     if (dialog && typeof dialog.showModal === 'function') {
                         self.$nextTick(function () {
@@ -111,18 +175,6 @@
 
                 isGoogleAds() {
                     return this.form.category === 'google_ads';
-                },
-                showGeneric() {
-                    // Provider / model / base URL make no sense for an OAuth-client connection.
-                    return !this.isGoogleAds();
-                },
-                supportsModels() {
-                    // Categories whose providers expose a model listing endpoint.
-                    return ['llm', 'embedding', 'reranker', 'image'].indexOf(this.form.category) !== -1;
-                },
-                requiresModel() {
-                    // Categories where a model is mandatory — a connection is useless without one.
-                    return this.supportsModels();
                 },
                 };
             });
