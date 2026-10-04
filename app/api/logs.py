@@ -15,7 +15,14 @@ router = APIRouter()
 # The badge filters offered by feed.html. Anything else in ?level= is ignored
 # rather than interpolated straight into a PocketBase filter — a stray quote
 # ("err\"||x=\"1") made PocketBase reject the query, which surfaced as a 500.
-LEVELS = ("info", "warning", "error")
+# A level maps to every eventType that belongs to it: job failures carry
+# `job.failed`/`job.provider_error`, not the bare `error`, so filtering on the
+# bare value alone showed an empty list even while jobs were failing.
+LEVEL_TYPES = {
+    "info": ("info",),
+    "warning": ("warning", "job.retry_scheduled"),
+    "error": ("error", "job.failed", "job.provider_error", "provider_error"),
+}
 
 
 @router.get("/logs", response_class=HTMLResponse)
@@ -28,8 +35,8 @@ def logs_page(request: Request, level: str = ""):
     pb = request.state.pb
     scope = project_scope(request)
     f = ""
-    if level in LEVELS:
-        f = f'eventType="{level}"'
+    if level in LEVEL_TYPES:
+        f = " || ".join(f'eventType="{t}"' for t in LEVEL_TYPES[level])
     else:
         level = ""
     if scope is None:
