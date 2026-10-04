@@ -5,8 +5,8 @@ platform. Audience: engineers or operators responsible for a running deployment.
 
 ```text
 Documentation status:  Verified against Makefile, Dockerfile, config, worker code
-                       (post-v1.3.0, images pipeline)
-Last verified:         2026-09-12
+                       (research engine)
+Last verified:         2026-10-04
 ```
 
 ---
@@ -46,7 +46,8 @@ make bootstrap        # python -m app.scripts.bootstrap_pb
 ```
 
 Bootstrap does, in order: import/patch all 33 collections (`delete_missing=False`),
-add `role`/`displayName` to `users`, seed the `app_settings` singleton + 8 global
+union any new select values into live collections (`ensure_select_values`), add
+`role`/`displayName` to `users`, seed the `app_settings` singleton + all 25 global
 default prompts, and create the platform admin if `SEED_ADMIN_PASSWORD` is set.
 It prints explicit confirmation lines for each step; on failure it raises with a
 hint about reachability/credentials/PB version.
@@ -232,8 +233,12 @@ Details and fixes: TROUBLESHOOTING.md · failure-mode matrix: FAILURES.md.
 3. **No retention pruner** for append-only audit collections (see §5).
 4. **Embedding fallback trap** — projects without explicit embedding settings fall
    back to hardcoded OpenAI-compatible defaults, not the seeded global Cohere values.
-5. `docs/` is gitignored in this repo — these documents are local working copies
-   unless you change `.gitignore`.
+5. **Google Ads is configured per project, not globally.** The env `GOOGLE_ADS_*`
+   vars are only a fallback for a project with no enabled `google_ads` connection. A
+   research run's refresh token lives in `google_ads_connections.refreshTokenEnc`
+   (Fernet, `SECRETS_KEY`) — back up `SECRETS_KEY` as you would any integration secret.
+   Research runs are resumable and re-run stage-checkpointed, so a worker restart
+   continues rather than re-paying Google Ads.
 
 ## 12. Verification commands (development)
 

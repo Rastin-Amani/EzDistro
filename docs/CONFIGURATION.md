@@ -7,8 +7,8 @@ lists every knob, its default, and where it takes effect.
 ```text
 Documentation status:  Verified against app/config.py, .env.example,
                        app/services/settings.py, app/scripts/bootstrap_pb.py
-                       (post-v1.3.0, images pipeline)
-Last verified:         2026-09-12
+                       (research engine)
+Last verified:         2026-10-04
 ```
 
 ## 1. Environment variables
@@ -85,11 +85,15 @@ Do not rely on it.
 | `GOOGLE_ADS_API_VERSION` | `v25` | Google Ads API version; versions sunset annually, keep configurable |
 | `GOOGLE_ADS_LOGIN_CUSTOMER_ID` | — | Optional manager (MCC) id used as `login-customer-id` |
 | `GOOGLE_ADS_DEVELOPER_TOKEN` | — | Legacy: developer tokens were sunset 2026-09-09; sent only if set, ignored by Google |
-| `RESEARCH_MAX_KEYWORDS_PER_RUN` | `5000` | Google Ads keyword budget per run |
-| `RESEARCH_MAX_COMPETITOR_PAGES` | `200` | Crawl budget per run |
+| `RESEARCH_MAX_KEYWORDS_PER_RUN` | `0` (= uncapped) | Google Ads keyword budget per run (`.env.example` suggests `5000`) |
+| `RESEARCH_MAX_COMPETITOR_PAGES` | `0` (= uncapped) | Crawl budget per run (`.env.example` suggests `200`) |
 | `RESEARCH_MAX_SERP_QUERIES` | `0` | Live SERP budget per run (`0` = no live SERP queries) |
 | `RESEARCH_CRAWL_CONCURRENCY` | `4` | Competitor crawl parallelism |
 | `RESEARCH_GOOGLE_ADS_CONCURRENCY` | `2` | Keyword Planning parallelism (tight rate limits) |
+
+> **Note:** the code defaults for the keyword/crawl caps are `0` (no cap). The
+> commented values in `.env.example` (`5000`/`200`) are *recommended* production
+> caps, not the defaults.
 
 Google Ads credentials resolve per project via the enabled `google_ads`
 integration (client id / redirect URI / API version / login customer id in
@@ -104,10 +108,12 @@ and without a SERP provider. See [SEO_RESEARCH.md](SEO_RESEARCH.md).
 | `OLLAMA_ENABLED` | `0` | `1` exposes Ollama (`/v1`) as a selectable LLM provider |
 | `PROVIDER_EVENTS_ENABLED` | `0` | `1` records every provider call as a `provider_call` job event |
 
-Not exposed via env (code constants): UI page size `25`
-(`settings.page_size`), stats TTL cache 5 s, metrics flush interval 30 s,
-adapter retry defaults (3 attempts, base delay 2 s), index checkpoint every 10
-documents, WP fetch page size 100.
+Defined but currently **unused**: `PAGE_SIZE` (`settings.page_size`, default 25 —
+no reader; `.env.example` correctly says not to set it) and `SCHEDULE_WINDOW_MINUTES`
+(no reader). Not exposed via env (code constants): stats TTL cache 5 s, metrics flush
+interval 30 s, adapter retry defaults (3 attempts, base delay 2 s), index checkpoint
+every 10 documents, WP fetch page size 100, Google Ads Keyword Planning page size
+10 000.
 
 ## 2. Per-project settings (project_settings collection)
 
@@ -164,12 +170,23 @@ JSON `retryPolicy`: `{max_attempts: 3, backoff_base: 30, backoff_max: 3600}`.
 Backoff = `min(base × 2^(attempts−1), cap)` with ±50 % jitter; provider `Retry-After`
 always wins as a lower bound.
 
+### Localization & brand (multilingual engine prompt context)
+
+| Setting | Runtime default | Notes |
+|---|---|---|
+| targetLocale / targetCountry / targetAudience | empty | market + locale + reader injected into every engine prompt |
+| brandName | empty (= project name) | |
+| preferredTerminology / forbiddenTerminology | empty | comma-separated wording rules |
+| urlPolicy | empty | slug convention for non-Latin scripts |
+| productContext | empty | brand offering in 1–2 sentences |
+
 ### Publishing
 
 | Setting | Values | Notes |
 |---|---|---|
 | publishingMode | `draft` (default) \| `publish` | Status used when creating/updating WP posts |
 | autosave | `{enabled, interval_minutes}` | Draft autosave descriptor |
+| autoPublish | json | Auto-publish rule descriptor |
 
 ### Image generation (v1.3.0 — project **Images** tab)
 
@@ -199,11 +216,13 @@ Managed in the project **Integrations** tab; one row per `(category, provider, n
 | Category | Providers selectable | Secret stored |
 |---|---|---|
 | llm | `openai_compat`, `gemini`, `custom`, `ollama` (flag) | API key |
-| embedding | `cohere`, `openai_compat` | API key |
+| embedding | `openai_compat` | API key (OpenAI-compatible; a legacy `cohere` value maps to this adapter) |
 | reranker | `cohere_compat` | API key |
 | vector_store | `qdrant` | optional API key |
 | publisher | `wordpress` | application password |
 | image (v1.3.0) | `gemini`, `bfl`, `openai_compat` | API key |
+| serp (research) | `serper`, `none` | API key (optional) |
+| google_ads (research) | `google_ads` | OAuth client secret (+ optional legacy developer token) |
 
 Non-secret config (base URL, username, model id…) lives in the plain `configuration`
 JSON; secrets are Fernet-encrypted into `secretsEnc` and never rendered beyond a
@@ -235,17 +254,17 @@ Editable via the AI Models tab's global-defaults form.
 
 ## 5. Prompts
 
-Twenty-one prompt types per project (falling back to global rows), seeded from
-`multilingual-seo-content-engine-prompts.md` via `DEFAULT_PROMPTS` in
-`app/scripts/bootstrap_pb.py`:
+Twenty-five prompt types per project (falling back to global rows), all seeded via
+`DEFAULT_PROMPTS` in `app/scripts/bootstrap_pb.py` (`PROMPT_TYPES` in
+`app/repositories/prompts.py` is the single source of the list):
 `brand_voice`, `seo_content_contract`, `research_system`, `research_user`,
 `outline_system`, `outline_user`, `section_system`, `section_user`,
 `internal_linking`, `metadata_system`, `metadata_user`, `article_qa_system`,
 `article_qa_user`, `article_repair_system`, `article_repair_user`,
 `image_plan_system`, `image_plan_user`, `output_validation`,
-`content_refresh_system` — plus legacy aliases `seo_rules` (resolves the
-contract) and `validation` (generic JSON repair) kept so existing projects and
-tests keep working. The image-plan prompts accept `{{ article.title }}`,
+`content_refresh_system`, `cluster_system`, `cluster_user`, `opportunity_system`,
+`opportunity_user` — plus legacy aliases `seo_rules` (resolves the contract) and
+`validation` (generic JSON repair) kept so existing projects and tests keep working. The image-plan prompts accept `{{ article.title }}`,
 `{{ article.content }}`, `{{ topic.keyword }}`, `{{ language }}`,
 `{{ locale }}`, `{{ prompt_language }}`, `{{ sections }}`,
 `{{ style_profile }}`, `{{ max_interior_images }}`; the outline repair pass

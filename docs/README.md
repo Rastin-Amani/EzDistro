@@ -6,10 +6,12 @@ these files ship with the codebase and are copied into the Docker image
 (`COPY docs ./docs` in the Dockerfile).
 
 ```text
-All documents verified against the working tree (post-v1.3.0, images pipeline),
-2026-09-12. Each file carries its own "Documentation status" block.
+All documents verified against the working tree (research engine),
+2026-10-04. Each file carries its own "Documentation status" block.
 Conflict findings discovered during earlier audits are recorded honestly in
-ARCHITECTURE §11, SCHEMA §5, and TROUBLESHOOTING §8.
+ARCHITECTURE §11 and SCHEMA §5.
+The whole set is also served in-app at /help/ (auth-gated) — the Research tab's
+"Setup guide" link points at /help/SEO_RESEARCH.md.
 ```
 
 ## Which document should I read?
@@ -21,22 +23,23 @@ ARCHITECTURE §11, SCHEMA §5, and TROUBLESHOOTING §8.
 | A content/SEO operator using the UI | [USER-GUIDE.md](USER-GUIDE.md) | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) |
 | Debugging a failed job | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | [FAILURES.md](FAILURES.md) |
 | Wanting the failure-mode matrix | [FAILURES.md](FAILURES.md) | — |
-| Building/using SEO research (Google Ads, competitors, opportunities) | [SEO_RESEARCH.md](SEO_RESEARCH.md) | [CONFIGURATION.md](CONFIGURATION.md) |
+| Building/using SEO research (Google Ads, competitors, opportunities) | [SEO_RESEARCH.md](SEO_RESEARCH.md) | [USER-GUIDE.md](USER-GUIDE.md) §12 |
 | Needing every field/collection | [SCHEMA.md](SCHEMA.md) | [CONFIGURATION.md](CONFIGURATION.md) |
+| Contributing to the code | [../CONTRIBUTING.md](../CONTRIBUTING.md) | [ARCHITECTURE.md](ARCHITECTURE.md) §1–§5 |
 | Onboarding to the code | [ARCHITECTURE.md](ARCHITECTURE.md) §1–§5 | README.md (repo root) |
 
 ## Document map
 
 | Document | Audience | Purpose | Status |
 |---|---|---|---|
-| **ARCHITECTURE.md** | Engineers, operators | System context, process model, job engine deep dive, all pipelines (writer, indexer, images), provider layer, security, known drift | Verified · covers v1.3.0 images pipeline |
-| **SCHEMA.md** | Engineers, integrators | 20-collection PocketBase reference, fields, enums, indexes, cascades, vector payload contract | Verified · covers v1.3.0 images pipeline |
-| **CONFIGURATION.md** | DevOps, operators | Every env var + per-project setting (incl. image generation) + integration/prompt variables | Verified · covers v1.3.0 images pipeline |
-| **USER-GUIDE.md** | Product operators | Task-oriented walkthrough of the UI with every on-screen label in **bold** (incl. **Images** tab + images pane) | Verified · covers v1.3.0 images pipeline |
+| **ARCHITECTURE.md** | Engineers, operators | System context, process model, job engine deep dive, all pipelines (writer, indexer, images, research, WordPress sync), provider layer, security, known drift | Verified · research engine |
+| **SCHEMA.md** | Engineers, integrators | 33-collection PocketBase reference (incl. 13 research collections), fields, enums, indexes, cascades, vector payload contract | Verified · research engine |
+| **CONFIGURATION.md** | DevOps, operators | Every env var + per-project setting (incl. image generation, localization, research caps) + integration/prompt variables | Verified · research engine |
+| **USER-GUIDE.md** | Product operators | Task-oriented walkthrough of the UI with every on-screen label in **bold** (incl. **Images** tab, images pane, **Research** workflow) | Verified · research engine |
 | **OPERATIONS.md** | DevOps, SRE | Deployment, runbook, health, scaling, backups/DR, upgrades | Verified |
-| **TROUBLESHOOTING.md** | Operators, on-call | Symptom → verify → resolution per area (incl. images) | Verified · covers v1.3.0 images pipeline |
-| **FAILURES.md** | Engineers, on-call | Per-dependency failure matrix + crash-simulation guarantees (incl. images) | Verified · refreshed |
-| **SEO_RESEARCH.md** | Engineers, SEO operators, DevOps | Google Ads OAuth + keyword research, WordPress mirror/sync, optional SERP, clustering, opportunity engine, cost/retention | New · research engine |
+| **TROUBLESHOOTING.md** | Operators, on-call | Symptom → verify → resolution per area (incl. images, research) | Verified · research engine |
+| **FAILURES.md** | Engineers, on-call | Per-dependency failure matrix + crash-simulation guarantees (incl. images, Google Ads, SERP) | Verified · research engine |
+| **SEO_RESEARCH.md** | Engineers, SEO operators, DevOps | Google Ads OAuth + keyword research, WordPress mirror/sync, optional SERP, clustering, opportunity engine, cost/retention | Verified · research engine |
 
 ## Conventions used across the set
 

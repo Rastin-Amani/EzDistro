@@ -12,11 +12,11 @@ Primary: indie hacker / solo developer running SEO + AIO + GEO for their own sit
 
 ## Product Purpose
 
-EzDistro automates SEO content operations end-to-end: Indexer (fetch WordPress posts → chunk → embed → Qdrant) plus Writer (topics → retrieved context → validated LLM outline → per-section generation → sanitized HTML → publish back to WordPress, draft or live, idempotent). Success = a solo operator ships publish-ready, indexed articles across many projects with minimal clicks, and sees pipeline + provider health at a glance.
+EzDistro automates SEO content operations end-to-end: Research (Google Ads Keyword Planner data or keyword-file import → WordPress mirror → competitor crawl → clusters → gaps → scored opportunities), Indexer (fetch WordPress posts → chunk → embed → Qdrant) and Writer (topics → retrieved context → validated LLM outline → per-section generation → sanitized HTML → publish back to WordPress, draft or live, idempotent). Facts first, AI second: the research engine never invents volume, CPC, competition or rankings. Success = a solo operator ships publish-ready, indexed articles across many projects with minimal clicks, and sees pipeline + provider health at a glance.
 
 ## Positioning
 
-Modular monolith with no Redis/Celery/n8n: FastAPI + HTMX + DaisyUI front, PocketBase as source of truth (20 collections), Qdrant vectors, pluggable LLM/embedding/rerank/image providers, standalone asyncio worker with atomic lease claiming. Everything (WP config, prompts, SEO rules, schedules, concurrency) is per-project and UI-editable.
+Modular monolith with no Redis/Celery/n8n: FastAPI + HTMX + DaisyUI front, PocketBase as source of truth (33 collections incl. the SEO research engine), Qdrant vectors, pluggable LLM/embedding/rerank/image/SERP providers, standalone asyncio worker with atomic lease claiming. Everything (WP config, prompts, SEO rules, schedules, concurrency, research targeting) is per-project and UI-editable. Optional Google Ads OAuth client is configured per project on the Connections tab (env is a fallback).
 
 ## Operating Context
 
@@ -24,7 +24,7 @@ Daily loop: create project → Integrations tab (WP, LLM, embedding, Qdrant, rer
 
 ## Capabilities and Constraints
 
-Must preserve: all routes/HTMX/Alpine behavior, the English-only UI, light + dark DaisyUI themes, PWA shell, sidebar + mobile dock navigation (Dashboard/Projects/Jobs/Workers/Failed/Events), project tabs (Articles/Topics/Indexing/Prompts/Integrations/Settings/Jobs/Logs/Images/Publishing/Retrieval/AI models), article workspace 3-pane, toasts/confirm-dialog, only-DaisyUI constraint (no new deps). Attached design.md is binding visual direction (Base blueprint: white paper, ink, rationed electric blue) translated to both themes. Mobile must be spectacular; layouts scalable.
+Must preserve: all routes/HTMX/Alpine behavior, the English-only UI, light + dark DaisyUI themes, PWA shell, sidebar + mobile dock navigation (Dashboard/Projects/Jobs/Workers/Failed/Events), project tabs (Settings/Connections/AI Models/Prompts/Research/Topics/Articles/Images/Publishing/Retrieval/Indexing/Jobs/Logs), article workspace 3-pane, toasts/confirm-dialog, only-DaisyUI constraint (no new deps). Attached design.md is binding visual direction (Base blueprint: white paper, ink, rationed electric blue) translated to both themes. Mobile must be spectacular; layouts scalable.
 
 ## Brand Commitments
 
@@ -44,4 +44,4 @@ Live codebase (FastAPI/Jinja2/HTMX/DaisyUI5/Tailwind4), docs/ARCHITECTURE.md + d
 
 ## Accessibility & Inclusion
 
-Keyboard focus visible, Persian + English locales, reduced-motion respected (single orchestrated entrance), touch targets ≥32px buttons / 44px fields, contrast ≥4.5:1 body.
+Keyboard focus visible, English-only interface (LTR; content language is per project), reduced-motion respected (single orchestrated entrance), touch targets ≥32px buttons / 44px fields, contrast ≥4.5:1 body.

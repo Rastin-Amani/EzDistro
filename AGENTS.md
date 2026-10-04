@@ -10,7 +10,7 @@ EzDistro Platform: FastAPI + HTMX (Jinja2/DaisyUI) SEO automation platform (Word
 
 **Working directory matters**: both processes must be launched from the repo root. Config is pydantic-settings, which reads `.env` from the *current working directory* — `make web`/`make worker` already do this, but never start them from another folder. On this host, `make install-web-service` / `make install-worker-service` install systemd units (templates in `deploy/`) that run the same commands with `WorkingDirectory=__ROOT__`.
 
-The full schema (currently **18 collections**, e.g. `article_revisions`, `provider_metrics`) is defined **as code** in `app/scripts/bootstrap_pb.py` — treat the code as the source of truth. `docs/SCHEMA.md` / `docs/ARCHITECTURE.md` are committed (the Dockerfile copies `docs/` into the image) but may lag the code, so prefer the bootstrap script when they disagree.
+The full schema (currently **33 collections**, e.g. `article_revisions`, `provider_metrics`, plus the 13 SEO-research collections) is defined **as code** in `app/scripts/bootstrap_pb.py` — treat the code as the source of truth. `docs/SCHEMA.md` / `docs/ARCHITECTURE.md` are committed (the Dockerfile copies `docs/` into the image) but may lag the code, so prefer the bootstrap script when they disagree.
 
 ## Setup & env
 

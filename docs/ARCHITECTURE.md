@@ -9,10 +9,10 @@ one standalone asyncio worker process, PocketBase as the source of truth, Qdrant
 vectors. No Redis, no Celery, no n8n.
 
 ```text
-Documentation status:  Verified against the working tree (post-v1.3.0, images pipeline)
-Last verified:         2026-09-12
+Documentation status:  Verified against the working tree (research engine)
+Last verified:         2026-10-04
 Companion documents:   SCHEMA.md · CONFIGURATION.md · OPERATIONS.md · TROUBLESHOOTING.md
-                       USER-GUIDE.md · FAILURES.md
+                       USER-GUIDE.md · FAILURES.md · SEO_RESEARCH.md
 ```
 
 ---
@@ -35,20 +35,22 @@ Companion documents:   SCHEMA.md · CONFIGURATION.md · OPERATIONS.md · TROUBLE
              │  truth)         │        └─────────┘
              └─────────────────┘
                       ▲ provider HTTP calls (worker side)
-       ┌──────────────┼────────────────┬───────────────┐
-       ▼              ▼                ▼               ▼
-   LLM APIs      Embedding/Rerank  WordPress REST   (Qdrant above)
- (OpenAI-compat,  (Cohere-compatible) application
-  Gemini, Ollama)                   passwords
+   ┌──────────┬───────┼──────────────┬───────────────┬──────────────┐
+   ▼          ▼       ▼              ▼               ▼              ▼
+ LLM APIs  Embedding  WordPress   Google Ads      SERP          (Qdrant
+(OpenAI-   /Rerank    REST        API (OAuth;     provider       above)
+ compat,   (Cohere-   application optional,       (optional,
+ Gemini,   compatible) passwords  research only)  research only)
+ Ollama)
 ```
 
 ### Data ownership
 
 | Store | Owns |
 |---|---|
-| **PocketBase** | Everything relational: projects, settings (incl. image-generation config), integrations (encrypted secrets, incl. `image` category), prompts (incl. `image_plan_*`), topics, articles, sections, revisions, article images, documents metadata, index runs, jobs / leases / job events, publishing runs, provider metrics, schedules, worker heartbeats, app settings, project members |
+| **PocketBase** | Everything relational: projects, settings (incl. image-generation and multilingual config), integrations (encrypted secrets; categories incl. `image`, `serp`, `google_ads`), prompts (incl. `image_plan_*`, `research_*`, `cluster_*`, `opportunity_*`), topics, articles (incl. WordPress-mirror fields), sections, revisions, article images, documents metadata, index runs, jobs / leases / job events, publishing runs, provider metrics, schedules, worker heartbeats, app settings, project members, and the 13 research collections (`google_ads_connections`/`customers`, `research_runs`/`seeds`, `keywords`, `keyword_metrics`, `keyword_volumes`, `clusters`, `competitor_pages`, `content_gaps`, `article_ideas`, `serp_queries`/`results`) |
 | **Qdrant** | Vectors + payload (chunk text, source URL, title, ids). No vector data is duplicated into PocketBase; no secrets live in Qdrant payloads |
-| **External providers** | LLM generations, embeddings, reranking, WordPress posts |
+| **External providers** | LLM generations, embeddings, reranking, WordPress posts, Google Ads Keyword Planner (research), SERP observations (research, optional) |
 
 ## 2. Process model
 
@@ -82,16 +84,24 @@ app/
   templates.py       Jinja2 env + locale date/number filters + status badge styles
   utils.py           HTMX response helpers (hx_toast, mutation_response, …)
   api/               HTTP/HTMX routers — auth, dashboard, projects, articles,
-                     workspace, jobs, logs (+ dev-only debug)
+                     images, research, workspace, jobs, workers, logs
+                     (+ dev-only debug)
   routes/            pwa (manifest/sw/offline), debug (dev only)
   domain/            Pure logic, zero I/O: chunker, parsing, prompt_render,
-                     article_html, sanitize, seo_score, validation, article_validation
+                     article_html, sanitize, seo_score, validation,
+                     article_validation, keywords, images, seo_enforce
   schemas/           Pydantic models for LLM outputs & retrieval results
-  repositories/      The ONLY code that talks to PocketBase (20 collections)
+  repositories/      The ONLY code that talks to PocketBase (33 collections)
   providers/         External adapters behind protocols + table-driven registry
+                     (llm, embedding, reranker, vector_store, publisher, image,
+                     serp, google_ads)
   services/          Orchestration: indexing, writing, publishing_service,
                      retrieval, internal_linking, scheduler, secrets, settings,
-                     stats, metrics, revisions, outline_editor, prompt_service
+                     stats, metrics, revisions, outline_editor, prompt_service,
+                     wordpress_sync, and the research engine (research,
+                     research_keywords, research_competitors, research_clustering,
+                     research_opportunities, research_handoff, research_import,
+                     google_ads)
   jobs/              Engine: state machine, claim/heartbeat/retry/finalize,
                      handler registry (@register_job), JobContext
   workers/worker.py  Worker entrypoint
@@ -270,8 +280,9 @@ Append-only `job_events` rows (never updated) form the audit trail shown in the 
 
 ### 5.8 Registered job types
 
-Fourteen types, whitelisted in `app/workers/worker.py` and self-registered via
-`@register_job(...)` (imports triggered by `ensure_registered()`):
+Sixteen types, listed in `JOB_TYPES` (`app/jobs/handlers.py`) — which the worker
+and `app/api/jobs.py` derive from — and self-registered via `@register_job(...)`
+(imports triggered by `ensure_registered()`):
 
 | Type | Purpose |
 |---|---|
@@ -289,8 +300,11 @@ Fourteen types, whitelisted in `app/workers/worker.py` and self-registered via
 | `generate_article_image` | Generic single-image generation entry point (same pipeline as role jobs) |
 | `optimize_article_image` | Decode + quality-gate + re-encode to WebP/AVIF/JPEG + small variant |
 | `publish_article_image` | Upload one image to the WP media library (idempotent via stored media id) |
+| `wordpress_sync` | Mirror WordPress posts into `articles` (research engine; §6.8) |
+| `research_run` | The nine-stage research pipeline (§6.7) |
 
-Adding a type = implement a handler, decorate it, and add it to the worker whitelist.
+Adding a type = implement a handler decorated with `@register_job(...)` and add it to
+`JOB_TYPES` (the worker and jobs API read that single list).
 
 ## 6. Pipelines
 
@@ -467,6 +481,55 @@ Details verified in `app/services/image_planning.py` + `app/services/images.py`:
   `image*` settings plus a one-click generation test that replicates real
   cover-request dimensions.
 
+### 6.7 Research pipeline (`research_run`)
+
+The SEO research engine (`app/services/research*.py`, handlers in
+`app/services/research.py`) turns real demand data into an article roadmap. It is
+**facts first, AI second** — it never invents volume, CPC, competition or rankings;
+Google Ads competition is *paid* competition, never organic difficulty. Full detail
+lives in [SEO_RESEARCH.md](SEO_RESEARCH.md); the shape is:
+
+```
+validate → wordpress_sync → keyword_collection → competitor_crawl → serp
+  → clustering → gaps → opportunities → finalize
+```
+
+- **Nine stages**, each writing a summary into `research_runs.stageState`; a re-run or
+  worker restart skips a stage whose summary already exists (resumable, and an
+  interrupted run never re-pays Google Ads).
+- **Keyword collection** is Google Ads Keyword Planning (GAQL/REST via
+  `app/providers/google_ads.py`) **or** an uploaded Keyword Planner CSV/XLSX
+  (`research_import.parse_keyword_file`, stdlib-only) with
+  `researchType="import"`. Metrics/volumes persist (`keyword_metrics`,
+  `keyword_volumes`) keyed per run/targeting.
+- **Competitor crawl** is sitemap-first, robots-respecting, cached by content hash
+  (`competitor_pages`). **SERP** is optional (`serp_queries`/`serp_results`); without a
+  provider the SERP component is simply excluded and reported as unavailable.
+- **Clustering** modes: `auto` (embedding if available, else lexical),
+  `deterministic` (pure lexical, zero AI), `embedding`, `llm` (degrades to
+  deterministic per failing batch).
+- **Opportunities** (`article_ideas`) are scored transparently (`scoreVersion`,
+  `scoreComponents`) and classified `generate`/`update`/`expand`/`support`/`reject`.
+- **Handoff** (`research_handoff.accept_opportunity`): `update`/`expand` attach a brief
+  to an existing article; `generate`/`support` create a topic + article and queue the
+  existing `write_article` job (idempotent). The engine never writes or publishes
+  itself.
+- **Run cache**: `ResearchRunRepo.fingerprint(targeting, seeds)` reuses an identical
+  previous run unless **Refresh** is ticked.
+- Job key `research_run:{runId}` makes double submission a no-op.
+
+### 6.8 WordPress synchronisation (`wordpress_sync`)
+
+`app/services/wordpress_sync.py` mirrors WordPress posts into the existing `articles`
+collection (auto-creating a topic per post, since `articles.topicId` is required) so
+existing WP content appears in the **same Articles section** as generated drafts,
+badged by `source`. Remote identity is `(project, wordpressPostId)`; a cheap paged
+inventory (`id, status, modified`) runs first and full content is fetched only for new
+or changed posts. Local edits are never overwritten — a remote change over local work
+flags `syncStatus='update_available'`; remote deletions flag
+`remoteStatus='deleted'`/`syncStatus='remote_deleted'`. Changed published posts are
+handed to the existing indexing pipeline (`index_project`/`index_document`).
+
 ## 7. Retrieval subsystem
 
 Used by the writer and exposed as a diagnostics tab in the project UI:
@@ -488,11 +551,14 @@ Used by the writer and exposed as a diagnostics tab in the project UI:
 
 ## 8. Provider layer
 
-All external access goes through six protocols in `app/providers/base.py` —
+All external access goes through protocols in `app/providers/base.py` —
 `LLMProvider`, `EmbeddingProvider`, `RerankerProvider`, `VectorStoreProvider`,
-`ImageGenerationProvider`, `PublisherProvider` — resolved by a **table-driven registry**
-(`app/providers/registry.py`). There are no provider-specific branches in application
-code; adding a provider = subclass a protocol and register the class.
+`ImageGenerationProvider`, `PublisherProvider`, `KeywordResearchProvider`,
+`SERPProvider` — resolved by a **table-driven registry** (`app/providers/registry.py`).
+The Google Ads OAuth client is a separate adapter (`GoogleAdsOAuthProvider`, category
+`google_ads`) used by the research engine. There are no provider-specific branches in
+application code; adding a provider = subclass a protocol and register the class in
+`registry._load_adapters()`.
 
 | Category | Provider name | Adapter | Notes |
 |---|---|---|---|
@@ -500,14 +566,16 @@ code; adding a provider = subclass a protocol and register the class.
 | llm | `gemini` | native Gemini REST | `generateContent` / streaming |
 | llm | `ollama` *(alias)* | same OpenAI-compat adapter | selectable only when `OLLAMA_ENABLED=1` |
 | llm | `custom` *(alias)* | same OpenAI-compat adapter | user-supplied base URL + model id |
-| embedding | `cohere` | Cohere Embed v4.0 | `search_document` vs `search_query` input types |
-| embedding | `openai_compat` | OpenAI-compatible `/embeddings` | |
+| embedding | `openai_compat` | OpenAI-compatible `/embeddings` | the only embedding adapter; `search_document` vs `search_query` is done via the API shape, not a separate adapter. A legacy stored `cohere` value is normalised to this adapter rather than failing resolution |
 | reranker | `cohere_compat` | Cohere-compatible rerank | scores + metadata preserved |
 | vector_store | `qdrant` | Qdrant HTTP (async client) | namespaced per project+model |
 | image | `gemini` | Gemini native image generation | default for cover (`gemini-3-pro-image`) |
 | image | `bfl` | Black Forest Labs FLUX | default for interiors (`flux-2-klein-9b`, megapixel pricing) |
 | image | `openai_compat` | OpenAI-compatible image endpoint | fallback / custom endpoints |
 | publisher | `wordpress` | WordPress REST | application-password auth; list/get/create/update/unpublish, taxonomy fetch, find-by-slug, media upload + featured-media attach |
+| serp | `serper` | serper.dev Google SERP API | optional; organic results, PAA, related searches |
+| serp | `none` | no-op provider | first-class state: SERP data simply unavailable, never estimated |
+| google_ads | `google_ads` | Google Ads OAuth + Keyword Planning REST | per-project connection; refresh token encrypted; research only |
 
 Resolution rules:
 
@@ -596,10 +664,10 @@ here honestly rather than papered over:
    drops it at rest. The request id survives only inside `responseMetadata.requestId`
    (which *is* written on completion). The older SCHEMA.md documented
    `request_id`/`response_status` columns that do not exist.
-3. **Collection count drift (resolved).** Earlier revisions said "17"/"18
-   collections"; the bootstrap now defines **20** base collections
-   (`article_images` added in v1.3.0, `worker_heartbeats` in v1.1.0 — plus the
-   extended `users` collection).
+3. **Collection count.** The bootstrap defines **33** base collections: the core 20
+   (`article_images` in v1.3.0, `worker_heartbeats` in v1.1.0) plus the 13 research
+   collections added in 2026-10 — plus the extended `users` collection. Older
+   revisions said "17"/"18"/"20".
 4. **Embedding defaults differ by path.** `ProjectConfig.embedding` falls back to
    `openai_compat` / `text-embedding-3-small` / 1536 dims, while the seeded global
    `app_settings` advertises Cohere `embed-v4.0` / 1024 dims. Unlike LLM roles,
@@ -619,10 +687,12 @@ Measured-first tooling: `app/scripts/benchmark.py` runs the real engine and hand
 against instrumented fakes (defaults: 10 concurrent jobs, 100 topics). It is a load
 test, not a fixture. Optimizations present in code: batched prompt resolution (~5
 queries per job config), pooled keep-alive HTTP clients with an idle sweeper, batch
-embeddings, bounded concurrency at job and provider level, pagination everywhere, HTMX
-partial updates with modest polling intervals (dashboard/jobs 5 s, monitor 8 s,
-workspace sections 2.5 s, indexing 10 s), and a 5-second TTL cache for derived
-dashboard aggregates (mutable entity state is never cached). Historical throughput
+embeddings, bounded concurrency at job and provider level, pagination everywhere,
+`fanout()` (`app/utils.py`) to overlap independent PocketBase round trips (dashboard
+aggregates, N+1 indexing/provider-health scans) into one wave, HTMX partial updates
+with modest polling intervals (dashboard/jobs 5 s, monitor 8 s, workspace sections
+2.5 s, indexing 10 s), and a 5-second TTL cache for derived dashboard aggregates
+(mutable entity state is never cached). Historical throughput
 numbers from earlier revisions are intentionally not reproduced here; re-run the
 benchmark to measure current behavior.
 

@@ -6,8 +6,8 @@ ARCHITECTURE.md (how the engine works).
 
 ```text
 Documentation status:  Verified against code & failure handling paths
-                       (post-v1.3.0, images pipeline)
-Last verified:         2026-09-12
+                       (research engine)
+Last verified:         2026-10-04
 ```
 
 How to read a job's history first (applies everywhere below):
@@ -90,7 +90,7 @@ Checklist, in order:
   another poll cycle reclaims it automatically.
 - **Resolution:** wait out `LEASE_SECONDS` (300 s default) with some worker alive; no
   manual reset required. Repeated immediate crashes → see the job's traceback tail
-  (admins) and FIXURES.md crash matrix.
+  (admins) and FAILURES.md crash matrix.
 
 ## 5. Retries & failures
 
@@ -278,6 +278,40 @@ Mutations require HTMX; responses drive toasts/events. If JavaScript was blocked
 action may not apply — retry with scripts enabled. All mutations answer with visible
 toasts; a silent click means the request never reached the server (network)
 or was rejected pre-handler.
+
+## 12. SEO research (Google Ads / SERP / WordPress sync)
+
+A dedicated symptom table lives in [SEO_RESEARCH.md](SEO_RESEARCH.md#troubleshooting).
+The most common ones:
+
+### Symptom: "Google Ads is not configured for this project"
+
+- **Cause:** no enabled `google_ads` connection on the project, and env `GOOGLE_ADS_*`
+  is empty (env is only a fallback).
+- **Resolution:** **Connections** → add/edit the Google Ads connection (client id,
+  client secret, redirect URI) → connect the account on the **Research** tab.
+
+### Symptom: `redirect_uri_mismatch`
+
+- The redirect URI in the connection must match the Google Cloud registration exactly
+  (scheme, host, path). Both `/auth/google-ads/callback` and
+  `/projects/google-ads/callback` are served and interchangeable.
+
+### Symptom: research run stuck `running`
+
+- The worker must be running (`make worker`); runs are resumable and continue from the
+  last completed stage on restart. Check the run's job in **Jobs** for the failing stage.
+
+### Symptom: mirrored WordPress posts missing / `update_available`
+
+- Sync is paged and incremental; **Refresh accounts**/re-run the research. A remote
+  change over local work is flagged `update_available` by design — the engine refuses
+  to overwrite local edits.
+
+### Symptom: SERP tab shows "not configured"
+
+- Expected without a `serp` integration. Add a `serper` connection to enable SERP data;
+  ranking/PAA/snippet fields are otherwise shown *unavailable*, never estimated.
 
 ---
 

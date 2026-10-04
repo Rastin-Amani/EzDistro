@@ -22,8 +22,8 @@ be re-dispatched manually (**Retry**).
 
 ```text
 Documentation status:  Refreshed & verified against current code
-                       (post-v1.3.0, images pipeline)
-Last verified:         2026-09-12
+                       (research engine)
+Last verified:         2026-10-04
 ```
 
 ## Cohere / embeddings
@@ -95,6 +95,29 @@ Idempotency: `image:{role}:{sectionKey}:{articleId}:v{version}` keys +
 `ensure_wp_media` reuses stored `wordpressMediaId` so retries never duplicate
 media. Missing cover blocks `publish_article` (permanent) unless
 `publishWithoutCover=true`.
+
+## Google Ads (research)
+
+| Failure | Retry? | Attempts | Backoff | User-visible | Permanent? | Manual recovery |
+|---|---|---|---|---|---|---|
+| timeout / 5xx | adapter + job | 3 + 3 | exp 2 s; jittered | humanised on the run page | no | none (auto) |
+| 429 rate limit | adapter + job | 3 + 3 | honors `Retry-After` | humanised | no | none (auto); Keyword Planning concurrency defaults to 2 |
+| refresh token expired/revoked | **no** | — | — | "reconnect Google Ads" | **yes** | reconnect the account on the Research tab |
+| access/permission denied (cloud project not allowed for Keyword Planning) | **no** | — | — | actionable message | **yes** | enable Google Ads API on the Cloud project that owns the OAuth client |
+| unresolvable language/country constant | **no** | — | — | "Google Ads does not recognise the language '…'" | **yes** | use an ISO code (e.g. `en`, `fa`, `es`) |
+
+Research runs are resumable: a transient failure restarts the run at the last
+completed stage (no re-paid Google Ads calls). Run-level fingerprint cache prevents
+duplicate work for identical targeting+seeds.
+
+## SERP (research, optional)
+
+| Failure | Retry? | Attempts | Backoff | User-visible | Permanent? | Manual recovery |
+|---|---|---|---|---|---|---|
+| timeout / 5xx | adapter + job | 3 + 3 | exp 2 s; jittered | run page | no | none (auto) |
+| 429 | adapter + job | 3 + 3 | honors `Retry-After` | run page | no | none (auto) |
+| 401 auth | **no** | — | — | "SERP provider rejected the key" | **yes** | fix the `serper` key in Connections; refresh the keyword |
+| no `serp` integration | n/a | — | — | SERP fields shown *unavailable* | n/a | add a `serper` integration if SERP data is wanted |
 
 ## PocketBase
 

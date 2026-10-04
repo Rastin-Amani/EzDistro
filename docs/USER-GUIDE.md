@@ -7,8 +7,8 @@ tools that power users will appreciate.
 
 ```text
 Documentation status:  Verified against templates & route handlers
-                       (post-v1.3.0, images pipeline)
-Last verified:         2026-09-12
+                       (research engine)
+Last verified:         2026-10-04
 UI language:           English (LTR) · PWA-enabled
 ```
 
@@ -19,12 +19,13 @@ UI language:           English (LTR) · PWA-enabled
 1. Open the platform URL (development default: `http://localhost:8000`).
 2. You are redirected to **Login to EzDistro** (the login page). Enter your email and
    password → you land on **Dashboard**.
-3. The top navigation has five areas:
+3. The navigation has six areas (a desktop rail; a mobile dock):
    - **Dashboard** (`/dashboard`) — pipeline overview,
    - **Projects** (`/projects`) — project list,
+   - **Workers** (`/workers`) — worker liveness from heartbeats,
    - **Jobs** (`/jobs`) — job monitor,
-   - **Failed jobs** (`/failed`) — dead-letter shortcut,
-   - **Logs** (`/logs`) — event feed.
+   - **Failed** (`/failed`) — dead-letter shortcut,
+   - **Events** (`/logs`) — platform event feed.
 
 **Expected result:** the dashboard shows content/article counters, job pipeline
 counts, indexing health per project, provider health, failure rate and average
@@ -48,21 +49,22 @@ platform admin.
    projects page).
 2. Fill in name, unique slug, description, language (`fa` default), timezone
    (default `Asia/Tehran`).
-3. Open the project. It presents twelve tabs:
+3. Open the project. It presents thirteen tabs, ordered as the daily operator flow:
 
 | Tab (label) | Purpose |
 |---|---|
-| **Settings** (settings) | chunking, retrieval, generation, retry policy, publishing mode |
-| **Connections** (integrations) | credentials: WordPress, LLM, embedding, Qdrant, reranker |
+| **Settings** (settings) | chunking, retrieval, generation, retry policy, publishing mode, localization/brand |
+| **Connections** (integrations) | credentials: WordPress, LLM, embedding, Qdrant, reranker, image, SERP, Google Ads |
 | **AI Models** (ai_models) | per-role model configuration + global defaults |
-| **Images** (images) | image-generation providers/models, sizes, optimization, style + one-click generation test |
 | **Prompts** (prompts) | prompt library, versions, tester |
+| **Research** (research) | Google Ads / file-import research runs and the opportunity roadmap |
 | **Topics** (topics) | editorial backlog |
-| **Articles** (articles) | generated articles list |
-| **Retrieval** (retrieval) | retrieval diagnostics playground |
-| **Jobs** (jobs) | this project's jobs |
-| **Indexing** (indexing) | index runs, documents health |
+| **Articles** (articles) | generated articles list (incl. mirrored WordPress posts) |
+| **Images** (images) | image-generation providers/models, sizes, optimization, style + one-click generation test |
 | **Publishing** (publishing) | publish history |
+| **Retrieval** (retrieval) | retrieval diagnostics playground |
+| **Indexing** (indexing) | index runs, documents health |
+| **Jobs** (jobs) | this project's jobs |
 | **Logs** (logs) | project event feed |
 
 **Expected result:** the project appears with status `active`. Archived projects
@@ -80,11 +82,13 @@ Minimum set to run the full pipeline:
 | Category | Provider options | What you enter |
 |---|---|---|
 | LLM (language model) | `openai_compat`, `gemini`, `custom`, `ollama`* | base URL + API key (+ model id for custom) |
-| Embedding (text embedding) | `cohere`, `openai_compat` | base URL + API key |
+| Embedding (text embedding) | `openai_compat` | base URL + API key |
 | Vector store | `qdrant` | URL (+ optional API key); localhost works only when the server runs with private networks allowed (dev setting) |
 | Publisher | `wordpress` | site URL + username + **application password** |
 | Reranker (optional) | `cohere_compat` | base URL + API key |
 | Image (image, v1.3.0) | `gemini`, `bfl`, `openai_compat` | base URL + API key; cover defaults to Gemini, interiors to FLUX |
+| SERP (research, optional) | `serper` | API key (see §12) |
+| Google Ads (research, optional) | `google_ads` | Google Cloud OAuth **client id + client secret + redirect URI** (see §12) |
 
 \* Ollama appears only when the server is started with `OLLAMA_ENABLED=1`.
 
@@ -122,9 +126,11 @@ each section keeps the provider/model/prompt version that produced it.
 
 ## 5. Prompts
 
-Prompts control writing behaviour without code changes. Eight types exist per project
-(outline system/user, section system/user, SEO rules, internal-linking rules, brand
-voice, validation). Every save creates a **new version**; you can activate any older
+Prompts control writing behaviour without code changes. Twenty-five types exist per
+project — the multilingual SEO-engine set (brand voice, SEO content contract, research,
+outline, section, metadata, article QA, article repair, image planning, cluster,
+opportunity; each with system/user where applicable) plus legacy `seo_rules` and
+`validation` aliases. Every save creates a **new version**; you can activate any older
 version to roll back, duplicate a version as inactive, compare two versions
 side-by-side, and test a prompt against a chosen topic/model from the tester panel
 (testing never touches stored versions).
@@ -261,7 +267,54 @@ exact trimmed prompt context. Use it to tune top-k/threshold/reranking or to exp
 - **Failed jobs** is the filtered shortcut to everything dead-lettered.
 - **Logs** shows the raw event feed for the whole platform.
 
-## 12. Quick reference: what do I do when…?
+## 12. Run SEO research (**Research**)
+
+The Research tab (`Research`) turns real search demand, your site and competitor pages
+into an evidence-backed article roadmap. **Facts first, AI second** — it never invents
+search volume, CPC, competition or rankings. Every capability is optional and degrades
+gracefully: it works with a keyword-file import and no Google Ads, and with no SERP
+provider or LLM. Full engine detail: [SEO_RESEARCH.md](SEO_RESEARCH.md).
+
+### Option A — Google Ads
+
+1. **Connections** → add a connection, category **Google Ads (keyword research)**, with
+   the Google Cloud OAuth **client id**, **client secret** and **redirect URI** (the
+   URI must match the registered one character-for-character). API access levels now
+   ride on the Google Cloud project — there is no developer token to paste.
+2. On the **Research** tab press **Connect Google Ads** → consent → you return with an
+   inline status (`connected` / `denied` / `error`). Pick the customer/account, then
+   **Refresh accounts** if needed.
+3. Set targeting (country, language, locale, network, adult-keywords) and add **seeds**
+   (keyword / url / site / competitor), or type a natural-language goal.
+4. Press **Start research**. The run page shows the nine stages; it is resumable — a
+   restart continues from the last completed stage. Identical targeting+seeds reuses a
+   previous run unless you tick **Refresh**.
+
+### Option B — Keyword Planner file (no Google Ads API access)
+
+1. On the **Research** tab upload a Google **Keyword Planner** export (CSV or XLSX).
+2. Confirm the detected columns/keyword count in the preview, supply a column index if
+   a keyword column was not detected, then **Start**.
+
+### What you get
+
+The run page has tabs: **Keywords**, **SERP**, **Competitors**, **Content gaps**,
+**Clusters**, and **Opportunities**. Keywords carry paid competition (labelled *paid
+comp.*, never organic difficulty), CPC and volume; the keyword drawer can refresh a
+single SERP observation on demand. Use the bulk actions to accept/reject many clusters
+or opportunities at once, and the **Opportunities** export to download a CSV.
+
+**Handoff:** accepting an opportunity either attaches a brief to an existing article
+(`update` / `expand` — no new URL) or creates a topic + article and queues the normal
+`write_article` job (`generate` / `support`). The research engine never writes or
+publishes by itself. WordPress posts are mirrored into **Articles** by the sync stage;
+a remote change over your local work is flagged **update_available** and never
+overwritten.
+
+> **Without a SERP provider** the ranking/PAA/snippet fields show *unavailable* — they
+> are never estimated.
+
+## 13. Quick reference: what do I do when…?
 
 | Goal | Where |
 |---|---|
@@ -275,7 +328,10 @@ exact trimmed prompt context. Use it to tune top-k/threshold/reranking or to exp
 | Plan/regenerate images | workspace images pane → **Image plan** / **Regenerate** |
 | Configure image pipeline | project **Images** tab (providers, models, sizes, style, test) |
 | Approve & publish | review screen → **Approve** → **Publish** |
-| Something failed | **Failed jobs** → inspect → **Retry** |
+| Connect Google Ads for research | **Connections** → Google Ads connection → **Connect Google Ads** |
+| Research without Google Ads API | **Research** → upload Keyword Planner CSV/XLSX |
+| Turn demand into topics | **Research** → **Opportunities** → accept (creates topic + writes) |
+| Something failed | **Failed** → inspect → **Retry** |
 | Explain retrieval quality | **Retrieval** diagnostics |
 
 Deeper background (how jobs recover from crashes, how retries/backoff work, security

@@ -4,6 +4,14 @@ The research engine turns Google Ads demand data, your WordPress content and
 competitor pages into an evidence-backed article roadmap. It is **facts first,
 AI second**: the model interprets real data, it never invents metrics.
 
+```text
+Documentation status:  Verified against app/services/research*.py, providers, schema
+Last verified:         2026-10-04
+Companion documents:   ARCHITECTURE.md §6.7–6.8 · SCHEMA.md §3.22–3.34 ·
+                       CONFIGURATION.md · FAILURES.md
+Also served in-app at  /help/SEO_RESEARCH.md (auth-gated)
+```
+
 ## What it does
 
 1. Connects a Google Ads account (OAuth) and picks a customer/account.
@@ -279,13 +287,16 @@ engine feeds the current pipeline, it does not replace it.
 
 ## Cost, retention and caps
 
-| Setting | Default | Meaning |
+| Setting | Code default | Meaning |
 | --- | --- | --- |
-| `RESEARCH_MAX_KEYWORDS_PER_RUN` | 5000 | Google Ads budget per run |
-| `RESEARCH_MAX_COMPETITOR_PAGES` | 200 | crawl budget per run |
-| `RESEARCH_MAX_SERP_QUERIES` | 0 | live SERP budget (0 = none) |
-| `RESEARCH_CRAWL_CONCURRENCY` | 4 | crawl parallelism |
-| `RESEARCH_GOOGLE_ADS_CONCURRENCY` | 2 | Keyword Planning parallelism (rate-limited) |
+| `RESEARCH_MAX_KEYWORDS_PER_RUN` | `0` (uncapped) | Google Ads budget per run (`.env.example` recommends `5000`) |
+| `RESEARCH_MAX_COMPETITOR_PAGES` | `0` (uncapped) | crawl budget per run (`.env.example` recommends `200`) |
+| `RESEARCH_MAX_SERP_QUERIES` | `0` | live SERP budget (0 = none) |
+| `RESEARCH_CRAWL_CONCURRENCY` | `4` | crawl parallelism |
+| `RESEARCH_GOOGLE_ADS_CONCURRENCY` | `2` | Keyword Planning parallelism (rate-limited) |
+
+> The keyword/crawl caps default to **no cap** in code; the `5000`/`200` values are the
+> recommended production caps shown commented in `.env.example`.
 
 Google Ads keyword-planning responses are stable within a month, so the
 fingerprint cache is the primary saving. Keep normalised strategic data

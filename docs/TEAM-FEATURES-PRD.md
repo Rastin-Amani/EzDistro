@@ -11,6 +11,14 @@ Decisions:     (1) Invitations are LINK-ONLY — no email is ever sent by the ap
                    member management, delivered in phases.
 ```
 
+> **Staleness note (2026-10-04):** this is a dated planning brief, not current
+> reference documentation. Its Phase 0 findings were taken on 2026-09-25, before
+> the SEO research engine landed — the schema now has **33** collections (not 20)
+> and `pb_collections_import.json` is generated from the code (see
+> [SCHEMA.md](SCHEMA.md) §2). Re-verify the file/line references before acting on
+> them. None of the team features below are implemented yet (there is no
+> member-management route or template).
+
 ---
 
 ## 1. Objective

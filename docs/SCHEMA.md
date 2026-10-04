@@ -6,8 +6,8 @@ the repo root mirrors it for manual import). If this document and the code disag
 the code wins — please fix the doc.
 
 ```text
-Documentation status:  Verified against app/scripts/bootstrap_pb.py (post-v1.3.0)
-Last verified:         2026-09-12
+Documentation status:  Verified against app/scripts/bootstrap_pb.py (research engine)
+Last verified:         2026-10-04
 Requires:              PocketBase ≥ 0.23
 ```
 
@@ -32,21 +32,10 @@ Requires:              PocketBase ≥ 0.23
 
 ## 2. Collections overview
 
-33 base collections (+ built-in `users`, extended with `role` / `displayName`):
+33 base collections (+ built-in `users`, extended with `role` / `displayName`).
+The first 20 are the core platform; the last 13 are the SEO research engine
+(documented in detail in §3.22–§3.34 and in [SEO_RESEARCH.md](SEO_RESEARCH.md)).
 
-> **Note (SEO research engine, 2026-10):** `app/scripts/bootstrap_pb.py` now also
-> defines 13 research collections — `google_ads_connections`, `google_ads_customers`,
-> `research_runs`, `research_seeds`, `keywords`, `keyword_metrics`,
-> `keyword_volumes`, `clusters`, `competitor_pages`, `content_gaps`,
-> `article_ideas`, `serp_queries`, `serp_results` — plus `serp` and `google_ads`
-> values on `integrations.category` and WordPress-mirror fields on `articles`
-> (`source`, `syncStatus`, `remoteStatus`, `remoteModified`, `remoteContentHash`,
-> `remoteSlug`, `remoteExcerpt`, `remoteMeta`, `contentHash`). The table below
-> predates them; the bootstrap script is the source of truth, and
-> `pb_collections_import.json` is generated from it
-> (`python -m app.scripts.bootstrap_pb --export`). See
-> [SEO_RESEARCH.md](SEO_RESEARCH.md).
->
 > **Schema drift — always re-run `make bootstrap` after changing `COLLECTIONS`.**
 > `import_collections` adds new *fields* to existing collections, but PocketBase
 > does **not** replace an existing select field's `values` array through the
@@ -84,6 +73,19 @@ Requires:              PocketBase ≥ 0.23
 | `worker_heartbeats` | Worker liveness beacons (v1.1.0) | unique `workerId` |
 | `app_settings` | Global defaults singleton | unique `key` (`default`) |
 | `project_members` | Authorization | unique `(project, user)` |
+| `google_ads_connections` | Google Ads OAuth refresh token per user (encrypted) | unique `user` |
+| `google_ads_customers` | Selectable Google Ads customers per connection | unique `(connection, customerId)` |
+| `research_runs` | One row per research run (stage state, targeting, counts) | — |
+| `research_seeds` | Keyword/url/site/competitor seeds for a run | — |
+| `keywords` | Normalised keyword catalogue per project | unique `(project, normalizedKeyword, language, locationId)` |
+| `keyword_metrics` | Per-run Google Ads metrics for one keyword | unique `(run, keyword)` |
+| `keyword_volumes` | Per-run monthly search-volume history | unique `(run, keyword, year, month)` |
+| `clusters` | Keyword clusters (deterministic / embedding / llm) | — |
+| `competitor_pages` | Crawled competitor pages (cached) | — |
+| `content_gaps` | Cluster/keyword coverage gaps vs competitors | — |
+| `article_ideas` | Scored opportunities (`generate`/`update`/`expand`/`support`/`reject`) | — |
+| `serp_queries` | Cached SERP observations (optional provider) | unique `(project, keyword, provider, locale, location)` |
+| `serp_results` | Individual organic results for a SERP query | — |
 
 ### Entity relationships
 
@@ -97,6 +99,13 @@ topics ──1:1── articles ──1:N── article_sections
                     │─────── 1:N article_revisions · publishing_runs · article_images
 jobs ──1:1(unique)── job_leases        jobs ──1:N── job_events
 jobs.parent ──▶ jobs (chained jobs, e.g. publish chained from write)
+
+users ──1:1(unique)── google_ads_connections ──1:N── google_ads_customers
+projects ──1:N── research_runs ──1:N── research_seeds · keyword_metrics · keyword_volumes
+                              └──1:N── content_gaps · article_ideas · serp_queries · clusters
+projects ──1:N── keywords        keyword_metrics ──N:1── keywords
+clusters.parentCluster ──▶ clusters        article_ideas.existingArticle ──▶ articles
+serp_queries ──1:N── serp_results        research_runs.job ──▶ jobs (no cascade)
 ```
 
 Cascade deletes (relation `cascadeDelete=true`): deleting a project removes its
@@ -157,6 +166,7 @@ Indexes: UNIQUE slug; status.
 | urlPolicy | text | slug convention for non-Latin scripts |
 | productContext | text | brand offering in 1–2 sentences |
 | autosave | json | `{enabled, interval_minutes}` |
+| autoPublish | json | auto-publish rule descriptor |
 | indexing | json | `{schedule_enabled, schedule_interval_minutes, wp_status}` |
 | imageCoverProvider / imageCoverModel | text | defaults `gemini` / `gemini-3-pro-image` |
 | imageInteriorProvider / imageInteriorModel | text | defaults `bfl` / `flux-2-klein-9b` |
@@ -179,10 +189,11 @@ fallback differs from the global seed — see ARCHITECTURE §11.4.
 | field | type | notes |
 |---|---|---|
 | project* R | projects | cascade |
-| category* | sel | `llm` \| `embedding` \| `reranker` \| `vector_store` \| `publisher` \| `image` (v1.3.0) |
-| provider* | text | e.g. `openai_compat`, `gemini`, `cohere`, `cohere_compat`, `qdrant`, `wordpress`, `bfl` |
+| category* | sel | `llm` \| `embedding` \| `reranker` \| `vector_store` \| `publisher` \| `image` (v1.3.0) \| `serp` \| `google_ads` |
+| provider* | text | e.g. `openai_compat`, `gemini`, `cohere_compat`, `qdrant`, `wordpress`, `bfl`, `serper`, `google_ads` |
 | displayName* | text | part of uniqueness |
-| configuration | json | non-secret config only (base_url, username, model, …) |
+| model | text | provider/model hint for discovery-backed connections |
+| configuration | json | non-secret config only (base_url, username, model, client_id, redirect_uri, api_version, login_customer_id, …) |
 | secretsEnc | text | Fernet ciphertext of the secret JSON — never rendered or logged |
 | enabled | bool | the active integration per category feeds the registry |
 | healthStatus | sel | `unknown` \| `healthy` \| `degraded` \| `unhealthy` |
@@ -196,7 +207,7 @@ Indexes: (project, category); UNIQUE (project, category, provider, displayName).
 | field | type | notes |
 |---|---|---|
 | project R | projects | empty ⇒ **global default**; project row wins resolution |
-| type* | sel | `brand_voice` \| `seo_content_contract` \| `research_system` \| `research_user` \| `outline_system` \| `outline_user` \| `section_system` \| `section_user` \| `internal_linking` \| `metadata_system` \| `metadata_user` \| `article_qa_system` \| `article_qa_user` \| `article_repair_system` \| `article_repair_user` \| `image_plan_system` \| `image_plan_user` \| `output_validation` \| `content_refresh_system` \| legacy `seo_rules` \| `validation` |
+| type* | sel | `brand_voice` \| `seo_content_contract` \| `research_system` \| `research_user` \| `outline_system` \| `outline_user` \| `section_system` \| `section_user` \| `internal_linking` \| `metadata_system` \| `metadata_user` \| `article_qa_system` \| `article_qa_user` \| `article_repair_system` \| `article_repair_user` \| `image_plan_system` \| `image_plan_user` \| `output_validation` \| `content_refresh_system` \| `cluster_system` \| `cluster_user` \| `opportunity_system` \| `opportunity_user` \| legacy `seo_rules` \| `validation` (25 total) |
 | name* | text | typically `default` |
 | content* | text (≤20000) | may contain `{{ variable }}` tokens (validated registry) |
 | version* | num | 1-based; each save inserts a NEW row |
@@ -206,11 +217,12 @@ Indexes: (project, category); UNIQUE (project, category, provider, displayName).
 
 Indexes: (project, type, active); UNIQUE (project, type, name, version).
 
-Bootstrap seeds twenty-one global prompts (19 from
-`multilingual-seo-content-engine-prompts.md` plus legacy `seo_rules` /
-`validation` aliases carrying the new contract / repair text) — see
-`DEFAULT_PROMPTS` in `bootstrap_pb.py`. The single source of the type list is
-`PROMPT_TYPES` in `app/repositories/prompts.py`.
+Bootstrap seeds all twenty-five global prompts (`DEFAULT_PROMPTS` in
+`bootstrap_pb.py`) — the multilingual SEO-engine set (research / outline /
+section / metadata / QA / repair / image-plan / cluster / opportunity / contract
+/ brand voice) plus legacy `seo_rules` and `validation` aliases carrying the new
+contract / repair text. The single source of the type list is `PROMPT_TYPES` in
+`app/repositories/prompts.py` (25 values).
 
 ### 3.5 topics
 
@@ -254,6 +266,15 @@ Indexes: (project, status, priority); (project, status); (project, week).
 | imagePlan | json | latest `ArticleImagePlan` snapshot (v1.3.0) |
 | imagePlanVersion | num | |
 | lastJob R | jobs | audit pointer, no cascade |
+| source | sel | `generated` \| `wordpress` (WordPress mirror) |
+| syncStatus | sel | `local` \| `remote_only` \| `synced` \| `update_available` \| `remote_deleted` \| `sync_error` |
+| remoteStatus | text | remote WP status (`publish`/`draft`/…) |
+| remoteModified | date | remote `modified` timestamp (change detection) |
+| remoteContentHash | text | last-seen remote content hash |
+| remoteSlug | text | remote slug |
+| remoteExcerpt | text | remote excerpt |
+| remoteMeta | json | remote metadata snapshot |
+| contentHash | text | local content hash |
 
 Indexes: (project, status); UNIQUE topicId.
 
@@ -369,7 +390,7 @@ Index: (project, created).
 | field | type | notes |
 |---|---|---|
 | project* R | projects | cascade |
-| type* | text | one of the 14 registered types (see ARCHITECTURE §5.8) |
+| type* | text | one of the 16 registered types (see ARCHITECTURE §5.8) |
 | entityType / entityId | text | polymorphic ref: project \| topic \| article \| section \| document |
 | status* | sel | `pending` \| `running` \| `completed` \| `failed` \| `cancelled` \| `retrying` — **there is no `claimed` value** |
 | priority | num | poll order desc |
@@ -510,6 +531,224 @@ platform admins bypass membership checks entirely.
 Added by bootstrap if missing: `role` (sel: `admin` \| `member`) and `displayName`
 (text). Seeded admin account comes from `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD`.
 
+### 3.22 google_ads_connections
+
+OAuth refresh token per user (encrypted), used by the research engine. One row per
+user (unique `user`). Managed from the project **Research** tab after connecting via
+the project's `google_ads` integration.
+
+| field | type | notes |
+|---|---|---|
+| user* R | users | cascade |
+| googleAccountId | text | Google account id |
+| email / displayName | text | account identity |
+| refreshTokenEnc | text | Fernet ciphertext — never returned/rendered/logged |
+| tokenMetadata | json | scopes, expiry, token type |
+| status | sel | `connected` \| `expired` \| `revoked` \| `error` |
+| lastError | text | human-readable last failure |
+| lastVerifiedAt | date | |
+| createdBy | text | audit |
+
+Indexes: UNIQUE user; status.
+
+### 3.23 google_ads_customers
+
+Selectable customers (accounts) exposed by a connection; optionally bound to a project.
+
+| field | type | notes |
+|---|---|---|
+| connection* R | google_ads_connections | cascade |
+| project R | projects | optional binding, no cascade |
+| customerId* | text | Google Ads customer id |
+| descriptiveName / currencyCode / timeZone / managerCustomerId | text | metadata |
+| isManager / accessible | bool | |
+| metadata | json | raw probe metadata |
+
+Indexes: UNIQUE (connection, customerId); (project).
+
+### 3.24 research_runs
+
+One row per research run. Stage summaries live in `stageState` (resumable).
+
+| field | type | notes |
+|---|---|---|
+| project* R | projects | cascade |
+| name | text | |
+| researchType | sel | `keywords` \| `site` \| `competitors` \| `mixed` \| `import` |
+| status | sel | `pending` \| `running` \| `completed` \| `failed` \| `cancelled` \| `partial` |
+| currentStage | sel | `validate` \| `wordpress_sync` \| `keyword_collection` \| `competitor_crawl` \| `serp` \| `clustering` \| `gaps` \| `opportunities` \| `finalize` |
+| config / targeting | json | mode, clustering, goal, country/language/locale/network, import payload |
+| progress | num | 0–100 |
+| stageState | json | per-stage resume summaries |
+| counts | json | row counts per stage |
+| providerVersions | json | provider/model provenance |
+| errorCode / errorMessage / errorDetails | text/text/json | structured failure |
+| job R | jobs | no cascade |
+| connection R | google_ads_connections | no cascade |
+| customerId | text | |
+| fingerprint | text | targeting+seeds hash → run cache dedupe |
+| startedAt / completedAt | date | |
+| createdBy | text | audit |
+
+Indexes: (project, created); (project, status); (project, fingerprint).
+
+### 3.25 research_seeds
+
+| field | type | notes |
+|---|---|---|
+| run* R | research_runs | cascade |
+| seedType* | sel | `keyword` \| `url` \| `site` \| `competitor` |
+| value / normalizedValue | text | |
+
+Index: (run, seedType).
+
+### 3.26 keywords
+
+Normalised keyword catalogue per project (identity excludes the run so keywords are
+shared across runs/targeting).
+
+| field | type | notes |
+|---|---|---|
+| project* R | projects | cascade |
+| normalizedKeyword* | text | |
+| displayKeyword | text | |
+| language / locale / locationId / locationName | text | targeting identity |
+| source | text | e.g. `google_ads`, `keyword_planner_import` |
+
+Indexes: UNIQUE (project, normalizedKeyword, language, locationId); (project, normalizedKeyword).
+
+### 3.27 keyword_metrics
+
+Per-run Google Ads metrics for one keyword (a keyword legitimately carries different
+metrics per targeting).
+
+| field | type | notes |
+|---|---|---|
+| run* R / keyword* R | research_runs / keywords | cascade |
+| avgMonthlySearches | num | measured (Google Ads) |
+| competition / competitionIndex | text/num | **paid** competition, never organic difficulty |
+| averageCpcMicros / lowTopOfPageBidMicros / highTopOfPageBidMicros | num | micros |
+| currencyCode | text | |
+| intent | sel | `informational` \| `commercial` \| `transactional` \| `navigational` \| `local` \| `comparison` \| `unknown` |
+| intentConfidence / intentSource | num/text | |
+| cluster R | clusters | no cascade |
+| observedAt | date | |
+
+Indexes: UNIQUE (run, keyword); (keyword); (run, avgMonthlySearches).
+
+### 3.28 keyword_volumes
+
+| field | type | notes |
+|---|---|---|
+| run* R / keyword* R | research_runs / keywords | cascade |
+| year / month | num | |
+| monthlySearches | num | historical monthly volume |
+
+Index: UNIQUE (run, keyword, year, month).
+
+### 3.29 clusters
+
+| field | type | notes |
+|---|---|---|
+| project* R | projects | cascade |
+| run R | research_runs | cascade |
+| name* / slug | text | label / slug |
+| parentCluster R | clusters | no cascade |
+| size | num | keyword count |
+| primaryKeyword / summary | text | |
+| method | sel | `deterministic` \| `embedding` \| `llm` \| `jev` \| `mixed` |
+| status | sel | `proposed` \| `accepted` \| `rejected` |
+| confidence | num | |
+| meta | json | |
+
+Indexes: (project, run); (project, name).
+
+### 3.30 competitor_pages
+
+Crawled competitor pages (sitemap-first, robots-respecting, cached by content hash).
+
+| field | type | notes |
+|---|---|---|
+| project* R | projects | cascade |
+| run R | research_runs | cascade |
+| domain / url / canonicalUrl | text | |
+| title / metaDescription / h1 | text | |
+| headings / schemaTypes | json | |
+| wordCount | num | |
+| contentType / language | text | |
+| contentHash / textHash | text | change detection |
+| status | sel | `pending` \| `fetched` \| `failed` \| `skipped` \| `unchanged` |
+| error | text | |
+| fetchedAt / lastChangedAt | date | |
+
+Indexes: (project, canonicalUrl); (run).
+
+### 3.31 content_gaps
+
+| field | type | notes |
+|---|---|---|
+| project* R | projects | cascade |
+| run R | research_runs | cascade |
+| gapType | sel | `competitor_only` \| `you_only` \| `under_served` \| `expansion` \| `update` \| `supporting` \| `both` |
+| cluster R | clusters | no cascade |
+| keyword | text | |
+| demand / competitorCoverage / yourCoverage / score | num | |
+| competitorPages / notes | json | |
+
+Index: (run, gapType).
+
+### 3.32 article_ideas (opportunities)
+
+| field | type | notes |
+|---|---|---|
+| project* R | projects | cascade |
+| run R | research_runs | cascade |
+| title* / suggestedTitle | text | |
+| primaryKeyword / secondaryKeywords | text/json | |
+| cluster R / parentCluster R | clusters | no cascade |
+| intent | sel | same intent enum as keyword_metrics |
+| intentConfidence / businessGoalMatch | num | |
+| contentType / action* | text/sel | action `generate` \| `update` \| `expand` \| `support` \| `reject` |
+| actionConfidence | num | |
+| opportunityScore / scoreVersion / scoreComponents | num/text/json | transparent, versioned score |
+| searchVolume / searchTrend | num/json | measured |
+| googleAdsCompetition / googleAdsCompetitionIndex | text/num | **paid** competition |
+| serpOpportunityScore / contentGapScore / businessRelevanceScore / coverageScore / uniquenessScore | num | score components |
+| recommendedAngle / uniqueValueProposition / targetAudience / contentBrief | text | |
+| questions / entities / internalLinks / evidence | json | |
+| existingArticle R | articles | no cascade |
+| canonicalExistingUrl | text | |
+| locale / language | text | |
+| status | sel | `proposed` \| `accepted` \| `roadmap` \| `rejected` \| `merged` \| `generated` |
+| confidence | sel | `high` \| `medium` \| `low` |
+| article R | articles | no cascade — created on handoff |
+
+### 3.33 serp_queries
+
+Cached SERP observations (only when a `serp` integration exists).
+
+| field | type | notes |
+|---|---|---|
+| project R / run R | projects / research_runs | no cascade / cascade |
+| keyword / provider / locale / location / device | text | identity |
+| resultCount | num | |
+| features / questions / relatedSearches / raw | json | |
+| observedAt | date | TTL basis |
+
+Indexes: UNIQUE (project, keyword, provider, locale, location); (run).
+
+### 3.34 serp_results
+
+| field | type | notes |
+|---|---|---|
+| query R | serp_queries | cascade |
+| position | num | |
+| url / domain / title / snippet | text | |
+| isFeaturedSnippet / isPeopleAlsoAsk | bool | |
+| metadata | json | |
+
+Index: (query, position).
+
 ---
 
 ## 4. Vector payload contract (Qdrant)
@@ -548,5 +787,7 @@ deletion happens only on explicit full reindexes.
 - The old document described `publishing_runs.request_id` / `response_status` columns
   and a `claimed` job status; none exist (see §3.15 note and ARCHITECTURE §11).
 - Section numbering duplication (two “3.7b”/“3.15” blocks) fixed here.
-- Collection count corrected to 20 (was stated as 17/18 in older revisions;
-  `article_images` added in v1.3.0, `worker_heartbeats` in v1.1.0).
+- Collection count is **33**: the core 20 (`article_images` added in v1.3.0,
+  `worker_heartbeats` in v1.1.0) plus the 13 research collections added in
+  2026-10 (§3.22–§3.34). The `prompts.type` select carries 25 values and `jobs`
+  recognises 16 job types — both corrected here.
