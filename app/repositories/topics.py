@@ -22,6 +22,12 @@ TOPIC_STATUSES = (
 TOPIC_TYPES = ("article", "pillar_page", "guide", "news")
 
 
+def _norm_key(value: Any) -> str:
+    """Duplicate-detection key: lowercase, whitespace-collapsed (matches
+    ``topic_import.normalize_key`` so import compares like with like)."""
+    return " ".join(str(value or "").strip().lower().split())
+
+
 class TopicRepo(BaseRepo):
     collection = "topics"
 
@@ -121,10 +127,10 @@ class TopicRepo(BaseRepo):
             if not batch:
                 break
             for t in batch:
-                title = (t.get("title") or "").strip()
+                title = _norm_key(t.get("title") or "")
                 if title:
                     titles.add(title)
-                keyword = (t.get("keyword") or "").strip()
+                keyword = _norm_key(t.get("keyword") or "")
                 if keyword:
                     keywords.add(keyword)
             if len(batch) < 500:
