@@ -323,9 +323,7 @@ async def research_pipeline(
 
     force = force or bool(config.get("force"))
     stages = StageTracker(ctx, run_id, force=force)
-    max_keywords = _cap(
-        config.get("maxKeywords"), app_settings.research_max_keywords_per_run, minimum=1
-    )
+    max_keywords = _cap(config.get("maxKeywords"), app_settings.research_max_keywords_per_run)
     pages_config = config.get("maxCompetitorPages")
     max_pages = int(pages_config) if pages_config else app_settings.research_max_competitor_pages
     max_serp = _cap(config.get("maxSerpQueries"), app_settings.research_max_serp_queries)

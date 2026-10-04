@@ -1172,6 +1172,21 @@
         "id": "text672f6398"
       },
       {
+        "name": "model",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0,
+        "id": "textd79572d9"
+      },
+      {
         "name": "configuration",
         "type": "json",
         "required": false,
@@ -7163,7 +7178,7 @@
       }
     ],
     "indexes": [
-      "CREATE UNIQUE INDEX idx_competitor_pages_url ON competitor_pages (project, canonicalUrl)",
+      "CREATE INDEX idx_competitor_pages_url ON competitor_pages (project, canonicalUrl)",
       "CREATE INDEX idx_competitor_pages_run ON competitor_pages (run)"
     ],
     "listRule": null,

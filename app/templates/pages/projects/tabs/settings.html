@@ -3,15 +3,12 @@
 <form hx-post="/projects/{{ project.id }}/settings" hx-swap="none" class="flex flex-col gap-5 w-full">
 
     {{ f.section_open(('Text embedding'), ('Set the embedding model, the text-to-vector converter. Changing it creates a new vector space in Qdrant.'), ('The embedding model converts text to vectors; used for semantic retrieval.')) }}
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {{ f.select('embedding_provider', ('Provider'), embedding_providers, settings.embeddingProvider,
-                ( 'Embedding service provider (e.g. Cohere or OpenAI). Must have an active connection in the “Connections” tab.' ),
-                hint=( 'Must match an active connection.' )) }}
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {{ f.text('embedding_model', ('Model'), settings.embeddingModel,
-                ( 'Embedding model ID — for Cohere usually embed-v4.0, for OpenAI text-embedding-3-small.' ),
-                dir='ltr', placeholder='embed-v4.0') }}
+                ( 'OpenAI-compatible embedding model ID, e.g. text-embedding-3-small.' ),
+                dir='ltr', placeholder='text-embedding-3-small') }}
             {{ f.number('embedding_dimensions', ('Dimensions'), settings.embeddingDimensions,
-                ( 'Number of output vector dimensions — must match the model (embed-v4.0 = 1024, text-embedding-3-small = 1536).' ),
+                ( 'Number of output vector dimensions — must match the model (text-embedding-3-small = 1536).' ),
                 hint=( 'Changing the model or dimensions = a new vector space; a full reindex is required.' )) }}
         </div>
     {{ f.section_close() }}

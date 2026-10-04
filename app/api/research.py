@@ -323,8 +323,8 @@ def research_start(
         "targeting": targeting,
     }
     for key, raw, floor in (
-        ("maxKeywords", max_keywords, 1),
-        ("maxCompetitorPages", max_competitor_pages, 1),
+        ("maxKeywords", max_keywords, 0),
+        ("maxCompetitorPages", max_competitor_pages, 0),
         ("maxSerpQueries", max_serp_queries, 0),
     ):
         value = safe_int(raw, 0)
@@ -536,6 +536,36 @@ def research_cancel(request: Request, project_id: str, run_id: str):
         run_id, "cancelled", error_code="cancelled", error_message="Cancelled by user"
     )
     return success_response("Research run cancelled.", extra_events={"refreshResearch": True})
+
+
+@router.post("/projects/{project_id}/research/{run_id}/resume")
+@hx_error("Could not resume the research run.")
+def research_resume(request: Request, project_id: str, run_id: str):
+    """Re-queue a run, picking up from the last completed stage (no work redone)."""
+    require_hx(request)
+    require_project_access(request, project_id)
+    require_project_role(request, project_id)
+    run = _run_or_none(request, project_id, run_id)
+    if run is None:
+        return error_response("Research run not found.")
+    if run.get("status") in ("pending", "running"):
+        return error_response("This run is already in progress.")
+    runs = ResearchRunRepo(request.state.pb)
+    runs.set_status(run_id, "pending")
+    job = JobRepo(request.state.pb).create(
+        project=project_id,
+        type="research_run",
+        payload={"runId": run_id},
+        idempotency_key=f"research_run:{run_id}:resume:{int(time.time())}",
+        entity_type="research_run",
+        entity_id=run_id,
+        max_attempts=2,
+    )
+    runs.update(run_id, {"job": job["id"]})
+    return ok_with_redirect(
+        "Resuming the research run — it picks up from the last completed step.",
+        f"/projects/{project_id}/research/{run_id}",
+    )
 
 
 @router.get("/projects/{project_id}/research/{run_id}", response_class=HTMLResponse)

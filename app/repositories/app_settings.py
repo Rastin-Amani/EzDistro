@@ -9,14 +9,14 @@ from app.repositories.base import BaseRepo
 GLOBAL_LLM_DEFAULTS: dict[str, Any] = {
     "outline": {
         "provider": "openai_compat",
-        "model": "gpt-4o-mini",
+        "model": "",
         "temperature": 0.7,
         "max_tokens": 4096,
         "timeout": 120,
     },
     "section": {
         "provider": "openai_compat",
-        "model": "gpt-4o-mini",
+        "model": "",
         "temperature": 0.7,
         "max_tokens": 4096,
         "timeout": 120,

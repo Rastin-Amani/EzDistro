@@ -212,9 +212,41 @@ def raise_for_provider(response: httpx.Response, *, what: str) -> None:
             "an HTML web page, not an API response — check that the base URL "
             "points at the API endpoint (usually ends in /v1), not the site root"
         )
+    elif 400 <= status < 500:
+        body = _explain_client_error(body, status)
     if status in (429,) or 500 <= status <= 599:
         raise TransientError(f"{what} failed with HTTP {status}: {body}", details)
     raise PermanentError(f"{what} failed with HTTP {status}: {body}", details)
+
+
+def _explain_client_error(body: str, status: int) -> str:
+    """Translate cryptic gateway/provider 4xx bodies into an actionable hint.
+
+    OpenAI-compatible gateways (9router, OpenRouter, LiteLLM…) report the
+    *upstream provider* they could not reach, which looks unrelated to the
+    configured URL. The usual causes are a bare (un-namespaced) model ID or a
+    base URL pointing at the wrong host.
+    """
+    lowered = body.lower()
+    if "no active credentials for provider" in lowered:
+        return (
+            f"HTTP {status}: the gateway has no credentials for the upstream provider it routed "
+            "your model to. Usually the model ID is not namespaced for this gateway — prefix it "
+            f"with the provider it exposes (e.g. 'mistral/mistral-embed', 'openrouter/text-embedding-3-small'). "
+            f"Raw: {body}"
+        )
+    if "no credentials for provider" in lowered:
+        return (
+            f"HTTP {status}: the gateway could not resolve a provider for this model. Check that the "
+            "model ID is one the gateway lists (and namespaced if required, e.g. 'mistral/mistral-embed'). "
+            f"Raw: {body}"
+        )
+    if "model_not_found" in lowered or "model not found" in lowered:
+        return (
+            f"HTTP {status}: the provider does not know this model ID. Set the exact model name the "
+            f"provider lists. Raw: {body}"
+        )
+    return body
 
 
 def _looks_like_html(text: str) -> bool:

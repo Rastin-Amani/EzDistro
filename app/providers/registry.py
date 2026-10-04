@@ -44,6 +44,18 @@ CATEGORY_PUBLISHER = "publisher"
 CATEGORY_IMAGE = "image"
 CATEGORY_SERP = "serp"
 CATEGORY_GOOGLE_ADS = "google_ads"
+
+# Embeddings are OpenAI-compatible only (OpenAI, Azure, 9Router, Ollama, vLLM…).
+DEFAULT_EMBEDDING_MODEL = "text-embedding-3-small"
+DEFAULT_EMBEDDING_DIMENSIONS = 1536
+
+
+def _integration_model(integration: dict[str, Any]) -> str:
+    """Read the dedicated DB field, retaining compatibility with old JSON rows."""
+    config = integration.get("configuration") or {}
+    return str(integration.get("model") or config.get("model") or "").strip()
+
+
 CATEGORIES = (
     CATEGORY_LLM,
     CATEGORY_EMBEDDING,
@@ -57,7 +69,7 @@ CATEGORIES = (
 
 DEFAULT_PROVIDER: dict[str, str] = {
     CATEGORY_LLM: "openai_compat",
-    CATEGORY_EMBEDDING: "cohere",
+    CATEGORY_EMBEDDING: "openai_compat",
     CATEGORY_RERANKER: "cohere_compat",
     CATEGORY_VECTOR: "qdrant",
     CATEGORY_PUBLISHER: "wordpress",
@@ -90,7 +102,6 @@ class ProviderRegistry:
     # Adapter table (provider_name → class). Add a new provider here.
     # ---------------------------------------------------------------------------
     def _load_adapters(self) -> None:
-        from app.providers.embedding.cohere import CohereEmbedding
         from app.providers.embedding.openai_compat import OpenAICompatEmbedding
         from app.providers.google_ads_oauth import GoogleAdsOAuthProvider
         from app.providers.image.flux import FluxImage
@@ -107,7 +118,6 @@ class ProviderRegistry:
             OpenAICompatLLM,
             GeminiLLM,
             OpenAICompatEmbedding,
-            CohereEmbedding,
             CohereCompatReranker,
             QdrantStore,
             WordPressPublisher,
@@ -326,6 +336,10 @@ class ProviderRegistry:
         return adapter
 
     def _provider_name_for(self, category: str, settings: dict[str, Any]) -> str:
+        # Embeddings are OpenAI-compatible only — there is exactly one adapter,
+        # so a stale stored value (e.g. old "cohere") must not fail resolution.
+        if category == CATEGORY_EMBEDDING:
+            return DEFAULT_PROVIDER[category]
         key = SETTINGS_KEY.get(category)
         configured = str(settings.get(key) or "") if key else ""
         return configured.strip() or DEFAULT_PROVIDER.get(category) or ""
@@ -422,14 +436,20 @@ class ProviderRegistry:
             if provider_name in ("openai_compat", "ollama", "custom")
             else "https://generativelanguage.googleapis.com/v1beta"
         )
+        # Model source order: the connection's own model (set on the Connections
+        # tab — authoritative) → explicit per-role/global override → project default.
+        # A hardcoded fallback is deliberately avoided: a fabricated model ID
+        # makes providers fail with opaque "no credentials" errors.
         model = (
-            rc.get("model")
+            _integration_model(integration)
+            or rc.get("model")
             or settings.get("defaultLlmModel")
-            or (integration.get("configuration") or {}).get("model")
             or ""
         )
         if not model:
-            raise PermanentError(f"no {role} model configured — set it in AI Models")
+            raise PermanentError(
+                f"no {role} model configured — set the model on the Connections tab (or in AI Models)"
+            )
         return {
             "base_url": self._safe_url(integration, base),
             "model": str(model),
@@ -447,19 +467,16 @@ class ProviderRegistry:
         provider_name: str,
     ) -> dict[str, Any]:
         integration = self._integration_or_error(integration, CATEGORY_EMBEDDING)
-        base = (
-            "https://api.cohere.com/v1"
-            if provider_name == "cohere"
-            else "https://api.openai.com/v1"
-        )
+        base = "https://api.openai.com/v1"
+        model = _integration_model(integration) or str(settings.get("embeddingModel") or "").strip()
+        if not model:
+            raise PermanentError(
+                "no embedding model configured — enter the model ID on the Connections tab"
+            )
         return {
             "base_url": self._safe_url(integration, base),
-            "model": str(
-                settings.get("embeddingModel")
-                or (integration.get("configuration") or {}).get("model")
-                or "embed-v4.0"
-            ),
-            "dimensions": int(settings.get("embeddingDimensions") or 1024),
+            "model": model,
+            "dimensions": int(settings.get("embeddingDimensions") or DEFAULT_EMBEDDING_DIMENSIONS),
             "api_key": self._api_key(integration),
             "attempts": self._retries(settings),
             "timeout": 120.0,
@@ -474,13 +491,14 @@ class ProviderRegistry:
         provider_name: str,
     ) -> dict[str, Any]:
         integration = self._integration_or_error(integration, CATEGORY_RERANKER)
+        model = _integration_model(integration) or str(settings.get("rerankerModel") or "").strip()
+        if not model:
+            raise PermanentError(
+                "no reranker model configured — enter the model ID on the Connections tab"
+            )
         return {
             "base_url": self._safe_url(integration, "https://api.cohere.com/v1"),
-            "model": str(
-                settings.get("rerankerModel")
-                or (integration.get("configuration") or {}).get("model")
-                or "rerank-v4.0"
-            ),
+            "model": model,
             "api_key": self._api_key(integration),
             "attempts": self._retries(settings),
             "timeout": 60.0,
@@ -500,7 +518,7 @@ class ProviderRegistry:
         else:
             url = app_settings.qdrant_url
             api_key = app_settings.qdrant_api_key
-        model = settings.get("embeddingModel") or "embed-v4.0"
+        model = settings.get("embeddingModel") or DEFAULT_EMBEDDING_MODEL
         from app.providers.vector.qdrant_store import project_key
 
         return {
@@ -564,11 +582,7 @@ class ProviderRegistry:
             "bfl": "https://api.bfl.ai",
             "openai_compat": "https://api.openai.com/v1",
         }.get(provider_name, "https://generativelanguage.googleapis.com/v1beta")
-        model = (
-            (role_config or {}).get("model")
-            or (integration.get("configuration") or {}).get("model")
-            or ""
-        )
+        model = (role_config or {}).get("model") or _integration_model(integration) or ""
         if not model:
             raise PermanentError(
                 f"no image model configured for {role} — set it in project settings"
@@ -647,7 +661,7 @@ class ProviderRegistry:
             return []
         try:
             provider_name = integration.get("provider") or DEFAULT_PROVIDER.get(category, "")
-            configured_model = (integration.get("configuration") or {}).get("model") or "probe"
+            configured_model = _integration_model(integration) or "probe"
             # LLM resolves the model from a role; other categories read their own
             # settings key (e.g. embeddingModel); "probe" satisfies the builders.
             probe_settings: dict[str, Any] = {
@@ -712,16 +726,12 @@ class ProviderRegistry:
             settings["defaultLlmProvider"] = (
                 integration.get("provider") or DEFAULT_PROVIDER[category]
             )
-            settings["defaultLlmModel"] = (integration.get("configuration") or {}).get(
-                "model"
-            ) or "probe"
+            settings["defaultLlmModel"] = _integration_model(integration) or "probe"
         elif category == CATEGORY_EMBEDDING:
             settings["embeddingProvider"] = (
                 integration.get("provider") or DEFAULT_PROVIDER[category]
             )
-            settings["embeddingModel"] = (integration.get("configuration") or {}).get(
-                "model"
-            ) or "embed-v4.0"
+            settings["embeddingModel"] = _integration_model(integration) or "probe"
         elif category == CATEGORY_RERANKER:
             settings["rerankerProvider"] = integration.get("provider") or DEFAULT_PROVIDER[category]
         elif category == CATEGORY_IMAGE:
@@ -770,5 +780,5 @@ class ProviderRegistry:
 def qdrant_namespace(project: dict[str, Any], settings: dict[str, Any]) -> str:
     from app.providers.vector.qdrant_store import project_key
 
-    model = settings.get("embeddingModel") or "embed-v4.0"
+    model = settings.get("embeddingModel") or DEFAULT_EMBEDDING_MODEL
     return project_key(str(project.get("slug", project["id"])), str(model))

@@ -289,7 +289,8 @@ async def collect_keywords(
     batches = plan_batches(seeds)
     if not batches:
         raise PermanentError("no usable research seeds: add at least one keyword, URL or site")
-    max_keywords = max(1, int(max_keywords))
+    # <= 0 → no keyword budget; collect everything the seeds surface.
+    max_keywords = int(max_keywords)
 
     store: dict[str, KeywordIdea] = {}
     done = 0
@@ -298,9 +299,11 @@ async def collect_keywords(
     for index, batch in enumerate(batches, start=1):
         await ctx.check_cancelled()
         remaining = max_keywords - len(store)
-        if remaining <= 0:
+        if max_keywords > 0 and remaining <= 0:
             budget_hit = True
             break
+        # 0 → let the provider return as much as it can per seed.
+        max_results = remaining if max_keywords > 0 else 0
         ctx.progress(
             2 + int(58 * (index - 1) / len(batches)),
             stage="keyword_collection",
@@ -321,7 +324,7 @@ async def collect_keywords(
                 network=resolved["network"],
                 include_adult_keywords=resolved["includeAdultKeywords"],
                 page_size=PAGE_SIZE,
-                max_results=remaining,
+                max_results=max_results,
             )
         except PermanentError:
             raise

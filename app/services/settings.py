@@ -44,7 +44,7 @@ class ProjectConfig:
         """Legacy single-LLM view (kept for compatibility)."""
         return {
             "provider": self.settings.get("defaultLlmProvider") or "openai_compat",
-            "model": self.settings.get("defaultLlmModel") or "gpt-4o-mini",
+            "model": self.settings.get("defaultLlmModel") or "",
         }
 
     def role_llm(self, role: str) -> dict[str, Any]:
@@ -66,10 +66,13 @@ class ProjectConfig:
             self.settings.get(key("Model"))
             or global_cfg.get("model")
             or self.settings.get("defaultLlmModel")
-            or "gpt-4o-mini"
+            or ""
         )
         return {
             "provider": provider,
+            # Only an explicit per-role/global model is returned here; when empty,
+            # the connection's own model (set on the Connections tab) is used.
+            # Legacy defaultLlmModel still wins if the project set one explicitly.
             "model": model,
             "temperature": float(
                 self.settings.get(key("Temperature")) or global_cfg.get("temperature") or 0.7
@@ -102,8 +105,9 @@ class ProjectConfig:
     @property
     def embedding(self) -> dict[str, Any]:
         return {
-            "provider": self.settings.get("embeddingProvider") or "openai_compat",
-            "model": self.settings.get("embeddingModel") or "text-embedding-3-small",
+            "provider": "openai_compat",
+            "model": self.settings.get("embeddingModel") or "",
+            # 0 → the registry's DEFAULT_EMBEDDING_DIMENSIONS applies.
             "dimensions": int(self.settings.get("embeddingDimensions") or 1536),
         }
 

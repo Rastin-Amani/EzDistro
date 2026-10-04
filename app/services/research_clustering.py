@@ -507,9 +507,13 @@ async def cluster_run(ctx: Any, *, run_id: str, method: str = "auto") -> dict[st
             groups = [Group(members=member_list) for member_list in members]
             used = "embedding"
         except Exception as exc:
-            notes.append(f"embedding clustering unavailable: {type(exc).__name__}")
+            detail = str(exc)[:300]
+            notes.append(f"embedding clustering unavailable: {detail}")
             ctx.warning(
-                "embedding clustering failed; using lexical clustering", {"error": str(exc)[:200]}
+                "embedding clustering unavailable; using lexical clustering instead. "
+                "Check the embeddings provider base URL and API key in Connections "
+                "(the base URL must be the API endpoint, e.g. ending in /v1).",
+                {"error": detail},
             )
 
     if chosen == "llm":

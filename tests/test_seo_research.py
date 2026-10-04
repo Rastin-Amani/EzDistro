@@ -349,7 +349,132 @@ def test_goal_parsing_and_score_monotonicity():
     assert high > low
     assert detail["serp"] is None  # no SERP signals are invented
     assert detail["version"] == "opp_v1"
-    assert detail["version"] == "opp_v1"
+
+
+def test_goal_default_is_uncapped_opportunities():
+    """A goal without an explicit 'N ideas' is unlimited, not silently 500.
+
+    Regression: a stale run config carried maxOpportunities=500 and the
+    pipeline honored it, so a run produced exactly 500 opportunities.
+    """
+    from app.services.research_opportunities import MAX_OPPORTUNITIES
+
+    assert MAX_OPPORTUNITIES == 0
+    goal = parse_goal("Grow qualified leads for a gym SaaS")
+    assert goal.max_opportunities == 0
+    # An explicit request still wins.
+    assert parse_goal("Write 250 opportunities").max_opportunities == 250
+
+
+def test_crawl_competitors_with_zero_budget_is_unbounded():
+    """max_pages=0 must crawl every discovered page, not just one.
+
+    Regression: the default was 200 and 0 was coerced to 1, capping accuracy.
+    """
+    import httpx
+
+    from app.services.research_competitors import crawl_competitors
+    from tests.helpers import make_pb
+
+    pb = make_pb()
+    project = make_project(pb)
+    job = _run_job(pb, project["id"], key="crawl")
+    ctx = make_ctx(pb, FakeRegistry(), job)
+
+    base = "https://rival.com"
+    pages = [f"{base}/p{i}" for i in range(5)]
+    sitemap = (
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+        + "".join(f"<url><loc>{u}</loc></url>" for u in pages)
+        + "</urlset>"
+    )
+    bodies = {
+        f"{base}/robots.txt": "User-agent: *\nAllow: /\n",
+        f"{base}/sitemap.xml": sitemap,
+    }
+    for u in pages:
+        bodies[u] = f"<html><head><title>{u}</title></head><body>page</body></html>"
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, text=bodies.get(str(request.url), ""))
+
+    result = asyncio.run(
+        crawl_competitors(
+            ctx,
+            run_id="run-x",
+            domains=["rival.com"],
+            max_pages=0,
+            transport=httpx.MockTransport(handler),
+            verify_urls=False,
+        )
+    )
+    assert result["pages"] == 5
+    assert result["fetched"] == 5
+
+
+def test_crawl_competitors_tolerates_urls_sharing_one_canonical():
+    """Several discovered URLs declaring the same canonical must not raise.
+
+    Regression: the sitemap listed `/maya-ai` and its canonical target, both
+    crawled concurrently, both `create()`d → PocketBase 400 validation_not_unique
+    on (project, canonicalUrl), which failed the whole research run.
+    """
+    import httpx
+
+    from app.repositories.research import CompetitorPageRepo
+    from app.services.research_competitors import crawl_competitors
+    from tests.helpers import make_pb
+
+    pb = make_pb()
+    project = make_project(pb)
+    job = _run_job(pb, project["id"], key="crawl-canon")
+    ctx = make_ctx(pb, FakeRegistry(), job)
+
+    base = "https://rival.com"
+    canonical = f"{base}/es/one-page"
+    # The production failure: the sitemap listed two *distinct* URLs (`/maya-ai`
+    # and its canonical target) whose pages both declare the same canonical, so
+    # both survive discovery de-dup, are crawled concurrently, and race create()
+    # on the same (project, canonicalUrl).
+    urls = [f"{base}/one-page-a", f"{base}/one-page-b"]
+    sitemap = (
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+        + "".join(f"<url><loc>{u}</loc></url>" for u in urls)
+        + "</urlset>"
+    )
+    bodies = {
+        f"{base}/robots.txt": "User-agent: *\nAllow: /\n",
+        f"{base}/sitemap.xml": sitemap,
+    }
+    page_html = (
+        f'<html><head><title>t</title><link rel="canonical" href="{canonical}">'
+        f"</head><body>page</body></html>"
+    )
+    bodies[f"{base}/one-page-a"] = page_html
+    bodies[f"{base}/one-page-b"] = page_html
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, text=bodies.get(str(request.url), ""))
+
+    result = asyncio.run(
+        crawl_competitors(
+            ctx,
+            run_id="run-y",
+            domains=["rival.com"],
+            max_pages=0,
+            transport=httpx.MockTransport(handler),
+            verify_urls=False,
+            concurrency=4,
+        )
+    )
+    # No failure escaped the gather.
+    assert result["failed"] == 0
+    # Every alias folded into the single canonical row.
+    stored = CompetitorPageRepo(pb).list_for_run("run-y", per_page=100)
+    assert len(stored) == 1
+    assert stored[0]["canonicalUrl"] == canonical
 
 
 # ---------------------------------------------------------------------------

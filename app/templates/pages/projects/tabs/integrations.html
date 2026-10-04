@@ -117,7 +117,7 @@
 
                                                 data-category="{{ category }}"
 
-                                                data-payload='{{ {"id": i.id, "category": category, "displayName": i.displayName, "provider": i.provider, "model": cfg.model or "", "baseUrl": cfg.base_url or "", "username": cfg.username or "", "masked": cfg.masked or "", "clientId": cfg.client_id or "", "redirectUri": cfg.redirect_uri or "", "apiVersion": cfg.api_version or "", "loginCustomerId": cfg.login_customer_id or ""} | tojson }}'
+                                                data-payload='{{ {"id": i.id, "category": category, "displayName": i.displayName, "provider": i.provider, "model": i.model or cfg.model or "", "baseUrl": cfg.base_url or "", "username": cfg.username or "", "masked": cfg.masked or "", "clientId": cfg.client_id or "", "redirectUri": cfg.redirect_uri or "", "apiVersion": cfg.api_version or "", "loginCustomerId": cfg.login_customer_id or ""} | tojson }}'
 
                                                 @click="openEditorFrom($event.currentTarget)">{{ ('Edit') }}</button>
 
@@ -246,33 +246,15 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-                    <label class="form-control" x-show="showGeneric()">
+                    <input type="hidden" name="provider" x-model="form.provider" />
+
+                    <label class="form-control" x-show="['llm', 'embedding', 'reranker', 'image'].includes(form.category)">
 
                         <div class="label px-0 pb-1">
 
-                            <span class="label-text font-medium text-sm">{{ ('Provider') }}</span>
+                            <span class="label-text font-medium text-sm">{{ ('Model') }} <span class="text-error">*</span></span>
 
-                            <span class="tooltip tooltip-left sm:tooltip-top" data-tip="{{ (( 'Provider ID (e.g. openai_compat) — pick from the list or enter manually' )) }}">
-
-                                <span class="cursor-help text-base-content/40"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/></svg></span>
-
-                            </span>
-
-                        </div>
-
-                        <input name="provider" class="input input-bordered w-full" dir="ltr" x-model="form.provider"
-
-                               list="int-providers" placeholder="openai_compat" />
-
-                    </label>
-
-                    <label class="form-control" x-show="showGeneric()">
-
-                        <div class="label px-0 pb-1">
-
-                            <span class="label-text font-medium text-sm">{{ ('Model (optional)') }}</span>
-
-                            <span class="tooltip tooltip-left sm:tooltip-top" data-tip="{{ (( 'Default model for this connection (e.g. gpt-4o-mini) — fetch from the provider or type it manually' )) }}">
+                            <span class="tooltip tooltip-left sm:tooltip-top" data-tip="{{ (( 'Model this connection uses by default. If your endpoint is a gateway/router, use the namespaced ID it exposes (e.g. openrouter/text-embedding-3-small or mistral/mistral-embed); a bare model name may be rejected.' )) }}">
 
                                 <span class="cursor-help text-base-content/40"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/></svg></span>
 
@@ -284,7 +266,7 @@
 
                             <input name="model" class="input input-bordered flex-1" dir="ltr" x-model="form.model"
 
-                                   list="int-models" autocomplete="off" placeholder="gpt-4o-mini" />
+                                   list="int-models" autocomplete="off" placeholder="Enter the provider's model ID" :required="['llm', 'embedding', 'reranker', 'image'].includes(form.category)" />
 
                             <button type="button" class="btn btn-ghost btn-sm" x-show="isEdit && supportsModels()"
 
@@ -487,21 +469,5 @@
         </div>
 
     </dialog>
-
-
-
-    <datalist id="int-providers">
-
-        {% for cat in categories %}
-
-        {% for p in known_providers.get(cat, []) %}
-
-        <option value="{{ p }}"></option>
-
-        {% endfor %}
-
-        {% endfor %}
-
-    </datalist>
 
 </div>

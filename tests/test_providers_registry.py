@@ -9,7 +9,6 @@ from typing import Any
 import pytest
 
 from app.providers.base import PermanentError
-from app.providers.embedding.cohere import CohereEmbedding
 from app.providers.embedding.openai_compat import OpenAICompatEmbedding
 from app.providers.llm.gemini import GeminiLLM
 from app.providers.llm.openai_compat import OpenAICompatLLM
@@ -44,6 +43,7 @@ def add_integration(
     provider: str,
     *,
     base_url: str = "",
+    model: str = "",
     api_key: str = "k-123",
 ) -> dict[str, Any]:
     secrets = SecretsService(b"0123456789abcdef0123456789abcdef")
@@ -52,7 +52,8 @@ def add_integration(
         category=category,
         provider=provider,
         display_name=f"{category}-{provider}",
-        configuration={"base_url": base_url},
+        model=model,
+        configuration={"base_url": base_url, "model": model},
         secrets_enc=secrets.encrypt(json.dumps({"api_key": api_key})),
         enabled=True,
     )
@@ -83,32 +84,40 @@ def test_registry_resolves_by_provider_name():
     assert isinstance(llm2, OpenAICompatLLM)
 
 
-def test_registry_embedding_defaults_to_cohere():
+def test_registry_embedding_is_openai_compatible_only():
     pb = make_pb()
     project = make_project(pb)
     registry = ProviderRegistry(pb, secrets=SecretsService(b"0123456789abcdef0123456789abcdef"))
-    add_integration(pb, project["id"], "embedding", "cohere")
+    add_integration(pb, project["id"], "embedding", "openai_compat", model="text-embedding-3-small")
 
-    # empty provider setting → default "cohere", model embed-v4.0
+    # The connection's explicitly configured model is authoritative.
     embedding = registry.get_embedding_provider(
         project, {"embeddingModel": "", "embeddingDimensions": 0, "retryPolicy": {}}
     )
-    assert isinstance(embedding, CohereEmbedding)
-    assert embedding.model_name == "embed-v4.0"
-    assert embedding.dimensions == 1024
+    assert isinstance(embedding, OpenAICompatEmbedding)
+    assert embedding.model_name == "text-embedding-3-small"
+    assert embedding.dimensions == 1536
 
-    add_integration(pb, project["id"], "embedding", "openai_compat")
-    embedding2 = registry.get_embedding_provider(
+    with pytest.raises(PermanentError, match="enter the model ID"):
+        registry._config_embedding(
+            project,
+            {"category": "embedding", "configuration": {}},
+            {"embeddingModel": "", "embeddingDimensions": 0},
+            "openai_compat",
+        )
+
+    # a stale stored provider name must not break resolution
+    stale = registry.get_embedding_provider(
         project,
         {
-            "embeddingProvider": "openai_compat",
+            "embeddingProvider": "cohere",
             "embeddingModel": "text-embedding-3-small",
             "embeddingDimensions": 1536,
             "retryPolicy": {},
         },
     )
-    assert isinstance(embedding2, OpenAICompatEmbedding)
-    assert embedding2.dimensions == 1536
+    assert isinstance(stale, OpenAICompatEmbedding)
+    assert stale.dimensions == 1536
 
 
 def test_registry_embedding_normalizes_scheme_less_base_url():
@@ -168,7 +177,8 @@ def test_registry_available_providers():
     llm_providers = registry.available_providers("llm")
     assert "openai_compat" in llm_providers
     assert "gemini" in llm_providers
-    assert "cohere" in registry.available_providers("embedding")
+    assert "cohere" not in registry.available_providers("embedding")
+    assert registry.available_providers("embedding") == ["openai_compat"]
     assert "qdrant" in registry.available_providers("vector_store")
     assert "wordpress" in registry.available_providers("publisher")
 

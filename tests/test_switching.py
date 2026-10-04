@@ -139,18 +139,17 @@ def test_embedding_provider_switch_via_settings_ui():
         P.save_settings,
         req,
         project["id"],
-        embedding_provider="cohere",
-        embedding_model="embed-v4.0",
-        embedding_dimensions="1024",
+        embedding_provider="openai_compat",
+        embedding_model="text-embedding-3-large",
+        embedding_dimensions="3072",
     )
     settings = ProjectSettingsRepo(pb).get_for_project(project["id"])
-    assert settings.get("embeddingProvider") == "cohere"
-    assert settings.get("embeddingModel") == "embed-v4.0"
+    assert settings.get("embeddingModel") == "text-embedding-3-large"
 
     from app.providers.registry import qdrant_namespace
 
     ns = qdrant_namespace({"id": project["id"], "slug": "proj-a"}, settings)
-    assert "embed-v4-0" in ns  # namespace keyed by model → switching model re-indexes
+    assert "text-embedding-3-large" in ns  # namespace keyed by model → switching model re-indexes
 
 
 def test_prompt_switch_via_prompts_ui():

@@ -7,6 +7,7 @@ paginated; large collections are never loaded into memory at once.
 from __future__ import annotations
 
 from collections.abc import Iterable
+from datetime import UTC, datetime
 from typing import Any
 
 from pocketbase import PocketBase
@@ -21,6 +22,12 @@ def record_to_dict(record: Record | dict[str, Any] | None) -> dict[str, Any]:
     if isinstance(record, dict):
         return record
     return {k: v for k, v in vars(record).items() if not k.startswith("_")}
+
+
+def _now_ts() -> str:
+    """PocketBase date format: ``2026-10-04 12:00:00.000Z`` (UTC)."""
+    now = datetime.now(UTC)
+    return now.strftime("%Y-%m-%d %H:%M:%S.") + f"{now.microsecond // 1000:03d}Z"
 
 
 def _is_not_found(exc: Exception) -> bool:
@@ -49,10 +56,20 @@ class BaseRepo:
         return [r for r in (self.get(i) for i in record_ids) if r]
 
     def create(self, data: dict[str, Any]) -> dict[str, Any]:
-        return record_to_dict(self._coll().create(data))
+        # The live PocketBase keeps legacy `date` system fields that cannot carry
+        # onCreate/onUpdate flags (PB strips them), so the app writes the
+        # timestamps itself. Callers may pass real values (imports/backfills).
+        now = _now_ts()
+        payload = {
+            **data,
+            "created": data.get("created") or now,
+            "updated": data.get("updated") or now,
+        }
+        return record_to_dict(self._coll().create(payload))
 
     def update(self, record_id: str, data: dict[str, Any]) -> dict[str, Any]:
-        return record_to_dict(self._coll().update(record_id, data))
+        payload = {**data, "updated": data.get("updated") or _now_ts()}
+        return record_to_dict(self._coll().update(record_id, payload))
 
     def delete(self, record_id: str) -> None:
         self._coll().delete(record_id)

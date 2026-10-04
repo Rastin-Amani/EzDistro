@@ -47,7 +47,7 @@ class ProjectRepo(BaseRepo):
 # ---------------------------------------------------------------------------
 DEFAULT_SETTINGS: dict[str, Any] = {
     "defaultLlmProvider": "openai_compat",
-    "defaultLlmModel": "gpt-4o-mini",
+    "defaultLlmModel": "",
     # per-role AI models — empty values resolve to global defaults
     "outlineProvider": "",
     "outlineModel": "",
@@ -65,9 +65,9 @@ DEFAULT_SETTINGS: dict[str, Any] = {
     "metaModel": "",
     "reviewProvider": "",
     "reviewModel": "",
-    "embeddingProvider": "cohere",
-    "embeddingModel": "embed-v4.0",
-    "embeddingDimensions": 1024,
+    "embeddingProvider": "openai_compat",
+    "embeddingModel": "",
+    "embeddingDimensions": 0,
     "chunkSize": 500,
     "chunkOverlap": 100,
     "separatorStrategy": "auto",

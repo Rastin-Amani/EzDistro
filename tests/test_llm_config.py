@@ -43,14 +43,18 @@ def add_integration(
     *,
     base_url: str = "https://example.com/v1",
     api_key: str = "sk-secret-1234",
+    model: str = "",
 ) -> dict[str, Any]:
     secrets = SecretsService(b"0123456789abcdef0123456789abcdef")
+    configuration: dict[str, Any] = {"base_url": base_url, "masked": "************1234"}
+    if model:
+        configuration["model"] = model
     return IntegrationRepo(pb).create(
         project=project_id,
         category="llm",
         provider=provider,
         display_name=f"LLM {provider}",
-        configuration={"base_url": base_url, "masked": "************1234"},
+        configuration=configuration,
         secrets_enc=secrets.encrypt(json.dumps({"api_key": api_key})),
         enabled=True,
     )
@@ -64,10 +68,10 @@ def test_role_llm_resolution_priority():
     project = make_project(pb)
     config = ProjectConfig.load(pb, project["id"])
 
-    # no project override, no global → legacy fields
+    # no project override, no global → empty model (the connection supplies it)
     outline = config.role_llm("outline")
     assert outline["provider"] == "openai_compat"
-    assert outline["model"] == "gpt-4o-mini"
+    assert outline["model"] == ""
     assert outline["temperature"] == 0.7
     assert outline["timeout"] == 120.0
 
@@ -132,7 +136,8 @@ def test_registry_builds_role_provider():
     assert isinstance(llm, GeminiLLM)
     assert llm.model_name == "gemini-2.0-flash"
 
-    # section role without provider override → defaults to openai_compat (legacy)
+    # section role without an override → the connection's model is used
+    add_integration(pb, project["id"], "openai_compat", model="writer")
     section = registry.get_llm_provider(
         project, config.settings, role="section", role_config=config.role_llm("section")
     )

@@ -125,6 +125,13 @@ def integration_categories() -> dict[str, str]:
     }
 
 
+def _default_provider_for(category: str) -> str:
+    """Provider used when the form does not send one (the Provider field is hidden)."""
+    from app.providers.registry import DEFAULT_PROVIDER
+
+    return DEFAULT_PROVIDER.get(category, "openai_compat")
+
+
 def health_labels() -> dict[str, str]:
     return {
         "unknown": ("Unknown"),
@@ -384,18 +391,11 @@ def _tab_context(
         context["settings"] = ProjectSettingsRepo(pb).get_for_project(project_id)
         context["schedules"] = ScheduleRepo(pb).list_for_project(project_id)
         context["llm_providers"] = registry.available_providers("llm")
-        context["embedding_providers"] = registry.available_providers("embedding")
         context["reranker_providers"] = registry.available_providers("reranker")
     elif tab == "integrations":
-        from app.providers.registry import ProviderRegistry
-
-        registry = ProviderRegistry(pb)
         context["integrations"] = IntegrationRepo(pb).list_for_project(project_id)
         context["categories"] = integration_categories()
         context["health_labels"] = health_labels()
-        context["known_providers"] = {
-            cat: registry.available_providers(cat) for cat in integration_categories()
-        }
     elif tab == "prompts":
         from app.domain.prompt_render import variable_labels
 
@@ -609,9 +609,9 @@ def save_settings(
     require_project_role(request, project_id)
     data = {
         "defaultLlmProvider": safe_str(default_llm_provider, "openai_compat"),
-        "defaultLlmModel": safe_str(default_llm_model, "gpt-4o-mini"),
+        "defaultLlmModel": safe_str(default_llm_model, ""),
         "embeddingProvider": safe_str(embedding_provider, "openai_compat"),
-        "embeddingModel": safe_str(embedding_model, "text-embedding-3-small"),
+        "embeddingModel": safe_str(embedding_model, ""),
         "embeddingDimensions": safe_int(embedding_dimensions, 1536),
         "chunkSize": safe_int(chunk_size, 500),
         "chunkOverlap": safe_int(chunk_overlap, 100),
@@ -983,9 +983,13 @@ def save_integration(
     else:
         secrets_enc = secrets.encrypt(json.dumps({"api_key": secret}, ensure_ascii=False))
 
+    model = safe_str(model).strip()
+    if category in ("llm", "embedding", "reranker", "image") and not model:
+        return error_response("Enter the model ID for this connection before saving.")
+
     configuration: dict[str, Any] = {
         "base_url": normalize_base_url(safe_str(base_url)),
-        "model": safe_str(model),
+        "model": model,
         # masked preview — the browser NEVER receives the real secret
         "masked": (existing.get("configuration") or {}).get("masked")
         if existing and not secret
@@ -996,8 +1000,9 @@ def save_integration(
 
     payload = {
         "category": category,
-        "provider": safe_str(provider) or "openai_compat",
+        "provider": safe_str(provider) or _default_provider_for(category),
         "displayName": safe_str(display_name) or category,
+        "model": model,
         "configuration": configuration,
         "secretsEnc": secrets_enc,
         "enabled": bool(existing.get("enabled")) if existing else True,
@@ -1011,6 +1016,7 @@ def save_integration(
             category=payload["category"],
             provider=payload["provider"],
             display_name=payload["displayName"],
+            model=payload["model"],
             configuration=payload["configuration"],
             secrets_enc=payload["secretsEnc"],
             enabled=payload["enabled"],

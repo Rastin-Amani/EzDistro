@@ -31,11 +31,11 @@ def transport_for(handler):
 
 
 # ---------------------------------------------------------------------------
-# Cohere embeddings: timeout / 429 / 500 / malformed response
+# OpenAI-compatible embeddings: timeout / 429 / 500 / malformed response
 # ---------------------------------------------------------------------------
 
 
-def cohere_handler(scenario: str):
+def embedding_handler(scenario: str):
     def handler(request: httpx.Request) -> httpx.Response:
         if scenario == "timeout":
             raise httpx.ReadTimeout("read timeout", request=request)
@@ -51,40 +51,40 @@ def cohere_handler(scenario: str):
     return handler
 
 
-def make_cohere(scenario: str):
-    from app.providers.embedding.cohere import CohereEmbedding
+def make_embedding(scenario: str):
+    from app.providers.embedding.openai_compat import OpenAICompatEmbedding
 
-    return CohereEmbedding(
-        base_url="https://api.cohere.com/v1",
-        model="embed-v4.0",
+    return OpenAICompatEmbedding(
+        base_url="https://api.openai.com/v1",
+        model="text-embedding-3-small",
         api_key="k",
         attempts=1,  # adapter-level retry off: job-level retry covers it
-        transport=transport_for(cohere_handler(scenario)),
+        transport=transport_for(embedding_handler(scenario)),
     )
 
 
 @pytest.mark.asyncio
-async def test_cohere_timeout_is_transient_retryable():
+async def test_embedding_timeout_is_transient_retryable():
     with pytest.raises(TransientError):
-        await make_cohere("timeout").embed_documents(["\u0633\u0644\u0627\u0645"])
+        await make_embedding("timeout").embed_documents(["\u0633\u0644\u0627\u0645"])
 
 
 @pytest.mark.asyncio
-async def test_cohere_429_is_transient_retryable():
+async def test_embedding_429_is_transient_retryable():
     with pytest.raises(TransientError):
-        await make_cohere("429").embed_documents(["\u0633\u0644\u0627\u0645"])
+        await make_embedding("429").embed_documents(["\u0633\u0644\u0627\u0645"])
 
 
 @pytest.mark.asyncio
-async def test_cohere_500_is_transient_retryable():
+async def test_embedding_500_is_transient_retryable():
     with pytest.raises(TransientError):
-        await make_cohere("500").embed_documents(["\u0633\u0644\u0627\u0645"])
+        await make_embedding("500").embed_documents(["\u0633\u0644\u0627\u0645"])
 
 
 @pytest.mark.asyncio
-async def test_cohere_malformed_response_is_permanent():
+async def test_embedding_malformed_response_is_permanent():
     with pytest.raises(PermanentError):
-        await make_cohere("malformed").embed_documents(["\u0633\u0644\u0627\u0645"])
+        await make_embedding("malformed").embed_documents(["\u0633\u0644\u0627\u0645"])
 
 
 # ---------------------------------------------------------------------------

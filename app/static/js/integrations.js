@@ -120,6 +120,10 @@
                     // Categories whose providers expose a model listing endpoint.
                     return ['llm', 'embedding', 'reranker', 'image'].indexOf(this.form.category) !== -1;
                 },
+                requiresModel() {
+                    // Categories where a model is mandatory — a connection is useless without one.
+                    return this.supportsModels();
+                },
                 };
             });
         }

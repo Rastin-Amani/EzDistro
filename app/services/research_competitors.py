@@ -19,6 +19,7 @@ import datetime as dt
 import hashlib
 import json
 import re
+import time
 from html.parser import HTMLParser
 from typing import Any
 from urllib.parse import urljoin, urlparse, urlunparse
@@ -388,6 +389,28 @@ def _is_fresh(record: dict[str, Any]) -> bool:
     return 0 <= (now_utc() - fetched).total_seconds() < COMPETITOR_TTL_SECONDS
 
 
+def _wait_for_canonical(
+    pages: CompetitorPageRepo,
+    project_id: str,
+    canonical: str,
+    *,
+    attempts: int = 5,
+    delay: float = 0.15,
+) -> dict[str, Any] | None:
+    """Look up a canonical that a concurrent `_process_url` is about to create.
+
+    Losers of a create race see `None` for a few milliseconds while the winner's
+    write lands; a short bounded retry closes that window without a lock.
+    """
+    stored = pages.get_for_canonical(project_id, canonical)
+    for _ in range(attempts - 1):
+        if stored is not None:
+            return stored
+        time.sleep(delay)
+        stored = pages.get_for_canonical(project_id, canonical)
+    return stored
+
+
 async def _process_url(
     ctx: JobContext,
     client: httpx.AsyncClient,
@@ -449,8 +472,11 @@ async def _process_url(
     except ClientResponseError as exc:
         if exc.status not in (400, 409):
             raise
-        # A concurrent worker created this canonical first — fold into it.
-        stored = pages.get_for_canonical(ctx.project_id, canonical)
+        # The unique index is (project, canonicalUrl), and several discovered URLs
+        # commonly declare the same canonical. Concurrent crawls therefore race the
+        # create and the loser must fold into the winner's row. The winner may not be
+        # visible yet, so retry the lookup briefly before giving up.
+        stored = _wait_for_canonical(pages, ctx.project_id, canonical)
         if stored is None:
             raise
         pages.update(stored["id"], payload)
@@ -462,12 +488,17 @@ async def crawl_competitors(
     *,
     run_id: str,
     domains: list[str],
-    max_pages: int = 200,
+    max_pages: int = 0,
     transport: httpx.AsyncBaseTransport | None = None,
     verify_urls: bool = True,
     concurrency: int = 4,
 ) -> dict[str, Any]:
-    """Crawl competitor domains (sitemap-first) into `competitor_pages`."""
+    """Crawl competitor domains (sitemap-first) into `competitor_pages`.
+
+    `max_pages <= 0` means no page budget: every discovered, robots-allowed URL
+    is crawled. Accuracy comes from coverage, so the default is unbounded and an
+    explicit positive value is the only way to cap a run.
+    """
     targets = [d.strip() for d in domains if d and d.strip()]
     if not targets:
         return {"domains": 0, "pages": 0, "fetched": 0, "unchanged": 0, "skipped": 0, "failed": 0}
@@ -481,7 +512,8 @@ async def crawl_competitors(
         "skipped": 0,
         "failed": 0,
     }
-    budget = max(1, int(max_pages))
+    budget = int(max_pages)  # <= 0 → unbounded
+    unbounded = budget <= 0
     limits = asyncio.Semaphore(max(1, int(concurrency)))
 
     async with httpx.AsyncClient(
@@ -489,7 +521,7 @@ async def crawl_competitors(
     ) as client:
         for index, domain in enumerate(targets, start=1):
             await ctx.check_cancelled()
-            if budget <= 0:
+            if not unbounded and budget <= 0:
                 break
             base = domain if "://" in domain else f"https://{domain}"
             ctx.progress(
@@ -504,7 +536,19 @@ async def crawl_competitors(
             except Exception as exc:
                 ctx.warning("competitor discovery failed", {"domain": base, "error": str(exc)})
                 continue
-            allowed = [u for u in urls if robots_allowed(u, disallow)][:budget]
+            allowed_all = [u for u in urls if robots_allowed(u, disallow)]
+            # De-duplicate by path: sitemaps often list both a short URL and its
+            # canonical target (`/maya-ai` and `/es/maya-ai-...`), which would
+            # otherwise be fetched twice and race the same (project, canonicalUrl).
+            seen: set[str] = set()
+            deduped: list[str] = []
+            for candidate in allowed_all:
+                key = candidate.rstrip("/").lower()
+                if key in seen:
+                    continue
+                seen.add(key)
+                deduped.append(candidate)
+            allowed = deduped if unbounded else deduped[:budget]
 
             async def _run(url: str) -> str:
                 async with limits:
@@ -513,7 +557,8 @@ async def crawl_competitors(
                     )
 
             results = await asyncio.gather(*(_run(url) for url in allowed))
-            budget -= len(allowed)
+            if not unbounded:
+                budget -= len(allowed)
             totals["pages"] += len(allowed)
             for outcome in results:
                 totals[outcome] = totals.get(outcome, 0) + 1

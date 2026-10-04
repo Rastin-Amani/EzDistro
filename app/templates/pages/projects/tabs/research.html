@@ -151,10 +151,10 @@
       {{ f.form_section('Limits & options', 'Cost and crawler ceilings') }}
       <div class="grid gap-4 md:grid-cols-3">
         <div>
-          {{ f.number('max_keywords', 'Maximum keywords', placeholder='e.g. 500', min='1', hint='Cost ceiling for this run.') }}
+          {{ f.number('max_keywords', 'Maximum keywords', placeholder='0', min='0', hint='0 = no limit — collect every keyword the seeds surface.') }}
         </div>
         <div>
-          {{ f.number('max_competitor_pages', 'Maximum competitor pages', placeholder='e.g. 50', min='1', hint='Crawler page ceiling per run.') }}
+          {{ f.number('max_competitor_pages', 'Maximum competitor pages', placeholder='0', min='0', hint='0 = no limit — crawl every discovered page (best accuracy).') }}
         </div>
         <div>
           {{ f.number('max_serp_queries', 'Maximum SERP queries', placeholder='0', min='0', hint='0 keeps live SERP collection off.') }}

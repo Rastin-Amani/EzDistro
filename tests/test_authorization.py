@@ -169,6 +169,7 @@ def test_save_integration_creates_new_integration(setup):
     rec = records[0]
     assert rec["provider"] == "openai_compat"
     assert rec["displayName"] == "Embedder"
+    assert rec["model"] == "text-embedding-3-small"
     assert rec["configuration"]["model"] == "text-embedding-3-small"
     assert rec["configuration"]["base_url"] == "https://example.com/v1"
     assert rec["enabled"] is True
@@ -188,10 +189,30 @@ def test_save_integration_normalizes_scheme_less_base_url(setup):
         provider="openai_compat",
         display_name="Router",
         base_url="router.example.com/v1",
+        model="gpt-4o-mini",
         secret="sk-router-1",
     )
     records = IntegrationRepo(setup["pb"]).list_for_project(setup["proj_a"]["id"], "llm")
     assert records[0]["configuration"]["base_url"] == "https://router.example.com/v1"
+
+
+def test_save_integration_requires_model_for_model_categories(setup):
+    """A model-bearing connection must not be saved without a model."""
+    pb = setup["pb"]
+    req = make_req(pb, make_user(), setup["proj_a"]["id"])
+    resp = call_route(
+        P.save_integration,
+        req,
+        setup["proj_a"]["id"],
+        category="llm",
+        provider="openai_compat",
+        display_name="No model",
+        base_url="https://example.com/v1",
+        model="",
+        secret="sk-x",
+    )
+    assert "Enter the model ID" in resp.headers.get("hx-trigger", "")
+    assert IntegrationRepo(pb).list_for_project(setup["proj_a"]["id"], "llm") == []
 
 
 def test_save_integration_update_keeps_existing_secret(setup):

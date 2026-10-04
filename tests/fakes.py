@@ -250,13 +250,8 @@ class FakeStorage:
     def create(self, name: str, data: dict) -> dict:
         self._bump_write()
         plain, uploads = self._split_files(data)
-        for field in self.unique_fields.get(name, []):
-            value = plain.get(field)
-            if value is None or value == "":
-                continue
-            for other in self._records.get(name, {}).values():
-                if other.get(field) == value and other.get(field) != "":
-                    raise ClientResponseError("unique constraint violated", status=400)
+        for spec in self.unique_fields.get(name, []):
+            self._check_unique(name, plain, spec)
         record = {"id": uuid.uuid4().hex, "created": _now(), "updated": _now(), **plain}
         self._records.setdefault(name, {})[record["id"]] = record
         for key, item in uploads:
@@ -265,19 +260,38 @@ class FakeStorage:
             self.files[(name, record["id"], key)] = content
         return dict(record)
 
+    def _check_unique(self, name: str, plain: dict, spec: str | tuple[str, ...]) -> None:
+        fields = (spec,) if isinstance(spec, str) else tuple(spec)
+        key = tuple(plain.get(f) for f in fields)
+        if any(v is None or v == "" for v in key):
+            return
+        for other in self._records.get(name, {}).values():
+            if tuple(other.get(f) for f in fields) == key:
+                raise ClientResponseError("unique constraint violated", status=400)
+
     def update(self, name: str, record_id: str, data: dict) -> dict:
         self._bump_write()
         record = self._records.get(name, {}).get(record_id)
         if record is None:
             raise ClientResponseError("not found", status=404)
         plain, uploads = self._split_files(data)
-        for field in self.unique_fields.get(name, []):
-            if field in plain and plain[field]:
-                for other in self._records[name].values():
-                    if other["id"] != record_id and other.get(field) == plain[field]:
-                        raise ClientResponseError("unique constraint violated", status=400)
+        for spec in self.unique_fields.get(name, []):
+            fields = (spec,) if isinstance(spec, str) else tuple(spec)
+            if any(f not in plain for f in fields):
+                continue
+            merged = {**record, **plain}
+            key = tuple(merged.get(f) for f in fields)
+            if any(v is None or v == "" for v in key):
+                continue
+            for other in self._records[name].values():
+                if other["id"] == record_id:
+                    continue
+                if tuple(other.get(f) for f in fields) == key:
+                    raise ClientResponseError("unique constraint violated", status=400)
         record.update(plain)
-        record["updated"] = _now()
+        # Respect an explicit timestamp (real PocketBase stores it); otherwise
+        # keep the pre-existing auto-bump behaviour for raw updates.
+        record["updated"] = plain.get("updated") or _now()
         for key, item in uploads:
             filename, content = self._upload_parts(item)
             record[key] = filename
@@ -335,4 +349,5 @@ def default_unique_fields() -> dict[str, list[str]]:
         "jobs": ["idempotencyKey"],
         "documents": ["sourceId"],
         "projects": ["slug"],
+        "competitor_pages": [("project", "canonicalUrl")],
     }

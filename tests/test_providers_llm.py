@@ -8,7 +8,6 @@ import httpx
 import pytest
 
 from app.providers.base import GenerationParams, PermanentError, TransientError
-from app.providers.embedding.cohere import CohereEmbedding
 from app.providers.embedding.openai_compat import OpenAICompatEmbedding
 from app.providers.http import raise_for_provider
 from app.providers.llm.gemini import GeminiLLM
@@ -223,61 +222,6 @@ def test_gemini_garbage_json_raises_value_error():
     with pytest.raises(ValueError):
         asyncio.run(llm.generate_json(system=None, user="json"))
     asyncio.run(llm.aclose())
-
-
-# ---------------------------------------------------------------------------
-# Cohere Embed v4.0
-# ---------------------------------------------------------------------------
-def cohere_embed_handler(request: httpx.Request) -> httpx.Response:
-    body = json.loads(request.content)
-    assert body["model"] == "embed-v4.0"
-    assert body["embedding_types"] == ["float"]
-    return httpx.Response(200, json={"embeddings": [[0.1, 0.2], [0.3, 0.4]]})
-
-
-def test_cohere_embed_documents_uses_search_document():
-    import asyncio
-
-    seen = {}
-
-    def handler(request: httpx.Request) -> httpx.Response:
-        body = json.loads(request.content)
-        seen["input_type"] = body["input_type"]
-        n = len(body["texts"])
-        return httpx.Response(200, json={"embeddings": [[0.1, 0.2]] * n})
-
-    emb = CohereEmbedding(
-        base_url="https://api.cohere.com/v1",
-        model="embed-v4.0",
-        dimensions=2,
-        api_key="co-key",
-        transport=transport_for(handler),
-    )
-    assert emb.provider_name == "cohere"
-    assert emb.model_name == "embed-v4.0"
-    assert emb.dimensions == 2
-
-    vectors = asyncio.run(emb.embed_documents(["doc1", "doc2"]))
-    assert seen["input_type"] == "search_document"
-    assert len(vectors) == 2
-    assert vectors[0] == [0.1, 0.2]
-
-    asyncio.run(emb.embed_queries(["q"]))
-    assert seen["input_type"] == "search_query"
-    asyncio.run(emb.aclose())
-
-
-def test_cohere_defaults():
-    import asyncio
-
-    emb = CohereEmbedding(
-        base_url="https://api.cohere.com/v1",
-        api_key="k",
-        transport=transport_for(cohere_embed_handler),
-    )
-    assert emb.model_name == "embed-v4.0"
-    assert emb.dimensions == 1024
-    asyncio.run(emb.aclose())
 
 
 def test_openai_compat_embedding():

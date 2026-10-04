@@ -52,7 +52,6 @@ LLM_CLUSTERS_PER_BATCH = 6
 KEYWORDS_PER_CLUSTER = 12
 COMPETITORS_PER_CLUSTER = 8
 MAX_OPPORTUNITIES = 0  # 0 → no cap; more opportunities is better
-MAX_CANDIDATES = 400
 
 # Similarity at which a candidate is considered to describe an existing page
 # rather than a new one. Above this the action is forced to ``update``.
@@ -288,7 +287,7 @@ class MatchIndex:
                 candidates.update(bucket)
         best_row: dict[str, Any] | None = None
         best_score = 0.0
-        for position in list(candidates)[:MAX_CANDIDATES]:
+        for position in candidates:
             score = similarity(text, self.items[position][0])
             if score > best_score:
                 best_score = score
@@ -703,9 +702,9 @@ async def generate_opportunities(
                 raise ValueError("opportunity response contained no opportunities list")
         except Exception as exc:  # one bad batch must not kill the run
             errors.append(
-                f"opportunity batch {start // LLM_CLUSTERS_PER_BATCH + 1} failed: {type(exc).__name__}"
+                f"opportunity batch {start // LLM_CLUSTERS_PER_BATCH + 1} failed: {str(exc)[:200]}"
             )
-            ctx.warning("opportunity batch failed", {"error": str(exc)[:200]})
+            ctx.warning("opportunity batch failed", {"error": str(exc)[:300]})
             continue
 
         batches += 1
@@ -768,7 +767,17 @@ async def generate_opportunities(
         )
 
     if created == 0 and order:
-        ctx.warning("opportunity batches failed — falling back to deterministic ideas", {})
+        first_error = next((e for e in errors if "failed" in e), "")
+        hint = (
+            ": " + first_error
+            if first_error
+            else ". Check the LLM provider URL and API key in Connections."
+        )
+        ctx.warning(
+            "article opportunities could not be generated with the LLM — using deterministic "
+            "ideas instead" + hint,
+            {"errors": errors[:5]},
+        )
         return await _deterministic_opportunities(
             ctx,
             run_id=run_id,
@@ -844,7 +853,7 @@ def _competitors_for(
 
 def _seen_similarity(seen: Sequence[dict[str, Any]], row: dict[str, Any]) -> float:
     best = 0.0
-    for other in seen[-MAX_CANDIDATES:]:
+    for other in seen:
         score = max(
             similarity(row["title"], other["title"]),
             similarity(row["primaryKeyword"], other["primaryKeyword"]),

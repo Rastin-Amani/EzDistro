@@ -41,6 +41,10 @@
         <button class="btn btn-sm btn-ghost text-error"
                 hx-post="/projects/{{ project.id }}/research/{{ run.id }}/cancel"
                 hx-swap="none" hx-confirm="Cancel this research run?">Cancel</button>
+      {% elif run.status in ('failed', 'cancelled') %}
+        <button class="btn btn-sm btn-primary"
+                hx-post="/projects/{{ project.id }}/research/{{ run.id }}/resume"
+                hx-swap="none">Continue from last step</button>
       {% endif %}
     </div>
   </div>

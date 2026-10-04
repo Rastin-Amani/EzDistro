@@ -333,7 +333,7 @@ class ResearchRunRepo(BaseRepo):
         # without this, a transient error that a later retry recovered leaves a
         # stale errorCode/errorMessage on a completed run and the UI keeps
         # showing a failure that no longer applies.
-        if status in ("running", "completed"):
+        if status in ("pending", "running", "completed"):
             payload["errorCode"] = ""
             payload["errorMessage"] = ""
             payload["errorDetails"] = {}

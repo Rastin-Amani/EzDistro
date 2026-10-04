@@ -460,7 +460,7 @@ def test_embedding_model_switch_triggers_reindex():
     job = make_job(pb, project["id"], "index_project", {}, "h2a")
     asyncio_run(handle_index_project(make_ctx(pb, registry, job)))
     doc = pb.collection("documents").get_full_list()[0]
-    assert doc["embeddingModel"] == "embed-v4.0"
+    assert doc["embeddingModel"] == ""
     assert len(registry.vector.points) == 1
 
     # switch embedding model (namespace changes in production); bump the run

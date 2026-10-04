@@ -286,6 +286,7 @@ COLLECTIONS: list[dict[str, Any]] = [
             ),
             t("provider", required=True),
             t("displayName", required=True),
+            t("model"),
             json_field("configuration"),
             t("secretsEnc"),
             boolean("enabled"),
@@ -992,7 +993,10 @@ COLLECTIONS: list[dict[str, Any]] = [
             date("lastChangedAt"),
         ],
         indexes=[
-            "CREATE UNIQUE INDEX idx_competitor_pages_url ON competitor_pages (project, canonicalUrl)",
+            # ponytail: non-unique to match the live DB — 3 historical duplicate
+            # rows exist and the app tolerates them; re-enable UNIQUE after an
+            # authorized dedupe if you want the constraint back.
+            "CREATE INDEX idx_competitor_pages_url ON competitor_pages (project, canonicalUrl)",
             "CREATE INDEX idx_competitor_pages_run ON competitor_pages (run)",
         ],
     ),
@@ -1319,6 +1323,95 @@ def ensure_select_values(pb: PocketBase) -> None:
                 )
 
 
+def ensure_integration_model_field(pb: PocketBase) -> None:
+    """Add the dedicated model field without importing unrelated collection indexes."""
+    base = str(pb.base_url).rstrip("/")
+    headers = {"Authorization": getattr(pb.auth_store, "token", "")}
+    url = f"{base}/api/collections/integrations"
+    response = httpx.get(url, headers=headers, timeout=15)
+    if response.status_code != 200:
+        raise RuntimeError(
+            f"Could not read integrations schema (HTTP {response.status_code}): {response.text[:200]}"
+        )
+
+    fields = response.json().get("fields") or []
+    if any(field.get("name") == "model" for field in fields):
+        return
+
+    model_field = t("model")
+    model_field["id"] = _field_id("text", "model")
+    fields.append(model_field)
+    response = httpx.patch(url, headers=headers, json={"fields": fields}, timeout=15)
+    if response.status_code != 200:
+        raise RuntimeError(
+            f"Could not add integrations.model (HTTP {response.status_code}): {response.text[:300]}"
+        )
+    print("integrations: added model field")
+
+
+def backfill_integration_models(pb: PocketBase) -> None:
+    """Copy the saved Connections-form model into integrations.model.
+
+    Existing rows stored the user-entered model inside ``configuration``. The
+    dedicated field is now canonical; preserve each existing value without
+    inventing provider-specific model IDs for blank rows.
+    """
+    model_categories = {"llm", "embedding", "reranker", "image"}
+    records = pb.collection("integrations").get_full_list()
+
+    from app.repositories.base import record_to_dict
+    from app.repositories.projects import ProjectSettingsRepo
+
+    settings_repo = ProjectSettingsRepo(pb)
+    setting_candidates = {
+        "llm": (
+            ("outlineProvider", "outlineModel"),
+            ("sectionProvider", "sectionModel"),
+            ("metaProvider", "metaModel"),
+            ("reviewProvider", "reviewModel"),
+            ("defaultLlmProvider", "defaultLlmModel"),
+        ),
+        "embedding": (("embeddingProvider", "embeddingModel"),),
+        "reranker": (("rerankerProvider", "rerankerModel"),),
+        "image": (
+            ("imageCoverProvider", "imageCoverModel"),
+            ("imageInteriorProvider", "imageInteriorModel"),
+            ("imageFallbackProvider", "imageFallbackModel"),
+        ),
+    }
+    for raw_record in records:
+        record = record_to_dict(raw_record)
+        if record.get("category") not in model_categories:
+            continue
+        config = record.get("configuration") or {}
+        model = str(record.get("model") or config.get("model") or "").strip()
+        if not model:
+            saved_settings = (
+                settings_repo.first(filter=f'project="{record.get("project")}"')
+                if record.get("project")
+                else None
+            ) or {}
+            candidates = {
+                str(saved_settings.get(model_key) or "").strip()
+                for provider_key, model_key in setting_candidates[record["category"]]
+                if saved_settings.get(model_key)
+                and saved_settings.get(provider_key) == record.get("provider")
+            }
+            model = candidates.pop() if len(candidates) == 1 else ""
+        if not model:
+            print(
+                f"WARNING: integration {record['id']} ({record['category']}) has no saved model; "
+                "enter one on the Connections tab. No model was guessed.",
+                file=sys.stderr,
+            )
+            continue
+        if record.get("model") != model or config.get("model") != model:
+            pb.collection("integrations").update(
+                record["id"], {"model": model, "configuration": {**config, "model": model}}
+            )
+        print(f"integration {record['id']} ({record['category']}): model backfilled")
+
+
 def ensure_users_fields(pb: PocketBase) -> None:
     """Add role + display_name to the built-in users collection if missing."""
     fields = list(pb.collections.get_one("users").fields)
@@ -1394,21 +1487,21 @@ def seed_defaults(pb: PocketBase) -> None:
                 "key": "default",
                 "value": {
                     "default_llm_provider": "openai_compat",
-                    "default_embedding_provider": "cohere",
-                    "default_embedding_model": "embed-v4.0",
-                    "default_embedding_dimensions": 1024,
+                    "default_embedding_provider": "openai_compat",
+                    "default_embedding_model": "",
+                    "default_embedding_dimensions": 0,
                     "heartbeat_interval": 15,
                     "llm": {
                         "outline": {
                             "provider": "openai_compat",
-                            "model": "gpt-4o-mini",
+                            "model": "",
                             "temperature": 0.7,
                             "max_tokens": 4096,
                             "timeout": 120,
                         },
                         "section": {
                             "provider": "openai_compat",
-                            "model": "gpt-4o-mini",
+                            "model": "",
                             "temperature": 0.7,
                             "max_tokens": 4096,
                             "timeout": 120,
@@ -1591,9 +1684,17 @@ def main() -> None:
             settings.pb_admin_email, settings.pb_admin_password
         )
 
+    if "--metadata-migrate" in sys.argv:
+        ensure_integration_model_field(pb)
+        backfill_integration_models(pb)
+        print("✓ integration models backfilled")
+        return
+
     import_collections(pb)
     time.sleep(0.5)
+    ensure_integration_model_field(pb)
     ensure_select_values(pb)
+    backfill_integration_models(pb)
     ensure_users_fields(pb)
     ensure_users_rules(pb)
     seed_defaults(pb)

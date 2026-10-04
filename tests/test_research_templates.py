@@ -483,3 +483,58 @@ def test_opportunity_accept_creates_an_article_and_a_write_job():
     jobs = JobRepo(pb).list_for_project(project["id"], per_page=50)
     assert any(j["type"] == "write_article" for j in jobs)
     assert len(pb.collection("jobs").get_full_list()) == before + 1
+
+
+def test_resume_failed_run_queues_a_new_job_and_clears_the_error():
+    pb, project, run, _ = _setup()
+    ResearchRunRepo(pb).set_status(
+        run["id"],
+        "failed",
+        error_code="PermanentError",
+        error_message="boom at the last step",
+    )
+    before = len(pb.collection("jobs").get_full_list())
+    req = make_req(pb, make_user(), project["id"])
+    resp = _call(R.research_resume, req, project["id"], run["id"])
+    assert resp.status_code == 200
+    refreshed = ResearchRunRepo(pb).get(run["id"])
+    assert refreshed["status"] == "pending"
+    assert refreshed["errorMessage"] == ""
+    assert refreshed["errorCode"] == ""
+    assert len(pb.collection("jobs").get_full_list()) == before + 1
+
+
+def test_resume_running_run_is_rejected():
+    pb, project, run, _ = _setup()
+    ResearchRunRepo(pb).set_status(run["id"], "running")
+    before = len(pb.collection("jobs").get_full_list())
+    req = make_req(pb, make_user(), project["id"])
+    resp = _call(R.research_resume, req, project["id"], run["id"])
+    assert resp.status_code == 200
+    assert "already in progress" in resp.headers.get("hx-trigger", "")
+    assert len(pb.collection("jobs").get_full_list()) == before
+
+
+def test_stage_tracker_skips_completed_stages_on_resume():
+    """The whole point of resume: a run that died at the last step re-runs only
+    the stages it never recorded."""
+    import asyncio
+    from types import SimpleNamespace
+
+    from app.services.research import StageTracker
+
+    pb, project, run, _ = _setup()
+    ResearchRunRepo(pb).set_stage(
+        run["id"], "validate", progress=5, stage_state={"validate": {"seeds": 1}}
+    )
+    ctx = SimpleNamespace(
+        pb=pb,
+        stage_started=lambda *a, **k: None,
+        stage_completed=lambda *a, **k: None,
+        progress=lambda *a, **k: None,
+    )
+    stages = StageTracker(ctx, run["id"])
+    assert stages.done("validate") is True
+    assert stages.done("opportunities") is False
+    forced = StageTracker(ctx, run["id"], force=True)
+    assert forced.done("validate") is False
