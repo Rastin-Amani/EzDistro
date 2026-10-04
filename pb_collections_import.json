@@ -813,6 +813,32 @@
         "id": "textb6af1ac5"
       },
       {
+        "name": "landingPageUrl",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0,
+        "id": "text1208a1e2"
+      },
+      {
+        "name": "productProfile",
+        "type": "json",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSize": 0,
+        "id": "jsond5a535b4"
+      },
+      {
         "name": "autosave",
         "type": "json",
         "required": false,

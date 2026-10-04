@@ -58,11 +58,14 @@ class PromptService:
         search_intent: str = "",
         extra: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
+        from app.domain.product_profile import format_product_profile
+
         project = config.project
         topic = topic or {}
         article = article or {}
         section = section or {}
         settings = config.settings or {}
+        profile_text = format_product_profile(settings.get("productProfile"))
         article_content = (
             article.get("finalHtml")
             or article.get("generatedContent")
@@ -130,7 +133,9 @@ class PromptService:
             "original_value_opportunities": "",
             "evidence_requirements": "",
             "site_context": project.get("description") or "",
-            "product_context": settings.get("productContext") or "",
+            "product_context": settings.get("productContext") or profile_text,
+            "product_profile": profile_text,
+            "landing_page_url": settings.get("landingPageUrl") or "",
             "priority_pages": "",
             "topical_clusters": "",
             "url_policy": settings.get("urlPolicy") or "",
@@ -159,6 +164,14 @@ class PromptService:
             ("brand_voice", config.prompt("brand_voice")),
         ):
             rules[key] = render_prompt(raw, base) if raw else ""
+        # The product profile grounds every prompt that reads brand_voice /
+        # product_context, without requiring per-project prompt edits.
+        if profile_text:
+            rules["brand_voice"] = (
+                f"{rules['brand_voice']}\n\n{profile_text}".strip()
+                if rules["brand_voice"]
+                else profile_text
+            )
         return {**base, **rules}
 
     # ---------------------------------------------------------------------------

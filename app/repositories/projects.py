@@ -94,6 +94,9 @@ DEFAULT_SETTINGS: dict[str, Any] = {
     "forbiddenTerminology": "",
     "urlPolicy": "",
     "productContext": "",
+    # landing-page analysis → product profile consumed by every prompt
+    "landingPageUrl": "",
+    "productProfile": {},
     # image subsystem defaults (mirror bootstrap_pb project_settings fields)
     "imageCoverProvider": "gemini",
     "imageCoverModel": "gemini-3-pro-image",

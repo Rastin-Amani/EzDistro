@@ -93,10 +93,10 @@
 
     {{ f.section_open(('Localization & brand'), ('Market, locale and voice context fed to every prompt.'), ('These values fill the language, locale, audience and brand variables — no prompt editing needed per market.')) }}
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {{ f.text('target_locale', ('Target locale'), settings.targetLocale,
-                ( 'Locale code such as fa-IR, en-US, de-DE. Drives native phrasing, units and examples.' ), dir='ltr', placeholder='fa-IR') }}
-            {{ f.text('target_country', ('Target country/market'), settings.targetCountry,
-                ( 'Market the content is written for (e.g. Iran, Germany).' ), placeholder='Iran') }}
+            {{ f.select('target_locale', ('Target locale'), locales, settings.targetLocale,
+                ( 'Locale code such as fa-IR, en-US, de-DE. Drives native phrasing, units and examples.' )) }}
+            {{ f.select('target_country', ('Target country/market'), countries, settings.targetCountry,
+                ( 'Market the content is written for.' )) }}
             {{ f.text('target_audience', ('Target audience'), settings.targetAudience,
                 ( 'Who reads this (e.g. gym owners, beginner gardeners).' )) }}
             {{ f.text('brand_name', ('Brand name'), settings.brandName,
@@ -109,6 +109,26 @@
                 ( 'Slug convention for non-Latin scripts (e.g. keep Persian script, or transliterate).' )) }}
             {{ f.text('product_context', ('Product context'), settings.productContext,
                 ( 'One or two sentences on what the brand sells, so research and examples stay grounded.' )) }}
+        </div>
+
+        <div class="rounded-box border border-base-300/70 p-4 flex flex-col gap-3">
+            <div class="flex items-center gap-2">
+                <h3 class="ezdistro-panel-title">{{ ('Landing page analysis') }}</h3>
+                <span class="text-xs opacity-50">{{ ('Crawls the page once and stores the product context used in every article.') }}</span>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-3 sm:items-end">
+                <div class="flex-1">
+                    {{ f.text('landing_page_url', ('Landing page URL'), settings.landingPageUrl,
+                        ( 'Your main product or landing page (https://…).' ), dir='ltr', placeholder='https://example.com') }}
+                </div>
+                <button type="button" class="btn btn-primary btn-sm shrink-0"
+                        hx-post="/projects/{{ project.id }}/settings/landing-page/analyze"
+                        hx-target="#landing-status" hx-swap="outerHTML" hx-disabled-elt="this">
+                    <span class="loading loading-spinner loading-xs htmx-indicator"></span>
+                    {{ ('Analyse page') }}
+                </button>
+            </div>
+            {% include 'pages/projects/tabs/_landing_status.html' %}
         </div>
     {{ f.section_close() }}
 

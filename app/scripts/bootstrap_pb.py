@@ -243,6 +243,8 @@ COLLECTIONS: list[dict[str, Any]] = [
             t("forbiddenTerminology"),
             t("urlPolicy"),
             t("productContext"),
+            t("landingPageUrl"),
+            json_field("productProfile"),
             json_field("autosave"),
             json_field("autoPublish"),
             json_field("indexing"),

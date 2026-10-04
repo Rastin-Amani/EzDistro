@@ -74,6 +74,8 @@ def variable_labels() -> dict[str, str]:
         "evidence_requirements": ("Evidence requirements"),
         "site_context": ("Site context"),
         "product_context": ("Brand / product context"),
+        "product_profile": ("Structured product profile from the landing page"),
+        "landing_page_url": ("Brand landing page URL"),
         "priority_pages": ("Priority pages for internal linking"),
         "topical_clusters": ("Topical clusters"),
         "url_policy": ("URL / slug policy for non-Latin scripts"),

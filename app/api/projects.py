@@ -753,6 +753,7 @@ def save_settings(
     forbidden_terminology: str = Form(""),
     url_policy: str = Form(""),
     product_context: str = Form(""),
+    landing_page_url: str = Form(""),
 ):
     require_hx(request)
     require_project_access(request, project_id)
@@ -792,6 +793,7 @@ def save_settings(
         "forbiddenTerminology": safe_str(forbidden_terminology),
         "urlPolicy": safe_str(url_policy),
         "productContext": safe_str(product_context),
+        "landingPageUrl": safe_str(landing_page_url),
         "autosave": {
             "enabled": safe_bool(autosave_enabled),
             "interval_minutes": safe_int(autosave_interval_minutes, 5),
@@ -812,6 +814,53 @@ def save_settings(
         request.state.pb, project_id, "write", schedule_write_enabled, schedule_write_interval
     )
     return success_response("Settings saved")
+
+
+@router.post("/projects/{project_id}/settings/landing-page/analyze")
+@hx_error("Landing page analysis failed")
+def analyze_landing_page(request: Request, project_id: str):
+    """Queue a landing-page crawl that extracts the brand/product profile."""
+    require_hx(request)
+    require_project_access(request, project_id)
+    require_project_role(request, project_id)
+    repo = ProjectSettingsRepo(request.state.pb)
+    settings = repo.get_for_project(project_id)
+    if not safe_str(settings.get("landingPageUrl")):
+        return error_response("Save a landing page URL first")
+    JobRepo(request.state.pb).create(
+        project=project_id,
+        type="analyze_landing_page",
+        payload={},
+        idempotency_key=f"landing:{project_id}:{int(time.time())}",
+        max_attempts=2,
+        entity_type="project",
+        entity_id=project_id,
+    )
+    resp = templates.TemplateResponse(
+        request,
+        "pages/projects/tabs/_landing_status.html",
+        {
+            "project": {"id": project_id},
+            "settings": repo.get_for_project(project_id),
+            "queued": True,
+        },
+    )
+    resp.headers.update(
+        hx_trigger({"show-toast": {"message": ("Landing page analysis queued"), "type": "success"}})
+    )
+    return resp
+
+
+@router.get("/projects/{project_id}/settings/landing-page/status", response_class=HTMLResponse)
+def landing_page_status(request: Request, project_id: str):
+    """Fragment polled by the status card until the analysis finishes."""
+    require_project_access(request, project_id)
+    settings = ProjectSettingsRepo(request.state.pb).get_for_project(project_id)
+    return templates.TemplateResponse(
+        request,
+        "pages/projects/tabs/_landing_status.html",
+        {"project": {"id": project_id}, "settings": settings},
+    )
 
 
 @router.post("/projects/{project_id}/settings/images")

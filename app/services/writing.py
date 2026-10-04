@@ -385,6 +385,21 @@ async def handle_assemble_article(ctx: JobContext) -> dict[str, Any]:
     fixed_title = enforced["title"]
     fixed_slug = enforced["slug"]
 
+    # Brand/product footer: when the project analysed its landing page, close
+    # every article with a short factual "About" note. Placed before the
+    # trailing Related list so the links stay last.
+    from app.domain.product_profile import product_footer_html
+
+    footer = product_footer_html(
+        ctx.config.settings.get("productProfile"),
+        ctx.config.settings.get("landingPageUrl") or "",
+    )
+    if footer:
+        if "<h2>Related</h2>" in html:
+            html = html.replace("<h2>Related</h2>", f"{footer}\n<h2>Related</h2>", 1)
+        else:
+            html = f"{html}\n{footer}"
+
     # Metadata stage (multilingual-engine pipeline): LLM-generated final
     # metadata. Skipped when metadata_user is unconfigured; falls back to the
     # stored meta description (or the title) on any failure.

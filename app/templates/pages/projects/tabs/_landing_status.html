@@ -1,0 +1,38 @@
+{% set profile = settings.productProfile if settings.productProfile is mapping else {} %}
+{% set status = profile.status or ('running' if queued else '') %}
+<div id="landing-status"
+     {% if status == 'running' %}hx-get="/projects/{{ project.id }}/settings/landing-page/status" hx-trigger="load delay:3s" hx-swap="outerHTML"{% endif %}
+     class="rounded-box border border-base-300/60 bg-base-200/40 p-3 text-sm">
+    {% if status == 'ready' %}
+        {% set data = profile.profile if profile.profile is mapping else {} %}
+        {% set products = data.products if data.products is iterable and data.products is not string else [] %}
+        <div class="flex items-start gap-2">
+            <span class="text-success mt-0.5" aria-hidden="true">●</span>
+            <div class="min-w-0">
+                <p class="font-medium">
+                    {{ data.brand or ('Product profile ready') }}
+                    <span class="opacity-60 font-normal">— {{ products | length }} {{ 'product' if products | length == 1 else 'products' }}</span>
+                </p>
+                {% if data.summary %}<p class="opacity-70 leading-relaxed mt-0.5">{{ data.summary }}</p>{% endif %}
+                <p class="text-xs opacity-40 mt-1">{{ ('Source:') }} {{ profile.source or '' }}</p>
+            </div>
+        </div>
+    {% elif status == 'running' %}
+        <div class="flex items-center gap-2">
+            <span class="loading loading-spinner loading-xs"></span>
+            <span>{{ ('Analysing the landing page…') }}</span>
+        </div>
+    {% elif status == 'failed' %}
+        <div class="flex items-start gap-2">
+            <span class="text-error mt-0.5" aria-hidden="true">●</span>
+            <div class="min-w-0">
+                <p class="font-medium text-error">{{ ('Analysis failed') }}</p>
+                <p class="opacity-70 leading-relaxed">{{ profile.error or ('Unknown error') }}</p>
+            </div>
+        </div>
+    {% else %}
+        <p class="opacity-60 leading-relaxed">
+            {{ ('Not analysed yet. Save the URL, then analyse the page to extract the product context used in every article.') }}
+        </p>
+    {% endif %}
+</div>
