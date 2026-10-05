@@ -145,21 +145,44 @@ def test_prompt_labels_include_new_variables():
 
 def test_analyze_route_queues_job_and_requires_url():
     from app.api import projects as P
+    from app.repositories.projects import ProjectSettingsRepo
 
     pb = make_pb()
     project = make_project(pb)
     make_member(pb, project["id"], user_id="u1", role="owner")
     req = make_req(pb, make_user(), project["id"])
 
-    # no URL saved → no job, error toast
+    # no URL typed or saved → no job, error toast
     resp = call_route(P.analyze_landing_page, req, project["id"])
     jobs = pb.collection("jobs").get_full_list()
     assert not [j for j in jobs if j["type"] == "analyze_landing_page"]
-    assert "Save a landing page URL" in toast_message(resp)
+    assert "Enter a landing page URL" in toast_message(resp)
 
-    # URL saved → one job queued
-    _set_landing_url(pb, project["id"], "https://acme.test")
-    call_route(P.analyze_landing_page, req, project["id"])
+    # URL typed and not yet saved → persisted here, then a job is queued
+    call_route(P.analyze_landing_page, req, project["id"], landing_page_url="https://typed.test")
     jobs = [j for j in pb.collection("jobs").get_full_list() if j["type"] == "analyze_landing_page"]
     assert len(jobs) == 1
     assert jobs[0]["project"] == project["id"]
+    assert (
+        ProjectSettingsRepo(pb).get_for_project(project["id"])["landingPageUrl"]
+        == "https://typed.test"
+    )
+
+    # URL already saved → still queues from the saved value
+    _set_landing_url(pb, project["id"], "https://acme.test")
+    call_route(P.analyze_landing_page, req, project["id"])
+    jobs = [j for j in pb.collection("jobs").get_full_list() if j["type"] == "analyze_landing_page"]
+    assert len(jobs) >= 1
+
+
+def test_landing_status_fragment_is_never_cached():
+    """The polled status URL is identical each tick; it must not be cached."""
+    from app.api import projects as P
+
+    pb = make_pb()
+    project = make_project(pb)
+    make_member(pb, project["id"], user_id="u1", role="owner")
+    req = make_req(pb, make_user(), project["id"])
+
+    resp = call_route(P.landing_page_status, req, project["id"])
+    assert resp.headers.get("cache-control") == "no-store"

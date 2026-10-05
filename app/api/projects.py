@@ -818,15 +818,23 @@ def save_settings(
 
 @router.post("/projects/{project_id}/settings/landing-page/analyze")
 @hx_error("Landing page analysis failed")
-def analyze_landing_page(request: Request, project_id: str):
-    """Queue a landing-page crawl that extracts the brand/product profile."""
+def analyze_landing_page(request: Request, project_id: str, landing_page_url: str = Form("")):
+    """Queue a landing-page crawl that extracts the brand/product profile.
+
+    Accepts the URL straight from the form so the user can type it and click
+    Analyse without saving the whole settings page first — it is persisted
+    here before the job is queued.
+    """
     require_hx(request)
     require_project_access(request, project_id)
     require_project_role(request, project_id)
     repo = ProjectSettingsRepo(request.state.pb)
-    settings = repo.get_for_project(project_id)
-    if not safe_str(settings.get("landingPageUrl")):
-        return error_response("Save a landing page URL first")
+    typed = safe_str(landing_page_url)
+    url = typed or safe_str(repo.get_for_project(project_id).get("landingPageUrl"))
+    if not url:
+        return error_response("Enter a landing page URL first")
+    if typed:
+        repo.upsert(project_id, {"landingPageUrl": typed})
     JobRepo(request.state.pb).create(
         project=project_id,
         type="analyze_landing_page",
@@ -848,19 +856,26 @@ def analyze_landing_page(request: Request, project_id: str):
     resp.headers.update(
         hx_trigger({"show-toast": {"message": ("Landing page analysis queued"), "type": "success"}})
     )
+    resp.headers["Cache-Control"] = "no-store"
     return resp
 
 
 @router.get("/projects/{project_id}/settings/landing-page/status", response_class=HTMLResponse)
 def landing_page_status(request: Request, project_id: str):
-    """Fragment polled by the status card until the analysis finishes."""
+    """Fragment polled by the status card until the analysis finishes.
+
+    ``no-store``: the polled URL is identical each time, so without it the
+    browser replays the first (running) response and the card never updates.
+    """
     require_project_access(request, project_id)
     settings = ProjectSettingsRepo(request.state.pb).get_for_project(project_id)
-    return templates.TemplateResponse(
+    resp = templates.TemplateResponse(
         request,
         "pages/projects/tabs/_landing_status.html",
         {"project": {"id": project_id}, "settings": settings},
     )
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
 
 
 @router.post("/projects/{project_id}/settings/images")

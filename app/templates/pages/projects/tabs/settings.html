@@ -92,7 +92,7 @@
     {{ f.section_close() }}
 
     {{ f.section_open(('Localization & brand'), ('Market, locale and voice context fed to every prompt.'), ('These values fill the language, locale, audience and brand variables — no prompt editing needed per market.')) }}
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {{ f.select('target_locale', ('Target locale'), locales, settings.targetLocale,
                 ( 'Locale code such as fa-IR, en-US, de-DE. Drives native phrasing, units and examples.' )) }}
             {{ f.select('target_country', ('Target country/market'), countries, settings.targetCountry,
@@ -107,22 +107,30 @@
                 ( 'Wording the model must never use — comma separated.' )) }}
             {{ f.text('url_policy', ('URL policy'), settings.urlPolicy,
                 ( 'Slug convention for non-Latin scripts (e.g. keep Persian script, or transliterate).' )) }}
-            {{ f.text('product_context', ('Product context'), settings.productContext,
-                ( 'One or two sentences on what the brand sells, so research and examples stay grounded.' )) }}
+            <label class="form-control w-full" style="grid-column: 1 / -1">
+                <span class="label flex items-center gap-1.5 px-0 pb-1.5">
+                    <span class="label-text font-medium text-sm text-base-content/80">{{ ('Product context') }}</span>
+                    {{ f.tip(('One or two sentences on what the brand sells, so research and examples stay grounded.')) }}
+                </span>
+                <textarea name="product_context" rows="3" dir="auto"
+                          class="textarea textarea-bordered w-full text-sm leading-relaxed"
+                          placeholder="{{ ('What the brand sells and who it serves…') }}">{{ settings.productContext or '' }}</textarea>
+            </label>
         </div>
 
         <div class="rounded-box border border-base-300/70 p-4 flex flex-col gap-3">
-            <div class="flex items-center gap-2">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
                 <h3 class="ezdistro-panel-title">{{ ('Landing page analysis') }}</h3>
-                <span class="text-xs opacity-50">{{ ('Crawls the page once and stores the product context used in every article.') }}</span>
+                <span class="text-xs text-base-content/50">{{ ('Crawls the page once and stores the product context used in every article.') }}</span>
             </div>
-            <div class="flex flex-col sm:flex-row gap-3 sm:items-end">
-                <div class="flex-1">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
+                <div class="min-w-0 max-w-md flex-1">
                     {{ f.text('landing_page_url', ('Landing page URL'), settings.landingPageUrl,
                         ( 'Your main product or landing page (https://…).' ), dir='ltr', placeholder='https://example.com') }}
                 </div>
-                <button type="button" class="btn btn-primary btn-sm shrink-0"
+                <button type="button" class="btn btn-primary shrink-0"
                         hx-post="/projects/{{ project.id }}/settings/landing-page/analyze"
+                        hx-include="[name='landing_page_url']"
                         hx-target="#landing-status" hx-swap="outerHTML" hx-disabled-elt="this">
                     <span class="loading loading-spinner loading-xs htmx-indicator"></span>
                     {{ ('Analyse page') }}
