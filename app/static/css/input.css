@@ -404,10 +404,10 @@ body {
         @apply flex items-center gap-2 flex-wrap;
     }
 
-    /* Brand mark — the solid blue block. No radius: the one place blue
-       appears at scale before a user-initiated action. */
+    /* Brand mark — the solid blue block. Uses the app's box radius token
+       (rounded-box) so the tile matches every other surface. */
     .ezdistro-logo {
-        @apply grid place-items-center rounded-none bg-primary font-black text-white;
+        @apply grid place-items-center rounded-box bg-primary font-black text-white;
         overflow: hidden;
     }
     .ezdistro-logo svg {
