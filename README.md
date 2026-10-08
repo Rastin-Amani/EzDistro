@@ -191,3 +191,7 @@ leases make multi-worker safe).
 - Setup, checks, architecture rules and the schema workflow: [CONTRIBUTING.md](CONTRIBUTING.md).
 - Release history: [CHANGELOG.md](CHANGELOG.md).
 - Security model and how to report a vulnerability: [SECURITY.md](SECURITY.md).
+
+## License
+
+Apache License 2.0 — see [LICENSE](LICENSE). Copyright 2026 Rastin Amani.

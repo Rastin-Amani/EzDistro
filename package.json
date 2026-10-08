@@ -1,15 +1,15 @@
 {
-    "name": "fast-htmx-boilerplate",
+    "name": "ezdistro",
     "version": "1.0.0",
-    "description": "FastAPI + HTMX + TailwindCSS Boilerplate",
+    "description": "EzDistro Platform - self-hosted SEO content automation (WordPress indexer + AI writer)",
     "main": "index.js",
     "scripts": {
         "css:build": "npx @tailwindcss/cli -i ./app/static/css/input.css -o ./app/static/app.css --minify",
         "css:watch": "npx @tailwindcss/cli -i ./app/static/css/input.css -o ./app/static/app.css --watch"
     },
-    "keywords": [],
-    "author": "",
-    "license": "ISC",
+    "keywords": ["seo", "content-automation", "wordpress", "fastapi", "htmx", "self-hosted"],
+    "author": "Rastin Amani",
+    "license": "Apache-2.0",
     "type": "commonjs",
     "devDependencies": {
         "@tailwindcss/cli": "^4.3.3",
