@@ -44,15 +44,7 @@
 
             </div>
 
-            <span class="badge badge-soft badge-info badge-sm">{{ p.language or 'en' }}</span>
-
         </div>
-
-        {% if p.description %}
-
-        <p class="text-sm opacity-60 line-clamp-2 mt-3 leading-relaxed">{{ p.description }}</p>
-
-        {% endif %}
 
         <div class="mt-3 flex items-center gap-1.5 text-xs opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity text-primary font-medium">
 
@@ -115,16 +107,6 @@
             {{ f.text('name', ('Project name'), placeholder=('e.g. Tech Magazine'), required=true, autocomplete='off') }}
 
             {{ f.text('slug', ('Slug — English'), dir='ltr', placeholder='tech-magazine', hint=('Left empty, it is derived from the name.')) }}
-
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-
-                {{ f.select('language', ('Language'), [('en', 'English'), ('fa', ('Persian')), ('ar', ('Arabic')), ('tr', ('Türkçe'))], selected='en') }}
-
-                {{ f.select('timezone', ('Timezone'), ['Asia/Tehran', 'UTC', 'Europe/London', 'America/New_York'], selected='Asia/Tehran') }}
-
-            </div>
-
-            {{ f.textarea('description', ('Description'), rows=2, dir='auto') }}
 
             <div class="flex gap-3 mt-1">
 

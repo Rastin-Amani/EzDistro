@@ -15,19 +15,13 @@ class ProjectRepo(BaseRepo):
         *,
         name: str,
         slug: str,
-        language: str = "en",
-        timezone: str = "Asia/Tehran",
-        description: str = "",
         created_by: str = "",
     ) -> dict[str, Any]:
         return super().create(
             {
                 "name": name,
                 "slug": slug,
-                "description": description,
                 "status": "active",
-                "language": language or "en",
-                "timezone": timezone or "Asia/Tehran",
                 "createdBy": created_by,
             }
         )
@@ -86,8 +80,9 @@ DEFAULT_SETTINGS: dict[str, Any] = {
     "retryPolicy": {"max_attempts": 3, "backoff_base": 30, "backoff_max": 3600},
     "publishingMode": "publish",
     # localization & brand (multilingual engine: locale/market/voice context)
-    "targetLocale": "",
-    "targetCountry": "",
+    # US English is the default market/locale; the language derives from the locale.
+    "targetLocale": "en-US",
+    "targetCountry": "US",
     "targetAudience": "",
     "brandName": "",
     "preferredTerminology": "",
@@ -127,6 +122,10 @@ DEFAULT_SETTINGS: dict[str, Any] = {
 
 SETTINGS_FIELDS = tuple(DEFAULT_SETTINGS.keys())
 
+# Settings whose stored blank value should fall back to the default (a blank
+# locale/market is "unset", not a real choice).
+_BLANK_MEANS_DEFAULT = frozenset({"targetLocale", "targetCountry"})
+
 
 class ProjectSettingsRepo(BaseRepo):
     collection = "project_settings"
@@ -139,7 +138,13 @@ class ProjectSettingsRepo(BaseRepo):
         merged: dict[str, Any] = {"id": record["id"], "project": record["project"]}
         for key, default in DEFAULT_SETTINGS.items():
             value = record.get(key)
-            merged[key] = default if value is None else value
+            # A blank locale/market is "unset" — fall back to the default
+            # (US / en-US) rather than an empty string. Other empty strings
+            # (e.g. an intentionally cleared brand name) are kept as-is.
+            if value is None or (key in _BLANK_MEANS_DEFAULT and value == ""):
+                merged[key] = default
+            else:
+                merged[key] = value
         return merged
 
     def upsert(self, project_id: str, data: dict[str, Any]) -> dict[str, Any]:

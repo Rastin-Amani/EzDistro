@@ -174,7 +174,7 @@ always wins as a lower bound.
 
 | Setting | Runtime default | Notes |
 |---|---|---|
-| targetLocale / targetCountry / targetAudience | empty | market + locale + reader injected into every engine prompt |
+| targetLocale / targetCountry / targetAudience | `en-US` / `US` / empty | market + locale + reader injected into every engine prompt; a blank locale/market falls back to the default, and the writing language derives from `targetLocale` |
 | brandName | empty (= project name) | |
 | preferredTerminology / forbiddenTerminology | empty | comma-separated wording rules |
 | urlPolicy | empty | slug convention for non-Latin scripts |
@@ -288,6 +288,9 @@ neighbours (`{{ previous_section }}`, `{{ next_section }}`), QA
 `{{ style_profile }}`, `{{ max_interior_images }}`), site/market context
 (`{{ site_context }}`, `{{ url_policy }}`…) — full registry in
 `variable_labels()` (`app/domain/prompt_render.py`).
+
+`{{ project.language }}` is derived from the project's `targetLocale` (`en-US` → `en`),
+not a separate project column.
 
 Every save appends a new version; activating an old version is the rollback path.
 Bootstrap seeds English global defaults for all types.

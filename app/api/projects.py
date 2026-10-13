@@ -220,9 +220,6 @@ def create_project(
     request: Request,
     name: str = Form(""),
     slug: str = Form(""),
-    language: str = Form("en"),
-    timezone: str = Form("Asia/Tehran"),
-    description: str = Form(""),
 ):
     require_hx(request)
     user = require_user(request)
@@ -235,9 +232,6 @@ def create_project(
     project = ProjectRepo(request.state.pb).create(
         name=safe_str(name),
         slug=slug_value,
-        language=safe_str(language, "en"),
-        timezone=safe_str(timezone, "Asia/Tehran"),
-        description=safe_str(description),
         created_by=user.get("id", ""),
     )
     # Creator becomes owner of the project (authorization).

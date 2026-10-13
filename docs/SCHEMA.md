@@ -7,7 +7,7 @@ the code wins — please fix the doc.
 
 ```text
 Documentation status:  Verified against app/scripts/bootstrap_pb.py (research engine)
-Last verified:         2026-10-04
+Last verified:         2026-10-13
 Requires:              PocketBase ≥ 0.23
 ```
 
@@ -131,13 +131,16 @@ Legend: `*` required · `U` unique index · `R` relation · `sel` select values 
 |---|---|---|
 | name* | text | |
 | slug* | text | U; used in Qdrant namespace keys |
-| description | text | |
 | status | sel | `active` \| `archived` |
-| language | sel | `fa` \| `en` \| `ar` \| `tr` |
-| timezone | text | IANA name |
 | createdBy | text | audit |
 
 Indexes: UNIQUE slug; status.
+
+`description`, `language` and `timezone` were **removed** from this collection:
+the market and locale live in `project_settings` (`targetLocale` /
+`targetCountry`), and the writing language is derived from the locale. An
+existing database keeps the orphan columns until they are dropped explicitly —
+run `python -m app.scripts.drop_legacy_project_fields` (idempotent).
 
 ### 3.2 project_settings (1:1 flat)
 
@@ -160,7 +163,7 @@ Indexes: UNIQUE slug; status.
 | minArticleWords | num | assembly validation gate (runtime default 300) |
 | retryPolicy | json | `{max_attempts, backoff_base, backoff_max}` (defaults 3 / 30 s / 3600 s) |
 | publishingMode | sel | `draft` \| `publish` |
-| targetLocale / targetCountry / targetAudience | text | market + locale + reader for every prompt |
+| targetLocale / targetCountry / targetAudience | text | market + locale + reader for every prompt; locale/market default to `en-US` / `US`, and a blank value falls back to that default (the writing language derives from `targetLocale`) |
 | brandName | text | empty = project name |
 | preferredTerminology / forbiddenTerminology | text | comma-separated wording rules |
 | urlPolicy | text | slug convention for non-Latin scripts |

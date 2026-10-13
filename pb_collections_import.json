@@ -34,21 +34,6 @@
         "id": "text989d9b62"
       },
       {
-        "name": "description",
-        "type": "text",
-        "required": false,
-        "system": false,
-        "hidden": false,
-        "presentable": false,
-        "help": "",
-        "primaryKey": false,
-        "autogeneratePattern": "",
-        "pattern": "",
-        "min": 0,
-        "max": 0,
-        "id": "text6de44026"
-      },
-      {
         "name": "status",
         "type": "select",
         "required": false,
@@ -62,38 +47,6 @@
           "archived"
         ],
         "id": "select7b00651c"
-      },
-      {
-        "name": "language",
-        "type": "select",
-        "required": false,
-        "system": false,
-        "hidden": false,
-        "presentable": false,
-        "help": "",
-        "maxSelect": 1,
-        "values": [
-          "fa",
-          "en",
-          "ar",
-          "tr"
-        ],
-        "id": "selectd4db71b5"
-      },
-      {
-        "name": "timezone",
-        "type": "text",
-        "required": false,
-        "system": false,
-        "hidden": false,
-        "presentable": false,
-        "help": "",
-        "primaryKey": false,
-        "autogeneratePattern": "",
-        "pattern": "",
-        "min": 0,
-        "max": 0,
-        "id": "text3701b297"
       },
       {
         "name": "createdBy",

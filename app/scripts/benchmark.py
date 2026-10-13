@@ -122,9 +122,7 @@ async def run_load_test(
         {
             "name": "Bench Project",
             "slug": "bench",
-            "language": "en",
             "status": "active",
-            "timezone": "Asia/Tehran",
         }
     )
     pb.collection("project_settings").create({"project": project["id"], **DEFAULT_SETTINGS})

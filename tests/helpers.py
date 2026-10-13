@@ -82,10 +82,7 @@ def make_project(pb: FakePocketBase, slug: str = "proj-a", name: str = "A") -> d
         {
             "name": name,
             "slug": slug,
-            "language": "en",
             "status": "active",
-            "timezone": "Asia/Tehran",
-            "description": "",
             "createdBy": "",
         }
     )

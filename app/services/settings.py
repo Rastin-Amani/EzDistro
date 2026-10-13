@@ -32,11 +32,15 @@ class ProjectConfig:
 
     @property
     def language(self) -> str:
-        return str(self.project.get("language") or "en")
+        """Writing language — derived from the project's target locale.
 
-    @property
-    def timezone(self) -> str:
-        return str(self.project.get("timezone") or "Asia/Tehran")
+        The locale is the single source of truth (`en-US` → `en`); there is no
+        separate per-project language field to keep in sync.
+        """
+        locale = str(self.settings.get("targetLocale") or self.project.get("locale") or "")
+        if locale:
+            return locale.replace("_", "-").split("-")[0].lower()
+        return "en"
 
     # -- flat settings accessors ----------------------------------------------------
     @property

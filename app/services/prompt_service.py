@@ -80,7 +80,7 @@ class PromptService:
         base = {
             "project.name": project.get("name") or "",
             "project.slug": project.get("slug") or "",
-            "project.language": project.get("language") or "",
+            "project.language": config.language,
             "topic.title": topic.get("title") or "",
             "topic.keyword": topic.get("keyword") or "",
             "topic.pillar": topic.get("pillar") or "",
@@ -132,7 +132,7 @@ class PromptService:
             "content_gaps": "",
             "original_value_opportunities": "",
             "evidence_requirements": "",
-            "site_context": project.get("description") or "",
+            "site_context": settings.get("productContext") or profile_text or "",
             "product_context": settings.get("productContext") or profile_text,
             "product_profile": profile_text,
             "landing_page_url": settings.get("landingPageUrl") or "",

@@ -47,8 +47,8 @@ platform admin.
 
 1. Go to **Projects** and create a new project (**+ Topic**-style creation form on the
    projects page).
-2. Fill in name, unique slug, description, language (`fa` default), timezone
-   (default `Asia/Tehran`).
+2. Fill in a name and a unique slug (left empty, the slug is derived from the name).
+   Locale, market and audience are configured later on the **Settings** tab.
 3. Open the project. It presents thirteen tabs, ordered as the daily operator flow:
 
 | Tab (label) | Purpose |

@@ -179,10 +179,7 @@ COLLECTIONS: list[dict[str, Any]] = [
         [
             t("name", required=True),
             t("slug", required=True),
-            t("description"),
             select("status", ["active", "archived"]),
-            select("language", ["fa", "en", "ar", "tr"]),
-            t("timezone"),
             t("createdBy"),
         ],
         indexes=[
