@@ -88,15 +88,21 @@ class JobEngine:
     # ---------------------------------------------------------------------------
     # Polling
     # ---------------------------------------------------------------------------
-    async def poll_and_run(self) -> None:
-        """One poll cycle: claim candidates, then execute them under the semaphore."""
+    async def poll_and_run(self) -> int:
+        """One poll cycle: claim candidates, then execute them under the semaphore.
+
+        Returns the number of jobs claimed this cycle.
+        """
         candidates = self.jobs.pending_candidates(limit=50)
+        claimed = 0
         for job in candidates:
             if job.get("status") not in ("pending", "retrying", "running"):
                 continue
             if not self._claim(job):
                 continue
+            claimed += 1
             asyncio.create_task(self._run_guarded(job))
+        return claimed
 
     def _claim(self, job: dict[str, Any]) -> bool:
         """Atomic claim via the unique job_leases constraint. Returns True on win.

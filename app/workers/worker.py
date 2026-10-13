@@ -73,14 +73,18 @@ async def main() -> None:
         loop.add_signal_handler(sig, _signal_handler)
 
     async def job_poll_loop() -> None:
+        # ponytail: idle backoff up to 5x POLL_INTERVAL; resets as soon as work is found
+        idle_multiplier = 1.0
         while not stop.is_set():
             started = time.monotonic()
             try:
-                await engine.poll_and_run()
+                claimed = await engine.poll_and_run()
             except Exception:
                 logger.exception("worker.poll.error")
+                claimed = 1  # poll failed — retry soon
+            idle_multiplier = 1.0 if claimed else min(idle_multiplier * 2.0, 5.0)
             elapsed = time.monotonic() - started
-            await asyncio.sleep(max(0.5, POLL_INTERVAL - elapsed))
+            await asyncio.sleep(max(0.5, POLL_INTERVAL * idle_multiplier - elapsed))
 
     async def schedule_poll_loop() -> None:
         while not stop.is_set():

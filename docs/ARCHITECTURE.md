@@ -65,7 +65,8 @@ worker memory.
 The worker runs three async loops until SIGINT/SIGTERM:
 
 1. **Job poll loop** — every `POLL_INTERVAL_SECONDS` (default 5): claims due jobs and
-   executes them under a global semaphore.
+   executes them under a global semaphore. When a cycle claims nothing it backs off
+   multiplicatively up to 5× the interval, resetting as soon as work is found.
 2. **Schedule loop** — every `SCHEDULE_POLL_INTERVAL_SECONDS` (default 60, floor 10):
    turns due per-project schedules into jobs (idempotent per time window).
 3. **Metrics loop** — every 30 s: flushes accumulated provider metrics to PocketBase
