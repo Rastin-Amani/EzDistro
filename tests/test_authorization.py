@@ -354,7 +354,7 @@ def test_project_detail_renders_active_tab_with_context(setup):
     assert resp.status_code == 200
     body = resp.body.decode()
     assert ">A</h1>" in body  # project name heading
-    assert "Text embedding" in body  # settings tab partial rendered inline
+    assert 'name="embedding_model"' in body  # settings tab partial rendered inline
     assert '<nav id="project-tabs"' in body
     assert f'href="/projects/{setup["proj_a"]["id"]}?tab=settings"' in body
     assert 'data-tab="settings"' in body and 'aria-current="page"' in body
@@ -446,7 +446,7 @@ def test_project_tab_prompts_empty_history_renders(setup):
     req = make_req(setup["pb"], make_user(), setup["proj_a"]["id"])
     resp = call_route(P.project_tab, req, setup["proj_a"]["id"], "prompts")
     assert resp.status_code == 200
-    assert "Global default is used" in resp.body.decode()
+    assert "Using the global default" in resp.body.decode()
 
 
 # ---------------------------------------------------------------------------

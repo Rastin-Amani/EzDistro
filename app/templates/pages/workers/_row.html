@@ -1,0 +1,31 @@
+{# One worker row (shared by the online table and the collapsed offline table). #}
+<tr{% if w.status == 'offline' %} class="opacity-60"{% endif %}>
+    <td class="max-w-56">
+        <p class="truncate font-mono text-xs" dir="ltr" title="{{ w.workerId }}">{{ w.workerId }}</p>
+        <p class="truncate text-[0.7rem] opacity-50" dir="ltr">{{ w.hostname or '—' }}{% if w.pid %} · pid {{ w.pid }}{% endif %}</p>
+    </td>
+    <td>
+        {% if w.status == 'active' %}
+        <span class="badge badge-sm badge-soft badge-success">{{ ('Active') }}</span>
+        {% elif w.status == 'stale' %}
+        <span class="badge badge-sm badge-soft badge-warning">{{ ('Unknown') }}</span>
+        {% else %}
+        <span class="badge badge-sm badge-soft badge-neutral">{{ ('Offline') }}</span>
+        {% endif %}
+        {% if w.needs_restart %}
+        <span class="badge badge-sm badge-soft badge-warning ms-1" title="{{ ('Worker version differs from the web version') }}">{{ ('Needs restart') }}</span>
+        {% endif %}
+    </td>
+    <td class="hidden text-xs sm:table-cell">{{ w.lastHeartbeatAt|rel_time if w.lastHeartbeatAt else ('never') }}</td>
+    <td class="hidden text-xs tabular md:table-cell">
+        <span class="text-warning">{{ w.runningJobs or 0 }}</span>
+        <span class="opacity-30"> / </span>
+        <span class="text-success">{{ w.completedJobs or 0 }}</span>
+        <span class="opacity-30"> / </span>
+        <span class="{{ 'text-error' if (w.failedJobs or 0) > 0 else 'opacity-50' }}">{{ w.failedJobs or 0 }}</span>
+    </td>
+    <td class="hidden text-xs tabular lg:table-cell">{{ w.maxConcurrentJobs or '—' }}</td>
+    <td class="text-xs">
+        <span class="font-mono" dir="ltr">{{ w.version or '—' }}</span>
+    </td>
+</tr>

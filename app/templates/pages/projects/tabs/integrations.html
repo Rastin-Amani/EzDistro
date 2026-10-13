@@ -1,497 +1,265 @@
 {% import 'macros/forms.html' as f %}
 
-{{ f.page_header(('Connections'), ('Manage provider connections.'), eyebrow=('Project')) }}
-
+{# No `hx-select` on this container: the /tabs/integrations endpoint already
+   returns this exact element, and hx-select is INHERITED by descendant htmx
+   requests (Test, Fetch models, …) — it would filter their responses to
+   nothing and blank the target. #}
 <div id="integrations-tab"
-
-     x-data='integrationsEditor({{ provider_meta | tojson }}, {{ provider_defaults | tojson }})'
-
+     x-data='integrationsEditor({{ provider_meta | tojson }}, {{ provider_defaults | tojson }}, {{ categories | tojson }})'
      hx-get="/projects/{{ project.id }}/tabs/integrations"
-
      hx-trigger="refreshIntegrations from:body"
-
      hx-target="this"
-
-     hx-swap="outerHTML"
-
-     hx-select="#integrations-tab">
-
-    <div class="flex flex-col gap-5">
-
-        {% for category, label in categories.items() %}
-
-        {% set integs = integrations | selectattr('category', 'equalto', category) | list %}
-
-        <section class="ezdistro-panel">
-
-            <div class="ezdistro-panel-head">
-
-                <div class="flex items-center gap-2">
-
-                    <h2 class="ezdistro-panel-title">{{ label }}</h2>
-
-                    <span class="tooltip tooltip-right" data-tip="{{ (( 'Active connections in this category — create one per provider and use it in project settings.' )) }}">
-
-                        <span class="cursor-help text-base-content/40"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/></svg></span>
-
-                    </span>
-
-                    <span class="badge badge-soft badge-neutral badge-sm">{{ ('%(n)s connections') % {'n': integs|length} }}</span>
-
-                </div>
-
-                <button type="button" class="btn btn-primary btn-sm" @click="openEditor(null, '{{ category }}')">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-4" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
-                    {{ ('Add') }}
-                </button>
-
-            </div>
-
-            <div class="p-4">
-
-                {% if integs %}
-
-                <div class="overflow-x-auto -mx-2">
-
-                    <table class="table table-sm">
-
-                        <thead>
-
-                            <tr class="text-xs opacity-60">
-
-                                <th>{{ ('Name') }}</th>
-
-                                <th class="hidden xl:table-cell">{{ ('Provider') }}</th>
-
-                                <th class="hidden xl:table-cell">{{ ('Key') }}</th>
-
-                                <th>{{ ('Health') }}</th>
-
-                                <th class="hidden md:table-cell">{{ ('Last test') }}</th>
-
-                                <th>{{ ('Active') }}</th>
-
-                                <th><span class="sr-only">{{ ('Actions') }}</span></th>
-
-                            </tr>
-
-                        </thead>
-
-                        <tbody>
-
-                            {% for i in integs %}
-
-                            {% set cfg = i.configuration or {} %}
-
-                            <tr>
-
-                                <td class="max-w-32 truncate text-xs font-medium sm:max-w-none">{{ i.displayName }}</td>
-
-                                <td class="hidden text-xs opacity-70 xl:table-cell" dir="ltr">{{ i.provider }}</td>
-
-                                <td class="hidden text-xs font-mono opacity-70 xl:table-cell" dir="ltr">{{ cfg.masked if cfg.masked else '—' }}</td>
-
-                                <td><span class="badge badge-sm {{ i.healthStatus|status_badge }}">{{ health_labels.get(i.healthStatus, i.healthStatus) }}</span></td>
-
-                                <td class="hidden whitespace-nowrap text-xs opacity-60 md:table-cell">{{ i.lastTestedAt|loc_dt if i.lastTestedAt else '—' }}</td>
-
-                                <td>
-
-                                    <label class="tooltip tooltip-top cursor-pointer" data-tip="{{ ('Active — click to deactivate') if i.enabled else ('Inactive — click to activate') }}">
-
-                                        <input type="checkbox" class="toggle toggle-xs toggle-primary" {% if i.enabled %}checked{% endif %}
-
-                                               hx-post="/projects/{{ project.id }}/integrations/{{ i.id }}/toggle"
-
-                                               hx-trigger="change" hx-swap="none"
-
-                                               aria-label="{{ ('Toggle connection %(v)s') % {'v': i.displayName} }}" />
-
-                                    </label>
-
-                                </td>
-
-                                <td class="whitespace-nowrap">
-
-                                    <div class="flex items-center justify-end gap-1">
-
-                                        <button type="button" class="btn btn-ghost btn-sm"
-
-                                                data-category="{{ category }}"
-
-                                                data-payload='{{ {"id": i.id, "category": category, "displayName": i.displayName, "provider": i.provider, "model": i.model or cfg.model or "", "baseUrl": cfg.base_url or "", "username": cfg.username or "", "masked": cfg.masked or "", "clientId": cfg.client_id or "", "redirectUri": cfg.redirect_uri or "", "apiVersion": cfg.api_version or "", "loginCustomerId": cfg.login_customer_id or ""} | tojson }}'
-
-                                                @click="openEditorFrom($event.currentTarget)">{{ ('Edit') }}</button>
-
-                                        <button class="btn btn-primary btn-sm"
-
-                                                hx-post="/projects/{{ project.id }}/integrations/{{ i.id }}/test"
-
-                                                hx-target="#health-{{ i.id }}" hx-swap="outerHTML">
-
-                                            <span class="loading loading-spinner loading-xs htmx-indicator"></span>
-
-                                            {{ ('Test') }}
-
-                                        </button>
-
-                                        <details>
-                                            <summary class="btn btn-ghost btn-square btn-sm list-none" aria-label="{{ ('More actions') }}">
-                                                <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="size-5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h.01M12 12h.01M19 12h.01" /></svg>
-                                            </summary>
-                                            <ul class="menu mt-1 w-40 rounded-box border border-base-300 bg-base-100 p-2 text-sm">
-                                                <li><button class="text-error"
-                                                    hx-post="/projects/{{ project.id }}/integrations/{{ i.id }}/delete"
-                                                    hx-swap="none"
-                                                    hx-confirm="{{ ('Delete this integration? This cannot be undone.') }}">{{ ('Delete') }}</button></li>
-                                            </ul>
-                                        </details>
-
-                                    </div>
-
-                                </td>
-
-                            </tr>
-
-                            {% endfor %}
-
-                        </tbody>
-
-                    </table>
-
-                    <div class="px-2 pb-1">
-
-                        {% for i in integs %}<div id="health-{{ i.id }}"></div>{% endfor %}
-
-                    </div>
-
-                </div>
-
-                {% else %}
-
-                <div class="ezdistro-empty">
-
-                    <p class="font-bold text-base-content/75">{{ ('No connections registered in this category.') }}</p>
-
-                    <p class="text-sm text-base-content/50">{{ ('Create the first connection with “Add”.') }}</p>
-
-                </div>
-
-                {% endif %}
-
-            </div>
-
-        </section>
-
-        {% endfor %}
-
+     hx-swap="outerHTML">
+
+    <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div class="min-w-0">
+            <h2 class="text-lg font-extrabold tracking-tight">{{ ('Connections') }}</h2>
+            <p class="mt-0.5 text-sm text-base-content/50">
+                {{ ('Providers this project uses — one connection per provider. Test, activate or edit them here; pick them in Settings and the other tabs.') }}
+            </p>
+        </div>
+        <button type="button" class="btn btn-primary btn-sm shrink-0" @click="openEditor(null, 'llm')">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-4" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+            {{ ('Add connection') }}
+        </button>
     </div>
 
-
+    {% if integrations %}
+    <div class="flex flex-col gap-4">
+        {% for category, label in categories.items() %}
+        {% set integs = integrations | selectattr('category', 'equalto', category) | list %}
+        {% if integs %}
+        <section class="ezdistro-panel">
+            <div class="ezdistro-panel-head">
+                <div class="flex items-center gap-2">
+                    <h3 class="ezdistro-panel-title">{{ label }}</h3>
+                    <span class="badge badge-soft badge-neutral badge-sm tabular">{{ integs|length }}</span>
+                </div>
+                <button type="button" class="btn btn-ghost btn-xs" @click="openEditor(null, '{{ category }}')">{{ ('Add') }}</button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="table table-sm">
+                    <thead>
+                        <tr class="text-xs opacity-60">
+                            <th>{{ ('Name') }}</th>
+                            <th class="hidden xl:table-cell">{{ ('Provider') }}</th>
+                            <th class="hidden xl:table-cell">{{ ('Key') }}</th>
+                            <th>{{ ('Health') }}</th>
+                            <th class="hidden md:table-cell">{{ ('Last test') }}</th>
+                            <th>{{ ('Active') }}</th>
+                            <th><span class="sr-only">{{ ('Actions') }}</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for i in integs %}
+                        {% set cfg = i.configuration or {} %}
+                        <tr>
+                            <td class="max-w-32 truncate text-xs font-medium sm:max-w-none">{{ i.displayName }}</td>
+                            <td class="hidden text-xs opacity-70 xl:table-cell" dir="ltr">{{ i.provider }}</td>
+                            <td class="hidden text-xs font-mono opacity-70 xl:table-cell" dir="ltr">{{ cfg.masked if cfg.masked else '—' }}</td>
+                            <td><span id="health-badge-{{ i.id }}" class="badge badge-sm {{ i.healthStatus|status_badge }}">{{ health_labels.get(i.healthStatus, i.healthStatus) }}</span></td>
+                            <td class="hidden whitespace-nowrap text-xs opacity-60 md:table-cell"><span id="health-tested-{{ i.id }}">{{ i.lastTestedAt|loc_dt if i.lastTestedAt else '—' }}</span></td>
+                            <td>
+                                <label class="tooltip tooltip-top cursor-pointer" data-tip="{{ ('Active — click to deactivate') if i.enabled else ('Inactive — click to activate') }}">
+                                    <input type="checkbox" class="toggle toggle-xs toggle-primary" {% if i.enabled %}checked{% endif %}
+                                           hx-post="/projects/{{ project.id }}/integrations/{{ i.id }}/toggle"
+                                           hx-trigger="change" hx-swap="none"
+                                           aria-label="{{ ('Toggle connection %(v)s') % {'v': i.displayName} }}" />
+                                </label>
+                            </td>
+                            <td class="whitespace-nowrap">
+                                <div class="flex items-center justify-end gap-1">
+                                    <button type="button" class="btn btn-ghost btn-sm"
+                                            data-category="{{ category }}"
+                                            data-payload='{{ {"id": i.id, "category": category, "displayName": i.displayName, "provider": i.provider, "model": i.model or cfg.model or "", "baseUrl": cfg.base_url or "", "username": cfg.username or "", "masked": cfg.masked or "", "clientId": cfg.client_id or "", "redirectUri": cfg.redirect_uri or "", "apiVersion": cfg.api_version or "", "loginCustomerId": cfg.login_customer_id or ""} | tojson }}'
+                                            @click="openEditorFrom($event.currentTarget)">{{ ('Edit') }}</button>
+                                    <button class="btn btn-primary btn-sm"
+                                            hx-post="/projects/{{ project.id }}/integrations/{{ i.id }}/test"
+                                            hx-target="#health-{{ i.id }}" hx-swap="outerHTML">
+                                        <span class="loading loading-spinner loading-xs htmx-indicator"></span>
+                                        {{ ('Test') }}
+                                    </button>
+                                    <details>
+                                        <summary class="btn btn-ghost btn-square btn-sm list-none" aria-label="{{ ('More actions') }}">
+                                            <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="size-5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h.01M12 12h.01M19 12h.01" /></svg>
+                                        </summary>
+                                        <ul class="menu mt-1 w-40 rounded-box border border-base-300 bg-base-100 p-2 text-sm">
+                                            <li><button class="text-error"
+                                                hx-post="/projects/{{ project.id }}/integrations/{{ i.id }}/delete"
+                                                hx-swap="none"
+                                                hx-confirm="{{ ('Delete this integration? This cannot be undone.') }}">{{ ('Delete') }}</button></li>
+                                        </ul>
+                                    </details>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <div class="px-2 pb-1">
+                    {% for i in integs %}<div id="health-{{ i.id }}"></div>{% endfor %}
+                </div>
+            </div>
+        </section>
+        {% endif %}
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="ezdistro-panel">
+        <div class="ezdistro-empty py-10">
+            <p class="font-bold text-base-content/75">{{ ('No connections yet') }}</p>
+            <p class="text-sm text-base-content/50">{{ ('Add a connection to use an LLM, embeddings, a vector store, WordPress, images, SERP or Google Ads.') }}</p>
+            <button type="button" class="btn btn-primary btn-sm mt-2" @click="openEditor(null, 'llm')">{{ ('Add your first connection') }}</button>
+        </div>
+    </div>
+    {% endif %}
 
     <!-- Shared add/edit editor — bottomsheet on mobile, centered modal on desktop -->
-
     <dialog id="int-editor" class="modal modal-bottom sm:modal-middle" hx-boost="false">
-
         <div class="modal-box bg-base-100 border border-base-300">
-
             <div class="flex items-center justify-between mb-4">
-
                 <h3 class="font-bold text-lg">
                     <span x-show="isEdit">{{ ('Edit connection') }}</span>
                     <span x-show="!isEdit">{{ ('New connection') }}</span>
                 </h3>
-
                 <button type="button" class="btn btn-ghost btn-circle btn-sm" @click="closeEditor()" aria-label="{{ ('Close') }}">
-
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
-
                 </button>
-
             </div>
 
-
-
             <form hx-post="/projects/{{ project.id }}/integrations"
-
                   hx-swap="none"
-
                   hx-on::after-request="if (event.detail.successful) document.getElementById('int-editor').close()"
-
                   class="flex flex-col gap-4">
-
                 <input type="hidden" name="category" x-model="form.category" />
-
                 <input type="hidden" name="record_id" x-model="form.record_id" />
 
-
-
-                <label class="form-control">
-
-                    <div class="label px-0 pb-1">
-
-                        <span class="label-text font-medium text-sm">{{ ('Display name') }} <span class="text-error">*</span></span>
-
-                        <span class="tooltip tooltip-left sm:tooltip-top" data-tip="{{ (( 'The name you see in the connections table, e.g. “Main OpenAI”' )) }}">
-
-                            <span class="cursor-help text-base-content/40"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/></svg></span>
-
-                        </span>
-
-                    </div>
-
-                    <input name="display_name" class="input input-bordered w-full" x-model="form.display_name" required />
-
-                </label>
-
-
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <label class="form-control" x-show="!isEdit">
+                        <div class="label px-0 pb-1"><span class="label-text font-medium text-sm">{{ ('Category') }} <span class="text-error">*</span></span></div>
+                        <select class="select select-bordered w-full" x-model="form.category" @change="onCategoryChange()">
+                            {% for cat, label in categories.items() %}
+                            <option value="{{ cat }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                    <label class="form-control" x-show="isEdit">
+                        <div class="label px-0 pb-1"><span class="label-text font-medium text-sm">{{ ('Category') }}</span></div>
+                        <input class="input input-bordered w-full" :value="categoryLabel()" disabled />
+                    </label>
+                    <label class="form-control">
+                        <div class="label px-0 pb-1">
+                            <span class="label-text font-medium text-sm">{{ ('Display name') }} <span class="text-error">*</span></span>
+                            <span class="tooltip tooltip-left sm:tooltip-top" data-tip="{{ (( 'The name you see in the connections list, e.g. “Main OpenAI”' )) }}">
+                                <span class="cursor-help text-base-content/40"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/></svg></span>
+                            </span>
+                        </div>
+                        <input name="display_name" class="input input-bordered w-full" x-model="form.display_name" required />
+                    </label>
+                </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
                     <label class="form-control">
-
-                        <div class="label px-0 pb-1">
-
-                            <span class="label-text font-medium text-sm">{{ ('Provider') }} <span class="text-error">*</span></span>
-
-                        </div>
-
+                        <div class="label px-0 pb-1"><span class="label-text font-medium text-sm">{{ ('Provider') }} <span class="text-error">*</span></span></div>
                         <select name="provider" class="select select-bordered w-full" x-model="form.provider" @change="onProviderChange()">
-
                             <template x-for="p in providersFor(form.category)" :key="p.provider">
-
                                 <option :value="p.provider" x-text="p.provider"></option>
-
                             </template>
-
                         </select>
-
                         <span class="text-xs opacity-50 mt-1 leading-relaxed" x-text="providerDescription()"></span>
-
                     </label>
-
-
 
                     <label class="form-control" x-show="requiresModel()">
-
                         <div class="label px-0 pb-1">
-
                             <span class="label-text font-medium text-sm">{{ ('Model') }} <span class="text-error">*</span></span>
-
-                            <span class="tooltip tooltip-left sm:tooltip-top" data-tip="{{ (( 'Model this connection uses by default. If your endpoint is a gateway/router, use the namespaced ID it exposes (e.g. openrouter/text-embedding-3-small or mistral/mistral-embed); a bare model name may be rejected.' )) }}">
-
+                            <span class="tooltip tooltip-left sm:tooltip-top" data-tip="{{ (( 'Model this connection uses by default. On a gateway/router use the namespaced ID it exposes (e.g. openrouter/text-embedding-3-small); a bare name may be rejected.' )) }}">
                                 <span class="cursor-help text-base-content/40"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/></svg></span>
-
                             </span>
-
                         </div>
-
                         <div class="flex gap-2">
-
                             <input name="model" class="input input-bordered flex-1" dir="ltr" x-model="form.model"
-
-                                   list="int-models" autocomplete="off" placeholder="Enter the provider's model ID" :required="requiresModel()" />
-
+                                   list="int-models" autocomplete="off" placeholder="Provider model ID" :required="requiresModel()" />
                             <button type="button" class="btn btn-ghost btn-sm" x-show="isEdit && supportsModels()"
-
                                     @click="$el.setAttribute('hx-get', '/projects/{{ project.id }}/integrations/' + form.record_id + '/models'); htmx.process($el); htmx.trigger($el, 'fetch-models')"
-
                                     hx-trigger="fetch-models"
-
                                     hx-target="#int-models" hx-swap="innerHTML"
-
                                     title="{{ ('Fetch models from the provider') }}">
-
                                 <span class="loading loading-spinner loading-xs htmx-indicator"></span>
-
                                 {{ ('Fetch') }}
-
                             </button>
-
                         </div>
-
                         <datalist id="int-models"></datalist>
-
                         <span class="text-xs opacity-40 mt-1" x-show="isEdit && supportsModels()">{{ ('Fetched from the saved connection — you can also type the model ID.') }}</span>
-
                         <span class="text-xs opacity-40 mt-1" x-show="!isEdit">{{ ('Save first to fetch models, or type the model ID now.') }}</span>
-
                     </label>
-
                 </div>
-
-
 
                 <label class="form-control" x-show="showBaseUrl()">
-
                     <div class="label px-0 pb-1">
-
                         <span class="label-text font-medium text-sm">{{ ('Base URL') }}</span>
-
                         <span class="tooltip tooltip-left sm:tooltip-top" data-tip="{{ (( 'API URL — for OpenAI usually …/v1, for Qdrant usually http://127.0.0.1:6333. Without a protocol, https:// is added.' )) }}">
-
                             <span class="cursor-help text-base-content/40"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/></svg></span>
-
                         </span>
-
                     </div>
-
-                    <input name="base_url" class="input input-bordered w-full" dir="ltr" x-model="form.base_url"
-
-                           :placeholder="baseUrlPlaceholder()" />
-
+                    <input name="base_url" class="input input-bordered w-full" dir="ltr" x-model="form.base_url" :placeholder="baseUrlPlaceholder()" />
                 </label>
-
-
 
                 <label class="form-control" x-show="isPublisher()">
-
-                    <div class="label px-0 pb-1">
-
-                        <span class="label-text font-medium text-sm">{{ ('WordPress username') }}</span>
-
-                        <span class="tooltip tooltip-left sm:tooltip-top" data-tip="{{ (( 'WordPress username together with an Application Password' )) }}">
-
-                            <span class="cursor-help text-base-content/40"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/></svg></span>
-
-                        </span>
-
-                    </div>
-
+                    <div class="label px-0 pb-1"><span class="label-text font-medium text-sm">{{ ('WordPress username') }}</span></div>
                     <input name="username" class="input input-bordered w-full" dir="ltr" autocomplete="off" x-model="form.username" />
-
                 </label>
-
-
 
                 <template x-if="isGoogleAds()">
-
                     <div class="flex flex-col gap-3">
-
                         <label class="form-control">
-
-                            <div class="label px-0 pb-1">
-
-                                <span class="label-text font-medium text-sm">{{ ('Google Ads client ID') }}</span>
-
-                            </div>
-
+                            <div class="label px-0 pb-1"><span class="label-text font-medium text-sm">{{ ('Google Ads client ID') }}</span></div>
                             <input name="client_id" class="input input-bordered w-full" dir="ltr" autocomplete="off" x-model="form.client_id" placeholder="1234.apps.googleusercontent.com" />
-
                         </label>
-
                         <label class="form-control">
-
-                            <div class="label px-0 pb-1">
-
-                                <span class="label-text font-medium text-sm">{{ ('Redirect URI') }}</span>
-
-                            </div>
-
+                            <div class="label px-0 pb-1"><span class="label-text font-medium text-sm">{{ ('Redirect URI') }}</span></div>
                             <input name="redirect_uri" class="input input-bordered w-full" dir="ltr" autocomplete="off" x-model="form.redirect_uri" placeholder="https://your-app/auth/google-ads/callback" />
-
                         </label>
-
                         <label class="form-control">
-
-                            <div class="label px-0 pb-1">
-
-                                <span class="label-text font-medium text-sm">{{ ('API version (optional)') }}</span>
-
-                            </div>
-
+                            <div class="label px-0 pb-1"><span class="label-text font-medium text-sm">{{ ('API version (optional)') }}</span></div>
                             <input name="api_version" class="input input-bordered w-full" dir="ltr" autocomplete="off" x-model="form.api_version" placeholder="v25" />
-
                         </label>
-
                         <label class="form-control">
-
-                            <div class="label px-0 pb-1">
-
-                                <span class="label-text font-medium text-sm">{{ ('Login customer ID (optional)') }}</span>
-
-                            </div>
-
+                            <div class="label px-0 pb-1"><span class="label-text font-medium text-sm">{{ ('Login customer ID (optional)') }}</span></div>
                             <input name="login_customer_id" class="input input-bordered w-full" dir="ltr" autocomplete="off" x-model="form.login_customer_id" placeholder="1234567890" />
-
                         </label>
-
                         <label class="form-control">
-
-                            <div class="label px-0 pb-1">
-
-                                <span class="label-text font-medium text-sm">{{ ('Developer token (optional)') }}</span>
-
-                            </div>
-
+                            <div class="label px-0 pb-1"><span class="label-text font-medium text-sm">{{ ('Developer token (optional)') }}</span></div>
                             <input type="password" name="developer_token" class="input input-bordered w-full" dir="ltr" autocomplete="new-password" x-model="form.developer_token" />
-
                         </label>
-
                         <label class="form-control">
-
-                            <div class="label px-0 pb-1">
-
-                                <span class="label-text font-medium text-sm">{{ ('Client secret') }}</span>
-
-                            </div>
-
+                            <div class="label px-0 pb-1"><span class="label-text font-medium text-sm">{{ ('Client secret') }}</span></div>
                             <input type="password" name="client_secret" class="input input-bordered w-full" dir="ltr"
-
                                    autocomplete="new-password" x-model="form.client_secret"
-
                                    placeholder="{{ ('If left empty, the previous value is kept') }}" />
-
                         </label>
-
                     </div>
-
                 </template>
 
-
-
                 <label class="form-control" x-show="showSecret()">
-
                     <div class="label px-0 pb-1">
-
                         <span class="label-text font-medium text-sm" x-text="secretLabel()"></span>
-
                         <span class="tooltip tooltip-left sm:tooltip-top" data-tip="{{ (( 'When editing, leave empty to keep the existing key. The key is never stored or displayed in plaintext — only an encrypted version is kept' )) }}">
-
                             <span class="cursor-help text-base-content/40"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/></svg></span>
-
                         </span>
-
                     </div>
-
                     <input type="password" name="secret" class="input input-bordered w-full" dir="ltr"
-
                            autocomplete="new-password" x-model="form.secret"
-
                            placeholder="{{ ('If left empty, the previous value is kept') }}" />
-
                 </label>
 
-
-
                 <div class="flex gap-3 mt-2">
-
                     <button type="submit" class="btn btn-primary flex-1" hx-disabled-elt="this">
-
                         <span class="loading loading-spinner loading-xs htmx-indicator"></span>
-
                         {{ ('Save') }}
-
                     </button>
-
                     <button type="button" class="btn btn-ghost flex-1" @click="closeEditor()">{{ ('Cancel') }}</button>
-
                 </div>
-
             </form>
-
         </div>
-
     </dialog>
-
 </div>

@@ -1,263 +1,155 @@
 {% import 'macros/forms.html' as f %}
 
-{{ f.page_header(('Topics'), ('Manage topics and article generation.'), eyebrow=('Project')) }}
-
 <div id="topics-tab"
-
      hx-get="/projects/{{ project.id }}/tabs/topics"
-
      hx-trigger="refreshTopics from:body"
-
      hx-target="this"
+     hx-swap="outerHTML">
 
-     hx-swap="outerHTML"
+    {{ f.section_head(('Topics'), ('Plan and generate articles. Search, filter by status, or add a topic.')) }}
 
-     hx-select="#topics-tab">
+    {% set statuses = ['planned', 'queued', 'planning', 'outline_ready', 'writing', 'review', 'publishing', 'published', 'failed', 'cancelled'] %}
 
-    <div class="flex flex-col gap-3">
-
-        <div class="flex flex-wrap items-center justify-between gap-2">
-
-            <div class="join join-sm overflow-x-auto">
-
-                <a class="join-item btn btn-xs {{ 'btn-primary' if not status_filter }}"
-
-                   hx-get="/projects/{{ project.id }}/tabs/topics?q={{ q }}" hx-target="#tab-content" hx-swap="innerHTML">{{ ('All') }}</a>
-
-                {% for s in ['planned', 'queued', 'planning', 'outline_ready', 'writing', 'review', 'publishing', 'published', 'failed', 'cancelled'] %}
-
-                <a class="join-item btn btn-xs {{ 'btn-primary' if status_filter == s }}"
-
-                   hx-get="/projects/{{ project.id }}/tabs/topics?status={{ s }}&q={{ q }}" hx-target="#tab-content" hx-swap="innerHTML">{{ s|status_label }}</a>
-
+    <div class="mb-4 flex flex-wrap items-center gap-2">
+        <form class="flex min-w-0 flex-1 items-center gap-2"
+              hx-get="/projects/{{ project.id }}/tabs/topics"
+              hx-target="#tab-content" hx-swap="innerHTML" hx-trigger="submit">
+            <input name="q" type="search" value="{{ q }}" class="input input-sm w-full max-w-72"
+                   placeholder="{{ ('Search by title or keyword…') }}" aria-label="{{ ('Search topics') }}" />
+            <select name="status" class="select select-sm w-full max-w-44"
+                    hx-get="/projects/{{ project.id }}/tabs/topics"
+                    hx-target="#tab-content" hx-swap="innerHTML" hx-trigger="change"
+                    hx-include="closest form"
+                    aria-label="{{ ('Filter by status') }}">
+                <option value="">{{ ('All statuses') }}</option>
+                {% for s in statuses %}
+                <option value="{{ s }}" {{ 'selected' if status_filter == s }}>{{ s|status_label }}</option>
                 {% endfor %}
-
-            </div>
-
-            <div class="flex items-center gap-2">
-
-                <a href="/projects/{{ project.id }}/topics" class="btn btn-ghost btn-xs">{{ ('Full view') }}</a>
-
-                <button class="btn btn-ghost btn-xs" @click="$store.ui.openModal('topic-import-modal')">
-
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" /></svg>
-
-                    {{ ('CSV / Bulk') }}
-
-                </button>
-
-                <button class="btn btn-primary btn-xs" @click="$store.ui.openModal('new-topic-modal')">{{ ('+ Topic') }}</button>
-
-            </div>
-
-        </div>
-
-
-
-        <form class="flex items-center gap-2" hx-get="/projects/{{ project.id }}/tabs/topics" hx-target="#tab-content"
-
-              hx-trigger="submit" hx-swap="innerHTML">
-
-            <input id="topics-tab-search" name="q" type="search" value="{{ q }}" class="input input-sm w-full max-w-64"
-
-                   placeholder="{{ ('Search by title or keyword…') }}" aria-label="{{ ('Search topics by title or keyword') }}" />
-
-            <input type="hidden" name="status" value="{{ status_filter }}" />
-
-            {% if q %}
-
-            <a class="btn btn-ghost btn-xs text-error" href="/projects/{{ project.id }}?tab=topics">{{ ('Clear') }}</a>
-
+            </select>
+            <button type="submit" class="btn btn-ghost btn-sm shrink-0">{{ ('Search') }}</button>
+            {% if q or status_filter %}
+            <a href="/projects/{{ project.id }}?tab=topics" class="btn btn-ghost btn-sm shrink-0 text-error"
+               hx-get="/projects/{{ project.id }}/tabs/topics" hx-target="#tab-content" hx-swap="innerHTML">{{ ('Clear') }}</a>
             {% endif %}
-
         </form>
-
-
-
-        {% if topics %}
-
-        <div class="ezdistro-panel">
-
-            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ ('Topics') }}</h2></div>
-
-            <div class="overflow-x-auto">
-
-                <table class="table table-sm">
-
-                    <thead>
-
-                        <tr class="text-xs opacity-60">
-
-                            <th>{{ ('Title') }}</th>
-
-                            <th>{{ ('Keyword') }}</th>
-
-                            <th>{{ ('Pillar/Cluster') }}</th>
-
-                            <th>{{ ('Status') }}</th>
-
-                            <th>{{ ('Priority') }}</th>
-
-                            <th></th>
-
-                        </tr>
-
-                    </thead>
-
-                    <tbody>
-
-                        {% for t in topics %}
-
-                        <tr>
-
-                            <td class="text-xs max-w-50">
-
-                                <p class="truncate">{{ t.title }}</p>
-
-                                {% if t.type %}<span class="badge badge-soft badge-neutral badge-xs">{{ t.type }}</span>{% endif %}
-
-                            </td>
-
-                            <td class="text-xs">{{ t.keyword or '—' }}</td>
-
-                            <td class="text-xs max-w-32">
-
-                                <p class="truncate">{{ t.pillar or '—' }}{% if t.cluster %} / {{ t.cluster }}{% endif %}</p>
-
-                            </td>
-
-                            <td><span class="badge badge-sm {{ t.status|status_badge }}">{{ t.status|status_label }}</span></td>
-
-                            <td class="text-xs">{{ t.priority or 0 }}</td>
-
-                            <td class="whitespace-nowrap">
-
-                                {% if t.status in ['planned', 'failed', 'cancelled'] %}
-
-                                <button class="btn btn-ghost btn-xs text-primary"
-
-                                        hx-post="/projects/{{ project.id }}/topics/{{ t.id }}/write" hx-swap="none">{{ ('Write article') }}</button>
-
-                                {% endif %}
-
-                                {% if t.articleId %}
-
-                                <a class="btn btn-ghost btn-xs" href="/projects/{{ project.id }}/articles/{{ t.articleId }}">{{ ('Article') }}</a>
-
-                                {% endif %}
-
-                                <button class="btn btn-ghost btn-xs text-error"
-
-                                        hx-post="/projects/{{ project.id }}/topics/{{ t.id }}/delete" hx-swap="none"
-
-                                        hx-confirm="{{ ('Delete this topic? This cannot be undone.') }}">{{ ('Delete') }}</button>
-
-                            </td>
-
-                        </tr>
-
-                        {% endfor %}
-
-                    </tbody>
-
-                </table>
-
-            </div>
-
+        <div class="flex items-center gap-2">
+            <button class="btn btn-ghost btn-sm" @click="$store.ui.openModal('topic-import-modal')">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-4"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" /></svg>
+                {{ ('Import CSV') }}
+            </button>
+            <button class="btn btn-primary btn-sm" @click="$store.ui.openModal('new-topic-modal')">{{ ('Add topic') }}</button>
         </div>
-
-        {% else %}
-
-        <div class="ezdistro-panel">
-
-            <div class="p-4 flex flex-col items-center gap-3 py-8 text-center">
-
-                <p class="text-sm opacity-50">{{ ('No topic found.') }}</p>
-
-            </div>
-
-        </div>
-
-        {% endif %}
-
     </div>
 
-
+    {% if topics %}
+    <section class="ezdistro-panel">
+        <div class="ezdistro-panel-head">
+            <h3 class="ezdistro-panel-title">{{ ('Topics') }}</h3>
+            <span class="text-xs opacity-50 tabular">{{ topics|length }}</span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="table table-sm">
+                <thead>
+                    <tr class="text-xs opacity-60">
+                        <th>{{ ('Title') }}</th>
+                        <th class="hidden sm:table-cell">{{ ('Keyword') }}</th>
+                        <th class="hidden lg:table-cell">{{ ('Pillar / cluster') }}</th>
+                        <th>{{ ('Status') }}</th>
+                        <th class="hidden md:table-cell">{{ ('Priority') }}</th>
+                        <th><span class="sr-only">{{ ('Actions') }}</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in topics %}
+                    <tr>
+                        <td class="max-w-64 text-xs">
+                            <p class="truncate font-medium">{{ t.title }}</p>
+                            {% if t.type %}<span class="badge badge-soft badge-neutral badge-xs">{{ t.type }}</span>{% endif %}
+                        </td>
+                        <td class="hidden text-xs sm:table-cell">{{ t.keyword or '—' }}</td>
+                        <td class="hidden max-w-32 text-xs lg:table-cell">
+                            <p class="truncate">{{ t.pillar or '—' }}{% if t.cluster %} / {{ t.cluster }}{% endif %}</p>
+                        </td>
+                        <td><span class="badge badge-sm {{ t.status|status_badge }}">{{ t.status|status_label }}</span></td>
+                        <td class="hidden text-xs tabular md:table-cell">{{ t.priority or 0 }}</td>
+                        <td class="whitespace-nowrap">
+                            <div class="flex items-center justify-end gap-1">
+                                {% if t.status in ['planned', 'failed', 'cancelled'] %}
+                                <button class="btn btn-ghost btn-xs text-primary"
+                                        hx-post="/projects/{{ project.id }}/topics/{{ t.id }}/write" hx-swap="none">{{ ('Write') }}</button>
+                                {% endif %}
+                                {% if t.articleId %}
+                                <a class="btn btn-ghost btn-xs" href="/projects/{{ project.id }}/articles/{{ t.articleId }}">{{ ('Article') }}</a>
+                                {% endif %}
+                                <details>
+                                    <summary class="btn btn-ghost btn-square btn-xs list-none" aria-label="{{ ('More actions') }}">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="size-4"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h.01M12 12h.01M19 12h.01" /></svg>
+                                    </summary>
+                                    <ul class="menu mt-1 w-40 rounded-box border border-base-300 bg-base-100 p-2 text-sm">
+                                        <li><a href="/topics/{{ t.id }}">{{ ('Open') }}</a></li>
+                                        <li><button class="text-error"
+                                            hx-post="/projects/{{ project.id }}/topics/{{ t.id }}/delete" hx-swap="none"
+                                            hx-confirm="{{ ('Delete this topic? This cannot be undone.') }}">{{ ('Delete') }}</button></li>
+                                    </ul>
+                                </details>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+    {% else %}
+    <div class="ezdistro-panel">
+        <div class="ezdistro-empty py-10">
+            <p class="font-bold text-base-content/75">
+                {% if q or status_filter %}{{ ('No topics match these filters') }}{% else %}{{ ('No topics yet') }}{% endif %}
+            </p>
+            <p class="text-sm text-base-content/50">
+                {% if q or status_filter %}{{ ('Try clearing a filter.') }}{% else %}{{ ('Add a topic or import a Keyword Planner / research list.') }}{% endif %}
+            </p>
+            <button class="btn btn-primary btn-sm mt-2" @click="$store.ui.openModal('new-topic-modal')">{{ ('Add topic') }}</button>
+        </div>
+    </div>
+    {% endif %}
 
     <!-- New topic modal -->
-
     <dialog id="new-topic-modal" class="modal modal-bottom sm:modal-middle">
-
         <div class="modal-box bg-base-100 border border-base-300">
-
             <div class="flex items-center justify-between mb-4">
-
                 <h3 class="font-bold text-lg">{{ ('New topic') }}</h3>
-
                 <button type="button" class="btn btn-ghost btn-circle btn-sm" @click="$store.ui.closeModal('new-topic-modal')" aria-label="{{ ('Close') }}">
-
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
-
                 </button>
-
             </div>
-
             <form hx-post="/projects/{{ project.id }}/topics" hx-swap="none"
-
                   hx-on::after-request="if (event.detail.successful) document.getElementById('new-topic-modal').close()"
-
                   class="flex flex-col gap-4">
-
-                {{ f.text('title', ('Topic title'), '', ('The title of the article you want written — the more precise, the better the output.'), ('e.g. Best SEO practices in 1405'), true, hint=('This title is the primary input for article generation.')) }}
-
+                {{ f.text('title', ('Topic title'), '', ('The title of the article you want written — the more precise, the better the output.'), placeholder='e.g. Best SEO practices in 2026', required=true) }}
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-                    {{ f.text('keyword', ('Keyword'), '', ('The main phrase or keyword this article optimizes for.'), ('e.g. SEO tutorial')) }}
-
-                    {{ f.select('type', ('Type'), [('article', ('Article')), ('pillar_page', ('Pillar page')), ('guide', ('Guide')), ('news', ('News'))], 'article', ('Content type — the pillar page anchors the whole content cluster.')) }}
-
+                    {{ f.text('keyword', ('Keyword'), '', ('The main phrase this article optimizes for.'), placeholder='e.g. SEO tutorial') }}
+                    {{ f.select('type', ('Type'), [('article', ('Article')), ('pillar_page', ('Pillar page')), ('guide', ('Guide')), ('news', ('News'))], 'article') }}
                 </div>
-
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-                    {{ f.text('pillar', ('Pillar'), '', ('The main pillar article this topic relates to (for internal linking).')) }}
-
-                    {{ f.text('cluster', ('Cluster'), '', ('Content cluster name for grouping related topics.')) }}
-
+                    {{ f.text('pillar', ('Pillar'), '', ('The main pillar article this topic relates to.')) }}
+                    {{ f.text('cluster', ('Cluster'), '', ('Content cluster for grouping related topics.')) }}
                 </div>
-
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-                    {{ f.number('priority', ('Priority'), '0', ('The higher, the sooner it enters the generation queue.'), min='0') }}
-
+                    {{ f.number('priority', ('Priority'), '0', ('Higher enters the queue sooner.'), min='0') }}
                     {{ f.number('week', ('Week'), '', ('Editorial calendar week (optional).')) }}
-
                 </div>
-
-                {{ f.text('url', ('Article link'), '', ('Published URL (optional).')) }}
-
+                {{ f.text('url', ('Published URL'), '', ('Optional.')) }}
                 <div class="flex gap-3 mt-2">
-
                     <button type="submit" class="btn btn-primary flex-1" hx-disabled-elt="this">
-
                         <span class="loading loading-spinner loading-xs htmx-indicator"></span>
-
                         {{ ('Add') }}
-
                     </button>
-
                     <button type="button" class="btn btn-ghost flex-1" @click="$store.ui.closeModal('new-topic-modal')">{{ ('Cancel') }}</button>
-
                 </div>
-
             </form>
-
         </div>
-
     </dialog>
 
-
-
     {% include "components/topics/import_modal.html" %}
-
 </div>

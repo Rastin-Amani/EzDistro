@@ -13,6 +13,7 @@ from app.repositories.integrations import IntegrationRepo
 from app.repositories.members import MemberRepo
 from app.repositories.projects import ProjectRepo
 from app.repositories.topics import TopicRepo
+from app.templates import templates
 from tests.fakes import FakePocketBase, default_unique_fields
 from tests.helpers import call_route, make_req, make_user
 
@@ -139,3 +140,18 @@ def test_resume_article_requeues_last_failed_job():
     assert resp.status_code == 200
     requeued = JobRepo(pb).get(job["id"])
     assert requeued["status"] in ("retrying", "pending")
+
+
+def test_integration_health_fragment_swaps_row_badge_out_of_band():
+    """The Test action returns the detailed result inline AND an out-of-band
+    health badge carrying the same id as the row badge, so the badge (which is
+    server-rendered) updates without a full page reload."""
+    html = templates.get_template("pages/projects/tabs/integration_health.html").render(
+        integration={"id": "int1", "category": "llm", "healthStatus": "healthy"},
+        result={"ok": True, "latency_ms": 12, "message": "connection ok", "models": []},
+        health_labels={"healthy": "Healthy"},
+    )
+    assert 'id="health-badge-int1"' in html
+    assert 'id="health-tested-int1"' in html
+    assert 'hx-swap-oob="true"' in html
+    assert "Healthy" in html

@@ -1,221 +1,207 @@
 {% import 'macros/forms.html' as f %}
+
 <div id="research-tab">
+    {{ f.section_head('Research', 'Discover search demand, analyze competitors and turn evidence into an article roadmap.',
+        actions='<a class="btn btn-sm btn-ghost" href="/help/SEO_RESEARCH.md" target="_blank" rel="noopener">Setup guide</a>') }}
 
-  {{ f.page_header( 'Research', 'Discover search demand, analyze competitors and turn evidence into an article roadmap.', eyebrow='Project', actions='<a class="btn btn-sm btn-ghost" href="/help/SEO_RESEARCH.md" target="_blank" rel="noopener">Setup guide</a>' ) }}
+    <div class="flex flex-col gap-4">
 
-  <div class="flex flex-col gap-4">
-
-  {% if ga %}
-    <div class="alert alert-soft {{ 'alert-success' if ga == 'connected' else 'alert-warning' }} mb-4">
-      <span>
-        {% if ga == 'connected' %}Google Ads connected.
-        {% elif ga == 'unconfigured' %}Google Ads OAuth is not configured for this project yet.
-        {% elif ga == 'denied' %}Google Ads access was denied.
-        {% else %}Google Ads connection failed. Try again.{% endif %}
-      </span>
-    </div>
-  {% endif %}
-
-  {% set ads_step = '?tab=integrations' %}
-
-  {{ f.panel('Google Ads', actions='<a class="btn btn-xs btn-ghost" href="/projects/' ~ project.id ~ ads_step ~ '">Open Connections</a>') }}
-    {% if not google_ads_configured %}
-      <div class="alert alert-soft alert-warning mb-4">
-        <span>Keyword research needs a Google Ads OAuth client for this project. Add it under <b>Connections → Google Ads</b> (client ID, redirect URI, client secret), then connect the account below. Competitor and site research works without it.</span>
-      </div>
-    {% endif %}
-    {% if connections %}
-      <div class="overflow-x-auto">
-        <table class="table table-sm">
-          <thead><tr class="text-xs opacity-60">
-            <th>Google account</th><th>Status</th><th>Last verified</th><th></th>
-          </tr></thead>
-          <tbody>
-          {% for c in connections %}
-            <tr>
-              <td class="text-sm">
-                {{ c.email or c.googleAccountId or 'Google Ads account' }}
-                {% if c.displayName %}<span class="block text-xs opacity-50">{{ c.displayName }}</span>{% endif %}
-              </td>
-              <td><span class="badge {{ c.status|status_badge }}">{{ c.status|status_label }}</span></td>
-              <td class="text-xs opacity-60">{{ c.lastVerifiedAt|loc_dt }}</td>
-              <td class="text-end whitespace-nowrap">
-                <button class="btn btn-xs btn-ghost"
-                        hx-post="/projects/{{ project.id }}/google-ads/customers/discover"
-                        hx-swap="none" hx-indicator="#ga-busy">Refresh accounts</button>
-                <button class="btn btn-xs btn-ghost text-error"
-                        hx-post="/projects/{{ project.id }}/google-ads/disconnect"
-                        hx-swap="none" hx-target="#research-tab"
-                        hx-confirm="Disconnect this Google Ads account?">Disconnect</button>
-              </td>
-            </tr>
-          {% endfor %}
-          </tbody>
-        </table>
-      </div>
-      <span id="ga-busy" class="htmx-indicator text-xs opacity-60">Fetching accounts…</span>
-    {% else %}
-      {% if google_ads_configured %}
-        {{ f.empty('No Google Ads connection', hint='Connect an account to pull keyword ideas, search demand, competition and CPC.', action='<a class="btn btn-sm btn-primary" href="/projects/google-ads/connect?project_id=' ~ project.id ~ '">Connect Google Ads</a>', compact=true) }}
-      {% else %}
-        {{ f.empty('Google Ads is not set up', hint='Add the OAuth client on the Connections tab. Until then, research still runs on site and competitor seeds.', action='<a class="btn btn-sm btn-primary" href="/projects/' ~ project.id ~ ads_step ~ '">Configure Google Ads</a>', compact=true) }}
-      {% endif %}
-    {% endif %}
-  {{ f.panel_close() }}
-
-  {% if connections %}
-    {{ f.panel('Google Ads accounts') }}
-      {% if customers %}
-        <div class="overflow-x-auto">
-          <table class="table table-sm">
-            <thead><tr class="text-xs opacity-60">
-              <th>Account</th><th>Customer ID</th><th>Currency</th><th>Time zone</th><th></th>
-            </tr></thead>
-            <tbody>
-            {% for c in customers %}
-              <tr>
-                <td class="text-sm">
-                  {{ c.descriptiveName or c.customerId }}
-                  {% if c.isManager %}<span class="badge badge-soft badge-xs ms-1">Manager</span>{% endif %}
-                </td>
-                <td class="font-mono text-xs opacity-70">{{ c.customerId }}</td>
-                <td class="text-xs opacity-60">{{ c.currencyCode or '—' }}</td>
-                <td class="text-xs opacity-60">{{ c.timeZone or '—' }}</td>
-                <td class="text-end">
-                  <button class="btn btn-xs btn-primary"
-                          hx-post="/projects/{{ project.id }}/google-ads/customers/select"
-                          hx-vals='{"customer_record_id": "{{ c.id }}"}'
-                          hx-swap="none">Use for research</button>
-                </td>
-              </tr>
-            {% endfor %}
-            </tbody>
-          </table>
+        {% if ga %}
+        <div class="alert alert-soft {{ 'alert-success' if ga == 'connected' else 'alert-warning' }}">
+            <span>
+                {% if ga == 'connected' %}Google Ads connected.
+                {% elif ga == 'unconfigured' %}Google Ads OAuth is not configured for this project yet.
+                {% elif ga == 'denied' %}Google Ads access was denied.
+                {% else %}Google Ads connection failed. Try again.{% endif %}
+            </span>
         </div>
-      {% else %}
-        {{ f.empty('No accounts yet', hint='No accessible Google Ads customers were returned. Check the connection and developer token, then Refresh accounts.', compact=true) }}
-      {% endif %}
-    {{ f.panel_close() }}
-  {% endif %}
-
-  {{ f.panel('Run research') }}
-    {% if not serp_configured %}
-      <div class="alert alert-soft alert-info mb-4 text-sm">
-        <span>Search engine (SERP) data is not configured — research still runs in <b>Google Ads + site intelligence</b> mode.</span>
-      </div>
-    {% endif %}
-
-    <form hx-post="/projects/{{ project.id }}/research/start" hx-swap="none" hx-target="#research-tab"
-          class="flex flex-col gap-5">
-
-      {{ f.form_section('Sources', 'At least one seed is required') }}
-      <div class="grid gap-4 md:grid-cols-2">
-        <div class="md:col-span-2">
-          {{ f.text('name', 'Research name', placeholder='Gym software — US', hint='Optional. Helps you find this run later.') }}
-        </div>
-        <div class="md:col-span-2">
-          {{ f.textarea('keywords', 'Seed keywords', rows=4, placeholder='gym management software\ngym CRM\nfitness studio software', hint='One keyword per line. These need a Google Ads connection.') }}
-        </div>
-        <div>
-          {{ f.text('site', 'Your website', placeholder='https://example.com', hint='Used as a site seed to discover ideas from your own pages.') }}
-        </div>
-        <div>
-          {{ f.textarea('urls', 'Specific URLs', rows=2, placeholder='https://example.com/features', hint='One URL per line.') }}
-        </div>
-        <div class="md:col-span-2">
-          {{ f.textarea('competitors', 'Competitor domains or URLs', rows=2, placeholder='competitor-a.com\ncompetitor-b.com', hint='Analyzed without any paid competitor database.') }}
-        </div>
-      </div>
-
-      {{ f.form_section('Targeting') }}
-      <div class="grid gap-4 md:grid-cols-2">
-        <div>
-          {{ f.select('country', 'Country', countries, selected='US') }}
-        </div>
-        <div>
-          {{ f.select('language', 'Language', languages, selected='en') }}
-        </div>
-        <div>
-          {{ f.select('network', 'Network', [('GOOGLE_SEARCH', 'Google Search'), ('GOOGLE_SEARCH_AND_PARTNERS', 'Search + partners')], selected='GOOGLE_SEARCH') }}
-        </div>
-        <div>
-          {{ f.select('clustering', 'Keyword clustering', [('auto', 'Automatic (recommended)'), ('deterministic', 'Deterministic (free)'), ('embedding', 'Existing embeddings'), ('llm', 'AI assisted')], selected='auto') }}
-        </div>
-        {% if customers %}
-          {% set customer_options = [] %}
-          {% for c in customers %}{% set _ = customer_options.append((c.customerId, (c.descriptiveName or c.customerId) ~ ' · ' ~ c.customerId)) %}{% endfor %}
-          <div class="md:col-span-2">
-            {{ f.select('customer_id', 'Google Ads account', customer_options, selected=customers[0].customerId, hint='Keyword research is billed to this account.') }}
-          </div>
         {% endif %}
-      </div>
 
-      {{ f.form_section('Limits & options', 'Cost and crawler ceilings') }}
-      <div class="grid gap-4 md:grid-cols-3">
-        <div>
-          {{ f.number('max_keywords', 'Maximum keywords', placeholder='0', min='0', hint='0 = no limit — collect every keyword the seeds surface.') }}
-        </div>
-        <div>
-          {{ f.number('max_competitor_pages', 'Maximum competitor pages', placeholder='0', min='0', hint='0 = no limit — crawl every discovered page (best accuracy).') }}
-        </div>
-        <div>
-          {{ f.number('max_serp_queries', 'Maximum SERP queries', placeholder='0', min='0', hint='0 keeps live SERP collection off.') }}
-        </div>
-      </div>
-      <div class="grid gap-2 md:grid-cols-2">
-        {{ f.checkbox('include_adult', 'Include adult keywords') }}
-        {{ f.checkbox('refresh', 'Refresh cached data', hint='Ignore the cached research for this exact targeting and seeds.') }}
-      </div>
+        {% set ads_step = '?tab=integrations' %}
 
-      {{ f.form_section('Goal') }}
-      {{ f.textarea('goal', 'What do you want to achieve?', rows=3, placeholder='Get qualified US traffic from gym owners, build topical authority around gym management and drive demo requests. Avoid duplicate topics.', hint='Written in your own words. This shapes which opportunities get proposed.') }}
+        {# ── Google Ads setup (collapsed unless it needs attention) ─────── #}
+        {% set ads_needs_setup = not google_ads_configured or not connections %}
+        <details class="ezdistro-panel" {{ 'open' if ads_needs_setup }}>
+            <summary class="ezdistro-panel-head cursor-pointer select-none">
+                <h2 class="ezdistro-panel-title">{{ ('Google Ads (keyword data)') }}</h2>
+                {% if connections %}
+                <span class="badge badge-soft badge-success badge-sm">{{ ('Connected') }}</span>
+                {% elif google_ads_configured %}
+                <span class="badge badge-soft badge-warning badge-sm">{{ ('Not connected') }}</span>
+                {% else %}
+                <span class="badge badge-soft badge-neutral badge-sm">{{ ('Optional') }}</span>
+                {% endif %}
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="ezdistro-disclosure-chev ms-auto size-4 shrink-0"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
+            </summary>
+            <div class="flex flex-col gap-4 p-4">
+                <p class="text-xs opacity-60 leading-relaxed">
+                    {{ ('Keyword research needs a Google Ads OAuth client for this project.') }}
+                    {% if not google_ads_configured %}
+                    {{ ('Add it under') }} <b>{{ ('Connections → Google Ads') }}</b> {{ ('(client ID, redirect URI, client secret), then connect below. Competitor and site research works without it.') }}
+                    {% endif %}
+                </p>
 
-      <input type="hidden" name="connection_id" value="{{ connections[0].id if connections else '' }}" />
+                {% if connections %}
+                <div class="overflow-x-auto">
+                    <table class="table table-sm">
+                        <thead><tr class="text-xs opacity-60"><th>{{ ('Google account') }}</th><th>{{ ('Status') }}</th><th class="hidden sm:table-cell">{{ ('Last verified') }}</th><th></th></tr></thead>
+                        <tbody>
+                        {% for c in connections %}
+                            <tr>
+                                <td class="text-sm">
+                                    {{ c.email or c.googleAccountId or 'Google Ads account' }}
+                                    {% if c.displayName %}<span class="block text-xs opacity-50">{{ c.displayName }}</span>{% endif %}
+                                </td>
+                                <td><span class="badge {{ c.status|status_badge }}">{{ c.status|status_label }}</span></td>
+                                <td class="hidden text-xs opacity-60 sm:table-cell">{{ c.lastVerifiedAt|loc_dt }}</td>
+                                <td class="text-end whitespace-nowrap">
+                                    <button class="btn btn-xs btn-ghost" hx-post="/projects/{{ project.id }}/google-ads/customers/discover" hx-swap="none" hx-indicator="#ga-busy">{{ ('Refresh accounts') }}</button>
+                                    <button class="btn btn-xs btn-ghost text-error" hx-post="/projects/{{ project.id }}/google-ads/disconnect" hx-swap="none" hx-target="#research-tab" hx-confirm="{{ ('Disconnect this Google Ads account?') }}">{{ ('Disconnect') }}</button>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                    <span id="ga-busy" class="htmx-indicator text-xs opacity-60">{{ ('Fetching accounts…') }}</span>
+                </div>
 
-      <div class="flex flex-wrap items-center gap-3">
-        <button class="btn btn-primary btn-sm" type="submit" hx-disabled-elt="this">Start research</button>
-        <span class="htmx-indicator text-xs opacity-60">Starting…</span>
-        <span class="text-xs opacity-50">Runs in the background — you can leave this page.</span>
-      </div>
-    </form>
-  {{ f.panel_close() }}
+                {% if customers %}
+                <div class="border-t border-base-300/60 pt-3">
+                    <p class="ezdistro-panel-title mb-2">{{ ('Accounts') }}</p>
+                    <div class="overflow-x-auto">
+                        <table class="table table-sm">
+                            <thead><tr class="text-xs opacity-60"><th>{{ ('Account') }}</th><th>{{ ('Customer ID') }}</th><th class="hidden sm:table-cell">{{ ('Currency') }}</th><th class="hidden md:table-cell">{{ ('Time zone') }}</th><th></th></tr></thead>
+                            <tbody>
+                            {% for c in customers %}
+                                <tr>
+                                    <td class="text-sm">{{ c.descriptiveName or c.customerId }}{% if c.isManager %}<span class="badge badge-soft badge-xs ms-1">Manager</span>{% endif %}</td>
+                                    <td class="font-mono text-xs opacity-70">{{ c.customerId }}</td>
+                                    <td class="hidden text-xs opacity-60 sm:table-cell">{{ c.currencyCode or '—' }}</td>
+                                    <td class="hidden text-xs opacity-60 md:table-cell">{{ c.timeZone or '—' }}</td>
+                                    <td class="text-end">
+                                        <button class="btn btn-xs btn-primary" hx-post="/projects/{{ project.id }}/google-ads/customers/select" hx-vals='{"customer_record_id": "{{ c.id }}"}' hx-swap="none">{{ ('Use for research') }}</button>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% else %}
+                {{ f.empty('No accounts yet', hint='No accessible Google Ads customers were returned. Check the connection, then Refresh accounts.', compact=true) }}
+                {% endif %}
 
-  <div class="collapse collapse-arrow border border-base-300/70 rounded-box">
-    <input type="checkbox" />
-    <div class="collapse-title text-sm font-medium">No Google Ads API access? Import a Keyword Planner file instead</div>
-    <div class="collapse-content">
-      {% include "pages/projects/tabs/research_import.html" %}
+                {% elif google_ads_configured %}
+                {{ f.empty('No Google Ads connection', hint='Connect an account to pull keyword ideas, search demand, competition and CPC.', action='<a class="btn btn-sm btn-primary" href="/projects/google-ads/connect?project_id=' ~ project.id ~ '">Connect Google Ads</a>', compact=true) }}
+                {% else %}
+                {{ f.empty('Google Ads is not set up', hint='Until then, research still runs on site and competitor seeds.', action='<a class="btn btn-sm btn-primary" href="/projects/' ~ project.id ~ ads_step ~ '">Configure Google Ads</a>', compact=true) }}
+                {% endif %}
+            </div>
+        </details>
+
+        {# ── Run research ──────────────────────────────────────────────── #}
+        <section class="ezdistro-panel">
+            <div class="ezdistro-panel-head">
+                <h2 class="ezdistro-panel-title">{{ ('Run research') }}</h2>
+                {% if not serp_configured %}
+                <span class="text-xs opacity-50">{{ ('SERP not configured — Google Ads + site intelligence mode') }}</span>
+                {% endif %}
+            </div>
+            <form hx-post="/projects/{{ project.id }}/research/start" hx-swap="none" hx-target="#research-tab" class="flex flex-col gap-5 p-4">
+                <p class="ezdistro-panel-title">{{ ('Sources') }}</p>
+                <div class="grid gap-4 md:grid-cols-2">
+                    <div class="md:col-span-2">{{ f.text('name', 'Research name', placeholder='Gym software — US', hint='Optional. Helps you find this run later.') }}</div>
+                    <div class="md:col-span-2">{{ f.textarea('keywords', 'Seed keywords', rows=4, placeholder='gym management software\ngym CRM\nfitness studio software', hint='One keyword per line. These need a Google Ads connection.') }}</div>
+                    <div>{{ f.text('site', 'Your website', placeholder='https://example.com', hint='Discover ideas from your own pages.') }}</div>
+                    <div>{{ f.textarea('urls', 'Specific URLs', rows=2, placeholder='https://example.com/features', hint='One URL per line.') }}</div>
+                    <div class="md:col-span-2">{{ f.textarea('competitors', 'Competitor domains or URLs', rows=2, placeholder='competitor-a.com\ncompetitor-b.com', hint='Analyzed without any paid competitor database.') }}</div>
+                </div>
+
+                {% if customers %}
+                {% set customer_options = [] %}
+                {% for c in customers %}{% set _ = customer_options.append((c.customerId, (c.descriptiveName or c.customerId) ~ ' · ' ~ c.customerId)) %}{% endfor %}
+                {{ f.select('customer_id', 'Google Ads account', customer_options, selected=customers[0].customerId, hint='Keyword research is billed to this account.') }}
+                {% endif %}
+
+                <div class="md:col-span-2">{{ f.textarea('goal', 'What do you want to achieve?', rows=3, placeholder='Get qualified US traffic from gym owners and drive demo requests. Avoid duplicate topics.', hint='Written in your own words. Shapes which opportunities get proposed.') }}</div>
+
+                {# Targeting + limits are rarely changed — disclose. #}
+                <details class="border-t border-base-300/60 pt-3">
+                    <summary class="cursor-pointer select-none text-xs font-medium opacity-70">{{ ('Targeting & limits') }}</summary>
+                    <div class="mt-4 flex flex-col gap-5">
+                        <div class="grid gap-4 md:grid-cols-2">
+                            {{ f.select('country', 'Country', countries, selected='US') }}
+                            {{ f.select('language', 'Language', languages, selected='en') }}
+                            {{ f.select('network', 'Network', [('GOOGLE_SEARCH', 'Google Search'), ('GOOGLE_SEARCH_AND_PARTNERS', 'Search + partners')], selected='GOOGLE_SEARCH') }}
+                            {{ f.select('clustering', 'Keyword clustering', [('auto', 'Automatic (recommended)'), ('deterministic', 'Deterministic (free)'), ('embedding', 'Existing embeddings'), ('llm', 'AI assisted')], selected='auto') }}
+                        </div>
+                        <div class="grid gap-4 md:grid-cols-3">
+                            {{ f.number('max_keywords', 'Maximum keywords', placeholder='0', min='0', hint='0 = no limit.') }}
+                            {{ f.number('max_competitor_pages', 'Maximum competitor pages', placeholder='0', min='0', hint='0 = no limit.') }}
+                            {{ f.number('max_serp_queries', 'Maximum SERP queries', placeholder='0', min='0', hint='0 keeps live SERP off.') }}
+                        </div>
+                        <div class="grid gap-2 md:grid-cols-2">
+                            {{ f.checkbox('include_adult', 'Include adult keywords') }}
+                            {{ f.checkbox('refresh', 'Refresh cached data', hint='Ignore cached research for this exact targeting and seeds.') }}
+                        </div>
+                    </div>
+                </details>
+
+                <input type="hidden" name="connection_id" value="{{ connections[0].id if connections else '' }}" />
+
+                <div class="flex flex-wrap items-center gap-3">
+                    <button class="btn btn-primary btn-sm" type="submit" hx-disabled-elt="this">{{ ('Start research') }}</button>
+                    <span class="htmx-indicator text-xs opacity-60">{{ ('Starting…') }}</span>
+                    <span class="text-xs opacity-50">{{ ('Runs in the background — you can leave this page.') }}</span>
+                </div>
+            </form>
+        </section>
+
+        {# ── Import fallback (collapsed) ───────────────────────────────── #}
+        <details class="ezdistro-panel">
+            <summary class="ezdistro-panel-head cursor-pointer select-none">
+                <h2 class="ezdistro-panel-title">{{ ('No Google Ads API access?') }}</h2>
+                <span class="text-xs opacity-50">{{ ('Import a Keyword Planner file') }}</span>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="ezdistro-disclosure-chev ms-auto size-4 shrink-0"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
+            </summary>
+            <div class="p-4">
+                {% include "pages/projects/tabs/research_import.html" %}
+            </div>
+        </details>
+
+        {# ── Runs ──────────────────────────────────────────────────────── #}
+        <section class="ezdistro-panel">
+            <div class="ezdistro-panel-head">
+                <h2 class="ezdistro-panel-title">{{ ('Research runs') }}</h2>
+                <span class="text-xs opacity-60 tabular">{{ runs|length }}</span>
+            </div>
+            {% if runs %}
+            <div class="overflow-x-auto">
+                <table class="table table-sm">
+                    <thead><tr class="text-xs opacity-60">
+                        <th>{{ ('Name') }}</th><th class="hidden sm:table-cell">{{ ('Type') }}</th><th>{{ ('Status') }}</th>
+                        <th class="hidden md:table-cell">{{ ('Stage') }}</th><th class="hidden md:table-cell">{{ ('Progress') }}</th>
+                        <th class="hidden lg:table-cell">{{ ('Created') }}</th><th></th>
+                    </tr></thead>
+                    <tbody>
+                    {% for r in runs %}
+                        <tr>
+                            <td class="text-sm">{{ r.name or 'Research run' }}</td>
+                            <td class="hidden text-xs opacity-60 sm:table-cell">{{ r.researchType or '—' }}</td>
+                            <td><span class="badge {{ r.status|status_badge }}">{{ r.status|status_label }}</span></td>
+                            <td class="hidden text-xs opacity-60 md:table-cell">{{ r.currentStage or '—' }}</td>
+                            <td class="hidden text-xs opacity-70 tabular md:table-cell">{{ r.progress|int }}%</td>
+                            <td class="hidden text-xs opacity-60 lg:table-cell">{{ r.created|loc_dt }}</td>
+                            <td class="text-end"><a class="btn btn-xs btn-ghost" href="/projects/{{ project.id }}/research/{{ r.id }}">{{ ('Open') }}</a></td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            {{ f.empty('No research runs yet', hint='Start your first research run above — it collects keywords, analyzes your site and competitors, then proposes article opportunities.') }}
+            {% endif %}
+        </section>
+
     </div>
-  </div>
-
-  {{ f.panel('Research runs', actions='<span class="text-xs opacity-60">' ~ (runs|length) ~ ' runs</span>') }}
-    {% if runs %}
-      <div class="overflow-x-auto">
-        <table class="table table-sm">
-          <thead><tr class="text-xs opacity-60">
-            <th>Name</th><th>Type</th><th>Status</th><th>Stage</th><th>Progress</th><th>Created</th><th></th>
-          </tr></thead>
-          <tbody>
-          {% for r in runs %}
-            <tr>
-              <td class="text-sm">{{ r.name or 'Research run' }}</td>
-              <td class="text-xs opacity-60">{{ r.researchType or '—' }}</td>
-              <td><span class="badge {{ r.status|status_badge }}">{{ r.status|status_label }}</span></td>
-              <td class="text-xs opacity-60">{{ r.currentStage or '—' }}</td>
-              <td class="text-xs opacity-70 tabular">{{ r.progress|int }}%</td>
-              <td class="text-xs opacity-60">{{ r.created|loc_dt }}</td>
-              <td class="text-end">
-                <a class="btn btn-xs btn-ghost" href="/projects/{{ project.id }}/research/{{ r.id }}">Open</a>
-              </td>
-            </tr>
-          {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    {% else %}
-      {{ f.empty('No research runs yet', hint='Start your first research run above — it collects keywords, analyzes your site and competitors, then proposes article opportunities.') }}
-    {% endif %}
-  {{ f.panel_close() }}
-
-  </div>
 </div>

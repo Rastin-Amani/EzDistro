@@ -1,5 +1,5 @@
 {% import 'macros/forms.html' as f %}
-{{ f.page_header(('Events'), ('Project event history.'), eyebrow=('Project')) }}
+{{ f.section_head(('Events'), ('Project event history.')) }}
 <div id="logs-table"
      hx-get="/projects/{{ project.id }}/tabs/logs"
      hx-trigger="every 8s"

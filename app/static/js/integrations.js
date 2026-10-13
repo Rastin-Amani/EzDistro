@@ -14,10 +14,11 @@
 
     function register() {
         if (window.Alpine && typeof window.Alpine.data === 'function') {
-            window.Alpine.data('integrationsEditor', function (providerMeta, providerDefaults) {
+            window.Alpine.data('integrationsEditor', function (providerMeta, providerDefaults, categoryLabels) {
                 return {
                 meta: providerMeta || {},
                 defaults: providerDefaults || {},
+                categoryLabels: categoryLabels || {},
                 open: false,
                 isEdit: false,
                 hasSecret: false,
@@ -95,6 +96,19 @@
 
                 defaultProvider(category) {
                     return this.defaults[category] || '';
+                },
+
+                categoryLabel() {
+                    return this.categoryLabels[this.form.category] || this.form.category;
+                },
+
+                onCategoryChange() {
+                    // Switching category resets provider/model/base URL to that
+                    // category's defaults so the form never carries a stale field.
+                    this.form.provider = this.defaultProvider(this.form.category);
+                    this.form.model = '';
+                    this.form.base_url = '';
+                    this.onProviderChange();
                 },
 
                 openEditor(payload, category) {

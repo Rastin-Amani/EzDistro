@@ -417,6 +417,7 @@ def _tab_context(
     *,
     status: str = "",
     q: str = "",
+    ptype: str = "",
     user: dict[str, Any] | None = None,
     ga: str = "",
 ) -> dict[str, Any]:
@@ -523,6 +524,10 @@ def _tab_context(
                 bucket.append(row)
         context["history"] = history
         context["variables"] = variable_labels()
+        # One prompt at a time — 21 editors stacked was unusable.
+        context["active_ptype"] = (
+            ptype if ptype in context["prompt_types"] else next(iter(context["prompt_types"]))
+        )
     elif tab == "topics":
         topic_repo = TopicRepo(pb)
         rows, _total = topic_repo.search(project_id, status=status or None, q=q, per_page=50)
@@ -665,6 +670,7 @@ def project_detail(request: Request, project_id: str, tab: str = "settings"):
         active,
         status=request.query_params.get("status") or "",
         q=request.query_params.get("q") or "",
+        ptype=request.query_params.get("ptype") or "",
         user=current_user(request),
         ga=request.query_params.get("ga") or "",
     )
@@ -692,6 +698,7 @@ def project_tab(request: Request, project_id: str, tab: str):
         tab,
         status=request.query_params.get("status") or "",
         q=request.query_params.get("q") or "",
+        ptype=request.query_params.get("ptype") or "",
         user=current_user(request),
         ga=request.query_params.get("ga") or "",
     )
@@ -1264,10 +1271,17 @@ async def test_integration(request: Request, project_id: str, record_id: str):
     result = await ProviderRegistry(request.state.pb).test_integration(
         require_project_access(request, project_id), integration
     )
+    # Re-read the record: the test persisted a new healthStatus/lastTestedAt,
+    # and the row badge is swapped out-of-band from this refreshed value.
+    integration = repo.get(record_id) or integration
     return templates.TemplateResponse(
         request,
         "pages/projects/tabs/integration_health.html",
-        {"integration": integration, "result": result},
+        {
+            "integration": integration,
+            "result": result,
+            "health_labels": health_labels(),
+        },
     )
 
 

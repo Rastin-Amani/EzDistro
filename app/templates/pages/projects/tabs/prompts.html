@@ -1,293 +1,179 @@
 {% import 'macros/forms.html' as f %}
 
-{{ f.page_header(('Prompts'), ('Manage prompt versions and run interactive tests.'), eyebrow=('Project')) }}
+{% set prompt_groups = [
+    ('Voice & rules', ['brand_voice', 'seo_content_contract', 'output_validation']),
+    ('Research', ['research_system', 'research_user']),
+    ('Outline', ['outline_system', 'outline_user']),
+    ('Sections', ['section_system', 'section_user']),
+    ('Metadata', ['metadata_system', 'metadata_user']),
+    ('Quality & repair', ['article_qa_system', 'article_qa_user', 'article_repair_system', 'article_repair_user']),
+    ('Images', ['image_plan_system', 'image_plan_user']),
+    ('Other', ['internal_linking', 'content_refresh_system']),
+    ('Legacy', ['seo_rules', 'validation'])
+] %}
 
 <div id="prompts-tab" class="flex flex-col gap-4"
-
      hx-get="/projects/{{ project.id }}/tabs/prompts"
-
      hx-trigger="refreshPrompts from:body"
-
      hx-target="this"
+     hx-swap="outerHTML">
 
-     hx-swap="outerHTML"
+    {{ f.section_head(('Prompts'), ('Edit one prompt at a time. Saving always creates a new version — the active one is used until you activate another.')) }}
 
-     hx-select="#prompts-tab">
-
-    <!-- Variables reference -->
-
-    <details class="ezdistro-panel">
-
-        <summary class="ezdistro-panel-head cursor-pointer">
-
-            <span class="ezdistro-panel-title">{{ ('Available variables') }}</span>
-
-        </summary>
-
-        <div class="p-4 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs">
-
-            {% for name, desc in variables.items() %}
-
-            <code class="bg-base-200/60 rounded px-2 py-1 font-mono" dir="ltr">{{ '{{ ' ~ name ~ ' }}' }}</code>
-
-            <span class="opacity-70 leading-relaxed">{{ desc }}</span>
-
-            {% endfor %}
-
-        </div>
-
-    </details>
-
-
-
-    {% for ptype, label in prompt_types.items() %}
-
-    {% set active = prompts | selectattr('type', 'equalto', ptype) | selectattr('active', 'equalto', true) | first %}
-
-    {% set versions = history.get(ptype, []) %}
-
+    {% set active = prompts | selectattr('type', 'equalto', active_ptype) | selectattr('active', 'equalto', true) | first %}
+    {% set versions = history.get(active_ptype, []) %}
     {% set next_ver = (active.version if active else 0) + 1 %}
 
+    {# ── Type picker ─────────────────────────────────────────────────── #}
+    <div class="flex flex-wrap items-end gap-3">
+        <label class="form-control w-full sm:w-80">
+            <span class="label px-0 pb-1.5"><span class="label-text text-xs font-medium">{{ ('Prompt type') }}</span></span>
+            <select name="ptype" class="select select-sm select-bordered w-full"
+                    hx-get="/projects/{{ project.id }}/tabs/prompts"
+                    hx-target="#tab-content"
+                    hx-swap="innerHTML"
+                    hx-trigger="change">
+                {% for group_name, items in prompt_groups %}
+                <optgroup label="{{ group_name }}">
+                    {% for t in items if t in prompt_types %}
+                    <option value="{{ t }}" {{ 'selected' if t == active_ptype }}>{{ prompt_types[t] }}</option>
+                    {% endfor %}
+                </optgroup>
+                {% endfor %}
+            </select>
+        </label>
+        {% if active %}
+        <span class="badge badge-soft badge-success badge-sm">{{ ('Active: v%(n)s') % {'n': active.version} }}</span>
+        {% else %}
+        <span class="badge badge-soft badge-warning badge-sm">{{ ('Using the global default') }}</span>
+        {% endif %}
+    </div>
+
+    {# ── Editor for the selected type ────────────────────────────────── #}
     <section class="ezdistro-panel">
-
         <div class="ezdistro-panel-head">
-
-            <h2 class="ezdistro-panel-title">{{ label }}</h2>
-
-            {% if active %}
-
-            <span class="badge badge-soft badge-success badge-sm">{{ ('Active version: v%(n)s') % {'n': active.version} }}</span>
-
-            {% else %}
-
-            <span class="badge badge-soft badge-warning badge-sm">{{ ('Global default is used') }}</span>
-
+            <h2 class="ezdistro-panel-title">{{ prompt_types.get(active_ptype, active_ptype) }}</h2>
+            {% if versions|length > 1 %}
+            <span class="text-xs opacity-50 tabular">{{ versions|length }} {{ ('versions') }}</span>
             {% endif %}
-
         </div>
 
         <div class="p-4 flex flex-col gap-4">
-
             <form hx-post="/projects/{{ project.id }}/prompts" hx-swap="none" class="flex flex-col gap-2">
-
-                {{ f.textarea(ptype, ('Prompt text'), active.content if active else '', ('Full text of this prompt. You can use the variables listed above.'), 5, false, '', ('Save = new version (v') ~ next_ver ~ ')') }}
-
+                {{ f.textarea(active_ptype, ('Prompt text'), active.content if active else '', rows=8,
+                    classes='min-h-48',
+                    hint=('Saving creates version v' ~ next_ver ~ '. Variables appear in the reference below.')) }}
                 <div class="flex items-center justify-end">
-
                     <button type="submit" class="btn btn-primary btn-sm" hx-disabled-elt="this">
-
                         <span class="loading loading-spinner loading-xs htmx-indicator"></span>
-
-                        {{ ('Save new version') }}
-
+                        {{ ('Save as v%(n)s') % {'n': next_ver} }}
                     </button>
-
                 </div>
-
             </form>
 
-
-
-            <!-- Tester -->
-
-            <details class="ezdistro-panel">
-
-                <summary class="ezdistro-panel-head cursor-pointer">
-
-                    <span class="ezdistro-panel-title text-xs">{{ ('Interactive prompt test (does not change versions)') }}</span>
-
-                </summary>
-
-                <div class="p-4">
-
-                <form hx-post="/projects/{{ project.id }}/prompts/test" hx-target="#test-result-{{ ptype }}" hx-swap="innerHTML" class="grid grid-cols-1 sm:grid-cols-4 gap-4">
-
-                    <input type="hidden" name="ptype" value="{{ ptype }}" />
-
+            {# Tester #}
+            <details class="border-t border-base-300/60 pt-3">
+                <summary class="cursor-pointer select-none text-xs font-medium opacity-70">{{ ('Test this prompt without saving') }}</summary>
+                <form hx-post="/projects/{{ project.id }}/prompts/test" hx-target="#test-result-{{ active_ptype }}" hx-swap="innerHTML" class="mt-3 grid grid-cols-1 sm:grid-cols-4 gap-4">
+                    <input type="hidden" name="ptype" value="{{ active_ptype }}" />
                     <input type="hidden" name="content" value="{{ active.content if active else '' }}" />
-
                     <label class="form-control col-span-2">
-
-                        <div class="label px-0 pb-1">
-
-                            <span class="label-text font-medium text-xs">{{ ('Topic') }}</span>
-
-                            {{ f.tip(('Pick a real topic so real retrieval context is built.')) }}
-
-                        </div>
-
+                        <span class="label px-0 pb-1.5"><span class="label-text text-xs font-medium">{{ ('Topic') }}</span></span>
                         <select name="topic_id" class="select select-bordered w-full select-sm">
-
                             <option value="">{{ ('— No topic —') }}</option>
-
-                            {% for t in topics %}
-
-                            <option value="{{ t.id }}">{{ t.title }}</option>
-
-                            {% endfor %}
-
+                            {% for t in topics %}<option value="{{ t.id }}">{{ t.title }}</option>{% endfor %}
                         </select>
-
                     </label>
-
                     <label class="form-control">
-
-                        <div class="label px-0 pb-1">
-
-                            <span class="label-text font-medium text-xs">{{ ('Model') }}</span>
-
-                            {{ f.tip(('Role of the model the prompt runs with (Outline, Section, Meta or Review).')) }}
-
-                        </div>
-
+                        <span class="label px-0 pb-1.5"><span class="label-text text-xs font-medium">{{ ('Model role') }}</span></span>
                         <select name="model_role" class="select select-bordered w-full select-sm">
-
                             <option value="outline">Outline</option>
-
                             <option value="section">Section</option>
-
                             <option value="meta">Meta</option>
-
                             <option value="review">Review</option>
-
                         </select>
-
                     </label>
-
                     <div class="self-end">
-
                         <button type="submit" class="btn btn-primary btn-sm w-full" hx-disabled-elt="this">
-
                             <span class="loading loading-spinner loading-xs htmx-indicator"></span>
-
                             {{ ('Test prompt') }}
-
                         </button>
-
                     </div>
-
                 </form>
-
-                <div id="test-result-{{ ptype }}" class="mt-3"></div>
-
-                </div>
-
+                <div id="test-result-{{ active_ptype }}" class="mt-3"></div>
             </details>
 
-
-
-            <!-- Version history -->
-
+            {# Version history #}
             {% if versions|length > 1 %}
-
-            <div class="overflow-x-auto">
-
-                <table class="table table-sm">
-
-                    <thead>
-
-                        <tr class="text-xs opacity-60">
-
-                            <th>{{ ('Version') }}</th>
-
-                            <th>{{ ('Author') }}</th>
-
-                            <th>{{ ('Time') }}</th>
-
-                            <th>{{ ('Status') }}</th>
-
-                            <th>{{ ('Operation') }}</th>
-
-                        </tr>
-
-                    </thead>
-
-                    <tbody>
-
-                        {% for v in versions %}
-
-                        <tr class="{{ 'bg-primary/5' if v.active }}">
-
-                            <td class="font-mono">v{{ v.version }}</td>
-
-                            <td class="text-xs">{{ v.updatedBy or '—' }}</td>
-
-                            <td class="text-xs opacity-60 whitespace-nowrap">{{ v.created|loc_dt }}</td>
-
-                            <td>
-
-                                {% if v.active %}
-
-                                <span class="badge badge-soft badge-success badge-xs">{{ ('Active') }}</span>
-
-                                {% else %}
-
-                                <span class="badge badge-soft badge-neutral badge-xs">{{ ('Inactive') }}</span>
-
-                                {% endif %}
-
-                            </td>
-
-                            <td class="whitespace-nowrap">
-
-                                {% if not v.active %}
-
-                                <button class="btn btn-ghost btn-xs text-primary"
-
-                                        hx-post="/projects/{{ project.id }}/prompts/{{ ptype }}/activate"
-
-                                        hx-vals='{"version_id": "{{ v.id }}"}'
-
-                                        hx-swap="none"
-
-                                        hx-confirm="{{ ('Activate this version? The previous version is deactivated.') }}">{{ ('Activate') }}</button>
-
-                                {% endif %}
-
-                                <button class="btn btn-ghost btn-xs"
-
-                                        hx-post="/projects/{{ project.id }}/prompts/{{ ptype }}/duplicate"
-
-                                        hx-vals='{"version_id": "{{ v.id }}"}'
-
-                                        hx-swap="none"
-
-                                        title="{{ ('Copy as a new (inactive) version') }}">{{ ('Duplicate') }}</button>
-
-                                {% set other = versions | rejectattr('id', 'equalto', v.id) | first %}
-
-                                {% if other %}
-
-                                <button class="btn btn-ghost btn-xs"
-
-                                        hx-get="/projects/{{ project.id }}/prompts/compare?ptype={{ ptype }}&a={{ v.id }}&b={{ other.id }}"
-
-                                        hx-target="#compare-modal" hx-swap="innerHTML">{{ ('Compare') }}</button>
-
-                                {% endif %}
-
-                            </td>
-
-                        </tr>
-
-                        {% endfor %}
-
-                    </tbody>
-
-                </table>
-
-            </div>
-
+            <details class="border-t border-base-300/60 pt-3">
+                <summary class="cursor-pointer select-none text-xs font-medium opacity-70">{{ ('Version history') }} ({{ versions|length }})</summary>
+                <div class="mt-3 overflow-x-auto">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr class="text-xs opacity-60">
+                                <th>{{ ('Version') }}</th>
+                                <th>{{ ('Author') }}</th>
+                                <th class="hidden sm:table-cell">{{ ('Time') }}</th>
+                                <th>{{ ('Status') }}</th>
+                                <th>{{ ('Actions') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for v in versions %}
+                            <tr class="{{ 'bg-primary/5' if v.active }}">
+                                <td class="font-mono text-xs">v{{ v.version }}</td>
+                                <td class="text-xs">{{ v.updatedBy or '—' }}</td>
+                                <td class="hidden whitespace-nowrap text-xs opacity-60 sm:table-cell">{{ v.created|loc_dt }}</td>
+                                <td>
+                                    {% if v.active %}
+                                    <span class="badge badge-soft badge-success badge-xs">{{ ('Active') }}</span>
+                                    {% else %}
+                                    <span class="badge badge-soft badge-neutral badge-xs">{{ ('Inactive') }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="whitespace-nowrap">
+                                    {% if not v.active %}
+                                    <button class="btn btn-ghost btn-xs text-primary"
+                                            hx-post="/projects/{{ project.id }}/prompts/{{ active_ptype }}/activate"
+                                            hx-vals='{"version_id": "{{ v.id }}"}'
+                                            hx-swap="none"
+                                            hx-confirm="{{ ('Activate this version? The previous version is deactivated.') }}">{{ ('Activate') }}</button>
+                                    {% endif %}
+                                    <button class="btn btn-ghost btn-xs"
+                                            hx-post="/projects/{{ project.id }}/prompts/{{ active_ptype }}/duplicate"
+                                            hx-vals='{"version_id": "{{ v.id }}"}'
+                                            hx-swap="none"
+                                            title="{{ ('Copy as a new (inactive) version') }}">{{ ('Duplicate') }}</button>
+                                    {% set other = versions | rejectattr('id', 'equalto', v.id) | first %}
+                                    {% if other %}
+                                    <button class="btn btn-ghost btn-xs"
+                                            hx-get="/projects/{{ project.id }}/prompts/compare?ptype={{ active_ptype }}&a={{ v.id }}&b={{ other.id }}"
+                                            hx-target="#compare-modal" hx-swap="innerHTML">{{ ('Compare') }}</button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </details>
             {% endif %}
-
         </div>
-
     </section>
 
-    {% endfor %}
-
-
+    {# Variables reference #}
+    <details class="ezdistro-panel">
+        <summary class="ezdistro-panel-head cursor-pointer select-none">
+            <span class="ezdistro-panel-title">{{ ('Available variables') }}</span>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="ezdistro-disclosure-chev ms-auto size-4 shrink-0"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
+        </summary>
+        <div class="p-4 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs">
+            {% for name, desc in variables.items() %}
+            <code class="bg-base-200/60 rounded px-2 py-1 font-mono" dir="ltr">{{ '{{ ' ~ name ~ ' }}' }}</code>
+            <span class="opacity-70 leading-relaxed">{{ desc }}</span>
+            {% endfor %}
+        </div>
+    </details>
 
     <div id="compare-modal"></div>
-
 </div>

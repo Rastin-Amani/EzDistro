@@ -16,3 +16,7 @@
     <span class="text-error font-mono break-all" dir="ltr">{{ result.message }}</span>
     {% endif %}
 </div>
+{# Out-of-band: refresh the row's health badge without a full page reload, so
+   the badge matches the status the test just persisted. #}
+<span id="health-badge-{{ integration.id }}" class="badge badge-sm {{ integration.healthStatus|status_badge }}" hx-swap-oob="true">{{ health_labels.get(integration.healthStatus, integration.healthStatus) }}</span>
+<span id="health-tested-{{ integration.id }}" hx-swap-oob="true">{{ integration.lastTestedAt|loc_dt if integration.lastTestedAt else '—' }}</span>

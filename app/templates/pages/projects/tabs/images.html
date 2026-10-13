@@ -1,6 +1,9 @@
 {% import 'macros/forms.html' as f %}
 
-{{ f.page_header(('Images'), ('Settings for generating and publishing article images (cover and in-text images).'), eyebrow=('Project')) }}
+{{ f.section_head(
+    ('Images'),
+    ('Settings for generating and publishing article images (cover and in-text images).')
+) }}
 
 <div id="images-tab" class="flex flex-col gap-4 w-full">
 
@@ -112,7 +115,11 @@
 
                 </div>
 
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <details class="border-t border-base-300/60 pt-3">
+
+                    <summary class="cursor-pointer select-none text-xs font-medium opacity-70">{{ ('Advanced — aspect ratios, formats & review') }}</summary>
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-3">
 
                     {{ f.text('image_cover_aspect_ratio', ('Cover aspect ratio'), settings.imageCoverAspectRatio or '16:9', ('e.g. 16:9')) }}
 
@@ -136,19 +143,23 @@
 
                 </div>
 
+                </details>
+
             </div>
 
         </div>
 
-        <div class="ezdistro-panel">
+        <details class="ezdistro-panel">
 
-            <div class="ezdistro-panel-head">
+            <summary class="ezdistro-panel-head cursor-pointer select-none">
 
                 <h2 class="ezdistro-panel-title">{{ ('Visual style profile') }}</h2>
 
-                {{ f.tip(('The project\'s brand style — added to every image prompt. «Forbidden elements» go into the negative prompt.')) }}
+                <span class="truncate text-xs opacity-50">{{ ('Added to every image prompt') }}</span>
 
-            </div>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="ezdistro-disclosure-chev ms-auto size-4 shrink-0"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
+
+            </summary>
 
             {% set style = settings.imageStyle if settings.imageStyle is mapping else {} %}
 
@@ -166,7 +177,7 @@
 
             </div>
 
-        </div>
+        </details>
 
         {{ f.sticky_save(('Save image settings')) }}
 

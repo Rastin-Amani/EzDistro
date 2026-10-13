@@ -110,7 +110,11 @@ Model discovery lists available models from the provider (cached ~10 minutes);
 typing a model id manually always works. Changing a model never rewrites history:
 each section keeps the provider/model/prompt version that produced it.
 
-**Settings tab:** sensible defaults exist; typical adjustments:
+**Settings tab:** grouped into collapsible sections (**Basics**, **Language & brand
+voice**, **Retrieval & chunking**, **Publishing & automation**, **Scheduling & retry**);
+sensible defaults exist. Typical adjustments:
+- Target locale / market / audience (default `en-US` / `US`; the writing language
+  derives from the locale),
 - Chunking (chunk size 500 words / overlap 100 / strategy `auto`),
 - Retrieval pool (top-k 20) and similarity threshold (0 = off),
 - Context budget (links 5 / passages 5 / chars 4000),
