@@ -264,7 +264,7 @@ exact trimmed prompt context. Use it to tune top-k/threshold/reranking or to exp
   checkpoint (current step finishes first).
 - **Retry:** failed jobs offer **Retry**; transient failures retry automatically
   with exponential backoff + jitter (honoring provider rate-limit headers).
-- **Failed jobs** is the filtered shortcut to everything dead-lettered.
+- **Failed jobs** is the dead-letter view, filterable by project, stage and reason.
 - **Logs** shows the raw event feed for the whole platform.
 
 ## 12. Run SEO research (**Research**)

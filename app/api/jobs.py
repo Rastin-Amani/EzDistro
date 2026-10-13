@@ -115,7 +115,10 @@ def jobs_monitor(
             "job_types": JOB_TYPES,
             "statuses": JOB_STATUSES,
             "error_codes": error_codes,
-            "f": {
+            # NOTE: never call this key `f` — templates import the form macros
+            # as `f`, and the import shadows any context value of the same name,
+            # which silently reset every filter field to its default.
+            "filters": {
                 "project": project,
                 "job_type": job_type,
                 "status": status,
@@ -130,19 +133,63 @@ def jobs_monitor(
 
 @router.get("/failed", response_class=HTMLResponse)
 @page_guard("Something went wrong loading the failed jobs page — please try again.")
-def failed_jobs(request: Request, page: int = 1):
-    """Failed jobs (dead-letter view) — retry from here or open the detail."""
+def failed_jobs(
+    request: Request,
+    project: str = "",
+    stage: str = "",
+    reason: str = "",
+    page: int = 1,
+):
+    """Failed jobs (dead-letter view) — filter, retry from here or open the detail."""
     pb = request.state.pb
     scope = project_scope(request)
-    f = 'status="failed"'
+    # non-admins may only filter by a project they can access
+    if scope is not None and project not in scope:
+        project = ""
+
+    repo = JobRepo(pb)
+    per_page = 25
+    parts = ['status="failed"']
     if scope is None:
-        pass  # admin — unrestricted
-    elif scope:
-        f += " && (" + " || ".join(f'project="{s}"' for s in scope) + ")"
+        if project:
+            parts.append(f'project="{project}"')
     else:
-        f += ' && project="__no_access__"'
-    rows, total = JobRepo(pb).search(status="failed", page=max(1, page), per_page=25)
-    jobs = JobRepo(pb).list_records(filter=f, sort="-updated", page=max(1, page), per_page=25)
+        allowed = [project] if project else scope
+        if allowed:
+            parts.append("(" + " || ".join(f'project="{s}"' for s in allowed) + ")")
+        else:
+            parts.append('project="__no_access__"')
+    if stage:
+        parts.append(f'type="{stage}"')
+    if reason:
+        parts.append(f'errorCode="{reason}"')
+    f = " && ".join(parts)
+
+    page = max(1, page)
+
+    def _projects() -> list[dict[str, Any]]:
+        if scope is None:
+            return ProjectRepo(pb).list_records(sort="name", per_page=200)
+        if not scope:
+            return []
+        return ProjectRepo(pb).list_records(
+            filter="(" + " || ".join(f'id="{s}"' for s in scope) + ")",
+            sort="name",
+            per_page=200,
+        )
+
+    loaded = fanout(
+        {
+            "jobs": lambda: repo.list_records(
+                filter=f, sort="-updated", page=page, per_page=per_page
+            ),
+            "total": lambda: repo.count(filter=f),
+            "projects": _projects,
+            "reasons": lambda: repo.error_codes(),
+        }
+    )
+    jobs = loaded["jobs"]
+    total = loaded["total"]
     return templates.TemplateResponse(
         request,
         "pages/jobs/failed.html",
@@ -150,8 +197,12 @@ def failed_jobs(request: Request, page: int = 1):
             "title": ("Failed jobs"),
             "jobs": jobs,
             "total": total,
-            "page": max(1, page),
-            "pages": max(1, -(-total // 25)),
+            "page": page,
+            "pages": max(1, -(-total // per_page)),
+            "projects": loaded["projects"],
+            "reasons": loaded["reasons"],
+            "job_types": JOB_TYPES,
+            "filters": {"project": project, "stage": stage, "reason": reason},
         },
     )
 

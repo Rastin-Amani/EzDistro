@@ -160,6 +160,43 @@ def test_logs_page_failure_shows_inline_retry_not_dead_end(monkeypatch):
     assert "/logs?level=error" in body
 
 
+def test_jobs_monitor_preserves_selected_filter_values():
+    """The context dict must not be named `f` — that shadowed the form macros
+    import and reset every filter field to its default on Apply."""
+    pb, proj_a, _ = _setup()
+    req = make_req(pb, make_user(), proj_a["id"])
+    resp = call_route(
+        J.jobs_monitor, req, project=proj_a["id"], status="failed", job_type="write_article"
+    )
+    body = resp.body.decode()
+    assert f'value="{proj_a["id"]}" selected' in body
+    assert 'value="failed" selected' in body
+    assert 'value="write_article" selected' in body
+
+
+def test_failed_jobs_filters_by_stage_and_reason():
+    pb, proj_a, _ = _setup()
+    wrong_reason = make_job(pb, proj_a["id"], job_type="write_article", status="failed")
+    match_reason = make_job(pb, proj_a["id"], job_type="publish_article", status="failed")
+    JobRepo(pb).update(wrong_reason["id"], {"errorCode": "PermanentError"})
+    JobRepo(pb).update(match_reason["id"], {"errorCode": "ClientResponseError"})
+    req = make_req(pb, make_user(), proj_a["id"])
+
+    by_stage = call_route(J.failed_jobs, req, stage="publish_article").body.decode()
+    assert match_reason["id"] in by_stage
+    assert wrong_reason["id"] not in by_stage
+
+    by_reason = call_route(J.failed_jobs, req, reason="PermanentError").body.decode()
+    assert wrong_reason["id"] in by_reason
+    assert match_reason["id"] not in by_reason
+
+    selected = call_route(
+        J.failed_jobs, req, project=proj_a["id"], stage="publish_article"
+    ).body.decode()
+    assert f'value="{proj_a["id"]}" selected' in selected
+    assert 'value="publish_article" selected' in selected
+
+
 # ---------------------------------------------------------------------------
 # Job detail + events
 # ---------------------------------------------------------------------------

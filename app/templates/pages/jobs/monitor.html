@@ -4,6 +4,8 @@
 
 {{ f.page_header(('Jobs'), ('Monitor indexing and article generation across all projects'), ('Operations & monitoring'), '<span class="text-xs opacity-50">' ~ total ~ (' items</span>')) }}
 
+<div class="flex flex-col gap-5">
+
 <!-- Worker scheduler status -->
 {% if scheduler_heartbeat %}
 <div class="ezdistro-panel border-base-300/70">
@@ -39,7 +41,7 @@
                 <select name="project" class="select select-sm w-full">
                     <option value="">{{ ('All') }}</option>
                     {% for p in projects %}
-                    <option value="{{ p.id }}" {{ 'selected' if f.project == p.id }}>{{ p.name }}</option>
+                    <option value="{{ p.id }}" {{ 'selected' if filters.project == p.id }}>{{ p.name }}</option>
                     {% endfor %}
                 </select>
             </label>
@@ -48,7 +50,7 @@
                 <select name="job_type" class="select select-sm w-full">
                     <option value="">{{ ('All') }}</option>
                     {% for t in job_types %}
-                    <option value="{{ t }}" {{ 'selected' if f.job_type == t }}>{{ t }}</option>
+                    <option value="{{ t }}" {{ 'selected' if filters.job_type == t }}>{{ t }}</option>
                     {% endfor %}
                 </select>
             </label>
@@ -57,7 +59,7 @@
                 <select name="status" class="select select-sm w-full">
                     <option value="">{{ ('All') }}</option>
                     {% for s in statuses %}
-                    <option value="{{ s }}" {{ 'selected' if f.status == s }}>{{ s|status_label }}</option>
+                    <option value="{{ s }}" {{ 'selected' if filters.status == s }}>{{ s|status_label }}</option>
                     {% endfor %}
                 </select>
             </label>
@@ -66,21 +68,21 @@
                 <select name="failure_type" class="select select-sm w-full">
                     <option value="">{{ ('All') }}</option>
                     {% for code in error_codes %}
-                    <option value="{{ code }}" {{ 'selected' if f.failure_type == code }}>{{ code }}</option>
+                    <option value="{{ code }}" {{ 'selected' if filters.failure_type == code }}>{{ code }}</option>
                     {% endfor %}
                 </select>
             </label>
             <label class="form-control">
                 <span class="label-text text-xs font-medium">{{ ('Worker') }}</span>
-                <input name="worker" class="input input-sm w-full" dir="ltr" value="{{ f.worker }}" placeholder="worker id" />
+                <input name="worker" class="input input-sm w-full" dir="ltr" value="{{ filters.worker }}" placeholder="worker id" />
             </label>
             <label class="form-control">
                 <span class="label-text text-xs font-medium">{{ ('From date') }}</span>
-                <input name="date_from" type="date" class="input input-sm w-full" value="{{ f.date_from }}" />
+                <input name="date_from" type="date" class="input input-sm w-full" value="{{ filters.date_from }}" />
             </label>
             <label class="form-control">
                 <span class="label-text text-xs font-medium">{{ ('To date') }}</span>
-                <input name="date_to" type="date" class="input input-sm w-full" value="{{ f.date_to }}" />
+                <input name="date_to" type="date" class="input input-sm w-full" value="{{ filters.date_to }}" />
             </label>
         </div>
         <div class="flex items-center gap-2">
@@ -91,7 +93,7 @@
 {{ f.panel_close() }}
 
 <!-- Table -->
-<div id="jobs-table" class="ezdistro-panel mt-4">
+<div id="jobs-table" class="ezdistro-panel">
     <div class="overflow-x-auto">
         <table class="table table-sm">
             <thead>
@@ -150,7 +152,7 @@
 </div>
 
 {% if provider_metrics %}
-<details class="ezdistro-panel mt-4" open>
+<details class="ezdistro-panel" open>
     <summary class="ezdistro-panel-head cursor-pointer text-sm font-bold select-none">{{ ('Provider metrics (last 7 days)') }}</summary>
     <div class="overflow-x-auto p-4">
         <table class="table table-sm">
@@ -183,11 +185,13 @@
 {% endif %}
 
 {% if pages > 1 %}
-<div class="join mt-4">
+<div class="join">
     {% for p in range(1, pages + 1) %}
-    <a href="/jobs?page={{ p }}&project={{ f.project }}&job_type={{ f.job_type }}&status={{ f.status }}&worker={{ f.worker }}&failure_type={{ f.failure_type }}&date_from={{ f.date_from }}&date_to={{ f.date_to }}"
+    <a href="/jobs?page={{ p }}&project={{ filters.project }}&job_type={{ filters.job_type }}&status={{ filters.status }}&worker={{ filters.worker }}&failure_type={{ filters.failure_type }}&date_from={{ filters.date_from }}&date_to={{ filters.date_to }}"
        class="join-item btn btn-xs {{ 'btn-primary' if p == page }}">{{ p }}</a>
     {% endfor %}
 </div>
 {% endif %}
+
+</div>{# /flex column #}
 {% endblock %}

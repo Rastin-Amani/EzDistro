@@ -4,39 +4,96 @@
 
 {{ f.page_header(('Failed jobs'), ('Jobs that hit errors and need attention'), ('Monitoring'), '<a href="/jobs" class="btn btn-ghost btn-sm">' ~ ('All jobs') ~ '</a>') }}
 
-{% if jobs %}
-<div class="flex flex-col gap-3" id="failed-list"
-     hx-get="/failed" hx-trigger="every 10s" hx-target="this" hx-swap="innerHTML" hx-select="#failed-list">
-    {% for j in jobs %}
-    <div class="ezdistro-panel border-error/40">
-        <div class="p-4 flex flex-col gap-2">
-            <div class="flex items-center justify-between gap-2">
-                <div class="flex items-center gap-2 min-w-0">
-                    <span class="badge badge-sm badge-soft badge-error">{{ j.type }}</span>
-                    <span class="text-xs opacity-60">{{ j.project[:8] }}</span>
-                    <span class="text-xs opacity-40">{{ j.updated|loc_dt }}</span>
+<div class="flex flex-col gap-4">
+
+    {# Filters — project / stage / reason #}
+    <section class="ezdistro-panel">
+        <form method="get" action="/failed" class="p-4 flex flex-col gap-3">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <label class="form-control">
+                    <span class="label-text text-xs font-medium">{{ ('Project') }}</span>
+                    <select name="project" class="select select-sm w-full">
+                        <option value="">{{ ('All projects') }}</option>
+                        {% for p in projects %}
+                        <option value="{{ p.id }}" {{ 'selected' if filters.project == p.id }}>{{ p.name }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label class="form-control">
+                    <span class="label-text text-xs font-medium">{{ ('Stage') }}</span>
+                    <select name="stage" class="select select-sm w-full">
+                        <option value="">{{ ('All stages') }}</option>
+                        {% for t in job_types %}
+                        <option value="{{ t }}" {{ 'selected' if filters.stage == t }}>{{ t }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label class="form-control">
+                    <span class="label-text text-xs font-medium">{{ ('Reason') }}</span>
+                    <select name="reason" class="select select-sm w-full">
+                        <option value="">{{ ('All reasons') }}</option>
+                        {% for code in reasons %}
+                        <option value="{{ code }}" {{ 'selected' if filters.reason == code }}>{{ code }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+            </div>
+            <div class="flex items-center gap-2">
+                <button type="submit" class="btn btn-primary btn-sm">{{ ('Apply filter') }}</button>
+                <a href="/failed" class="btn btn-ghost btn-sm">{{ ('Clear') }}</a>
+                <span class="ms-auto text-xs opacity-50 tabular">{{ total }} {{ ('failed') }}</span>
+            </div>
+        </form>
+    </section>
+
+    {% if jobs %}
+    <div class="flex flex-col gap-3" id="failed-list">
+        {% for j in jobs %}
+        <div class="ezdistro-panel border-error/40">
+            <div class="p-4 flex flex-col gap-2">
+                <div class="flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-2 min-w-0">
+                        <span class="badge badge-sm badge-soft badge-error">{{ j.type }}</span>
+                        <span class="text-xs opacity-60">{{ j.project[:8] }}</span>
+                        <span class="text-xs opacity-40">{{ j.updated|loc_dt }}</span>
+                    </div>
+                    <button class="btn btn-primary btn-xs" hx-post="/jobs/{{ j.id }}/retry" hx-swap="none">{{ ('Retry') }}</button>
                 </div>
-                <button class="btn btn-primary btn-xs" hx-post="/jobs/{{ j.id }}/retry" hx-swap="none">{{ ('Retry') }}</button>
+                {% if j.errorCode %}
+                <div class="text-xs bg-error/5 border border-error/20 rounded-lg p-2 font-mono break-words" dir="ltr">
+                    <span class="text-error">{{ j.errorCode }}:</span>
+                    <span class="line-clamp-2 align-top" title="{{ j.errorMessage }}">{{ j.errorMessage }}</span>
+                    {% if j.errorDetails and j.errorDetails.attempts %}<span class="opacity-50">{{ ('(attempt %(n)s)') % {'n': j.errorDetails.attempts} }}</span>{% endif %}
+                </div>
+                {% endif %}
             </div>
-            {% if j.errorCode %}
-            <div class="text-xs bg-error/5 border border-error/20 rounded-lg p-2 font-mono break-words" dir="ltr">
-                <span class="text-error">{{ j.errorCode }}:</span> {{ j.errorMessage }}
-                {% if j.errorDetails and j.errorDetails.attempts %}<span class="opacity-50">{{ ('(attempt %(n)s)') % {'n': j.errorDetails.attempts} }}</span>{% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if pages > 1 %}
+    <div class="join">
+        {% for p in range(1, pages + 1) %}
+        <a href="/failed?page={{ p }}&project={{ filters.project }}&stage={{ filters.stage }}&reason={{ filters.reason }}"
+           class="join-item btn btn-xs {{ 'btn-primary' if p == page }}">{{ p }}</a>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="ezdistro-panel">
+        <div class="ezdistro-empty">
+            <div class="ezdistro-empty-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
             </div>
-            {% endif %}
+            <p class="font-bold text-base-content/75">
+                {% if filters.project or filters.stage or filters.reason %}{{ ('No failed jobs match these filters') }}{% else %}{{ ('No failed jobs') }}{% endif %}
+            </p>
+            <p class="text-sm text-base-content/50">
+                {% if filters.project or filters.stage or filters.reason %}{{ ('Try clearing a filter.') }}{% else %}{{ ('Everything is running as planned.') }}{% endif %}
+            </p>
         </div>
     </div>
-    {% endfor %}
+    {% endif %}
 </div>
-{% else %}
-<div class="ezdistro-panel">
-    <div class="ezdistro-empty">
-        <div class="ezdistro-empty-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
-        </div>
-        <p class="font-bold text-base-content/75">{{ ('No failed jobs') }}</p>
-        <p class="text-sm text-base-content/50">{{ ('Everything is running as planned.') }}</p>
-    </div>
-</div>
-{% endif %}
 {% endblock %}
