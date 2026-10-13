@@ -9,6 +9,66 @@ release builds on. Format is based on [Keep a Changelog](https://keepachangelog.
 
 ## [Unreleased]
 
+## [v1.18.0] — 2026-10-13
+
+### Added
+- Filter **Failed jobs** by project, stage and reason.
+- Connections editor: choosing a category resets the provider/model/base URL to
+  that category's defaults, and **Test** refreshes the row's health badge
+  out-of-band.
+
+### Changed
+- Redesigned the shell and project navigation: grouped sidebar, a grouped vertical
+  project rail (horizontal strip on small screens), a tighter mobile dock, compact
+  tab section headers, collapsible settings groups, and a one-prompt-at-a-time
+  editor.
+- Projects no longer carry `language`, `timezone` or `description`: market and
+  locale live in project settings (`targetLocale`/`targetCountry`, default `US` /
+  `en-US`) and the writing language derives from the locale. Existing databases
+  are migrated with `python -m app.scripts.drop_legacy_project_fields`.
+- The **Events** feed retries a transient PocketBase read and degrades to an inline,
+  retryable panel instead of a dead-end error page.
+- Adopted the Apache-2.0 license and corrected package metadata.
+
+### Fixed
+- The **Jobs** monitor keeps the selected filter values when a filter is applied.
+- The service worker never caches a degraded/error page; error pages send
+  `Cache-Control: no-store`.
+- The Events page template (`app/templates/pages/logs/feed.html`) is tracked again
+  — a broad `logs/` `.gitignore` rule had excluded it from the repository.
+- WordPress sync fetches pending posts in bounded parallel batches.
+
+### Performance
+- The worker's job poll loop backs off while idle (up to 5× the interval).
+- Static assets are cache-busted with the app version.
+
+## [v1.17.1] — 2026-10-05
+
+### Fixed
+- Analyse the typed landing-page URL, stop caching the status poll, and round the
+  brand tile with the box radius.
+
+## [v1.17.0] — 2026-10-04
+
+### Added
+- Analyse the landing page into a stored product profile, and register the
+  corresponding job type.
+- Emit Gutenberg blocks when publishing to WordPress; resume a failed article from
+  its last failed step.
+- Pick integration providers from the Connections tab.
+- Adopt the EzDistro brand asset kit.
+
+### Changed
+- Make the content pipeline English-only.
+- Overlap read-only PocketBase reads; open the worker's job loop to the new
+  landing-page job.
+
+### Fixed
+- Preserve system field patterns when bootstrapping the `users` collection.
+- Match duplicate topic titles case-insensitively and filter log levels by their
+  event types.
+- Scope tab polling, serve `docs/`, and harden actions.
+
 ### Documentation
 - Brought the whole `docs/` set up to date for the SEO research engine: 33
   collections, 16 job types, 25 prompt types, the research/WordPress-sync
