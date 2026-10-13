@@ -1,6 +1,8 @@
 import os
 from datetime import datetime
 
+from babel.dates import format_date, format_datetime
+from babel.numbers import format_decimal
 from fastapi.templating import Jinja2Templates
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -41,14 +43,10 @@ def _parse_dt(date_str):
 
 
 def _babel_date(parsed, fmt):
-    from babel.dates import format_date
-
     return format_date(parsed, format=fmt, locale="en")
 
 
 def _babel_datetime(parsed, fmt):
-    from babel.dates import format_datetime
-
     return format_datetime(parsed, format=fmt, locale="en")
 
 
@@ -84,8 +82,6 @@ def loc_int(value):
         number = int(value)
     except (TypeError, ValueError):
         return value
-    from babel.numbers import format_decimal
-
     return format_decimal(number, format="#,##0", locale="en")
 
 
