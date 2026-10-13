@@ -141,8 +141,9 @@ def test_logs_level_is_allow_listed(monkeypatch):
     assert captured["filter"] == 'eventType="info"'
 
 
-def test_logs_page_failure_renders_error_page_not_500(monkeypatch):
-    """An upstream PocketBase failure must degrade to the guarded error page."""
+def test_logs_page_failure_shows_inline_retry_not_dead_end(monkeypatch):
+    """An upstream PocketBase failure degrades to an inline, retryable panel —
+    never a dead-end that hides the logs page."""
 
     def boom(self, **kwargs):
         raise RuntimeError("pb down")
@@ -153,8 +154,10 @@ def test_logs_page_failure_renders_error_page_not_500(monkeypatch):
     resp = call_route(L.logs_page, req)
     body = resp.body.decode()
     assert resp.status_code == 200
-    assert "please try again" in body
-    assert "/dashboard" in body
+    assert "Could not load events" in body
+    assert "/logs" in body
+    # the level filter bar is still available
+    assert "/logs?level=error" in body
 
 
 # ---------------------------------------------------------------------------

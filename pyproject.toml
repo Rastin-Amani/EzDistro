@@ -35,6 +35,7 @@ disable_error_code = ["override"]
 [[tool.mypy.overrides]]
 module = [
     "app.api.errors",
+    "app.api.logs",
     "app.jobs.engine",
     "app.services.scheduler",
     "app.workers.worker",

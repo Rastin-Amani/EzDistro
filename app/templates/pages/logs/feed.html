@@ -1,0 +1,89 @@
+{% extends "layouts/platform.html" %}
+{% block dashboard_content %}
+{% import 'macros/forms.html' as f %}
+
+{{ f.page_header(
+    ('Events'),
+    ('System and job event history across every project you can access.'),
+    ('Monitoring'),
+    '<a href="/jobs" class="btn btn-ghost btn-sm">' ~ ('All jobs') ~ '</a>'
+) }}
+
+{# Level filter — mirrors the allow-listed ?level= values in app/api/logs.py #}
+<div class="join join-sm mb-4 overflow-x-auto" role="group" aria-label="{{ ('Filter by level') }}">
+    <a href="/logs" class="join-item btn btn-xs {{ 'btn-primary' if not level_filter }}" aria-current="{{ 'true' if not level_filter else 'false' }}">{{ ('All') }}</a>
+    {% for level in ['info', 'warning', 'error'] %}
+    <a href="/logs?level={{ level }}" class="join-item btn btn-xs {{ 'btn-primary' if level_filter == level }}" aria-current="{{ 'true' if level_filter == level else 'false' }}">{{ level|status_label }}</a>
+    {% endfor %}
+</div>
+
+{% if load_error %}
+<div class="ezdistro-panel border-error/40 mb-4">
+    <div class="flex flex-wrap items-center justify-between gap-3 p-4">
+        <div class="min-w-0">
+            <p class="font-bold text-error">{{ ('Could not load events') }}</p>
+            <p class="text-sm opacity-60">{{ ('The event feed could not be reached. This is usually a temporary connection problem — your filters are kept.') }}</p>
+        </div>
+        <a class="btn btn-primary btn-sm shrink-0" href="/logs{{ '?level=' ~ level_filter if level_filter }}">{{ ('Try again') }}</a>
+    </div>
+</div>
+{% endif %}
+
+{% if events %}
+<div class="ezdistro-panel">
+    <div class="ezdistro-panel-head">
+        <h2 class="ezdistro-panel-title">{{ ('Activity') }}</h2>
+        <span class="text-xs opacity-50 tabular">{{ events|length }} {{ ('events') }}</span>
+    </div>
+    <div class="overflow-x-auto" aria-live="polite">
+        <table class="table table-sm">
+            <thead>
+                <tr class="text-xs opacity-60">
+                    <th>{{ ('Type') }}</th>
+                    <th>{{ ('Message') }}</th>
+                    <th class="hidden md:table-cell">{{ ('Project') }}</th>
+                    <th class="hidden sm:table-cell">{{ ('Job') }}</th>
+                    <th class="hidden lg:table-cell">{{ ('Data') }}</th>
+                    <th>{{ ('Time') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for e in events %}
+                <tr>
+                    <td><span class="badge badge-sm {{ e.eventType|status_badge }}">{{ e.eventType|status_label }}</span></td>
+                    <td class="max-w-64 text-sm"><p class="break-words">{{ e.message or '—' }}</p></td>
+                    <td class="hidden text-xs opacity-60 md:table-cell">
+                        {% if e.project %}<a href="/projects/{{ e.project }}" class="link link-hover font-mono" dir="ltr">{{ e.project[:8] }}</a>{% else %}—{% endif %}
+                    </td>
+                    <td class="hidden text-xs sm:table-cell">
+                        {% if e.job %}<a href="/jobs/{{ e.job }}" class="link link-hover font-mono" dir="ltr">{{ e.job[:8] }}</a>{% else %}—{% endif %}
+                    </td>
+                    <td class="hidden text-xs lg:table-cell">
+                        {% if e.metadata and e.metadata != {} %}
+                        <details class="dropdown dropdown-end">
+                            <summary class="btn btn-ghost btn-xs">JSON</summary>
+                            <div class="dropdown-content z-50 max-h-48 w-80 overflow-auto rounded-lg border border-base-300/70 bg-base-100 p-3 font-mono text-xs">
+                                <pre>{{ e.metadata|tojson }}</pre>
+                            </div>
+                        </details>
+                        {% else %}—{% endif %}
+                    </td>
+                    <td class="whitespace-nowrap text-xs opacity-50">{{ e.created|loc_dt }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+{% if not load_error %}
+<div class="ezdistro-panel">
+    {{ f.empty(
+        ('No events recorded'),
+        ('Job activity, provider errors and configuration changes will appear here.'),
+        '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" /></svg>'
+    ) }}
+</div>
+{% endif %}
+{% endif %}
+{% endblock %}
