@@ -48,7 +48,9 @@ lerna-debug.log*
 # -----------------------------
 # Logs
 # -----------------------------
-logs/
+# Root-anchored: a bare `logs/` also swallowed app/templates/pages/logs/
+# (the Events feed template), which then never entered the repository.
+/logs/
 *.log
 
 
@@ -82,3 +84,6 @@ app/static/uploads/
 
 # OpenChamber local project state (screenshots, per-project actions)
 .openchamber/
+
+# Local distribution/marketing campaign output (regenerated, not product code)
+distribution/
