@@ -9,7 +9,9 @@ workbox.setConfig({
 // ---- Cache names (bumped on app version change) ----
 // __CACHE_VERSION__ is replaced at runtime by app/routes/pwa.py with APP_VERSION from main.py
 const CACHE_VERSION = '__CACHE_VERSION__';
-const CACHE_PREFIX = `ezdistro-${CACHE_VERSION}`;
+// `-p2` busts any error page cached by an older worker (see the fetch handler:
+// responses marked no-store are never cached now).
+const CACHE_PREFIX = `ezdistro-${CACHE_VERSION}-p2`;
 const PAGE_CACHE = `${CACHE_PREFIX}-pages`;
 const STATIC_CACHE = `${CACHE_PREFIX}-static`;
 const IMAGE_CACHE = `${CACHE_PREFIX}-images`;
@@ -90,7 +92,10 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
         fetch(request)
             .then((response) => {
-                if (response && response.status === 200) {
+                // Never cache an error/degraded page as if it were the real
+                // page — `no-store` marks those responses.
+                const noStore = (response.headers.get('Cache-Control') || '').includes('no-store');
+                if (response && response.status === 200 && !noStore) {
                     const clone = response.clone();
                     caches.open(PAGE_CACHE).then((cache) => cache.put(request, clone));
                 }

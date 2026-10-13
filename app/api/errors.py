@@ -95,6 +95,9 @@ def page_guard(fail: str, back_url: str = "", back_label: str = "") -> Callable[
                 "back_url": back_url,
                 "back_label": back_label,
             },
+            # An error page must never be cached (SW or browser) and replayed
+            # as if it were the real page.
+            headers={"Cache-Control": "no-store, must-revalidate"},
         )
 
     def deco(fn: F) -> F:

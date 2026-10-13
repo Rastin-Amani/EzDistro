@@ -50,7 +50,7 @@
         />
 
         <title>{{ title or ('EzDistro') }}</title>
-        <link rel="stylesheet" href="{{ url_for('static', path='/app.css') }}" />
+        <link rel="stylesheet" href="{{ url_for('static', path='/app.css') }}?v={{ app_version }}" />
     </head>
 
     <body
@@ -127,11 +127,11 @@
             });
         </script>
 
-        <script type="module" src="{{ url_for('static', path='/js/integrations.js') }}"></script>
-        <script type="module" src="{{ url_for('static', path='/js/provider_defaults.js') }}"></script>
-        <script type="module" src="{{ url_for('static', path='/app.js') }}"></script>
-        <script defer src="{{ url_for('static', path='/js/theme.js') }}"></script>
-        <script defer src="{{ url_for('static', path='/js/confirm-dialog.js') }}"></script>
+        <script type="module" src="{{ url_for('static', path='/js/integrations.js') }}?v={{ app_version }}"></script>
+        <script type="module" src="{{ url_for('static', path='/js/provider_defaults.js') }}?v={{ app_version }}"></script>
+        <script type="module" src="{{ url_for('static', path='/app.js') }}?v={{ app_version }}"></script>
+        <script defer src="{{ url_for('static', path='/js/theme.js') }}?v={{ app_version }}"></script>
+        <script defer src="{{ url_for('static', path='/js/confirm-dialog.js') }}?v={{ app_version }}"></script>
 
         <script>
             function getProgressBar() {
