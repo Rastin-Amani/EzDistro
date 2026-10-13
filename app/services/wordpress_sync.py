@@ -21,6 +21,7 @@ changed. No full-content download of unchanged posts.
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import time
 from typing import Any
@@ -264,11 +265,29 @@ async def sync_posts(
 
     created = updated = unchanged = flagged = failed = 0
     index_ids: list[int] = []
+    # ponytail: bounded-parallel fetch (5 at a time); mirroring stays serial below.
+    fetch_sem = asyncio.Semaphore(5)
+
+    async def _fetch(pid: int) -> WPPost | None:
+        async with fetch_sem:
+            return await publisher.get_post(pid)
+
+    fetched: dict[int, WPPost | None] = {}
+    if pending:
+        for post_id, post in zip(
+            pending,
+            await asyncio.gather(*(_fetch(pid) for pid in pending)),
+            strict=True,
+        ):
+            if post is not None:  # None = deleted between inventory sweep and now
+                fetched[post_id] = post
+            else:
+                failed += 1
+
     for position, post_id in enumerate(pending, start=1):
         await ctx.check_cancelled()
-        post = await publisher.get_post(post_id)
+        post = fetched.get(post_id)
         if post is None:  # deleted between the inventory sweep and now
-            failed += 1
             continue
         try:
             outcome = await _mirror_post(
