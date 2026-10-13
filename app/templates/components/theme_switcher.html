@@ -1,7 +1,7 @@
 {# Reusable theme switcher — DaisyUI popover dropdown (closes on blur/outside click).
    Pass up=True where it sits at the bottom of the screen (opens upward).
    Radios carry the selection state; theme.js keeps `checked` in sync after htmx swaps. #}
-<div class="dropdown dropdown-end {{ 'dropdown-top' if up|default(false) }}" data-theme-switcher>
+<div class="dropdown {{ 'dropdown-start' if start|default(false) else 'dropdown-end' }} {{ 'dropdown-top' if up|default(false) }}" data-theme-switcher>
     <div
         tabindex="0"
         role="button"

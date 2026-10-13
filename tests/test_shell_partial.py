@@ -52,3 +52,25 @@ def test_unauthenticated_plain_request_still_redirects():
     resp = client.get("/dashboard", follow_redirects=False)
     assert resp.status_code == 303
     assert resp.headers["location"] == "/login"
+
+
+# ---------------------------------------------------------------------------
+# Theme switcher alignment
+# ---------------------------------------------------------------------------
+def _theme_switcher(**ctx) -> str:
+    return templates.get_template("components/theme_switcher.html").render(**ctx)
+
+
+def test_theme_switcher_in_left_rail_opens_toward_content():
+    """In the left sidebar the menu must open to the right (`start`), not the
+    left — `dropdown-end` flipped it off the left edge of the screen."""
+    html = _theme_switcher(up=True, start=True)
+    assert "dropdown-start" in html
+    assert "dropdown-top" in html
+    assert "dropdown-end" not in html
+
+
+def test_theme_switcher_default_is_right_aligned():
+    html = _theme_switcher()
+    assert "dropdown-end" in html
+    assert "dropdown-start" not in html

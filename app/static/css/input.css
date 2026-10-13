@@ -178,6 +178,13 @@ body {
    Component layer — refine DaisyUI primitives into the ezdistro voice
    (flat: hierarchy via borders, surface contrast, type — never shadows)
    ═══════════════════════════════════════════════════════════════════════ */
+/* Collapsible settings panels: chevron flips when the group is open. */
+.ezdistro-disclosure-chev {
+    transition: transform 0.15s ease;
+}
+details[open] > summary .ezdistro-disclosure-chev {
+    transform: rotate(180deg);
+}
 @layer components {
     .card {
         @apply rounded-lg border border-base-300 bg-base-100;
@@ -429,11 +436,14 @@ body {
         @apply flex h-16 items-center gap-2.5 border-b border-base-300/70 px-4;
     }
     .ezdistro-nav {
-        @apply flex-1 overflow-y-auto px-3 py-4 flex flex-col gap-0.5;
+        @apply flex-1 overflow-y-auto px-3 py-3 flex flex-col gap-3;
+    }
+    .ezdistro-nav-section {
+        @apply flex flex-col gap-0.5;
     }
     /* Group names are mono index labels, pinned above their items. */
     .ezdistro-nav-group {
-        @apply px-2 pb-1 pt-4 font-mono text-[0.65rem] font-normal uppercase text-base-content/55;
+        @apply px-2.5 pb-1.5 pt-1 font-mono text-[0.65rem] font-normal uppercase text-base-content/45;
         letter-spacing: 0.073em;
     }
     /* Rail items: flat, no background. Hover shifts ink to blue; active
@@ -468,43 +478,32 @@ body {
         width: 2px;
         background: var(--color-primary);
     }
-    /* Start panel: bottom-anchored, hairline above, blue dot + mono label,
-       one blue primary + stacked ghost actions. */
+    /* Bottom call-to-action, hairline above (one blue primary). */
     .ezdistro-start {
-        @apply border-t border-base-300 px-3 py-3 flex flex-col gap-2;
-    }
-    .ezdistro-start-label {
-        @apply flex items-center gap-2 font-mono text-[0.65rem] uppercase text-base-content/55;
-        letter-spacing: 0.073em;
-    }
-    .ezdistro-start-dot {
-        @apply size-1.5 rounded-full bg-primary;
+        @apply border-t border-base-300/70 px-3 py-3;
     }
     .ezdistro-sidefoot {
         @apply border-t border-base-300/70 p-3;
     }
 
-    /* Mobile dock — floating bar in the thumb zone, safe-area aware.
-       Content scrolls under it; the shell keeps pb-32 clearance.
-       Icons are size-11 blocks: the active one is the single solid blue
-       signal, the rest are ghosts. Labels stay truncated below. */
+    /* Mobile dock — floating thumb-zone bar. Items share the width
+       (basis-0 + flex-1) so the pill can never overflow on narrow screens,
+       and the safe-area inset is applied once (to the dock), never twice. */
     .ezdistro-dock {
-        @apply pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 md:hidden;
-        padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+        @apply pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-3 md:hidden;
+        padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
     }
     .ezdistro-dock-pill {
-        @apply pointer-events-auto flex w-full max-w-md items-stretch justify-around gap-2 rounded-2xl border border-base-300/80 bg-base-100/85 p-3 backdrop-blur-xl;
-        padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+        @apply pointer-events-auto flex w-full max-w-md items-stretch gap-1 rounded-2xl border border-base-300/80 bg-base-100/90 p-1.5 backdrop-blur-xl;
     }
     .ezdistro-dock a {
-        @apply relative flex min-w-0 flex-none flex-col items-center justify-center gap-1 rounded-xl px-1 py-1 text-[0.6rem] font-semibold text-base-content/60 transition-colors;
-        min-height: 3.5rem;
+        @apply flex min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-1 rounded-xl px-1 py-1.5 text-[0.6rem] font-semibold text-base-content/55 transition-colors;
     }
     .ezdistro-dock a svg {
-        @apply size-11 shrink-0 rounded-xl p-2.5 text-base-content/60 transition-colors;
+        @apply size-9 shrink-0 rounded-lg p-2 text-base-content/55 transition-colors;
     }
     .ezdistro-dock a span {
-        @apply w-full max-w-16 truncate text-center;
+        @apply w-full truncate text-center;
     }
     .ezdistro-dock a:hover svg {
         @apply bg-base-200 text-primary;
@@ -522,30 +521,100 @@ body {
         height: calc(3.5rem + env(safe-area-inset-top));
         padding-top: env(safe-area-inset-top);
     }
-    .ezdistro-project-tabs {
+    /* Project sub-navigation ---------------------------------------------
+       A grouped vertical rail on desktop (13 sections stay scannable), a
+       sticky horizontal scroll strip on small screens. */
+    .ezdistro-project-layout {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    .ezdistro-subnav {
         position: sticky;
         top: calc(3.5rem + env(safe-area-inset-top));
         z-index: 20;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        overflow-x: auto;
         margin-inline: -1rem;
         padding: 0.5rem 1rem;
-        margin-bottom: 0.5rem;
         background: color-mix(in oklab, var(--color-base-100) 95%, transparent);
         backdrop-filter: blur(12px);
+        border-bottom: 1px solid color-mix(in oklab, var(--color-base-300) 70%, transparent);
     }
-    /* The hairline under the tab bar is drawn at the tab box's own width, so
-       the rule and the tab strip share the same edges (never wider). */
-    .ezdistro-project-tabs::after {
-        content: "";
-        position: absolute;
-        inset-inline: 1rem;
-        bottom: 0;
-        height: 1px;
-        background: color-mix(in oklab, var(--color-base-300) 70%, transparent);
+    .ezdistro-subnav-section {
+        display: contents;
     }
-    @media (min-width: 768px) {
-        .ezdistro-project-tabs {
-            top: 0;
+    .ezdistro-subnav-group {
+        display: none;
+    }
+    .ezdistro-subnav-link {
+        @apply relative whitespace-nowrap rounded-lg px-2.5 py-1.5 text-sm font-medium;
+        color: color-mix(in oklab, var(--color-base-content) 65%, transparent);
+        transition:
+            color 0.15s ease,
+            background-color 0.15s ease;
+    }
+    .ezdistro-subnav-link:hover {
+        background: var(--color-base-200);
+        color: var(--color-base-content);
+    }
+    .ezdistro-subnav-link.is-active {
+        color: var(--color-primary);
+    }
+    @media (min-width: 1024px) {
+        .ezdistro-project-layout {
+            display: grid;
+            grid-template-columns: 13rem minmax(0, 1fr);
+            gap: 2.5rem;
+            align-items: start;
+        }
+        .ezdistro-subnav {
+            position: sticky;
+            top: 1rem;
+            display: block;
+            overflow: visible;
             margin-inline: 0;
+            padding: 0;
+            background: transparent;
+            backdrop-filter: none;
+            border-bottom: 0;
+        }
+        .ezdistro-subnav-section {
+            display: block;
+        }
+        .ezdistro-subnav-group {
+            display: block;
+            padding: 1rem 0.6rem 0.35rem;
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            letter-spacing: 0.073em;
+            text-transform: uppercase;
+            color: color-mix(in oklab, var(--color-base-content) 45%, transparent);
+        }
+        .ezdistro-subnav-section:first-child .ezdistro-subnav-group {
+            padding-top: 0.1rem;
+        }
+        .ezdistro-subnav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            border-radius: 8px;
+            padding: 0.45rem 0.6rem;
+        }
+        .ezdistro-subnav-link.is-active {
+            background: color-mix(in oklab, var(--color-primary) 10%, transparent);
+        }
+        .ezdistro-subnav-link.is-active::before {
+            content: "";
+            position: absolute;
+            inset-inline-start: 0;
+            top: 0.45rem;
+            bottom: 0.45rem;
+            width: 2px;
+            border-radius: 2px;
+            background: var(--color-primary);
         }
     }
 

@@ -149,6 +149,34 @@
 </header>
 {%- endmacro %}
 
+{# Compact header for content rendered inside a project tab (the giant atlas
+   title is reserved for the top-level project header, not every tab). #}
+{% macro section_head(title, hint='', actions='') -%}
+<div class="mb-4 flex flex-wrap items-end justify-between gap-x-4 gap-y-1">
+    <div class="min-w-0">
+        <h2 class="text-lg font-extrabold tracking-tight">{{ title }}</h2>
+        {% if hint %}<p class="mt-0.5 text-sm text-base-content/50">{{ hint }}</p>{% endif %}
+    </div>
+    {% if actions %}<div class="flex items-center gap-2">{{ actions|safe }}</div>{% endif %}
+</div>
+{%- endmacro %}
+
+{# Collapsible settings group: a panel whose head is the toggle. #}
+{% macro disclosure(title, hint='', open=false) -%}
+<details class="ezdistro-panel" {{ 'open' if open }}>
+    <summary class="ezdistro-panel-head cursor-pointer select-none">
+        <h3 class="ezdistro-panel-title">{{ title }}</h3>
+        {% if hint %}<span class="hidden truncate text-xs opacity-50 sm:inline">{{ hint }}</span>{% endif %}
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="ezdistro-disclosure-chev ms-auto size-4 shrink-0"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
+    </summary>
+    <div class="p-4">
+{%- endmacro %}
+
+{% macro disclosure_close() -%}
+    </div>
+</details>
+{%- endmacro %}
+
 {% macro panel(title='', actions='', id='', body_class='p-4') -%}
 <section class="ezdistro-panel" {% if id %}id="{{ id }}"{% endif %}>
     {% if title or actions %}
