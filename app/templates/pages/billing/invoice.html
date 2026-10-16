@@ -9,6 +9,8 @@
     '<a href="/billing" class="btn btn-ghost btn-sm">' ~ ('Back to billing') ~ '</a>'
 ) }}
 
+<div class="flex flex-col gap-5">
+
 {% if not invoice %}
 {{ f.panel() }}{{ f.empty(('Invoice not found'), ('It may belong to another account.')) }}{{ f.panel_close() }}
 {% else %}
@@ -36,4 +38,6 @@
     </p>
 {{ f.panel_close() }}
 {% endif %}
+
+</div>
 {% endblock %}
