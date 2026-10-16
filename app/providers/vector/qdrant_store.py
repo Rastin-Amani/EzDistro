@@ -11,6 +11,7 @@ from __future__ import annotations
 import re
 import uuid
 from typing import Any
+from urllib.parse import urlsplit, urlunsplit
 
 import httpx
 from qdrant_client import AsyncQdrantClient, models
@@ -29,6 +30,23 @@ def project_key(project_slug: str, model: str) -> str:
 
 def point_id(project_slug: str, wp_post_id: int, chunk_index: int) -> str:
     return f"{project_slug}:{wp_post_id}:{chunk_index}"
+
+
+def _client_url(url: str) -> str:
+    """Default an explicit port by scheme.
+
+    ``AsyncQdrantClient(url=...)`` falls back to its REST default (:6333) when the
+    URL omits a port, even for ``https://``. A normal reverse-proxied Qdrant URL
+    (``https://host/``) then dials 6333 and times out — while the ping (raw httpx,
+    defaults to 443) reports healthy. Pin 443/80 so both agree.
+    """
+    parts = urlsplit(url)
+    if not parts.scheme or parts.port is not None:
+        return url
+    port = 443 if parts.scheme == "https" else 80
+    return urlunsplit(
+        (parts.scheme, f"{parts.netloc}:{port}", parts.path, parts.query, parts.fragment)
+    )
 
 
 def _to_filter(filters: dict[str, Any] | None) -> models.Filter | None:
@@ -72,7 +90,9 @@ class QdrantStore:
     async def _get_client(self) -> AsyncQdrantClient:
         if self._client is None:
             self._client = AsyncQdrantClient(
-                url=self._url, api_key=self._api_key or None, timeout=int(self._timeout)
+                url=_client_url(self._url),
+                api_key=self._api_key or None,
+                timeout=int(self._timeout),
             )
         return self._client
 
