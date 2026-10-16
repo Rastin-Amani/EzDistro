@@ -47,6 +47,8 @@ module = [
     "app.services.indexing",
     "app.services.writing",
     "app.api.research",
+    "app.services.billing",
+    "app.api.billing",
 ]
 disable_error_code = ["call-arg", "arg-type"]
 
