@@ -6,6 +6,18 @@ import pytest
 
 
 @pytest.fixture(autouse=True)
+def _billing_off_by_default(monkeypatch):
+    """Keep tests hermetic regardless of the developer's `.env`.
+
+    A local `.env` with BILLING_ENABLED=true must not change test behaviour;
+    billing tests opt back in with their own fixture.
+    """
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "billing_enabled", False)
+
+
+@pytest.fixture(autouse=True)
 def _clear_caches():
     """Isolate process-global caches between tests."""
     from app.middleware import clear_session_cache
