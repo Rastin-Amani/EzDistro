@@ -1135,6 +1135,149 @@ COLLECTIONS: list[dict[str, Any]] = [
         ],
         indexes=["CREATE INDEX idx_serp_results_query ON serp_results (query, position)"],
     ),
+    # ==========================================================================
+    # Billing / payments. Products are trusted server-side records; users buy
+    # credit packs, PayRam confirms the payment, and an append-only credit
+    # ledger plus usage records track entitlements and metering.
+    # All collections are bootstrapped locked (superuser-only) like the rest of
+    # the schema — the app reads/writes through get_data_pb() and authorization
+    # stays in app/api/deps.py + app/services/billing.py.
+    # ==========================================================================
+    # ------------------------------------------------------ billing_products
+    col(
+        "billing_products",
+        [
+            t("code", required=True),
+            t("name", required=True),
+            t("description", max_len=2000),
+            select("type", ["credit_pack"], required=True),
+            boolean("active"),
+            # Prices in minor units (cents) — never floats.
+            num("priceCents", required=True),
+            t("currency", required=True),
+            num("credits", required=True),
+            num("sortOrder"),
+            json_field("metadata"),
+        ],
+        indexes=[
+            "CREATE UNIQUE INDEX idx_billing_products_code ON billing_products (code)",
+            "CREATE INDEX idx_billing_products_active ON billing_products (active, sortOrder)",
+        ],
+    ),
+    # ------------------------------------------------------ billing_invoices
+    col(
+        "billing_invoices",
+        [
+            # No cascade: a user's payment history survives user deletion.
+            rel("user", "users", required=True),
+            rel("product", "billing_products"),
+            t("invoiceNumber", required=True),
+            # Snapshot of the purchased terms — later product edits must not
+            # change an existing invoice.
+            t("productCode"),
+            t("productName"),
+            num("priceCents"),
+            t("currency"),
+            num("credits"),
+            select(
+                "status",
+                [
+                    "pending",
+                    "awaiting_payment",
+                    "paid",
+                    "partially_paid",
+                    "failed",
+                    "expired",
+                    "cancelled",
+                    "refunded",
+                    "needs_review",
+                ],
+                required=True,
+            ),
+            t("provider"),
+            t("providerReference"),
+            t("checkoutUrl", max_len=1000),
+            num("expectedAmountUsd"),
+            num("paidAmountUsd"),
+            num("overpaidAmountUsd"),
+            date("expiresAt"),
+            date("paidAt"),
+            date("fulfilledAt"),
+            t("error", max_len=2000),
+            json_field("metadata"),
+        ],
+        indexes=[
+            "CREATE UNIQUE INDEX idx_billing_invoices_number ON billing_invoices (invoiceNumber)",
+            "CREATE INDEX idx_billing_invoices_user_created ON billing_invoices (user, created)",
+            "CREATE INDEX idx_billing_invoices_provider_ref ON billing_invoices (provider, providerReference)",
+            "CREATE INDEX idx_billing_invoices_status ON billing_invoices (status)",
+        ],
+    ),
+    # ------------------------------------------------- billing_payment_events
+    col(
+        "billing_payment_events",
+        [
+            t("provider", required=True),
+            t("eventKey", required=True),
+            rel("invoice", "billing_invoices"),
+            t("eventType"),
+            t("providerStatus"),
+            boolean("processed"),
+            date("receivedAt"),
+            date("processedAt"),
+            t("error", max_len=2000),
+            json_field("payload"),
+        ],
+        indexes=[
+            "CREATE UNIQUE INDEX idx_billing_events_key ON billing_payment_events (eventKey)",
+            "CREATE INDEX idx_billing_events_invoice ON billing_payment_events (invoice)",
+            "CREATE INDEX idx_billing_events_processed ON billing_payment_events (processed)",
+        ],
+    ),
+    # -------------------------------------------------------- billing_usage
+    col(
+        "billing_usage",
+        [
+            rel("user", "users", required=True),
+            rel("project", "projects"),
+            t("operationKey", required=True),
+            select("source", ["free", "credit"], required=True),
+            num("quantity"),
+            t("unit"),
+            select("status", ["reserved", "completed", "released"], required=True),
+            t("job"),
+            rel("creditTransaction", "credit_transactions"),
+            date("completedAt"),
+            date("releasedAt"),
+            json_field("metadata"),
+        ],
+        indexes=[
+            "CREATE UNIQUE INDEX idx_billing_usage_operation ON billing_usage (operationKey)",
+            "CREATE INDEX idx_billing_usage_user_created ON billing_usage (user, created)",
+            "CREATE INDEX idx_billing_usage_user_source_status ON billing_usage (user, source, status)",
+            "CREATE INDEX idx_billing_usage_job ON billing_usage (job)",
+        ],
+    ),
+    # --------------------------------------------------- credit_transactions
+    col(
+        "credit_transactions",
+        [
+            rel("user", "users", required=True),
+            # Append-only ledger: grant (+) / spend (-) / refund (+) / adjustment (±).
+            select("kind", ["grant", "spend", "refund", "adjustment"], required=True),
+            num("quantity", required=True),
+            t("reason"),
+            rel("invoice", "billing_invoices"),
+            rel("usage", "billing_usage"),
+            t("idempotencyKey", required=True),
+            json_field("metadata"),
+        ],
+        indexes=[
+            "CREATE UNIQUE INDEX idx_credit_tx_idempotency ON credit_transactions (idempotencyKey)",
+            "CREATE INDEX idx_credit_tx_user_created ON credit_transactions (user, created)",
+            "CREATE INDEX idx_credit_tx_invoice ON credit_transactions (invoice)",
+        ],
+    ),
 ]
 
 
@@ -1485,6 +1628,60 @@ def ensure_users_rules(pb: PocketBase) -> None:
         print("users collection: API rules locked to superuser-only")
 
 
+# ---------------------------------------------------------------------------
+# Billing: default credit packs (idempotent; safe to re-run)
+# ---------------------------------------------------------------------------
+DEFAULT_BILLING_PRODUCTS: list[dict[str, Any]] = [
+    {
+        "code": "starter",
+        "name": "Starter",
+        "description": "25 article generations.",
+        "type": "credit_pack",
+        "active": True,
+        "priceCents": 900,
+        "currency": "USD",
+        "credits": 25,
+        "sortOrder": 10,
+    },
+    {
+        "code": "growth",
+        "name": "Growth",
+        "description": "100 article generations.",
+        "type": "credit_pack",
+        "active": True,
+        "priceCents": 2900,
+        "currency": "USD",
+        "credits": 100,
+        "sortOrder": 20,
+    },
+    {
+        "code": "scale",
+        "name": "Scale",
+        "description": "500 article generations.",
+        "type": "credit_pack",
+        "active": True,
+        "priceCents": 9900,
+        "currency": "USD",
+        "credits": 500,
+        "sortOrder": 30,
+    },
+]
+
+
+def seed_billing_products(pb: PocketBase) -> None:
+    """Create the default credit packs once; never overwrite operator edits."""
+    for spec in DEFAULT_BILLING_PRODUCTS:
+        try:
+            pb.collection("billing_products").get_first_list_item(
+                f'code="{spec["code"]}"', {"perPage": 1}
+            )
+            continue
+        except Exception:
+            pass
+        pb.collection("billing_products").create(spec)
+    print("billing_products: defaults ensured")
+
+
 def seed_defaults(pb: PocketBase) -> None:
     # app_settings singleton
     try:
@@ -1710,6 +1907,7 @@ def main() -> None:
     ensure_users_fields(pb)
     ensure_users_rules(pb)
     seed_defaults(pb)
+    seed_billing_products(pb)
     seed_admin_user(pb)
     print("✓ bootstrap complete")
 
