@@ -369,4 +369,9 @@ def default_unique_fields() -> dict[str, list[str]]:
         "documents": ["sourceId"],
         "projects": ["slug"],
         "competitor_pages": [("project", "canonicalUrl")],
+        "billing_products": ["code"],
+        "billing_invoices": ["invoiceNumber"],
+        "billing_payment_events": ["eventKey"],
+        "billing_usage": ["operationKey"],
+        "credit_transactions": ["idempotencyKey"],
     }
