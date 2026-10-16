@@ -12,6 +12,7 @@ from app.api.deps import (
     require_hx,
     require_project_access,
     require_project_role,
+    require_user,
     safe_str,
 )
 from app.api.errors import hx_error, page_guard
@@ -21,6 +22,7 @@ from app.repositories.articles import ArticleRepo, SectionRepo
 from app.repositories.jobs import JobRepo
 from app.repositories.publishing_runs import PublishingRunRepo
 from app.repositories.topics import TopicRepo
+from app.services.billing import BillingError, BillingService
 from app.templates import templates
 from app.utils import error_response, success_response
 
@@ -168,12 +170,23 @@ def regenerate_article(
     )
     if active:
         return error_response("Article is being regenerated — try again shortly")
+    user = require_user(request)
+    op_key = f"write:article:{topic_id}:regen:{int(__import__('time').time())}"
+    billing = BillingService(request.state.pb)
+    try:
+        billing.authorize_generation(user.get("id", ""), project_id, op_key)
+    except BillingError as exc:
+        return error_response(str(exc))
     ArticleRepo(request.state.pb).set_status(article_id, "generating")
+    payload: dict[str, Any] = {"topicId": topic_id, "regenerate": True}
+    if billing.enabled:
+        payload["billingKey"] = op_key
+        payload["billingUserId"] = user.get("id", "")
     JobRepo(request.state.pb).create(
         project=project_id,
         type="write_article",
-        payload={"topicId": topic_id, "regenerate": True},
-        idempotency_key=f"write:article:{topic_id}:regen:{int(__import__('time').time())}",
+        payload=payload,
+        idempotency_key=op_key,
         max_attempts=3,
         entity_type="article",
         entity_id=article_id,

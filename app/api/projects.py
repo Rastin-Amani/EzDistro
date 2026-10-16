@@ -42,6 +42,7 @@ from app.repositories.prompts import PromptRepo
 from app.repositories.publishing_runs import PublishingRunRepo
 from app.repositories.schedules import ScheduleRepo
 from app.repositories.topics import TopicRepo
+from app.services.billing import BillingError, BillingService
 from app.services.prompt_service import PromptService
 from app.services.secrets import SecretsService, get_secrets_service
 from app.services.topic_import import (
@@ -352,12 +353,15 @@ def topics_bulk(
     require_hx(request)
     require_project_access(request, project_id)
     require_project_role(request, project_id)
+    user = require_user(request)
     ids = [i.strip() for i in topic_ids.split(",") if i.strip()]
     if not ids:
         return error_response("No topic selected")
     repo = TopicRepo(request.state.pb)
     jobs = JobRepo(request.state.pb)
+    billing = BillingService(request.state.pb)
     done = 0
+    blocked = 0
     for topic_id in ids:
         topic = repo.get(topic_id)
         if not topic or topic.get("project") != project_id:
@@ -367,12 +371,22 @@ def topics_bulk(
             "failed",
             "cancelled",
         ):
-            repo.set_status(topic_id, "queued")
+            op_key = f"write:article:{topic_id}"
+            try:
+                billing.authorize_generation(user.get("id", ""), project_id, op_key)
+            except BillingError:
+                blocked += 1
+                continue
+            topic = repo.set_status(topic_id, "queued")
+            payload: dict[str, Any] = {"topicId": topic_id}
+            if billing.enabled:
+                payload["billingKey"] = op_key
+                payload["billingUserId"] = user.get("id", "")
             jobs.create(
                 project=project_id,
                 type="write_article",
-                payload={"topicId": topic_id},
-                idempotency_key=f"write:article:{topic_id}",
+                payload=payload,
+                idempotency_key=op_key,
                 max_attempts=3,
                 entity_type="topic",
                 entity_id=topic_id,
@@ -387,9 +401,18 @@ def topics_bulk(
             "writing",
         ):
             repo.set_status(topic_id, "cancelled")
+            billing.release(f"write:article:{topic_id}", reason="topic cancelled")
             done += 1
+    if blocked and not done:
+        return error_response(
+            "You have used your free article generations and have no credits left. "
+            "Buy more on the Billing page."
+        )
+    message = f"{done} topic updated" if done == 1 else f"{done} topics updated"
+    if blocked:
+        message += f" — {blocked} skipped (out of credits)"
     return success_response(
-        (f"{done} topic updated" if done == 1 else f"{done} topics updated"),
+        message,
         extra_events={"refreshTopics": True, "refreshJobs": True},
     )
 
@@ -404,6 +427,7 @@ def cancel_topic(request: Request, project_id: str, topic_id: str):
     if not topic or topic.get("project") != project_id:
         return error_response("Topic not found")
     TopicRepo(request.state.pb).set_status(topic_id, "cancelled")
+    BillingService(request.state.pb).release(f"write:article:{topic_id}", reason="topic cancelled")
     return success_response(("Topic cancelled"), extra_events={"refreshTopics": True})
 
 
@@ -1569,15 +1593,26 @@ def write_topic(request: Request, project_id: str, topic_id: str):
     require_hx(request)
     require_project_access(request, project_id)
     require_project_role(request, project_id)
+    user = require_user(request)
     topic = TopicRepo(request.state.pb).get(topic_id)
     if not topic or topic.get("project") != project_id:
         return error_response("Topic not found")
+    op_key = f"write:article:{topic_id}"
+    billing = BillingService(request.state.pb)
+    try:
+        billing.authorize_generation(user.get("id", ""), project_id, op_key)
+    except BillingError as exc:
+        return error_response(str(exc))
     topic = TopicRepo(request.state.pb).set_status(topic_id, "queued")
+    payload: dict[str, Any] = {"topicId": topic_id}
+    if billing.enabled:
+        payload["billingKey"] = op_key
+        payload["billingUserId"] = user.get("id", "")
     JobRepo(request.state.pb).create(
         project=project_id,
         type="write_article",
-        payload={"topicId": topic_id},
-        idempotency_key=f"write:article:{topic_id}",
+        payload=payload,
+        idempotency_key=op_key,
         max_attempts=3,
         entity_type="topic",
         entity_id=topic_id,
