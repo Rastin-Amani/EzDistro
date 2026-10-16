@@ -8,7 +8,22 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from app.providers.base import VectorPoint
-from app.providers.vector.qdrant_store import QdrantStore, payload_safe, point_id, project_key
+from app.providers.vector.qdrant_store import (
+    QdrantStore,
+    _client_url,
+    payload_safe,
+    point_id,
+    project_key,
+)
+
+
+def test_client_url_defaults_port_by_scheme():
+    # A portless URL must not silently default to qdrant's :6333.
+    assert _client_url("https://q.example.com/") == "https://q.example.com:443/"
+    assert _client_url("http://q.example.com") == "http://q.example.com:80"
+    # Explicit ports and prefixes are preserved.
+    assert _client_url("https://q.example.com:8443") == "https://q.example.com:8443"
+    assert _client_url("https://q.example.com:443/qdrant") == "https://q.example.com:443/qdrant"
 
 
 def make_store(**kwargs) -> QdrantStore:
