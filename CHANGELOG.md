@@ -9,6 +9,23 @@ release builds on. Format is based on [Keep a Changelog](https://keepachangelog.
 
 ## [Unreleased]
 
+## [v1.19.1] — 2026-10-16
+
+### Fixed
+- A portless `https://` Qdrant URL no longer dials the REST default port 6333:
+  the client pins 443/80 by scheme, so reverse-proxied Qdrant URLs connect
+  instead of timing out while the health ping reports healthy.
+- The billing pages use the app's standard panel spacing.
+
+### Changed
+- `PB_URL` now defaults to `http://127.0.0.1:8090` (and the commented
+  `QDRANT_URL` example to the code's local fallback) instead of hardcoding the
+  maintainer's hosted hosts; deployments keep overriding them from `.env`.
+
+### Testing
+- The test suite forces billing off by default, so a local `BILLING_ENABLED=true`
+  no longer changes test behaviour.
+
 ## [v1.19.0] — 2026-10-16
 
 ### Added
