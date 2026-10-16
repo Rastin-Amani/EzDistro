@@ -1,10 +1,10 @@
 {% import 'macros/forms.html' as f %}
-{{ f.section_head(('Events'), ('Project event history.')) }}
 <div id="logs-table"
      hx-get="/projects/{{ project.id }}/tabs/logs"
      hx-trigger="every 8s"
      hx-target="this"
      hx-swap="outerHTML">
+    {{ f.section_head(('Events'), ('Project event history.')) }}
     {% if events %}
     <div class="ezdistro-panel">
         <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ ('Events') }}</h2></div>
