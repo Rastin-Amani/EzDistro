@@ -23,6 +23,7 @@ PUBLIC_PATHS = [
     "/openapi.json",
     "/docs",
     "/offline",
+    "/webhooks",
 ]
 
 # Paths that render identically for anonymous and authenticated visitors AND

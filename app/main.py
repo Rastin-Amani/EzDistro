@@ -8,6 +8,7 @@ from starlette.middleware.gzip import GZipMiddleware
 from app.api import (
     articles,
     auth,
+    billing,
     dashboard,
     images,
     jobs,
@@ -60,6 +61,7 @@ app.include_router(images.router)
 app.include_router(jobs.router)
 app.include_router(workers.router)
 app.include_router(logs.router)
+app.include_router(billing.router)
 app.include_router(pwa.router)
 
 if not settings.is_prod:
