@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     app_name: str = "EzDistro Platform"
 
     # --- PocketBase ---
-    pb_url: str = "https://db.ezdistro.space"
+    pb_url: str = "http://127.0.0.1:8090"
     pb_admin_email: str = ""
     pb_admin_password: str = ""
 
