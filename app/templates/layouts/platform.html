@@ -23,6 +23,9 @@
                 ('/failed', ('Failed jobs'), 'M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z'),
                 ('/logs', ('Events'), 'M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z'),
             ]),
+            ('Account', [
+                ('/billing', ('Billing'), 'M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z'),
+            ]),
         ] %}
 
         <nav class="ezdistro-nav" aria-label="{{ ('Main menu') }}">
@@ -61,6 +64,7 @@
                     </div>
                     <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box border border-base-300/70 w-52 max-w-[calc(100vw-2rem)] overflow-auto p-2 z-50">
                         <li class="menu-title text-xs">{{ user.email or user.id }}</li>
+                        <li><a href="/billing" hx-get="/billing" hx-target="#main-content" hx-swap="innerHTML show:window:top" hx-push-url="true">{{ ('Billing') }}</a></li>
                         <li><a href="/logout" hx-post="/logout" hx-swap="none" hx-on:click="setTimeout(()=>location.href='/login',200)">{{ ('Sign out') }}</a></li>
                     </ul>
                 </div>
@@ -86,6 +90,7 @@
                     </button>
                     <ul tabindex="0" role="menu" class="dropdown-content menu z-50 w-52 max-w-[calc(100vw-2rem)] overflow-auto rounded-box border border-base-300 bg-base-100 p-2">
                         <li class="menu-title text-xs">{{ user.email or user.id }}</li>
+                        <li><a role="menuitem" href="/billing" hx-get="/billing" hx-target="#main-content" hx-swap="innerHTML show:window:top" hx-push-url="true">{{ ('Billing') }}</a></li>
                         <li><a role="menuitem" href="/logout" hx-post="/logout" hx-swap="none" hx-on:click="setTimeout(()=>location.href='/login',200)">{{ ('Sign out') }}</a></li>
                     </ul>
                 </div>

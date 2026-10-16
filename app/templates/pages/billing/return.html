@@ -1,0 +1,53 @@
+{% extends "layouts/platform.html" %}
+{% block dashboard_content %}
+{% import 'macros/forms.html' as f %}
+
+{{ f.page_header(
+    ('Payment status'),
+    ('We confirm every payment with the provider before granting credits.'),
+    ('Billing'),
+    '<a href="/billing" class="btn btn-ghost btn-sm">' ~ ('Back to billing') ~ '</a>'
+) }}
+
+{{ f.panel() }}
+{% if not invoice %}
+    <div class="flex items-start gap-3">
+        <span class="badge badge-soft badge-neutral mt-0.5">{{ ('Unknown') }}</span>
+        <div class="text-sm">
+            <p class="font-semibold">{{ ('We could not find that payment') }}</p>
+            <p class="mt-1 text-base-content/60 leading-relaxed">
+                {{ ('If you just paid, your credits will appear on the billing page once the network confirms the transaction.') }}
+            </p>
+        </div>
+    </div>
+{% elif invoice.status == 'paid' %}
+    <div class="flex items-start gap-3">
+        <span class="badge badge-soft badge-success mt-0.5">{{ ('Paid') }}</span>
+        <div class="text-sm">
+            <p class="font-semibold">{{ ('Payment confirmed — credits added') }}</p>
+            <p class="mt-1 text-base-content/60 leading-relaxed">
+                {{ invoice.credits }} {{ ('credits were added to your account.') }}
+            </p>
+            <div class="mt-3 flex gap-2">
+                <a href="/billing" class="btn btn-primary btn-sm">{{ ('View balance') }}</a>
+                <a href="/projects" class="btn btn-ghost btn-sm">{{ ('Back to projects') }}</a>
+            </div>
+        </div>
+    </div>
+{% else %}
+    <div class="flex items-start gap-3">
+        <span class="badge badge-soft badge-warning mt-0.5">{{ invoice.status|status_label }}</span>
+        <div class="text-sm">
+            <p class="font-semibold">{{ ('Waiting for confirmation') }}</p>
+            <p class="mt-1 text-base-content/60 leading-relaxed">
+                {{ ('Your payment has not been confirmed yet. Crypto payments can take a few minutes; you can close this page — credits are added automatically.') }}
+            </p>
+            <div class="mt-3 flex gap-2">
+                <a href="/billing/invoices/{{ invoice.id }}" class="btn btn-ghost btn-sm">{{ ('View invoice') }}</a>
+                <a href="/billing" class="btn btn-ghost btn-sm">{{ ('Back to billing') }}</a>
+            </div>
+        </div>
+    </div>
+{% endif %}
+{{ f.panel_close() }}
+{% endblock %}

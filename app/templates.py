@@ -85,6 +85,29 @@ def loc_int(value):
     return format_decimal(number, format="#,##0", locale="en")
 
 
+def money_cents(value):
+    """Format an integer minor-unit price (cents) as e.g. ``$9.00``."""
+    if value is None or value == "":
+        return "—"
+    try:
+        cents = int(value)
+    except (TypeError, ValueError):
+        return value
+    sign = "-" if cents < 0 else ""
+    return f"{sign}${abs(cents) // 100}.{abs(cents) % 100:02d}"
+
+
+def money_usd(value):
+    """Format a float USD amount as e.g. ``$9.00``."""
+    if value is None or value == "":
+        return "—"
+    try:
+        amount = float(value)
+    except (TypeError, ValueError):
+        return value
+    return f"${amount:,.2f}"
+
+
 # ---------------------------------------------------------------------------
 # Status styling
 # ---------------------------------------------------------------------------
@@ -140,6 +163,13 @@ STATUS_STYLES = {
     "job.failed": "badge-soft badge-error",
     "job.cancelled": "badge-soft badge-neutral",
     "provider_call": "badge-soft badge-info",
+    # billing
+    "awaiting_payment": "badge-soft badge-info",
+    "partially_paid": "badge-soft badge-warning",
+    "paid": "badge-soft badge-success",
+    "refunded": "badge-soft badge-neutral",
+    "expired": "badge-soft badge-neutral",
+    "needs_review": "badge-soft badge-warning",
 }
 
 
@@ -197,6 +227,13 @@ def status_label(status: str) -> str:
         "job.failed": ("Job failed"),
         "job.cancelled": ("Job cancelled"),
         "provider_call": ("Provider call"),
+        # billing
+        "awaiting_payment": ("Awaiting payment"),
+        "partially_paid": ("Partially paid"),
+        "paid": ("Paid"),
+        "refunded": ("Refunded"),
+        "expired": ("Expired"),
+        "needs_review": ("Needs review"),
     }
     return labels.get(status, status)
 
@@ -230,6 +267,8 @@ templates.env.filters["loc_year"] = loc_year
 templates.env.filters["loc_date"] = loc_date
 templates.env.filters["loc_dt"] = loc_datetime
 templates.env.filters["loc_int"] = loc_int
+templates.env.filters["money_cents"] = money_cents
+templates.env.filters["money_usd"] = money_usd
 templates.env.filters["status_badge"] = status_badge
 templates.env.filters["status_label"] = status_label
 templates.env.filters["rel_time"] = to_rel_time
