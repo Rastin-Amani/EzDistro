@@ -82,6 +82,44 @@ class Settings(BaseSettings):
     # --- web ---
     page_size: int = 25  # default pagination for UI lists
 
+    # --- billing / payments ---
+    # Disabled by default so existing deployments keep working unchanged until
+    # an operator turns monetization on. When enabled, article generation is
+    # metered against the per-user free allowance and purchased credits.
+    billing_enabled: bool = False
+    billing_provider: str = "payram"
+    # Public base URL of THIS app (used for the checkout return URL). No trailing slash.
+    public_app_url: str = "http://localhost:8000"
+    billing_currency: str = "USD"
+    # Free article generations per user. 0 disables the free tier entirely.
+    billing_free_allowance: int = 3
+    # none | monthly — monthly resets the free allowance at the start of each UTC month.
+    billing_free_reset: str = "none"
+    # Credits consumed by one article generation.
+    billing_article_cost: int = 1
+    # Record an overpayment but never grant extra credits (record | reject).
+    billing_overpayment_policy: str = "record"
+    # Minimum seconds between two checkout creations for the same user (abuse guard).
+    billing_checkout_cooldown_seconds: int = 5
+
+    # --- PayRam provider ---
+    # BASE_URL of the PayRam instance (dashboard → Settings → Site URL).
+    payram_base_url: str = ""
+    # Project API key from the PayRam dashboard (server-side only; never rendered).
+    payram_api_key: str = ""
+    # Optional distinct webhook secret. Defaults to the API key, which is what
+    # PayRam uses to sign the raw body (HMAC-SHA256, header X-Payram-Signature).
+    payram_webhook_secret: str = ""
+    payram_timeout_seconds: float = 20.0
+
+    @property
+    def payram_configured(self) -> bool:
+        return bool(self.payram_base_url and self.payram_api_key)
+
+    @property
+    def billing_webhook_secret(self) -> str:
+        return self.payram_webhook_secret or self.payram_api_key
+
     @property
     def is_prod(self) -> bool:
         return self.env.lower() == "production"
