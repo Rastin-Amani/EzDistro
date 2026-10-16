@@ -32,9 +32,10 @@ Requires:              PocketBase ≥ 0.23
 
 ## 2. Collections overview
 
-33 base collections (+ built-in `users`, extended with `role` / `displayName`).
-The first 20 are the core platform; the last 13 are the SEO research engine
-(documented in detail in §3.22–§3.34 and in [SEO_RESEARCH.md](SEO_RESEARCH.md)).
+38 base collections (+ built-in `users`, extended with `role` / `displayName`).
+The first 20 are the core platform, the middle 13 are the SEO research engine
+(§3.22–§3.34, [SEO_RESEARCH.md](SEO_RESEARCH.md)), and the last 5 are billing
+and payments (§3.35–§3.39, [BILLING.md](BILLING.md)).
 
 > **Schema drift — always re-run `make bootstrap` after changing `COLLECTIONS`.**
 > `import_collections` adds new *fields* to existing collections, but PocketBase
@@ -86,6 +87,11 @@ The first 20 are the core platform; the last 13 are the SEO research engine
 | `article_ideas` | Scored opportunities (`generate`/`update`/`expand`/`support`/`reject`) | — |
 | `serp_queries` | Cached SERP observations (optional provider) | unique `(project, keyword, provider, locale, location)` |
 | `serp_results` | Individual organic results for a SERP query | — |
+| `billing_products` | Purchasable credit packs (trusted prices/credits) | unique `code` |
+| `billing_invoices` | One per checkout; snapshots the purchased terms | unique `invoiceNumber` |
+| `billing_payment_events` | Verified provider webhook notifications | unique `eventKey` |
+| `billing_usage` | One row per metered generation (free/credit) | unique `operationKey` |
+| `credit_transactions` | **Append-only** credit ledger | unique `idempotencyKey` |
 
 ### Entity relationships
 
@@ -106,13 +112,19 @@ projects ──1:N── research_runs ──1:N── research_seeds · keyword
 projects ──1:N── keywords        keyword_metrics ──N:1── keywords
 clusters.parentCluster ──▶ clusters        article_ideas.existingArticle ──▶ articles
 serp_queries ──1:N── serp_results        research_runs.job ──▶ jobs (no cascade)
+
+users ──1:N── billing_invoices ──1:N── billing_payment_events
+users ──1:N── billing_usage ──1:1── credit_transactions
+billing_products ──▶ billing_invoices      billing_invoices ──▶ credit_transactions
 ```
 
 Cascade deletes (relation `cascadeDelete=true`): deleting a project removes its
 settings, integrations, project prompts, topics → articles → sections/revisions/
 publishing runs, documents, index runs, jobs → leases/events, metrics, schedules and
 memberships. **Global prompts (empty `project`) survive.** Deleting a user cascades
-their memberships. Audit pointers that intentionally do NOT cascade: `documents.lastRun`,
+their memberships. Billing records never cascade: a user's invoices, usage rows and
+credit ledger survive deletion (the ledger is append-only). Audit pointers that
+intentionally do NOT cascade: `documents.lastRun`,
 `index_runs.job`, `publishing_runs.job`, `articles.lastJob`, `jobs.parent`,
 `topics.articleId` (cleared in app code).
 
@@ -752,6 +764,100 @@ Indexes: UNIQUE (project, keyword, provider, locale, location); (run).
 
 Index: (query, position).
 
+### 3.35 billing_products
+
+Purchasable credit packs — trusted server-side rows (prices are integers in minor
+units, never floats). Seeded once by `seed_billing_products` (never overwritten).
+
+| field | type | notes |
+|---|---|---|
+| code* | text | U; stable identifier used by checkout |
+| name* / description | text | |
+| type* | sel | `credit_pack` |
+| active | bool | only active rows are listed/ purchasable |
+| priceCents* | num | integer minor units (cents) |
+| currency* | text | e.g. `USD` |
+| credits* | num | article generations granted |
+| sortOrder | num | display order |
+| metadata | json | |
+
+Indexes: UNIQUE code; (active, sortOrder).
+
+### 3.36 billing_invoices
+
+One row per checkout attempt; snapshots the purchased terms so later product edits
+never change an existing invoice.
+
+| field | type | notes |
+|---|---|---|
+| user* R | users | no cascade |
+| product R | billing_products | |
+| invoiceNumber* | text | U; `INV-<epoch>-<hex>` |
+| productCode / productName | text | snapshot |
+| priceCents / currency / credits | num/text/num | snapshot |
+| status* | sel | `pending` \| `awaiting_payment` \| `paid` \| `partially_paid` \| `failed` \| `expired` \| `cancelled` \| `refunded` \| `needs_review` |
+| provider / providerReference / checkoutUrl | text | provider linkage |
+| expectedAmountUsd / paidAmountUsd / overpaidAmountUsd | num | USD |
+| expiresAt / paidAt / fulfilledAt | date | |
+| error | text | last failure reason |
+| metadata | json | |
+
+Indexes: UNIQUE invoiceNumber; (user, created); (provider, providerReference); (status).
+
+### 3.37 billing_payment_events
+
+Verified provider webhook notifications (dedup key unique). Append-mostly.
+
+| field | type | notes |
+|---|---|---|
+| provider* / eventKey* | text | eventKey U; provider + status + confirmation counters |
+| invoice R | billing_invoices | |
+| eventType / providerStatus | text | provider-native status preserved |
+| processed | bool | idempotency guard |
+| receivedAt / processedAt | date | |
+| error | text | |
+| payload | json | raw notification |
+
+Indexes: UNIQUE eventKey; (invoice); (processed).
+
+### 3.38 billing_usage
+
+One row per metered generation attempt — the free-allowance / credit accounting.
+
+| field | type | notes |
+|---|---|---|
+| user* R | users | no cascade |
+| project R | projects | |
+| operationKey* | text | U; e.g. `write:article:<topicId>` |
+| source* | sel | `free` \| `credit` |
+| quantity | num | generations consumed |
+| unit | text | `article` |
+| status* | sel | `reserved` \| `completed` \| `released` |
+| job | text | job id (audit, not a relation) |
+| creditTransaction R | credit_transactions | set for a credit spend |
+| completedAt / releasedAt | date | |
+| metadata | json | |
+
+Indexes: UNIQUE operationKey; (user, created); (user, source, status); (job).
+
+### 3.39 credit_transactions
+
+**Append-only** credit ledger: `grant` (+) on paid invoice, `spend` (−) on a credit
+generation, `refund` (+) on release, `adjustment` (±) manual. Never edited.
+
+| field | type | notes |
+|---|---|---|
+| user* R | users | no cascade |
+| kind* | sel | `grant` \| `spend` \| `refund` \| `adjustment` |
+| quantity* | num | signed |
+| reason | text | |
+| invoice R | billing_invoices | |
+| usage R | billing_usage | |
+| idempotencyKey* | text | U; `invoice:<id>:grant`, `usage:<id>`, `refund:<id>` |
+| metadata | json | |
+
+Indexes: UNIQUE idempotencyKey; (user, created); (invoice).
+
 ---
 
 ## 4. Vector payload contract (Qdrant)
@@ -790,7 +896,8 @@ deletion happens only on explicit full reindexes.
 - The old document described `publishing_runs.request_id` / `response_status` columns
   and a `claimed` job status; none exist (see §3.15 note and ARCHITECTURE §11).
 - Section numbering duplication (two “3.7b”/“3.15” blocks) fixed here.
-- Collection count is **33**: the core 20 (`article_images` added in v1.3.0,
-  `worker_heartbeats` in v1.1.0) plus the 13 research collections added in
-  2026-10 (§3.22–§3.34). The `prompts.type` select carries 25 values and `jobs`
+- Collection count is **38**: the core 20 (`article_images` added in v1.3.0,
+  `worker_heartbeats` in v1.1.0), the 13 research collections added in 2026-10
+  (§3.22–§3.34), and the 5 billing collections added in v1.19.0 (§3.35–§3.39).
+  The `prompts.type` select carries 25 values and `jobs`
   recognises 16 job types — both corrected here.

@@ -33,7 +33,7 @@ The whole set is also served in-app at /help/ (auth-gated) — the Research tab'
 | Document | Audience | Purpose | Status |
 |---|---|---|---|
 | **ARCHITECTURE.md** | Engineers, operators | System context, process model, job engine deep dive, all pipelines (writer, indexer, images, research, WordPress sync), provider layer, security, known drift | Verified · research engine |
-| **SCHEMA.md** | Engineers, integrators | 33-collection PocketBase reference (incl. 13 research collections), fields, enums, indexes, cascades, vector payload contract | Verified · research engine |
+| **SCHEMA.md** | Engineers, integrators | 38-collection PocketBase reference (incl. 13 research + 5 billing collections), fields, enums, indexes, cascades, vector payload contract | Verified · research engine |
 | **CONFIGURATION.md** | DevOps, operators | Every env var + per-project setting (incl. image generation, localization, research caps) + integration/prompt variables | Verified · research engine |
 | **USER-GUIDE.md** | Product operators | Task-oriented walkthrough of the UI with every on-screen label in **bold** (incl. **Images** tab, images pane, **Research** workflow) | Verified · research engine |
 | **OPERATIONS.md** | DevOps, SRE | Deployment, runbook, health, scaling, backups/DR, upgrades | Verified |

@@ -88,7 +88,7 @@ Architecture, data model, job-state design and provider interfaces: see [docs/AR
 ## Data model
 
 The PocketBase schema is designed around the product domain (not the old n8n
-workflows): **33 collections** covering projects, flat project settings
+workflows): **38 collections** covering projects, flat project settings
 (incl. image-generation and multilingual config), configurable integrations
 (encrypted secrets; categories incl. `image`, `serp`, `google_ads`), versioned
 prompts (incl. `image_plan_*`, `research_*`, `cluster_*`, `opportunity_*`),
@@ -102,7 +102,9 @@ built-in `users` collection extended with `role`/`displayName`), **plus 13 SEO
 research collections** (`google_ads_connections`, `google_ads_customers`,
 `research_runs`, `research_seeds`, `keywords`, `keyword_metrics`,
 `keyword_volumes`, `clusters`, `competitor_pages`, `content_gaps`,
-`article_ideas`, `serp_queries`, `serp_results`).
+`article_ideas`, `serp_queries`, `serp_results`), **plus 5 billing collections**
+(`billing_products`, `billing_invoices`, `billing_payment_events`,
+`billing_usage`, `credit_transactions`).
 Relationships, cascades, uniqueness and the indexing strategy:
 [docs/SCHEMA.md](docs/SCHEMA.md).
 

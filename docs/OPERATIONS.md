@@ -45,7 +45,7 @@ export PB_ADMIN_EMAIL=… PB_ADMIN_PASSWORD=…   # or put them in .env
 make bootstrap        # python -m app.scripts.bootstrap_pb
 ```
 
-Bootstrap does, in order: import/patch all 33 collections (`delete_missing=False`),
+Bootstrap does, in order: import/patch all 38 collections (`delete_missing=False`),
 union any new select values into live collections (`ensure_select_values`), add
 `role`/`displayName` to `users`, seed the `app_settings` singleton + all 25 global
 default prompts, and create the platform admin if `SEED_ADMIN_PASSWORD` is set.

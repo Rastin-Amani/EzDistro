@@ -92,14 +92,14 @@ app/
                      article_html, sanitize, seo_score, validation,
                      article_validation, keywords, images, seo_enforce
   schemas/           Pydantic models for LLM outputs & retrieval results
-  repositories/      The ONLY code that talks to PocketBase (33 collections)
+  repositories/      The ONLY code that talks to PocketBase (38 collections)
   providers/         External adapters behind protocols + table-driven registry
                      (llm, embedding, reranker, vector_store, publisher, image,
-                     serp, google_ads)
+                     serp, google_ads, payments)
   services/          Orchestration: indexing, writing, publishing_service,
                      retrieval, internal_linking, scheduler, secrets, settings,
                      stats, metrics, revisions, outline_editor, prompt_service,
-                     wordpress_sync, and the research engine (research,
+                     wordpress_sync, billing, and the research engine (research,
                      research_keywords, research_competitors, research_clustering,
                      research_opportunities, research_handoff, research_import,
                      google_ads)
@@ -665,10 +665,11 @@ here honestly rather than papered over:
    drops it at rest. The request id survives only inside `responseMetadata.requestId`
    (which *is* written on completion). The older SCHEMA.md documented
    `request_id`/`response_status` columns that do not exist.
-3. **Collection count.** The bootstrap defines **33** base collections: the core 20
-   (`article_images` in v1.3.0, `worker_heartbeats` in v1.1.0) plus the 13 research
-   collections added in 2026-10 — plus the extended `users` collection. Older
-   revisions said "17"/"18"/"20".
+3. **Collection count.** The bootstrap defines **38** base collections: the core 20
+   (`article_images` in v1.3.0, `worker_heartbeats` in v1.1.0), the 13 research
+   collections added in 2026-10, and the 5 billing collections added in v1.19.0 —
+   plus the extended `users` collection. Older
+   revisions said "17"/"18"/"20"/"33".
 4. **Embedding defaults differ by path.** `ProjectConfig.embedding` falls back to
    `openai_compat` / `text-embedding-3-small` / 1536 dims, while the seeded global
    `app_settings` advertises Cohere `embed-v4.0` / 1024 dims. Unlike LLM roles,
