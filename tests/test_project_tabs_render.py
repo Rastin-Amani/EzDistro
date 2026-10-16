@@ -142,6 +142,24 @@ def test_resume_article_requeues_last_failed_job():
     assert requeued["status"] in ("retrying", "pending")
 
 
+def test_polling_tabs_lead_with_their_swap_root():
+    """Tab poll endpoints return the WHOLE tab template, but the poll swaps only
+    the table container. The polled container must therefore be the FIRST thing
+    in that response — otherwise the section header sits outside the outerHTML
+    target and is re-inserted on every tick, duplicating the title/subtitle
+    (20 copies after ~2 minutes)."""
+    pb, project = _setup()
+    for tab, elem_id in (
+        ("indexing", "indexing-tab"),
+        ("jobs", "jobs-table"),
+        ("logs", "logs-table"),
+    ):
+        body = _render(pb, project, tab).lstrip()
+        assert body.startswith(f'<div id="{elem_id}"'), (
+            f"{tab} renders content before #{elem_id}; polling will duplicate it"
+        )
+
+
 def test_integration_health_fragment_swaps_row_badge_out_of_band():
     """The Test action returns the detailed result inline AND an out-of-band
     health badge carrying the same id as the row badge, so the badge (which is
