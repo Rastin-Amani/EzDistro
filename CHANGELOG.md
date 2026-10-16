@@ -12,6 +12,10 @@ release builds on. Format is based on [Keep a Changelog](https://keepachangelog.
 ## [v1.19.1] — 2026-10-16
 
 ### Fixed
+- Polling is no longer destructive on tabbed pages: the polled containers lead
+  with their swap root, so the tab section headers are replaced in place instead
+  of duplicated on every tick; the job **Timeline** poll now swaps only the
+  event fragment, keeping its panel wrapper.
 - A portless `https://` Qdrant URL no longer dials the REST default port 6333:
   the client pins 443/80 by scheme, so reverse-proxied Qdrant URLs connect
   instead of timing out while the health ping reports healthy.
