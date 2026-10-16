@@ -30,7 +30,7 @@ from app.domain.sanitize import sanitize_html
 from app.domain.seo_score import seo_score
 from app.jobs.context import JobCancelled, JobContext
 from app.jobs.handlers import register_job
-from app.providers.base import GenerationParams, ProviderError, TransientError
+from app.providers.base import GenerationParams, PermanentError, ProviderError, TransientError
 from app.repositories.articles import ArticleRepo, SectionRepo
 from app.repositories.jobs import JobRepo
 from app.repositories.prompts import PromptRepo
@@ -88,9 +88,33 @@ async def handle_write_article(ctx: JobContext) -> dict[str, Any]:
                 return {"articleId": existing["id"], "alreadyWritten": True}
             raise ValueError(f"topic {topic_id} is in unexpected state: {topic.get('status')}")
 
+    # Billing: reserve one generation for this operation before any LLM work.
+    from app.services.billing import BillingError, BillingService, owner_id_for_project
+
+    billing = BillingService(ctx.pb)
+    billing_key = str(payload.get("billingKey") or ctx.job.get("idempotencyKey") or "")
+    billing_user = str(payload.get("billingUserId") or owner_id_for_project(ctx.pb, ctx.project_id))
+    if billing.enabled and billing_key:
+        try:
+            billing.authorize_generation(
+                billing_user, ctx.project_id, billing_key, job_id=ctx.job_id
+            )
+        except BillingError as exc:
+            raise PermanentError(str(exc), details={"billing": True}) from exc
+
     try:
-        return await _write(ctx, topics, articles, sections, topic, topic_id)
+        return await _write(
+            ctx,
+            topics,
+            articles,
+            sections,
+            topic,
+            topic_id,
+            billing_key=billing_key,
+            billing_user=billing_user,
+        )
     except JobCancelled:
+        billing.release(billing_key, reason="job cancelled")
         raise
     except Exception:
         # Deterministic failure state: topic (and article if created) → failed.
@@ -100,6 +124,8 @@ async def handle_write_article(ctx: JobContext) -> dict[str, Any]:
         if article and article.get("status") not in ("published", "review"):
             with contextlib.suppress(Exception):
                 articles.set_status(article["id"], "failed")
+        # A generation that never completed must not consume the user's allowance.
+        billing.release(billing_key, reason="generation failed")
         raise
 
 
@@ -110,6 +136,9 @@ async def _write(
     sections: SectionRepo,
     topic: dict[str, Any],
     topic_id: str,
+    *,
+    billing_key: str = "",
+    billing_user: str = "",
 ) -> dict[str, Any]:
     article = articles.by_topic(topic_id)
     outline_version = 0
@@ -194,6 +223,10 @@ async def _write(
             # the chain so assembly can decide publish-vs-rewrite on its own
             "trigger": payload.get("trigger") or "",
             "autoAttempts": int(payload.get("autoAttempts") or 1),
+            # carry billing attribution: assembly completes or releases the
+            # generation reservation.
+            "billingKey": billing_key,
+            "billingUserId": billing_user,
         },
         idempotency_key=f"assemble:article:{article_id}",
         max_attempts=max(10, 3 * len(rows) + 30),  # generous: waits for sections
@@ -339,6 +372,11 @@ async def handle_assemble_article(ctx: JobContext) -> dict[str, Any]:
     if not rows:
         raise ValueError("article has no sections")
 
+    from app.services.billing import BillingService
+
+    billing = BillingService(ctx.pb)
+    billing_key = str(ctx.payload().get("billingKey") or "")
+
     # deterministic wait: not ready → transient retry (engine honors retry-after)
     pending = [r for r in rows if r.get("status") in ("pending", "generating")]
     failed = [r for r in rows if r.get("status") == "failed"]
@@ -350,6 +388,7 @@ async def handle_assemble_article(ctx: JobContext) -> dict[str, Any]:
     if failed:
         failed_ids = [r["id"] for r in failed]
         articles.set_status(article_id, "failed")
+        billing.release(billing_key, reason="section generation failed")
         raise ProviderError(
             f"cannot assemble: {len(failed)} section(s) failed: {', '.join(failed_ids)}",
             retryable=False,
@@ -427,6 +466,7 @@ async def handle_assemble_article(ctx: JobContext) -> dict[str, Any]:
     articles.set_validation(article_id, report.to_dict())
     if not report.ok:
         articles.set_status(article_id, "failed")
+        billing.release(billing_key, reason="article validation failed")
         raise ProviderError(
             "article validation failed",
             retryable=False,
@@ -529,6 +569,7 @@ async def handle_assemble_article(ctx: JobContext) -> dict[str, Any]:
                         "regenerate": True,
                         "trigger": "schedule",
                         "autoAttempts": attempts + 1,
+                        "billingUserId": str(ctx.payload().get("billingUserId") or ""),
                     },
                     idempotency_key=(
                         f"write:article:{topic_id}:auto:{attempts}:{int(time.time())}"
@@ -550,6 +591,8 @@ async def handle_assemble_article(ctx: JobContext) -> dict[str, Any]:
 
     ctx.stage_completed("assembling", ("The article is ready for review"))
     ctx.progress(100, stage="done", message=("The article is ready for review"))
+    # The generation is complete and billable — consume the reservation.
+    billing.complete(billing_key)
     return {
         "articleId": article_id,
         "words": word_count_from_html(html),
