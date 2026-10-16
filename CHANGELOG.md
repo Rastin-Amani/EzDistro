@@ -9,6 +9,28 @@ release builds on. Format is based on [Keep a Changelog](https://keepachangelog.
 
 ## [Unreleased]
 
+## [v1.19.0] — 2026-10-16
+
+### Added
+- **Billing & payments.** Optional per-user metering of article generation: a free
+  allowance first, then purchased credits. Credit packs are paid in crypto through
+  **PayRam**; billing is off by default (`BILLING_ENABLED=false`).
+- Five PocketBase collections (`billing_products`, `billing_invoices`,
+  `billing_payment_events`, `billing_usage`, `credit_transactions`) plus an
+  append-only credit ledger, seeded with three default credit packs.
+- A **Billing** page (balance, credit packs, payment history, invoice detail) and
+  a public, signature-verified PayRam webhook (`POST /webhooks/payram`).
+- `money_cents` / `money_usd` template filters and billing status badges.
+
+### Changed
+- The `write_article` pipeline reserves a generation when queued and releases it on
+  failure/cancel; queuing a topic is blocked with a paywall message when a user has
+  neither free allowance nor credits (scheduled jobs are billed to the project owner).
+
+### Documentation
+- Added [`docs/BILLING.md`](docs/BILLING.md); refreshed the schema/architecture
+  collection counts to 38.
+
 ## [v1.18.0] — 2026-10-13
 
 ### Added
