@@ -177,11 +177,11 @@
 </details>
 {%- endmacro %}
 
-{% macro panel(title='', actions='', id='', body_class='p-4') -%}
-<section class="ezdistro-panel" {% if id %}id="{{ id }}"{% endif %}>
+{% macro panel(title='', actions='', id='', body_class='card-body p-4') -%}
+<div class="card border border-base-300 bg-base-100 min-w-0" {% if id %}id="{{ id }}"{% endif %}>
     {% if title or actions %}
-    <div class="ezdistro-panel-head">
-        {% if title %}<h2 class="ezdistro-panel-title">{{ title }}</h2>{% endif %}
+    <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
+        {% if title %}<h2 class="font-mono text-xs font-normal uppercase text-base-content/55 tracking-[0.073em]">{{ title }}</h2>{% endif %}
         {% if actions %}<div class="flex items-center gap-2">{{ actions|safe }}</div>{% endif %}
     </div>
     {% endif %}
@@ -190,12 +190,12 @@
 
 {% macro panel_close() -%}
     </div>
-</section>
+</div>
 {%- endmacro %}
 
 {% macro empty(title, hint='', icon='', action='', compact=false) -%}
-<div class="ezdistro-empty{{ ' py-6' if compact else '' }}">
-    {% if icon %}<div class="ezdistro-empty-icon">{{ icon|safe }}</div>{% endif %}
+<div class="flex flex-col items-center justify-center gap-3 text-center {{ 'py-6' if compact else 'py-12' }}">
+    {% if icon %}<div class="grid size-14 place-items-center rounded-lg bg-base-200 text-base-content/40">{{ icon|safe }}</div>{% endif %}
     <p class="font-bold text-base-content/75">{{ title }}</p>
     {% if hint %}<p class="text-sm text-base-content/50 max-w-sm leading-relaxed">{{ hint }}</p>{% endif %}
     {% if action %}<div class="mt-1">{{ action|safe }}</div>{% endif %}
@@ -203,12 +203,12 @@
 {%- endmacro %}
 
 {% macro stat(label, value, swatch='', sub='') -%}
-<div class="ezdistro-metric">
+<div class="stat border border-base-300 bg-base-100 p-4 min-w-0">
     <div class="flex items-center gap-2">
-        {% if swatch %}<span class="ezdistro-metric-swatch {{ swatch }}"></span>{% endif %}
-        <span class="ezdistro-metric-label">{{ label }}</span>
+        {% if swatch %}<span class="size-2.5 rounded-full {{ swatch }}"></span>{% endif %}
+        <span class="stat-title font-mono text-xs font-normal uppercase tracking-[0.073em]">{{ label }}</span>
     </div>
-    <span class="ezdistro-metric-value">{{ value }}</span>
+    <span class="stat-value text-[2rem] font-black leading-none tracking-[-0.04em] tabular-nums">{{ value }}</span>
     {% if sub %}<span class="text-xs text-base-content/50">{{ sub }}</span>{% endif %}
 </div>
 {%- endmacro %}
