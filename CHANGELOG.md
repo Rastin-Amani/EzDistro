@@ -9,6 +9,36 @@ release builds on. Format is based on [Keep a Changelog](https://keepachangelog.
 
 ## [Unreleased]
 
+## [v1.20.0] — 2026-10-17
+
+### Added
+- Writing-flow guidance: a **Topics → Draft → Review → Publish** strip on the
+  dashboard and a **Draft → Review → Publish** strip on the workspace and review
+  pages, a **Continue writing** primary action on the project header, and a
+  **Start here** label on the rail.
+- Research now opens on the no-API path: upload a Keyword Planner export first,
+  with Google Ads setup and the run form collapsed underneath.
+
+### Changed
+- Information architecture follows the writing loop: a project opens on its
+  **Topics** tab and its tabs are grouped **Write → Research → Setup → System**;
+  the global rail is **Workspace / Operations / Account**, the top-level
+  **Failed jobs** shortcut moves behind **Jobs**, and the mobile dock is trimmed
+  to four items.
+- The component layer is DaisyUI-native: `input.css` now holds only the theme,
+  base accessibility and the shell/rail/dock/subnav layout helpers — the
+  hand-rolled button/card/input/table/badge/stat/alert/modal overrides and the
+  dead `.ezdistro-bars`/`.ezdistro-rule`/tab-pill motifs are removed.
+
+### Fixed
+- The article workspace no longer repeats section status (the outline is the
+  single source), shows Validation only when invalid, and collapses **Publish
+  history** and **Version history** behind `<details>`.
+
+### Documentation
+- Updated `DESIGN.md`, `docs/USER-GUIDE.md` and the README to the new component
+  layer and navigation.
+
 ## [v1.19.1] — 2026-10-16
 
 ### Fixed
