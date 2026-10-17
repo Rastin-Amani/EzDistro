@@ -18,8 +18,15 @@
     ( 'Dashboard' ),
     ( 'Overall health of content production, indexing and providers' ),
     ( 'Command center' ),
-    '<span id="last-updated" class="text-xs opacity-50 hidden sm:inline"></span>'
+    '<a href="/projects" class="btn btn-primary btn-sm">' ~ ('New project') ~ '</a>'
 ) }}
+
+<ul class="steps steps-horizontal w-full mb-6 text-xs" aria-label="{{ ('Writing flow') }}">
+    <li class="step step-primary">{{ ('Topics') }}</li>
+    <li class="step step-primary">{{ ('Draft') }}</li>
+    <li class="step">{{ ('Review') }}</li>
+    <li class="step">{{ ('Publish') }}</li>
+</ul>
 
 {% include "pages/dashboard/_stats.html" %}
 

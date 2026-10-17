@@ -3,10 +3,10 @@
      hx-trigger="every 8s"
      hx-target="this"
      hx-swap="outerHTML" class="flex flex-col gap-4">
-    <section class="ezdistro-panel" aria-labelledby="content-pipeline-title">
-        <div class="ezdistro-panel-head">
-             <h2 id="content-pipeline-title" class="ezdistro-panel-title">{{ ('Content pipeline') }}</h2>
-             <a href="/projects" class="btn btn-ghost btn-sm">{{ ('View projects') }}</a>
+    <section class="card border border-base-300 bg-base-100" aria-labelledby="content-pipeline-title">
+        <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
+            <h2 id="content-pipeline-title" class="font-mono text-xs font-normal uppercase text-base-content/55 tracking-[0.073em]">{{ ('Content pipeline') }}</h2>
+            <a href="/projects" class="btn btn-ghost btn-sm">{{ ('View projects') }}</a>
         </div>
         {% set n_planned = stats.topics_planned|int %}
         {% set n_writing = stats.articles_writing|int %}
@@ -34,31 +34,9 @@
             </li>
             {% endfor %}
         </ol>
-        {% set n_pending = stats.jobs_pending|int %}
-        {% set n_active = stats.jobs_running|int + stats.jobs_retrying|int %}
-        {% set n_failed = stats.jobs_failed|int %}
-        {% set spark = [
-            (('Planned topics'), n_planned, ''),
-            (('Articles being written'), n_writing, 'is-blue'),
-            (('Awaiting review'), n_review, ''),
-            (('Published'), n_published, 'is-green'),
-            (('Pending jobs'), n_pending, ''),
-            (('Active jobs'), n_active, 'is-blue'),
-            (('Failed jobs'), n_failed, ''),
-        ] %}
-        {% set smax = spark|map(attribute=1)|max %}
-        <div class="px-4 pb-4">
-            <p class="ezdistro-panel-title mb-2">{{ ('Activity') }}</p>
-            <div class="ezdistro-spark" role="img" aria-label="{{ ('Activity mix, sized by count') }}">
-                {% for label, value, cls in spark %}
-                {% set h = (value / smax * 100)|round|int if smax else 0 %}
-                <i class="{{ cls }}" style="height: {{ h if h >= 8 else (8 if value else 3) }}%" title="{{ label }}: {{ value }}"></i>
-                {% endfor %}
-            </div>
-        </div>
     </section>
 
-    <details class="ezdistro-panel group">
+    <details class="card border border-base-300 bg-base-100 group">
         <summary class="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-base-content sm:px-5">
              <span class="font-semibold">{{ ('System health') }}</span>
             {% if stats.jobs_failed %}<span class="badge badge-soft badge-error">{{ stats.jobs_failed }} {{ ('Failed') }}</span>{% endif %}
