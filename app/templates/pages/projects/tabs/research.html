@@ -19,9 +19,21 @@
 
         {% set ads_step = '?tab=integrations' %}
 
-        {# ── Google Ads setup (collapsed unless it needs attention) ─────── #}
-        {% set ads_needs_setup = not google_ads_configured or not connections %}
-        <details class="ezdistro-panel" {{ 'open' if ads_needs_setup }}>
+        {# ── No-API path: primary research option ──────────────────────── #}
+        <details class="ezdistro-panel" open>
+            <summary class="ezdistro-panel-head cursor-pointer select-none">
+                <h2 class="ezdistro-panel-title">{{ ('Research without Google Ads API') }}</h2>
+                <span class="text-xs opacity-50">{{ ('Start with a CSV / XLSX export') }}</span>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="ezdistro-disclosure-chev ms-auto size-4 shrink-0"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
+            </summary>
+            <div class="p-4">
+                {% include "pages/projects/tabs/research_import.html" %}
+            </div>
+        </details>
+
+
+        {# ── Google Ads setup (secondary option) ────────────────────────── #}
+        <details class="ezdistro-panel">
             <summary class="ezdistro-panel-head cursor-pointer select-none">
                 <h2 class="ezdistro-panel-title">{{ ('Google Ads (keyword data)') }}</h2>
                 {% if connections %}
@@ -100,13 +112,14 @@
         </details>
 
         {# ── Run research ──────────────────────────────────────────────── #}
-        <section class="ezdistro-panel">
-            <div class="ezdistro-panel-head">
+        <details class="ezdistro-panel">
+            <summary class="ezdistro-panel-head cursor-pointer select-none">
                 <h2 class="ezdistro-panel-title">{{ ('Run research') }}</h2>
                 {% if not serp_configured %}
                 <span class="text-xs opacity-50">{{ ('SERP not configured — Google Ads + site intelligence mode') }}</span>
                 {% endif %}
-            </div>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="ezdistro-disclosure-chev ms-auto size-4 shrink-0"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
+            </summary>
             <form hx-post="/projects/{{ project.id }}/research/start" hx-swap="none" hx-target="#research-tab" class="flex flex-col gap-5 p-4">
                 <p class="ezdistro-panel-title">{{ ('Sources') }}</p>
                 <div class="grid gap-4 md:grid-cols-2">
@@ -155,18 +168,6 @@
                     <span class="text-xs opacity-50">{{ ('Runs in the background — you can leave this page.') }}</span>
                 </div>
             </form>
-        </section>
-
-        {# ── Import fallback (collapsed) ───────────────────────────────── #}
-        <details class="ezdistro-panel">
-            <summary class="ezdistro-panel-head cursor-pointer select-none">
-                <h2 class="ezdistro-panel-title">{{ ('No Google Ads API access?') }}</h2>
-                <span class="text-xs opacity-50">{{ ('Import a Keyword Planner file') }}</span>
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="ezdistro-disclosure-chev ms-auto size-4 shrink-0"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
-            </summary>
-            <div class="p-4">
-                {% include "pages/projects/tabs/research_import.html" %}
-            </div>
         </details>
 
         {# ── Runs ──────────────────────────────────────────────────────── #}
