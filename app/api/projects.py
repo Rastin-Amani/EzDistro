@@ -93,18 +93,16 @@ RESEARCH_LANGUAGES = [
 router = APIRouter()
 
 TABS = [
-    # Ordered as the daily operator flow: configure → research → write →
-    # publish → index → monitor. The tab bar is a workflow trail, not an
-    # alphabetical list.
-    "settings",
-    "integrations",
-    "ai_models",
-    "prompts",
-    "research",
+    # Writer-first: daily flow opens on Topics, setup lives behind Setup.
     "topics",
     "articles",
     "images",
     "publishing",
+    "research",
+    "settings",
+    "integrations",
+    "ai_models",
+    "prompts",
     "retrieval",
     "indexing",
     "jobs",
@@ -680,14 +678,14 @@ def _tab_context(
 
 
 @router.get("/projects/{project_id}", response_class=HTMLResponse)
-def project_detail(request: Request, project_id: str, tab: str = "settings"):
+def project_detail(request: Request, project_id: str, tab: str = "topics"):
     try:
         project = require_project_access(request, project_id)
     except (PermissionError, ValueError):
         return templates.TemplateResponse(
             request, "pages/projects/not_found.html", {"title": ("Project not found")}
         )
-    active = tab if tab in TABS else "settings"
+    active = tab if tab in TABS else "topics"
     context = _tab_context(
         request.state.pb,
         project,
