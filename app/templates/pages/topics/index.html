@@ -4,10 +4,11 @@
 
 <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
     <div class="flex items-center gap-2.5 min-w-0">
-        <a href="/projects/{{ project.id }}" class="btn btn-ghost btn-circle btn-sm shrink-0" aria-label="{{ ('Back') }}">
+        <a href="/projects/{{ project.id }}?tab=topics" class="btn btn-ghost btn-circle btn-sm shrink-0" aria-label="{{ ('Back to project') }}">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5 ltr:rotate-180"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
         </a>
         <div class="min-w-0">
+            <p class="font-mono text-[0.65rem] uppercase tracking-[0.073em] text-base-content/45">{{ ('Write · Topics') }}</p>
             <h1 class="font-extrabold text-lg truncate">{{ ('Topics') }}</h1>
             <span class="text-xs opacity-50">{{ ('%(n)s items · %(v)s') % {'n': total, 'v': project.name} }}</span>
         </div>
