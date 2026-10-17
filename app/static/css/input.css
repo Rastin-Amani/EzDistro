@@ -7,13 +7,14 @@
 @theme {
     --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
     --font-brand: 'Inter', ui-sans-serif, system-ui, sans-serif;
-    /* Mono pins every category label + metadata (uppercase, +0.073em). */
     --font-mono: 'JetBrains Mono', 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
-/* EzDistro Atlas: white paper, carbon ink, one rationed electric blue.
-   Blue lives only in: logo block, primary action, live data nodes.
-   Hierarchy via hairlines + type scale + spacing — never shadows. */
+/* EzDistro Atlas — theme tokens are the single source of truth.
+   Components below are thin aliases over DaisyUI primitives + the few
+   layout helpers DaisyUI cannot provide (shell rail, sticky subnav,
+   thumb-zone dock, page frame). No hand-rolled buttons, inputs, tables,
+   badges or cards here — use DaisyUI directly in templates. */
 @plugin "daisyui/theme" {
     name: "ezdistro";
     default: true;
@@ -53,11 +54,6 @@
     --noise: 0;
 }
 
-/* Dark atlas: ink ground, hairlines + surfaces shifted for contrast, but the
-   rationed hues stay in the electric-blue / wireframe-green family — no
-   purple shift. Pure #0000ff as text/icon on #0b0b10 is ~2.3:1, so primary
-   + info are brightened one step to #3333ff (white ink on the fill still
-   clears 4.5:1); accent/success keep #098551 with white ink. */
 @plugin "daisyui/theme" {
     name: "ezdistro-dark";
     default: false;
@@ -97,7 +93,6 @@
     --noise: 0;
 }
 
-/* Local variable font: Inter is the English UI face. */
 @font-face {
     font-family: 'Inter';
     src: url('./assets/InterVariable.ttf') format('truetype-variations'),
@@ -110,9 +105,6 @@ body {
     font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   Base layer — typography, focus, scrollbars, rhythm
-   ═══════════════════════════════════════════════════════════════════════ */
 @layer base {
     html {
         -webkit-text-size-adjust: 100%;
@@ -120,17 +112,12 @@ body {
     }
     body {
         background: var(--color-base-100);
-        font-feature-settings: "ss01", "cv01";
     }
-    /* Tabular numerals everywhere data lives (IDs, counts, dates, metrics) */
     .tabular,
-    table .num,
     .stat-value,
     .font-mono {
         font-variant-numeric: tabular-nums;
     }
-    /* Clickable non-link elements (HTMX tabs, role=button/tab, anchors
-       without href) must still show a pointer cursor. */
     a:not([href]),
     [role='tab'],
     [role='button'],
@@ -139,13 +126,11 @@ body {
     [onclick] {
         cursor: pointer;
     }
-    /* High-contrast focus ring — electric blue, the rationed action color. */
     :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
         outline: 2px solid var(--color-primary);
         outline-offset: 2px;
         border-radius: 0.5rem;
     }
-    /* Paper-tinted text selection carries the design into browser chrome. */
     ::selection {
         background: var(--color-primary);
         color: var(--color-primary-content);
@@ -153,7 +138,6 @@ body {
     :root {
         caret-color: var(--color-primary);
     }
-    /* Subtle, brand-tinted scrollbars */
     * {
         scrollbar-width: thin;
         scrollbar-color: var(--color-base-300) transparent;
@@ -164,77 +148,21 @@ body {
     }
     *::-webkit-scrollbar-thumb {
         background-color: color-mix(in oklch, var(--color-base-300) 80%, transparent);
-        border-radius: 9999px;
         border: 2px solid transparent;
-        background-clip: padding-box;
-    }
-    *::-webkit-scrollbar-thumb:hover {
-        background-color: var(--color-base-content);
         background-clip: padding-box;
     }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   Component layer — refine DaisyUI primitives into the ezdistro voice
-   (flat: hierarchy via borders, surface contrast, type — never shadows)
-   ═══════════════════════════════════════════════════════════════════════ */
-/* Collapsible settings panels: chevron flips when the group is open. */
+/* Disclosure chevron (native <details> toggle affordance). */
 .ezdistro-disclosure-chev {
     transition: transform 0.15s ease;
 }
 details[open] > summary .ezdistro-disclosure-chev {
     transform: rotate(180deg);
 }
+
 @layer components {
-    .card {
-        @apply rounded-lg border border-base-300 bg-base-100;
-    }
-    .card-body {
-        @apply gap-4;
-    }
-
-    /* Buttons: 8px radius. Primary is THE blue ration — solid fill, white
-       ink, no border. Ghost is paper with a mist hairline. */
-    .btn {
-        @apply rounded-lg border border-base-300 font-medium;
-    }
-    .btn-primary {
-        @apply border-primary bg-primary text-white;
-    }
-    .btn-primary:hover {
-        @apply brightness-90;
-    }
-    /* Touch targets: smallest button still clears 32px; fields clear 44px. */
-    .btn-xs {
-        @apply min-h-8 px-3;
-    }
-    .input,
-    .select {
-        @apply min-h-11;
-    }
-    .btn-ghost {
-        @apply border-transparent;
-    }
-
-    .input,
-    .select,
-    .textarea {
-        @apply rounded-lg border-base-300 bg-base-100;
-    }
-    .input:focus,
-    .select:focus,
-    .textarea:focus {
-        @apply border-primary ring-2 ring-primary/15 outline-none;
-    }
-    .input::placeholder,
-    .textarea::placeholder {
-        @apply opacity-40;
-    }
-
-    /* Loading indicators must NOT occupy layout space in the default state —
-       the spinner placeholder is what makes buttons look like they have an
-       extra gap. They appear only while an HTMX request is in flight.
-       !important wins over any block/inline utility on the same element. */
+    /* HTMX loading spinner: no layout shift when idle. */
     .htmx-indicator {
         display: none !important;
     }
@@ -243,9 +171,11 @@ details[open] > summary .ezdistro-disclosure-chev {
         display: inline-flex !important;
     }
 
-    /* Form controls fill their container cell — keeps every field aligned
-       and justified, regardless of which wrapper (form-control / floating-label)
-       the page uses. */
+    /* Form controls fill their grid cell; labels truncate. */
+    .form-control {
+        @apply flex flex-col gap-1;
+        min-width: 0;
+    }
     .form-control input,
     .form-control select,
     .form-control textarea,
@@ -254,136 +184,28 @@ details[open] > summary .ezdistro-disclosure-chev {
     .floating-label textarea {
         @apply w-full;
     }
-    .form-control {
-        /* daisyUI 5 dropped .form-control's own layout, so `gap` alone was
-           inert and an inline label shared the line with its control (the
-           control's `w-full` lost for `-sm` sizes). A column flex container
-           puts every child on its own line and stretches it to full width,
-           which is what every field in this app expects. */
-        @apply flex flex-col gap-1;
-        /* min-w-0: grid children — a long value must never push the
-           column (and the input beside it) past the viewport. */
-        min-width: 0;
-    }
-    /* Form labels stay on one line with ellipsis; the input below keeps
-       its full row instead of wrapping under a two-line label. */
     .label-text {
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
     }
-    label.input,
-    label.select {
-        overflow: hidden;
-    }
 
-    /* Tables — legible, dense, with sticky headers and calm row hover */
-    .table {
-        @apply text-base-content;
-    }
-    .table thead th {
-        @apply bg-base-200 font-medium text-base-content/70 text-xs sticky top-0 z-10;
-        position: sticky;
-    }
-    .table tbody tr {
-        @apply border-base-300/70 transition-colors;
-    }
-    .table tbody tr:hover {
-        @apply bg-base-200/50;
-    }
-    .table-zebra tbody tr:nth-child(even):hover {
-        @apply bg-base-200/50;
-    }
-
-    /* Tags: 2px radius per the atlas (badges are labels, not pills).
-       Mobile: single-line ellipsis so Persian labels never wrap or
-       overflow their row; inline-flex keeps the background on the text. */
-    .badge {
-        @apply rounded-[2px] border-transparent font-medium;
-        display: inline-flex;
-        align-items: center;
-        line-height: 1.4;
-        white-space: nowrap;
-        max-width: 100%;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        flex-shrink: 0;
-    }
-    .badge-soft {
-        padding-inline: 0.5rem;
-    }
-
-    .stat {
-        @apply rounded-lg border border-base-300 bg-base-100 px-4 py-3;
-    }
-    .stat-title {
-        @apply text-base-content/55;
-    }
-    .stat-value {
-        @apply leading-tight;
-    }
-
-    .progress {
-        @apply rounded-full bg-base-200;
-    }
-    .progress::-webkit-progress-value,
-    .progress::-moz-progress-bar {
-        @apply rounded-full;
-    }
-
-    .tabs {
-        @apply border-base-300/70;
-    }
-
-    .alert {
-        @apply rounded-lg border border-base-300;
-    }
-
-    .dropdown-content {
-        @apply rounded-lg border border-base-300 bg-base-100 shadow-none;
-    }
-
-    .modal-box {
-        @apply rounded-lg border border-base-300 bg-base-100;
-    }
-
-    .tooltip[data-tip] {
-        cursor: help;
-    }
-}
-
-/* ═══════════════════════════════════════════════════════════════════════
-   EzDistro design vocabulary — shared, reusable building blocks
-   ═══════════════════════════════════════════════════════════════════════ */
-@layer components {
-    /* Page frame + header ----------------------------------------------
-       Atlas opener: mono label pinned above a massive tight-tracked
-       display title; description sits opposite on wide screens. */
+    /* ── Page frame + atlas header (top-level pages only) ── */
     .ezdistro-page {
         @apply mx-auto w-full max-w-300 px-4 pb-32 pt-5 sm:px-6 sm:pt-7 md:pb-10;
     }
-    /* One orchestrated entrance per navigation: the header rises once, nothing
-       else animates on load. */
     @media (prefers-reduced-motion: no-preference) {
         .ezdistro-pagehead {
             animation: ezdistro-rise 0.4s cubic-bezier(0.2, 0.7, 0.3, 1) both;
         }
     }
     @keyframes ezdistro-rise {
-        from {
-            opacity: 0;
-            transform: translateY(0.5rem);
-        }
-        to {
-            opacity: 1;
-            transform: none;
-        }
+        from { opacity: 0; transform: translateY(0.5rem); }
+        to { opacity: 1; transform: none; }
     }
     .ezdistro-pagehead {
         @apply flex flex-wrap items-end justify-between gap-3 mb-5 sm:mb-7;
     }
-    /* A short rule leads the mono label — a structural anchor, not a badge.
-       No kickers above headings elsewhere: this label IS the section's name. */
     .ezdistro-eyebrow {
         @apply inline-flex items-center gap-2 font-mono text-[0.72rem] font-normal uppercase text-base-content/55;
         letter-spacing: 0.073em;
@@ -392,14 +214,10 @@ details[open] > summary .ezdistro-disclosure-chev {
         content: "";
         @apply h-px w-5 bg-primary;
     }
-    /* Display title: oversized, tight tracking, short line — the atlas voice.
-       Clamped so Persian display type never overflows small viewports. */
     .ezdistro-title {
         @apply font-extrabold leading-[0.95] tracking-[-0.04em] text-base-content;
         font-size: clamp(2.5rem, 4vw + 1.5rem, 5rem);
     }
-    /* Status badges sit inside the display title, which carries tight negative
-       tracking; reset it so the badge label stays readable. */
     .ezdistro-title .badge {
         letter-spacing: normal;
     }
@@ -411,8 +229,7 @@ details[open] > summary .ezdistro-disclosure-chev {
         @apply flex items-center gap-2 flex-wrap;
     }
 
-    /* Brand mark — the solid blue block. Uses the app's box radius token
-       (rounded-box) so the tile matches every other surface. */
+    /* Brand block — the rationed blue square. */
     .ezdistro-logo {
         @apply grid place-items-center rounded-box bg-primary font-black text-white;
         overflow: hidden;
@@ -423,12 +240,10 @@ details[open] > summary .ezdistro-disclosure-chev {
         display: block;
     }
 
-    /* App shell — robust flex: sidebar is a normal sticky flow child so RTL
-       offset hacks (and the bugs they cause) are unnecessary. */
+    /* App shell — sidebar is a normal sticky flex child (no offset hacks). */
     .ezdistro-shell {
         @apply flex min-h-dvh bg-base-100;
     }
-    /* Fixed rail: 220px, paper canvas, mist hairline at its edge. */
     .ezdistro-sidebar {
         @apply hidden border-e border-base-300 bg-base-100 md:sticky md:top-0 md:h-dvh md:flex md:w-55 md:flex-none md:flex-col lg:w-60;
     }
@@ -441,13 +256,10 @@ details[open] > summary .ezdistro-disclosure-chev {
     .ezdistro-nav-section {
         @apply flex flex-col gap-0.5;
     }
-    /* Group names are mono index labels, pinned above their items. */
     .ezdistro-nav-group {
         @apply px-2.5 pb-1.5 pt-1 font-mono text-[0.65rem] font-normal uppercase text-base-content/45;
         letter-spacing: 0.073em;
     }
-    /* Rail items: flat, no background. Hover shifts ink to blue; active
-       pins a 2px blue bar at the inline start + blue label. */
     .ezdistro-navlink {
         @apply relative flex items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-medium text-base-content/70 transition-colors hover:text-primary;
     }
@@ -478,17 +290,18 @@ details[open] > summary .ezdistro-disclosure-chev {
         width: 2px;
         background: var(--color-primary);
     }
-    /* Bottom call-to-action, hairline above (one blue primary). */
     .ezdistro-start {
         @apply border-t border-base-300/70 px-3 py-3;
+    }
+    .ezdistro-start-label {
+        @apply px-1 pb-2 font-mono text-[0.65rem] font-normal uppercase text-base-content/45;
+        letter-spacing: 0.073em;
     }
     .ezdistro-sidefoot {
         @apply border-t border-base-300/70 p-3;
     }
 
-    /* Mobile dock — floating thumb-zone bar. Items share the width
-       (basis-0 + flex-1) so the pill can never overflow on narrow screens,
-       and the safe-area inset is applied once (to the dock), never twice. */
+    /* Mobile dock — thumb-zone pill, 4 items max. */
     .ezdistro-dock {
         @apply pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-3 md:hidden;
         padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
@@ -508,7 +321,6 @@ details[open] > summary .ezdistro-disclosure-chev {
     .ezdistro-dock a:hover svg {
         @apply bg-base-200 text-primary;
     }
-    /* The single live signal on mobile: solid blue block, white glyph. */
     .ezdistro-dock a.ezdistro-dock-active {
         @apply text-base-content;
     }
@@ -521,9 +333,8 @@ details[open] > summary .ezdistro-disclosure-chev {
         height: calc(3.5rem + env(safe-area-inset-top));
         padding-top: env(safe-area-inset-top);
     }
-    /* Project sub-navigation ---------------------------------------------
-       A grouped vertical rail on desktop (13 sections stay scannable), a
-       sticky horizontal scroll strip on small screens. */
+
+    /* Project sub-navigation: sticky strip on mobile, rail on desktop. */
     .ezdistro-project-layout {
         display: flex;
         flex-direction: column;
@@ -552,9 +363,7 @@ details[open] > summary .ezdistro-disclosure-chev {
     .ezdistro-subnav-link {
         @apply relative whitespace-nowrap rounded-lg px-2.5 py-1.5 text-sm font-medium;
         color: color-mix(in oklab, var(--color-base-content) 65%, transparent);
-        transition:
-            color 0.15s ease,
-            background-color 0.15s ease;
+        transition: color 0.15s ease, background-color 0.15s ease;
     }
     .ezdistro-subnav-link:hover {
         background: var(--color-base-200);
@@ -618,12 +427,11 @@ details[open] > summary .ezdistro-disclosure-chev {
         }
     }
 
-    /* Cards / panels: 8px, hairline, flat -------------------------------- */
+    /* ── Back-compat aliases: thin wrappers over DaisyUI ──
+       Existing templates keep working; new code should use
+       card / card-title / stat directly (see DESIGN.md). */
     .ezdistro-panel {
-        /* min-w-0: panels are grid/flex children — a long unbreakable value
-           (workerId, hostname, version) must never force the column wider
-           than the viewport (RTL blowout). */
-        @apply min-w-0 rounded-lg border border-base-300 bg-base-100;
+        @apply card border border-base-300 bg-base-100 min-w-0;
     }
     .ezdistro-panel-head {
         @apply flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3;
@@ -632,26 +440,49 @@ details[open] > summary .ezdistro-disclosure-chev {
         @apply font-mono text-xs font-normal uppercase text-base-content/55;
         letter-spacing: 0.073em;
     }
-
-    /* Metrics / stats -------------------------------------------------- */
     .ezdistro-metric {
-        @apply min-w-0 rounded-lg border border-base-300 bg-base-100 p-4 flex flex-col gap-1;
+        @apply stat border border-base-300 bg-base-100 p-4 min-w-0;
     }
     .ezdistro-metric-label {
-        @apply font-mono text-xs font-normal uppercase text-base-content/55;
+        @apply stat-title font-mono text-xs font-normal uppercase;
         letter-spacing: 0.073em;
     }
     .ezdistro-metric-value {
-        @apply text-[2rem] font-black leading-none tracking-[-0.04em] text-base-content tabular-nums;
+        @apply stat-value text-[2rem] font-black leading-none tracking-[-0.04em] tabular-nums;
     }
     .ezdistro-metric-swatch {
         @apply size-2.5 rounded-full;
     }
+    .ezdistro-empty {
+        @apply flex flex-col items-center justify-center gap-3 py-12 text-center;
+    }
+    .ezdistro-empty-icon {
+        @apply grid size-14 place-items-center rounded-lg bg-base-200 text-base-content/40;
+    }
+    .ezdistro-kv {
+        @apply grid grid-cols-2 gap-2;
+    }
+    .ezdistro-kv > div {
+        @apply rounded-lg border border-base-300/70 bg-base-200/40 p-2.5 min-w-0;
+    }
+    .ezdistro-kv .k {
+        @apply block text-[0.7rem] text-base-content/50;
+    }
+    .ezdistro-kv .v {
+        @apply block font-bold text-base-content break-words;
+    }
+    .ezdistro-toast {
+        @apply pointer-events-auto flex min-w-0 items-center gap-3 rounded-lg border border-base-300/70 bg-base-100 px-4 py-3 text-base-content max-w-sm w-full;
+    }
+    .ezdistro-toast .ezdistro-toast-ico {
+        @apply grid size-7 shrink-0 place-items-center rounded-lg border border-base-300/70;
+    }
+    .ezdistro-toast-info .ezdistro-toast-ico { @apply bg-info/15 text-info; }
+    .ezdistro-toast-success .ezdistro-toast-ico { @apply bg-success/15 text-success; }
+    .ezdistro-toast-error .ezdistro-toast-ico { @apply bg-error/15 text-error; }
+    .ezdistro-toast-warning .ezdistro-toast-ico { @apply bg-warning/15 text-warning; }
 
-    /* Pipeline rail — the dashboard hero: the assembly line itself.
-       Cells split by hairlines; each cell threads a rule through its node
-       row so the stages read as one continuous track (2×2 on mobile,
-       one row from sm up). */
+    /* Pipeline rail — the one bespoke data visual DaisyUI cannot provide. */
     .ezdistro-rail-track {
         @apply relative grid grid-cols-2;
         background: color-mix(in oklab, var(--color-base-300) 70%, transparent);
@@ -660,8 +491,6 @@ details[open] > summary .ezdistro-disclosure-chev {
     .ezdistro-rail-stage {
         @apply relative flex min-w-0 flex-col gap-2 bg-base-100 px-4 pt-4 pb-4;
     }
-    /* Hairline threads the whole cell at node height; labels sit on the
-       next row so the track never runs through text. */
     .ezdistro-rail-line {
         position: absolute;
         top: 1.35rem;
@@ -686,22 +515,18 @@ details[open] > summary .ezdistro-disclosure-chev {
     .ezdistro-rail-bar > i {
         @apply block h-full rounded-full transition-[width] duration-700 ease-out;
     }
-    /* The single live signal: only the "being written" node breathes. */
     @media (prefers-reduced-motion: no-preference) {
         .ezdistro-rail-node-live {
             animation: ezdistro-breathe 2.6s ease-in-out infinite;
         }
     }
     @keyframes ezdistro-breathe {
-        0%,
-        100% {
-            box-shadow:
-                0 0 0 4px var(--color-base-100),
+        0%, 100% {
+            box-shadow: 0 0 0 4px var(--color-base-100),
                 0 0 0 6px color-mix(in oklab, var(--color-primary) 45%, transparent);
         }
         50% {
-            box-shadow:
-                0 0 0 4px var(--color-base-100),
+            box-shadow: 0 0 0 4px var(--color-base-100),
                 0 0 0 11px color-mix(in oklab, var(--color-primary) 0%, transparent);
         }
     }
@@ -711,37 +536,7 @@ details[open] > summary .ezdistro-disclosure-chev {
         }
     }
 
-    /* Empty / placeholder states: bars rest on paper, blue dot marks life. */
-    .ezdistro-empty {
-        @apply flex flex-col items-center justify-center gap-3 py-12 text-center;
-    }
-    .ezdistro-empty-icon {
-        @apply grid size-14 place-items-center rounded-lg bg-base-200 text-base-content/40;
-    }
-
-    /* Atlas bars — the signature decorative-data strip: hairline vertical
-       bars with occasional blue/green nodes. Pure CSS, no assets.
-       Usage: <div class="ezdistro-bars" aria-hidden="true"><i></i>…</div>
-       Heights come from --h per bar; nodes via .is-blue / .is-green. */
-    .ezdistro-bars {
-        @apply flex items-end gap-[3px] overflow-hidden;
-        height: 64px;
-    }
-    .ezdistro-bars > i {
-        @apply block w-[2px] shrink-0 rounded-none bg-base-300;
-        height: var(--h, 40%);
-    }
-    .ezdistro-bars > i.is-blue {
-        @apply bg-primary;
-    }
-    .ezdistro-bars > i.is-green {
-        @apply bg-accent;
-    }
-
-    /* Activity sparkline — pure CSS bars over server-rendered counts.
-       Usage: <div class="ezdistro-spark" role="img"><i style="height: 40%"
-       title="Label: 12"></i>…</div> Heights are percentages of the row
-       max, set inline by Jinja. Mist bars, blue/green live nodes. */
+    /* Activity sparkline — pure CSS bars over server counts. */
     .ezdistro-spark {
         @apply flex items-end gap-1 tabular-nums;
         height: 3.5rem;
@@ -756,13 +551,6 @@ details[open] > summary .ezdistro-disclosure-chev {
         @apply bg-accent;
     }
 
-    /* Project tab bar — mobile-first scrollable pills ------------------ */
-    .ezdistro-tab-active {
-        @apply border-primary bg-primary font-semibold text-white;
-    }
-    .ezdistro-tab-idle {
-        @apply border-transparent text-base-content/55 hover:text-base-content hover:bg-base-100;
-    }
     .ezdistro-scroll-x {
         scrollbar-width: none;
         -ms-overflow-style: none;
@@ -770,81 +558,30 @@ details[open] > summary .ezdistro-disclosure-chev {
     .ezdistro-scroll-x::-webkit-scrollbar {
         display: none;
     }
-
-    /* Divider with breathing room ------------------------------------- */
-    .ezdistro-rule {
-        @apply my-4 border-0 border-t border-base-300/70;
-    }
-
-    /* Inline key/value grid for metadata ------------------------------ */
-    .ezdistro-kv {
-        @apply grid grid-cols-2 gap-2;
-    }
-    .ezdistro-kv > div {
-        @apply rounded-lg border border-base-300/70 bg-base-200/40 p-2.5 min-w-0;
-    }
-    .ezdistro-kv .k {
-        @apply block text-[0.7rem] text-base-content/50;
-    }
-    .ezdistro-kv .v {
-        @apply block font-bold text-base-content break-words;
-    }
-
-    /* Toast — flat paper card; semantics live in the icon chip, never a
-       side border. */
-    .ezdistro-toast {
-        /* items-center, not items-start: the icon chip is taller than one text
-           line, so top alignment left a dead band under a short message that
-           read as an empty second line. */
-        @apply pointer-events-auto flex min-w-0 items-center gap-3 rounded-lg border border-base-300/70 bg-base-100 px-4 py-3 text-base-content max-w-sm w-full;
-    }
-    .ezdistro-toast .ezdistro-toast-ico {
-        @apply grid size-7 shrink-0 place-items-center rounded-lg border border-base-300/70;
-    }
-    .ezdistro-toast-info .ezdistro-toast-ico { @apply bg-info/15 text-info; }
-    .ezdistro-toast-success .ezdistro-toast-ico { @apply bg-success/15 text-success; }
-    .ezdistro-toast-error .ezdistro-toast-ico { @apply bg-error/15 text-error; }
-    .ezdistro-toast-warning .ezdistro-toast-ico { @apply bg-warning/15 text-warning; }
-
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   Utilities — small, deliberate helpers
-   ═══════════════════════════════════════════════════════════════════════ */
 @layer utilities {
-    /* Blue is readable as text on paper in both themes — no remapping. */
     .num {
         font-variant-numeric: tabular-nums;
     }
-    /* Native numeric/date controls follow the page direction (always LTR). */
     :is(input[type='number'], input[type='date'], input[type='time'], input[type='datetime-local'], input[type='tel']) {
         direction: ltr;
         text-align: left;
     }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   Theme switch transition — premium but fast, reduced-motion aware
-   ═══════════════════════════════════════════════════════════════════════ */
 @media (prefers-reduced-motion: no-preference) {
     html.theme-switching,
     html.theme-switching *,
     html.theme-switching *::before,
     html.theme-switching *::after {
-        transition:
-            background-color 0.25s ease,
-            border-color 0.25s ease,
-            color 0.25s ease,
-            fill 0.25s ease,
-            stroke 0.25s ease !important;
+        transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease,
+            fill 0.25s ease, stroke 0.25s ease !important;
     }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   Unlayered overrides — daisyUI's .table layer beats Tailwind's .hidden
-   layer, so `hidden sm:table` alone never hides the table on mobile.
-   Unlayered CSS wins over every @layer.
-   ═══════════════════════════════════════════════════════════════════════ */
+/* Unlayered: DaisyUI's .table layer beats Tailwind's .hidden layer,
+   so `hidden sm:table` alone never hides the table on mobile. */
 .table.hidden {
     display: none;
 }
@@ -855,19 +592,6 @@ details[open] > summary .ezdistro-disclosure-chev {
 }
 
 @media (max-width: 48rem) {
-    .drawer-side {
-        max-width: 85vw;
-    }
-
-    /* Mobile bar dropdowns (theme + account): anchor the panel to the
-       full-width sticky header instead of the trigger, so it can never leave
-       the viewport regardless of `.dropdown-end` inline math or text
-       direction. This is the ABSOLUTE variant, not `position: fixed`:
-       `.ezdistro-mobile-header` carries `backdrop-filter` (backdrop-blur-xl)
-       and `position: sticky`, so it is already the containing block for
-       fixed descendants — `position: fixed` would resolve against the 3.5rem
-       header box, not the viewport. `position: static` on the wrapper hands
-       the header to the panel as its containing block. */
     .ezdistro-mobile-header .dropdown {
         position: static;
     }
@@ -882,28 +606,16 @@ details[open] > summary .ezdistro-disclosure-chev {
         overflow: auto;
         z-index: 60;
     }
-    /* Kill iOS Safari focus-zoom: tapping a form control whose computed
-       font-size is < 16px zooms the whole viewport (daisyUI .menu is
-       0.875rem/14px). Keep the bar's menus at 16px; scoped here only. */
     .ezdistro-mobile-header .dropdown-content :is(input, select, textarea, label, button) {
         font-size: 1rem;
     }
 }
 
-/* Containment guard: stop any accidental horizontal overflow on phones.
-   `clip`, not `hidden` — `hidden` creates a scroll container that would
-   break the sticky top bar; `clip` does not. */
 @media (max-width: 48rem) {
     html,
     body {
         overflow-x: clip;
     }
-}
-
-/* Mobile tooltips: hover-only bubbles overflow small viewports, so cap
-   them at the viewport, let them wrap, and keep top bubbles centered
-   instead of sliding off-screen at the edges. */
-@media (max-width: 48rem) {
     .tooltip {
         overflow: visible;
     }
