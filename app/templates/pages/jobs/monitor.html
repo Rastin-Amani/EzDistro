@@ -2,7 +2,7 @@
 {% block dashboard_content %}
 {% import 'macros/forms.html' as f %}
 
-{{ f.page_header(('Jobs'), ('Monitor indexing and article generation across all projects'), ('Operations & monitoring'), '<span class="text-xs opacity-50">' ~ total ~ (' items</span>')) }}
+{{ f.page_header(('Jobs'), ('Monitor indexing and article generation across all projects'), ('Operations & monitoring'), '<a href="/failed" class="btn btn-ghost btn-sm">' ~ ('Failed jobs') ~ '</a>') }}
 
 <div class="flex flex-col gap-5">
 
