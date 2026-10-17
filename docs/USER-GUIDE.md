@@ -19,13 +19,13 @@ UI language:           English (LTR) · PWA-enabled
 1. Open the platform URL (development default: `http://localhost:8000`).
 2. You are redirected to **Login to EzDistro** (the login page). Enter your email and
    password → you land on **Dashboard**.
-3. The navigation has six areas (a desktop rail; a mobile dock):
+3. The navigation follows the writing flow (a desktop rail; a mobile dock):
    - **Dashboard** (`/dashboard`) — pipeline overview,
    - **Projects** (`/projects`) — project list,
-   - **Workers** (`/workers`) — worker liveness from heartbeats,
-   - **Jobs** (`/jobs`) — job monitor,
-   - **Failed** (`/failed`) — dead-letter shortcut,
-   - **Events** (`/logs`) — platform event feed.
+   - **Jobs** (`/jobs`) — job monitor; the **Failed jobs** dead-letter view opens from here,
+   - **Workers** (`/workers`) — worker liveness from heartbeats (desktop rail),
+   - **Events** (`/logs`) — platform event feed,
+   - **Billing** (`/billing`) — balance, credit packs and payment history.
 
 **Expected result:** the dashboard shows content/article counters, job pipeline
 counts, indexing health per project, provider health, failure rate and average
@@ -49,19 +49,20 @@ platform admin.
    projects page).
 2. Fill in a name and a unique slug (left empty, the slug is derived from the name).
    Locale, market and audience are configured later on the **Settings** tab.
-3. Open the project. It presents thirteen tabs, ordered as the daily operator flow:
+3. Open the project. It presents thirteen tabs grouped by the writing flow
+   (**Write** → **Research** → **Setup** → **System**); the default tab is **Topics**:
 
 | Tab (label) | Purpose |
 |---|---|
+| **Topics** (topics) | editorial backlog — the project's default tab |
+| **Articles** (articles) | generated articles list (incl. mirrored WordPress posts) |
+| **Images** (images) | image-generation providers/models, sizes, optimization, style + one-click generation test |
+| **Publishing** (publishing) | publish history |
+| **Research** (research) | Google Ads / file-import research runs and the opportunity roadmap |
 | **Settings** (settings) | chunking, retrieval, generation, retry policy, publishing mode, localization/brand |
 | **Connections** (integrations) | credentials: WordPress, LLM, embedding, Qdrant, reranker, image, SERP, Google Ads |
 | **AI Models** (ai_models) | per-role model configuration + global defaults |
 | **Prompts** (prompts) | prompt library, versions, tester |
-| **Research** (research) | Google Ads / file-import research runs and the opportunity roadmap |
-| **Topics** (topics) | editorial backlog |
-| **Articles** (articles) | generated articles list (incl. mirrored WordPress posts) |
-| **Images** (images) | image-generation providers/models, sizes, optimization, style + one-click generation test |
-| **Publishing** (publishing) | publish history |
 | **Retrieval** (retrieval) | retrieval diagnostics playground |
 | **Indexing** (indexing) | index runs, documents health |
 | **Jobs** (jobs) | this project's jobs |
@@ -256,7 +257,7 @@ vector scores, rerank scores (if enabled), final internal-link candidates and th
 exact trimmed prompt context. Use it to tune top-k/threshold/reranking or to explain
 "why does the article ignore X?".
 
-## 11. Monitor jobs (**Jobs** / **Failed jobs** / **Logs**)
+## 11. Monitor jobs (**Jobs** → **Failed jobs** / **Events**)
 
 - **Jobs** (`/jobs`): filter by project, type, status, date range, worker and error
   code (**Apply filter** applies). Rows link to detail pages. Auto-refreshes ~8 s.
@@ -268,8 +269,9 @@ exact trimmed prompt context. Use it to tune top-k/threshold/reranking or to exp
   checkpoint (current step finishes first).
 - **Retry:** failed jobs offer **Retry**; transient failures retry automatically
   with exponential backoff + jitter (honoring provider rate-limit headers).
-- **Failed jobs** is the dead-letter view, filterable by project, stage and reason.
-- **Logs** shows the raw event feed for the whole platform.
+- **Failed jobs** (the **Failed jobs** button on the Jobs header, `/failed`) is the
+  dead-letter view, filterable by project, stage and reason.
+- **Events** (`/logs`) shows the raw event feed for the whole platform.
 
 ## 12. Run SEO research (**Research**)
 

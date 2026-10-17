@@ -144,7 +144,8 @@ Login with the seeded admin user (`SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD`).
    publish job → live/draft on WordPress.
 6. **Research** tab (optional): connect Google Ads on **Connections** (or upload a
    Keyword Planner CSV/XLSX), run research, then accept opportunities to feed Topics.
-7. **Jobs / failed jobs / events** tabs: monitor, cancel, retry.
+7. **Jobs** and **Events** tabs: monitor, cancel, retry (the **Failed jobs**
+   dead-letter view opens from **Jobs**).
 8. **Full re-index** button (or schedule): index WordPress posts into Qdrant.
 
 The documentation set in `docs/` is also served in-app at `/help/` (auth-gated) —
