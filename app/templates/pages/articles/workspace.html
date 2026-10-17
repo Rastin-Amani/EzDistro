@@ -24,7 +24,7 @@
 
     <div class="flex items-center gap-2.5 min-w-0">
 
-        <a href="/projects/{{ project.id }}?tab=articles" class="btn btn-ghost btn-circle btn-sm shrink-0" aria-label="{{ ('Back') }}">
+        <a href="/projects/{{ project.id }}?tab=articles" class="btn btn-ghost btn-circle btn-sm shrink-0" aria-label="{{ ('Back to articles') }}">
 
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5 ltr:rotate-180"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
 
@@ -32,6 +32,7 @@
 
         <div class="min-w-0">
 
+            <p class="font-mono text-[0.65rem] uppercase tracking-[0.073em] text-base-content/45">{{ ('Write · Draft') }}</p>
             <h1 class="font-extrabold text-base truncate">{{ article.title }}</h1>
 
             <div class="flex items-center gap-2 text-xs opacity-50 flex-wrap">
@@ -167,6 +168,13 @@
 {% endif %}
 
 
+
+{% set _step_idx = {'planned': 1, 'generating': 1, 'review': 2, 'sent_back': 2, 'approved': 3, 'publishing': 3, 'published': 3, 'failed': 1}.get(article.status, 1) %}
+<ul class="steps steps-horizontal w-full max-w-xl text-xs mb-1" aria-label="{{ ('Article progress') }}">
+    <li class="step {{ 'step-primary' if _step_idx >= 1 }}">{{ ('Draft') }}</li>
+    <li class="step {{ 'step-primary' if _step_idx >= 2 }}">{{ ('Review') }}</li>
+    <li class="step {{ 'step-primary' if _step_idx >= 3 }}">{{ ('Publish') }}</li>
+</ul>
 
 <div id="workspace-grid" class="grid grid-cols-1 gap-4 items-start 2xl:grid-cols-[240px_minmax(0,1fr)_260px]">
 
@@ -424,9 +432,9 @@
 
 
 
-        {% if article.validation %}
+        {% if article.validation and not article.validation.ok %}
 
-        <div class="ezdistro-panel {{ 'border-success/40' if article.validation.ok else 'border-error/40' }}">
+        <div class="ezdistro-panel border-error/40">
 
             <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ ('Validation') }}</h2></div>
 
@@ -449,42 +457,6 @@
         </div>
 
         {% endif %}
-
-
-
-        <div class="ezdistro-panel">
-
-            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ ('Generating sections') }}</h2></div>
-
-            <div class="p-4">
-
-                <ul class="flex flex-col gap-1 text-xs">
-
-                    {% for s in sections %}
-
-                    <li class="flex items-center justify-between gap-2 border border-base-300/70 rounded-lg px-2 py-1">
-
-                        <span class="truncate opacity-70">{{ loop.index }}. {{ s.heading }}</span>
-
-                        <span class="flex items-center gap-1 shrink-0">
-
-                            {% if s.model %}<span class="font-mono opacity-60 hidden sm:inline" dir="ltr">{{ s.model }}</span>{% endif %}
-
-                            {% if s.promptVersion %}<span class="badge badge-soft badge-info badge-xs">v{{ s.promptVersion }}</span>{% endif %}
-
-                            <span class="badge badge-xs {{ s.status|status_badge }}">{{ s.status|status_label }}</span>
-
-                        </span>
-
-                    </li>
-
-                    {% endfor %}
-
-                </ul>
-
-            </div>
-
-        </div>
 
 
 
@@ -516,9 +488,12 @@
 
         {% if publish_runs %}
 
-        <div class="ezdistro-panel">
+        <details class="ezdistro-panel">
 
-            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ ('Publish history') }}</h2></div>
+            <summary class="ezdistro-panel-head cursor-pointer list-none">
+                <h2 class="ezdistro-panel-title">{{ ('Publish history') }}</h2>
+                <span class="badge badge-soft badge-neutral badge-xs">{{ publish_runs|length }}</span>
+            </summary>
 
             <div class="p-4 flex flex-col gap-2">
 
@@ -562,7 +537,7 @@
 
             </div>
 
-        </div>
+        </details>
 
         {% endif %}
 

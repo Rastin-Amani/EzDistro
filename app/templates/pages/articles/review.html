@@ -18,6 +18,7 @@
 
         <div class="min-w-0">
 
+            <p class="font-mono text-[0.65rem] uppercase tracking-[0.073em] text-base-content/45">{{ ('Write · Review') }}</p>
             <h1 class="font-extrabold text-base truncate">{{ ('Review: %(v)s') % {'v': article.title} }}</h1>
 
             <div class="flex items-center gap-2 text-xs opacity-50 flex-wrap">
@@ -356,9 +357,9 @@
 
 
 
-        <div class="ezdistro-panel">
+        <details class="ezdistro-panel">
 
-            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ ('Version history') }}</h2></div>
+            <summary class="ezdistro-panel-head cursor-pointer list-none"><h2 class="ezdistro-panel-title">{{ ('Version history') }}</h2></summary>
 
             <div class="p-4">
 
@@ -406,7 +407,7 @@
 
             </div>
 
-        </div>
+        </details>
 
     </aside>
 
