@@ -842,8 +842,7 @@ async def generate_opportunities(
 
         if rows:
             idea_repo.create_many(rows)
-            created += len(rows)
-        # The run's own progress only moved between stages, so a long
+            created += len(rows)  # The run's own progress only moved between stages, so a long
         # opportunity stage sat at 88% for its whole duration and looked hung.
         # Move the run inside the stage as well (88 → 96 across the batches).
         done = start + len(batch)

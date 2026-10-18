@@ -718,6 +718,72 @@ def test_merge_into_an_earlier_batch_is_written_back():
     assert written["evidence"]["merged"][0]["reason"] == "same search intent", written
 
 
+def test_cross_batch_merge_keeps_its_record():
+    """A duplicate that arrives in a later batch must be folded into the page
+    already stored — and the record of what was merged has to survive, which only
+    works if the stored row carries its id."""
+    # four gate-distinct keywords → four clusters → two batches
+    keywords = [
+        ("gym software pricing", 900),
+        ("gym software demo", 800),
+        ("gym software free", 700),
+        ("gym software reviews", 600),
+    ]
+    title = "Gym Management Software: How to Choose One"
+    responses = [
+        json.dumps(
+            {
+                "opportunities": [
+                    {
+                        "title": title,
+                        "primary_keyword": "gym software pricing",
+                        "intent": "commercial",
+                        "content_type": "guide",
+                        "action": "generate",
+                    }
+                ]
+            }
+        ),
+        json.dumps(
+            {
+                "opportunities": [
+                    {
+                        "title": title,
+                        "primary_keyword": "gym software reviews",
+                        "intent": "commercial",
+                        "content_type": "guide",
+                        "action": "generate",
+                    }
+                ]
+            }
+        ),
+    ]
+    pb, project, registry = _setup()
+    registry.llm = FakeLLM(responses)
+    job = _run_job(pb, project["id"], key="opp-cross-batch")
+    ctx = make_ctx(pb, registry, job)
+    run = ResearchRunRepo(pb).create_run(
+        project=project["id"],
+        name="r",
+        research_type="keywords",
+        config={},
+        targeting={},
+        fingerprint="fp",
+    )
+    _seed_keywords(pb, project["id"], run["id"], keywords)
+    asyncio.run(cluster_run(ctx, run_id=run["id"], method="deterministic"))
+
+    result = asyncio.run(generate_opportunities(ctx, run_id=run["id"], goal_text=""))
+    assert result["batches"] == 2, result
+    assert result["duplicates"] == 1, result
+
+    stored = ArticleIdeaRepo(pb).all_for_run(run["id"])
+    assert len(stored) == 1, stored
+    merged = stored[0]["evidence"]["merged"]
+    assert merged and merged[0]["primaryKeyword"] == "gym software reviews", merged
+    assert "gym software reviews" in stored[0]["secondaryKeywords"], stored[0]
+
+
 def test_cannibalization_forces_update_action():
     pb, project, registry = _setup()
     registry.llm = FakeLLM(

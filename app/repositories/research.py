@@ -117,7 +117,11 @@ class _BulkCreateMixin:
         created = 0
         for row in rows:
             try:
-                super().create(row)  # type: ignore[misc]
+                record = super().create(row)  # type: ignore[misc]
+                # Attach the stored id so a caller can keep referring to the row it
+                # just wrote — the opportunity engine folds a later duplicate into
+                # an earlier batch's row and must be able to address it again.
+                row.setdefault("id", record.get("id") or "")
                 created += 1
             except ClientResponseError as exc:
                 if ignore_duplicates and _is_duplicate(exc):
