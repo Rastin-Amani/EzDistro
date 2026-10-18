@@ -43,14 +43,14 @@
 
         <link
             rel="preload"
-            href="{{ url_for('static', path='/assets/InterVariable.ttf') }}"
+            href="{{ url_for('static', path='/assets/InterVariable.woff2') }}"
             as="font"
-            type="font/ttf"
+            type="font/woff2"
             crossorigin
         />
 
         <title>{{ title or ('EzDistro') }}</title>
-        <link rel="stylesheet" href="{{ url_for('static', path='/app.css') }}?v={{ app_version }}" />
+        <link rel="stylesheet" href="{{ url_for('static', path='/app.css') }}?v={{ asset_version() }}" />
     </head>
 
     <body
@@ -74,7 +74,7 @@
         <div id="modal-container"></div>
         <div
             id="toast-container"
-            class="pointer-events-none fixed top-4 end-4 z-[60] flex w-[min(92vw,22rem)] flex-col gap-2"
+            class="toast toast-top toast-end pointer-events-none z-[60]"
             aria-live="polite"
             aria-atomic="false"
         ></div>
@@ -127,11 +127,23 @@
             });
         </script>
 
-        <script type="module" src="{{ url_for('static', path='/js/integrations.js') }}?v={{ app_version }}"></script>
-        <script type="module" src="{{ url_for('static', path='/js/provider_defaults.js') }}?v={{ app_version }}"></script>
-        <script type="module" src="{{ url_for('static', path='/app.js') }}?v={{ app_version }}"></script>
-        <script defer src="{{ url_for('static', path='/js/theme.js') }}?v={{ app_version }}"></script>
-        <script defer src="{{ url_for('static', path='/js/confirm-dialog.js') }}?v={{ app_version }}"></script>
+        <!-- Popover row menus live in the top layer, so they cannot stretch a
+             table row or be clipped by `overflow-x-auto`. Close one as soon as
+             an item inside it is chosen. -->
+        <script>
+            document.addEventListener('click', function (evt) {
+                var target = evt.target;
+                if (!target || !target.closest) return;
+                var pop = target.closest('[popover].dropdown');
+                if (pop && target.closest('a, button')) pop.hidePopover();
+            });
+        </script>
+
+        <script type="module" src="{{ url_for('static', path='/js/integrations.js') }}?v={{ asset_version() }}"></script>
+        <script type="module" src="{{ url_for('static', path='/js/provider_defaults.js') }}?v={{ asset_version() }}"></script>
+        <script type="module" src="{{ url_for('static', path='/app.js') }}?v={{ asset_version() }}"></script>
+        <script defer src="{{ url_for('static', path='/js/theme.js') }}?v={{ asset_version() }}"></script>
+        <script defer src="{{ url_for('static', path='/js/confirm-dialog.js') }}?v={{ asset_version() }}"></script>
 
         <script>
             function getProgressBar() {
@@ -175,10 +187,10 @@
                     warning: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z',
                 };
                 const ROLE = {
-                    info: 'ezdistro-toast-info',
-                    success: 'ezdistro-toast-success',
-                    error: 'ezdistro-toast-error',
-                    warning: 'ezdistro-toast-warning',
+                    info: 'alert-info',
+                    success: 'alert-success',
+                    error: 'alert-error',
+                    warning: 'alert-warning',
                 };
                 document.addEventListener('show-toast', function (evt) {
                     const detail = evt.detail || {};
@@ -191,14 +203,11 @@
                     const toast = document.createElement('div');
                     const entryOffset = 'translate-x-full';
                     const exitOffset = 'translate-x-8';
-                    toast.className = `ezdistro-toast ${ROLE[type]} ${entryOffset} opacity-0 transition-all duration-300`;
+                    toast.className = `alert alert-soft ${ROLE[type]} pointer-events-auto w-full max-w-sm ${entryOffset} opacity-0 transition-all duration-300`;
                     toast.setAttribute('role', type === 'error' ? 'alert' : 'status');
                     toast.setAttribute('aria-live', type === 'error' ? 'assertive' : 'polite');
                     toast.setAttribute('aria-atomic', 'true');
 
-                    const icon = document.createElement('span');
-                    icon.className = 'ezdistro-toast-ico';
-                    icon.setAttribute('aria-hidden', 'true');
                     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
                     svg.setAttribute('viewBox', '0 0 24 24');
                     svg.setAttribute('fill', 'none');
@@ -207,15 +216,15 @@
                     svg.setAttribute('stroke-linecap', 'round');
                     svg.setAttribute('stroke-linejoin', 'round');
                     svg.setAttribute('class', 'size-5');
+                    svg.setAttribute('aria-hidden', 'true');
                     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
                     path.setAttribute('d', ICONS[type]);
                     svg.appendChild(path);
-                    icon.appendChild(svg);
 
                     const text = document.createElement('span');
                     text.className = 'min-w-0 flex-1 break-words text-sm leading-5';
                     text.textContent = message;
-                    toast.append(icon, text);
+                    toast.append(svg, text);
                     container.appendChild(toast);
                     requestAnimationFrame(() => toast.classList.remove(entryOffset, 'opacity-0'));
                     setTimeout(() => {

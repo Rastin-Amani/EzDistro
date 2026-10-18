@@ -6,15 +6,13 @@
 
 @theme {
     --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
-    --font-brand: 'Inter', ui-sans-serif, system-ui, sans-serif;
     --font-mono: 'JetBrains Mono', 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
-/* EzDistro Atlas — theme tokens are the single source of truth.
-   Components below are thin aliases over DaisyUI primitives + the few
-   layout helpers DaisyUI cannot provide (shell rail, sticky subnav,
-   thumb-zone dock, page frame). No hand-rolled buttons, inputs, tables,
-   badges or cards here — use DaisyUI directly in templates. */
+/* EzDistro Atlas — the two themes are the only place colour is decided.
+   Everything else in the UI is a DaisyUI component or a Tailwind utility in
+   the template, so there is no component layer below. */
+
 @plugin "daisyui/theme" {
     name: "ezdistro";
     default: true;
@@ -95,49 +93,42 @@
 
 @font-face {
     font-family: 'Inter';
-    src: url('./assets/InterVariable.ttf') format('truetype-variations'),
+    /* WOFF2 first (352 KB vs the 859 KB TTF) — browsers pick the first
+       supported format, so the TTF is only a legacy fallback. */
+    src: url('./assets/InterVariable.woff2') format('woff2'),
+         url('./assets/InterVariable.ttf') format('truetype-variations'),
          url('./assets/InterVariable.ttf') format('truetype');
     font-weight: 100 900;
     font-display: swap;
 }
 
-body {
-    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
-}
-
 @layer base {
     html {
         -webkit-text-size-adjust: 100%;
-        text-rendering: optimizeLegibility;
     }
-    body {
-        background: var(--color-base-100);
-    }
-    .tabular,
-    .stat-value,
-    .font-mono {
-        font-variant-numeric: tabular-nums;
-    }
-    a:not([href]),
-    [role='tab'],
-    [role='button'],
-    [role='menuitem'],
-    summary,
-    [onclick] {
-        cursor: pointer;
-    }
+
+    /* Keyboard focus must stay visible everywhere, including plain links and
+       the elements DaisyUI does not style itself. */
     :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
         outline: 2px solid var(--color-primary);
         outline-offset: 2px;
-        border-radius: 0.5rem;
     }
+
+    summary,
+    [role='button'],
+    [onclick] {
+        cursor: pointer;
+    }
+
     ::selection {
         background: var(--color-primary);
         color: var(--color-primary-content);
     }
+
     :root {
         caret-color: var(--color-primary);
     }
+
     * {
         scrollbar-width: thin;
         scrollbar-color: var(--color-base-300) transparent;
@@ -151,18 +142,18 @@ body {
         border: 2px solid transparent;
         background-clip: padding-box;
     }
+
+    /* Mobile Safari otherwise lets one wide child pan the whole page. */
+    @media (max-width: 48rem) {
+        html,
+        body {
+            overflow-x: clip;
+        }
+    }
 }
 
-/* Disclosure chevron (native <details> toggle affordance). */
-.ezdistro-disclosure-chev {
-    transition: transform 0.15s ease;
-}
-details[open] > summary .ezdistro-disclosure-chev {
-    transform: rotate(180deg);
-}
-
+/* htmx contract: hide indicators until the request is in flight. */
 @layer components {
-    /* HTMX loading spinner: no layout shift when idle. */
     .htmx-indicator {
         display: none !important;
     }
@@ -170,418 +161,10 @@ details[open] > summary .ezdistro-disclosure-chev {
     .htmx-request.htmx-indicator {
         display: inline-flex !important;
     }
-
-    /* Form controls fill their grid cell; labels truncate. */
-    .form-control {
-        @apply flex flex-col gap-1;
-        min-width: 0;
-    }
-    .form-control input,
-    .form-control select,
-    .form-control textarea,
-    .floating-label input,
-    .floating-label select,
-    .floating-label textarea {
-        @apply w-full;
-    }
-    .label-text {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    /* ── Page frame + atlas header (top-level pages only) ── */
-    .ezdistro-page {
-        @apply mx-auto w-full max-w-300 px-4 pb-32 pt-5 sm:px-6 sm:pt-7 md:pb-10;
-    }
-    @media (prefers-reduced-motion: no-preference) {
-        .ezdistro-pagehead {
-            animation: ezdistro-rise 0.4s cubic-bezier(0.2, 0.7, 0.3, 1) both;
-        }
-    }
-    @keyframes ezdistro-rise {
-        from { opacity: 0; transform: translateY(0.5rem); }
-        to { opacity: 1; transform: none; }
-    }
-    .ezdistro-pagehead {
-        @apply flex flex-wrap items-end justify-between gap-3 mb-5 sm:mb-7;
-    }
-    .ezdistro-eyebrow {
-        @apply inline-flex items-center gap-2 font-mono text-[0.72rem] font-normal uppercase text-base-content/55;
-        letter-spacing: 0.073em;
-    }
-    .ezdistro-eyebrow::before {
-        content: "";
-        @apply h-px w-5 bg-primary;
-    }
-    .ezdistro-title {
-        @apply font-extrabold leading-[0.95] tracking-[-0.04em] text-base-content;
-        font-size: clamp(2.5rem, 4vw + 1.5rem, 5rem);
-    }
-    .ezdistro-title .badge {
-        letter-spacing: normal;
-    }
-    .ezdistro-subtitle {
-        @apply mt-3 max-w-xl text-base leading-relaxed text-base-content/60;
-        letter-spacing: -0.014em;
-    }
-    .ezdistro-actions {
-        @apply flex items-center gap-2 flex-wrap;
-    }
-
-    /* Brand block — the rationed blue square. */
-    .ezdistro-logo {
-        @apply grid place-items-center rounded-box bg-primary font-black text-white;
-        overflow: hidden;
-    }
-    .ezdistro-logo svg {
-        width: 100%;
-        height: 100%;
-        display: block;
-    }
-
-    /* App shell — sidebar is a normal sticky flex child (no offset hacks). */
-    .ezdistro-shell {
-        @apply flex min-h-dvh bg-base-100;
-    }
-    .ezdistro-sidebar {
-        @apply hidden border-e border-base-300 bg-base-100 md:sticky md:top-0 md:h-dvh md:flex md:w-55 md:flex-none md:flex-col lg:w-60;
-    }
-    .ezdistro-sidebar-brand {
-        @apply flex h-16 items-center gap-2.5 border-b border-base-300/70 px-4;
-    }
-    .ezdistro-nav {
-        @apply flex-1 overflow-y-auto px-3 py-3 flex flex-col gap-3;
-    }
-    .ezdistro-nav-section {
-        @apply flex flex-col gap-0.5;
-    }
-    .ezdistro-nav-group {
-        @apply px-2.5 pb-1.5 pt-1 font-mono text-[0.65rem] font-normal uppercase text-base-content/45;
-        letter-spacing: 0.073em;
-    }
-    .ezdistro-navlink {
-        @apply relative flex items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-medium text-base-content/70 transition-colors hover:text-primary;
-    }
-    .ezdistro-navlink svg {
-        @apply size-5 opacity-75 transition-opacity;
-    }
-    .ezdistro-navlink:hover svg {
-        @apply opacity-100;
-    }
-    .ezdistro-navlink .ezdistro-nav-chev {
-        @apply ms-auto size-3.5 opacity-0 transition-opacity;
-    }
-    .ezdistro-navlink:hover .ezdistro-nav-chev {
-        @apply opacity-60;
-    }
-    .ezdistro-navlink-active {
-        @apply font-bold text-base-content hover:text-primary;
-    }
-    .ezdistro-navlink-active svg {
-        @apply opacity-100 text-primary;
-    }
-    .ezdistro-navlink-active::before {
-        content: "";
-        position: absolute;
-        inset-inline-start: 0;
-        top: 0.5rem;
-        bottom: 0.5rem;
-        width: 2px;
-        background: var(--color-primary);
-    }
-    .ezdistro-start {
-        @apply border-t border-base-300/70 px-3 py-3;
-    }
-    .ezdistro-start-label {
-        @apply px-1 pb-2 font-mono text-[0.65rem] font-normal uppercase text-base-content/45;
-        letter-spacing: 0.073em;
-    }
-    .ezdistro-sidefoot {
-        @apply border-t border-base-300/70 p-3;
-    }
-
-    /* Mobile dock — thumb-zone pill, 4 items max. */
-    .ezdistro-dock {
-        @apply pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-3 md:hidden;
-        padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
-    }
-    .ezdistro-dock-pill {
-        @apply pointer-events-auto flex w-full max-w-md items-stretch gap-1 rounded-2xl border border-base-300/80 bg-base-100/90 p-1.5 backdrop-blur-xl;
-    }
-    .ezdistro-dock a {
-        @apply flex min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-1 rounded-xl px-1 py-1.5 text-[0.6rem] font-semibold text-base-content/55 transition-colors;
-    }
-    .ezdistro-dock a svg {
-        @apply size-9 shrink-0 rounded-lg p-2 text-base-content/55 transition-colors;
-    }
-    .ezdistro-dock a span {
-        @apply w-full truncate text-center;
-    }
-    .ezdistro-dock a:hover svg {
-        @apply bg-base-200 text-primary;
-    }
-    .ezdistro-dock a.ezdistro-dock-active {
-        @apply text-base-content;
-    }
-    .ezdistro-dock a.ezdistro-dock-active svg {
-        @apply bg-primary text-white;
-        color: #ffffff;
-    }
-    .ezdistro-mobile-header {
-        @apply sticky top-0 z-30 flex items-center justify-between border-b border-base-300/70 bg-base-100/85 px-4 backdrop-blur-xl md:hidden;
-        height: calc(3.5rem + env(safe-area-inset-top));
-        padding-top: env(safe-area-inset-top);
-    }
-
-    /* Project sub-navigation: sticky strip on mobile, rail on desktop. */
-    .ezdistro-project-layout {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-    }
-    .ezdistro-subnav {
-        position: sticky;
-        top: calc(3.5rem + env(safe-area-inset-top));
-        z-index: 20;
-        display: flex;
-        align-items: center;
-        gap: 0.25rem;
-        overflow-x: auto;
-        margin-inline: -1rem;
-        padding: 0.5rem 1rem;
-        background: color-mix(in oklab, var(--color-base-100) 95%, transparent);
-        backdrop-filter: blur(12px);
-        border-bottom: 1px solid color-mix(in oklab, var(--color-base-300) 70%, transparent);
-    }
-    .ezdistro-subnav-section {
-        display: contents;
-    }
-    .ezdistro-subnav-group {
-        display: none;
-    }
-    .ezdistro-subnav-link {
-        @apply relative whitespace-nowrap rounded-lg px-2.5 py-1.5 text-sm font-medium;
-        color: color-mix(in oklab, var(--color-base-content) 65%, transparent);
-        transition: color 0.15s ease, background-color 0.15s ease;
-    }
-    .ezdistro-subnav-link:hover {
-        background: var(--color-base-200);
-        color: var(--color-base-content);
-    }
-    .ezdistro-subnav-link.is-active {
-        color: var(--color-primary);
-    }
-    @media (min-width: 1024px) {
-        .ezdistro-project-layout {
-            display: grid;
-            grid-template-columns: 13rem minmax(0, 1fr);
-            gap: 2.5rem;
-            align-items: start;
-        }
-        .ezdistro-subnav {
-            position: sticky;
-            top: 1rem;
-            display: block;
-            overflow: visible;
-            margin-inline: 0;
-            padding: 0;
-            background: transparent;
-            backdrop-filter: none;
-            border-bottom: 0;
-        }
-        .ezdistro-subnav-section {
-            display: block;
-        }
-        .ezdistro-subnav-group {
-            display: block;
-            padding: 1rem 0.6rem 0.35rem;
-            font-family: var(--font-mono);
-            font-size: 0.65rem;
-            letter-spacing: 0.073em;
-            text-transform: uppercase;
-            color: color-mix(in oklab, var(--color-base-content) 45%, transparent);
-        }
-        .ezdistro-subnav-section:first-child .ezdistro-subnav-group {
-            padding-top: 0.1rem;
-        }
-        .ezdistro-subnav-link {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            border-radius: 8px;
-            padding: 0.45rem 0.6rem;
-        }
-        .ezdistro-subnav-link.is-active {
-            background: color-mix(in oklab, var(--color-primary) 10%, transparent);
-        }
-        .ezdistro-subnav-link.is-active::before {
-            content: "";
-            position: absolute;
-            inset-inline-start: 0;
-            top: 0.45rem;
-            bottom: 0.45rem;
-            width: 2px;
-            border-radius: 2px;
-            background: var(--color-primary);
-        }
-    }
-
-    /* ── Back-compat aliases: thin wrappers over DaisyUI ──
-       Existing templates keep working; new code should use
-       card / card-title / stat directly (see DESIGN.md). */
-    .ezdistro-panel {
-        @apply card border border-base-300 bg-base-100 min-w-0;
-    }
-    .ezdistro-panel-head {
-        @apply flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3;
-    }
-    .ezdistro-panel-title {
-        @apply font-mono text-xs font-normal uppercase text-base-content/55;
-        letter-spacing: 0.073em;
-    }
-    .ezdistro-metric {
-        @apply stat border border-base-300 bg-base-100 p-4 min-w-0;
-    }
-    .ezdistro-metric-label {
-        @apply stat-title font-mono text-xs font-normal uppercase;
-        letter-spacing: 0.073em;
-    }
-    .ezdistro-metric-value {
-        @apply stat-value text-[2rem] font-black leading-none tracking-[-0.04em] tabular-nums;
-    }
-    .ezdistro-metric-swatch {
-        @apply size-2.5 rounded-full;
-    }
-    .ezdistro-empty {
-        @apply flex flex-col items-center justify-center gap-3 py-12 text-center;
-    }
-    .ezdistro-empty-icon {
-        @apply grid size-14 place-items-center rounded-lg bg-base-200 text-base-content/40;
-    }
-    .ezdistro-kv {
-        @apply grid grid-cols-2 gap-2;
-    }
-    .ezdistro-kv > div {
-        @apply rounded-lg border border-base-300/70 bg-base-200/40 p-2.5 min-w-0;
-    }
-    .ezdistro-kv .k {
-        @apply block text-[0.7rem] text-base-content/50;
-    }
-    .ezdistro-kv .v {
-        @apply block font-bold text-base-content break-words;
-    }
-    .ezdistro-toast {
-        @apply pointer-events-auto flex min-w-0 items-center gap-3 rounded-lg border border-base-300/70 bg-base-100 px-4 py-3 text-base-content max-w-sm w-full;
-    }
-    .ezdistro-toast .ezdistro-toast-ico {
-        @apply grid size-7 shrink-0 place-items-center rounded-lg border border-base-300/70;
-    }
-    .ezdistro-toast-info .ezdistro-toast-ico { @apply bg-info/15 text-info; }
-    .ezdistro-toast-success .ezdistro-toast-ico { @apply bg-success/15 text-success; }
-    .ezdistro-toast-error .ezdistro-toast-ico { @apply bg-error/15 text-error; }
-    .ezdistro-toast-warning .ezdistro-toast-ico { @apply bg-warning/15 text-warning; }
-
-    /* Pipeline rail — the one bespoke data visual DaisyUI cannot provide. */
-    .ezdistro-rail-track {
-        @apply relative grid grid-cols-2;
-        background: color-mix(in oklab, var(--color-base-300) 70%, transparent);
-        gap: 1px;
-    }
-    .ezdistro-rail-stage {
-        @apply relative flex min-w-0 flex-col gap-2 bg-base-100 px-4 pt-4 pb-4;
-    }
-    .ezdistro-rail-line {
-        position: absolute;
-        top: 1.35rem;
-        inset-inline: 0;
-        height: 1px;
-        background: color-mix(in oklab, var(--color-base-300) 70%, transparent);
-        z-index: 0;
-    }
-    .ezdistro-rail-node {
-        @apply relative z-[1] size-2.5 shrink-0 self-start rounded-full ring-4 ring-base-100;
-    }
-    .ezdistro-rail-label {
-        @apply truncate font-mono text-xs font-normal uppercase text-base-content/55;
-        letter-spacing: 0.073em;
-    }
-    .ezdistro-rail-num {
-        @apply text-[2rem] font-black leading-none tracking-[-0.04em] tabular-nums;
-    }
-    .ezdistro-rail-bar {
-        @apply h-1.5 w-full overflow-hidden rounded-full bg-base-200;
-    }
-    .ezdistro-rail-bar > i {
-        @apply block h-full rounded-full transition-[width] duration-700 ease-out;
-    }
-    @media (prefers-reduced-motion: no-preference) {
-        .ezdistro-rail-node-live {
-            animation: ezdistro-breathe 2.6s ease-in-out infinite;
-        }
-    }
-    @keyframes ezdistro-breathe {
-        0%, 100% {
-            box-shadow: 0 0 0 4px var(--color-base-100),
-                0 0 0 6px color-mix(in oklab, var(--color-primary) 45%, transparent);
-        }
-        50% {
-            box-shadow: 0 0 0 4px var(--color-base-100),
-                0 0 0 11px color-mix(in oklab, var(--color-primary) 0%, transparent);
-        }
-    }
-    @media (min-width: 640px) {
-        .ezdistro-rail-track {
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-        }
-    }
-
-    /* Activity sparkline — pure CSS bars over server counts. */
-    .ezdistro-spark {
-        @apply flex items-end gap-1 tabular-nums;
-        height: 3.5rem;
-    }
-    .ezdistro-spark > i {
-        @apply block min-h-1 min-w-2 flex-1 rounded-[2px] bg-base-300;
-    }
-    .ezdistro-spark > i.is-blue {
-        @apply bg-primary;
-    }
-    .ezdistro-spark > i.is-green {
-        @apply bg-accent;
-    }
-
-    .ezdistro-scroll-x {
-        scrollbar-width: none;
-        -ms-overflow-style: none;
-    }
-    .ezdistro-scroll-x::-webkit-scrollbar {
-        display: none;
-    }
 }
 
-@layer utilities {
-    .num {
-        font-variant-numeric: tabular-nums;
-    }
-    :is(input[type='number'], input[type='date'], input[type='time'], input[type='datetime-local'], input[type='tel']) {
-        direction: ltr;
-        text-align: left;
-    }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-    html.theme-switching,
-    html.theme-switching *,
-    html.theme-switching *::before,
-    html.theme-switching *::after {
-        transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease,
-            fill 0.25s ease, stroke 0.25s ease !important;
-    }
-}
-
-/* Unlayered: DaisyUI's .table layer beats Tailwind's .hidden layer,
-   so `hidden sm:table` alone never hides the table on mobile. */
+/* Tailwind emits `.table{display:table}` after `.hidden{display:none}`, so
+   `hidden sm:table` alone never hides a table on mobile. */
 .table.hidden {
     display: none;
 }
@@ -591,43 +174,13 @@ details[open] > summary .ezdistro-disclosure-chev {
     }
 }
 
-@media (max-width: 48rem) {
-    .ezdistro-mobile-header .dropdown {
-        position: static;
-    }
-    .ezdistro-mobile-header .dropdown-content {
-        position: absolute;
-        inset-inline: 1rem;
-        inset-block-start: calc(100% + 0.5rem);
-        inset-block-end: auto;
-        width: auto;
-        max-width: none;
-        max-height: min(60vh, 24rem);
-        overflow: auto;
-        z-index: 60;
-    }
-    .ezdistro-mobile-header .dropdown-content :is(input, select, textarea, label, button) {
-        font-size: 1rem;
-    }
-}
-
-@media (max-width: 48rem) {
-    html,
-    body {
-        overflow-x: clip;
-    }
-    .tooltip {
-        overflow: visible;
-    }
-    .tooltip::before,
-    .tooltip::after {
-        white-space: normal;
-        width: max-content;
-        max-width: min(70vw, 260px);
-        text-wrap: balance;
-    }
-    .tooltip-top::before {
-        left: 50%;
-        transform: translateX(-50%);
+/* theme.js stamps .theme-switching for one frame so colours cross-fade. */
+@media (prefers-reduced-motion: no-preference) {
+    html.theme-switching,
+    html.theme-switching *,
+    html.theme-switching *::before,
+    html.theme-switching *::after {
+        transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease,
+            fill 0.25s ease, stroke 0.25s ease !important;
     }
 }

@@ -26,9 +26,9 @@
 
     {# ── Type picker ─────────────────────────────────────────────────── #}
     <div class="flex flex-wrap items-end gap-3">
-        <label class="form-control w-full sm:w-80">
-            <span class="label px-0 pb-1.5"><span class="label-text text-xs font-medium">{{ ('Prompt type') }}</span></span>
-            <select name="ptype" class="select select-sm select-bordered w-full"
+        <label class="flex flex-col gap-1 min-w-0 w-full sm:w-80">
+            <span class="label px-0 pb-1.5"><span class="truncate text-xs font-medium">{{ ('Prompt type') }}</span></span>
+            <select name="ptype" class="select select-sm w-full"
                     hx-get="/projects/{{ project.id }}/tabs/prompts"
                     hx-target="#tab-content"
                     hx-swap="innerHTML"
@@ -50,11 +50,11 @@
     </div>
 
     {# ── Editor for the selected type ────────────────────────────────── #}
-    <section class="ezdistro-panel">
-        <div class="ezdistro-panel-head">
-            <h2 class="ezdistro-panel-title">{{ prompt_types.get(active_ptype, active_ptype) }}</h2>
+    <section class="card border border-base-300 bg-base-100 min-w-0">
+        <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
+            <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ prompt_types.get(active_ptype, active_ptype) }}</h2>
             {% if versions|length > 1 %}
-            <span class="text-xs opacity-50 tabular">{{ versions|length }} {{ ('versions') }}</span>
+            <span class="text-xs opacity-50 tabular-nums">{{ versions|length }} {{ ('versions') }}</span>
             {% endif %}
         </div>
 
@@ -77,16 +77,16 @@
                 <form hx-post="/projects/{{ project.id }}/prompts/test" hx-target="#test-result-{{ active_ptype }}" hx-swap="innerHTML" class="mt-3 grid grid-cols-1 sm:grid-cols-4 gap-4">
                     <input type="hidden" name="ptype" value="{{ active_ptype }}" />
                     <input type="hidden" name="content" value="{{ active.content if active else '' }}" />
-                    <label class="form-control col-span-2">
-                        <span class="label px-0 pb-1.5"><span class="label-text text-xs font-medium">{{ ('Topic') }}</span></span>
-                        <select name="topic_id" class="select select-bordered w-full select-sm">
+                    <label class="flex flex-col gap-1 min-w-0 col-span-2">
+                        <span class="label px-0 pb-1.5"><span class="truncate text-xs font-medium">{{ ('Topic') }}</span></span>
+                        <select name="topic_id" class="select w-full select-sm">
                             <option value="">{{ ('— No topic —') }}</option>
                             {% for t in topics %}<option value="{{ t.id }}">{{ t.title }}</option>{% endfor %}
                         </select>
                     </label>
-                    <label class="form-control">
-                        <span class="label px-0 pb-1.5"><span class="label-text text-xs font-medium">{{ ('Model role') }}</span></span>
-                        <select name="model_role" class="select select-bordered w-full select-sm">
+                    <label class="flex flex-col gap-1 min-w-0">
+                        <span class="label px-0 pb-1.5"><span class="truncate text-xs font-medium">{{ ('Model role') }}</span></span>
+                        <select name="model_role" class="select w-full select-sm">
                             <option value="outline">Outline</option>
                             <option value="section">Section</option>
                             <option value="meta">Meta</option>
@@ -162,10 +162,10 @@
     </section>
 
     {# Variables reference #}
-    <details class="ezdistro-panel">
-        <summary class="ezdistro-panel-head cursor-pointer select-none">
-            <span class="ezdistro-panel-title">{{ ('Available variables') }}</span>
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="ezdistro-disclosure-chev ms-auto size-4 shrink-0"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
+    <details class="card group border border-base-300 bg-base-100 min-w-0">
+        <summary class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3 cursor-pointer select-none">
+            <span class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Available variables') }}</span>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="transition-transform group-open:rotate-180 ms-auto size-4 shrink-0"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
         </summary>
         <div class="p-4 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs">
             {% for name, desc in variables.items() %}

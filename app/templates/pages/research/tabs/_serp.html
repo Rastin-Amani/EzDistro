@@ -10,8 +10,8 @@
       </span>
     </div>
     <div class="grid gap-3 sm:grid-cols-2">
-      <div class="ezdistro-panel p-4">
-        <div class="ezdistro-panel-title mb-2">Still available</div>
+      <div class="card border border-base-300 bg-base-100 min-w-0 p-4">
+        <div class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55 mb-2">Still available</div>
         <ul class="text-sm space-y-1.5 opacity-80">
           <li class="flex items-center gap-2"><span class="size-1.5 shrink-0 rounded-full bg-success" aria-hidden="true"></span>Search demand</li>
           <li class="flex items-center gap-2"><span class="size-1.5 shrink-0 rounded-full bg-success" aria-hidden="true"></span>Keyword universe</li>
@@ -19,8 +19,8 @@
           <li class="flex items-center gap-2"><span class="size-1.5 shrink-0 rounded-full bg-success" aria-hidden="true"></span>Competitor content</li>
         </ul>
       </div>
-      <div class="ezdistro-panel p-4">
-        <div class="ezdistro-panel-title mb-2">Also available</div>
+      <div class="card border border-base-300 bg-base-100 min-w-0 p-4">
+        <div class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55 mb-2">Also available</div>
         <ul class="text-sm space-y-1.5 opacity-80">
           <li class="flex items-center gap-2"><span class="size-1.5 shrink-0 rounded-full bg-success" aria-hidden="true"></span>Content gaps</li>
           <li class="flex items-center gap-2"><span class="size-1.5 shrink-0 rounded-full bg-success" aria-hidden="true"></span>Semantic clusters</li>
@@ -55,7 +55,7 @@
           <tr>
             <td class="text-sm">{{ row.keyword }}</td>
             <td class="text-xs opacity-60">{{ row.provider }}</td>
-            <td class="text-end text-xs tabular">{{ row.resultCount|loc_int }}</td>
+            <td class="text-end text-xs tabular-nums">{{ row.resultCount|loc_int }}</td>
             <td class="text-xs opacity-60">{{ row.observedAt|loc_dt }}</td>
             <td class="text-end">
               <button class="btn btn-xs btn-ghost"

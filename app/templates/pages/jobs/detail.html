@@ -29,21 +29,21 @@
 <div class="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-4 items-start">
     <!-- Meta -->
     <aside class="flex flex-col gap-4">
-        <div class="ezdistro-panel">
-            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ ('Details') }}</h2></div>
+        <div class="card border border-base-300 bg-base-100 min-w-0">
+            <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3"><h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Details') }}</h2></div>
             <div class="p-4 text-xs flex flex-col gap-1.5">
                 <div class="flex justify-between gap-2"><span class="opacity-50">{{ ('ID') }}</span><span class="font-mono truncate" dir="ltr">{{ job.id }}</span></div>
                 <div class="flex justify-between"><span class="opacity-50">{{ ('Type') }}</span><span>{{ job.type }}</span></div>
                 <div class="flex justify-between gap-2"><span class="opacity-50">{{ ('Entity') }}</span><span class="truncate"><span class="opacity-60">{{ job.entityType or '—' }}</span> <code class="font-mono">{{ job.entityId or '—' }}</code></span></div>
                 <div class="flex justify-between"><span class="opacity-50">{{ ('Project') }}</span><span class="font-mono">{{ job.project[:8] }}{% if project %} — {{ project.name }}{% endif %}</span></div>
                 <div class="flex justify-between"><span class="opacity-50">{{ ('Status') }}</span><span>{{ job.status|status_label }}</span></div>
-                <div class="flex justify-between"><span class="opacity-50">{{ ('Attempts') }}</span><span class="tabular">{{ job.attempts or 0 }}/{{ job.maxAttempts or 3 }}</span></div>
-                <div class="flex justify-between"><span class="opacity-50">{{ ('Priority') }}</span><span class="tabular">{{ job.priority or 0 }}</span></div>
+                <div class="flex justify-between"><span class="opacity-50">{{ ('Attempts') }}</span><span class="tabular-nums">{{ job.attempts or 0 }}/{{ job.maxAttempts or 3 }}</span></div>
+                <div class="flex justify-between"><span class="opacity-50">{{ ('Priority') }}</span><span class="tabular-nums">{{ job.priority or 0 }}</span></div>
             </div>
         </div>
 
-        <div class="ezdistro-panel">
-            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ ('Schedule') }}</h2></div>
+        <div class="card border border-base-300 bg-base-100 min-w-0">
+            <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3"><h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Schedule') }}</h2></div>
             <div class="p-4 text-xs flex flex-col gap-1.5">
                 <div class="flex justify-between"><span class="opacity-50">{{ ('Created') }}</span><span>{{ job.created|loc_dt }}</span></div>
                 <div class="flex justify-between"><span class="opacity-50">{{ ('Started') }}</span><span>{{ job.startedAt|loc_dt if job.startedAt else '—' }}</span></div>
@@ -53,18 +53,18 @@
             </div>
         </div>
 
-        <div class="ezdistro-panel">
-            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ ('Progress') }}</h2></div>
+        <div class="card border border-base-300 bg-base-100 min-w-0">
+            <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3"><h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Progress') }}</h2></div>
             <div class="p-4 text-xs flex flex-col gap-2">
                 <progress class="progress progress-primary w-full" value="{{ job.progress or 0 }}" max="100"></progress>
-                <p class="text-center font-bold tabular">{{ ('%(n)s%%') % {'n': job.progress or 0} }}</p>
+                <p class="text-center font-bold tabular-nums">{{ ('%(n)s%%') % {'n': job.progress or 0} }}</p>
                 {% if job.stage %}<p class="opacity-60" dir="ltr">{{ job.stage }}</p>{% endif %}
                 {% if job.progressMessage %}<p class="opacity-70">{{ job.progressMessage }}</p>{% endif %}
             </div>
         </div>
 
-        <div class="ezdistro-panel">
-            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ ('Run') }}</h2></div>
+        <div class="card border border-base-300 bg-base-100 min-w-0">
+            <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3"><h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Run') }}</h2></div>
             <div class="p-4 text-xs flex flex-col gap-1.5">
                 <div class="flex justify-between gap-2"><span class="opacity-50">{{ ('Worker') }}</span><span class="font-mono" dir="ltr">{{ job.lockedBy or '—' }}</span></div>
                 <div class="flex justify-between"><span class="opacity-50">{{ ('Locked by') }}</span><span>{{ job.lockedAt|loc_dt if job.lockedAt else '—' }}</span></div>
@@ -74,8 +74,8 @@
         </div>
 
         {% if job.errorCode %}
-        <div class="ezdistro-panel border-error/40">
-            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title text-error">{{ ('Error') }}</h2></div>
+        <div class="card border border-base-300 bg-base-100 min-w-0 border-error/40">
+            <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3"><h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55 text-error">{{ ('Error') }}</h2></div>
             <div class="p-4 text-xs flex flex-col gap-2">
                 <p><span class="font-mono text-error" dir="ltr">{{ job.errorCode }}</span></p>
                 <p class="opacity-80">{{ job.errorMessage }}</p>
@@ -91,9 +91,9 @@
     </aside>
 
     <!-- Timeline -->
-    <section class="ezdistro-panel"
+    <section class="card border border-base-300 bg-base-100 min-w-0"
              {% if active %}hx-get="/jobs/{{ job.id }}/events" hx-trigger="every 5s" hx-target="#job-timeline" hx-swap="outerHTML"{% endif %}>
-        <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ ('Timeline') }}</h2></div>
+        <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3"><h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Timeline') }}</h2></div>
         <div class="p-4">
             {% include "pages/jobs/_timeline.html" %}
         </div>

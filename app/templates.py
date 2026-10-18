@@ -20,9 +20,37 @@ def _hx_partial(request):
     return {"partial": request.headers.get("HX-Request") == "true"}
 
 
+def _has_projects(request):
+    """Does the current user have any project at all?
+
+    Drives the sidebar's "Start here → New project" hint, which only makes
+    sense before the first project. Skipped for HTMX requests (those render a
+    page fragment, never the shell) and returns nothing when the request has
+    no PocketBase client, so the template can tell "unknown" from "zero".
+    """
+    if request.headers.get("HX-Request") == "true":
+        return {}
+    pb = getattr(request.state, "pb", None)
+    user = getattr(request.state, "user", None)
+    if pb is None or not user:
+        return {}
+
+    from app.repositories.members import MemberRepo
+    from app.repositories.projects import ProjectRepo
+
+    try:
+        if user.get("role") == "admin":
+            total = ProjectRepo(pb).count()
+        else:
+            total = MemberRepo(pb).count(filter=f'user="{user.get("id", "")}"')
+    except Exception:  # noqa: BLE001 - a sidebar hint must never break a page
+        return {}
+    return {"has_projects": total > 0}
+
+
 templates = Jinja2Templates(
     directory=os.path.join(BASE_DIR, "templates"),
-    context_processors=[_hx_partial],
+    context_processors=[_hx_partial, _has_projects],
 )
 
 

@@ -9,9 +9,9 @@
 
     <form hx-post="/projects/{{ project.id }}/settings/images" hx-swap="none" class="flex flex-col gap-4">
 
-        <div class="ezdistro-panel">
+        <div class="card border border-base-300 bg-base-100 min-w-0">
 
-            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ ('Image generation models') }}</h2></div>
+            <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3"><h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Image generation models') }}</h2></div>
 
             <div class="p-4 flex flex-col gap-4">
 
@@ -21,11 +21,11 @@
 
                     {% set cover_sel = (cover_opts | selectattr('selected') | first) if cover_opts else none %}
 
-                    <label class="form-control w-full">
+                    <label class="flex flex-col gap-1 min-w-0 w-full">
 
-                        <div class="label px-0 pb-1.5"><span class="label-text font-medium text-sm text-base-content/80">{{ ('Cover provider') }}</span></div>
+                        <div class="label px-0 pb-1.5"><span class="truncate font-medium text-sm text-base-content/80">{{ ('Cover provider') }}</span></div>
 
-                        <select name="image_cover_provider" class="select select-bordered w-full" data-provider-model="#image_cover_model">
+                        <select name="image_cover_provider" class="select w-full" data-provider-model="#image_cover_model">
 
                             <option value="">{{ ('— Select a connection —') }}</option>
 
@@ -41,11 +41,11 @@
 
                     </label>
 
-                    <label class="form-control w-full">
+                    <label class="flex flex-col gap-1 min-w-0 w-full">
 
-                        <div class="label px-0 pb-1.5"><span class="label-text font-medium text-sm text-base-content/80">{{ ('Cover model') }}</span></div>
+                        <div class="label px-0 pb-1.5"><span class="truncate font-medium text-sm text-base-content/80">{{ ('Cover model') }}</span></div>
 
-                        <input id="image_cover_model" name="image_cover_model" class="input input-bordered w-full" dir="ltr" value="{{ settings.imageCoverModel or (cover_sel.model if cover_sel else '') }}" placeholder="gemini-3-pro-image" />
+                        <input id="image_cover_model" name="image_cover_model" class="input w-full" dir="ltr" value="{{ settings.imageCoverModel or (cover_sel.model if cover_sel else '') }}" placeholder="gemini-3-pro-image" />
 
                     </label>
 
@@ -55,11 +55,11 @@
 
                     {% set interior_sel = (interior_opts | selectattr('selected') | first) if interior_opts else none %}
 
-                    <label class="form-control w-full">
+                    <label class="flex flex-col gap-1 min-w-0 w-full">
 
-                        <div class="label px-0 pb-1.5"><span class="label-text font-medium text-sm text-base-content/80">{{ ('In-text image provider') }}</span></div>
+                        <div class="label px-0 pb-1.5"><span class="truncate font-medium text-sm text-base-content/80">{{ ('In-text image provider') }}</span></div>
 
-                        <select name="image_interior_provider" class="select select-bordered w-full" data-provider-model="#image_interior_model">
+                        <select name="image_interior_provider" class="select w-full" data-provider-model="#image_interior_model">
 
                             <option value="">{{ ('— Select a connection —') }}</option>
 
@@ -75,11 +75,11 @@
 
                     </label>
 
-                    <label class="form-control w-full">
+                    <label class="flex flex-col gap-1 min-w-0 w-full">
 
-                        <div class="label px-0 pb-1.5"><span class="label-text font-medium text-sm text-base-content/80">{{ ('In-text image model') }}</span></div>
+                        <div class="label px-0 pb-1.5"><span class="truncate font-medium text-sm text-base-content/80">{{ ('In-text image model') }}</span></div>
 
-                        <input id="image_interior_model" name="image_interior_model" class="input input-bordered w-full" dir="ltr" value="{{ settings.imageInteriorModel or (interior_sel.model if interior_sel else '') }}" placeholder="flux-2-klein-9b" />
+                        <input id="image_interior_model" name="image_interior_model" class="input w-full" dir="ltr" value="{{ settings.imageInteriorModel or (interior_sel.model if interior_sel else '') }}" placeholder="flux-2-klein-9b" />
 
                     </label>
 
@@ -87,11 +87,11 @@
 
                     {% set fallback_opts = image_role_options.imageFallbackProvider %}
 
-                    <label class="form-control w-full">
+                    <label class="flex flex-col gap-1 min-w-0 w-full">
 
-                        <div class="label px-0 pb-1.5"><span class="label-text font-medium text-sm text-base-content/80">{{ ('Fallback provider (optional)') }}</span></div>
+                        <div class="label px-0 pb-1.5"><span class="truncate font-medium text-sm text-base-content/80">{{ ('Fallback provider (optional)') }}</span></div>
 
-                        <select name="image_fallback_provider" class="select select-bordered w-full" data-provider-model="#image_fallback_model">
+                        <select name="image_fallback_provider" class="select w-full" data-provider-model="#image_fallback_model">
 
                             <option value="">{{ ('No fallback') }}</option>
 
@@ -105,11 +105,11 @@
 
                     </label>
 
-                    <label class="form-control w-full">
+                    <label class="flex flex-col gap-1 min-w-0 w-full">
 
-                        <div class="label px-0 pb-1.5"><span class="label-text font-medium text-sm text-base-content/80">{{ ('Fallback model') }}</span></div>
+                        <div class="label px-0 pb-1.5"><span class="truncate font-medium text-sm text-base-content/80">{{ ('Fallback model') }}</span></div>
 
-                        <input id="image_fallback_model" name="image_fallback_model" class="input input-bordered w-full" dir="ltr" value="{{ settings.imageFallbackModel or '' }}" placeholder="{{ ('Empty = no fallback') }}" />
+                        <input id="image_fallback_model" name="image_fallback_model" class="input w-full" dir="ltr" value="{{ settings.imageFallbackModel or '' }}" placeholder="{{ ('Empty = no fallback') }}" />
 
                     </label>
 
@@ -149,15 +149,15 @@
 
         </div>
 
-        <details class="ezdistro-panel">
+        <details class="card group border border-base-300 bg-base-100 min-w-0">
 
-            <summary class="ezdistro-panel-head cursor-pointer select-none">
+            <summary class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3 cursor-pointer select-none">
 
-                <h2 class="ezdistro-panel-title">{{ ('Visual style profile') }}</h2>
+                <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Visual style profile') }}</h2>
 
                 <span class="truncate text-xs opacity-50">{{ ('Added to every image prompt') }}</span>
 
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="ezdistro-disclosure-chev ms-auto size-4 shrink-0"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="transition-transform group-open:rotate-180 ms-auto size-4 shrink-0"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
 
             </summary>
 

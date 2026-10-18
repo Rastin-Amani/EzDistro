@@ -4,13 +4,13 @@
 
 <div id="retrieval-tab" class="flex flex-col gap-4 w-full">
 
-    <div class="ezdistro-panel">
+    <div class="card border border-base-300 bg-base-100 min-w-0">
 
-        <div class="ezdistro-panel-head">
+        <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
 
             <div class="flex items-center gap-2">
 
-                <h2 class="ezdistro-panel-title">{{ ('Retrieval diagnostics') }}</h2>
+                <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Retrieval diagnostics') }}</h2>
 
                 {{ f.tip(('Enter a query to run the real retrieval path (embedding → Qdrant search → optional rerank) and inspect the result.')) }}
 

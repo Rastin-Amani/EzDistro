@@ -6,8 +6,8 @@
      hx-swap="outerHTML">
     {{ f.section_head(('Jobs'), ('Running jobs and history.')) }}
     {% if jobs %}
-    <div class="ezdistro-panel">
-        <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ ('Jobs') }}</h2></div>
+    <div class="card border border-base-300 bg-base-100 min-w-0">
+        <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3"><h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Jobs') }}</h2></div>
         <div class="overflow-x-auto">
             <table class="table table-sm">
                 <thead>
@@ -58,7 +58,7 @@
         </div>
     </div>
     {% else %}
-    <div class="ezdistro-panel">
+    <div class="card border border-base-300 bg-base-100 min-w-0">
         <div class="p-4 flex flex-col items-center gap-3 py-8 text-center">
             <p class="text-sm opacity-50">{{ ('No jobs.') }}</p>
         </div>

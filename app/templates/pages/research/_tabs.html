@@ -4,7 +4,7 @@
   'keywords': 'Keywords', 'serp': 'SERP', 'competitors': 'Competitors',
   'clusters': 'Clusters', 'gaps': 'Content gaps', 'opportunities': 'Opportunities'
 } %}
-<nav id="research-tabs" class="tabs tabs-box tabs-sm ezdistro-scroll-x overflow-x-auto flex-nowrap"
+<nav id="research-tabs" class="tabs tabs-box tabs-sm [scrollbar-width:none] [&::-webkit-scrollbar]:hidden overflow-x-auto flex-nowrap"
      {% if oob %}hx-swap-oob="outerHTML:#research-tabs"{% endif %}>
   {% for tab in tabs %}
     <a href="?tab={{ tab }}" data-tab="{{ tab }}"

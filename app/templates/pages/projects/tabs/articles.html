@@ -4,7 +4,7 @@
     {% if articles %}
     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
         {% for a in articles %}
-        <a href="/projects/{{ project.id }}/articles/{{ a.id }}/workspace" class="ezdistro-panel hover:border-primary/40 transition-colors block">
+        <a href="/projects/{{ project.id }}/articles/{{ a.id }}/workspace" class="card border border-base-300 bg-base-100 min-w-0 hover:border-primary/40 transition-colors block">
             <div class="p-4 flex flex-col gap-2">
                 <div class="flex items-center justify-between gap-2">
                     <h3 class="font-bold text-sm truncate">{{ a.title }}</h3>
@@ -12,7 +12,7 @@
                 </div>
                 <div class="flex items-center gap-3 text-xs opacity-50">
                     <span>{{ ('%(n)s words') % {'n': a.wordCount or 0} }}</span>
-                    {% if a.wpUrl %}<span class="truncate" dir="ltr">{{ a.wpUrl }}</span>{% endif %}
+                    {% if a.wordpressUrl %}<span class="truncate" dir="ltr">{{ a.wordpressUrl }}</span>{% endif %}
                     <span>{{ a.updated|loc_dt }}</span>
                 </div>
             </div>
@@ -20,7 +20,7 @@
         {% endfor %}
     </div>
     {% else %}
-    <div class="ezdistro-panel">
+    <div class="card border border-base-300 bg-base-100 min-w-0">
         <div class="p-4 flex flex-col items-center gap-3 py-8 text-center">
             <p class="text-sm opacity-50">{{ ('No articles generated yet. Pick a topic from the “Topics” tab.') }}</p>
         </div>

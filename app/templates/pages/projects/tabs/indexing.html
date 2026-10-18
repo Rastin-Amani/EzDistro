@@ -37,11 +37,11 @@
 
         {% if provider_metrics %}
 
-        <details class="ezdistro-panel">
+        <details class="card group border border-base-300 bg-base-100 min-w-0">
 
-            <summary class="ezdistro-panel-head cursor-pointer">
+            <summary class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3 cursor-pointer">
 
-                <span class="ezdistro-panel-title">{{ ('Provider metrics') }}</span>
+                <span class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Provider metrics') }}</span>
 
             </summary>
 
@@ -91,21 +91,21 @@
 
         {% if runs %}
 
-        <div class="ezdistro-panel">
+        <div class="card border border-base-300 bg-base-100 min-w-0">
 
-            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ ('Indexing runs') }}</h2><span class="text-xs opacity-60">{{ runs|length }} {{ ('runs') }}</span></div>
+            <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3"><h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Indexing runs') }}</h2><span class="text-xs opacity-60">{{ runs|length }} {{ ('runs') }}</span></div>
 
             {% set recent_runs = runs[:7]|reverse|list %}
             {% set ns = namespace(vals=[]) %}
             {% for r in recent_runs %}{% set ns.vals = ns.vals + [(r.indexedDocuments or 0)] %}{% endfor %}
             {% set rmax = ns.vals|max if ns.vals else 0 %}
             <div class="px-4 pt-3">
-                <p class="ezdistro-panel-title mb-2">{{ ('Recent output') }}</p>
-                <div class="ezdistro-spark" role="img" aria-label="{{ ('Indexed documents per recent run') }}">
+                <p class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55 mb-2">{{ ('Recent output') }}</p>
+                <div class="flex h-14 items-end gap-1 tabular-nums" role="img" aria-label="{{ ('Indexed documents per recent run') }}">
                     {% for r in recent_runs %}
                     {% set v = r.indexedDocuments or 0 %}
                     {% set h = (v / rmax * 100)|round|int if rmax else 0 %}
-                    <i class="{{ 'is-green' if r.status == 'completed' else ('is-blue' if r.status == 'running' else '') }}" style="height: {{ h if h >= 8 else (8 if v else 3) }}%" title="{{ r.startedAt|loc_dt }}: {{ v }}"></i>
+                    <i class="block min-h-1 min-w-2 flex-1 rounded-[2px] {{ 'bg-accent' if r.status == 'completed' else ('bg-primary' if r.status == 'running' else 'bg-base-300') }}" style="height: {{ h if h >= 8 else (8 if v else 3) }}%" title="{{ r.startedAt|loc_dt }}: {{ v }}"></i>
                     {% endfor %}
                 </div>
             </div>
@@ -204,9 +204,9 @@
 
         {% if documents %}
 
-        <div class="ezdistro-panel">
+        <div class="card border border-base-300 bg-base-100 min-w-0">
 
-            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ ('Recent documents') }}</h2><span class="text-xs opacity-60">{{ indexed_count }} {{ ('indexed') }}</span></div>
+            <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3"><h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Recent documents') }}</h2><span class="text-xs opacity-60">{{ indexed_count }} {{ ('indexed') }}</span></div>
 
             <div class="overflow-x-auto">
 

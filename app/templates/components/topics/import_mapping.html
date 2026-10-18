@@ -30,7 +30,7 @@
 
     {% if data_preview %}
 
-    <div class="ezdistro-panel">
+    <div class="card border border-base-300 bg-base-100 min-w-0">
 
         <div class="overflow-x-auto p-4">
 
@@ -98,9 +98,9 @@
 
             {% for field in fields %}
 
-            <label class="form-control w-full">
+            <label class="flex flex-col gap-1 min-w-0 w-full">
 
-                <span class="label-text text-xs font-medium">{{ field_labels.get(field, field) }}</span>
+                <span class="truncate text-xs font-medium">{{ field_labels.get(field, field) }}</span>
 
                 <select name="col_{{ field }}" class="select select-sm w-full">
 

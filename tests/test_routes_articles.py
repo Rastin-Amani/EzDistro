@@ -360,7 +360,7 @@ def test_workspace_generating_shows_progress_and_readonly():
     resp = call_route(W.article_workspace, req, proj_a["id"], article["id"])
     assert resp.status_code == 200
     body = resp.body.decode()
-    assert "Generating sections" in body
+    assert "Writing sections" in body
     assert "1 of 2 ready" in body
     assert "disabled" in body  # in-flight section editor is read-only
 

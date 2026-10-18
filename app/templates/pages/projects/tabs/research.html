@@ -20,11 +20,11 @@
         {% set ads_step = '?tab=integrations' %}
 
         {# ── Free path: expand seed keywords ───────────────────────────── #}
-        <details class="ezdistro-panel" open>
-            <summary class="ezdistro-panel-head cursor-pointer select-none">
-                <h2 class="ezdistro-panel-title">{{ ('Harvest from seed keywords') }}</h2>
+        <details class="card group border border-base-300 bg-base-100 min-w-0" open>
+            <summary class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3 cursor-pointer select-none">
+                <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Harvest from seed keywords') }}</h2>
                 <span class="text-xs opacity-50">{{ ('Free — builds the roadmap from your seeds') }}</span>
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="ezdistro-disclosure-chev ms-auto size-4 shrink-0"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="transition-transform group-open:rotate-180 ms-auto size-4 shrink-0"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
             </summary>
             <div class="p-4">
                 {% include "pages/projects/tabs/research_harvest.html" %}
@@ -32,11 +32,11 @@
         </details>
 
         {# ── No-API path: primary research option ──────────────────────── #}
-        <details class="ezdistro-panel">
-            <summary class="ezdistro-panel-head cursor-pointer select-none">
-                <h2 class="ezdistro-panel-title">{{ ('Research without Google Ads API') }}</h2>
+        <details class="card group border border-base-300 bg-base-100 min-w-0">
+            <summary class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3 cursor-pointer select-none">
+                <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Research without Google Ads API') }}</h2>
                 <span class="text-xs opacity-50">{{ ('Or bring your own keyword export') }}</span>
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="ezdistro-disclosure-chev ms-auto size-4 shrink-0"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="transition-transform group-open:rotate-180 ms-auto size-4 shrink-0"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
             </summary>
             <div class="p-4">
                 {% include "pages/projects/tabs/research_import.html" %}
@@ -45,9 +45,9 @@
 
 
         {# ── Google Ads setup (secondary option) ────────────────────────── #}
-        <details class="ezdistro-panel">
-            <summary class="ezdistro-panel-head cursor-pointer select-none">
-                <h2 class="ezdistro-panel-title">{{ ('Google Ads (keyword data)') }}</h2>
+        <details class="card group border border-base-300 bg-base-100 min-w-0">
+            <summary class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3 cursor-pointer select-none">
+                <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Google Ads (keyword data)') }}</h2>
                 {% if connections %}
                 <span class="badge badge-soft badge-success badge-sm">{{ ('Connected') }}</span>
                 {% elif google_ads_configured %}
@@ -55,7 +55,7 @@
                 {% else %}
                 <span class="badge badge-soft badge-neutral badge-sm">{{ ('Optional') }}</span>
                 {% endif %}
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="ezdistro-disclosure-chev ms-auto size-4 shrink-0"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="transition-transform group-open:rotate-180 ms-auto size-4 shrink-0"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
             </summary>
             <div class="flex flex-col gap-4 p-4">
                 <p class="text-xs opacity-60 leading-relaxed">
@@ -91,7 +91,7 @@
 
                 {% if customers %}
                 <div class="border-t border-base-300/60 pt-3">
-                    <p class="ezdistro-panel-title mb-2">{{ ('Accounts') }}</p>
+                    <p class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55 mb-2">{{ ('Accounts') }}</p>
                     <div class="overflow-x-auto">
                         <table class="table table-sm">
                             <thead><tr class="text-xs opacity-60"><th>{{ ('Account') }}</th><th>{{ ('Customer ID') }}</th><th class="hidden sm:table-cell">{{ ('Currency') }}</th><th class="hidden md:table-cell">{{ ('Time zone') }}</th><th></th></tr></thead>
@@ -124,16 +124,16 @@
         </details>
 
         {# ── Run research ──────────────────────────────────────────────── #}
-        <details class="ezdistro-panel">
-            <summary class="ezdistro-panel-head cursor-pointer select-none">
-                <h2 class="ezdistro-panel-title">{{ ('Run research') }}</h2>
+        <details class="card group border border-base-300 bg-base-100 min-w-0">
+            <summary class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3 cursor-pointer select-none">
+                <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Run research') }}</h2>
                 {% if not serp_configured %}
                 <span class="text-xs opacity-50">{{ ('SERP not configured — Google Ads + site intelligence mode') }}</span>
                 {% endif %}
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="ezdistro-disclosure-chev ms-auto size-4 shrink-0"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="transition-transform group-open:rotate-180 ms-auto size-4 shrink-0"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
             </summary>
             <form hx-post="/projects/{{ project.id }}/research/start" hx-swap="none" hx-target="#research-tab" class="flex flex-col gap-5 p-4">
-                <p class="ezdistro-panel-title">{{ ('Sources') }}</p>
+                <p class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Sources') }}</p>
                 <div class="grid gap-4 md:grid-cols-2">
                     <div class="md:col-span-2">{{ f.text('name', 'Research name', placeholder='Gym software — US', hint='Optional. Helps you find this run later.') }}</div>
                     <div class="md:col-span-2">{{ f.textarea('keywords', 'Seed keywords', rows=4, placeholder='gym management software\ngym CRM\nfitness studio software', hint='One keyword per line. These need a Google Ads connection.') }}</div>
@@ -183,10 +183,10 @@
         </details>
 
         {# ── Runs ──────────────────────────────────────────────────────── #}
-        <section class="ezdistro-panel">
-            <div class="ezdistro-panel-head">
-                <h2 class="ezdistro-panel-title">{{ ('Research runs') }}</h2>
-                <span class="text-xs opacity-60 tabular">{{ runs|length }}</span>
+        <section class="card border border-base-300 bg-base-100 min-w-0">
+            <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
+                <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Research runs') }}</h2>
+                <span class="text-xs opacity-60 tabular-nums">{{ runs|length }}</span>
             </div>
             {% if runs %}
             <div class="overflow-x-auto">
@@ -203,7 +203,7 @@
                             <td class="hidden text-xs opacity-60 sm:table-cell">{{ r.researchType or '—' }}</td>
                             <td><span class="badge {{ r.status|status_badge }}">{{ r.status|status_label }}</span></td>
                             <td class="hidden text-xs opacity-60 md:table-cell">{{ r.currentStage or '—' }}</td>
-                            <td class="hidden text-xs opacity-70 tabular md:table-cell">{{ r.progress|int }}%</td>
+                            <td class="hidden text-xs opacity-70 tabular-nums md:table-cell">{{ r.progress|int }}%</td>
                             <td class="hidden text-xs opacity-60 lg:table-cell">{{ r.created|loc_dt }}</td>
                             <td class="text-end"><a class="btn btn-xs btn-ghost" href="/projects/{{ project.id }}/research/{{ r.id }}">{{ ('Open') }}</a></td>
                         </tr>

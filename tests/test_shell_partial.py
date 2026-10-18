@@ -31,12 +31,14 @@ def test_htmx_request_renders_page_body_without_shell():
     assert "<!doctype" not in body
     assert "app.js" not in body
     assert "toast-container" not in body
-    assert "ezdistro-panel" in body
+    assert 'class="card border border-base-300 bg-base-100 min-w-0"' in body
 
 
 def test_plain_request_renders_full_shell():
     body = _render(hx=False)
-    assert '<aside class="ezdistro-sidebar"' in body
+    assert "<aside" in body
+    assert '<nav class="dock md:hidden"' in body
+    assert '<main id="main-content"' in body
     assert "<!doctype" in body
     assert "toast-container" in body
 

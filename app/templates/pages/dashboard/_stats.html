@@ -3,7 +3,7 @@
      hx-trigger="every 8s"
      hx-target="this"
      hx-swap="outerHTML" class="flex flex-col gap-4">
-    <section class="card border border-base-300 bg-base-100" aria-labelledby="content-pipeline-title">
+    <section class="card overflow-hidden border border-base-300 bg-base-100" aria-labelledby="content-pipeline-title">
         <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
             <h2 id="content-pipeline-title" class="font-mono text-xs font-normal uppercase text-base-content/55 tracking-[0.073em]">{{ ('Content pipeline') }}</h2>
             <a href="/projects" class="btn btn-ghost btn-sm">{{ ('View projects') }}</a>
@@ -19,17 +19,17 @@
             (('Published'), n_published, 'bg-accent', false),
         ] %}
         {% set maxv = [n_planned, n_writing, n_review, n_published]|max %}
-        <ol class="ezdistro-rail-track">
+        <ol class="grid grid-cols-2 gap-px bg-base-300/70 sm:grid-cols-4">
             {% for label, value, color, live in stages %}
-            <li class="ezdistro-rail-stage">
-                <span class="ezdistro-rail-line" aria-hidden="true"></span>
-                <span class="ezdistro-rail-node {{ color }}{{ ' ezdistro-rail-node-live' if live and value }}" aria-hidden="true"></span>
-                <span class="ezdistro-rail-label">{{ label }}</span>
-                <span class="ezdistro-rail-num">{{ value }}</span>
-                <span class="ezdistro-rail-bar" aria-hidden="true">
+            <li class="relative flex min-w-0 flex-col gap-2 bg-base-100 px-4 py-4">
+                <span class="absolute inset-x-0 top-[1.35rem] z-0 h-px bg-base-300/70" aria-hidden="true"></span>
+                <span class="relative z-[1] size-2.5 shrink-0 self-start rounded-full ring-4 ring-base-100 {{ color }}{{ ' motion-safe:animate-pulse' if live and value }}" aria-hidden="true"></span>
+                <span class="truncate font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ label }}</span>
+                <span class="text-[2rem] font-black leading-none tracking-[-0.04em] tabular-nums">{{ value }}</span>
+                <span class="h-1.5 w-full overflow-hidden rounded-full bg-base-200" aria-hidden="true">
                     {% set w = (value / maxv * 100)|round|int if maxv else 0 %}
                     {% if value and w < 8 %}{% set w = 8 %}{% endif %}
-                    <i class="{{ color }}" style="width: {{ w }}%"></i>
+                    <i class="{{ color }} block h-full rounded-full transition-[width] duration-700 ease-out" style="width: {{ w }}%"></i>
                 </span>
             </li>
             {% endfor %}

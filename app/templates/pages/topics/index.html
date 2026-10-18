@@ -65,7 +65,7 @@
 </form>
 
 <!-- Table -->
-<div class="ezdistro-panel">
+<div class="card border border-base-300 bg-base-100 min-w-0">
     <div class="overflow-x-auto">
         <table class="table table-sm">
             <thead>
@@ -90,7 +90,7 @@
                     <td class="hidden text-xs md:table-cell">{{ t.keyword or '—' }}</td>
                     <td class="hidden max-w-32 text-xs lg:table-cell"><p class="truncate">{{ t.pillar or '—' }}{% if t.cluster %} / {{ t.cluster }}{% endif %}</p></td>
                     <td><span class="badge badge-sm {{ t.status|status_badge }}">{{ t.status|status_label }}</span></td>
-                    <td class="hidden text-xs tabular sm:table-cell">{{ t.priority or 0 }}</td>
+                    <td class="hidden text-xs tabular-nums sm:table-cell">{{ t.priority or 0 }}</td>
                     <td class="whitespace-nowrap">
                         <div class="flex items-center justify-end gap-1">
                         {% if t.status in ['planned', 'failed', 'cancelled'] %}
@@ -99,27 +99,25 @@
                         {% elif t.articleId %}
                         <a class="btn btn-ghost btn-sm" href="/projects/{{ project.id }}/articles/{{ t.articleId }}/workspace">{{ ('Article') }}</a>
                         {% endif %}
-                        <details>
-                            <summary class="btn btn-ghost btn-square btn-sm list-none" aria-label="{{ ('More actions') }}">
-                                <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="size-5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h.01M12 12h.01M19 12h.01" /></svg>
-                            </summary>
-                            <ul class="menu mt-1 w-40 rounded-box border border-base-300 bg-base-100 p-2 text-sm">
-                                {% if t.status in ['planned', 'queued', 'planning', 'outline_ready', 'writing'] %}
-                                <li><button class="text-warning" hx-post="/projects/{{ project.id }}/topics/{{ t.id }}/cancel" hx-swap="none">{{ ('Cancel') }}</button></li>
-                                {% endif %}
-                                {% if t.articleId and t.status in ['planned', 'failed', 'cancelled'] %}
-                                <li><a href="/projects/{{ project.id }}/articles/{{ t.articleId }}/workspace">{{ ('Article') }}</a></li>
-                                {% endif %}
-                                <li><button class="text-error" hx-post="/projects/{{ project.id }}/topics/{{ t.id }}/delete" hx-swap="none" hx-confirm="{{ ('Delete this topic?') }}">{{ ('Delete') }}</button></li>
-                            </ul>
-                        </details>
+                        <button type="button" popovertarget="topic-menu-{{ t.id }}" class="btn btn-ghost btn-square btn-sm" aria-label="{{ ('More actions') }}">
+                            <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="size-5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h.01M12 12h.01M19 12h.01" /></svg>
+                        </button>
+                        <ul id="topic-menu-{{ t.id }}" popover class="dropdown dropdown-end menu w-44 rounded-box border border-base-300 bg-base-100 p-2 text-sm [&_a:hover]:bg-base-200 [&_button:hover]:bg-base-200 [&_label:hover]:bg-base-200">
+                            {% if t.status in ['planned', 'queued', 'planning', 'outline_ready', 'writing'] %}
+                            <li><button class="text-warning" hx-post="/projects/{{ project.id }}/topics/{{ t.id }}/cancel" hx-swap="none">{{ ('Cancel') }}</button></li>
+                            {% endif %}
+                            {% if t.articleId and t.status in ['planned', 'failed', 'cancelled'] %}
+                            <li><a href="/projects/{{ project.id }}/articles/{{ t.articleId }}/workspace">{{ ('Article') }}</a></li>
+                            {% endif %}
+                            <li><button class="text-error" hx-post="/projects/{{ project.id }}/topics/{{ t.id }}/delete" hx-swap="none" hx-confirm="{{ ('Delete this topic?') }}">{{ ('Delete') }}</button></li>
+                        </ul>
                         </div>
                     </td>
                 </tr>
                 {% else %}
                 <tr><td colspan="7">
-                    <div class="ezdistro-empty py-8">
-                        <div class="ezdistro-empty-icon">
+                    <div class="flex flex-col items-center justify-center gap-3 text-center py-8">
+                        <div class="grid size-14 place-items-center rounded-lg bg-base-200 text-base-content/40">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 0 0-1.883 2.542l.857 6a2.25 2.25 0 0 0 2.227 1.932H19.05a2.25 2.25 0 0 0 2.227-1.932l.857-6a2.25 2.25 0 0 0-1.883-2.542m-16.5 0V6A2.25 2.25 0 0 1 6 3.75h12A2.25 2.25 0 0 1 20.25 6v3.776" /></svg>
                         </div>
                         <p class="font-bold text-base-content/75">{{ ('No topic found') }}</p>

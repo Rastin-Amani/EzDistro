@@ -17,14 +17,14 @@
         {% endif %}
     </td>
     <td class="hidden text-xs sm:table-cell">{{ w.lastHeartbeatAt|rel_time if w.lastHeartbeatAt else ('never') }}</td>
-    <td class="hidden text-xs tabular md:table-cell">
+    <td class="hidden text-xs tabular-nums md:table-cell">
         <span class="text-warning">{{ w.runningJobs or 0 }}</span>
         <span class="opacity-30"> / </span>
         <span class="text-success">{{ w.completedJobs or 0 }}</span>
         <span class="opacity-30"> / </span>
         <span class="{{ 'text-error' if (w.failedJobs or 0) > 0 else 'opacity-50' }}">{{ w.failedJobs or 0 }}</span>
     </td>
-    <td class="hidden text-xs tabular lg:table-cell">{{ w.maxConcurrentJobs or '—' }}</td>
+    <td class="hidden text-xs tabular-nums lg:table-cell">{{ w.maxConcurrentJobs or '—' }}</td>
     <td class="text-xs">
         <span class="font-mono" dir="ltr">{{ w.version or '—' }}</span>
     </td>

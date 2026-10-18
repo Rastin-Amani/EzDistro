@@ -3,510 +3,281 @@
 {% block dashboard_content %}
 
 {% import 'macros/forms.html' as f %}
+{% import 'macros/article.html' as a %}
 
+{# Can this be approved? Both panels answer it, so compute the answer once. #}
+{% set qa_ran = qa.get('ran') %}
+{% set qa_ready = qa.get('ready') %}
+{% set blockers = report.issues|length + ((qa.get('issues') or [])|length if qa_ran and not qa_ready else 0) %}
+{% set ready = report.ok and (not qa_ran or qa_ready) %}
+{% set decided = article.status in ['approved', 'published', 'publishing'] %}
 
+{# Normalise both issue lists into the one shape the shared list macro renders. #}
+{% set report_issues = [] %}
+{% for issue in report.issues %}
+    {% set _ = report_issues.append({'tag': issue.code, 'message': issue.message, 'tone': 'error', 'detail': ''}) %}
+{% endfor %}
+{% set qa_issues = [] %}
+{% for issue in (qa.get('issues') or []) %}
+    {% set _ = qa_issues.append({
+        'tag': issue.severity or '',
+        'message': issue.problem or '',
+        'tone': 'error' if issue.severity in ('critical', 'high') else 'warning',
+        'detail': (('Fix: ' ~ issue.required_fix) if issue.required_fix else (issue.location or '')),
+    }) %}
+{% endfor %}
 
-<div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+{% set approve %}
+{% if article.status == 'review' %}
+<button class="btn btn-primary btn-sm" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/approve" hx-swap="none" hx-disabled-elt="this"
+        {% if not report.ok %}disabled title="{{ ('Fix the failing checks before approving') }}"{% endif %}>
+    <span class="loading loading-spinner loading-xs htmx-indicator"></span>
+    {{ ('Approve') }}
+</button>
+{% elif article.status == 'approved' %}
+<button class="btn btn-primary btn-sm" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/publish" hx-swap="none" hx-disabled-elt="this"
+        hx-confirm="{{ ('Send the article to WordPress?') }}">
+    <span class="loading loading-spinner loading-xs htmx-indicator"></span>
+    {{ ('Publish to WordPress') }}
+</button>
+{% endif %}
+{% endset %}
 
-    <div class="flex items-center gap-2.5 min-w-0">
-
-        <a href="/projects/{{ project.id }}/articles/{{ article.id }}/workspace" class="btn btn-ghost btn-circle btn-sm shrink-0" aria-label="{{ ('Back to workspace') }}">
-
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5 ltr:rotate-180"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
-
-        </a>
-
-        <div class="min-w-0">
-
-            <p class="font-mono text-[0.65rem] uppercase tracking-[0.073em] text-base-content/45">{{ ('Write · Review') }}</p>
-            <h1 class="font-extrabold text-base truncate">{{ ('Review: %(v)s') % {'v': article.title} }}</h1>
-
-            <div class="flex items-center gap-2 text-xs opacity-50 flex-wrap">
-
-                <span class="badge badge-sm {{ article.status|status_badge }}">{{ article.status|status_label }}</span>
-
-                <span class="tabular">{{ ('%(n)s words') % {'n': article.wordCount or 0} }}</span>
-
-                <span>{{ ('Outline v%(n)s') % {'n': article.outlineVersion or 0} }}</span>
-
-                {% if article.generatedAt %}<span>{{ ('Generated: %(v)s') % {'v': article.generatedAt|loc_dt} }}</span>{% endif %}
-
-            </div>
-
-        </div>
-
-    </div>
-
-    <div class="flex items-center gap-2 flex-wrap">
-
-        {% if article.status == 'review' %}
-
-        <button type="button" class="btn btn-ghost btn-sm text-warning"
-                @click="$store.ui.openModal('sendback-note')">{{ ('Return') }}</button>
-
-        <button class="btn btn-primary btn-sm" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/approve" hx-swap="none" hx-disabled-elt="this">
-
-            <span class="loading loading-spinner loading-xs htmx-indicator"></span>
-
-            {{ ('Confirm') }}
-
-        </button>
-
-        {% elif article.status == 'approved' %}
-
-        <span class="badge badge-soft badge-success">{{ ('Approved — publishing enabled') }}</span>
-
-        <button class="btn btn-primary btn-sm" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/publish"
-
-                hx-swap="none" hx-disabled-elt="this" hx-confirm="Send the article to WordPress?">{{ ('Publish') }}</button>
-
-        {% elif article.status == 'sent_back' %}
-
-        <span class="badge badge-soft badge-warning">{{ ('Returned') }}</span>
-
-        {% endif %}
-
+{% set actions %}{% if article.status in ['review', 'approved'] %}<button type="button" class="btn btn-ghost btn-sm text-warning" @click="$store.ui.openModal('sendback-note')">{{ ('Return for changes') }}</button>{% endif %}{{ approve }}<div class="dropdown dropdown-end">
+    <button type="button" tabindex="0" class="btn btn-ghost btn-sm btn-square" aria-label="{{ ('More actions') }}">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-4" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.75h.008v.008H12V6.75Zm0 5.25h.008v.008H12V12Zm0 5.25h.008v.008H12v-.008Z" /></svg>
+    </button>
+    <ul tabindex="0" class="dropdown-content menu z-50 mt-1 w-56 rounded-box border border-base-300/70 bg-base-100 p-1.5 [&_a:hover]:bg-base-200 [&_button:hover]:bg-base-200 [&_label:hover]:bg-base-200">
+        <li><a href="/projects/{{ project.id }}/articles/{{ article.id }}/workspace">{{ ('Open writing workspace') }}</a></li>
+        <li><a href="/projects/{{ project.id }}/articles/{{ article.id }}">{{ ('Edit sections and meta') }}</a></li>
         {% if article.status in ['review', 'approved', 'sent_back', 'failed'] %}
-
-        <button class="btn btn-ghost btn-sm" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/regenerate"
-
-                hx-swap="none" hx-disabled-elt="this" hx-confirm="{{ ('The current version is saved to history; continue full regeneration?') }}">{{ ('Full regeneration') }}</button>
-
+        <li><button type="button" class="text-warning" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/regenerate" hx-swap="none" hx-disabled-elt="this" hx-confirm="{{ ('The current version is saved to history; continue full regeneration?') }}">{{ ('Regenerate the article') }}</button></li>
         {% endif %}
+    </ul>
+</div>{% endset %}
 
+<div id="review-body"
+     hx-get="/projects/{{ project.id }}/articles/{{ article.id }}/review"
+     hx-trigger="refreshArticle from:body"
+     hx-target="this"
+     hx-swap="outerHTML"
+     hx-select="#review-body">
+
+{{ a.header(project, article, '/projects/' ~ project.id ~ '/articles/' ~ article.id ~ '/workspace', ('Back to workspace'), eyebrow=('Write · Review'), actions=actions) }}
+
+<!-- The answer, before the evidence -->
+<section class="card overflow-hidden border {{ 'border-success/40' if ready or decided else 'border-error/40' }} bg-base-100 mb-4">
+    {% if decided %}
+        {{ a.verdict(True, ('Approved — publishing is enabled'), ('This article passed review. Return it for changes if something still needs to change.')) }}
+    {% elif ready %}
+        {{ a.verdict(True, ('Ready to approve'), ('Every check passed. Approve to enable publishing, or return it with a note.')) }}
+    {% else %}
+        {{ a.verdict(False, ('%(n)s blocker(s) to clear before approval') % {'n': blockers},
+                     ('Fix the items in Checks on the right, then approve.') ) }}
+    {% endif %}
+    <div class="grid grid-cols-2 gap-px bg-base-300/70 sm:grid-cols-4">
+        {% set s = report.stats %}
+        {{ f.stat(('Words'), s.words, 'bg-primary', ('minimum %(n)s') % {'n': s.min_words}) }}
+        {{ f.stat(('Sections'), s.sections, 'bg-info') }}
+        {{ f.stat(('Validation'), report.issues|length, 'bg-success' if report.ok else 'bg-error', ('all checks passed' if report.ok else 'blocking issues')) }}
+        {{ f.stat(('Editorial QA'), ((qa.get('issues') or [])|length if qa_ran else 0), 'bg-success' if qa_ready else 'bg-warning', ('clean' if qa_ready else ('findings' if qa_ran else 'not audited'))) }}
     </div>
+</section>
 
-</div>
+<div class="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
 
-
-
-<!-- Send back note modal -->
-
-<dialog id="sendback-note" class="modal modal-bottom sm:modal-middle">
-
-    <div class="modal-box bg-base-100">
-
-        <div class="flex items-center gap-3 mb-3">
-
-            <div class="grid size-11 place-items-center rounded-lg bg-warning/15 text-warning">
-
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" /></svg>
-
-            </div>
-
-            <h3 class="font-bold text-lg">{{ ('Return article') }}</h3>
-
-        </div>
-
-        <form hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/send-back" hx-swap="none" class="flex flex-col gap-3">
-
-            <textarea name="note" class="textarea textarea-sm w-full" rows="3" placeholder="{{ ('Reason for returning (recorded in history)…') }}" aria-label="{{ ('Reason for returning this article') }}"></textarea>
-
-            <div class="flex gap-3">
-
-                <button type="submit" class="btn btn-warning flex-1">{{ ('Return') }}</button>
-
-                <button type="button" class="btn btn-ghost" @click="$store.ui.closeModal('sendback-note')">{{ ('Cancel') }}</button>
-
-            </div>
-
-        </form>
-
-    </div>
-
-</dialog>
-
-
-
-<div class="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4 items-start">
-
-    <!-- Left: validation + metadata -->
-
-    <aside class="flex flex-col gap-4">
-
-        <div class="ezdistro-panel {{ 'border-success/40' if report.ok else 'border-error/40' }}">
-
-            <div class="ezdistro-panel-head">
-
-                <h2 class="ezdistro-panel-title">{{ ('Validation panel') }}</h2>
-
-                <span class="badge badge-sm {{ 'badge-soft badge-success' if report.ok else 'badge-soft badge-error' }}">
-
-                    {{ ('Passed') if report.ok else ('Error') }}
-
-                </span>
-
-            </div>
-
-            <div class="p-4 flex flex-col gap-2 text-xs">
-
-                {% if report.ok %}
-
-                <p class="opacity-60">{{ ('All checks passed — the article can be approved.') }}</p>
-
-                {% else %}
-
-                <ul class="flex flex-col gap-1">
-
-                    {% for issue in report.issues %}
-
-                    <li class="flex items-start gap-2 border border-error/20 bg-error/5 rounded-lg px-2 py-1">
-
-                        <span class="badge badge-xs badge-soft badge-error shrink-0">{{ issue.code }}</span>
-
-                        <span class="text-error">{{ issue.message }}</span>
-
-                    </li>
-
-                    {% endfor %}
-
-                </ul>
-
-                {% endif %}
-
-                <div class="grid grid-cols-3 gap-1 opacity-60 border-t border-base-300/70 pt-2">
-
-                    <span>{{ ('%(n)s words') % {'n': report.stats.words} }}</span>
-
-                    <span>{{ ('%(n)s sections') % {'n': report.stats.sections} }}</span>
-
-                    <span>{{ ('Minimum %(n)s') % {'n': report.stats.min_words} }}</span>
-
+    {# ── Read the article first ────────────────────────────────────────── #}
+    <div class="flex min-w-0 flex-col gap-4">
+        <section class="card border border-base-300 bg-base-100 min-w-0">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
+                <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Article') }}</h2>
+                <div class="min-w-0 text-xs opacity-55">
+                    <code class="font-mono" dir="ltr">/{{ article.slug or '' }}</code>
                 </div>
-
             </div>
-
-        </div>
-
-
-
-        <div class="ezdistro-panel {{ 'border-success/40' if qa.get('ready') else ('border-warning/40' if qa.get('ran') else '') }}">
-
-            <div class="ezdistro-panel-head">
-
-                <h2 class="ezdistro-panel-title">{{ ('Editorial QA') }}</h2>
-
-                {% if qa.get('ran') %}
-
-                <span class="badge badge-sm {{ 'badge-soft badge-success' if qa.get('ready') else 'badge-soft badge-warning' }}">
-
-                    {{ ('Clean') if qa.get('ready') else ('Needs attention') }}
-
-                </span>
-
-                {% else %}
-
-                <span class="badge badge-sm badge-soft badge-neutral">{{ ('Not audited') }}</span>
-
-                {% endif %}
-
-            </div>
-
-            <div class="p-4 flex flex-col gap-2 text-xs">
-
-                {% if not qa.get('ran') %}
-
-                <p class="opacity-60">{{ ('No LLM audit ran for this article — configure the Article QA prompts to enable it.') }}</p>
-
-                {% else %}
-
-                {% if qa.get('summary') %}<p class="leading-relaxed">{{ qa.get('summary') }}</p>{% endif %}
-
-                {% if qa.get('repaired') %}<p class="text-success">{{ ('Repaired automatically from QA findings and re-validated.') }}</p>{% endif %}
-
-                {% if qa.get('issues') %}
-
-                <ul class="flex flex-col gap-1">
-
-                    {% for issue in qa.get('issues') %}
-
-                    <li class="flex flex-col gap-1 border rounded-lg px-2 py-1 {{ 'border-error/20 bg-error/5' if issue.severity in ('critical', 'high') else 'border-warning/20 bg-warning/5' }}">
-
-                        <div class="flex items-center gap-2">
-
-                            <span class="badge badge-xs badge-soft shrink-0 {{ 'badge-error' if issue.severity in ('critical', 'high') else 'badge-warning' }}">{{ issue.severity }}</span>
-
-                            {% if issue.category %}<span class="opacity-60">{{ issue.category }}</span>{% endif %}
-
-                        </div>
-
-                        {% if issue.location %}<div class="opacity-60">{{ issue.location }}</div>{% endif %}
-
-                        <div>{{ issue.problem }}</div>
-
-                        {% if issue.required_fix %}<div class="opacity-70">{{ ('Fix:') }} {{ issue.required_fix }}</div>{% endif %}
-
-                    </li>
-
-                    {% endfor %}
-
-                </ul>
-
-                {% else %}
-
-                <p class="opacity-60">{{ ('No issues reported.') }}</p>
-
-                {% endif %}
-
-                {% endif %}
-
-            </div>
-
-        </div>
-
-
-
-        {% set _intent = research.get('search_intent', {}) %}
-        {% if _intent is mapping %}
-        {% set _primary = _intent.get('primary') %}
-        {% set _reader_job = _intent.get('reader_job') %}
-        {% else %}
-        {% set _primary = _intent %}
-        {% set _reader_job = '' %}
-        {% endif %}
-
-        {% if research %}
-
-        <div class="ezdistro-panel">
-
-            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ ('Research snapshot') }}</h2></div>
-
-            <div class="p-4 text-xs flex flex-col gap-1.5">
-
-                {% if _primary %}
-
-                <div class="flex justify-between gap-2"><span class="opacity-50 shrink-0">{{ ('Search intent') }}</span><span class="text-right">{{ _primary }}</span></div>
-
-                {% endif %}
-
-                {% if _reader_job %}
-
-                <div class="flex justify-between gap-2"><span class="opacity-50 shrink-0">{{ ('Reader job') }}</span><span class="text-right">{{ _reader_job }}</span></div>
-
-                {% endif %}
-
-                <div class="flex justify-between"><span class="opacity-50">{{ ('Key questions') }}</span><span class="font-mono">{{ (research.get('essential_questions') or [])|length }}</span></div>
-
-                <div class="flex justify-between"><span class="opacity-50">{{ ('Content gaps') }}</span><span class="font-mono">{{ (research.get('content_gaps') or [])|length }}</span></div>
-
-                <div class="flex justify-between"><span class="opacity-50">{{ ('Entities') }}</span><span class="font-mono">{{ (research.get('entities') or [])|length }}</span></div>
-
-            </div>
-
-        </div>
-
-        {% endif %}
-
-
-
-        <div class="ezdistro-panel">
-
-            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ ('Generation info') }}</h2></div>
-
-            <div class="p-4 text-xs flex flex-col gap-1.5">
-
-                <div class="flex justify-between"><span class="opacity-50">{{ ('Latest generation version') }}</span><span class="font-mono">v{{ article.lastGeneratedRevision or '—' }}</span></div>
-
-                <div class="flex justify-between"><span class="opacity-50">{{ ('Generation time') }}</span><span>{{ article.generatedAt|loc_dt if article.generatedAt else '—' }}</span></div>
-
-                <div class="flex justify-between"><span class="opacity-50">{{ ('SEO score') }}</span><span class="font-bold text-primary">{{ article.seoScore or 0 }}/100</span></div>
-
-                {% if topic %}<div class="flex justify-between"><span class="opacity-50">{{ ('Keyword') }}</span><span>{{ topic.keyword or '—' }}</span></div>{% endif %}
-
-                <h3 class="font-bold text-xs mt-2 opacity-60">{{ ('Sections (model/prompt version)') }}</h3>
-
-                <ul class="flex flex-col gap-1">
-
-                    {% for s in sections %}
-
-                    <li class="flex items-center justify-between border border-base-300/70 rounded-lg px-2 py-1">
-
-                        <span class="truncate opacity-70">{{ loop.index }}. {{ s.heading }}</span>
-
-                        <span class="shrink-0 flex items-center gap-1">
-
-                            {% if s.model %}<span class="font-mono opacity-60 hidden sm:inline" dir="ltr">{{ s.provider }}/{{ s.model }}</span>{% endif %}
-
-                            {% if s.promptVersion %}<span class="badge badge-soft badge-info badge-xs">v{{ s.promptVersion }}</span>{% endif %}
-
-                            {% if s.generationLatency %}<span class="opacity-40">{{ s.generationLatency }}ms</span>{% endif %}
-
-                        </span>
-
-                    </li>
-
-                    {% endfor %}
-
-                </ul>
-
-                <h3 class="font-bold text-xs mt-2 opacity-60">{{ ('Internal links') }}</h3>
-
-                <ul class="flex flex-col gap-1">
-
-                    {% for link in internal_links %}
-
-                    <li class="truncate"><a href="{{ link.url }}" target="_blank" rel="noopener" class="link link-primary" dir="ltr">{{ link.title }}</a></li>
-
-                    {% endfor %}
-
-                </ul>
-
-            </div>
-
-        </div>
-
-
-
-        <details class="ezdistro-panel">
-
-            <summary class="ezdistro-panel-head cursor-pointer list-none"><h2 class="ezdistro-panel-title">{{ ('Version history') }}</h2></summary>
-
-            <div class="p-4">
-
-                {% if revisions %}
-
-                <ul class="flex flex-col gap-1">
-
-                    {% for r in revisions %}
-
-                    <li class="text-xs border border-base-300/70 rounded-lg px-2 py-1 flex items-center justify-between gap-2">
-
-                        <span class="flex items-center gap-1.5 min-w-0">
-
-                            <span class="badge badge-soft badge-neutral badge-xs shrink-0">v{{ r.revision }}</span>
-
-                            <span class="badge badge-soft badge-info badge-xs shrink-0">{{ r.kind }}</span>
-
-                            <span class="truncate opacity-60">{{ r.note or r.created|loc_dt }}</span>
-
-                        </span>
-
-                        {% if r.revision != article.lastGeneratedRevision %}
-
-                        <button class="btn btn-ghost btn-xs shrink-0"
-
-                                hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/revisions/{{ r.id }}/rollback"
-
-                                hx-swap="none"
-
-                                hx-confirm="{{ ('Restore this version? The current version is saved to history.') }}">{{ ('Back') }}</button>
-
-                        {% endif %}
-
-                    </li>
-
-                    {% endfor %}
-
-                </ul>
-
-                {% else %}
-
-                <p class="text-xs opacity-50">{{ ('No history recorded.') }}</p>
-
-                {% endif %}
-
-            </div>
-
-        </details>
-
-    </aside>
-
-
-
-    <!-- Right: the article -->
-
-    <section class="flex flex-col gap-4 min-w-0">
-
-        <div class="ezdistro-panel">
-
-            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ ('Title and slug') }}</h2></div>
-
-            <div class="p-4 flex flex-col gap-2">
-
-                <h1 class="text-xl font-bold">{{ article.title }}</h1>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-
-                    <div><span class="opacity-50 block">{{ ('Slug') }}</span><code class="font-mono" dir="ltr">{{ article.slug or '—' }}</code></div>
-
-                    <div><span class="opacity-50 block">{{ ('Meta description') }}</span><p class="opacity-80">{{ article.metaDescription or '—' }}</p></div>
-
-                </div>
-
-            </div>
-
-        </div>
-
-
-
-        <div class="ezdistro-panel">
-
-            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ ('Outline') }}</h2></div>
-
-            <div class="p-4">
-
-                <ol class="flex flex-col gap-1.5">
-
-                    {% for plan in (article.outline.sections if article.outline else []) %}
-
-                    <li class="text-sm border border-base-300/70 rounded-lg px-3 py-1.5">
-
-                        <span class="font-semibold">{{ loop.index }}. {{ plan.heading }}</span>
-
-                        {% if plan.content_brief %}<p class="text-xs opacity-50 mt-0.5">{{ plan.content_brief }}</p>{% endif %}
-
-                    </li>
-
-                    {% endfor %}
-
-                </ol>
-
-            </div>
-
-        </div>
-
-
-
-        <div class="ezdistro-panel">
-
-            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ ('Article body') }}</h2></div>
-
-            <div class="p-4">
-
+            <div class="p-4 sm:p-6">
                 {% if article.finalHtml %}
-
-                <article class="prose-sm max-w-none" dir="auto">{{ article.finalHtml|safe }}</article>
-
+                <article class="{{ a.prose() }}" dir="auto">{{ article.finalHtml|safe }}</article>
                 {% else %}
-
-                <p class="text-sm opacity-50 py-6 text-center">{{ ('No content has been generated.') }}</p>
-
+                {{ f.empty(('No content has been generated'), ('Regenerate the article, then review it here.'), compact=true) }}
                 {% endif %}
-
+                {% if article.metaDescription %}
+                <div class="mt-5 border-t border-base-300/70 pt-3">
+                    <p class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Meta description') }}</p>
+                    <p class="mt-1 text-sm opacity-70 leading-relaxed">{{ article.metaDescription }}</p>
+                </div>
+                {% endif %}
             </div>
+        </section>
 
-        </div>
-
-
+        {% if article.outline and article.outline.sections %}
+        <details class="card group border border-base-300 bg-base-100 min-w-0">
+            <summary class="flex cursor-pointer select-none items-center gap-2 border-b border-base-300/70 px-4 py-3">
+                <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Outline') }}</h2>
+                <span class="badge badge-soft badge-neutral badge-xs tabular-nums">{{ article.outline.sections|length }}</span>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="ms-auto size-3.5 transition-transform group-open:rotate-180" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
+            </summary>
+            <ol class="flex flex-col gap-1.5 p-4">
+                {% for plan in article.outline.sections %}
+                <li class="rounded-box border border-base-300/70 px-3 py-1.5 text-sm">
+                    <span class="font-semibold">{{ loop.index }}. {{ plan.heading }}</span>
+                    {% if plan.content_brief %}<p class="mt-0.5 text-xs opacity-50">{{ plan.content_brief }}</p>{% endif %}
+                </li>
+                {% endfor %}
+            </ol>
+        </details>
+        {% endif %}
 
         {% if article.generatedContent and article.generatedContent != article.finalHtml %}
-
-        <div class="ezdistro-panel">
-
-            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ ('Generated version (v%(n)s)') % {'n': article.lastGeneratedRevision} }}</h2></div>
-
-            <div class="p-4 text-xs opacity-60">
-
-                {{ ('Differs from the current version — use history to roll back.') }}
-
-            </div>
-
+        <div class="alert alert-soft alert-warning">
+            <span>{{ ('The generated version (v%(n)s) differs from what is shown — restore it from history if needed.') % {'n': article.lastGeneratedRevision} }}</span>
         </div>
+        {% endif %}
+    </div>
 
+    {# ── The evidence ──────────────────────────────────────────────────── #}
+    <aside class="flex min-w-0 flex-col gap-4 lg:sticky lg:top-4">
+        <section class="card overflow-hidden border {{ 'border-success/40' if report.ok else 'border-error/40' }} bg-base-100 min-w-0">
+            <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
+                <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Checks') }}</h2>
+                <span class="badge badge-sm {{ 'badge-soft badge-success' if report.ok else 'badge-soft badge-error' }}">{{ ('Passed') if report.ok else (report.issues|length ~ ' ' ~ ('issue' if report.issues|length == 1 else 'issues')) }}</span>
+            </div>
+            <div class="p-4 text-xs">
+                {% if report.ok %}
+                <p class="opacity-60">{{ ('All checks passed — the article can be approved.') }}</p>
+                {% else %}
+                {{ a.issues(report_issues) }}
+                {% endif %}
+            </div>
+        </section>
+
+        <section class="card overflow-hidden border {{ 'border-success/40' if qa_ready else ('border-warning/40' if qa_ran else 'border-base-300') }} bg-base-100 min-w-0">
+            <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
+                <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Editorial QA') }}</h2>
+                {% if qa_ran %}
+                <span class="badge badge-sm {{ 'badge-soft badge-success' if qa_ready else 'badge-soft badge-warning' }}">{{ ('Clean') if qa_ready else ('Needs attention') }}</span>
+                {% else %}
+                <span class="badge badge-sm badge-soft badge-neutral">{{ ('Not audited') }}</span>
+                {% endif %}
+            </div>
+            <div class="p-4 flex flex-col gap-2 text-xs">
+                {% if not qa_ran %}
+                <p class="opacity-60">{{ ('No LLM audit ran for this article — configure the Article QA prompts to enable it.') }}</p>
+                {% else %}
+                {% if qa.get('summary') %}<p class="leading-relaxed opacity-80">{{ qa.get('summary') }}</p>{% endif %}
+                {% if qa.get('repaired') %}<p class="text-success">{{ ('Repaired automatically from QA findings and re-validated.') }}</p>{% endif %}
+                {% if qa_issues %}{{ a.issues(qa_issues) }}{% else %}<p class="opacity-60">{{ ('No issues reported.') }}</p>{% endif %}
+                {% endif %}
+            </div>
+        </section>
+
+        <section class="card border border-base-300 bg-base-100 min-w-0">
+            <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
+                <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Article details') }}</h2>
+            </div>
+            <dl class="flex flex-col gap-1.5 p-4 text-xs">
+                {{ a.kv(('Revision'), 'v' ~ (article.lastGeneratedRevision or '—')) }}
+                {{ a.kv(('Generated'), article.generatedAt|loc_dt if article.generatedAt else '—') }}
+                {{ a.kv(('SEO score'), (article.seoScore or 0) ~ '/100', 'font-bold text-primary') }}
+                {% if topic %}{{ a.kv(('Keyword'), topic.keyword or '—') }}{% endif %}
+                {% if research %}
+                {% set intent = research.get('search_intent', {}) %}
+                {% if intent is mapping %}
+                    {% if intent.get('primary') %}{{ a.kv(('Search intent'), intent.get('primary')) }}{% endif %}
+                    {% if intent.get('reader_job') %}{{ a.kv(('Reader job'), intent.get('reader_job')) }}{% endif %}
+                {% elif intent %}
+                    {{ a.kv(('Search intent'), intent) }}
+                {% endif %}
+                {{ a.kv(('Key questions'), (research.get('essential_questions') or [])|length) }}
+                {{ a.kv(('Content gaps'), (research.get('content_gaps') or [])|length) }}
+                {{ a.kv(('Entities'), (research.get('entities') or [])|length) }}
+                {% endif %}
+            </dl>
+        </section>
+
+        {% if internal_links %}
+        <section class="card border border-base-300 bg-base-100 min-w-0">
+            <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
+                <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Internal links') }}</h2>
+                <span class="badge badge-soft badge-neutral badge-xs tabular-nums">{{ internal_links|length }}</span>
+            </div>
+            <ul class="flex flex-col gap-1.5 p-4 text-xs">
+                {% for link in internal_links %}
+                <li class="truncate"><a href="{{ link.url }}" target="_blank" rel="noopener" class="link link-primary" dir="ltr">{{ link.title }}</a></li>
+                {% endfor %}
+            </ul>
+        </section>
         {% endif %}
 
-    </section>
+        {% if sections %}
+        <details class="card group border border-base-300 bg-base-100 min-w-0">
+            <summary class="flex cursor-pointer select-none items-center gap-2 border-b border-base-300/70 px-4 py-3">
+                <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Section provenance') }}</h2>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="ms-auto size-3.5 transition-transform group-open:rotate-180" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
+            </summary>
+            <ul class="flex flex-col gap-1 p-4 text-xs">
+                {% for s in sections %}
+                <li class="flex items-center justify-between gap-2 rounded-box border border-base-300/70 px-2 py-1">
+                    <span class="truncate opacity-70">{{ loop.index }}. {{ s.heading }}</span>
+                    <span class="flex shrink-0 items-center gap-1">
+                        {% if s.model %}<span class="hidden font-mono opacity-60 sm:inline" dir="ltr">{{ s.provider }}/{{ s.model }}</span>{% endif %}
+                        {% if s.promptVersion %}<span class="badge badge-soft badge-info badge-xs">v{{ s.promptVersion }}</span>{% endif %}
+                        {% if s.generationLatency %}<span class="opacity-40 tabular-nums">{{ s.generationLatency }}ms</span>{% endif %}
+                    </span>
+                </li>
+                {% endfor %}
+            </ul>
+        </details>
+        {% endif %}
 
+        <details class="card group border border-base-300 bg-base-100 min-w-0">
+            <summary class="flex cursor-pointer select-none items-center gap-2 border-b border-base-300/70 px-4 py-3">
+                <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Version history') }}</h2>
+                {% if revisions %}<span class="badge badge-soft badge-neutral badge-xs tabular-nums">{{ revisions|length }}</span>{% endif %}
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="ms-auto size-3.5 transition-transform group-open:rotate-180" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
+            </summary>
+            <div class="p-4">
+                {% if revisions %}
+                <ul class="flex flex-col gap-1 text-xs">
+                    {% for r in revisions %}
+                    <li class="flex items-center justify-between gap-2 rounded-box border border-base-300/70 px-2 py-1">
+                        <span class="flex min-w-0 items-center gap-1.5">
+                            <span class="badge badge-soft badge-neutral badge-xs shrink-0">v{{ r.revision }}</span>
+                            <span class="badge badge-soft badge-info badge-xs shrink-0">{{ r.kind }}</span>
+                            <span class="truncate opacity-60">{{ r.note or r.created|loc_dt }}</span>
+                        </span>
+                        {% if r.revision != article.lastGeneratedRevision %}
+                        <button class="btn btn-ghost btn-xs shrink-0" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/revisions/{{ r.id }}/rollback" hx-swap="none" hx-confirm="{{ ('Restore this version? The current version is saved to history.') }}">{{ ('Restore') }}</button>
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-xs opacity-50">{{ ('No history recorded.') }}</p>
+                {% endif %}
+            </div>
+        </details>
+    </aside>
 </div>
+</div>
+
+<!-- Return note -->
+<dialog id="sendback-note" class="modal modal-bottom sm:modal-middle">
+    <div class="modal-box bg-base-100">
+        <div class="flex items-center gap-3 mb-3">
+            <span class="grid size-11 place-items-center rounded-box bg-warning/15 text-warning">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="size-6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" /></svg>
+            </span>
+            <h3 class="font-bold text-lg">{{ ('Return for changes') }}</h3>
+        </div>
+        <form hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/send-back" hx-swap="none" class="flex flex-col gap-3">
+            <textarea name="note" class="textarea textarea-sm w-full" rows="3" placeholder="{{ ('What needs to change? Recorded in history.') }}" aria-label="{{ ('Reason for returning this article') }}"></textarea>
+            <div class="flex gap-3">
+                <button type="submit" class="btn btn-warning flex-1">{{ ('Return for changes') }}</button>
+                <button type="button" class="btn btn-ghost" @click="$store.ui.closeModal('sendback-note')">{{ ('Cancel') }}</button>
+            </div>
+        </form>
+    </div>
+</dialog>
 
 {% endblock %}

@@ -1,7 +1,29 @@
 {% import 'macros/forms.html' as f %}
-{# `counts` maps each stage to that stage's own summary: flatten the numeric
-   entries into one labelled metric grid (a raw stage dict is never a number,
-   so a plain `is number` filter over the top level renders nothing). #}
+{# Live progress for one research run. Rendered inside run.html and re-rendered
+   every second by the /status poll while the run is pending or running.
+
+   The pipeline is a fixed stage list (app/services/research.py STAGE_PERCENT),
+   so the rail can be honest about what is done, running and still to come. #}
+{% set stages = [
+    ('validate', 'Validation'),
+    ('wordpress_sync', 'WordPress sync'),
+    ('keyword_collection', 'Keyword ideas'),
+    ('competitor_crawl', 'Competitors'),
+    ('serp', 'SERP'),
+    ('clustering', 'Clustering'),
+    ('gaps', 'Content gaps'),
+    ('opportunities', 'Opportunities'),
+    ('finalize', 'Finalize'),
+] %}
+{% set running = run.status in ('pending', 'running') %}
+{% set failed = run.status in ('failed', 'cancelled') %}
+{% set current = run.currentStage or '' %}
+{% set ns = namespace(idx=-1, label='') %}
+{% for key, label in stages %}
+  {% if key == current %}{% set ns.idx = loop.index0 %}{% set ns.label = label %}{% endif %}
+{% endfor %}
+
+{# Flatten each stage's own summary into one labelled metric grid. #}
 {% set metrics = [] %}
 {% for stage, values in (counts or {}).items() %}
   {% set stage_label = stage|replace('_', ' ')|title %}
@@ -15,17 +37,57 @@
     {% set _ = metrics.append((stage_label, values)) %}
   {% endif %}
 {% endfor %}
-<div id="research-status" class="ezdistro-panel"
-     {% if run.status in ('pending', 'running') %}
+
+<div id="research-status" class="card overflow-hidden border border-base-300 bg-base-100 min-w-0"
+     {% if running %}
      hx-get="/projects/{{ project.id }}/research/{{ run.id }}/status"
-     hx-trigger="every 3s" hx-swap="outerHTML"
+     hx-trigger="every 1s" hx-swap="outerHTML"
      {% endif %}>
-  <div class="ezdistro-panel-head">
-    <div class="ezdistro-panel-title">Progress</div>
-    <div class="text-xs opacity-60">{{ run.currentStage or '—' }} · {{ run.progress|int }}%</div>
+  <div class="flex flex-wrap items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
+    <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">Progress</h2>
+    <div class="flex items-center gap-2 text-xs">
+      {% if running %}
+        <span class="inline-flex items-center gap-1.5 font-semibold">
+          <span class="size-1.5 rounded-full bg-primary motion-safe:animate-pulse" aria-hidden="true"></span>
+          {{ ns.label or 'Starting' }}
+        </span>
+      {% else %}
+        <span class="font-semibold">{{ ns.label or run.status|status_label }}</span>
+      {% endif %}
+      <span class="tabular-nums opacity-60">{{ run.progress|int }}%</span>
+    </div>
   </div>
-  <div class="p-4 space-y-3">
-    <progress class="progress progress-primary w-full" value="{{ run.progress|int }}" max="100"></progress>
+
+  <div class="space-y-4 p-4">
+    <progress class="progress progress-primary w-full" value="{{ run.progress|int }}" max="100"
+              aria-label="{{ ('Run progress') }}"></progress>
+
+    {# Stage rail: what is done, what is running, what is left. #}
+    <ol class="flex flex-wrap gap-x-5 gap-y-2" aria-label="{{ ('Research stages') }}">
+      {% for key, label in stages %}
+        {% set i = loop.index0 %}
+        {% if run.status == 'completed' %}
+          {% set state = 'done' %}
+        {% elif failed and i == ns.idx %}
+          {% set state = 'failed' %}
+        {% elif ns.idx >= 0 and i < ns.idx %}
+          {% set state = 'done' %}
+        {% elif i == ns.idx %}
+          {% set state = 'active' %}
+        {% else %}
+          {% set state = 'pending' %}
+        {% endif %}
+        <li class="flex items-center gap-2 text-xs"
+            {% if state == 'active' %}aria-current="step"{% endif %}>
+          <span class="size-2.5 shrink-0 rounded-full
+                       {{ 'bg-success' if state == 'done'
+                          else ('bg-error' if state == 'failed'
+                          else ('bg-primary motion-safe:animate-pulse' if state == 'active'
+                          else 'bg-base-300')) }}" aria-hidden="true"></span>
+          <span class="{{ 'font-semibold' if state in ('active', 'failed') else 'opacity-55' }}">{{ label }}</span>
+        </li>
+      {% endfor %}
+    </ol>
 
     {% if metrics %}
       <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
@@ -35,23 +97,34 @@
       </div>
     {% endif %}
 
-    {% if run.status in ('pending', 'running') %}
-      <p class="text-xs opacity-50">This run runs in the background. Progress refreshes automatically.</p>
-    {% endif %}
+    <p class="text-xs opacity-55">
+      {% if running %}
+        {{ ('Running in the background — progress updates every second. You can leave this page.') }}
+      {% elif run.status == 'completed' %}
+        {{ ('Finished') }}{% if run.created %} · {{ ('started') }} {{ run.created|loc_dt }}{% endif %}
+      {% else %}
+        {{ run.status|status_label }}{% if run.created %} · {{ ('started') }} {{ run.created|loc_dt }}{% endif %}
+      {% endif %}
+    </p>
 
+    {# The raw job log stays available but is no longer the page. #}
     {% if logs %}
-      <div class="mt-3">
-        <div class="mb-1 text-xs font-medium uppercase tracking-wide opacity-50">Live log</div>
-        <ul class="max-h-56 space-y-1 overflow-y-auto text-xs" aria-live="polite">
+      <details class="group border-t border-base-300/70 pt-3">
+        <summary class="flex cursor-pointer select-none items-center gap-2 text-xs opacity-70">
+          <span>{{ ('Activity log') }}</span>
+          <span class="badge badge-soft badge-neutral badge-xs tabular-nums">{{ logs|length }}</span>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="ms-auto size-3.5 transition-transform group-open:rotate-180" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
+        </summary>
+        <ul class="mt-2 max-h-56 space-y-1 overflow-y-auto text-xs" aria-live="polite">
           {% for entry in logs %}
             <li class="flex items-start gap-2">
-              <span class="shrink-0 opacity-40">{{ entry.created|loc_dt }}</span>
+              <span class="shrink-0 opacity-40 tabular-nums">{{ entry.created|loc_dt }}</span>
               <span class="badge badge-soft badge-xs shrink-0">{{ entry.eventType }}</span>
               <span class="opacity-80">{{ entry.message }}</span>
             </li>
           {% endfor %}
         </ul>
-      </div>
+      </details>
     {% endif %}
   </div>
 </div>

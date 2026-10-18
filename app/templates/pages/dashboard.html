@@ -17,16 +17,8 @@
 {{ f.page_header(
     ( 'Dashboard' ),
     ( 'Overall health of content production, indexing and providers' ),
-    ( 'Command center' ),
-    '<a href="/projects" class="btn btn-primary btn-sm">' ~ ('New project') ~ '</a>'
+    ( 'Command center' )
 ) }}
-
-<ul class="steps steps-horizontal w-full mb-6 text-xs" aria-label="{{ ('Writing flow') }}">
-    <li class="step step-primary">{{ ('Topics') }}</li>
-    <li class="step step-primary">{{ ('Draft') }}</li>
-    <li class="step">{{ ('Review') }}</li>
-    <li class="step">{{ ('Publish') }}</li>
-</ul>
 
 {% include "pages/dashboard/_stats.html" %}
 
@@ -52,7 +44,7 @@
                         <td>
                             <div class="flex items-center gap-2">
                                 <progress class="progress progress-primary w-20 h-1.5" value="{{ j.progress or 0 }}" max="100" aria-label="{{ ('Progress') }}"></progress>
-                                <span class="text-xs tabular">{{ ('%(n)s%%') % {'n': j.progress or 0} }}</span>
+                                <span class="text-xs tabular-nums">{{ ('%(n)s%%') % {'n': j.progress or 0} }}</span>
                             </div>
                         </td>
                         <td class="text-xs opacity-60 whitespace-nowrap">{{ j.created|loc_dt }}</td>
@@ -81,8 +73,8 @@
             {% endfor %}
         </ul>
         {% else %}
-        <div class="ezdistro-empty py-8">
-            <div class="ezdistro-empty-icon">
+        <div class="flex flex-col items-center justify-center gap-3 text-center py-8">
+            <div class="grid size-14 place-items-center rounded-lg bg-base-200 text-base-content/40">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" /></svg>
             </div>
             <p class="font-bold text-base-content/70">{{ ('No jobs recorded yet') }}</p>
@@ -105,7 +97,7 @@
             {% endfor %}
         </ul>
         {% else %}
-        <div class="ezdistro-empty py-8">
+        <div class="flex flex-col items-center justify-center gap-3 text-center py-8">
             <p class="font-bold text-base-content/70">{{ ('No events recorded') }}</p>
         </div>
         {% endif %}

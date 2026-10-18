@@ -1,19 +1,19 @@
 {# One schedule row — a standalone form (never nested inside another form) #}
-<form class="ezdistro-panel p-4 flex flex-wrap items-end gap-4" id="sched-{{ kind }}"
+<form class="card border border-base-300 bg-base-100 min-w-0 p-4 flex flex-wrap items-end gap-4" id="sched-{{ kind }}"
       hx-post="/projects/{{ project.id }}/schedules"
       hx-target="#sched-{{ kind }}"
       hx-swap="outerHTML">
     <input type="hidden" name="kind" value="{{ kind }}" />
     <div class="flex flex-col gap-1 min-w-40">
         <span class="text-xs font-semibold">{{ label_text }}</span>
-        <select name="enabled" class="select select-sm select-bordered w-full">
+        <select name="enabled" class="select select-sm w-full">
             <option value="1" {{ 'selected' if sched and sched.enabled }}>{{ ('Active') }}</option>
             <option value="0" {{ 'selected' if not sched or not sched.enabled }}>{{ ('Inactive') }}</option>
         </select>
     </div>
     <div class="flex flex-col gap-1 min-w-40">
         <span class="text-xs font-semibold">{{ ('Interval (minutes)') }}</span>
-        <input name="interval_minutes" type="number" class="input input-sm input-bordered w-full"
+        <input name="interval_minutes" type="number" class="input input-sm w-full"
                value="{{ sched.intervalMinutes if sched else 1440 }}" />
     </div>
     <button type="submit" class="btn btn-ghost btn-sm" hx-disabled-elt="this">{{ ('Save') }}</button>

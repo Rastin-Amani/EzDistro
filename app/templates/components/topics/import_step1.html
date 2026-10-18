@@ -10,9 +10,9 @@
 
     {% with current_step=1 %}{% include "components/topics/import_progress.html" %}{% endwith %}
 
-    <label class="form-control w-full">
+    <label class="flex flex-col gap-1 min-w-0 w-full">
 
-        <span class="label-text font-medium text-sm">{{ ('Paste text') }}</span>
+        <span class="truncate font-medium text-sm">{{ ('Paste text') }}</span>
 
         <textarea name="csv_text" rows="7" dir="auto" class="textarea w-full font-mono text-xs leading-relaxed"
 
@@ -30,9 +30,9 @@
 
     </div>
 
-    <label class="form-control w-full">
+    <label class="flex flex-col gap-1 min-w-0 w-full">
 
-        <span class="label-text font-medium text-sm">{{ ('Upload a CSV / TSV file') }}</span>
+        <span class="truncate font-medium text-sm">{{ ('Upload a CSV / TSV file') }}</span>
 
         <input type="file" name="file" accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values"
 

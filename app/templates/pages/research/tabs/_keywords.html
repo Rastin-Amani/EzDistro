@@ -39,11 +39,11 @@
           <tbody>
           {% for row in rows %}
             {% set m = row.metric %}
-            <tr class="hover">
+            <tr class="hover:bg-base-200/60">
               <td class="text-sm">{{ row.text }}</td>
-              <td class="text-end text-sm tabular">{{ m.avgMonthlySearches|loc_int }}</td>
+              <td class="text-end text-sm tabular-nums">{{ m.avgMonthlySearches|loc_int }}</td>
               <td class="text-xs">{{ m.competition or '—' }}</td>
-              <td class="text-end text-xs tabular">{{ m.competitionIndex|loc_int }}</td>
+              <td class="text-end text-xs tabular-nums">{{ m.competitionIndex|loc_int }}</td>
               <td class="text-end text-xs">
                 {% if m.averageCpcMicros %}{{ (m.averageCpcMicros / 1000000)|round(2) }} {{ m.currencyCode }}{% else %}—{% endif %}
               </td>

@@ -6,8 +6,8 @@
      hx-swap="outerHTML">
     {{ f.section_head(('Events'), ('Project event history.')) }}
     {% if events %}
-    <div class="ezdistro-panel">
-        <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ ('Events') }}</h2></div>
+    <div class="card border border-base-300 bg-base-100 min-w-0">
+        <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3"><h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Events') }}</h2></div>
         <div class="overflow-x-auto">
             <table class="table table-sm">
                 <thead>
@@ -25,12 +25,10 @@
                         <td class="text-xs max-w-60"><p class="truncate">{{ e.message }}</p></td>
                         <td class="text-xs max-w-40">
                             {% if e.metadata and e.metadata != {} %}
-                            <details class="dropdown dropdown-end">
-                                <summary class="btn btn-ghost btn-xs">JSON</summary>
-                                <div class="dropdown-content bg-base-100 border border-base-300/70 rounded-lg p-3 w-80 text-xs font-mono max-h-48 overflow-auto z-50">
-                                    <pre>{{ e.metadata|tojson }}</pre>
-                                </div>
-                            </details>
+                            <button type="button" popovertarget="meta-{{ e.id }}" class="btn btn-ghost btn-xs">JSON</button>
+                            <div id="meta-{{ e.id }}" popover class="dropdown dropdown-end max-h-48 w-80 overflow-auto rounded-box border border-base-300 bg-base-100 p-3 text-xs font-mono">
+                                <pre>{{ e.metadata|tojson }}</pre>
+                            </div>
                             {% else %}—{% endif %}
                         </td>
                         <td class="text-xs opacity-50 whitespace-nowrap">{{ e.created|loc_dt }}</td>
@@ -41,7 +39,7 @@
         </div>
     </div>
     {% else %}
-    <div class="ezdistro-panel">
+    <div class="card border border-base-300 bg-base-100 min-w-0">
         <div class="p-4 flex flex-col items-center gap-3 py-8 text-center">
             <p class="text-sm opacity-50">{{ ('No events recorded.') }}</p>
         </div>

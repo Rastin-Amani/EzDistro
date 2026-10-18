@@ -19,10 +19,10 @@
       {{ f.text('name', 'Research name', placeholder='e.g. Gym software — US') }}
     </div>
     <div class="md:col-span-2">
-      <label class="form-control w-full" for="import-file">
-        <span class="label px-0 pb-1.5"><span class="label-text font-medium text-sm">{{ ('Keyword Planner file (CSV or XLSX)') }}</span></span>
+      <label class="flex flex-col gap-1 min-w-0 w-full" for="import-file">
+        <span class="label px-0 pb-1.5"><span class="truncate font-medium text-sm">{{ ('Keyword Planner file (CSV or XLSX)') }}</span></span>
         <input id="import-file" type="file" name="file" accept=".csv,.xlsx,.xlsm"
-               class="file-input file-input-bordered w-full" required />
+               class="file-input w-full" required />
         <p class="text-xs opacity-50 mt-1">{{ ('Up to 20 MB. Columns are detected automatically.') }}</p>
       </label>
     </div>
@@ -39,7 +39,7 @@
                                              ('embedding', 'Embeddings'), ('llm', 'AI model')], 'auto') }}
     <label class="label cursor-pointer justify-start gap-3 md:col-span-2">
       <input type="checkbox" name="force" class="checkbox checkbox-sm" />
-      <span class="label-text">{{ ('Re-analyse even if an identical run exists') }}</span>
+      <span class="truncate">{{ ('Re-analyse even if an identical run exists') }}</span>
     </label>
     <div class="md:col-span-2 flex items-center gap-3">
       <button type="submit" class="btn btn-primary btn-sm" hx-disabled-elt="this">

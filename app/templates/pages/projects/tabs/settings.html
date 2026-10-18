@@ -12,9 +12,9 @@
     {# ── Basics — the handful of values worth seeing every time ─────────── #}
     {{ f.disclosure(('Basics'), ('Embedding, locale and audience'), open=true) }}
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <label class="form-control w-full">
-                <span class="label px-0 pb-1.5"><span class="label-text font-medium text-sm text-base-content/80">{{ ('Embedding model') }}</span></span>
-                <input data-embedding-model data-embedding-dims="#embedding_dimensions" name="embedding_model" class="input input-bordered w-full" dir="ltr"
+            <label class="flex flex-col gap-1 min-w-0 w-full">
+                <span class="label px-0 pb-1.5"><span class="truncate font-medium text-sm text-base-content/80">{{ ('Embedding model') }}</span></span>
+                <input data-embedding-model data-embedding-dims="#embedding_dimensions" name="embedding_model" class="input w-full" dir="ltr"
                        value="{{ embedding_model }}" placeholder="text-embedding-3-small" list="embedding-model-list" />
                 <datalist id="embedding-model-list">
                     {% for model, dims in embedding_model_dimensions.items() %}
@@ -25,9 +25,9 @@
                     {% if embedding_connection %}{{ ('From connection') }} {{ embedding_connection.name }}{% else %}{{ ('Converts text to vectors for semantic search.') }}{% endif %}
                 </p>
             </label>
-            <label class="form-control w-full">
-                <span class="label px-0 pb-1.5"><span class="label-text font-medium text-sm text-base-content/80">{{ ('Dimensions') }}</span></span>
-                <input id="embedding_dimensions" name="embedding_dimensions" type="number" class="input input-bordered w-full" value="{{ embedding_dims }}" />
+            <label class="flex flex-col gap-1 min-w-0 w-full">
+                <span class="label px-0 pb-1.5"><span class="truncate font-medium text-sm text-base-content/80">{{ ('Dimensions') }}</span></span>
+                <input id="embedding_dimensions" name="embedding_dimensions" type="number" class="input w-full" value="{{ embedding_dims }}" />
                 <p class="text-xs opacity-50 mt-1">{{ ('Changing the model or dimensions creates a new vector space — a full reindex is required.') }}</p>
             </label>
             {{ f.select('target_locale', ('Target locale'), locales, settings.targetLocale, hint=('fa-IR, en-US, de-DE…')) }}
@@ -72,7 +72,7 @@
 
     {# ── Retrieval & chunking ──────────────────────────────────────────── #}
     {{ f.disclosure(('Retrieval & chunking'), ('How documents are split and searched')) }}
-        <p class="ezdistro-panel-title mb-3">{{ ('Chunking') }}</p>
+        <p class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55 mb-3">{{ ('Chunking') }}</p>
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {{ f.number('chunk_size', ('Chunk size (words)'), settings.chunkSize or 500, hint='Smaller = more precise, more expensive.') }}
             {{ f.number('chunk_overlap', ('Overlap'), settings.chunkOverlap or 100, hint='15–20% of chunk size.') }}
@@ -82,19 +82,19 @@
             {{ f.number('max_chunk_count', ('Max chunks (0 = unlimited)'), settings.maxChunkCount or 0) }}
         </div>
 
-        <p class="ezdistro-panel-title mb-3 mt-5 pt-4 border-t border-base-300/60">{{ ('Retrieval & reranking') }}</p>
+        <p class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55 mb-3 mt-5 pt-4 border-t border-base-300/60">{{ ('Retrieval & reranking') }}</p>
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {{ f.number('retrieval_top_k', ('Candidates (Top K)'), settings.retrievalTopK or 20, hint='Fetched before reranking.') }}
             {{ f.number('similarity_threshold', ('Similarity threshold'), settings.similarityThreshold or 0.35, step='0.05', hint='0–1. Higher = fewer, more precise.') }}
             {{ f.select('reranking_enabled', ('Rerank'), [('0', ('Inactive')), ('1', ('Active'))], '1' if settings.rerankingEnabled else '0') }}
             {{ f.number('reranker_top_n', ('Results after rerank'), settings.rerankerTopN or 8) }}
-            <label class="form-control w-full">
-                <span class="label px-0 pb-1.5"><span class="label-text font-medium text-sm text-base-content/80">{{ ('Rerank model') }}</span></span>
-                <input id="reranker_model" name="reranker_model" class="input input-bordered w-full" dir="ltr" value="{{ settings.rerankerModel or 'rerank-v4.0' }}" placeholder="rerank-v4.0" />
+            <label class="flex flex-col gap-1 min-w-0 w-full">
+                <span class="label px-0 pb-1.5"><span class="truncate font-medium text-sm text-base-content/80">{{ ('Rerank model') }}</span></span>
+                <input id="reranker_model" name="reranker_model" class="input w-full" dir="ltr" value="{{ settings.rerankerModel or 'rerank-v4.0' }}" placeholder="rerank-v4.0" />
             </label>
-            <label class="form-control w-full">
-                <span class="label px-0 pb-1.5"><span class="label-text font-medium text-sm text-base-content/80">{{ ('Rerank provider') }}</span></span>
-                <select name="reranker_provider" class="select select-bordered w-full" data-provider-model="#reranker_model">
+            <label class="flex flex-col gap-1 min-w-0 w-full">
+                <span class="label px-0 pb-1.5"><span class="truncate font-medium text-sm text-base-content/80">{{ ('Rerank provider') }}</span></span>
+                <select name="reranker_provider" class="select w-full" data-provider-model="#reranker_model">
                     <option value="">{{ ('— Select a connection —') }}</option>
                     {% for opt in reranker_connections %}
                     <option value="{{ opt.id }}" data-model="{{ opt.model }}" {{ 'selected' if opt.selected }}>{{ opt.name }} — {{ opt.provider }}</option>
@@ -104,7 +104,7 @@
             </label>
         </div>
 
-        <p class="ezdistro-panel-title mb-3 mt-5 pt-4 border-t border-base-300/60">{{ ('Prompt context budget') }}</p>
+        <p class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55 mb-3 mt-5 pt-4 border-t border-base-300/60">{{ ('Prompt context budget') }}</p>
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
             {{ f.number('context_max_links', ('Max internal links'), settings.contextMaxLinks or 5) }}
             {{ f.number('context_max_passages', ('Max related chunks'), settings.contextMaxPassages or 5) }}
@@ -123,7 +123,7 @@
                 [('0', ('Inactive')), ('1', ('Active'))], '1' if settings.autosave.enabled else '0') }}
             {{ f.number('autosave_interval_minutes', ('Autosave interval (minutes)'), settings.autosave.interval_minutes or 5) }}
         </div>
-        <p class="ezdistro-panel-title mb-3 mt-5 pt-4 border-t border-base-300/60">{{ ('Auto-publish') }}</p>
+        <p class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55 mb-3 mt-5 pt-4 border-t border-base-300/60">{{ ('Auto-publish') }}</p>
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
             {{ f.select('auto_publish_enabled', ('Auto-publish'),
                 [('0', ('Inactive')), ('1', ('Active'))], '1' if settings.autoPublish.enabled else '0',
@@ -145,7 +145,7 @@
                 [('0', ('Inactive')), ('1', ('Active'))], '1' if sched_write and sched_write.enabled else '0') }}
             {{ f.number('schedule_write_interval', ('Writing interval (minutes)'), sched_write.intervalMinutes if sched_write else 1440) }}
         </div>
-        <p class="ezdistro-panel-title mb-3 mt-5 pt-4 border-t border-base-300/60">{{ ('Retry on transient errors') }}</p>
+        <p class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55 mb-3 mt-5 pt-4 border-t border-base-300/60">{{ ('Retry on transient errors') }}</p>
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
             {{ f.number('retry_max_attempts', ('Max attempts'), settings.retryPolicy.max_attempts) }}
             {{ f.number('retry_backoff_base', ('Base delay (seconds)'), settings.retryPolicy.backoff_base, hint='Grows exponentially.') }}

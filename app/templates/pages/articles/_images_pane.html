@@ -3,13 +3,13 @@
    (refreshArticle polling every 4s) so status chips track live job stages. #}
 {% set plan = article.imagePlan if article.imagePlan is mapping else none %}
 {% set base = '/projects/' ~ project.id ~ '/articles/' ~ article.id ~ '/images' %}
-<div class="ezdistro-panel" id="images-pane">
+<div class="card border border-base-300 bg-base-100 min-w-0" id="images-pane">
 
-    <div class="ezdistro-panel-head">
+    <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
 
         <div class="flex items-center gap-2">
 
-            <h2 class="ezdistro-panel-title">{{ ('Article images') }}</h2>
+            <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Article images') }}</h2>
 
             {% if plan %}<span class="badge badge-ghost badge-sm">v{{ article.imagePlanVersion or 1 }}</span>{% endif %}
 
@@ -27,7 +27,7 @@
 
         {% if not plan %}
 
-            <div class="ezdistro-empty py-6">
+            <div class="flex flex-col items-center justify-center gap-3 text-center py-6">
 
                 <p class="font-bold text-base-content/75">{{ ('The image plan has not been created') }}</p>
 
@@ -67,7 +67,7 @@
                 </div>
 
                 {% if row and row.estimatedCost %}
-                    <span class="text-xs tabular whitespace-nowrap" title="{{ ('Estimated generation cost') }}">${{ '%.3f'|format(row.estimatedCost) }}</span>
+                    <span class="text-xs tabular-nums whitespace-nowrap" title="{{ ('Estimated generation cost') }}">${{ '%.3f'|format(row.estimatedCost) }}</span>
                 {% elif row and row.status == 'ready' %}
                     <span class="text-xs opacity-50 whitespace-nowrap">{{ ('Cost: unknown') }}</span>
                 {% endif %}
@@ -183,21 +183,21 @@
 
             <form hx-post="{{ base }}/{{ row.id }}/metadata" hx-swap="none" class="grid sm:grid-cols-2 gap-2 items-end">
 
-                <label class="form-control">
+                <label class="flex flex-col gap-1 min-w-0">
 
-                    <span class="label-text text-xs font-bold">{{ ('Alt text') }}</span>
+                    <span class="truncate text-xs font-bold">{{ ('Alt text') }}</span>
 
                     <input type="text" name="alt_text" dir="auto" maxlength="300" value="{{ row.altText or spec.alt_text or '' }}"
-                           class="input input-bordered input-sm w-full" placeholder="{{ ('A natural image description for search engines') }}">
+                           class="input input-sm w-full" placeholder="{{ ('A natural image description for search engines') }}">
 
                 </label>
 
-                <label class="form-control">
+                <label class="flex flex-col gap-1 min-w-0">
 
-                    <span class="label-text text-xs font-bold">{{ ('Caption — optional') }}</span>
+                    <span class="truncate text-xs font-bold">{{ ('Caption — optional') }}</span>
 
                     <input type="text" name="caption" dir="auto" maxlength="300" value="{{ row.caption or spec.caption or '' }}"
-                           class="input input-bordered input-sm w-full">
+                           class="input input-sm w-full">
 
                 </label>
 
@@ -224,7 +224,7 @@
 
                         <div class="flex items-center gap-2 min-w-0">
 
-                            <span class="font-bold tabular">v{{ v.version }}</span>
+                            <span class="font-bold tabular-nums">v{{ v.version }}</span>
 
                             <span class="badge badge-ghost badge-xs {{ v.status|status_badge }}">{{ v.status|status_label }}</span>
 

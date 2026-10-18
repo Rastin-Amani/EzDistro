@@ -1,7 +1,7 @@
 <div class="flex flex-col gap-4">
-    <div class="ezdistro-panel">
-        <div class="ezdistro-panel-head">
-            <h2 class="ezdistro-panel-title">{{ ('Results for: “%(v)s”') % {'v': query} }}</h2>
+    <div class="card border border-base-300 bg-base-100 min-w-0">
+        <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
+            <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Results for: “%(v)s”') % {'v': query} }}</h2>
         </div>
         <div class="p-4 flex flex-col gap-2">
             <p class="text-xs opacity-50">
@@ -48,9 +48,9 @@
     </div>
 
     {% if context.links %}
-    <div class="ezdistro-panel">
-        <div class="ezdistro-panel-head">
-            <h2 class="ezdistro-panel-title">{{ ('Internal link candidates (%(n)s)') % {'n': context.links|length} }}</h2>
+    <div class="card border border-base-300 bg-base-100 min-w-0">
+        <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
+            <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Internal link candidates (%(n)s)') % {'n': context.links|length} }}</h2>
         </div>
         <div class="p-4">
             <ul class="flex flex-col gap-1">
@@ -67,9 +67,9 @@
     {% endif %}
 
     {% if context.passages %}
-    <div class="ezdistro-panel">
-        <div class="ezdistro-panel-head">
-            <h2 class="ezdistro-panel-title">{{ ('Prompt context (%(a)s chunks — %(b)s characters)') % {'a': context.passages|length, 'b': context.used_chars} }}</h2>
+    <div class="card border border-base-300 bg-base-100 min-w-0">
+        <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
+            <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Prompt context (%(a)s chunks — %(b)s characters)') % {'a': context.passages|length, 'b': context.used_chars} }}</h2>
         </div>
         <div class="p-4">
             <pre class="text-xs bg-base-200/60 rounded-lg p-3 whitespace-pre-wrap max-h-72 overflow-auto">{{ context.format_for_prompt }}</pre>

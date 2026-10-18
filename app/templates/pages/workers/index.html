@@ -27,10 +27,10 @@
     </div>
 
     <!-- Workers — compact table, offline collapsed -->
-    <section class="ezdistro-panel">
-        <div class="ezdistro-panel-head">
-            <h2 class="ezdistro-panel-title">{{ ('Worker processes') }}</h2>
-            <span class="text-xs opacity-50 tabular">
+    <section class="card border border-base-300 bg-base-100 min-w-0">
+        <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
+            <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Worker processes') }}</h2>
+            <span class="text-xs opacity-50 tabular-nums">
                 {{ online|length }} {{ ('online') }}{% if offline %} · {{ offline|length }} {{ ('offline') }}{% endif %}
             </span>
         </div>
@@ -65,7 +65,7 @@
         <details id="workers-offline" hx-preserve="true" class="border-t border-base-300/60">
             <summary class="flex cursor-pointer select-none items-center gap-2 px-4 py-2.5 text-xs opacity-70">
                 <span>{{ ('Offline workers') }}</span>
-                <span class="badge badge-sm badge-soft badge-neutral tabular">{{ offline|length }}</span>
+                <span class="badge badge-sm badge-soft badge-neutral tabular-nums">{{ offline|length }}</span>
                 <span class="opacity-50">{{ ('show / hide') }}</span>
             </summary>
             <div class="overflow-x-auto">
@@ -80,7 +80,7 @@
         </details>
         {% endif %}
         {% else %}
-        <div class="ezdistro-empty py-10">
+        <div class="flex flex-col items-center justify-center gap-3 text-center py-10">
             <p class="font-bold text-base-content/75">{{ ('No workers are running') }}</p>
             <p class="text-sm text-base-content/50">{{ ('Run the worker process so jobs and schedules are processed.') }}</p>
             <code class="mt-3 inline-block bg-base-200 rounded-lg px-3 py-1.5 font-mono text-sm" dir="ltr">make worker</code>
@@ -90,13 +90,13 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
         <!-- Scheduler status -->
-        <section class="ezdistro-panel">
-            <div class="ezdistro-panel-head"><h2 class="ezdistro-panel-title">{{ ('Automatic schedules') }}</h2></div>
+        <section class="card border border-base-300 bg-base-100 min-w-0">
+            <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3"><h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Automatic schedules') }}</h2></div>
             <div class="p-4 text-xs flex flex-col gap-1.5">
                 {% if scheduler_heartbeat %}
                 <div class="flex justify-between"><span class="opacity-60">{{ ('Last check') }}</span><span>{{ scheduler_heartbeat.lastPollAt|loc_dt }}</span></div>
-                <div class="flex justify-between"><span class="opacity-60">{{ ('Schedules due') }}</span><span class="tabular">{{ scheduler_heartbeat.due or 0 }}</span></div>
-                <div class="flex justify-between"><span class="opacity-60">{{ ('Jobs created') }}</span><span class="tabular {{ 'text-success' if (scheduler_heartbeat.created or 0) > 0 }}">{{ scheduler_heartbeat.created or 0 }}</span></div>
+                <div class="flex justify-between"><span class="opacity-60">{{ ('Schedules due') }}</span><span class="tabular-nums">{{ scheduler_heartbeat.due or 0 }}</span></div>
+                <div class="flex justify-between"><span class="opacity-60">{{ ('Jobs created') }}</span><span class="tabular-nums {{ 'text-success' if (scheduler_heartbeat.created or 0) > 0 }}">{{ scheduler_heartbeat.created or 0 }}</span></div>
                 {% if scheduler_heartbeat.failed %}
                 <p class="text-error mt-1">{{ ('Errors occurred in %(n)s schedule(s) — check the worker log.') % {'n': scheduler_heartbeat.failed} }}</p>
                 {% endif %}
@@ -108,32 +108,32 @@
         </section>
 
         <!-- Queue -->
-        <section class="ezdistro-panel">
-            <div class="ezdistro-panel-head">
-                <h2 class="ezdistro-panel-title">{{ ('Job queue') }}</h2>
+        <section class="card border border-base-300 bg-base-100 min-w-0">
+            <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
+                <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Job queue') }}</h2>
                 <a href="/jobs" class="btn btn-ghost btn-xs">{{ ('All jobs') }}</a>
             </div>
             <div class="p-4 flex flex-col gap-1.5 text-xs">
                 <a href="/jobs?status=pending" class="flex items-center justify-between rounded-lg border border-base-300/70 px-3 py-2 hover:bg-base-200/50">
-                    <span>{{ ('Queued (waiting to claim)') }}</span><b class="tabular">{{ queue.pending }}</b>
+                    <span>{{ ('Queued (waiting to claim)') }}</span><b class="tabular-nums">{{ queue.pending }}</b>
                 </a>
                 <a href="/jobs?status=retrying" class="flex items-center justify-between rounded-lg border border-base-300/70 px-3 py-2 hover:bg-base-200/50">
-                    <span>{{ ('Retry') }}</span><b class="tabular">{{ queue.retrying }}</b>
+                    <span>{{ ('Retry') }}</span><b class="tabular-nums">{{ queue.retrying }}</b>
                 </a>
                 <a href="/jobs?status=running" class="flex items-center justify-between rounded-lg border border-base-300/70 px-3 py-2 hover:bg-base-200/50">
-                    <span>{{ ('Running') }}</span><b class="tabular">{{ queue.running }}</b>
+                    <span>{{ ('Running') }}</span><b class="tabular-nums">{{ queue.running }}</b>
                 </a>
                 <a href="/jobs?status=failed" class="flex items-center justify-between rounded-lg border border-error/20 bg-error/5 px-3 py-2 hover:bg-error/10">
-                    <span class="text-error">{{ ('Failed') }}</span><b class="tabular text-error">{{ queue.failed }}</b>
+                    <span class="text-error">{{ ('Failed') }}</span><b class="tabular-nums text-error">{{ queue.failed }}</b>
                 </a>
             </div>
         </section>
     </div>
 
     <!-- Restart guidance (collapsed — rarely needed) -->
-    <details class="ezdistro-panel">
-        <summary class="ezdistro-panel-head cursor-pointer select-none">
-            <h2 class="ezdistro-panel-title">{{ ('Restart the worker') }}</h2>
+    <details class="card group border border-base-300 bg-base-100 min-w-0">
+        <summary class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3 cursor-pointer select-none">
+            <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Restart the worker') }}</h2>
             <span class="text-xs opacity-50">{{ ('Only needed after a code change') }}</span>
         </summary>
         <div class="p-4 flex flex-col gap-3">
@@ -162,9 +162,9 @@
 
     {% if recent_failed %}
     <!-- Recent failures -->
-    <section class="ezdistro-panel">
-        <div class="ezdistro-panel-head">
-            <h2 class="ezdistro-panel-title">{{ ('Recent failures') }}</h2>
+    <section class="card border border-base-300 bg-base-100 min-w-0">
+        <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
+            <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Recent failures') }}</h2>
             <a href="/failed" class="btn btn-ghost btn-xs">{{ ('All') }}</a>
         </div>
         <div class="p-4 flex flex-col gap-1.5 text-xs">

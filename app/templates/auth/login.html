@@ -4,12 +4,12 @@
     <div class="mx-auto grid min-h-dvh w-full max-w-7xl lg:grid-cols-[minmax(0,1fr)_minmax(27rem,36rem)]">
         <aside class="hidden flex-col justify-between border-e border-base-300 bg-base-200/40 px-8 py-10 lg:flex xl:px-14" aria-label="{{ ('SEO automation and content generation platform') }}">
             <div class="flex items-center gap-3">
-                <span class="ezdistro-logo size-11" aria-hidden="true">{% include "components/brand_mark.html" %}</span>
+                <span class="grid place-items-center rounded-box bg-primary font-black text-primary-content overflow-hidden size-11" aria-hidden="true">{% include "components/brand_mark.html" %}</span>
                 <span class="text-lg font-bold tracking-tight">EzDistro</span>
             </div>
 
             <div class="mx-auto w-full max-w-xl py-12">
-                <p class="ezdistro-eyebrow">{{ ('SEO automation and content generation platform') }}</p>
+                <p class="inline-flex items-center gap-2 font-mono text-[0.72rem] font-normal uppercase tracking-[0.073em] text-base-content/55"><span class="h-px w-5 bg-primary" aria-hidden="true"></span>{{ ('SEO automation and content generation platform') }}</p>
                 <h2 class="mt-5 max-w-lg text-4xl font-bold leading-[1.12] tracking-tight text-base-content xl:text-5xl">
                     {{ ('From search opportunity to published article.') }}
                 </h2>
@@ -67,7 +67,7 @@
 
             <div class="mx-auto w-full max-w-md">
                 <div class="mb-8 flex items-center gap-3 lg:hidden">
-                    <span class="ezdistro-logo size-11" aria-hidden="true">{% include "components/brand_mark.html" %}</span>
+                    <span class="grid place-items-center rounded-box bg-primary font-black text-primary-content overflow-hidden size-11" aria-hidden="true">{% include "components/brand_mark.html" %}</span>
                     <span class="text-lg font-bold tracking-tight">EzDistro</span>
                 </div>
 
@@ -85,7 +85,7 @@
                 {% endif %}
 
                 <!-- Native POST keeps the session cookie reliable on mobile browsers. -->
-                <form method="post" action="/login" hx-boost="false" class="ezdistro-panel flex flex-col gap-5 p-5 sm:p-7">
+                <form method="post" action="/login" hx-boost="false" class="card border border-base-300 bg-base-100 min-w-0 flex flex-col gap-5 p-5 sm:p-7">
                     <div>
                         <label for="login-email" class="mb-2 block text-sm font-semibold">{{ ('Email') }}</label>
                         <div class="relative">

@@ -10,7 +10,7 @@
 ) }}
 
 {# Level filter — mirrors the allow-listed ?level= values in app/api/logs.py #}
-<div class="join join-sm mb-4 overflow-x-auto" role="group" aria-label="{{ ('Filter by level') }}">
+<div class="join mb-4 overflow-x-auto" role="group" aria-label="{{ ('Filter by level') }}">
     <a href="/logs" class="join-item btn btn-xs {{ 'btn-primary' if not level_filter }}" aria-current="{{ 'true' if not level_filter else 'false' }}">{{ ('All') }}</a>
     {% for level in ['info', 'warning', 'error'] %}
     <a href="/logs?level={{ level }}" class="join-item btn btn-xs {{ 'btn-primary' if level_filter == level }}" aria-current="{{ 'true' if level_filter == level else 'false' }}">{{ level|status_label }}</a>
@@ -18,7 +18,7 @@
 </div>
 
 {% if load_error %}
-<div class="ezdistro-panel border-error/40 mb-4">
+<div class="card border border-base-300 bg-base-100 min-w-0 border-error/40 mb-4">
     <div class="flex flex-wrap items-center justify-between gap-3 p-4">
         <div class="min-w-0">
             <p class="font-bold text-error">{{ ('Could not load events') }}</p>
@@ -30,10 +30,10 @@
 {% endif %}
 
 {% if events %}
-<div class="ezdistro-panel">
-    <div class="ezdistro-panel-head">
-        <h2 class="ezdistro-panel-title">{{ ('Activity') }}</h2>
-        <span class="text-xs opacity-50 tabular">{{ events|length }} {{ ('events') }}</span>
+<div class="card border border-base-300 bg-base-100 min-w-0">
+    <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
+        <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Activity') }}</h2>
+        <span class="text-xs opacity-50 tabular-nums">{{ events|length }} {{ ('events') }}</span>
     </div>
     <div class="overflow-x-auto" aria-live="polite">
         <table class="table table-sm">
@@ -60,12 +60,10 @@
                     </td>
                     <td class="hidden text-xs lg:table-cell">
                         {% if e.metadata and e.metadata != {} %}
-                        <details class="dropdown dropdown-end">
-                            <summary class="btn btn-ghost btn-xs">JSON</summary>
-                            <div class="dropdown-content z-50 max-h-48 w-80 overflow-auto rounded-lg border border-base-300/70 bg-base-100 p-3 font-mono text-xs">
-                                <pre>{{ e.metadata|tojson }}</pre>
-                            </div>
-                        </details>
+                        <button type="button" popovertarget="meta-{{ e.id }}" class="btn btn-ghost btn-xs">JSON</button>
+                        <div id="meta-{{ e.id }}" popover class="dropdown dropdown-end max-h-48 w-80 overflow-auto rounded-box border border-base-300 bg-base-100 p-3 font-mono text-xs">
+                            <pre>{{ e.metadata|tojson }}</pre>
+                        </div>
                         {% else %}—{% endif %}
                     </td>
                     <td class="whitespace-nowrap text-xs opacity-50">{{ e.created|loc_dt }}</td>
@@ -77,7 +75,7 @@
 </div>
 {% else %}
 {% if not load_error %}
-<div class="ezdistro-panel">
+<div class="card border border-base-300 bg-base-100 min-w-0">
     {{ f.empty(
         ('No events recorded'),
         ('Job activity, provider errors and configuration changes will appear here.'),

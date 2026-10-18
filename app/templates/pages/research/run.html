@@ -18,12 +18,12 @@
 
   <div class="flex flex-wrap items-start justify-between gap-3">
     <div>
-      <div class="ezdistro-eyebrow">{{ project.name }}</div>
-      <h1 class="ezdistro-title">
+      <div class="inline-flex items-center gap-2 font-mono text-[0.72rem] font-normal uppercase tracking-[0.073em] text-base-content/55"><span class="h-px w-5 bg-primary" aria-hidden="true"></span>{{ project.name }}</div>
+      <h1 class="font-extrabold leading-[0.95] tracking-[-0.04em] text-base-content text-[clamp(2.5rem,4vw+1.5rem,5rem)]">
         {{ run.name or 'Research run' }}
         <span class="badge {{ run.status|status_badge }} ms-2 align-middle">{{ run.status|status_label }}</span>
       </h1>
-      <p class="ezdistro-subtitle">
+      <p class="mt-3 max-w-xl text-base leading-relaxed text-base-content/60 tracking-[-0.014em]">
         {% set t = run.targeting or {} %}
         {{ t.locale or 'en' }}
         {% if t.country %} · {{ t.country }}{% endif %}

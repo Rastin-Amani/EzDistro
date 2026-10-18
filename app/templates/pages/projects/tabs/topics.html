@@ -42,10 +42,10 @@
     </div>
 
     {% if topics %}
-    <section class="ezdistro-panel">
-        <div class="ezdistro-panel-head">
-            <h3 class="ezdistro-panel-title">{{ ('Topics') }}</h3>
-            <span class="text-xs opacity-50 tabular">{{ topics|length }}</span>
+    <section class="card border border-base-300 bg-base-100 min-w-0">
+        <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
+            <h3 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Topics') }}</h3>
+            <span class="text-xs opacity-50 tabular-nums">{{ topics|length }}</span>
         </div>
         <div class="overflow-x-auto">
             <table class="table table-sm">
@@ -71,7 +71,7 @@
                             <p class="truncate">{{ t.pillar or '—' }}{% if t.cluster %} / {{ t.cluster }}{% endif %}</p>
                         </td>
                         <td><span class="badge badge-sm {{ t.status|status_badge }}">{{ t.status|status_label }}</span></td>
-                        <td class="hidden text-xs tabular md:table-cell">{{ t.priority or 0 }}</td>
+                        <td class="hidden text-xs tabular-nums md:table-cell">{{ t.priority or 0 }}</td>
                         <td class="whitespace-nowrap">
                             <div class="flex items-center justify-end gap-1">
                                 {% if t.status in ['planned', 'failed', 'cancelled'] %}
@@ -81,17 +81,15 @@
                                 {% if t.articleId %}
                                 <a class="btn btn-ghost btn-xs" href="/projects/{{ project.id }}/articles/{{ t.articleId }}">{{ ('Article') }}</a>
                                 {% endif %}
-                                <details>
-                                    <summary class="btn btn-ghost btn-square btn-xs list-none" aria-label="{{ ('More actions') }}">
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="size-4"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h.01M12 12h.01M19 12h.01" /></svg>
-                                    </summary>
-                                    <ul class="menu mt-1 w-40 rounded-box border border-base-300 bg-base-100 p-2 text-sm">
-                                        <li><a href="/topics/{{ t.id }}">{{ ('Open') }}</a></li>
-                                        <li><button class="text-error"
-                                            hx-post="/projects/{{ project.id }}/topics/{{ t.id }}/delete" hx-swap="none"
-                                            hx-confirm="{{ ('Delete this topic? This cannot be undone.') }}">{{ ('Delete') }}</button></li>
-                                    </ul>
-                                </details>
+                                <button type="button" popovertarget="topic-menu-{{ t.id }}" class="btn btn-ghost btn-square btn-xs" aria-label="{{ ('More actions') }}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="size-4"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h.01M12 12h.01M19 12h.01" /></svg>
+                                </button>
+                                <ul id="topic-menu-{{ t.id }}" popover class="dropdown dropdown-end menu w-44 rounded-box border border-base-300 bg-base-100 p-2 text-sm [&_a:hover]:bg-base-200 [&_button:hover]:bg-base-200 [&_label:hover]:bg-base-200">
+                                    <li><a href="/topics/{{ t.id }}">{{ ('Open') }}</a></li>
+                                    <li><button class="text-error"
+                                        hx-post="/projects/{{ project.id }}/topics/{{ t.id }}/delete" hx-swap="none"
+                                        hx-confirm="{{ ('Delete this topic? This cannot be undone.') }}">{{ ('Delete') }}</button></li>
+                                </ul>
                             </div>
                         </td>
                     </tr>
@@ -101,8 +99,8 @@
         </div>
     </section>
     {% else %}
-    <div class="ezdistro-panel">
-        <div class="ezdistro-empty py-10">
+    <div class="card border border-base-300 bg-base-100 min-w-0">
+        <div class="flex flex-col items-center justify-center gap-3 text-center py-10">
             <p class="font-bold text-base-content/75">
                 {% if q or status_filter %}{{ ('No topics match these filters') }}{% else %}{{ ('No topics yet') }}{% endif %}
             </p>

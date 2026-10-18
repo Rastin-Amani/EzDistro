@@ -14,13 +14,13 @@
 
         {% set selected_opt = (opts | selectattr('selected') | first) if opts else none %}
 
-        <section class="ezdistro-panel">
+        <section class="card border border-base-300 bg-base-100 min-w-0">
 
-            <div class="ezdistro-panel-head">
+            <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
 
                 <div class="flex items-center gap-2">
 
-                    <h3 class="ezdistro-panel-title">{{ label }}</h3>
+                    <h3 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ label }}</h3>
 
                     {{ f.tip(('Roles: Outline builds the outline, Section writes the sections, Meta and Review are optional. If left empty, the global default is used.')) }}
 
@@ -32,17 +32,17 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
 
-                    <label class="form-control">
+                    <label class="flex flex-col gap-1 min-w-0">
 
                         <div class="label px-0 pb-1">
 
-                            <span class="label-text text-xs font-medium">{{ ('Provider') }}</span>
+                            <span class="truncate text-xs font-medium">{{ ('Provider') }}</span>
 
                             {{ f.tip(('LLM provider for this role — pick from active connections in the “Connections” tab.')) }}
 
                         </div>
 
-                        <select name="{{ role }}_provider" class="select select-bordered w-full"
+                        <select name="{{ role }}_provider" class="select w-full"
 
                                 data-provider-model="#model-{{ role }}">
 
@@ -70,11 +70,11 @@
 
 
 
-                    <label class="form-control">
+                    <label class="flex flex-col gap-1 min-w-0">
 
                         <div class="label px-0 pb-1">
 
-                            <span class="label-text text-xs font-medium">{{ ('Model') }}</span>
+                            <span class="truncate text-xs font-medium">{{ ('Model') }}</span>
 
                             {{ f.tip(('Model ID — enter it manually or fetch it from the provider with “Fetch”.')) }}
 
@@ -82,7 +82,7 @@
 
                         <div class="flex gap-2">
 
-                            <input id="model-{{ role }}" name="{{ role }}_model" class="input input-bordered flex-1" dir="ltr" value="{{ sel_model or (selected_opt.model if selected_opt else '') }}"
+                            <input id="model-{{ role }}" name="{{ role }}_model" class="input flex-1" dir="ltr" value="{{ sel_model or (selected_opt.model if selected_opt else '') }}"
 
                                    placeholder="{{ global_defaults[role].model if global_defaults.get(role) else '' }}" list="models-{{ role }}" />
 
@@ -110,11 +110,11 @@
 
 
 
-                    <label class="form-control">
+                    <label class="flex flex-col gap-1 min-w-0">
 
                         <div class="label px-0 pb-1">
 
-                            <span class="label-text text-xs font-medium">{{ ('Global default') }}</span>
+                            <span class="truncate text-xs font-medium">{{ ('Global default') }}</span>
 
                             {{ f.tip(('The global value defined by the admin; used when this role is empty.')) }}
 
@@ -144,11 +144,11 @@
 
                 <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-3">
 
-                    <label class="form-control">
+                    <label class="flex flex-col gap-1 min-w-0">
 
                         <div class="label px-0 pb-1">
 
-                            <span class="label-text text-xs font-medium">{{ ('Temperature') }}</span>
+                            <span class="truncate text-xs font-medium">{{ ('Temperature') }}</span>
 
                             {{ f.tip(('Output randomness — 0 is deterministic, 2 is creative. For SEO, 0.6–0.8 usually works well.')) }}
 
@@ -156,69 +156,69 @@
 
                         <input name="{{ role }}_temperature" type="number" step="0.1" min="0" max="2"
 
-                               class="input input-bordered w-full" value="{{ settings[role ~ 'Temperature'] or 0.7 }}" />
+                               class="input w-full" value="{{ settings[role ~ 'Temperature'] or 0.7 }}" />
 
                     </label>
 
-                    <label class="form-control">
+                    <label class="flex flex-col gap-1 min-w-0">
 
                         <div class="label px-0 pb-1">
 
-                            <span class="label-text text-xs font-medium">{{ ('Max tokens') }}</span>
+                            <span class="truncate text-xs font-medium">{{ ('Max tokens') }}</span>
 
                             {{ f.tip(('Output token cap per call. Must not exceed the model\'s capacity.')) }}
 
                         </div>
 
-                        <input name="{{ role }}_max_tokens" type="number" class="input input-bordered w-full"
+                        <input name="{{ role }}_max_tokens" type="number" class="input w-full"
 
                                value="{{ settings[role ~ 'MaxTokens'] or 4096 }}" />
 
                     </label>
 
-                    <label class="form-control">
+                    <label class="flex flex-col gap-1 min-w-0">
 
                         <div class="label px-0 pb-1">
 
-                            <span class="label-text text-xs font-medium">{{ ('Timeout (seconds)') }}</span>
+                            <span class="truncate text-xs font-medium">{{ ('Timeout (seconds)') }}</span>
 
                             {{ f.tip(('Maximum wait for a provider response before an error is raised.')) }}
 
                         </div>
 
-                        <input name="{{ role }}_timeout" type="number" class="input input-bordered w-full"
+                        <input name="{{ role }}_timeout" type="number" class="input w-full"
 
                                value="{{ settings[role ~ 'Timeout'] or 120 }}" />
 
                     </label>
 
-                    <label class="form-control">
+                    <label class="flex flex-col gap-1 min-w-0">
 
                         <div class="label px-0 pb-1">
 
-                            <span class="label-text text-xs font-medium">{{ ('Max attempts') }}</span>
+                            <span class="truncate text-xs font-medium">{{ ('Max attempts') }}</span>
 
                             {{ f.tip(('Number of retries on transient errors.')) }}
 
                         </div>
 
-                        <input name="{{ role }}_retry_attempts" type="number" class="input input-bordered w-full"
+                        <input name="{{ role }}_retry_attempts" type="number" class="input w-full"
 
                                value="{{ (settings[role ~ 'Retry'] or {}).max_attempts or 3 }}" />
 
                     </label>
 
-                    <label class="form-control">
+                    <label class="flex flex-col gap-1 min-w-0">
 
                         <div class="label px-0 pb-1">
 
-                            <span class="label-text text-xs font-medium">{{ ('Base delay (s)') }}</span>
+                            <span class="truncate text-xs font-medium">{{ ('Base delay (s)') }}</span>
 
                             {{ f.tip(('Initial delay before a retry; grows exponentially with each failure.')) }}
 
                         </div>
 
-                        <input name="{{ role }}_retry_base" type="number" class="input input-bordered w-full"
+                        <input name="{{ role }}_retry_base" type="number" class="input w-full"
 
                                value="{{ (settings[role ~ 'Retry'] or {}).backoff_base or 30 }}" />
 
@@ -249,13 +249,13 @@
 
     {% if user and user.role == 'admin' %}
 
-    <section class="ezdistro-panel">
+    <section class="card border border-base-300 bg-base-100 min-w-0">
 
-        <div class="ezdistro-panel-head">
+        <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
 
             <div class="flex items-center gap-2">
 
-                <h3 class="ezdistro-panel-title">{{ ('Global defaults (admin only)') }}</h3>
+                <h3 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Global defaults (admin only)') }}</h3>
 
                 {{ f.tip(('Values that all new projects use as defaults; project settings always take precedence.')) }}
 
@@ -277,9 +277,9 @@
 
                     <span class="text-xs font-semibold">{{ role }}</span>
 
-                    <input name="{{ role }}_provider" class="input input-xs input-bordered w-full" dir="ltr" placeholder="provider" value="{{ g.provider or '' }}" />
+                    <input name="{{ role }}_provider" class="input input-xs w-full" dir="ltr" placeholder="provider" value="{{ g.provider or '' }}" />
 
-                    <input name="{{ role }}_model" class="input input-xs input-bordered w-full" dir="ltr" placeholder="model" value="{{ g.model or '' }}" />
+                    <input name="{{ role }}_model" class="input input-xs w-full" dir="ltr" placeholder="model" value="{{ g.model or '' }}" />
 
                 </div>
 
