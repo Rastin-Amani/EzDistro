@@ -103,7 +103,8 @@ async def main() -> None:
         repo = WorkerHeartbeatRepo(pb)
         started_at = now_utc()
         while not stop.is_set():
-            await asyncio.sleep(HEARTBEAT_INTERVAL)
+            # Beat before sleeping: a redeploy then shows its own version on
+            # /workers immediately instead of the previous worker's for 15s.
             try:
                 running = JobRepo(pb).count(filter=f'status="running" && lockedBy="{worker_id}"')
                 stats = engine.stats()
@@ -136,6 +137,7 @@ async def main() -> None:
                 )
             except Exception:
                 logger.exception("worker.heartbeat.error")
+            await asyncio.sleep(HEARTBEAT_INTERVAL)
 
     async def metrics_flush_loop() -> None:
         while not stop.is_set():
