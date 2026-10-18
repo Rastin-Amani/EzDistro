@@ -699,6 +699,7 @@ async def generate_opportunities(
 
     order = sorted(grouped.items(), key=lambda item: -sum(k["volume"] for k in item[1]))
     accepted = MatchIndex()
+    accepted_intents: dict[frozenset[str], dict[str, Any]] = {}
     seen: list[dict[str, Any]] = []
     errors: list[str] = []
     created = duplicates = updates = skipped = batches = 0
@@ -713,6 +714,12 @@ async def generate_opportunities(
         for cluster_id, group in batch:
             cluster = clusters.get(cluster_id) or {}
             label = cluster.get("name") or group[0]["text"]
+            if label in cluster_by_label:
+                # Two clusters can carry the same name ("Gym crm" twice). The
+                # label is both the model's handle and this map's key, so a
+                # duplicate silently dropped one cluster from the batch — and
+                # the model could not tell them apart either.
+                label = f"{label} ({cluster.get('slug') or cluster_id})"
             members = group[:KEYWORDS_PER_CLUSTER]
             cluster_by_label[label] = (cluster_id, group)
             payload_clusters.append(
@@ -800,11 +807,19 @@ async def generate_opportunities(
                 continue
             row["project"] = ctx.project_id
             row["run"] = run_id
+            intent_key = _intent_key(row)
+            intent_row = accepted_intents.get(intent_key) if intent_key else None
+            if intent_row is not None:
+                duplicates += 1
+                _merge_duplicate(intent_row, row, similarity=1.0, reason="same search intent")
+                continue
             dup_row, dup_score = accepted.best(row["title"], threshold=DUPLICATE_THRESHOLD)
             if dup_row is not None:
                 duplicates += 1
                 _merge_duplicate(dup_row, row, similarity=dup_score)
                 continue
+            if intent_key:
+                accepted_intents[intent_key] = row
             row["uniquenessScore"] = round(max(0.0, 1.0 - _seen_similarity(seen, row)), 3)
             row["opportunityScore"], row["scoreComponents"] = score_opportunity(
                 volume=row["searchVolume"],
@@ -937,7 +952,62 @@ def _seen_similarity(seen: Sequence[dict[str, Any]], row: dict[str, Any]) -> flo
     return best
 
 
-def _merge_duplicate(kept: dict[str, Any], duplicate: dict[str, Any], *, similarity: float) -> None:
+# Words that qualify a query without changing the need it expresses, so
+# "gym crm", "best gym crm" and "gym crm software" are one page. Discriminating
+# words (pricing, booking, attendance…) are kept: they are different pages.
+_QUALIFIER_TOKENS = frozenset(
+    {
+        "software",
+        "system",
+        "systems",
+        "app",
+        "apps",
+        "application",
+        "applications",
+        "tool",
+        "tools",
+        "platform",
+        "platforms",
+        "solution",
+        "solutions",
+        "program",
+        "programs",
+        "programme",
+        "programmes",
+        "management",
+        "manager",
+        "managers",
+        "online",
+        "web",
+        "best",
+        "top",
+        "good",
+        "cheap",
+    }
+)
+
+
+def _intent_key(row: dict[str, Any]) -> frozenset[str]:
+    """The query's discriminators — what makes it a *different* page.
+
+    Two candidates that share a discriminator set are one page however
+    differently they are worded; the title-string comparison alone let
+    "Gym CRM: …" and "Best Gym CRM Software: …" both survive.
+    """
+    return frozenset(
+        token
+        for token in content_tokens(str(row.get("primaryKeyword") or ""))
+        if token not in _QUALIFIER_TOKENS
+    )
+
+
+def _merge_duplicate(
+    kept: dict[str, Any],
+    duplicate: dict[str, Any],
+    *,
+    similarity: float,
+    reason: str = "near-duplicate title",
+) -> None:
     """Fold a near-identical candidate into the one we keep (no duplicate pages)."""
     secondary = list(kept.get("secondaryKeywords") or [])
     candidate = duplicate.get("primaryKeyword")
@@ -949,7 +1019,14 @@ def _merge_duplicate(kept: dict[str, Any], duplicate: dict[str, Any], *, similar
     kept["secondaryKeywords"] = secondary[:25]
     evidence = dict(kept.get("evidence") or {})
     merged = list(evidence.get("merged") or [])
-    merged.append({"title": duplicate.get("title"), "similarity": round(similarity, 3)})
+    merged.append(
+        {
+            "title": duplicate.get("title"),
+            "primaryKeyword": duplicate.get("primaryKeyword"),
+            "similarity": round(similarity, 3),
+            "reason": reason,
+        }
+    )
     evidence["merged"] = merged[:10]
     kept["evidence"] = evidence
 
@@ -976,15 +1053,19 @@ def _build_row(
     lookup = _keyword_lookup(group)
     batch = _batch_index(cluster_by_label)
     raw_primary = str(item.get("primary_keyword") or "")
-    primary = _resolve_keyword(raw_primary, lookup)
-    if primary is None:
-        hit = batch.get(normalize_keyword(raw_primary))
-        if hit is not None:
-            # The model labelled the idea with a cluster that did not match, or
-            # picked a keyword from a sibling cluster: follow the keyword, so
-            # the row keeps real provenance (and the right gap score).
-            primary, cluster_id, group = hit
-            lookup = _keyword_lookup(group)
+    primary: dict[str, Any] | None
+    # An exact collected keyword always wins over a fuzzy match: a fuzzy match
+    # would resolve "gym crm software pricing" to "gym crm software" and the
+    # distinct pricing page would be merged away as a duplicate.
+    hit = batch.get(normalize_keyword(raw_primary))
+    if hit is not None:
+        # The model labelled the idea with a cluster that did not match, or
+        # picked a keyword from a sibling cluster: follow the keyword, so the
+        # row keeps real provenance (and the right gap score).
+        primary, cluster_id, group = hit
+        lookup = _keyword_lookup(group)
+    else:
+        primary = _resolve_keyword(raw_primary, lookup)
     if primary is None:
         return None, "primary keyword not in the collected keyword set"
     if goal.min_volume and primary["volume"] < goal.min_volume:
@@ -996,10 +1077,8 @@ def _build_row(
 
     secondary: list[str] = []
     for value in item.get("secondary_keywords") or []:
-        resolved = _resolve_keyword(str(value), lookup)
-        if resolved is None:
-            hit = batch.get(normalize_keyword(str(value)))
-            resolved = hit[0] if hit else None
+        hit = batch.get(normalize_keyword(str(value)))
+        resolved = hit[0] if hit else _resolve_keyword(str(value), lookup)
         if resolved is not None and resolved["text"] != primary["text"]:
             secondary.append(resolved["text"])
         if len(secondary) >= 15:
@@ -1136,6 +1215,7 @@ async def _deterministic_opportunities(
     """
     idea_repo = ArticleIdeaRepo(ctx.pb)
     accepted = MatchIndex()
+    accepted_intents: dict[frozenset[str], dict[str, Any]] = {}
     seen: list[dict[str, Any]] = []
     created = duplicates = updates = skipped = 0
     order = sorted(grouped.items(), key=lambda item: -sum(k["volume"] for k in item[1]))
@@ -1215,11 +1295,19 @@ async def _deterministic_opportunities(
             "status": "proposed",
             "scoreVersion": SCORE_VERSION,
         }
+        intent_key = _intent_key(row)
+        intent_row = accepted_intents.get(intent_key) if intent_key else None
+        if intent_row is not None:
+            duplicates += 1
+            _merge_duplicate(intent_row, row, similarity=1.0, reason="same search intent")
+            continue
         dup_row, dup_score = accepted.best(row["title"], threshold=DUPLICATE_THRESHOLD)
         if dup_row is not None:
             duplicates += 1
             _merge_duplicate(dup_row, row, similarity=dup_score)
             continue
+        if intent_key:
+            accepted_intents[intent_key] = row
         row["uniquenessScore"] = round(max(0.0, 1.0 - _seen_similarity(seen, row)), 3)
         row["opportunityScore"], row["scoreComponents"] = score_opportunity(
             volume=row["searchVolume"],
@@ -1300,8 +1388,7 @@ def _demo() -> None:
     _merge_duplicate(kept, {"title": "T", "primaryKeyword": "gym crm"}, similarity=0.9)
     assert kept["secondaryKeywords"] == ["gym crm"], kept
 
-    # trend comes from the collected monthly volumes, never estimated
-    assert _trend_label([(2025, month, 100) for month in range(1, 7)]) == "flat"
+    # trend comes from the collected monthly volumes, never estimated    assert _trend_label([(2025, month, 100) for month in range(1, 7)]) == "flat"
     assert (
         _trend_label(
             [
@@ -1325,6 +1412,17 @@ def _demo() -> None:
     assert _normalize_intent("nonsense") == "unknown"
     assert _normalize_content_type("Guide") == "guide"
     assert _normalize_content_type("nonsense") == ""
+
+    # one page per intent: qualifiers do not distinguish, discriminators do
+    assert _intent_key({"primaryKeyword": "gym crm software"}) == _intent_key(
+        {"primaryKeyword": "best gym crm"}
+    )
+    assert _intent_key({"primaryKeyword": "gym crm software"}) != _intent_key(
+        {"primaryKeyword": "gym crm software pricing"}
+    )
+    assert _intent_key({"primaryKeyword": "gym booking system"}) != _intent_key(
+        {"primaryKeyword": "gym attendance software"}
+    )
     print("research_opportunities ok")
 
 

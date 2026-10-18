@@ -40,6 +40,15 @@ from app.services.prompt_service import PromptService
 
 SIMILARITY_THRESHOLD = 0.62
 EMBEDDING_THRESHOLD = 0.72
+# A group bigger than this cannot be one page: embedding chaining put 192 of
+# 234 keywords into a single "Facility" group (they are all paraphrases of
+# "gym software") and the opportunity engine proposes only a couple of pages per
+# group, so the run collapsed to 10 pages. Oversized groups are re-clustered at
+# a tighter cosine until they break into sub-intents.
+MAX_CLUSTER_KEYWORDS = 15
+SPLIT_STEP = 0.05
+SPLIT_CEILING = 0.97
+MAX_SPLIT_DEPTH = 4
 CANDIDATE_CAP = 40
 EMBED_BATCH = 256
 LLM_BATCH = 120
@@ -270,23 +279,65 @@ async def embedding_members(
         )
 
     signatures = [_gate(keyword.text) for keyword in keywords]
+    groups = _greedy_groups(range(len(texts)), vectors, signatures, threshold)
+    split: list[list[int]] = []
+    for group in groups:
+        split.extend(_split_oversized(group, vectors, signatures, threshold))
+    return split
+
+
+def _greedy_groups(
+    indices: Iterable[int],
+    vectors: Sequence[Sequence[float]],
+    signatures: Sequence[frozenset[str]],
+    threshold: float,
+) -> list[list[int]]:
+    """Assign each index to the nearest representative (or start a new group).
+
+    Shared by the main pass and the split so both use one rule.
+    """
     groups: list[list[int]] = []
-    reps: list[tuple[int, list[float]]] = []
-    for index, vector in enumerate(vectors):
+    reps: list[tuple[int, Sequence[float]]] = []
+    for index in indices:
         best_group = -1
         best_score = 0.0
         for group_index, (rep, rep_vector) in enumerate(reps):
             if signatures[rep] != signatures[index]:
                 continue
-            score = _cosine(vector, rep_vector)
+            score = _cosine(vectors[index], rep_vector)
             if score > best_score:
                 best_score, best_group = score, group_index
         if best_group >= 0 and best_score >= threshold:
             groups[best_group].append(index)
         else:
-            reps.append((index, vector))
+            reps.append((index, vectors[index]))
             groups.append([index])
     return groups
+
+
+def _split_oversized(
+    members: Sequence[int],
+    vectors: Sequence[Sequence[float]],
+    signatures: Sequence[frozenset[str]],
+    threshold: float,
+    depth: int = 0,
+) -> list[list[int]]:
+    """Re-cluster a group that is too big to be a single page, at a tighter
+    cosine, until it breaks up (or the depth/ceiling stops it).
+
+    Members stay volume-descending, so each resulting group's first member is
+    still its highest-volume keyword.
+    """
+    if len(members) <= MAX_CLUSTER_KEYWORDS or depth >= MAX_SPLIT_DEPTH:
+        return [list(members)]
+    tighter = min(threshold + SPLIT_STEP, SPLIT_CEILING)
+    parts = _greedy_groups(members, vectors, signatures, tighter)
+    if len(parts) <= 1:
+        return [list(members)]
+    out: list[list[int]] = []
+    for part in parts:
+        out.extend(_split_oversized(part, vectors, signatures, tighter, depth + 1))
+    return out
 
 
 async def llm_groups(

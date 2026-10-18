@@ -590,6 +590,93 @@ def test_idea_kept_when_keyword_belongs_to_a_sibling_cluster():
     assert idea["cluster"] == clusters["fitness studio booking software"]
 
 
+def test_oversized_embedding_cluster_splits_into_sub_intents():
+    """Three sub-intents chain into one blob at the base threshold (all above
+    0.72 to the first representative) — the split must recover them, or a run
+    with 234 paraphrase keywords cannot exceed ~2 pages per blob."""
+    from app.services.research_clustering import (
+        MAX_CLUSTER_KEYWORDS,
+        _greedy_groups,
+        _split_oversized,
+    )
+
+    vectors: list[list[float]] = []
+    for base in ((1.0, 0.02, 0.02), (0.75, 0.66, 0.0), (0.75, 0.0, 0.66)):
+        for member in range(10):
+            jitter = member * 0.001
+            vectors.append([base[0] + jitter, base[1] + jitter, base[2] + jitter])
+    signatures = [frozenset({"software"})] * len(vectors)
+    members = list(range(len(vectors)))
+
+    blob = _greedy_groups(members, vectors, signatures, 0.72)
+    assert len(blob) == 1 and len(blob[0]) == 30
+
+    parts = _split_oversized(members, vectors, signatures, 0.72)
+    assert len(parts) == 3, parts
+    assert sorted(m for part in parts for m in part) == members  # nobody lost
+    assert all(len(part) <= MAX_CLUSTER_KEYWORDS for part in parts)
+    assert all(part[0] < part[-1] for part in parts)  # volume order preserved
+
+
+def test_same_intent_pages_merge_without_merging_distinct_formats():
+    """`gym crm software` and `best gym crm` are one page; `gym crm pricing` is
+    a different one. Title comparison alone kept the first two."""
+    payload = {
+        "opportunities": [
+            {
+                "title": "Gym CRM: Managing Leads and Trials",
+                "primary_keyword": "gym crm software",
+                "intent": "commercial",
+                "content_type": "guide",
+                "action": "generate",
+            },
+            {
+                "title": "Best Gym CRM Software: How to Choose",
+                "primary_keyword": "best gym crm",
+                "intent": "commercial",
+                "content_type": "best-of list",
+                "action": "generate",
+            },
+            {
+                "title": "What Gym CRM Software Costs",
+                "primary_keyword": "gym crm software pricing",
+                "intent": "commercial",
+                "content_type": "guide",
+                "action": "generate",
+            },
+        ]
+    }
+    pb, project, registry = _setup()
+    registry.llm = FakeLLM([json.dumps(payload)])
+    job = _run_job(pb, project["id"], key="opp-intent")
+    ctx = make_ctx(pb, registry, job)
+    run = ResearchRunRepo(pb).create_run(
+        project=project["id"],
+        name="r",
+        research_type="keywords",
+        config={},
+        targeting={},
+        fingerprint="fp",
+    )
+    _seed_keywords(
+        pb,
+        project["id"],
+        run["id"],
+        [("gym crm software", 900), ("best gym crm", 400), ("gym crm software pricing", 300)],
+    )
+    asyncio.run(cluster_run(ctx, run_id=run["id"], method="deterministic"))
+
+    result = asyncio.run(generate_opportunities(ctx, run_id=run["id"], goal_text=""))
+    assert result["created"] == 2, result
+    assert result["duplicates"] == 1, result
+    kept = {i["primaryKeyword"]: i for i in ArticleIdeaRepo(pb).all_for_run(run["id"])}
+    assert set(kept) == {"gym crm software", "gym crm software pricing"}, kept
+    merged = kept["gym crm software"]["evidence"]["merged"]
+    assert merged[0]["reason"] == "same search intent", merged
+    # the merged variant is kept as a secondary keyword, not thrown away
+    assert "best gym crm" in kept["gym crm software"]["secondaryKeywords"]
+
+
 def test_cannibalization_forces_update_action():
     pb, project, registry = _setup()
     registry.llm = FakeLLM(

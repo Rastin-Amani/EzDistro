@@ -112,6 +112,7 @@ def acquire_async_client(
             base_url, api_key=api_key, auth_header=auth_header, timeout=timeout
         )
         client._ezdistro_pooled = True  # type: ignore[attr-defined]
+
         # Refresh the idle stamp on every request. A long job holds ONE client
         # for many sequential calls; without this it looked idle after IDLE_TTL,
         # the sweeper closed it mid-run and every later call of that job died
