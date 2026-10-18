@@ -186,6 +186,42 @@ def test_harvest_persists_keywords_and_borrows_existing_metrics():
     assert summary["requests"] == 1
 
 
+async def test_keywords_export_is_ready_for_a_volume_round_trip():
+    """Harvested keywords carry no volume, so the CSV must be paste-ready for
+    Keyword Planner's "Get search volume"."""
+    from app.repositories.members import MemberRepo
+    from app.services.research_keywords import _persist
+    from tests.test_seo_research import _setup
+
+    pb, project, registry = _setup()
+    MemberRepo(pb).add(project=project["id"], user="u1", role="owner")
+    run = ResearchRunRepo(pb).create_run(
+        project=project["id"],
+        name="harvest",
+        research_type="harvest",
+        config={"harvest": {"seeds": ["gym software"]}},
+        targeting={"language": "en", "locale": "en-US", "country": "US"},
+    )
+    _persist(
+        pb=pb,
+        project_id=project["id"],
+        run_id=run["id"],
+        language="en",
+        location_id="US",
+        locale="en-US",
+        location_name="United States",
+        ideas=[KeywordIdea(text="gym software pricing", avg_monthly_searches=2400)],
+        source="autocomplete",
+    )
+
+    request = make_req(pb, make_user(), project["id"])
+    response = R.keywords_export(request, project["id"], run["id"])
+    body = "".join([chunk async for chunk in response.body_iterator])
+    assert "gym software pricing" in body
+    assert "Avg. monthly searches" in body
+    assert "2400" in body
+
+
 def test_harvest_route_queues_a_run_with_seeds_and_no_google_ads():
     pb = make_pb()
     project = make_project(pb, slug="harvest-route", name="H")

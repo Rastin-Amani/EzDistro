@@ -37,6 +37,8 @@
       <a class="btn btn-sm btn-ghost" href="/projects/{{ project.id }}?tab=research">All runs</a>
       <a class="btn btn-sm btn-ghost" href="/projects/{{ project.id }}/research/{{ run.id }}/opportunities.csv"
          download hx-boost="false">Export CSV</a>
+      <a class="btn btn-sm btn-ghost" href="/projects/{{ project.id }}/research/{{ run.id }}/keywords.csv"
+         download hx-boost="false" title="{{ ('For a Keyword Planner volume round trip') }}">Keywords CSV</a>
       {% if running %}
         <button class="btn btn-sm btn-ghost text-error"
                 hx-post="/projects/{{ project.id }}/research/{{ run.id }}/cancel"

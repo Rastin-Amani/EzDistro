@@ -1303,6 +1303,64 @@ def clusters_bulk(
     )
 
 
+@router.get("/projects/{project_id}/research/{run_id}/keywords.csv")
+@page_guard("Could not export the run's keywords.")
+def keywords_export(request: Request, project_id: str, run_id: str):
+    """The run's collected keywords, ready for a Keyword Planner volume round trip.
+
+    Harvested keywords have no measured volume (the autocomplete source has
+    none), and Keyword Planner answers for a pasted list — so this export is the
+    bridge between the free workflow and real demand data.
+    """
+    require_project_access(request, project_id)
+    run = _run_or_none(request, project_id, run_id)
+    if run is None:
+        return RedirectResponse(f"/projects/{project_id}?tab=research", status_code=303)
+    pb = request.state.pb
+    metrics = KeywordMetricRepo(pb).list_all_for_run(run_id)
+    texts = KeywordRepo(pb).map_by_ids([row.get("keyword", "") for row in metrics])
+
+    def generate() -> Any:
+        buffer = io.StringIO()
+        writer = csv.writer(buffer)
+        writer.writerow(
+            [
+                "Keyword",
+                "Avg. monthly searches",
+                "Competition",
+                "Competition (indexed value)",
+                "Top of page bid (high range)",
+                "Currency",
+                "Cluster",
+            ]
+        )
+        for row in metrics:
+            source = texts.get(row.get("keyword", "")) or {}
+            text = source.get("displayKeyword") or source.get("normalizedKeyword") or ""
+            if not text:
+                continue
+            writer.writerow(
+                [
+                    text,
+                    int(row.get("avgMonthlySearches") or 0),
+                    row.get("competition") or "UNSPECIFIED",
+                    int(row.get("competitionIndex") or 0),
+                    round(int(row.get("highTopOfPageBidMicros") or 0) / 1_000_000, 2),
+                    row.get("currencyCode") or "",
+                    row.get("cluster") or "",
+                ]
+            )
+            yield buffer.getvalue()
+            buffer.seek(0)
+            buffer.truncate(0)
+
+    return StreamingResponse(
+        generate(),
+        media_type="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="keywords-{run_id}.csv"'},
+    )
+
+
 @router.get("/projects/{project_id}/research/{run_id}/opportunities.csv")
 @page_guard("Could not export the research roadmap.")
 def opportunities_export(request: Request, project_id: str, run_id: str):
