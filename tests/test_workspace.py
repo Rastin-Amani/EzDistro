@@ -286,7 +286,7 @@ def test_workspace_stats_empty_scope_does_not_crash():
     pb = FakePocketBase(default_unique_fields())
     make_project(pb)  # data exists but this user cannot see it
     stats = global_stats(pb, [])
-    assert stats["projects"] == 0
+    assert stats["jobs_running"] == 0
     assert stats["jobs_pending"] == 0
     assert stats["jobs_completed"] == 0
     assert stats["average_duration_s"] == 0.0
