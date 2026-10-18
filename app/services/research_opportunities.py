@@ -812,11 +812,13 @@ async def generate_opportunities(
             if intent_row is not None:
                 duplicates += 1
                 _merge_duplicate(intent_row, row, similarity=1.0, reason="same search intent")
+                _persist_merge(idea_repo, intent_row)
                 continue
             dup_row, dup_score = accepted.best(row["title"], threshold=DUPLICATE_THRESHOLD)
             if dup_row is not None:
                 duplicates += 1
                 _merge_duplicate(dup_row, row, similarity=dup_score)
+                _persist_merge(idea_repo, dup_row)
                 continue
             if intent_key:
                 accepted_intents[intent_key] = row
@@ -998,6 +1000,25 @@ def _intent_key(row: dict[str, Any]) -> frozenset[str]:
         token
         for token in content_tokens(str(row.get("primaryKeyword") or ""))
         if token not in _QUALIFIER_TOKENS
+    )
+
+
+def _persist_merge(repo: Any, kept: dict[str, Any]) -> None:
+    """Write back a merge that folded a candidate into an *earlier* batch's row.
+
+    Rows are inserted per batch, so merging into a row from a previous batch only
+    mutated an in-memory dict: the candidate was dropped but the record of what
+    was merged (and its keywords) never reached the database. A row created in
+    this batch has no id yet and is written by create_many as it stands.
+    """
+    if not kept.get("id"):
+        return
+    repo.update(
+        kept["id"],
+        {
+            "secondaryKeywords": kept.get("secondaryKeywords") or [],
+            "evidence": kept.get("evidence") or {},
+        },
     )
 
 
@@ -1300,11 +1321,13 @@ async def _deterministic_opportunities(
         if intent_row is not None:
             duplicates += 1
             _merge_duplicate(intent_row, row, similarity=1.0, reason="same search intent")
+            _persist_merge(idea_repo, intent_row)
             continue
         dup_row, dup_score = accepted.best(row["title"], threshold=DUPLICATE_THRESHOLD)
         if dup_row is not None:
             duplicates += 1
             _merge_duplicate(dup_row, row, similarity=dup_score)
+            _persist_merge(idea_repo, dup_row)
             continue
         if intent_key:
             accepted_intents[intent_key] = row

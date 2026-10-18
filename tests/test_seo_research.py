@@ -32,6 +32,8 @@ from app.services import research as orchestrator
 from app.services.research_clustering import cluster_run
 from app.services.research_keywords import collect_keywords, merge_ideas, plan_batches
 from app.services.research_opportunities import (
+    _merge_duplicate,
+    _persist_merge,
     generate_opportunities,
     parse_goal,
     score_opportunity,
@@ -675,6 +677,45 @@ def test_same_intent_pages_merge_without_merging_distinct_formats():
     assert merged[0]["reason"] == "same search intent", merged
     # the merged variant is kept as a secondary keyword, not thrown away
     assert "best gym crm" in kept["gym crm software"]["secondaryKeywords"]
+
+
+def test_merge_into_an_earlier_batch_is_written_back():
+    """Candidates are folded by intent *across* batches; rows are inserted per
+    batch, so a merge into an already-written row must be persisted or the
+    record of what was merged never leaves memory."""
+    pb, project, _ = _setup()
+    run = ResearchRunRepo(pb).create_run(
+        project=project["id"],
+        name="r",
+        research_type="keywords",
+        config={},
+        targeting={},
+        fingerprint="fp",
+    )
+    repo = ArticleIdeaRepo(pb)
+    stored = repo.create(
+        {
+            "project": project["id"],
+            "run": run["id"],
+            "title": "Gym CRM Software",
+            "primaryKeyword": "gym crm software",
+            "secondaryKeywords": [],
+            "evidence": {"source": "ai"},
+            "status": "proposed",
+        }
+    )
+    duplicate = {
+        "title": "Best Gym CRM Software",
+        "primaryKeyword": "best gym crm",
+    }
+
+    _merge_duplicate(stored, duplicate, similarity=1.0, reason="same search intent")
+    _persist_merge(repo, stored)
+    _persist_merge(repo, {"title": "never stored"})  # no id → no write, no crash
+
+    written = repo.get(stored["id"]) or {}
+    assert "best gym crm" in written["secondaryKeywords"], written
+    assert written["evidence"]["merged"][0]["reason"] == "same search intent", written
 
 
 def test_cannibalization_forces_update_action():
