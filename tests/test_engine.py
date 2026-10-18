@@ -209,6 +209,36 @@ def test_cancel_request_aborts_handler():
     assert cancelled["seen"] is False  # handler aborted at checkpoint
 
 
+def test_cancelled_job_goes_back_to_the_queue():
+    """A deploy stops the worker mid-job: the job must be claimable again at
+    once, not sit `running` on a live lease until LEASE_SECONDS expires."""
+    pb = FakePocketBase(default_unique_fields())
+    project = make_project(pb)
+    job = seed_job(pb, project["id"])
+    started = asyncio.Event()
+
+    async def handler(ctx):
+        started.set()
+        await asyncio.Event().wait()  # blocks until cancelled
+
+    engine = make_engine(pb, handlers={"test": handler})
+
+    async def scenario():
+        task = asyncio.create_task(engine._run(job))
+        await started.wait()
+        task.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await task
+
+    asyncio.run(scenario())
+
+    updated = pb.collection("jobs").get_one(job["id"])
+    assert updated["status"] == "pending"
+    assert updated["lockedBy"] == ""
+    # No lease is left behind, so another worker claims it on the next poll.
+    assert make_engine(pb, worker_id="w2")._claim(updated) is True
+
+
 def test_successful_handler_records_result_and_100_percent():
     pb = FakePocketBase(default_unique_fields())
     project = make_project(pb)

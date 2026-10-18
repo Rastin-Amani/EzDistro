@@ -14,6 +14,7 @@ def test_all_expected_transitions_valid():
         ("running", "cancelled"),
         ("running", "retrying"),  # transient failure
         ("running", "running"),  # lease re-claim after crash
+        ("running", "pending"),  # worker stopped mid-job → back to the queue
         ("failed", "retrying"),  # manual retry
     ]
     for current, target in cases:

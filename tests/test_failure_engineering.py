@@ -596,9 +596,11 @@ async def test_stale_running_job_with_expired_lease_is_recovered():
 class CrashSimulator:
     """Runs an engine loop and 'kills' it at a scripted point.
 
-    The kill cancels every in-flight engine task — exactly what SIGKILL does:
-    no cleanup, no finalize. Jobs stay 'running' with (or without) a lease and
-    must be recovered by the restarted worker.
+    The kill cancels every in-flight engine task — the process is gone and no
+    finalize runs. A job the engine managed to hand back during cancellation
+    (`pending`, the graceful-stop path) and one left mid-flight (`running` on a
+    lease that then expires, the hard-kill path) are both recovered by the
+    restarted worker.
     """
 
     def __init__(self, pb: FakePocketBase, registry: FakeRegistry, worker_id: str):
@@ -693,7 +695,11 @@ async def test_crash_during_indexing_no_duplicate_points():
     crash = CrashSimulator(pb, registry, "worker-a")
     await crash.run_until(stop_when=vectors_exist, max_polls=3000)
     assert len(registry.vector.points) >= 8  # crashed mid-run, some vectors written
-    assert pb.collection("jobs").get_one(job["id"])["status"] == "running"  # run was NOT finished
+
+    # Run was NOT finished — either handed back to the queue by the cancelled
+    # worker or left `running` for lease expiry. Both are recoverable.
+    crashed = pb.collection("jobs").get_one(job["id"])
+    assert crashed["status"] in ("running", "pending")
 
     # restart: brand-new worker resumes the same run record from its checkpoint
     restart = CrashSimulator(pb, registry, "worker-b")
