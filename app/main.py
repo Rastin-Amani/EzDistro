@@ -4,6 +4,8 @@ from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.gzip import GZipMiddleware
+from starlette.responses import Response
+from starlette.types import Scope
 
 from app.api import (
     articles,
@@ -21,7 +23,7 @@ from app.api import (
 from app.config import settings
 from app.middleware import AuthMiddleware
 from app.routes import pwa
-from app.templates import templates
+from app.templates import templates, warm_templates
 
 app = FastAPI(
     title=settings.app_name,
@@ -30,11 +32,33 @@ app = FastAPI(
     openapi_url="/openapi.json" if not settings.is_prod else None,
 )
 
+# Compile every template now so no user request pays Jinja compilation.
 templates.env.globals["app_version"] = settings.app_version
 templates.env.globals["app_name"] = settings.app_name
+warm_templates()
+
+
+class _CachedStaticFiles(StaticFiles):
+    """StaticFiles plus Cache-Control.
+
+    base.html versions every css/js it links with a `?v=` cache-buster, so those
+    URLs are safe to cache immutably; anything else (brand images, fonts,
+    swagger in dev) gets a day. Without this the browser revalidated ~8 assets
+    with a conditional GET on every single navigation.
+    """
+
+    async def get_response(self, path: str, scope: Scope) -> Response:
+        response = await super().get_response(path, scope)
+        if response.status_code == 200:
+            versioned = b"v=" in scope.get("query_string", b"")
+            response.headers["Cache-Control"] = (
+                "public, max-age=31536000, immutable" if versioned else "public, max-age=86400"
+            )
+        return response
+
 
 # static files
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
+app.mount("/static", _CachedStaticFiles(directory="app/static"), name="static")
 
 # Committed docs (docs/) served as plain text. Not in PUBLIC_PATHS, so the auth
 # middleware gates /help exactly like every other in-app page. The Research

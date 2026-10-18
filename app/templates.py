@@ -1,4 +1,5 @@
 import os
+import time
 from datetime import datetime
 
 from babel.dates import format_date, format_datetime
@@ -6,6 +7,11 @@ from babel.numbers import format_decimal
 from fastapi.templating import Jinja2Templates
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+_STATIC_DIR = os.path.join(BASE_DIR, "static")
+
+# asset_version() memo: (monotonic_timestamp, value). See the function docstring.
+_ASSET_VERSION_TTL = 10.0
+_asset_version_cache: tuple[float, str] = (0.0, "")
 
 
 def _hx_partial(request):
@@ -290,3 +296,56 @@ def pb_file(record_id: object, filename: object) -> str:
 
 
 templates.env.filters["pb_file"] = pb_file
+
+
+def asset_version() -> str:
+    """Cache key for /static css+js that follows the files themselves.
+
+    `app_version` only moves on a release, so a rebuilt app.css kept being
+    served from a browser cache under an unchanged `?v=` URL — new markup
+    rendered against the old stylesheet. Derive the key from the newest asset
+    instead, and recompute per render so rebuilding the CSS needs no restart.
+
+    Memoized for a few seconds: base.html asks for this six times per page
+    (one CSS + five script tags), and each call walked + stat'ed the whole
+    static tree — six directory walks per page render for one value.
+    """
+    global _asset_version_cache
+    now = time.monotonic()
+    if now - _asset_version_cache[0] < _ASSET_VERSION_TTL:
+        return _asset_version_cache[1]
+    from pathlib import Path
+
+    from app.config import settings
+
+    newest = max(
+        (p.stat().st_mtime for p in Path(_STATIC_DIR).rglob("*") if p.suffix in {".css", ".js"}),
+        default=0.0,
+    )
+    value = f"{settings.app_version}-{int(newest)}"
+    _asset_version_cache = (now, value)
+    return value
+
+
+templates.env.globals["asset_version"] = asset_version
+
+
+def warm_templates() -> int:
+    """Compile every template once, at boot.
+
+    Jinja compiles lazily, so the FIRST request for each page paid its
+    compilation (~150-400 ms) on the request path. In production also drop the
+    per-render mtime check (`auto_reload=False`) — templates only change on a
+    deploy there, while dev keeps auto_reload for live edits.
+    """
+    from pathlib import Path
+
+    from app.config import settings
+
+    templates.env.auto_reload = not settings.is_prod
+    root = Path(os.path.join(BASE_DIR, "templates"))
+    count = 0
+    for path in root.rglob("*.html"):
+        templates.env.get_template(str(path.relative_to(root)))
+        count += 1
+    return count
