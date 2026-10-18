@@ -97,24 +97,30 @@ Restart=always
 
 ### Docker
 
-The included `Dockerfile` ships the web process by default:
+The included `Dockerfile` runs the web process plus a pool of `WORKERS` worker
+processes (`docker-entrypoint.sh`) in one container:
 
 ```bash
 docker build -t ezdistro .
 docker run --env-file .env -p 8000:8000 ezdistro
-# worker:
+# worker only:
 docker run --env-file .env ezdistro python -m app.workers.worker
 ```
+
+The entrypoint gives every worker slot a stable id (`worker-1…N`) and forwards
+`SIGTERM`/`SIGINT` to the whole pool, so `docker stop` shuts workers down
+gracefully instead of killing them.
 
 Note the image copies only `requirements.txt`, `app/` and `docs/` — `.env` must come
 from the environment (`--env-file`) since it is gitignored.
 
 ### Graceful shutdown
 
-SIGINT/SIGTERM stop the worker cleanly: loops cancel, metrics flush at shutdown,
-in-flight handlers finish their current step. Jobs interrupted mid-flight are
-recovered automatically by lease expiry (`LEASE_SECONDS`, default 300 s) — restarts
-never require manual cleanup.
+SIGINT/SIGTERM stop the worker cleanly: loops cancel, the job it was running
+goes straight back to the queue (`job.requeued`, no lock), and metrics flush at
+shutdown. Jobs interrupted by a hard kill (SIGKILL / lost host) are recovered by
+lease expiry (`LEASE_SECONDS`, default 300 s) — restarts never require manual
+cleanup.
 
 ## 4. Production configuration checklist
 
@@ -181,7 +187,8 @@ archiving/pruning out-of-band if volume matters.
 2. Deploy code, then re-run `make bootstrap` — it merges collection definitions
    additively (`delete_missing=False`: collections/fields removed from code are NOT
    deleted from the database).
-3. Restart web + worker. In-flight jobs survive restarts (lease recovery).
+3. Restart web + worker. A graceful stop requeues in-flight jobs immediately
+   (seconds); only a hard kill waits for lease expiry.
 4. If embedding model/dimensions changed for a project, trigger a full reindex
    (**Full re-index**) from the UI; collections are namespaced per model so nothing
    mixes.
