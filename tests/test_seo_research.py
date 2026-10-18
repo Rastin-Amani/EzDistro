@@ -530,6 +530,10 @@ def test_generate_opportunities_skips_invented_keywords_and_merges_dupes():
     assert result["created"] == 1
     assert result["duplicates"] == 1
     assert result["skipped"] == 1
+    # a long opportunity stage must move the run, not leave it at the stage start
+    run_after = ResearchRunRepo(pb).get(run["id"]) or {}
+    assert run_after["currentStage"] == "opportunities"
+    assert run_after["progress"] > 88
     ideas = ArticleIdeaRepo(pb).all_for_run(run["id"])
     assert len(ideas) == 1
     assert ideas[0]["searchVolume"] == 8100

@@ -40,6 +40,7 @@ from app.repositories.research import (
     ContentGapRepo,
     KeywordMetricRepo,
     KeywordRepo,
+    ResearchRunRepo,
     q,
 )
 from app.services.prompt_service import PromptService
@@ -825,10 +826,17 @@ async def generate_opportunities(
         if rows:
             idea_repo.create_many(rows)
             created += len(rows)
+        # The run's own progress only moved between stages, so a long
+        # opportunity stage sat at 88% for its whole duration and looked hung.
+        # Move the run inside the stage as well (88 → 96 across the batches).
+        done = start + len(batch)
+        ResearchRunRepo(ctx.pb).set_stage(
+            run_id, "opportunities", progress=88 + int(8 * done / max(1, len(order)))
+        )
         ctx.progress(
-            min(95, int(100 * (start + len(batch)) / max(1, len(order)))),
+            min(95, int(100 * done / max(1, len(order)))),
             stage="opportunities",
-            message=f"Generating article opportunities ({start + len(batch)}/{len(order)} clusters)…",
+            message=f"Generating article opportunities ({done}/{len(order)} clusters)…",
             current=created,
         )
 
