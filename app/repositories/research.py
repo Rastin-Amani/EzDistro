@@ -5,9 +5,9 @@ Field names are camelCase (PocketBase convention). Plain CRUD comes from BaseRep
 the helpers below add the get-or-create / upsert semantics that keep the background
 research pipeline resumable and idempotent.
 
-PocketBase (>= 0.23) has no batch-write endpoint, so `create_many` is one request
-per row: writes dominate the cost of a large run. Reads are always batched (a
-chunked OR filter), which is where the savings actually are.
+Bulk writes go through PocketBase's /api/batch endpoint (BaseRepo.create_many /
+delete_matching): one request per 50 rows instead of one per row. Reads use a
+chunked OR filter, which is where the read savings are.
 """
 
 from __future__ import annotations
@@ -108,26 +108,6 @@ def _list_or(repo: Any, terms: list[str], *, prefix: str = "") -> Iterator[dict[
         mid = len(terms) // 2
         yield from _list_or(repo, terms[:mid], prefix=prefix)
         yield from _list_or(repo, terms[mid:], prefix=prefix)
-
-
-class _BulkCreateMixin:
-    """Create rows, treating unique-constraint violations as already-present."""
-
-    def create_many(self, rows: Iterable[dict[str, Any]], *, ignore_duplicates: bool = True) -> int:
-        created = 0
-        for row in rows:
-            try:
-                record = super().create(row)  # type: ignore[misc]
-                # Attach the stored id so a caller can keep referring to the row it
-                # just wrote — the opportunity engine folds a later duplicate into
-                # an earlier batch's row and must be able to address it again.
-                row.setdefault("id", record.get("id") or "")
-                created += 1
-            except ClientResponseError as exc:
-                if ignore_duplicates and _is_duplicate(exc):
-                    continue
-                raise
-        return created
 
 
 # ---------------------------------------------------------------------------
@@ -382,7 +362,7 @@ class ResearchRunRepo(BaseRepo):
         return self.update(run_id, payload)
 
 
-class ResearchSeedRepo(_BulkCreateMixin, BaseRepo):
+class ResearchSeedRepo(BaseRepo):
     collection = "research_seeds"
 
     def replace_for_run(self, run_id: str, seeds: Iterable[dict[str, Any]]) -> int:
@@ -400,7 +380,7 @@ class ResearchSeedRepo(_BulkCreateMixin, BaseRepo):
 # ---------------------------------------------------------------------------
 # Keywords
 # ---------------------------------------------------------------------------
-class KeywordRepo(_BulkCreateMixin, BaseRepo):
+class KeywordRepo(BaseRepo):
     collection = "keywords"
 
     def identity(self, project_id: str, language: str, location_id: str) -> list[dict[str, Any]]:
@@ -484,7 +464,7 @@ class KeywordRepo(_BulkCreateMixin, BaseRepo):
         return by_key
 
 
-class KeywordMetricRepo(_BulkCreateMixin, BaseRepo):
+class KeywordMetricRepo(BaseRepo):
     collection = "keyword_metrics"
 
     def measured_best(self, keyword_ids: Sequence[str]) -> dict[str, dict[str, Any]]:
@@ -611,7 +591,7 @@ class KeywordMetricRepo(_BulkCreateMixin, BaseRepo):
         }
 
 
-class KeywordVolumeRepo(_BulkCreateMixin, BaseRepo):
+class KeywordVolumeRepo(BaseRepo):
     collection = "keyword_volumes"
 
     def replace_for_keyword(
@@ -664,7 +644,7 @@ class KeywordVolumeRepo(_BulkCreateMixin, BaseRepo):
 # ---------------------------------------------------------------------------
 # Clusters, competitor pages, gaps
 # ---------------------------------------------------------------------------
-class ClusterRepo(_BulkCreateMixin, BaseRepo):
+class ClusterRepo(BaseRepo):
     collection = "clusters"
 
     def list_for_run(
@@ -695,7 +675,7 @@ class ClusterRepo(_BulkCreateMixin, BaseRepo):
         return self.list_all(filter=f"project={q(project_id)}", sort="name")
 
 
-class CompetitorPageRepo(_BulkCreateMixin, BaseRepo):
+class CompetitorPageRepo(BaseRepo):
     collection = "competitor_pages"
 
     def get_for_canonical(self, project_id: str, canonical_url: str) -> dict[str, Any] | None:
@@ -729,7 +709,7 @@ class CompetitorPageRepo(_BulkCreateMixin, BaseRepo):
         return self.list_all(filter=f"project={q(project_id)}", sort="-wordCount")
 
 
-class ContentGapRepo(_BulkCreateMixin, BaseRepo):
+class ContentGapRepo(BaseRepo):
     collection = "content_gaps"
 
     def replace_for_run(self, run_id: str, rows: Iterable[dict[str, Any]]) -> int:
@@ -759,7 +739,7 @@ class ContentGapRepo(_BulkCreateMixin, BaseRepo):
 # ---------------------------------------------------------------------------
 # Article ideas
 # ---------------------------------------------------------------------------
-class ArticleIdeaRepo(_BulkCreateMixin, BaseRepo):
+class ArticleIdeaRepo(BaseRepo):
     collection = "article_ideas"
 
     def list_for_run(
@@ -889,7 +869,7 @@ class SerpQueryRepo(BaseRepo):
         return self.count(filter=f)
 
 
-class SerpResultRepo(_BulkCreateMixin, BaseRepo):
+class SerpResultRepo(BaseRepo):
     collection = "serp_results"
 
     def replace_for_query(self, query_id: str, results: Iterable[dict[str, Any]]) -> int:

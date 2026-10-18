@@ -14,6 +14,8 @@ from pocketbase import PocketBase
 from pocketbase.errors import ClientResponseError
 from pocketbase.models import Record
 
+from app.pb import batch_chunks, batch_send
+
 
 def record_to_dict(record: Record | dict[str, Any] | None) -> dict[str, Any]:
     """Convert a PB Record to a plain dict (snake→camel untouched: we use camelCase)."""
@@ -70,16 +72,57 @@ class BaseRepo:
         return [r for r in (self.get(i) for i in record_ids) if r]
 
     def create(self, data: dict[str, Any]) -> dict[str, Any]:
+        return record_to_dict(self._coll().create(self._create_payload(data)))
+
+    def _create_payload(self, data: dict[str, Any]) -> dict[str, Any]:
         # The live PocketBase keeps legacy `date` system fields that cannot carry
         # onCreate/onUpdate flags (PB strips them), so the app writes the
         # timestamps itself. Callers may pass real values (imports/backfills).
         now = _now_ts()
-        payload = {
+        return {
             **data,
             "created": data.get("created") or now,
             "updated": data.get("updated") or now,
         }
-        return record_to_dict(self._coll().create(payload))
+
+    def create_many(self, rows: Iterable[dict[str, Any]], *, ignore_duplicates: bool = True) -> int:
+        """Create many rows in PocketBase batches (50/request).
+
+        Was one request per row — writes dominated the cost of a large research
+        run. Each row gets its stored `id` attached (callers address rows they
+        just wrote). A batch is a transaction, so if any row in a chunk is
+        rejected (typically a duplicate) the whole chunk falls back to
+        per-row creates, preserving the ignore-duplicates semantics exactly.
+        """
+        pairs = [(row, self._create_payload(row)) for row in rows]
+        created = 0
+        for chunk in batch_chunks(pairs):
+            results = batch_send(
+                self._pb,
+                [
+                    {
+                        "method": "POST",
+                        "url": f"/api/collections/{self.collection}/records",
+                        "body": payload,
+                    }
+                    for _, payload in chunk
+                ],
+            )
+            if results is not None and len(results) == len(chunk):
+                for (row, _), record in zip(chunk, results, strict=False):
+                    row.setdefault("id", record.get("id") or "")
+                    created += 1
+                continue
+            for row, payload in chunk:
+                try:
+                    record = record_to_dict(self._coll().create(payload))
+                except ClientResponseError as exc:
+                    if ignore_duplicates and exc.status in (400, 409):
+                        continue
+                    raise
+                row.setdefault("id", record.get("id") or "")
+                created += 1
+        return created
 
     def update(self, record_id: str, data: dict[str, Any]) -> dict[str, Any]:
         payload = {**data, "updated": data.get("updated") or _now_ts()}
@@ -134,12 +177,34 @@ class BaseRepo:
         ]
 
     def delete_matching(self, *, filter: str) -> int:
-        """Delete every record matching `filter`. Used to replace child rows
-        (keyword volumes, SERP results, gaps) idempotently on a resumed run."""
+        """Delete every record matching `filter`, batched (50/request).
+
+        Used to replace child rows (keyword volumes, SERP results, gaps)
+        idempotently on a resumed run — previously one DELETE round trip per
+        row, which for a large run was thousands of requests.
+        """
         ids = [r["id"] for r in self.list_all(filter=filter)]
-        for record_id in ids:
-            self.delete(record_id)
-        return len(ids)
+        if not ids:
+            return 0
+        deleted = 0
+        for chunk in batch_chunks(ids):
+            results = batch_send(
+                self._pb,
+                [
+                    {
+                        "method": "DELETE",
+                        "url": f"/api/collections/{self.collection}/records/{record_id}",
+                    }
+                    for record_id in chunk
+                ],
+            )
+            if results is not None and len(results) == len(chunk):
+                deleted += len(chunk)
+                continue
+            for record_id in chunk:
+                self.delete(record_id)
+                deleted += 1
+        return deleted
 
     def first(self, *, filter: str = "", sort: str = "") -> dict[str, Any] | None:
         params: dict[str, Any] = {"sort": sort or "-created", "perPage": 1}
