@@ -110,7 +110,7 @@ and without a SERP provider. See [SEO_RESEARCH.md](SEO_RESEARCH.md).
 
 Defined but currently **unused**: `PAGE_SIZE` (`settings.page_size`, default 25 —
 no reader; `.env.example` correctly says not to set it) and `SCHEDULE_WINDOW_MINUTES`
-(no reader). Not exposed via env (code constants): stats TTL cache 5 s, metrics flush
+(no reader). Not exposed via env (code constants): stats/queue TTL cache 15 s, metrics flush
 interval 30 s, adapter retry defaults (3 attempts, base delay 2 s), index checkpoint
 every 10 documents, WP fetch page size 100, Google Ads Keyword Planning page size
 10 000.

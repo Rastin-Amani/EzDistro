@@ -691,10 +691,12 @@ test, not a fixture. Optimizations present in code: batched prompt resolution (~
 queries per job config), pooled keep-alive HTTP clients with an idle sweeper, batch
 embeddings, bounded concurrency at job and provider level, pagination everywhere,
 `fanout()` (`app/utils.py`) to overlap independent PocketBase round trips (dashboard
-aggregates, N+1 indexing/provider-health scans) into one wave, HTMX partial updates
-with modest polling intervals (dashboard/jobs 5 s, monitor 8 s, workspace sections
-2.5 s, indexing 10 s), and a 5-second TTL cache for derived dashboard aggregates
-(mutable entity state is never cached). Historical throughput
+aggregates, N+1 indexing/provider-health scans) into one wave, a process-wide warm
+PocketBase connection pool with batched `/api/batch` bulk writes (50 per request),
+HTMX partial updates with modest polling intervals (dashboard/jobs 5 s, monitor 8 s,
+workspace sections 2.5 s, indexing 10 s), and a 15-second TTL cache for derived
+dashboard and queue-depth aggregates (mutable entity state is never cached).
+Historical throughput
 numbers from earlier revisions are intentionally not reproduced here; re-run the
 benchmark to measure current behavior.
 
