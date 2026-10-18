@@ -9,7 +9,9 @@ from __future__ import annotations
 
 import threading
 import time
+from typing import Any
 
+import httpx
 from pocketbase import PocketBase
 
 from app.config import settings
@@ -22,14 +24,48 @@ from app.config import settings
 # _DATA_TTL_SECONDS; the lock prevents a re-auth stampede.
 _PB_TIMEOUT_SECONDS = 8.0
 _DATA_TTL_SECONDS = 300.0
+
+# One process-wide connection pool shared by every PocketBase client.
+#
+# The SDK builds its own httpx.Client per PocketBase instance, so without a
+# shared transport every client — and every re-auth / every session-cache miss —
+# opened and abandoned its own pool. Two consequences: an idle-then-navigate
+# request (30s session TTL, or the SDK's 5s keep-alive expiry) paid a fresh
+# TCP+TLS handshake to PocketBase for each of the ~20 dashboard queries, and the
+# dead sockets piled up in the process (leaked clients were never closed). Tests
+# measured ~0.5-1.6s per navigation that should be ~150ms.
+#
+# A shared transport keeps ONE warm, bounded pool for the whole process, so the
+# pool outlives any single client. `retries` replays a request whose pooled
+# socket the server already closed instead of stalling on it, and a long
+# keepalive_expiry spans the session-cache gap.
+_TRANSPORT = httpx.HTTPTransport(
+    retries=2,
+    limits=httpx.Limits(
+        max_connections=32,
+        max_keepalive_connections=32,
+        keepalive_expiry=120.0,
+    ),
+)
+
 _data_lock = threading.Lock()
 _data_pb: PocketBase | None = None
 _data_issued_at = 0.0
 
 
+def _client() -> PocketBase:
+    """A PocketBase client bound to the shared pool (see _TRANSPORT)."""
+    return PocketBase(
+        settings.pb_url,
+        auto_snake_case=False,
+        timeout=_PB_TIMEOUT_SECONDS,
+        transport=_TRANSPORT,
+    )
+
+
 def get_pb() -> PocketBase:
     """Unauthenticated client — used for session validation and login."""
-    return PocketBase(settings.pb_url, auto_snake_case=False, timeout=_PB_TIMEOUT_SECONDS)
+    return _client()
 
 
 def get_admin_pb() -> PocketBase:
@@ -39,7 +75,7 @@ def get_admin_pb() -> PocketBase:
             "PB_ADMIN_EMAIL/PB_ADMIN_PASSWORD are required for admin operations "
             "(worker, bootstrap)."
         )
-    pb = PocketBase(settings.pb_url, auto_snake_case=False, timeout=_PB_TIMEOUT_SECONDS)
+    pb = _client()
     # PocketBase >= 0.23 uses _superusers; older versions use _admins.
     try:
         pb.collection("_superusers").auth_with_password(
@@ -84,3 +120,74 @@ class LazyDataPb:
 
     def __getattr__(self, name: str):
         return getattr(self._factory(), name)
+
+
+# ---------------------------------------------------------------------------
+# Batch writes
+# ---------------------------------------------------------------------------
+# PocketBase's /api/batch is a MUTATION-only transaction (GET sub-requests are
+# rejected with 400), so it cannot collapse read round trips — but it turns N
+# bulk writes into ceil(N/50) requests, which is exactly what the worker's
+# per-row create/delete loops need.
+BATCH_MAX_REQUESTS = 50
+# Keep a batch comfortably under the server's max body size even when rows are
+# large (a row that alone exceeds this simply gets its own batch).
+BATCH_MAX_BYTES = 1_000_000
+
+
+def batch_send(pb: PocketBase, requests: list[dict[str, Any]]) -> list[dict[str, Any]] | None:
+    """Send ONE PocketBase batch (<=50 sub-requests).
+
+    Returns the per-sub-request bodies on success, or None when batching is
+    unavailable (disabled server-side) or the transaction failed — the caller
+    then falls back to one request per row, so behaviour never depends on the
+    batch endpoint being enabled.
+    """
+    import json
+
+    if not requests:
+        return []
+    if len(requests) > BATCH_MAX_REQUESTS:
+        raise ValueError(f"batch exceeds {BATCH_MAX_REQUESTS} requests")
+    url = str(pb.base_url).rstrip("/") + "/api/batch"
+    try:
+        response = pb.http_client.post(
+            url,
+            data={"@jsonPayload": json.dumps({"requests": requests})},
+            headers={"Authorization": pb.auth_store.token or ""},
+        )
+    except Exception:
+        return None
+    if response.status_code != 200:
+        return None
+    try:
+        items = response.json()
+    except Exception:
+        return None
+    if not isinstance(items, list):
+        return None
+    return [item.get("body") or {} for item in items]
+
+
+def batch_chunks(
+    items: list[Any], *, max_requests: int = BATCH_MAX_REQUESTS, max_bytes: int = BATCH_MAX_BYTES
+) -> list[list[Any]]:
+    """Split items into batches bounded by count AND serialized size."""
+    import json
+
+    chunks: list[list[Any]] = []
+    current: list[Any] = []
+    size = 0
+    for item in items:
+        try:
+            weight = len(json.dumps(item))
+        except (TypeError, ValueError):
+            weight = 0
+        if current and (len(current) >= max_requests or size + weight > max_bytes):
+            chunks.append(current)
+            current, size = [], 0
+        current.append(item)
+        size += weight
+    if current:
+        chunks.append(current)
+    return chunks
