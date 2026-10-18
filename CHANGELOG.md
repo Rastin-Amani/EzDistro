@@ -9,6 +9,51 @@ release builds on. Format is based on [Keep a Changelog](https://keepachangelog.
 
 ## [Unreleased]
 
+## [v1.21.0] — 2026-10-18
+
+### Added
+- **Free, keyless keyword harvest.** Paste seed keywords and expand them through
+  the public autocomplete endpoints (Google, YouTube, Bing, DuckDuckGo, Amazon) —
+  no account, key or quota — then cluster them and propose article
+  opportunities. It reports no volume, competition or CPC by design; Keyword
+  Planner is the documented way to fill them in.
+- Export a run's keywords as CSV (**Keywords CSV**) for a Keyword Planner
+  volume round trip, alongside the roadmap export.
+
+### Changed
+- Research clustering splits a cluster larger than 15 keywords at a tighter
+  cosine, so a large file becomes many pages instead of a few.
+- Opportunity generation runs two clusters per call with up to 40 keywords each,
+  reads the imported monthly volume trend, and resolves sibling-cluster
+  keywords instead of dropping them.
+- The `meta` / `review` roles accept temperature, max tokens, timeout and
+  retries like `outline` / `section`.
+- The container entrypoint runs the web process plus a `WORKERS` pool, giving
+  each slot a stable id (`worker-1…N`).
+
+### Fixed
+- A redeploy no longer leaves outdated workers behind: the container entrypoint
+  gives every worker slot a stable id (`worker-1…N`), so the new process
+  overwrites its own `worker_heartbeats` row instead of adding a second one to
+  the Workers page, and it forwards `SIGTERM` to the pool so workers are asked
+  to stop instead of being killed with their in-flight jobs still locked.
+- A worker stopped mid-job hands that job straight back to the queue
+  (`job.requeued`) instead of leaving it `running` until `LEASE_SECONDS`
+  expires, so a deploy resumes work in seconds and its own version shows on
+  `/workers` immediately.
+- A research run's progress advances inside the long opportunity stage instead
+  of freezing at 88%.
+- Cross-batch merges persist: a candidate folded into an earlier batch's page
+  now writes back what was merged and which keywords it carried, and stored
+  keyword rows carry the id they were saved with.
+- Opportunity generation no longer discards a keyword that belongs to a sibling
+  cluster in the same batch; an exact collected keyword wins over a fuzzy match;
+  and same-intent candidates ("gym crm", "best gym crm") merge into one page
+  while a distinct format ("gym crm software pricing") stays its own.
+- A pooled HTTP client is no longer closed while a job is still using it, and an
+  empty length-truncated completion reports the model spent its token budget on
+  reasoning instead of an unactionable "empty completion".
+
 ## [v1.20.0] — 2026-10-17
 
 ### Added
