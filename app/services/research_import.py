@@ -16,6 +16,7 @@ import csv
 import io
 import re
 import zipfile
+from collections.abc import Sequence
 from typing import Any
 from xml.etree import ElementTree
 
@@ -73,6 +74,23 @@ _CPC_ALIASES = (
 _CURRENCY_ALIASES = ("currency", "currency code")
 _MONTH_ALIASES = ("month", "monthly search volume", "period", "date")
 
+# Keyword Planner exports the 12 monthly observations as "Searches: Oct 2025".
+_MONTHLY_RE = re.compile(r"^searches\s+([a-z]{3,9})\s+(\d{4})$")
+_MONTHS = {
+    "jan": 1,
+    "feb": 2,
+    "mar": 3,
+    "apr": 4,
+    "may": 5,
+    "jun": 6,
+    "jul": 7,
+    "aug": 8,
+    "sep": 9,
+    "oct": 10,
+    "nov": 11,
+    "dec": 12,
+}
+
 _FIELDS = ("keyword", "volume", "competition", "index", "cpc_low", "cpc_high", "currency")
 
 # Keyword Planner writes numbers like "12,000", "1.2K", or "1,234.56".
@@ -118,6 +136,24 @@ def _map_headers(headers: list[str]) -> dict[str, int]:
                 mapping[field] = index
                 break
     return mapping
+
+
+def _map_monthly_headers(headers: list[str]) -> list[tuple[int, int, int]]:
+    """Monthly volume columns → [(column index, year, month)].
+
+    The per-month series is the only real trend signal a Keyword Planner export
+    carries; it drives the keyword trend chart and lets opportunity generation
+    prefer rising demand.
+    """
+    columns: list[tuple[int, int, int]] = []
+    for index, header in enumerate(headers):
+        match = _MONTHLY_RE.match(_norm(header))
+        if not match:
+            continue
+        month = _MONTHS.get(match.group(1)[:3])
+        if month:
+            columns.append((index, int(match.group(2)), month))
+    return columns
 
 
 def _to_number(value: Any) -> float:
@@ -287,7 +323,11 @@ def _find_header(grid: list[list[Any]]) -> tuple[int, dict[str, int]]:
 
 
 def _rows_to_ideas(
-    grid: list[list[Any]], header_index: int, mapping: dict[str, int], currency: str
+    grid: list[list[Any]],
+    header_index: int,
+    mapping: dict[str, int],
+    currency: str,
+    monthly: Sequence[tuple[int, int, int]] = (),
 ) -> tuple[list[KeywordIdea], int]:
     ideas: dict[str, KeywordIdea] = {}
     skipped = 0
@@ -310,6 +350,14 @@ def _rows_to_ideas(
                 return ""
             return row[index]
 
+        volumes: list[tuple[int, int, int]] = []
+        for index, year, month in monthly:
+            if index >= len(row):
+                continue
+            raw = str(row[index] or "").strip()
+            if raw:
+                volumes.append((year, month, int(_to_number(raw))))
+
         idea = KeywordIdea(
             text=text,
             avg_monthly_searches=int(_to_number(cell("volume"))),
@@ -319,6 +367,7 @@ def _rows_to_ideas(
             low_top_of_page_bid_micros=_to_micros(cell("cpc_low"), currency),
             high_top_of_page_bid_micros=_to_micros(cell("cpc_high") or cell("cpc_low"), currency),
             currency_code=str(cell("currency") or currency or "").strip(),
+            monthly_volumes=volumes,
             source="keyword_planner_import",
         )
         current = ideas.get(key)
@@ -380,11 +429,14 @@ def parse_keyword_file(
         return [], report
 
     headers = [str(cell).strip() for cell in grid[header_index]]
+    monthly = _map_monthly_headers(headers)
     report["headers"] = [header for header in headers if header]
+    report["monthlyColumns"] = len(monthly)
     currency = _guess_currency(grid[header_index + 1 :] if header_index + 1 < len(grid) else [])
-    ideas, skipped = _rows_to_ideas(grid, header_index, detected, currency)
+    ideas, skipped = _rows_to_ideas(grid, header_index, detected, currency, monthly)
     report["ideas"] = len(ideas)
     report["skipped"] = skipped
+    report["withTrend"] = sum(1 for idea in ideas if idea.monthly_volumes)
     return ideas, report
 
 
@@ -400,10 +452,11 @@ def _guess_currency(rows: list[list[Any]]) -> str:
 def _demo() -> None:  # pragma: no cover - runnable self check
     csv_bytes = (
         b"Keyword,Avg. monthly searches,Competition,Competition (indexed value),"
-        b"Top of page bid (low range),Top of page bid (high range),Currency\n"
-        b'gym management software,"8,100",Medium,61,1.50,4.20,USD\n'
-        b"gym crm,1200,Low,12,0.80,2.00,USD\n"
-        b'Gym Management Software,"8,100",Medium,61,1.50,4.20,USD\n'
+        b"Top of page bid (low range),Top of page bid (high range),Currency,"
+        b"Searches: Aug 2025,Searches: Sep 2025\n"
+        b'gym management software,"8,100",Medium,61,1.50,4.20,USD,100,900\n'
+        b"gym crm,1200,Low,12,0.80,2.00,USD,10,20\n"
+        b'Gym Management Software,"8,100",Medium,61,1.50,4.20,USD,100,900\n'
     )
     ideas, report = parse_keyword_file(csv_bytes, "kw.csv")
     assert report["ok"] and report["format"] == "csv", report
@@ -415,6 +468,11 @@ def _demo() -> None:  # pragma: no cover - runnable self check
     assert by["gym management software"].competition_index == 61
     assert by["gym management software"].competition == "MEDIUM"
     assert by["gym crm"].high_top_of_page_bid_micros == 2_000_000
+    # the monthly columns are the only trend signal the export carries
+    assert report["monthlyColumns"] == 2 and report["withTrend"] == 2, report
+    assert by["gym management software"].monthly_volumes == [(2025, 8, 100), (2025, 9, 900)], by[
+        "gym management software"
+    ].monthly_volumes
 
     unknown, bad = parse_keyword_file(b"Nope,Nope\n1,2\n", "bad.csv")
     assert unknown == [] and bad["ok"] is False, bad

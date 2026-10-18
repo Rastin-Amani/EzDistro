@@ -48,8 +48,8 @@ SCORE_VERSION = "opp_v1"
 GOAL_SOURCE = "goal_heuristic_v1"
 LLM_SOURCE = "opportunity_v1"
 
-LLM_CLUSTERS_PER_BATCH = 6
-KEYWORDS_PER_CLUSTER = 12
+LLM_CLUSTERS_PER_BATCH = 2
+KEYWORDS_PER_CLUSTER = 40
 COMPETITORS_PER_CLUSTER = 8
 MAX_OPPORTUNITIES = 0  # 0 → no cap; more opportunities is better
 
@@ -484,8 +484,11 @@ def _load_metrics(pb: Any, run_id: str) -> list[dict[str, Any]]:
 
 
 def _by_cluster(
-    metrics: Sequence[dict[str, Any]], texts: dict[str, dict[str, Any]]
+    metrics: Sequence[dict[str, Any]],
+    texts: dict[str, dict[str, Any]],
+    trends: dict[str, str] | None = None,
 ) -> dict[str, list[dict[str, Any]]]:
+    trends = trends or {}
     grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for row in metrics:
         cluster_id = row.get("cluster") or ""
@@ -501,6 +504,7 @@ def _by_cluster(
                 "keywordId": row.get("keyword") or "",
                 "text": text,
                 "volume": int(row.get("avgMonthlySearches") or 0),
+                "trend": str(trends.get(row.get("keyword") or "") or ""),
                 "competition": row.get("competition") or "",
                 "competitionIndex": int(row.get("competitionIndex") or 0),
                 "intent": row.get("intent") or "",
@@ -511,11 +515,66 @@ def _by_cluster(
     return grouped
 
 
+def _trend_label(points: Sequence[tuple[int, int, int]]) -> str:
+    """Trend from the stored monthly observations (last 3 months vs the 3 before).
+
+    Derived from collected numbers only — never an estimate.
+    """
+    values = [count for _, _, count in sorted(points)]
+    if len(values) < 6:
+        return ""
+    recent = sum(values[-3:]) / 3
+    previous = sum(values[-6:-3]) / 3
+    if previous <= 0:
+        return ""
+    change = round(100 * (recent - previous) / previous)
+    if abs(change) < 10:
+        return "flat"
+    return f"{'+' if change > 0 else ''}{change}%"
+
+
+def _keyword_trends(pb: Any, run_id: str) -> dict[str, str]:
+    """keyword id → trend label, read from the run's monthly volume rows."""
+    from app.repositories.research import KeywordVolumeRepo
+
+    points: dict[str, list[tuple[int, int, int]]] = defaultdict(list)
+    try:
+        rows = KeywordVolumeRepo(pb).list_all(filter=f"run={q(run_id)}")
+    except Exception:
+        return {}
+    for row in rows:
+        points[str(row.get("keyword") or "")].append(
+            (
+                int(row.get("year") or 0),
+                int(row.get("month") or 0),
+                int(row.get("monthlySearches") or 0),
+            )
+        )
+    return {key: label for key, values in points.items() if (label := _trend_label(values))}
+
+
 # ---------------------------------------------------------------------------
 # Prompt context plumbing
 # ---------------------------------------------------------------------------
 def _keyword_lookup(group: Sequence[dict[str, Any]]) -> dict[str, dict[str, Any]]:
     return {normalize_keyword(item["text"]): item for item in group}
+
+
+def _batch_index(
+    cluster_by_label: dict[str, tuple[str, list[dict[str, Any]]]],
+) -> dict[str, tuple[dict[str, Any], str, list[dict[str, Any]]]]:
+    """normalized keyword → (member, owning cluster id, that cluster's members).
+
+    The prompt is handed every cluster of the batch and told the primary keyword
+    must come from the supplied list, so a keyword belonging to a sibling
+    cluster is a valid pick — resolving only inside the labelled cluster threw
+    those opportunities away.
+    """
+    index: dict[str, tuple[dict[str, Any], str, list[dict[str, Any]]]] = {}
+    for cluster_id, group in cluster_by_label.values():
+        for member in group:
+            index.setdefault(normalize_keyword(member["text"]), (member, cluster_id, group))
+    return index
 
 
 def _resolve_keyword(value: str, lookup: dict[str, dict[str, Any]]) -> dict[str, Any] | None:
@@ -584,7 +643,9 @@ async def generate_opportunities(
         }
     clusters = ClusterRepo(ctx.pb).map_for_run(run_id)
     grouped = _by_cluster(
-        metrics, KeywordRepo(ctx.pb).map_by_ids([r.get("keyword", "") for r in metrics])
+        metrics,
+        KeywordRepo(ctx.pb).map_by_ids([r.get("keyword", "") for r in metrics]),
+        _keyword_trends(ctx.pb, run_id),
     )
     idea_repo = ArticleIdeaRepo(ctx.pb)
 
@@ -659,7 +720,12 @@ async def generate_opportunities(
                     "intent": cluster.get("meta", {}).get("intent", "") if cluster else "",
                     "gap": (gaps.get(cluster_id) or {}).get("gapType") or "",
                     "keywords": [
-                        {"keyword": item["text"], "volume": item["volume"]} for item in members
+                        {
+                            "keyword": item["text"],
+                            "volume": item["volume"],
+                            "trend": item["trend"],
+                        }
+                        for item in members
                     ],
                     "existing": _existing_for(cluster_id, group, existing, articles),
                     "competitors": _competitors_for(group, competitors),
@@ -900,7 +966,17 @@ def _build_row(
 
     cluster_id, group = _pick_cluster(item, cluster_by_label)
     lookup = _keyword_lookup(group)
-    primary = _resolve_keyword(str(item.get("primary_keyword") or ""), lookup)
+    batch = _batch_index(cluster_by_label)
+    raw_primary = str(item.get("primary_keyword") or "")
+    primary = _resolve_keyword(raw_primary, lookup)
+    if primary is None:
+        hit = batch.get(normalize_keyword(raw_primary))
+        if hit is not None:
+            # The model labelled the idea with a cluster that did not match, or
+            # picked a keyword from a sibling cluster: follow the keyword, so
+            # the row keeps real provenance (and the right gap score).
+            primary, cluster_id, group = hit
+            lookup = _keyword_lookup(group)
     if primary is None:
         return None, "primary keyword not in the collected keyword set"
     if goal.min_volume and primary["volume"] < goal.min_volume:
@@ -913,6 +989,9 @@ def _build_row(
     secondary: list[str] = []
     for value in item.get("secondary_keywords") or []:
         resolved = _resolve_keyword(str(value), lookup)
+        if resolved is None:
+            hit = batch.get(normalize_keyword(str(value)))
+            resolved = hit[0] if hit else None
         if resolved is not None and resolved["text"] != primary["text"]:
             secondary.append(resolved["text"])
         if len(secondary) >= 15:
@@ -955,6 +1034,7 @@ def _build_row(
             "action": action,
             "actionConfidence": 0.7 if action != "reject" else 0.4,
             "searchVolume": primary["volume"],
+            "searchTrend": str(primary.get("trend") or ""),
             "googleAdsCompetition": primary["competition"],
             "googleAdsCompetitionIndex": primary["competitionIndex"],
             "contentGapScore": gap_score,
@@ -1090,6 +1170,7 @@ async def _deterministic_opportunities(
             "action": action,
             "actionConfidence": 0.6,
             "searchVolume": primary["volume"],
+            "searchTrend": str(primary.get("trend") or ""),
             "googleAdsCompetition": primary["competition"],
             "googleAdsCompetitionIndex": primary["competitionIndex"],
             "contentGapScore": gap_score,
@@ -1210,6 +1291,28 @@ def _demo() -> None:
     kept: dict[str, Any] = {"secondaryKeywords": [], "evidence": {}}
     _merge_duplicate(kept, {"title": "T", "primaryKeyword": "gym crm"}, similarity=0.9)
     assert kept["secondaryKeywords"] == ["gym crm"], kept
+
+    # trend comes from the collected monthly volumes, never estimated
+    assert _trend_label([(2025, month, 100) for month in range(1, 7)]) == "flat"
+    assert (
+        _trend_label(
+            [
+                (2025, month, count)
+                for month, count in zip(range(1, 7), [100] * 3 + [300] * 3, strict=False)
+            ]
+        )
+        == "+200%"
+    )
+    assert (
+        _trend_label(
+            [
+                (2025, month, count)
+                for month, count in zip(range(1, 7), [300] * 3 + [100] * 3, strict=False)
+            ]
+        )
+        == "-67%"
+    )
+    assert _trend_label([(2025, 1, 500)]) == ""  # too few observations to say anything
     assert _normalize_intent("Commercial") == "commercial"
     assert _normalize_intent("nonsense") == "unknown"
     assert _normalize_content_type("Guide") == "guide"

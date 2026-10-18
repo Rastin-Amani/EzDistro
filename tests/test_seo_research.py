@@ -536,6 +536,56 @@ def test_generate_opportunities_skips_invented_keywords_and_merges_dupes():
     assert ideas[0]["status"] == "proposed"
 
 
+def test_idea_kept_when_keyword_belongs_to_a_sibling_cluster():
+    """The prompt gets every cluster of the batch, so a primary keyword from a
+    sibling cluster (or an unlabelled/mis-labelled cluster) is a valid pick —
+    it must be kept and attached to the cluster that owns the keyword."""
+    payload = {
+        "opportunities": [
+            {
+                "title": "Fitness Studio Scheduling Compared",
+                "cluster": "Gym management",  # label of the OTHER cluster
+                "primary_keyword": "fitness studio booking software",
+                "intent": "commercial",
+                "content_type": "comparison",
+                "action": "generate",
+                "brief": "compare",
+            }
+        ]
+    }
+    pb, project, registry = _setup()
+    registry.llm = FakeLLM([json.dumps(payload)])
+    job = _run_job(pb, project["id"], key="opp-sibling")
+    ctx = make_ctx(pb, registry, job)
+    run = ResearchRunRepo(pb).create_run(
+        project=project["id"],
+        name="r",
+        research_type="keywords",
+        config={},
+        targeting={},
+        fingerprint="fp",
+    )
+    _seed_keywords(
+        pb,
+        project["id"],
+        run["id"],
+        [("gym management software", 8100), ("fitness studio booking software", 500)],
+    )
+    asyncio.run(cluster_run(ctx, run_id=run["id"], method="deterministic"))
+
+    from app.repositories.research import ClusterRepo
+
+    clusters = {c["primaryKeyword"]: c["id"] for c in ClusterRepo(pb).list_for_run(run["id"])}
+    assert "fitness studio booking software" in clusters, clusters
+
+    result = asyncio.run(generate_opportunities(ctx, run_id=run["id"], goal_text=""))
+    assert result["created"] == 1, result
+    assert result["skipped"] == 0, result
+    idea = ArticleIdeaRepo(pb).all_for_run(run["id"])[0]
+    assert idea["primaryKeyword"] == "fitness studio booking software"
+    assert idea["cluster"] == clusters["fitness studio booking software"]
+
+
 def test_cannibalization_forces_update_action():
     pb, project, registry = _setup()
     registry.llm = FakeLLM(

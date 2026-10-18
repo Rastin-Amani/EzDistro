@@ -584,8 +584,8 @@ def _tab_context(
         context["roles"] = [
             ("outline", ("Outline model"), True),
             ("section", ("Section writer model"), True),
-            ("meta", ("Meta/SEO model (optional)"), False),
-            ("review", ("Review model (optional)"), False),
+            ("meta", ("Meta/SEO model (optional)"), True),
+            ("review", ("Review model (optional)"), True),
         ]
     elif tab == "retrieval":
         context["settings"] = ProjectSettingsRepo(pb).get_for_project(project_id)
@@ -1860,11 +1860,22 @@ def save_ai_models(
     section_timeout: str = Form(""),
     section_retry_attempts: str = Form(""),
     section_retry_base: str = Form(""),
-    # optional roles
+    # meta / review (optional roles, same knobs — a bulk JSON stage such as
+    # opportunity generation needs its own token budget)
     meta_provider: str = Form(""),
     meta_model: str = Form(""),
+    meta_temperature: str = Form(""),
+    meta_max_tokens: str = Form(""),
+    meta_timeout: str = Form(""),
+    meta_retry_attempts: str = Form(""),
+    meta_retry_base: str = Form(""),
     review_provider: str = Form(""),
     review_model: str = Form(""),
+    review_temperature: str = Form(""),
+    review_max_tokens: str = Form(""),
+    review_timeout: str = Form(""),
+    review_retry_attempts: str = Form(""),
+    review_retry_base: str = Form(""),
 ):
     """Save per-role AI model configuration.
 
@@ -1900,8 +1911,22 @@ def save_ai_models(
         },
         "metaProvider": safe_str(meta_provider),
         "metaModel": safe_str(meta_model),
+        "metaTemperature": safe_float(meta_temperature, 0.7) or 0.7,
+        "metaMaxTokens": safe_int(meta_max_tokens, 4096) or 4096,
+        "metaTimeout": safe_float(meta_timeout, 120.0) or 120.0,
+        "metaRetry": {
+            "max_attempts": safe_int(meta_retry_attempts, 3) or 3,
+            "backoff_base": safe_int(meta_retry_base, 30) or 30,
+        },
         "reviewProvider": safe_str(review_provider),
         "reviewModel": safe_str(review_model),
+        "reviewTemperature": safe_float(review_temperature, 0.7) or 0.7,
+        "reviewMaxTokens": safe_int(review_max_tokens, 4096) or 4096,
+        "reviewTimeout": safe_float(review_timeout, 120.0) or 120.0,
+        "reviewRetry": {
+            "max_attempts": safe_int(review_retry_attempts, 3) or 3,
+            "backoff_base": safe_int(review_retry_base, 30) or 30,
+        },
     }
     settings.upsert(project_id, data)
 

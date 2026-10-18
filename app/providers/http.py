@@ -72,9 +72,18 @@ def build_async_client(
 # keyed by (base_url, key-hash, timeout) and reused; the idle sweeper closes
 # them after IDLE_TTL seconds. Test transports are never pooled.
 # ---------------------------------------------------------------------------
-_CLIENT_POOL: dict[tuple, tuple[float, httpx.AsyncClient]] = {}
+_CLIENT_POOL: dict[tuple, tuple[float, httpx.AsyncClient, float]] = {}
 _POOL_LOCK = threading.Lock()
 IDLE_TTL = 120.0
+
+
+def _pool_touch(key: tuple, *, now: float | None = None) -> None:
+    """Mark a pooled client as just used (called per request, not per job)."""
+    stamp = now if now is not None else _time.monotonic()
+    with _POOL_LOCK:
+        entry = _CLIENT_POOL.get(key)
+        if entry is not None:
+            _CLIENT_POOL[key] = (stamp, entry[1], entry[2])
 
 
 def acquire_async_client(
@@ -95,7 +104,7 @@ def acquire_async_client(
     with _POOL_LOCK:
         entry = _CLIENT_POOL.get(key)
         if entry is not None:
-            _CLIENT_POOL[key] = (now, entry[1])
+            _CLIENT_POOL[key] = (now, entry[1], entry[2])
             client = entry[1]
             client._ezdistro_pooled = True  # type: ignore[attr-defined]
             return client
@@ -103,7 +112,17 @@ def acquire_async_client(
             base_url, api_key=api_key, auth_header=auth_header, timeout=timeout
         )
         client._ezdistro_pooled = True  # type: ignore[attr-defined]
-        _CLIENT_POOL[key] = (now, client)
+        # Refresh the idle stamp on every request. A long job holds ONE client
+        # for many sequential calls; without this it looked idle after IDLE_TTL,
+        # the sweeper closed it mid-run and every later call of that job died
+        # with "Cannot send a request, as the client has been closed".
+        # httpx awaits request hooks (`await hook(request)`), so this MUST be a
+        # coroutine — a sync hook raises "object NoneType can't be used in 'await'".
+        async def _touch(_request: httpx.Request, key: tuple = key) -> None:
+            _pool_touch(key)
+
+        client.event_hooks["request"] = [*client.event_hooks["request"], _touch]
+        _CLIENT_POOL[key] = (now, client, timeout)
         return client
 
 
@@ -121,12 +140,16 @@ async def _aclose(client: httpx.AsyncClient) -> None:
 
 
 def sweep_idle_clients(now: float | None = None) -> int:
-    """Close pooled clients idle for more than IDLE_TTL. Returns closed count."""
+    """Close pooled clients idle for more than IDLE_TTL. Returns closed count.
+
+    The threshold is never below a client's own timeout: closing one while its
+    request is still in flight is what killed long jobs mid-stage.
+    """
     now = now if now is not None else _time.monotonic()
     idle: list[httpx.AsyncClient] = []
     with _POOL_LOCK:
-        for key, (last_used, client) in list(_CLIENT_POOL.items()):
-            if now - last_used > IDLE_TTL:
+        for key, (last_used, client, timeout) in list(_CLIENT_POOL.items()):
+            if now - last_used > max(IDLE_TTL, timeout):
                 idle.append(client)
                 del _CLIENT_POOL[key]
     if idle:
@@ -282,6 +305,20 @@ def validate_llm_json_response(data: Any, what: str) -> dict[str, Any]:
     except (IndexError, KeyError, TypeError) as exc:
         raise PermanentError(f"{what}: malformed chat.completions response") from exc
     if not isinstance(content, str) or not content.strip():
+        # A reasoning model can spend the whole completion budget on its
+        # reasoning and return no answer at all — say so, otherwise the error
+        # ("empty completion content") points nowhere.
+        finish = ""
+        try:
+            finish = str(data["choices"][0].get("finish_reason") or "")
+        except (IndexError, KeyError, TypeError):
+            finish = ""
+        if finish == "length":
+            raise PermanentError(
+                f"{what}: the model used its entire max_tokens budget before returning an "
+                "answer (reasoning models count their reasoning against it) — raise this "
+                "role's Max tokens or point the role at a non-reasoning model"
+            )
         raise PermanentError(f"{what}: empty completion content")
     return data
 

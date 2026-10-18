@@ -349,6 +349,56 @@
         "id": "textd8d75e85"
       },
       {
+        "name": "metaTemperature",
+        "type": "number",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false,
+        "id": "numberfb72f76e"
+      },
+      {
+        "name": "metaMaxTokens",
+        "type": "number",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false,
+        "id": "number76abc6a7"
+      },
+      {
+        "name": "metaTimeout",
+        "type": "number",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false,
+        "id": "numbera597046b"
+      },
+      {
+        "name": "metaRetry",
+        "type": "json",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSize": 0,
+        "id": "json21a27dbf"
+      },
+      {
         "name": "reviewProvider",
         "type": "text",
         "required": false,
@@ -377,6 +427,56 @@
         "min": 0,
         "max": 0,
         "id": "texta9c560de"
+      },
+      {
+        "name": "reviewTemperature",
+        "type": "number",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false,
+        "id": "number2c0994ce"
+      },
+      {
+        "name": "reviewMaxTokens",
+        "type": "number",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false,
+        "id": "number1ba4b7e7"
+      },
+      {
+        "name": "reviewTimeout",
+        "type": "number",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false,
+        "id": "number3db9ec4d"
+      },
+      {
+        "name": "reviewRetry",
+        "type": "json",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSize": 0,
+        "id": "json50b043e4"
       },
       {
         "name": "embeddingProvider",

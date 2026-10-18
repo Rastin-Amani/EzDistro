@@ -273,6 +273,9 @@ def test_save_ai_models_persists_and_audits():
         outline_model="gpt-4o-mini",
         section_provider="openai_compat",
         section_model="gpt-4o-mini",
+        meta_provider="openai_compat",
+        meta_model="deepseek-v4.1-flash",
+        meta_max_tokens="16000",
     )
     assert "saved" in toast_message(resp)
     from app.repositories.projects import ProjectSettingsRepo
@@ -280,6 +283,7 @@ def test_save_ai_models_persists_and_audits():
     settings = ProjectSettingsRepo(pb).get_for_project(proj_a["id"])
     assert settings["outlineModel"] == "gpt-4o-mini"
     assert settings["sectionModel"] == "gpt-4o-mini"
+    assert settings["metaMaxTokens"] == 16000
 
 
 def test_save_global_llm_defaults_admin_only():
