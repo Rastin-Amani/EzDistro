@@ -92,7 +92,6 @@ _MONTHS = {
 }
 
 _FIELDS = ("keyword", "volume", "competition", "index", "cpc_low", "cpc_high", "currency")
-
 # Keyword Planner writes numbers like "12,000", "1.2K", or "1,234.56".
 _NUMBER_RE = re.compile(r"-?\d[\d,.\s]*")
 _MICRO = 1_000_000

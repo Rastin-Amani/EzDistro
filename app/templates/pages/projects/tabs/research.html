@@ -19,11 +19,23 @@
 
         {% set ads_step = '?tab=integrations' %}
 
-        {# ── No-API path: primary research option ──────────────────────── #}
+        {# ── Free path: expand seed keywords ───────────────────────────── #}
         <details class="ezdistro-panel" open>
             <summary class="ezdistro-panel-head cursor-pointer select-none">
+                <h2 class="ezdistro-panel-title">{{ ('Harvest from seed keywords') }}</h2>
+                <span class="text-xs opacity-50">{{ ('Free — builds the roadmap from your seeds') }}</span>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="ezdistro-disclosure-chev ms-auto size-4 shrink-0"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
+            </summary>
+            <div class="p-4">
+                {% include "pages/projects/tabs/research_harvest.html" %}
+            </div>
+        </details>
+
+        {# ── No-API path: primary research option ──────────────────────── #}
+        <details class="ezdistro-panel">
+            <summary class="ezdistro-panel-head cursor-pointer select-none">
                 <h2 class="ezdistro-panel-title">{{ ('Research without Google Ads API') }}</h2>
-                <span class="text-xs opacity-50">{{ ('Start with a CSV / XLSX export') }}</span>
+                <span class="text-xs opacity-50">{{ ('Or bring your own keyword export') }}</span>
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="ezdistro-disclosure-chev ms-auto size-4 shrink-0"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
             </summary>
             <div class="p-4">

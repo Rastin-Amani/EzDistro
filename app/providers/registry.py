@@ -44,6 +44,9 @@ CATEGORY_PUBLISHER = "publisher"
 CATEGORY_IMAGE = "image"
 CATEGORY_SERP = "serp"
 CATEGORY_GOOGLE_ADS = "google_ads"
+# Keyword sources need no credentials, so this is not an Integrations category —
+# it exists so a source is a table entry like any other provider.
+CATEGORY_KEYWORD_SOURCE = "keyword_source"
 
 # Embeddings are OpenAI-compatible only (OpenAI, Azure, 9Router, Ollama, vLLM…).
 DEFAULT_EMBEDDING_MODEL = "text-embedding-3-small"
@@ -87,6 +90,7 @@ CATEGORIES = (
     CATEGORY_IMAGE,
     CATEGORY_SERP,
     CATEGORY_GOOGLE_ADS,
+    CATEGORY_KEYWORD_SOURCE,
 )
 
 DEFAULT_PROVIDER: dict[str, str] = {
@@ -129,6 +133,7 @@ class ProviderRegistry:
         from app.providers.image.flux import FluxImage
         from app.providers.image.gemini import GeminiImage
         from app.providers.image.openai_compat import OpenAICompatImage
+        from app.providers.keyword_harvest import AutocompleteHarvester
         from app.providers.llm.gemini import GeminiLLM
         from app.providers.llm.openai_compat import OpenAICompatLLM
         from app.providers.publish.wordpress import WordPressPublisher
@@ -149,6 +154,7 @@ class ProviderRegistry:
             NoneSERPProvider,
             SerperSERPProvider,
             GoogleAdsOAuthProvider,
+            AutocompleteHarvester,
         ):
             adapter: Any = cls
             self._table[(adapter.category, adapter.provider_name)] = cls

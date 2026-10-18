@@ -529,6 +529,82 @@ async def research_import_start(
     )
 
 
+@router.post("/projects/{project_id}/research/harvest")
+@hx_error("Could not start harvesting keywords.")
+def research_harvest_start(
+    request: Request,
+    project_id: str,
+    name: str = Form(""),
+    seeds: str = Form(""),
+    max_keywords: str = Form(""),
+    country: str = Form("US"),
+    language: str = Form("en"),
+    locale: str = Form(""),
+    clustering: str = Form("auto"),
+    goal: str = Form(""),
+):
+    """Start a run whose keywords are harvested from seed keywords.
+
+    Free and credential-less: the seeds are expanded through public autocomplete,
+    so no Google Ads account is involved. Metrics this project already collected
+    for a harvested keyword are reused (see ``harvest_keywords``); everything else
+    stays unmeasured until a Keyword Planner export supplies volume.
+    """
+    require_hx(request)
+    require_project_access(request, project_id)
+    require_project_role(request, project_id)
+    seed_list = _lines(seeds)
+    if not seed_list:
+        return error_response("Add at least one seed keyword to harvest from.")
+
+    target_country = (safe_str(country) or "US").upper()[:2]
+    target_locale = safe_str(locale) or f"{safe_str(language) or 'en'}-{target_country}"
+    targeting = {
+        "country": target_country,
+        "language": (safe_str(language) or "en").lower()[:5],
+        "locale": target_locale[:10],
+        "network": "GOOGLE_SEARCH",
+    }
+    config: dict[str, Any] = {
+        "seeds": [],
+        "harvest": {"seeds": seed_list[:2000]},
+        "clustering": safe_str(clustering) or "auto",
+        "goal": safe_str(goal)[:4000],
+        "targeting": targeting,
+        "source": "harvest",
+    }
+    limit = safe_int(max_keywords, 0)
+    if limit > 0:
+        config["maxKeywords"] = limit
+
+    runs = ResearchRunRepo(request.state.pb)
+    run = runs.create_run(
+        project=project_id,
+        name=(safe_str(name) or f"Harvest {time.strftime('%Y-%m-%d %H:%M')}")[:120],
+        research_type="harvest",
+        config=config,
+        targeting=targeting,
+        created_by=str((current_user(request) or {}).get("id") or ""),
+    )
+    ResearchSeedRepo(request.state.pb).replace_for_run(
+        run["id"], _seed_rows(keywords=seeds, site="", urls="", competitors="")
+    )
+    job = JobRepo(request.state.pb).create(
+        project=project_id,
+        type="research_run",
+        payload={"runId": run["id"], "force": False},
+        idempotency_key=f"research_run:{run['id']}",
+        entity_type="research_run",
+        entity_id=run["id"],
+        max_attempts=2,
+    )
+    runs.update(run["id"], {"job": job["id"]})
+    return ok_with_redirect(
+        "Harvesting keywords from your seeds — this runs in the background.",
+        f"/projects/{project_id}/research/{run['id']}",
+    )
+
+
 @router.post("/projects/{project_id}/research/{run_id}/cancel")
 @hx_error("Could not cancel the research run.")
 def research_cancel(request: Request, project_id: str, run_id: str):

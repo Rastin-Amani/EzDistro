@@ -139,6 +139,16 @@ async def _run_stage(
 
 async def _validate(ctx: Any, run: dict[str, Any], seeds: list[dict[str, Any]]) -> dict[str, Any]:
     config = dict(run.get("config") or {})
+    harvest = config.get("harvest") or {}
+    if harvest:
+        wanted = [str(seed) for seed in harvest.get("seeds") or [] if str(seed).strip()]
+        if not wanted:
+            raise PermanentError("this harvest run has no seed keywords to expand")
+        return {
+            "seeds": len(wanted),
+            "kinds": ["harvest"],
+            "notes": ["keywords harvested from public autocomplete — no Google Ads account needed"],
+        }
     if config.get("importPayload"):
         # Keywords come from an uploaded Keyword Planner export, so the run is
         # valid even when no typed seeds were entered alongside the file.
@@ -175,6 +185,28 @@ async def _wordpress_stage(ctx: Any) -> dict[str, Any]:
         return {"skipped": True, "reason": str(exc)[:200], "created": 0}
     result = await sync_posts(ctx, publisher)
     return dict(result)
+
+
+async def _harvest_stage(
+    ctx: Any, run: dict[str, Any], config: dict[str, Any], *, max_keywords: int
+) -> dict[str, Any]:
+    """Expand the run's seed keywords through the free autocomplete source."""
+    from app.services.research_keywords import harvest_keywords
+
+    harvest = dict(config.get("harvest") or {})
+    seeds = [str(seed) for seed in harvest.get("seeds") or [] if str(seed).strip()]
+    targeting = dict(run.get("targeting") or {})
+    if harvest.get("maxRequests"):
+        targeting["maxRequests"] = harvest["maxRequests"]
+    return dict(
+        await harvest_keywords(
+            ctx,
+            run_id=run["id"],
+            seeds=seeds,
+            max_keywords=max_keywords,
+            targeting=targeting,
+        )
+    )
 
 
 async def _import_keyword_stage(
@@ -214,6 +246,8 @@ async def _keyword_stage(
     ctx: Any, run: dict[str, Any], seeds: list[dict[str, Any]], *, max_keywords: int
 ) -> dict[str, Any]:
     config = dict(run.get("config") or {})
+    if config.get("harvest"):
+        return await _harvest_stage(ctx, run, config, max_keywords=max_keywords)
     if config.get("importPayload"):
         return await _import_keyword_stage(ctx, run, config)
     if not any(str(seed.get("seedType")) != "competitor" for seed in seeds):

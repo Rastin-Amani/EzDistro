@@ -483,6 +483,28 @@ class KeywordRepo(_BulkCreateMixin, BaseRepo):
 class KeywordMetricRepo(_BulkCreateMixin, BaseRepo):
     collection = "keyword_metrics"
 
+    def measured_best(self, keyword_ids: Sequence[str]) -> dict[str, dict[str, Any]]:
+        """keyword id → the highest-volume *measured* metric row for it.
+
+        Used by the autocomplete harvest, which has no metrics of its own: a
+        keyword this project already collected keeps its real volume, competition
+        and bids from that earlier collection instead of a guessed zero.
+        """
+        best: dict[str, dict[str, Any]] = {}
+        keys = [kid for kid in keyword_ids if kid]
+        if not keys:
+            return best
+        terms = [f"keyword={q(kid)}" for kid in keys]
+        for chunk in filter_chunks(terms):
+            for row in self.list_all(filter="(" + " || ".join(chunk) + ")"):
+                keyword_id = str(row.get("keyword") or "")
+                current = best.get(keyword_id)
+                if current is None or int(row.get("avgMonthlySearches") or 0) > int(
+                    current.get("avgMonthlySearches") or 0
+                ):
+                    best[keyword_id] = row
+        return best
+
     def upsert_many(self, rows: Sequence[dict[str, Any]]) -> int:
         """Rows are keyed by (run, keyword). Batched read, then update or create."""
         if not rows:

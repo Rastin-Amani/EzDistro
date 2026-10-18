@@ -233,6 +233,151 @@ def _persist(
 
 
 # ---------------------------------------------------------------------------
+# Free harvest (no Google Ads account)
+# ---------------------------------------------------------------------------
+async def harvest_keywords(
+    ctx: JobContext,
+    *,
+    run_id: str,
+    seeds: list[str],
+    max_keywords: int = 1_000,
+    targeting: dict[str, Any] | None = None,
+    provider: Any = None,
+) -> dict[str, Any]:
+    """Expand seed keywords into the queries people actually type.
+
+    The source is public autocomplete: no account, no cost, and no metrics — so
+    an already-collected keyword keeps the volume, competition and bids from that
+    earlier collection (``measured_best``) rather than a guessed zero. Everything
+    else stays unmeasured on purpose; Keyword Planner fills it in later.
+
+    Persisting per seed keeps the stage resumable, exactly like the API path.
+    """
+    from app.providers.keyword_harvest import DEFAULT_MAX_REQUESTS, AutocompleteHarvester
+
+    stored_seeds = [str(seed).strip() for seed in seeds if str(seed).strip()]
+    if not stored_seeds:
+        raise PermanentError("no seed keywords: add at least one seed to harvest from")
+
+    context = dict(targeting or {})
+    language = str(context.get("language") or "en")
+    locale = str(context.get("locale") or f"{language}-US")
+    location_id = str(context.get("locationId") or context.get("country") or "")
+    location_name = str(context.get("locationName") or context.get("country") or "")
+    budget = int(max_keywords) if max_keywords and int(max_keywords) > 0 else 0
+
+    harvester = provider or AutocompleteHarvester(
+        locale=locale,
+        max_requests=int(context.get("maxRequests") or DEFAULT_MAX_REQUESTS),
+    )
+    found: dict[str, KeywordIdea] = {}
+    try:
+        for index, seed in enumerate(stored_seeds, start=1):
+            await ctx.check_cancelled()
+            ctx.progress(
+                2 + int(40 * (index - 1) / len(stored_seeds)),
+                stage="keyword_collection",
+                message=f"Harvesting keyword ideas ({index}/{len(stored_seeds)} seeds)…",
+                current=index,
+                total=len(stored_seeds),
+            )
+            remaining = budget - len(found) if budget else 0
+            if budget and remaining <= 0:
+                break
+            try:
+                ideas = await harvester.generate_keyword_ideas(
+                    keywords=[seed], max_results=remaining
+                )
+            except PermanentError:
+                raise
+            except Exception as exc:  # one bad seed must not lose the harvest
+                ctx.warning(f"harvest failed for seed {seed!r}: {str(exc)[:200]}")
+                continue
+            for idea in ideas:
+                found.setdefault(normalize_keyword(idea.text), idea)
+    finally:
+        close = getattr(harvester, "aclose", None)
+        if close is not None and provider is None:
+            await close()
+
+    if not found:
+        return {
+            "ideas": 0,
+            "skipped": True,
+            "reason": "the autocomplete sources returned nothing for these seeds",
+            "seeds": len(stored_seeds),
+        }
+
+    ideas = list(found.values())
+    borrowed = _borrow_measured(
+        pb=ctx.pb,
+        project_id=ctx.project_id,
+        language=language,
+        location_id=location_id,
+        ideas=ideas,
+    )
+    written = _persist(
+        pb=ctx.pb,
+        project_id=ctx.project_id,
+        run_id=run_id,
+        language=language,
+        location_id=location_id,
+        locale=locale,
+        location_name=location_name,
+        ideas=ideas,
+        source="autocomplete",
+    )
+    return {
+        "ideas": written,
+        "harvested": len(ideas),
+        "seeds": len(stored_seeds),
+        "borrowedMetrics": borrowed,
+        "requests": int(getattr(harvester, "requests", 0) or 0),
+        "failures": int(getattr(harvester, "failures", 0) or 0),
+        "bySource": dict(getattr(harvester, "by_source", {}) or {}),
+    }
+
+
+def _borrow_measured(
+    *,
+    pb: Any,
+    project_id: str,
+    language: str,
+    location_id: str,
+    ideas: list[KeywordIdea],
+) -> int:
+    """Fill metrics this project already collected for the same keyword."""
+    rows = [
+        {"normalizedKeyword": normalize_keyword(idea.text), "displayKeyword": idea.text}
+        for idea in ideas
+        if idea.text.strip()
+    ]
+    if not rows:
+        return 0
+    by_key = KeywordRepo(pb).ensure_many(
+        project=project_id, language=language, location_id=location_id, rows=rows
+    )
+    measured = KeywordMetricRepo(pb).measured_best(
+        [str(row.get("id") or "") for row in by_key.values()]
+    )
+    filled = 0
+    for idea in ideas:
+        row = by_key.get(normalize_keyword(idea.text)) or {}
+        metric = measured.get(str(row.get("id") or "")) or {}
+        if int(metric.get("avgMonthlySearches") or 0) <= 0:
+            continue
+        idea.avg_monthly_searches = int(metric.get("avgMonthlySearches") or 0)
+        idea.competition = str(metric.get("competition") or "UNSPECIFIED")
+        idea.competition_index = int(metric.get("competitionIndex") or 0)
+        idea.average_cpc_micros = int(metric.get("averageCpcMicros") or 0)
+        idea.low_top_of_page_bid_micros = int(metric.get("lowTopOfPageBidMicros") or 0)
+        idea.high_top_of_page_bid_micros = int(metric.get("highTopOfPageBidMicros") or 0)
+        idea.currency_code = str(metric.get("currencyCode") or "")
+        filled += 1
+    return filled
+
+
+# ---------------------------------------------------------------------------
 # Collection
 # ---------------------------------------------------------------------------
 async def resolve_targeting(provider: Any, targeting: dict[str, Any]) -> dict[str, Any]:
