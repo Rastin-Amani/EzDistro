@@ -10,13 +10,21 @@ from __future__ import annotations
 
 import re
 import uuid
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from urllib.parse import urlsplit, urlunsplit
 
 import httpx
-from qdrant_client import AsyncQdrantClient, models
 
 from app.providers.base import SearchHit, VectorPoint
+
+# qdrant_client is imported lazily inside the functions below, never at module
+# level: ``import qdrant_client`` costs seconds (numpy + grpc + a huge generated
+# HTTP-models module) and the provider registry imports THIS module eagerly to
+# register the adapter class — so a module-level import made the first page that
+# resolves any provider (e.g. project settings) pay that cost on the request
+# path. TYPE_CHECKING keeps the annotations type-checked.
+if TYPE_CHECKING:  # pragma: no cover
+    from qdrant_client import AsyncQdrantClient, models
 
 PROVIDER_NAME = "qdrant"
 
@@ -51,6 +59,8 @@ def _client_url(url: str) -> str:
 
 def _to_filter(filters: dict[str, Any] | None) -> models.Filter | None:
     """Payload filter: exact match on each key (Qdrant `match value` semantics)."""
+    from qdrant_client import models
+
     if not filters:
         return None
     conditions = [
@@ -88,6 +98,8 @@ class QdrantStore:
         self._client: AsyncQdrantClient | None = None
 
     async def _get_client(self) -> AsyncQdrantClient:
+        from qdrant_client import AsyncQdrantClient
+
         if self._client is None:
             self._client = AsyncQdrantClient(
                 url=_client_url(self._url),
@@ -103,6 +115,8 @@ class QdrantStore:
 
     # -- collection management ------------------------------------------------------
     async def ensure_collection(self, dimensions: int) -> None:
+        from qdrant_client import models
+
         client = await self._get_client()
         existing = await client.collection_exists(self._namespace)
         if existing:
@@ -134,6 +148,8 @@ class QdrantStore:
     async def upsert(self, points: list[VectorPoint]) -> None:
         if not points:
             return
+        from qdrant_client import models
+
         client = await self._get_client()
         batch_size = 64
         for i in range(0, len(points), batch_size):
@@ -174,6 +190,8 @@ class QdrantStore:
         )
 
     async def delete_by_filter(self, filters: dict[str, Any]) -> None:
+        from qdrant_client import models
+
         client = await self._get_client()
         await client.delete(
             collection_name=self._namespace,
