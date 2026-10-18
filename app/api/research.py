@@ -59,7 +59,7 @@ from app.services import google_ads as google_ads_service
 from app.services.research_import import parse_keyword_file
 from app.services.serp import refresh_keyword, serp_available
 from app.templates import templates
-from app.utils import error_response, fanout, ok_with_redirect, success_response
+from app.utils import error_response, fanout, navigate_response, success_response
 
 log = structlog.get_logger(__name__)
 
@@ -351,7 +351,7 @@ def research_start(
     runs = ResearchRunRepo(request.state.pb)
     existing = runs.for_fingerprint(project_id, fingerprint)
     if existing and not force:
-        return ok_with_redirect(
+        return navigate_response(
             "Reusing the previous research run for the same targeting and seeds.",
             f"/projects/{project_id}/research/{existing['id']}",
         )
@@ -378,7 +378,7 @@ def research_start(
         max_attempts=2,
     )
     runs.update(run["id"], {"job": job["id"]})
-    return ok_with_redirect(
+    return navigate_response(
         "Research started — this runs in the background.",
         f"/projects/{project_id}/research/{run['id']}",
     )
@@ -523,7 +523,7 @@ async def research_import_start(
         max_attempts=2,
     )
     runs.update(run["id"], {"job": job["id"]})
-    return ok_with_redirect(
+    return navigate_response(
         "Analysing the imported keywords — this runs in the background.",
         f"/projects/{project_id}/research/{run['id']}",
     )
@@ -599,7 +599,7 @@ def research_harvest_start(
         max_attempts=2,
     )
     runs.update(run["id"], {"job": job["id"]})
-    return ok_with_redirect(
+    return navigate_response(
         "Harvesting keywords from your seeds — this runs in the background.",
         f"/projects/{project_id}/research/{run['id']}",
     )
@@ -647,7 +647,7 @@ def research_resume(request: Request, project_id: str, run_id: str):
         max_attempts=2,
     )
     runs.update(run_id, {"job": job["id"]})
-    return ok_with_redirect(
+    return navigate_response(
         "Resuming the research run — it picks up from the last completed step.",
         f"/projects/{project_id}/research/{run_id}",
     )

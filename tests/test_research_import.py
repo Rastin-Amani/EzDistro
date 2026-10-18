@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import io
+import json
 import zipfile
 
 from app.domain.keywords import normalize_keyword
@@ -131,7 +132,8 @@ def test_import_start_creates_run_and_analyses_keywords():
         )
     )
     events = resp.headers.get("HX-Trigger", "")
-    assert "delayed-redirect" in events
+    assert "show-toast" in events
+    assert json.loads(resp.headers["HX-Location"])["target"] == "#main-content"
 
     runs = ResearchRunRepo(pb).list_for_project(project["id"], page=1, per_page=10)
     assert len(runs) == 1
@@ -251,7 +253,8 @@ def test_import_file_only_passes_validate_and_completes():
             force="",
         )
     )
-    assert "delayed-redirect" in resp.headers.get("HX-Trigger", "")
+    assert "show-toast" in resp.headers.get("HX-Trigger", "")
+    assert json.loads(resp.headers["HX-Location"])["target"] == "#main-content"
     run = ResearchRunRepo(pb).list_for_project(project["id"], page=1, per_page=5)[0]
     assert run["config"]["seeds"] == []
 

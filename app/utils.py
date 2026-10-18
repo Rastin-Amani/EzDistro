@@ -83,6 +83,27 @@ def delayed_redirect(url: str) -> dict[str, Any]:
     return {"delayed-redirect": {"url": url}}
 
 
+def navigate_response(
+    message: str,
+    url: str,
+    *,
+    type: str = "success",
+    target: str = "#main-content",
+) -> Response:
+    """Toast + navigation that keeps the application shell alive.
+
+    `ok_with_redirect` shows the toast, waits ~1.2s and then does a full
+    ``window.location`` load — a white flash and a rebuilt shell. For "the
+    submitted result is a page of its own" flows, swap the content region
+    instead: same shell, same sidebar, no dead second.
+    """
+    headers = hx_trigger({"show-toast": {"message": message, "type": type}})
+    headers["HX-Location"] = json.dumps(
+        {"path": url, "target": target, "swap": "innerHTML", "push": "true"}
+    )
+    return Response(content="", headers=headers)
+
+
 def ok_with_redirect(message: str, url: str, *, type: str = "success") -> Response:
     """Toast + delayed navigation for successful form submissions."""
     return mutation_response(
