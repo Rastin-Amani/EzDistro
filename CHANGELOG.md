@@ -9,6 +9,38 @@ release builds on. Format is based on [Keep a Changelog](https://keepachangelog.
 
 ## [Unreleased]
 
+## [v1.22.0] — 2026-10-18
+
+### Added
+- Starting, importing or resuming research now swaps the content region in place
+  instead of reloading the whole page, keeping the sidebar and shell alive.
+- The article detail, review and workspace pages share one header macro, so the
+  title, status, counts and actions sit in the same place on all three.
+
+### Changed
+- The interface no longer carries a bespoke `.ezdistro-*` styling vocabulary:
+  every surface uses DaisyUI primitives and Tailwind utilities inline, and
+  `input.css` is reduced to the themes, base accessibility, the htmx indicator
+  and two layer-order fixes.
+- Inter is served as WOFF2 (352 KB) with the TTF as fallback.
+- The dashboard drops its static flow strip and header action; the writing flow
+  stays on the workspace/review progress strips.
+
+### Performance
+- All PocketBase clients share one warm, bounded connection pool instead of
+  opening a fresh one per client; bulk creates and deletes go through
+  `/api/batch` (50 per request) with a per-row fallback.
+- Job claiming, heartbeat, release and retry paths re-read far less: the lease id
+  returned by `acquire` is reused, the claim record is handed to the run, the
+  cancel flag is memoized, and a retry is one write.
+- The dashboard and `/workers` share one TTL-cached queue-count computation, the
+  dashboard reads only the columns it renders, and the indexing tab merges its
+  metric counts into the existing fanout wave.
+- Templates compile once at boot, asset URLs are content-hashed from the newest
+  css/js file, and `/static` responses carry `Cache-Control`.
+- `qdrant_client` is imported lazily, removing its multi-second import from the
+  first request that resolves any provider.
+
 ## [v1.21.0] — 2026-10-18
 
 ### Added
