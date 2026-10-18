@@ -75,7 +75,13 @@ class JobRepo(BaseRepo):
                 "idempotencyKey": idempotency_key,
             }
         )
-        self._event(record["id"], "job.created", "job created", {"type": type, "project": project})
+        self._event(
+            record["id"],
+            "job.created",
+            "job created",
+            {"type": type, "project": project},
+            project=project,
+        )
         return record
 
     # -- polling --------------------------------------------------------------------
@@ -158,8 +164,14 @@ class JobRepo(BaseRepo):
         }
         if result is not None:
             payload["result"] = result
-        self.update(job_id, payload)
-        self._event(job_id, "job.completed", "job completed", {"result": result or {}})
+        record = self.update(job_id, payload)
+        self._event(
+            job_id,
+            "job.completed",
+            "job completed",
+            {"result": result or {}},
+            project=record.get("project", ""),
+        )
 
     def fail(
         self,
@@ -167,19 +179,27 @@ class JobRepo(BaseRepo):
         error_code: str,
         error_message: str,
         error_details: dict[str, Any] | None = None,
+        *,
+        attempts: int | None = None,
     ) -> None:
-        self.update(
+        payload: dict[str, Any] = {
+            "status": "failed",
+            "errorCode": error_code,
+            "errorMessage": error_message,
+            "errorDetails": error_details or {},
+            "lockedBy": "",
+            "finishedAt": pb_dt(now_utc()),
+        }
+        if attempts is not None:
+            payload["attempts"] = attempts
+        record = self.update(job_id, payload)
+        self._event(
             job_id,
-            {
-                "status": "failed",
-                "errorCode": error_code,
-                "errorMessage": error_message,
-                "errorDetails": error_details or {},
-                "lockedBy": "",
-                "finishedAt": pb_dt(now_utc()),
-            },
+            "job.failed",
+            f"job failed: {error_message}",
+            error_details or {},
+            project=record.get("project", ""),
         )
-        self._event(job_id, "job.failed", f"job failed: {error_message}", error_details or {})
 
     def schedule_retry(
         self,
@@ -188,16 +208,23 @@ class JobRepo(BaseRepo):
         attempt: int,
         max_attempts: int,
         delay_seconds: int,
+        *,
+        error_code: str = "",
+        error_message: str = "",
+        error_details: dict[str, Any] | None = None,
     ) -> None:
-        self.update(
-            job_id,
-            {
-                "status": "retrying",
-                "availableAt": pb_dt(next_available_at),
-                "attempts": attempt,
-                "lockedBy": "",
-            },
-        )
+        payload: dict[str, Any] = {
+            "status": "retrying",
+            "availableAt": pb_dt(next_available_at),
+            "attempts": attempt,
+            "lockedBy": "",
+        }
+        # The failure fields ride along so a retry is ONE write, not two.
+        if error_code:
+            payload["errorCode"] = error_code
+            payload["errorMessage"] = error_message
+            payload["errorDetails"] = error_details or {}
+        record = self.update(job_id, payload)
         self._event(
             job_id,
             "job.retry_scheduled",
@@ -208,6 +235,7 @@ class JobRepo(BaseRepo):
                 "delay_seconds": delay_seconds,
                 "available_at": pb_dt(next_available_at),
             },
+            project=record.get("project", ""),
         )
 
     def cancel(self, job_id: str) -> dict[str, Any]:
@@ -220,7 +248,7 @@ class JobRepo(BaseRepo):
                 "finishedAt": pb_dt(now_utc()),
             },
         )
-        self._event(job_id, "job.cancelled", "job cancelled", {})
+        self._event(job_id, "job.cancelled", "job cancelled", {}, project=record.get("project", ""))
         return record
 
     def request_cancel(self, job_id: str) -> dict[str, Any]:
@@ -242,7 +270,13 @@ class JobRepo(BaseRepo):
                 "lockedBy": "",
             },
         )
-        self._event(job_id, "job.requeued", "job returned to the queue (worker stopping)", {})
+        self._event(
+            job_id,
+            "job.requeued",
+            "job returned to the queue (worker stopping)",
+            {},
+            project=record.get("project", ""),
+        )
         return record
 
     def reset_for_retry(self, job_id: str) -> dict[str, Any]:
@@ -260,7 +294,13 @@ class JobRepo(BaseRepo):
                 "finishedAt": "",
             },
         )
-        self._event(job_id, "job.retry_scheduled", "manual retry requested", {"manual": True})
+        self._event(
+            job_id,
+            "job.retry_scheduled",
+            "manual retry requested",
+            {"manual": True},
+            project=record.get("project", ""),
+        )
         return record
 
     # -- queries --------------------------------------------------------------------
@@ -317,7 +357,11 @@ class JobRepo(BaseRepo):
     def error_codes(self, per_page: int = 100) -> list[str]:
         """Distinct failure types present on failed jobs (bounded sample)."""
         failed = self.list_records(
-            filter='status="failed"', sort="-updated", page=1, per_page=per_page
+            filter='status="failed"',
+            sort="-updated",
+            page=1,
+            per_page=per_page,
+            fields="errorCode",
         )
         return sorted({str(j.get("errorCode") or "Unknown") for j in failed})
 
@@ -333,14 +377,30 @@ class JobRepo(BaseRepo):
         return self.list_records(filter=f, sort="-created", page=1, per_page=10)
 
     # -- event helper (audit; never breaks the job pipeline) -------------------------
-    def _event(self, job_id: str, event_type: str, message: str, metadata: dict[str, Any]) -> None:
-        job = self.get(job_id)
-        if not job:
-            return
+    def _event(
+        self,
+        job_id: str,
+        event_type: str,
+        message: str,
+        metadata: dict[str, Any],
+        *,
+        project: str | None = None,
+    ) -> None:
+        """Write an audit event.
+
+        `project` is threaded in by callers that just wrote the job (their
+        `update()` returned it) — re-reading the job here was one extra PocketBase
+        round trip on every single job transition.
+        """
+        if project is None:
+            job = self.get(job_id)
+            if not job:
+                return
+            project = job.get("project", "")
         with contextlib.suppress(Exception):
             self._pb.collection("job_events").create(
                 {
-                    "project": job.get("project", ""),
+                    "project": project,
                     "job": job_id,
                     "eventType": event_type,
                     "message": message,
@@ -352,14 +412,22 @@ class JobRepo(BaseRepo):
 class LeaseRepo(BaseRepo):
     collection = "job_leases"
 
-    def acquire(self, job_id: str, worker_id: str, expires_at: dt.datetime) -> bool:
-        """Atomically claim a job. Returns True only if THIS worker won the race."""
+    def acquire(self, job_id: str, worker_id: str, expires_at: dt.datetime) -> str | None:
+        """Atomically claim a job. Returns the lease row id, or None if lost.
+
+        The id is returned (truthy on success, so `if not acquire(...)` still
+        reads as "lost the race") because the winner already knows it — which
+        lets release()/extend() delete or update the row directly instead of
+        re-reading it first. One request instead of two, per job.
+        """
         try:
-            self.create({"job": job_id, "workerId": worker_id, "expiresAt": pb_dt(expires_at)})
-            return True
+            record = self.create(
+                {"job": job_id, "workerId": worker_id, "expiresAt": pb_dt(expires_at)}
+            )
+            return str(record.get("id") or "") or None
         except ClientResponseError as err:
             if err.status == 400:
-                return False
+                return None
             raise
 
     def current(self, job_id: str) -> dict[str, Any] | None:
@@ -367,18 +435,27 @@ class LeaseRepo(BaseRepo):
 
     def delete_expired(self) -> None:
         expired = pb_dt(now_utc())
-        stale = self.list_all(filter=f'expiresAt < "{expired}"')
-        for lease in stale:
-            with contextlib.suppress(Exception):
-                self.delete(lease["id"])
+        # Batched delete (one request per 50 rows) — leases pile up when workers
+        # crash, and this used to be one DELETE round trip per stale lease.
+        with contextlib.suppress(Exception):
+            self.delete_matching(filter=f'expiresAt < "{expired}"')
 
-    def release(self, job_id: str) -> None:
+    def release(self, job_id: str, lease_id: str | None = None) -> None:
+        """Drop the lease row. `lease_id` (from acquire) avoids a lookup."""
+        if lease_id:
+            with contextlib.suppress(Exception):
+                self.delete(lease_id)
+            return
         lease = self.current(job_id)
         if lease:
             with contextlib.suppress(Exception):
                 self.delete(lease["id"])
 
-    def extend(self, job_id: str, expires_at: dt.datetime) -> None:
+    def extend(self, job_id: str, expires_at: dt.datetime, lease_id: str | None = None) -> None:
+        if lease_id:
+            with contextlib.suppress(Exception):
+                self.update(lease_id, {"expiresAt": pb_dt(expires_at)})
+            return
         lease = self.current(job_id)
         if lease:
             self.update(lease["id"], {"expiresAt": pb_dt(expires_at)})

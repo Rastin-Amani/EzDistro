@@ -70,6 +70,18 @@ class JobEngine:
         self._completed = 0
         self._failed = 0
         self._cancelled = 0
+        # Claim bookkeeping, so heartbeat/release/execution need no extra reads:
+        # `_lease_ids` remembers the lease row we created, `_running` the job
+        # record mark_running() returned. Both are bounded by jobs in flight and
+        # every consumer falls back to a real read if the entry is missing.
+        self._lease_ids: dict[str, str] = {}
+        self._running: dict[str, dict[str, Any]] = {}
+        # Cancellation is polled from inside per-item loops (per document, per
+        # keyword…), so a raw `jobs.get()` there was one PocketBase round trip
+        # PER ITEM — hundreds per run. A short TTL keeps cancellation responsive
+        # (it is already cooperative) while collapsing those to ~1 per window.
+        self._cancel_cache: dict[str, tuple[bool, float]] = {}
+        self._cancel_ttl = 3.0
         # ProjectConfig is immutable once loaded and identical for every job of a
         # project, but ProjectConfig.load issues ~7 PocketBase queries. The engine
         # is bound to a single PocketBase client, so caching per project_id is
@@ -112,23 +124,29 @@ class JobEngine:
         """
         job_id = job["id"]
         expires = now_utc() + dt.timedelta(seconds=self.lease_seconds)
-        if not self.leases.acquire(job_id, self.worker_id, expires):
+        lease_id = self.leases.acquire(job_id, self.worker_id, expires)
+        if not lease_id:
             # Lost the race — but if the existing lease is already expired we can
             # clean it up and retry once (abandoned-job recovery).
             current = self.leases.current(job_id)
             if current and _lease_expired(current):
                 self.leases.delete(current["id"])
-                if not self.leases.acquire(job_id, self.worker_id, expires):
+                lease_id = self.leases.acquire(job_id, self.worker_id, expires)
+                if not lease_id:
                     return False
             else:
                 return False
+        # Keep the lease row id: heartbeat + release then hit it directly instead
+        # of re-reading the row (one request each instead of two).
+        self._lease_ids[job_id] = lease_id
         # Only claim jobs that are still claimable (state may have changed).
         fresh = self.jobs.get(job_id)
         if not fresh or fresh.get("status") not in ("pending", "retrying", "running"):
-            self.leases.release(job_id)
+            self.leases.release(job_id, lease_id)
+            self._lease_ids.pop(job_id, None)
             return False
         validate_transition(fresh.get("status", "pending"), "running")
-        self.jobs.mark_running(job_id, self.worker_id, expires)
+        running = self.jobs.mark_running(job_id, self.worker_id, expires)
         self.events.add(
             project=fresh.get("project", ""),
             job=job_id,
@@ -136,6 +154,8 @@ class JobEngine:
             message=f"job claimed by worker {self.worker_id}",
             metadata={"worker_id": self.worker_id, "lease_expires_at": expires.isoformat()},
         )
+        # Hand the freshly-claimed record to _run so it need not re-read it.
+        self._running[job_id] = running or fresh
         return True
 
     # ---------------------------------------------------------------------------
@@ -173,7 +193,7 @@ class JobEngine:
                 {"retryable": False},
             )
             self._failed += 1
-            self.leases.release(job_id)
+            self._release_lease(job_id)
             return
 
         self.events.add(
@@ -189,7 +209,7 @@ class JobEngine:
             self._finalize_failure(
                 job_id, "ConfigError", f"failed to load project config: {exc}", retryable=transient
             )
-            self.leases.release(job_id)
+            self._release_lease(job_id)
             return
 
         stack = ProviderStack(
@@ -204,7 +224,8 @@ class JobEngine:
         )
         ctx = JobContext(
             pb=self.pb,
-            job=self.jobs.get(job_id) or job,
+            # The record _claim just wrote, so no re-read is needed (falls back).
+            job=self._running.pop(job_id, None) or self.jobs.get(job_id) or job,
             config=config,
             providers=stack,
             registry=self.registry,
@@ -238,11 +259,18 @@ class JobEngine:
                 str(exc),
                 retryable=True,
                 details={"traceback": traceback.format_exc()[-2000:]},
+                settings=config.settings,
             )
         finally:
             heartbeat_task.cancel()
-            self.leases.release(job_id)
+            self._release_lease(job_id)
+            self._cancel_cache.pop(job_id, None)
             await stack.aclose()
+
+    def _release_lease(self, job_id: str) -> None:
+        """Drop the lease row and the per-job claim bookkeeping."""
+        self.leases.release(job_id, self._lease_ids.pop(job_id, None))
+        self._running.pop(job_id, None)
 
     # ---------------------------------------------------------------------------
     # Failure handling & retries (exponential backoff + jitter + Retry-After)
@@ -256,6 +284,7 @@ class JobEngine:
             error["message"],
             retryable=error["retryable"],
             details=error.get("details"),
+            settings=ctx.config.settings,
         )
 
     def _finalize_failure(
@@ -266,6 +295,7 @@ class JobEngine:
         *,
         retryable: bool,
         details: dict[str, Any] | None = None,
+        settings: dict[str, Any] | None = None,
     ) -> None:
         job = self.jobs.get(job_id)
         if not job:
@@ -282,9 +312,13 @@ class JobEngine:
             error_details["details"] = details
 
         if retryable and attempts < max_attempts:
+            # The caller already holds the project settings (loaded once per job);
+            # only fall back to a query when it failed before config was loaded.
             policy = (
-                ProjectSettingsRepo(self.pb).get_for_project(job["project"]).get("retryPolicy", {})
-            )
+                settings
+                if settings is not None
+                else ProjectSettingsRepo(self.pb).get_for_project(job["project"])
+            ).get("retryPolicy", {})
             base = max(1, int(policy.get("backoff_base") or 30))
             cap = max(base, int(policy.get("backoff_max") or 3600))
             # exponential backoff with jitter (±50%)
@@ -295,15 +329,17 @@ class JobEngine:
             if retry_after > 0:
                 delay = max(delay, retry_after)
             next_retry = now_utc() + dt.timedelta(seconds=delay)
-            self.jobs.update(
+            # One write carrying both the error and the retry state.
+            self.jobs.schedule_retry(
                 job_id,
-                {
-                    "errorCode": error_code,
-                    "errorMessage": error_message,
-                    "errorDetails": error_details,
-                },
+                next_retry,
+                attempts,
+                max_attempts,
+                delay,
+                error_code=error_code,
+                error_message=error_message,
+                error_details=error_details,
             )
-            self.jobs.schedule_retry(job_id, next_retry, attempts, max_attempts, delay)
             logger.warning(
                 "job scheduled for retry",
                 job_id=job_id,
@@ -313,8 +349,7 @@ class JobEngine:
                 jittered=True,
             )
         else:
-            self.jobs.update(job_id, {"attempts": attempts})
-            self.jobs.fail(job_id, error_code, error_message, error_details)
+            self.jobs.fail(job_id, error_code, error_message, error_details, attempts=attempts)
             self._failed += 1
             logger.error("job failed permanently", job_id=job_id, error_code=error_code)
 
@@ -328,15 +363,22 @@ class JobEngine:
                 expires = now_utc() + dt.timedelta(seconds=self.lease_seconds)
                 try:
                     self.jobs.heartbeat(job_id, expires)
-                    self.leases.extend(job_id, expires)
+                    self.leases.extend(job_id, expires, self._lease_ids.get(job_id))
                 except Exception:
                     logger.warning("heartbeat failed", job_id=job_id)
         except asyncio.CancelledError:
             pass
 
     def _is_cancel_requested(self, job_id: str) -> bool:
+        """Cancel flag, memoized for a few seconds (see _cancel_cache)."""
+        cached = self._cancel_cache.get(job_id)
+        now = time.monotonic()
+        if cached is not None and now - cached[1] < self._cancel_ttl:
+            return cached[0]
         job = self.jobs.get(job_id)
-        return bool(job and job.get("cancelRequested"))
+        value = bool(job and job.get("cancelRequested"))
+        self._cancel_cache[job_id] = (value, now)
+        return value
 
     def _observer_for(self, project_id: str, job_id: str) -> Any:
         """Call observer chain: metrics accumulator + job_events (opt-in) + debug logs.
