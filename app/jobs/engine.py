@@ -219,6 +219,12 @@ class JobEngine:
             self.jobs.complete(job_id, result)
             self._completed += 1
             logger.info("job completed", job_id=job_id, type=ctx.job.get("type"))
+        except asyncio.CancelledError:
+            # Worker stopping (deploy/restart) mid-job: back to the queue at once
+            # instead of sitting `running` until the lease expires. The handler
+            # is no longer running, so no later write can fight the requeue.
+            self.jobs.requeue(job_id)
+            raise
         except JobCancelled:
             self.jobs.cancel(job_id)
             self._cancelled += 1

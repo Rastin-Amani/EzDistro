@@ -226,6 +226,25 @@ class JobRepo(BaseRepo):
     def request_cancel(self, job_id: str) -> dict[str, Any]:
         return self.update(job_id, {"cancelRequested": True})
 
+    def requeue(self, job_id: str) -> dict[str, Any]:
+        """Return a job to the queue, unlocked — the worker holding it stopped.
+
+        A deploy/restart cancels in-flight handlers; without this the job stays
+        `running` with a live lease, so no worker touches it until
+        `leaseExpiresAt` passes (LEASE_SECONDS). `attempts` is left alone: the
+        job was interrupted, not failed — same contract as lease recovery.
+        """
+        record = self.update(
+            job_id,
+            {
+                "status": "pending",
+                "availableAt": pb_dt(now_utc()),
+                "lockedBy": "",
+            },
+        )
+        self._event(job_id, "job.requeued", "job returned to the queue (worker stopping)", {})
+        return record
+
     def reset_for_retry(self, job_id: str) -> dict[str, Any]:
         """Human retry: failed → retrying, immediately claimable."""
         record = self.update(

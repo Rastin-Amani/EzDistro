@@ -7,6 +7,7 @@ States (schema in docs/SCHEMA.md §7):
         │                │  └──transient failure──▶ retrying ──(available_at)──▶ running
         │                └──permanent failure─────▶ failed ──manual retry──▶ retrying
         │                └──cancel requested──────▶ cancelled
+        │                └──worker shutdown───────▶ pending
         └── manual retry (retry_failed_job) ── from failed
 
 Lease expiry (crash recovery): running with leaseExpiresAt < now is reclaimed
@@ -21,12 +22,13 @@ from __future__ import annotations
 # running → failed            (permanent error, or retries exhausted)
 # running → retrying          (transient error, attempts left)
 # running → cancelled         (user cancellation acknowledged at a checkpoint)
+# running → pending           (worker stop mid-job: back to the queue, no lock)
 # failed → retrying           (manual retry requested — retry_failed_job)
 # running → running           (lease expiry re-claim by another worker)
 ALLOWED_TRANSITIONS: dict[str, set[str]] = {
     "pending": {"running", "cancelled", "retrying"},
     "retrying": {"running", "cancelled"},
-    "running": {"completed", "failed", "cancelled", "retrying", "running"},
+    "running": {"completed", "failed", "cancelled", "retrying", "running", "pending"},
     "failed": {"retrying", "cancelled"},
     "completed": set(),
     "cancelled": set(),
