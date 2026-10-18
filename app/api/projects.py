@@ -9,6 +9,7 @@ from __future__ import annotations
 import base64
 import re
 import time
+from functools import partial
 from typing import Any
 
 from fastapi import APIRouter, File, Form, Request, UploadFile
@@ -301,14 +302,7 @@ def topics_page(
     project = require_project_access(request, project_id)
     page = max(1, page)
     per_page = 20
-    rows, total = TopicRepo(request.state.pb).search(
-        project_id,
-        status=status or None,
-        q=q,
-        sort=TOPIC_SORTS.get(sort, TOPIC_SORTS["priority"]),
-        page=page,
-        per_page=per_page,
-    )
+    pb = request.state.pb
     statuses = [
         "planned",
         "queued",
@@ -321,7 +315,24 @@ def topics_page(
         "failed",
         "cancelled",
     ]
-    counts = {s: TopicRepo(request.state.pb).count_by_status(project_id, s) for s in statuses}
+    # The page (rows + total) and every status chip count are independent reads:
+    # one fanout wave instead of a serial search-then-10-counts chain, which was
+    # 11 sequential round trips on the slowest page in the app.
+    loaded = fanout(
+        {
+            "search": lambda: TopicRepo(pb).search(
+                project_id,
+                status=status or None,
+                q=q,
+                sort=TOPIC_SORTS.get(sort, TOPIC_SORTS["priority"]),
+                page=page,
+                per_page=per_page,
+            ),
+            **{s: partial(TopicRepo(pb).count_by_status, project_id, s) for s in statuses},
+        }
+    )
+    rows, total = loaded.pop("search")
+    counts = loaded
     return templates.TemplateResponse(
         request,
         "pages/topics/index.html",
@@ -613,7 +624,11 @@ def _tab_context(
     elif tab == "jobs":
         context["jobs"] = JobRepo(pb).list_for_project(project_id, per_page=30)
     elif tab == "indexing":
-        from app.services.metrics import project_metrics, query_provider_metrics
+        from app.services.metrics import (
+            PROJECT_METRIC_KEYS,
+            project_metric_tasks,
+            query_provider_metrics,
+        )
 
         loaded = fanout(
             {
@@ -623,10 +638,13 @@ def _tab_context(
                 "provider_metrics": lambda: query_provider_metrics(
                     pb, project_id=project_id, days=7
                 ),
+                # Merge the six project-metric counts into the SAME wave — they
+                # used to run as a second, sequential fanout after this one.
+                **project_metric_tasks(pb, project_id),
             }
         )
+        context["metrics"] = {k: loaded.pop(k) for k in PROJECT_METRIC_KEYS}
         context.update(loaded)
-        context["metrics"] = project_metrics(pb, project_id)
     elif tab == "publishing":
         context["records"] = PublishingRunRepo(pb).list_for_project(project_id, per_page=30)
     elif tab == "logs":

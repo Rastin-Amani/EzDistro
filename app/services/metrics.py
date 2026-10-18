@@ -173,7 +173,14 @@ def query_provider_metrics(pb: Any, project_id: str = "", days: int = 7) -> list
     rows = []
     try:
         records = pb.collection("provider_metrics").get_full_list(
-            query_params={"filter": f, "sort": "provider,model,operation"}
+            query_params={
+                "filter": f,
+                "sort": "provider,model,operation",
+                "fields": (
+                    "provider,model,operation,requestCount,successCount,failureCount,"
+                    "retryCount,promptTokens,completionTokens,latencySum,latencyBuckets"
+                ),
+            }
         )
     except Exception:
         return []
@@ -241,34 +248,52 @@ def _p95_from_buckets(buckets: dict[str, int], total: int) -> int:
 # ---------------------------------------------------------------------------
 # Project metrics (bounded queries over existing collections)
 # ---------------------------------------------------------------------------
-def project_metrics(pb: Any, project_id: str) -> dict[str, Any]:
+PROJECT_METRIC_KEYS = (
+    "indexed_documents",
+    "stale_documents",
+    "sections_generated",
+    "articles_generated",
+    "articles_published",
+    "failed_jobs",
+)
+
+
+def project_metric_tasks(pb: Any, project_id: str) -> dict[str, Any]:
+    """The six project-metric counts as leaf callables.
+
+    Exposed separately so a caller with its own reads can merge them into ONE
+    fanout wave instead of running a second, sequential wave (see the project
+    indexing tab). Every task is a leaf — never a nested fanout.
+    """
     from app.repositories.articles import ArticleRepo, SectionRepo
     from app.repositories.indexing import DocumentRepo
     from app.repositories.jobs import JobRepo
-    from app.utils import fanout
 
     docs = DocumentRepo(pb)
     articles = ArticleRepo(pb)
     jobs = JobRepo(pb)
     # article_sections has no `project` field — scope through the article relation.
-    counts = fanout(
-        {
-            "indexed_documents": lambda: docs.count(
-                filter=f'project="{project_id}" && indexStatus="indexed"'
-            ),
-            "stale_documents": lambda: docs.count(
-                filter=f'project="{project_id}" && indexStatus="deleted"'
-            ),
-            "sections_generated": lambda: SectionRepo(pb).count(
-                filter=f'article.project="{project_id}" && status="done"'
-            ),
-            "articles_generated": lambda: articles.count(
-                filter=f'project="{project_id}" && generatedAt != ""'
-            ),
-            "articles_published": lambda: articles.count(
-                filter=f'project="{project_id}" && status="published"'
-            ),
-            "failed_jobs": lambda: jobs.count(filter=f'project="{project_id}" && status="failed"'),
-        }
-    )
-    return counts
+    return {
+        "indexed_documents": lambda: docs.count(
+            filter=f'project="{project_id}" && indexStatus="indexed"'
+        ),
+        "stale_documents": lambda: docs.count(
+            filter=f'project="{project_id}" && indexStatus="deleted"'
+        ),
+        "sections_generated": lambda: SectionRepo(pb).count(
+            filter=f'article.project="{project_id}" && status="done"'
+        ),
+        "articles_generated": lambda: articles.count(
+            filter=f'project="{project_id}" && generatedAt != ""'
+        ),
+        "articles_published": lambda: articles.count(
+            filter=f'project="{project_id}" && status="published"'
+        ),
+        "failed_jobs": lambda: jobs.count(filter=f'project="{project_id}" && status="failed"'),
+    }
+
+
+def project_metrics(pb: Any, project_id: str) -> dict[str, Any]:
+    from app.utils import fanout
+
+    return fanout(project_metric_tasks(pb, project_id))

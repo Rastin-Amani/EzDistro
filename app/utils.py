@@ -17,7 +17,12 @@ from fastapi.responses import Response
 # submitted task MUST be a leaf (never submit to this pool itself) — that
 # invariant makes the shared pool deadlock-free. Work is network-bound, so a
 # little oversubscription is fine.
-_EXECUTOR = ThreadPoolExecutor(max_workers=12, thread_name_prefix="fanout")
+#
+# Sized to cover the largest single wave: the dashboard fans out ~19 aggregate
+# queries, so at 12 workers every dashboard load ran as two serial waves. The
+# shared PocketBase transport caps connections (app/pb.py), so the ceiling here
+# is about latency, not runaway concurrency.
+_EXECUTOR = ThreadPoolExecutor(max_workers=24, thread_name_prefix="fanout")
 
 
 def fanout(tasks: dict[str, Callable[[], Any]]) -> dict[str, Any]:

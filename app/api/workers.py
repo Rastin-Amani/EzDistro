@@ -16,8 +16,9 @@ from fastapi.responses import HTMLResponse
 
 from app.api.errors import page_guard
 from app.config import settings
-from app.repositories.jobs import JobEventRepo, JobRepo
+from app.repositories.jobs import JobRepo
 from app.repositories.worker_heartbeats import WorkerHeartbeatRepo
+from app.services.stats import job_status_counts
 from app.templates import templates
 from app.utils import fanout
 
@@ -40,21 +41,16 @@ def workers_page(request: Request):
             return []
 
     jobs = JobRepo(pb)
+    counts = job_status_counts(pb)
     loaded = fanout(
         {
             "heartbeats": _heartbeats,
-            "q_pending": lambda: jobs.count(filter='status="pending"'),
-            "q_retrying": lambda: jobs.count(filter='status="retrying"'),
-            "q_running": lambda: jobs.count(filter='status="running"'),
-            "q_failed": lambda: jobs.count(filter='status="failed"'),
             "recent_failed": lambda: jobs.list_records(
-                filter='status="failed"', sort="-created", page=1, per_page=6
-            ),
-            "recent_errors": lambda: JobEventRepo(pb).list_records(
-                filter='eventType="job.failed" || eventType="provider_error" || eventType="job.provider_error"',
+                filter='status="failed"',
                 sort="-created",
                 page=1,
-                per_page=8,
+                per_page=6,
+                fields="type,errorMessage,created",
             ),
             "scheduler_heartbeat": lambda: _scheduler_heartbeat(pb),
         }
@@ -64,13 +60,12 @@ def workers_page(request: Request):
     workers = [_decorate(w, now) for w in loaded["heartbeats"]]
     active = sum(1 for w in workers if w["status"] == "active")
     queue = {
-        "pending": loaded["q_pending"],
-        "retrying": loaded["q_retrying"],
-        "running": loaded["q_running"],
-        "failed": loaded["q_failed"],
+        "pending": counts["pending"],
+        "retrying": counts["retrying"],
+        "running": counts["running"],
+        "failed": counts["failed"],
     }
     recent_failed = loaded["recent_failed"]
-    recent_errors = loaded["recent_errors"]
     scheduler_heartbeat = loaded["scheduler_heartbeat"]
 
     return templates.TemplateResponse(
@@ -82,7 +77,6 @@ def workers_page(request: Request):
             "active_count": active,
             "queue": queue,
             "recent_failed": recent_failed,
-            "recent_errors": recent_errors,
             "scheduler_heartbeat": scheduler_heartbeat,
             "app_version": settings.app_version,
             "restart_commands": [
