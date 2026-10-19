@@ -881,11 +881,13 @@ async def _generate_metadata(
             out["meta_description"] = meta
         return out
     except Exception as exc:
-        from app.providers.base import ProviderError
-
-        if isinstance(exc, ProviderError) and not exc.retryable:
-            raise
-        ctx.warning("metadata generation skipped", {"error": str(exc)[:200]})
+        # Metadata is an enhancement: the enforced title/slug and stored meta
+        # description already exist. A provider failure or a broken prompt must
+        # never fail the article — it only costs the LLM-written variant.
+        ctx.warning(
+            "metadata generation skipped",
+            {"error": f"{type(exc).__name__}: {exc}"[:300]},
+        )
         return {}
 
 
@@ -1015,11 +1017,12 @@ async def _qa_and_repair(
         qa_info["repaired"] = True
         return repaired, qa_info
     except Exception as exc:
-        from app.providers.base import ProviderError
-
-        if isinstance(exc, ProviderError) and not exc.retryable:
-            raise
-        ctx.warning("article QA skipped", {"error": str(exc)[:200]})
+        # QA is an audit, not a gate: the article has already passed whole-article
+        # validation above. Letting a provider error (or a broken prompt) escape
+        # from here is what left articles stuck at "generating" with a
+        # permanently failed assembler and nothing to retry it.
+        reason = f"{type(exc).__name__}: {exc}"[:300]
+        ctx.warning("article QA skipped", {"error": reason})
         return html, {
             "ran": False,
             "ready": None,
@@ -1027,6 +1030,7 @@ async def _qa_and_repair(
             "issues": [],
             "strengths": [],
             "repaired": False,
+            "error": reason,
         }
 
 
