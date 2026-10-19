@@ -23,7 +23,7 @@ from typing import Any
 from app.domain.article_html import slugify
 from app.jobs.context import JobContext
 from app.jobs.handlers import register_job
-from app.providers.base import ProviderError
+from app.providers.base import ProviderError, TransientError
 from app.repositories.articles import ArticleRepo
 from app.repositories.jobs import JobRepo
 from app.repositories.publishing_runs import PublishingRunRepo
@@ -39,6 +39,27 @@ _LEADING_H1 = re.compile(r"^\s*<h1[^>]*>.*?</h1>\s*", re.DOTALL)
 
 def strip_leading_h1(html: str) -> str:
     return _LEADING_H1.sub("", html, count=1)
+
+
+def _images_still_queued(ctx: JobContext, article_id: str) -> bool:
+    """True while this article still has image work in the queue.
+
+    Waiting here is what makes "every article has images" hold: the assembler
+    queues image planning and publishing at the same moment, so without this
+    the post could go live before a single image exists.
+    """
+    return (
+        JobRepo(ctx.pb).first(
+            filter=(
+                f'entityId="{article_id}"'
+                ' && (status="pending" || status="retrying" || status="running")'
+                ' && (type="plan_article_images" || type="generate_cover_image"'
+                ' || type="generate_interior_image" || type="optimize_article_image"'
+                ' || type="publish_article_image")'
+            )
+        )
+        is not None
+    )
 
 
 @register_job("publish_article")
@@ -124,6 +145,17 @@ async def handle_publish_article(ctx: JobContext) -> dict[str, Any]:
         # resolution. Missing cover blocks publishing unless the user explicitly
         # overrides (publishWithoutCover=true in the job payload).
         from app.services.images import apply_images_to_html
+
+        # The assembler queues the image plan (and the publish job) together, so
+        # a fast publish would race ahead of image generation and ship a post
+        # with no images at all. Wait while this article's image jobs are still
+        # running; a *failed* cover still blocks below, per the "no image, no
+        # publish" rule.
+        if _images_still_queued(ctx, article_id):
+            raise TransientError(
+                "waiting for the article images before publishing",
+                {"retry_after_seconds": 30, "article": article_id},
+            )
 
         html, featured_media_id = await apply_images_to_html(
             ctx,

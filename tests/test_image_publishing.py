@@ -10,7 +10,7 @@ from typing import Any
 import pytest
 
 from app.domain.images import MAX_SOURCE_BYTES
-from app.providers.base import ProviderError
+from app.providers.base import ProviderError, TransientError
 from app.repositories.article_images import ArticleImageRepo
 from app.repositories.jobs import JobRepo
 from app.services.publishing_service import handle_publish_article
@@ -118,6 +118,30 @@ def run_publish(
         max_attempts=3,
     )
     return asyncio.run(handle_publish_article(make_ctx(pb, registry, job)))
+
+
+def test_publish_waits_while_images_are_still_queued(monkeypatch):
+    """The assembler queues the image plan and the publish job together, so a
+    fast publish must wait instead of shipping a post with no images."""
+    pb = make_pb()
+    project = make_project(pb)
+    article = make_publishable_article(pb, project["id"])
+    registry = FakeRegistry()
+    patch_download(monkeypatch, pb)
+    JobRepo(pb).create(
+        project=project["id"],
+        type="plan_article_images",
+        payload={"articleId": article["id"]},
+        idempotency_key="img:plan:queued",
+        max_attempts=3,
+        entity_type="article",
+        entity_id=article["id"],
+    )
+
+    with pytest.raises(TransientError, match="waiting for the article images"):
+        run_publish(pb, registry, article["id"], project["id"], key="wait1")
+
+    assert registry.publisher.created == []
 
 
 def test_publish_resolves_placeholders_and_sets_featured(monkeypatch):
