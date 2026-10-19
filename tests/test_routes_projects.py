@@ -234,6 +234,21 @@ def test_topics_bulk_cancel_skips_published():
     assert TopicRepo(pb).get(t2["id"])["status"] == "published"
 
 
+def test_topics_bulk_plan_returns_failed_topics_to_the_write_pool():
+    pb, proj_a, _ = _setup()
+    t1 = make_topic(pb, proj_a["id"], title="failed", status="failed")
+    t2 = make_topic(pb, proj_a["id"], title="published", status="published")
+    req = make_req(pb, make_user(), proj_a["id"])
+    resp = call_route(
+        P.topics_bulk, req, proj_a["id"], action="plan", topic_ids=f"{t1['id']},{t2['id']}"
+    )
+    assert "1 topic updated" in toast_message(resp)
+    assert TopicRepo(pb).get(t1["id"])["status"] == "planned"
+    assert TopicRepo(pb).get(t2["id"])["status"] == "published"
+    # planned, not queued: the write schedule owns the cadence
+    assert JobRepo(pb).list_for_project(proj_a["id"], per_page=10) == []
+
+
 def test_topics_bulk_empty_selection_errors():
     pb, proj_a, _ = _setup()
     req = make_req(pb, make_user(), proj_a["id"])

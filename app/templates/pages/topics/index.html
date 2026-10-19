@@ -57,6 +57,7 @@
     <span id="bulk-count">0</span> {{ ('Selected —') }}
     <button class="btn btn-primary btn-xs" data-bulk-action="generate" data-confirm="{{ ('Generate articles for the selected topics? This queues writing jobs.') }}">{{ ('Generate article') }}</button>
     <button class="btn btn-ghost btn-xs" data-bulk-action="retry" data-confirm="{{ ('Retry the selected topics?') }}">{{ ('Retry') }}</button>
+    <button class="btn btn-ghost btn-xs" data-bulk-action="plan" data-confirm="{{ ('Send the selected topics back to planned? Nothing new is queued — the write schedule picks them up at its interval.') }}">{{ ('Reset to planned') }}</button>
     <button class="btn btn-ghost btn-xs text-warning" data-bulk-action="cancel" data-confirm="{{ ('Cancel the selected topics? Any generation in progress will stop.') }}">{{ ('Cancel') }}</button>
 </div>
 <form id="bulk-form" hx-post="/projects/{{ project.id }}/topics/bulk" hx-swap="none" class="hidden">

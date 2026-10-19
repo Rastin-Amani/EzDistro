@@ -41,6 +41,12 @@
         </div>
     </div>
 
+    <a href="/projects/{{ project.id }}/topics"
+       class="mb-3 inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline">
+        {{ ('Bulk actions — select topics and generate, retry, reset to planned or cancel') }}
+        <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+    </a>
+
     {% if topics %}
     <section class="card border border-base-300 bg-base-100 min-w-0">
         <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">

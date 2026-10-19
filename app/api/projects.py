@@ -358,7 +358,7 @@ def topics_page(
 def topics_bulk(
     request: Request, project_id: str, action: str = Form(""), topic_ids: str = Form("")
 ):
-    """Bulk actions: generate | retry | cancel (comma-separated topic ids)."""
+    """Bulk actions: generate | retry | cancel | plan (comma-separated topic ids)."""
     require_hx(request)
     require_project_access(request, project_id)
     require_project_role(request, project_id)
@@ -411,6 +411,19 @@ def topics_bulk(
         ):
             repo.set_status(topic_id, "cancelled")
             billing.release(f"write:article:{topic_id}", reason="topic cancelled")
+            done += 1
+        elif action == "plan" and topic.get("status") in (
+            "planned",
+            "queued",
+            "planning",
+            "outline_ready",
+            "writing",
+            "failed",
+            "cancelled",
+        ):
+            # Back to the write pool WITHOUT queueing: the write schedule picks
+            # it up at its own interval.
+            repo.set_status(topic_id, "planned")
             done += 1
     if blocked and not done:
         return error_response(

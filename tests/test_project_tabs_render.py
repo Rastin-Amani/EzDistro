@@ -160,6 +160,15 @@ def test_polling_tabs_lead_with_their_swap_root():
         )
 
 
+def test_topics_tab_links_to_the_bulk_actions_page():
+    """The tab list has no selection UI; it must link to the page that has."""
+    pb, project = _setup()
+    TopicRepo(pb).create(project=project["id"], title="T")
+    html = _render(pb, project, "topics")
+    assert f'href="/projects/{project["id"]}/topics"' in html
+    assert "Bulk actions" in html
+
+
 def test_integration_health_fragment_swaps_row_badge_out_of_band():
     """The Test action returns the detailed result inline AND an out-of-band
     health badge carrying the same id as the row badge, so the badge (which is
