@@ -4835,7 +4835,8 @@
         "maxSelect": 1,
         "values": [
           "index",
-          "write"
+          "write",
+          "publish"
         ],
         "id": "select3bc4bcd9"
       },

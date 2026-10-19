@@ -728,7 +728,7 @@ COLLECTIONS: list[dict[str, Any]] = [
         [
             rel("project", "projects", required=True, cascade=True),
             t("name", required=True),
-            select("kind", ["index", "write"], required=True),
+            select("kind", ["index", "write", "publish"], required=True),
             boolean("enabled"),
             num("intervalMinutes", required=True),
             date("nextRunAt"),
