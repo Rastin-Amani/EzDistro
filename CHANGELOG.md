@@ -9,6 +9,42 @@ release builds on. Format is based on [Keep a Changelog](https://keepachangelog.
 
 ## [Unreleased]
 
+## [v1.23.0] — 2026-10-19
+
+### Added
+- **Auto-publishing schedule.** A per-project `publish` schedule drains the ready
+  queue one article per interval (oldest first, at or above the auto-publish
+  score floor), then indexes it and builds its inbound links. Configure it beside
+  Auto-indexing and Auto-writing on the project's Settings tab; it is inert
+  unless **Auto-publish** is enabled.
+- **Inbound internal link building.** After an article is published, the pages
+  most related to it (from the retrieval store) each receive one contextual link
+  back to it. The insertion is text-preserving — it only wraps an existing
+  keyword or title occurrence, never nests an anchor, and does not use an LLM —
+  and each edited page is re-indexed.
+- A bulk **Reset to planned** action returns failed or cancelled topics to the
+  write pool without queueing anything, and the Topics tab now links to the bulk
+  actions page.
+
+### Fixed
+- Article assembly no longer stalls forever when a pending section's
+  `generate_section` job has vanished (cancelled or lost with its worker): the
+  article, its topic and the billing reservation now fail deterministically
+  instead of sitting at "generating".
+- A cancelled topic is no longer written: `cancelled` is out of the
+  in-write-pipeline states, so a queued write stops instead of overriding the
+  cancellation.
+- Publishing waits while the article's image jobs are still queued, instead of
+  racing ahead and shipping a post with no images.
+- Self-replacing HTMX containers no longer wrap links: the refresh trigger is a
+  hidden sibling, so the article back button, the dashboard's project links and
+  the workers job-queue links navigate instead of blanking the page (inherited
+  `hx-target`/`hx-select`).
+
+### Changed
+- Accepting a research opportunity queues a write job only when the project has
+  no enabled write schedule; with one, the schedule owns the cadence.
+
 ## [v1.22.0] — 2026-10-18
 
 ### Added
