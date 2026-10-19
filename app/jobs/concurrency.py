@@ -100,15 +100,30 @@ class BoundedPublisher:
             )
 
     async def create_post(
-        self, *, title, html, status, slug, meta=None, excerpt=""
+        self, *, title, html, status, slug, meta=None, excerpt="", categories=None
     ) -> PublishResult:
         async with self._sem:
             return await self._inner.create_post(
-                title=title, html=html, status=status, slug=slug, meta=meta, excerpt=excerpt
+                title=title,
+                html=html,
+                status=status,
+                slug=slug,
+                meta=meta,
+                excerpt=excerpt,
+                categories=categories,
             )
 
     async def update_post(
-        self, post_id, *, title=None, html=None, status=None, slug=None, meta=None, excerpt=None
+        self,
+        post_id,
+        *,
+        title=None,
+        html=None,
+        status=None,
+        slug=None,
+        meta=None,
+        excerpt=None,
+        categories=None,
     ) -> PublishResult:
         async with self._sem:
             return await self._inner.update_post(
@@ -119,7 +134,16 @@ class BoundedPublisher:
                 slug=slug,
                 meta=meta,
                 excerpt=excerpt,
+                categories=categories,
             )
+
+    async def list_categories(self):
+        async with self._sem:
+            return await self._inner.list_categories()
+
+    async def create_category(self, name):
+        async with self._sem:
+            return await self._inner.create_category(name)
 
     async def get_post(self, post_id: int) -> WPPost | None:
         async with self._sem:

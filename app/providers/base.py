@@ -311,6 +311,7 @@ class PublisherProvider(Protocol):
         slug: str,
         meta: dict[str, Any] | None = None,
         excerpt: str = "",
+        categories: list[int] | None = None,
     ) -> PublishResult: ...
     async def update_post(
         self,
@@ -322,6 +323,7 @@ class PublisherProvider(Protocol):
         slug: str | None = None,
         meta: dict[str, Any] | None = None,
         excerpt: str | None = None,
+        categories: list[int] | None = None,
     ) -> PublishResult: ...
     async def get_post(self, post_id: int) -> WPPost | None: ...
     async def unpublish_post(self, post_id: int) -> PublishResult:
@@ -330,6 +332,9 @@ class PublisherProvider(Protocol):
 
     async def list_categories(self) -> list[dict[str, Any]]: ...
     async def list_tags(self) -> list[dict[str, Any]]: ...
+    async def create_category(self, name: str) -> dict[str, Any] | None:
+        """Create a post category; returns {id, name} (or None when refused)."""
+        ...
 
     async def upload_media(
         self,

@@ -180,6 +180,7 @@ class WordPressPublisher:
         slug: str,
         meta: dict | None = None,
         excerpt: str = "",
+        categories: list[int] | None = None,
     ) -> PublishResult:
         _validate_status(status)
         body: dict[str, Any] = {
@@ -190,6 +191,10 @@ class WordPressPublisher:
         }
         if excerpt:
             body["excerpt"] = excerpt
+        if categories:
+            # A post without a term lands in the site default ("Uncategorized")
+            # and drops out of every category archive — always send ours.
+            body["categories"] = [int(c) for c in categories]
         if meta:
             body["meta"] = {k: v for k, v in meta.items() if isinstance(v, (str, int, float, bool))}
 
@@ -217,6 +222,7 @@ class WordPressPublisher:
         slug: str | None = None,
         meta: dict | None = None,
         excerpt: str | None = None,
+        categories: list[int] | None = None,
     ) -> PublishResult:
         if status is not None:
             _validate_status(status)
@@ -231,6 +237,8 @@ class WordPressPublisher:
             body["slug"] = slug[:200]
         if excerpt is not None:
             body["excerpt"] = excerpt
+        if categories:
+            body["categories"] = [int(c) for c in categories]
         if meta:
             body["meta"] = {k: v for k, v in meta.items() if isinstance(v, (str, int, float, bool))}
         if not body:
@@ -392,6 +400,34 @@ class WordPressPublisher:
 
     async def list_tags(self) -> list[dict[str, Any]]:
         return await self._list_taxonomy("tags")
+
+    async def create_category(self, name: str) -> dict[str, Any] | None:
+        """Create a category, returning {id, name}. None when it cannot be made.
+
+        WordPress answers `term_exists` when another request created the same
+        name first; that is not a failure — the existing term is returned.
+        """
+
+        async def _call() -> httpx.Response:
+            return await self._client.post("/wp-json/wp/v2/categories", json={"name": name})
+
+        response = await with_retry(_call, attempts=2, what="wp.create_category", logger_name="wp")
+        if response.status_code in (400, 409):
+            code = ""
+            try:
+                code = str(response.json().get("code") or "")
+            except Exception:
+                code = ""
+            if code == "term_exists":
+                for row in await self.list_categories():
+                    if str(row.get("name") or "").casefold() == name.casefold():
+                        return row
+            return None
+        raise_for_provider(response, what="wp.create_category")
+        data = response.json()
+        if not isinstance(data, dict) or not data.get("id"):
+            return None
+        return {"id": int(data["id"]), "name": str(data.get("name") or name)}
 
 
 def _validate_status(status: str) -> None:

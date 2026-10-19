@@ -312,6 +312,12 @@ class FakePublisher:
         self.next_media_id = 5000
         self.featured_calls: list[tuple[int, int]] = []
         self.upload_media_error: Exception | None = None
+        # taxonomy (categories) — WP starts every site with one default term
+        self.categories: list[dict[str, Any]] = [
+            {"id": 1, "name": "Uncategorized", "slug": "uncategorized"}
+        ]
+        self.created_categories: list[str] = []
+        self.category_error: Exception | None = None
 
     async def list_posts(
         self, *, per_page=100, after_id=None, status="publish", fields=None, modified_after=""
@@ -325,7 +331,7 @@ class FakePublisher:
         return sorted(results, key=lambda p: p.id)[:per_page]
 
     async def create_post(
-        self, *, title, html, status, slug, meta=None, excerpt=""
+        self, *, title, html, status, slug, meta=None, excerpt="", categories=None
     ) -> PublishResult:
         self.next_id += 1
         self.created.append(
@@ -337,6 +343,7 @@ class FakePublisher:
                 "slug": slug,
                 "meta": meta,
                 "excerpt": excerpt,
+                "categories": list(categories or []),
             }
         )
         if meta:
@@ -361,10 +368,47 @@ class FakePublisher:
         return None
 
     async def update_post(
-        self, post_id, *, title=None, html=None, status=None, slug=None, meta=None, excerpt=None
+        self,
+        post_id,
+        *,
+        title=None,
+        html=None,
+        status=None,
+        slug=None,
+        meta=None,
+        excerpt=None,
+        categories=None,
     ) -> PublishResult:
-        self.updated.append({"post_id": post_id, "title": title, "html": html, "status": status})
+        self.updated.append(
+            {
+                "post_id": post_id,
+                "title": title,
+                "html": html,
+                "status": status,
+                "categories": list(categories or []),
+            }
+        )
         return PublishResult(post_id=post_id, link=f"https://site.test/?p={post_id}")
+
+    async def list_categories(self) -> list[dict[str, Any]]:
+        if self.category_error is not None:
+            raise self.category_error
+        return list(self.categories)
+
+    async def create_category(self, name: str) -> dict[str, Any] | None:
+        if self.category_error is not None:
+            raise self.category_error
+        for row in self.categories:
+            if str(row.get("name") or "").casefold() == name.casefold():
+                return row
+        self.created_categories.append(name)
+        row = {
+            "id": 100 + len(self.categories),
+            "name": name,
+            "slug": name.lower().replace(" ", "-"),
+        }
+        self.categories.append(row)
+        return row
 
     async def unpublish_post(self, post_id: int) -> PublishResult:
         self.updated.append({"post_id": post_id, "status": "private"})
