@@ -484,6 +484,24 @@ async def handle_assemble_article(ctx: JobContext) -> dict[str, Any]:
     if not meta_description.strip():
         meta_description = fixed_title
 
+    # WordPress category: the site's real taxonomy is read here and reused;
+    # a name that does not exist yet is created at publish time. Choosing now
+    # keeps publishing deterministic and lets the review page show the group.
+    from app.services.wp_categories import choose_category_name
+
+    try:
+        category_name = await choose_category_name(
+            ctx, topic=topic, title=fixed_title, keyword=keyword, summary=meta_description
+        )
+        if category_name and category_name != article.get("wordpressCategory"):
+            articles.update(article_id, {"wordpressCategory": category_name})
+            ctx.info("wordpress category chosen", {"category": category_name})
+    except Exception as exc:
+        ctx.warning(
+            "wordpress category selection skipped",
+            {"error": f"{type(exc).__name__}: {exc}"[:300]},
+        )
+
     # 15. whole-article validation
     min_words = int(ctx.config.generation.get("min_article_words") or 300)
     report = ArticleValidator(min_words=min_words, keyword=keyword).validate(
