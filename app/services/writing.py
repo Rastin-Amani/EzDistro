@@ -59,11 +59,12 @@ async def handle_write_article(ctx: JobContext) -> dict[str, Any]:
     # An explicit regeneration may start from any post-write state (the article
     # already exists and its content is being replaced). Everything else that is
     # already inside the write pipeline is skipped to avoid duplicate writes.
+    # `cancelled` is deliberately NOT in the list: cancelling a topic must stop
+    # a queued write, not be silently overridden by it.
     in_write_pipeline = topic.get("status") in (
         "queued",
         "planned",
         "failed",
-        "cancelled",
         "outline_ready",
     )
     post_write_states = ("review", "approved", "sent_back", "published", "completed")
@@ -80,7 +81,7 @@ async def handle_write_article(ctx: JobContext) -> dict[str, Any]:
             topics.set_status(topic_id, "planned")
         else:
             ctx.info(
-                "topic already in the write pipeline — skipping",
+                "topic is not in a writable state — skipping",
                 {"topic": topic_id, "status": topic.get("status")},
             )
             existing = articles.by_topic(topic_id)
@@ -377,22 +378,51 @@ async def handle_assemble_article(ctx: JobContext) -> dict[str, Any]:
     billing = BillingService(ctx.pb)
     billing_key = str(ctx.payload().get("billingKey") or "")
 
+    topic_id = str(article.get("topicId") or "")
+
+    def _fail(message: str, details: dict[str, Any]) -> ProviderError:
+        """Deterministic failure: article, its topic and the reservation all stop."""
+        articles.set_status(article_id, "failed")
+        if topic_id:
+            TopicRepo(ctx.pb).set_status(topic_id, "failed")
+        billing.release(billing_key, reason=message)
+        return ProviderError(message, retryable=False, details=details)
+
     # deterministic wait: not ready → transient retry (engine honors retry-after)
     pending = [r for r in rows if r.get("status") in ("pending", "generating")]
     failed = [r for r in rows if r.get("status") == "failed"]
     if pending:
+        # A pending section whose generate_section job is gone (cancelled, or
+        # killed together with its worker) can never finish. Waiting for it
+        # forever is what left articles stuck at "generating" on the dashboard,
+        # so a pipeline with no live section job fails deterministically.
+        ids = " || ".join(f'entityId="{row["id"]}"' for row in pending)
+        live = JobRepo(ctx.pb).first(
+            filter=(
+                'type="generate_section"'
+                ' && (status="pending" || status="retrying" || status="running")'
+                f" && ({ids})"
+            )
+        )
+        if live is None:
+            for row in pending:
+                sections.mark_failed(
+                    row["id"],
+                    {"type": "SectionJobMissing", "message": "the section job no longer exists"},
+                )
+            raise _fail(
+                f"cannot assemble: {len(pending)} section(s) have no job left",
+                {"stalled_sections": [r["id"] for r in pending]},
+            )
         raise TransientError(
             f"waiting for {len(pending)} sections to finish",
             {"retry_after_seconds": 20, "pending": [r["id"] for r in pending]},
         )
     if failed:
         failed_ids = [r["id"] for r in failed]
-        articles.set_status(article_id, "failed")
-        billing.release(billing_key, reason="section generation failed")
-        raise ProviderError(
+        raise _fail(
             f"cannot assemble: {len(failed)} section(s) failed: {', '.join(failed_ids)}",
-            retryable=False,
-            details={"failed_sections": failed_ids},
+            {"failed_sections": failed_ids},
         )
 
     ctx.stage_started("assembling", ("Assembling the final article"))
@@ -465,12 +495,9 @@ async def handle_assemble_article(ctx: JobContext) -> dict[str, Any]:
     )
     articles.set_validation(article_id, report.to_dict())
     if not report.ok:
-        articles.set_status(article_id, "failed")
-        billing.release(billing_key, reason="article validation failed")
-        raise ProviderError(
+        raise _fail(
             "article validation failed",
-            retryable=False,
-            details={"issues": [i.to_dict() for i in report.issues], "stats": report.stats},
+            {"issues": [i.to_dict() for i in report.issues], "stats": report.stats},
         )
 
     # QA + repair loop (multilingual-engine pipeline, single pass): an LLM

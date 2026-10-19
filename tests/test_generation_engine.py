@@ -12,6 +12,7 @@ from app.domain.article_html import build_article_html, normalize_article_html
 from app.domain.article_validation import ArticleValidator, SectionValidator
 from app.jobs.context import JobContext, ProviderStack
 from app.providers.base import PermanentError, ProviderError
+from app.repositories.articles import ArticleRepo
 from app.repositories.jobs import JobEventRepo, JobRepo
 from app.repositories.projects import DEFAULT_SETTINGS
 from app.repositories.prompts import PromptRepo
@@ -261,6 +262,26 @@ def test_write_article_accepts_queued_topic():
     assert article["status"] == "generating"
     assert TopicRepo(pb).get(topic["id"])["status"] == "writing"
     assert pb.collection("jobs").get_first_list_item('type="generate_section"')
+
+
+def test_write_article_skips_a_cancelled_topic():
+    """Cancelling a topic must stop a queued write, not be overridden by it."""
+    pb = FakePocketBase(default_unique_fields())
+    project = make_project(pb)
+    topic = TopicRepo(pb).create(project=project["id"], title="T", keyword="seo")
+    article = ArticleRepo(pb).create(
+        project=project["id"], topic_id=topic["id"], title="T", slug="t"
+    )
+    TopicRepo(pb).set_status(topic["id"], "cancelled")
+    registry = FakeRegistry()
+    registry.llm.responses = [OUTLINE_JSON] + [SECTION_HTML] * 3
+
+    result = run_write(pb, registry, topic["id"])
+
+    assert result["alreadyWritten"] is True
+    assert result["articleId"] == article["id"]
+    assert registry.llm.calls == []  # no LLM work for a cancelled topic
+    assert TopicRepo(pb).get(topic["id"])["status"] == "cancelled"
 
 
 # ---------------------------------------------------------------------------
