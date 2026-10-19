@@ -1,8 +1,8 @@
 {% import 'macros/forms.html' as f %}
 
 <div id="research-tab">
-    {{ f.section_head('Research', 'Discover search demand, analyze competitors and turn evidence into an article roadmap.',
-        actions='<a class="btn btn-sm btn-ghost" href="/help/SEO_RESEARCH.md" target="_blank" rel="noopener">Setup guide</a>') }}
+    {{ f.section_head('Find content opportunities', 'Tell us what your website is about. We will look for useful topics people search for and turn them into a practical content plan.',
+        actions='<a class="btn btn-sm btn-ghost" href="/help/SEO_RESEARCH.md" target="_blank" rel="noopener">How this works</a>') }}
 
     <div class="flex flex-col gap-4">
 
@@ -19,11 +19,11 @@
 
         {% set ads_step = '?tab=integrations' %}
 
-        {# ── Free path: expand seed keywords ───────────────────────────── #}
+        {# ── Start here: expand seed keywords ───────────────────────────── #}
         <details class="card group border border-base-300 bg-base-100 min-w-0" open>
             <summary class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3 cursor-pointer select-none">
-                <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Harvest from seed keywords') }}</h2>
-                <span class="text-xs opacity-50">{{ ('Free — builds the roadmap from your seeds') }}</span>
+                <h2 class="font-semibold">{{ ('Start with what you already know') }}</h2>
+                <span class="text-xs opacity-50">{{ ('Recommended') }}</span>
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="transition-transform group-open:rotate-180 ms-auto size-4 shrink-0"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
             </summary>
             <div class="p-4">
@@ -31,11 +31,11 @@
             </div>
         </details>
 
-        {# ── No-API path: primary research option ──────────────────────── #}
+        {# ── Bring an export ─────────────────────────────────────────────── #}
         <details class="card group border border-base-300 bg-base-100 min-w-0">
             <summary class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3 cursor-pointer select-none">
-                <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Research without Google Ads API') }}</h2>
-                <span class="text-xs opacity-50">{{ ('Or bring your own keyword export') }}</span>
+                <h2 class="font-semibold">{{ ('Already have a keyword list?') }}</h2>
+                <span class="text-xs opacity-50">{{ ('Upload it here') }}</span>
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="transition-transform group-open:rotate-180 ms-auto size-4 shrink-0"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
             </summary>
             <div class="p-4">
@@ -44,10 +44,10 @@
         </details>
 
 
-        {# ── Google Ads setup (secondary option) ────────────────────────── #}
+        {# ── Optional data connection ────────────────────────────────────── #}
         <details class="card group border border-base-300 bg-base-100 min-w-0">
             <summary class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3 cursor-pointer select-none">
-                <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Google Ads (keyword data)') }}</h2>
+                <h2 class="font-semibold">{{ ('Connect Google for more detailed search data') }}</h2>
                 {% if connections %}
                 <span class="badge badge-soft badge-success badge-sm">{{ ('Connected') }}</span>
                 {% elif google_ads_configured %}
@@ -126,20 +126,20 @@
         {# ── Run research ──────────────────────────────────────────────── #}
         <details class="card group border border-base-300 bg-base-100 min-w-0">
             <summary class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3 cursor-pointer select-none">
-                <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Run research') }}</h2>
+                <h2 class="font-semibold">{{ ('Tell us about your goals') }}</h2>
                 {% if not serp_configured %}
                 <span class="text-xs opacity-50">{{ ('SERP not configured — Google Ads + site intelligence mode') }}</span>
                 {% endif %}
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="transition-transform group-open:rotate-180 ms-auto size-4 shrink-0"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
             </summary>
             <form hx-post="/projects/{{ project.id }}/research/start" hx-swap="none" hx-target="#research-tab" class="flex flex-col gap-5 p-4">
-                <p class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Sources') }}</p>
+                 <p class="text-sm text-base-content/65">{{ ('Use any combination of these. You do not need to understand SEO terms.') }}</p>
                 <div class="grid gap-4 md:grid-cols-2">
-                    <div class="md:col-span-2">{{ f.text('name', 'Research name', placeholder='Gym software — US', hint='Optional. Helps you find this run later.') }}</div>
-                    <div class="md:col-span-2">{{ f.textarea('keywords', 'Seed keywords', rows=4, placeholder='gym management software\ngym CRM\nfitness studio software', hint='One keyword per line. These need a Google Ads connection.') }}</div>
-                    <div>{{ f.text('site', 'Your website', placeholder='https://example.com', hint='Discover ideas from your own pages.') }}</div>
-                    <div>{{ f.textarea('urls', 'Specific URLs', rows=2, placeholder='https://example.com/features', hint='One URL per line.') }}</div>
-                    <div class="md:col-span-2">{{ f.textarea('competitors', 'Competitor domains or URLs', rows=2, placeholder='competitor-a.com\ncompetitor-b.com', hint='Analyzed without any paid competitor database.') }}</div>
+                     <div class="md:col-span-2">{{ f.text('name', 'Name this plan', placeholder='Ideas for my gardening shop', hint='Optional. This helps you find it later.') }}</div>
+                     <div class="md:col-span-2">{{ f.textarea('keywords', 'What do people search for?', rows=4, placeholder='organic gardening\nvegetable garden ideas\ncomposting for beginners', hint='One idea per line. Use everyday words.') }}</div>
+                     <div>{{ f.text('site', 'Your website address', placeholder='https://example.com', hint='We can learn from the pages you already have.') }}</div>
+                     <div>{{ f.textarea('urls', 'Important pages', rows=2, placeholder='https://example.com/products', hint='Optional. One page per line.') }}</div>
+                     <div class="md:col-span-2">{{ f.textarea('competitors', 'Similar websites', rows=2, placeholder='example.com\nanother-example.com', hint='Optional. We use these to spot useful gaps.') }}</div>
                 </div>
 
                 {% if customers %}
@@ -148,11 +148,11 @@
                 {{ f.select('customer_id', 'Google Ads account', customer_options, selected=customers[0].customerId, hint='Keyword research is billed to this account.') }}
                 {% endif %}
 
-                <div class="md:col-span-2">{{ f.textarea('goal', 'What do you want to achieve?', rows=3, placeholder='Get qualified US traffic from gym owners and drive demo requests. Avoid duplicate topics.', hint='Written in your own words. Shapes which opportunities get proposed.') }}</div>
+                <div class="md:col-span-2">{{ f.textarea('goal', 'What would success look like?', rows=3, placeholder='Bring more people to my shop and help them choose the right products.', hint='Write this in your own words. It helps us suggest better ideas.') }}</div>
 
                 {# Targeting + limits are rarely changed — disclose. #}
                 <details class="border-t border-base-300/60 pt-3">
-                    <summary class="cursor-pointer select-none text-xs font-medium opacity-70">{{ ('Targeting & limits') }}</summary>
+                     <summary class="cursor-pointer select-none text-xs font-medium opacity-70">{{ ('More options') }}</summary>
                     <div class="mt-4 flex flex-col gap-5">
                         <div class="grid gap-4 md:grid-cols-2">
                             {{ f.select('country', 'Country', countries, selected='US') }}
@@ -175,7 +175,7 @@
                 <input type="hidden" name="connection_id" value="{{ connections[0].id if connections else '' }}" />
 
                 <div class="flex flex-wrap items-center gap-3">
-                    <button class="btn btn-primary btn-sm" type="submit" hx-disabled-elt="this">{{ ('Start research') }}</button>
+                    <button class="btn btn-primary btn-sm" type="submit" hx-disabled-elt="this">{{ ('Find opportunities') }}</button>
                     <span class="htmx-indicator text-xs opacity-60">{{ ('Starting…') }}</span>
                     <span class="text-xs opacity-50">{{ ('Runs in the background — you can leave this page.') }}</span>
                 </div>
@@ -185,24 +185,23 @@
         {# ── Runs ──────────────────────────────────────────────────────── #}
         <section class="card border border-base-300 bg-base-100 min-w-0">
             <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
-                <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Research runs') }}</h2>
+                <div>
+                    <h2 class="font-semibold">{{ ('Your opportunity searches') }}</h2>
+                    <p class="mt-0.5 text-sm text-base-content/55">{{ ('Open one to see the ideas we found.') }}</p>
+                </div>
                 <span class="text-xs opacity-60 tabular-nums">{{ runs|length }}</span>
             </div>
             {% if runs %}
             <div class="overflow-x-auto">
                 <table class="table table-sm">
                     <thead><tr class="text-xs opacity-60">
-                        <th>{{ ('Name') }}</th><th class="hidden sm:table-cell">{{ ('Type') }}</th><th>{{ ('Status') }}</th>
-                        <th class="hidden md:table-cell">{{ ('Stage') }}</th><th class="hidden md:table-cell">{{ ('Progress') }}</th>
-                        <th class="hidden lg:table-cell">{{ ('Created') }}</th><th></th>
+                        <th>{{ ('Name') }}</th><th>{{ ('Status') }}</th><th class="hidden md:table-cell">{{ ('Progress') }}</th><th class="hidden lg:table-cell">{{ ('Created') }}</th><th></th>
                     </tr></thead>
                     <tbody>
                     {% for r in runs %}
                         <tr>
                             <td class="text-sm">{{ r.name or 'Research run' }}</td>
-                            <td class="hidden text-xs opacity-60 sm:table-cell">{{ r.researchType or '—' }}</td>
                             <td><span class="badge {{ r.status|status_badge }}">{{ r.status|status_label }}</span></td>
-                            <td class="hidden text-xs opacity-60 md:table-cell">{{ r.currentStage or '—' }}</td>
                             <td class="hidden text-xs opacity-70 tabular-nums md:table-cell">{{ r.progress|int }}%</td>
                             <td class="hidden text-xs opacity-60 lg:table-cell">{{ r.created|loc_dt }}</td>
                             <td class="text-end"><a class="btn btn-xs btn-ghost" href="/projects/{{ project.id }}/research/{{ r.id }}">{{ ('Open') }}</a></td>

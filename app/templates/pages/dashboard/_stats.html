@@ -1,18 +1,21 @@
 <div id="stats-row" class="flex flex-col gap-4">
     <section class="card overflow-hidden border border-base-300 bg-base-100" aria-labelledby="content-pipeline-title">
         <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
-            <h2 id="content-pipeline-title" class="font-mono text-xs font-normal uppercase text-base-content/55 tracking-[0.073em]">{{ ('Content pipeline') }}</h2>
-            <a href="/projects" class="btn btn-ghost btn-sm">{{ ('View projects') }}</a>
+            <div>
+                <h2 id="content-pipeline-title" class="font-semibold">{{ ('Your content') }}</h2>
+                <p class="mt-0.5 text-sm text-base-content/55">{{ ('A simple view of every article moving through your plan.') }}</p>
+            </div>
+            <a href="/projects" class="btn btn-ghost btn-sm">{{ ('View websites') }}</a>
         </div>
         {% set n_planned = stats.topics_planned|int %}
         {% set n_writing = stats.articles_writing|int %}
         {% set n_review = stats.articles_review|int %}
         {% set n_published = stats.articles_published|int %}
         {% set stages = [
-            (('Planned topics'), n_planned, 'bg-base-300', false),
-            (('Articles being written'), n_writing, 'bg-primary', true),
-            (('Awaiting review'), n_review, 'bg-warning', false),
-            (('Published'), n_published, 'bg-accent', false),
+            (('Ideas to write'), n_planned, 'bg-base-300', false),
+            (('Being written'), n_writing, 'bg-primary', true),
+            (('Ready for your review'), n_review, 'bg-warning', false),
+            (('Live on your site'), n_published, 'bg-accent', false),
         ] %}
         {% set maxv = [n_planned, n_writing, n_review, n_published]|max %}
         <ol class="grid grid-cols-2 gap-px bg-base-300/70 sm:grid-cols-4">
@@ -20,7 +23,7 @@
             <li class="relative flex min-w-0 flex-col gap-2 bg-base-100 px-4 py-4">
                 <span class="absolute inset-x-0 top-[1.35rem] z-0 h-px bg-base-300/70" aria-hidden="true"></span>
                 <span class="relative z-[1] size-2.5 shrink-0 self-start rounded-full ring-4 ring-base-100 {{ color }}{{ ' motion-safe:animate-pulse' if live and value }}" aria-hidden="true"></span>
-                <span class="truncate font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ label }}</span>
+                <span class="truncate text-sm text-base-content/60">{{ label }}</span>
                 <span class="text-[2rem] font-black leading-none tracking-[-0.04em] tabular-nums">{{ value }}</span>
                 <span class="h-1.5 w-full overflow-hidden rounded-full bg-base-200" aria-hidden="true">
                     {% set w = (value / maxv * 100)|round|int if maxv else 0 %}
@@ -34,31 +37,31 @@
 
     <details class="card border border-base-300 bg-base-100 group">
         <summary class="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-base-content sm:px-5">
-             <span class="font-semibold">{{ ('System health') }}</span>
+             <span class="font-semibold">{{ ('Is everything running?') }}</span>
             {% if stats.jobs_failed %}<span class="badge badge-soft badge-error">{{ stats.jobs_failed }} {{ ('Failed') }}</span>{% endif %}
             <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="ms-auto size-4 transition-transform group-open:rotate-180"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6" /></svg>
         </summary>
         <dl class="grid grid-cols-1 gap-x-8 border-t border-base-300/70 px-4 py-2 sm:grid-cols-2 sm:px-5">
             <div class="flex items-center justify-between gap-3 border-b border-base-300/60 py-3">
-                <dt class="text-sm text-base-content/65">{{ ('Pending jobs') }}</dt><dd class="font-semibold tabular-nums">{{ stats.jobs_pending }}</dd>
+                <dt class="text-sm text-base-content/65">{{ ('Work waiting to start') }}</dt><dd class="font-semibold tabular-nums">{{ stats.jobs_pending }}</dd>
             </div>
             <div class="flex items-center justify-between gap-3 border-b border-base-300/60 py-3">
-                <dt class="text-sm text-base-content/65">{{ ('Running / retrying') }}</dt><dd class="font-semibold tabular-nums">{{ stats.jobs_running + stats.jobs_retrying }}</dd>
+                <dt class="text-sm text-base-content/65">{{ ('Work happening now') }}</dt><dd class="font-semibold tabular-nums">{{ stats.jobs_running + stats.jobs_retrying }}</dd>
             </div>
             <div class="flex items-center justify-between gap-3 border-b border-base-300/60 py-3">
-                <dt class="text-sm text-base-content/65">{{ ('Failure rate / average (seconds)') }}</dt><dd class="font-semibold tabular-nums">{{ (stats.failure_rate * 100)|round(1) }}% / {{ stats.average_duration_s }}s</dd>
+                <dt class="text-sm text-base-content/65">{{ ('Work that needs attention') }}</dt><dd class="font-semibold tabular-nums">{{ stats.jobs_failed }}</dd>
             </div>
             <div class="flex items-center justify-between gap-3 border-b border-base-300/60 py-3">
-                <dt class="text-sm text-base-content/65">{{ ('Indexing health') }}</dt><dd class="text-end text-sm"><span class="font-semibold text-success">{{ stats.indexing_ok }}{{ (' healthy') }}</span><span class="ms-2 text-warning">{{ stats.indexing_failed }}{{ (' degraded') }}</span></dd>
+                <dt class="text-sm text-base-content/65">{{ ('Your site content') }}</dt><dd class="text-end text-sm"><span class="font-semibold text-success">{{ stats.indexing_ok }}{{ (' up to date') }}</span><span class="ms-2 text-warning">{{ stats.indexing_failed }}{{ (' needs checking') }}</span></dd>
             </div>
             <div class="flex items-center justify-between gap-3 border-b border-base-300/60 py-3">
-                <dt class="text-sm text-base-content/65">{{ ('Provider health') }}</dt><dd class="text-end text-sm"><span class="font-semibold text-success">{{ stats.provider_healthy }}{{ (' healthy') }}</span><span class="ms-2 text-warning">{{ stats.provider_unhealthy }}{{ (' unhealthy · ') }}{{ stats.provider_latency_ms }}ms</span></dd>
+                <dt class="text-sm text-base-content/65">{{ ('Connected services') }}</dt><dd class="text-end text-sm"><span class="font-semibold text-success">{{ stats.provider_healthy }}{{ (' working') }}</span><span class="ms-2 text-warning">{{ stats.provider_unhealthy }}{{ (' need attention') }}</span></dd>
             </div>
             <div class="flex items-center justify-between gap-3 border-b border-base-300/60 py-3">
-                <dt class="text-sm text-base-content/65">{{ ('Failed') }}</dt><dd><a href="/failed" class="link link-error font-semibold tabular-nums">{{ stats.jobs_failed }} {{ ('View failed jobs') }}</a></dd>
+                <dt class="text-sm text-base-content/65">{{ ('Problems') }}</dt><dd><a href="/failed" class="link link-error font-semibold tabular-nums">{{ stats.jobs_failed }} {{ ('See what needs fixing') }}</a></dd>
             </div>
             <div class="flex items-center justify-between gap-3 py-3">
-                <dt class="text-sm text-base-content/65">{{ ('Worker online') }}</dt><dd><a href="/workers" class="link link-primary font-semibold tabular-nums">{{ stats.workers_active }} {{ ('View worker status →') }}</a></dd>
+                <dt class="text-sm text-base-content/65">{{ ('Automation') }}</dt><dd><a href="/schedules" class="link link-primary font-semibold tabular-nums">{{ stats.workers_active }} {{ ('active · View automation →') }}</a></dd>
             </div>
         </dl>
     </details>

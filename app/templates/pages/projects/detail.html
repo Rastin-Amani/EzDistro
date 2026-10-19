@@ -2,15 +2,15 @@
 {% block dashboard_content %}
 
 {% set project_labels = {
-    'settings': ('Settings'), 'integrations': ('Connections'), 'ai_models': ('AI models'), 'prompts': ('Prompts'),
-    'research': ('Research'), 'topics': ('Topics'), 'articles': ('Articles'), 'images': ('Images'),
-    'publishing': ('Publish'), 'retrieval': ('Retrieval'), 'indexing': ('Indexing'), 'jobs': ('Jobs'), 'logs': ('Events')
+    'overview': 'Overview',
+    'advanced': 'Advanced',
+    'settings': ('Website setup'), 'integrations': ('Connections'), 'ai_models': ('AI models'), 'prompts': ('Writing rules'),
+    'research': ('Find opportunities'), 'topics': ('Content plan'), 'articles': ('Articles'), 'images': ('Images'),
+    'publishing': ('Published'), 'retrieval': ('Search settings'), 'indexing': ('Site health'), 'jobs': ('Activity'), 'logs': ('Updates')
 } %}
 {% set project_groups = [
-    ('Write', ['topics', 'articles', 'images', 'publishing']),
-    ('Research', ['research']),
-    ('Setup', ['settings', 'integrations', 'ai_models', 'prompts']),
-    ('System', ['retrieval', 'indexing', 'jobs', 'logs']),
+    ('Grow your website', ['overview', 'research', 'topics', 'articles', 'publishing']),
+    ('Set it up', ['settings', 'advanced']),
 ] %}
 
 <header class="mb-5 flex flex-wrap items-center justify-between gap-3">
@@ -20,15 +20,15 @@
         </a>
         <div class="min-w-0">
             <h1 class="font-extrabold text-lg truncate">{{ project.name }}</h1>
-            <p class="text-xs opacity-50 truncate" dir="ltr">{{ project.slug }}</p>
+            <p class="text-xs opacity-50 truncate">{{ ('Website') }}</p>
         </div>
     </div>
-    <div class="flex items-center gap-2">
+    <div class="flex flex-wrap items-center gap-2">
         {% include "pages/projects/_status_toggle.html" %}
-        <a href="/projects/{{ project.id }}?tab=topics" class="btn btn-primary btn-sm">{{ ('Continue writing') }}</a>
+        <a href="/projects/{{ project.id }}?tab=topics" class="btn btn-ghost btn-sm">{{ ('Continue writing') }}</a>
         <button class="btn btn-ghost btn-sm" hx-post="/projects/{{ project.id }}/run-index" hx-swap="none" hx-disabled-elt="this" title="{{ ('Re-indexes only changed documents') }}">
             <span class="loading loading-spinner loading-xs htmx-indicator"></span>
-            {{ ('Index now') }}
+            {{ ('Refresh site content') }}
         </button>
         {# Destructive + rarely used actions live behind an overflow menu so they
            never compete with the primary action. #}
@@ -44,10 +44,10 @@
 </header>
 
 <div class="flex flex-col gap-4">
-    <nav id="project-tabs" class="min-w-0" aria-label="{{ ('Project sections') }}">
+    <nav id="project-tabs" class="sticky top-[calc(3.5rem_+_env(safe-area-inset-top))] z-20 min-w-0 bg-base-100 md:top-0" aria-label="{{ ('Website sections') }}">
         {# One horizontal tab strip at every width: a project rail beside the app
            sidebar reads as a second navigation column, which is what it is. #}
-        <ul class="menu menu-horizontal sticky top-[calc(3.5rem_+_env(safe-area-inset-top))] z-20 w-full flex-nowrap gap-1 overflow-x-auto rounded-box border border-base-300/70 bg-base-100/95 p-1.5 backdrop-blur-xl md:top-0">
+        <ul class="menu menu-horizontal w-full flex-nowrap overflow-x-auto rounded-box border border-base-300 bg-base-100 p-1.5">
         {% for group_name, group_items in project_groups %}
         {% for tab in group_items %}
         <li>
@@ -97,11 +97,12 @@
 
 <script>
     (function () {
-        function currentTab() {
-            return new URLSearchParams(window.location.search).get('tab') || 'settings';
+         function currentTab() {
+             return new URLSearchParams(window.location.search).get('tab') || 'overview';
         }
         function syncProjectTabs() {
             var active = currentTab();
+            if (['integrations', 'images', 'ai_models', 'prompts', 'retrieval', 'indexing', 'jobs', 'logs'].includes(active)) active = 'advanced';
             document.querySelectorAll('#project-tabs [data-tab]').forEach(function (t) {
                 var on = t.getAttribute('data-tab') === active;
                 if (on) t.setAttribute('aria-current', 'page');

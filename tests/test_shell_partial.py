@@ -37,7 +37,7 @@ def test_htmx_request_renders_page_body_without_shell():
 def test_plain_request_renders_full_shell():
     body = _render(hx=False)
     assert "<aside" in body
-    assert '<nav class="dock md:hidden"' in body
+    assert '<nav class="dock dock-md' in body
     assert '<main id="main-content"' in body
     assert "<!doctype" in body
     assert "toast-container" in body

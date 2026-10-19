@@ -43,7 +43,7 @@ def test_jobs_monitor_renders_and_scopes_member():
     body = resp.body.decode()
     assert resp.status_code == 200
     # member without a project filter sees only their own project's jobs
-    assert "write_article" in body
+    assert "Write an article" in body
     # project A's job is the only one in the list; B's must not appear as data
     assert (
         proj_b["id"] not in body.split("data-project=")[1][:200]
@@ -60,7 +60,7 @@ def test_jobs_monitor_admin_sees_all():
     resp = call_route(J.jobs_monitor, req)
     assert resp.status_code == 200
     body = resp.body.decode()
-    assert body.count("index_project") >= 2
+    assert body.count("Refresh website content") >= 2
 
 
 def test_jobs_monitor_filters_by_status():
@@ -161,8 +161,7 @@ def test_logs_page_failure_shows_inline_retry_not_dead_end(monkeypatch):
 
 
 def test_jobs_monitor_preserves_selected_filter_values():
-    """The context dict must not be named `f` — that shadowed the form macros
-    import and reset every filter field to its default on Apply."""
+    """The activity page keeps the website and status selections on Show."""
     pb, proj_a, _ = _setup()
     req = make_req(pb, make_user(), proj_a["id"])
     resp = call_route(
@@ -171,7 +170,6 @@ def test_jobs_monitor_preserves_selected_filter_values():
     body = resp.body.decode()
     assert f'value="{proj_a["id"]}" selected' in body
     assert 'value="failed" selected' in body
-    assert 'value="write_article" selected' in body
 
 
 def test_failed_jobs_filters_by_stage_and_reason():

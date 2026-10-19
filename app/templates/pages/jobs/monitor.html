@@ -1,197 +1,36 @@
 {% extends "layouts/platform.html" %}
 {% block dashboard_content %}
 {% import 'macros/forms.html' as f %}
-
-{{ f.page_header(('Jobs'), ('Monitor indexing and article generation across all projects'), ('Operations & monitoring'), '<a href="/failed" class="btn btn-ghost btn-sm">' ~ ('Failed jobs') ~ '</a>') }}
-
-<div class="flex flex-col gap-5">
-
-<!-- Worker scheduler status -->
-{% if scheduler_heartbeat %}
-<div class="card border border-base-300 bg-base-100 min-w-0 border-base-300/70">
-    <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3"><h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Automatic schedules (worker)') }}</h2></div>
-    <div class="p-4 text-xs flex flex-wrap items-center gap-x-6 gap-y-2">
-        <span>{{ ('Last check:') }} <span class="font-bold">{{ scheduler_heartbeat.lastPollAt|loc_dt }}</span></span>
-        <span>{{ ('Schedules due:') }} <span class="font-bold tabular-nums">{{ scheduler_heartbeat.due or 0 }}</span></span>
-        <span>{{ ('Jobs created:') }} <span class="font-bold tabular-nums {{ 'text-success' if (scheduler_heartbeat.created or 0) > 0 }}">{{ scheduler_heartbeat.created or 0 }}</span></span>
-        {% if scheduler_heartbeat.failed %}
-        <span class="text-error font-bold">{{ ('Errors running %(n)s schedule(s)') % {'n': scheduler_heartbeat.failed} }}</span>
-        {% endif %}
-        {% if (scheduler_heartbeat.due or 0) > 0 and not (scheduler_heartbeat.created or 0) %}
-        <span class="text-warning">{{ ('Schedules were due but no job was created — check the worker log.') }}</span>
-        {% endif %}
-    </div>
-</div>
-{% else %}
-<div class="card border border-base-300 bg-base-100 min-w-0 border-error/40">
-    <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3"><h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55 text-error">{{ ('Automatic schedules (worker)') }}</h2></div>
-    <div class="p-4 text-xs">
-        <span class="text-error font-bold">{{ ('The worker has not checked schedules yet.') }}</span>
-        <span class="opacity-70"> {{ ('— make sure the worker process') }} <code class="font-mono" dir="ltr">make worker</code> {{ ('is running (and was restarted after the last code change).') }}</span>
-    </div>
-</div>
-{% endif %}
-
-<!-- Filters -->
-{{ f.panel(('Filters'), '', '', 'p-4') }}
-    <form method="get" action="/jobs" class="flex flex-col gap-3">
-        <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
-            <label class="flex flex-col gap-1 min-w-0 col-span-2 lg:col-span-1">
-                <span class="truncate text-xs font-medium">{{ ('Project') }}</span>
-                <select name="project" class="select select-sm w-full">
-                    <option value="">{{ ('All') }}</option>
-                    {% for p in projects %}
-                    <option value="{{ p.id }}" {{ 'selected' if filters.project == p.id }}>{{ p.name }}</option>
-                    {% endfor %}
-                </select>
-            </label>
-            <label class="flex flex-col gap-1 min-w-0">
-                <span class="truncate text-xs font-medium">{{ ('Type') }}</span>
-                <select name="job_type" class="select select-sm w-full">
-                    <option value="">{{ ('All') }}</option>
-                    {% for t in job_types %}
-                    <option value="{{ t }}" {{ 'selected' if filters.job_type == t }}>{{ t }}</option>
-                    {% endfor %}
-                </select>
-            </label>
-            <label class="flex flex-col gap-1 min-w-0">
-                <span class="truncate text-xs font-medium">{{ ('Status') }}</span>
-                <select name="status" class="select select-sm w-full">
-                    <option value="">{{ ('All') }}</option>
-                    {% for s in statuses %}
-                    <option value="{{ s }}" {{ 'selected' if filters.status == s }}>{{ s|status_label }}</option>
-                    {% endfor %}
-                </select>
-            </label>
-            <label class="flex flex-col gap-1 min-w-0">
-                <span class="truncate text-xs font-medium">{{ ('Error type') }}</span>
-                <select name="failure_type" class="select select-sm w-full">
-                    <option value="">{{ ('All') }}</option>
-                    {% for code in error_codes %}
-                    <option value="{{ code }}" {{ 'selected' if filters.failure_type == code }}>{{ code }}</option>
-                    {% endfor %}
-                </select>
-            </label>
-            <label class="flex flex-col gap-1 min-w-0">
-                <span class="truncate text-xs font-medium">{{ ('Worker') }}</span>
-                <input name="worker" class="input input-sm w-full" dir="ltr" value="{{ filters.worker }}" placeholder="worker id" />
-            </label>
-            <label class="flex flex-col gap-1 min-w-0">
-                <span class="truncate text-xs font-medium">{{ ('From date') }}</span>
-                <input name="date_from" type="date" class="input input-sm w-full" value="{{ filters.date_from }}" />
-            </label>
-            <label class="flex flex-col gap-1 min-w-0">
-                <span class="truncate text-xs font-medium">{{ ('To date') }}</span>
-                <input name="date_to" type="date" class="input input-sm w-full" value="{{ filters.date_to }}" />
-            </label>
+{{ f.page_header('Activity', 'Follow the work and pick up anything that needs another try.', 'Work history', '<a class="btn btn-ghost btn-sm" href="/schedules">View automation</a>') }}
+{% set labels = {'index_project': 'Refresh website content', 'write_article': 'Write an article', 'publish_article': 'Publish an article', 'research_run': 'Find content opportunities', 'wordpress_sync': 'Read WordPress pages', 'analyze_landing_page': 'Learn about your business', 'generate_images': 'Create article images'} %}
+{% set states = {'pending': 'Waiting to start', 'running': 'In progress', 'retrying': 'Trying again automatically', 'failed': 'Needs attention', 'completed': 'Finished', 'cancelled': 'Stopped'} %}
+<form method="get" action="/jobs" class="flex flex-wrap items-end gap-3 mb-6 rounded-box bg-base-200 px-5 py-3">
+    <label class="fieldset min-w-0 w-full sm:w-auto"><span class="fieldset-legend">Website</span><select name="project" class="select w-full sm:w-56"><option value="">All websites</option>{% for p in projects %}<option value="{{ p.id }}" {{ 'selected' if filters.project == p.id }}>{{ p.name }}</option>{% endfor %}</select></label>
+    <label class="fieldset min-w-0 w-full sm:w-auto"><span class="fieldset-legend">Status</span><select name="status" class="select w-full sm:w-56"><option value="">All activity</option>{% for s in statuses %}<option value="{{ s }}" {{ 'selected' if filters.status == s }}>{{ states.get(s, s) }}</option>{% endfor %}</select></label>
+    <button class="btn btn-primary" type="submit">Show activity</button>
+    {% if filters.project or filters.status %}<a class="btn btn-ghost" href="/jobs">Clear filters</a>{% endif %}
+</form>
+<div class="mb-2 flex flex-wrap items-center justify-between gap-2 border-b border-base-300 pb-3"><h2 class="font-mono text-xs uppercase tracking-widest text-base-content/65">Latest work</h2><p class="text-xs text-base-content/65">{{ total }} results · newest first</p></div>
+<ul id="jobs-table" class="list bg-base-100">
+{% for j in jobs %}
+    {% set site = projects|selectattr('id', 'equalto', j.project)|first %}
+    <li class="list-row px-0 py-5">
+        <span class="flex size-8 items-center justify-center rounded-box {{ 'bg-success/10 text-success' if j.status == 'completed' else ('bg-warning/10 text-warning' if j.status == 'failed' else 'bg-base-200') }}" aria-hidden="true">{{ '✓' if j.status == 'completed' else ('!' if j.status == 'failed' else '·') }}</span>
+        <div class="list-col-grow min-w-0">
+            <h2 class="font-semibold">{{ labels.get(j.type, j.type|replace('_', ' ')|capitalize) }}</h2>
+            <p class="mt-1 text-sm text-base-content/65">{{ site.name if site else 'Website' }} · {{ j.created|loc_dt }}</p>
+            <span class="badge badge-sm rounded-[2px] mt-2 {{ 'badge-soft badge-neutral' if j.status == 'pending' else j.status|status_badge }}">{{ states.get(j.status, j.status) }}</span>
         </div>
-        <div class="flex items-center gap-2">
-            <button type="submit" class="btn btn-primary btn-sm">{{ ('Apply filter') }}</button>
-            <a href="/jobs" class="btn btn-ghost btn-sm">{{ ('Clear') }}</a>
+        <div class="col-span-full row-start-2 flex flex-wrap items-center gap-2 sm:col-span-1 sm:row-start-1">
+            {% if j.status == 'running' %}<progress class="progress progress-primary w-40" value="{{ j.progress or 0 }}" max="100" aria-label="Task progress"></progress><span>{{ j.progress or 0 }}%</span>{% endif %}
+            {% if j.status == 'failed' %}<p class="text-sm">This task could not finish. Try again or check the website’s connections.</p><button class="btn btn-sm btn-primary" hx-post="/jobs/{{ j.id }}/retry" hx-swap="none" hx-disabled-elt="this">Try again</button>{% endif %}
+            {% if j.status in ['pending', 'running', 'retrying'] %}<button class="btn btn-sm btn-ghost" hx-post="/jobs/{{ j.id }}/cancel" hx-swap="none" hx-disabled-elt="this" hx-confirm="Stop this task?">Stop task</button>{% endif %}
+            <a class="btn btn-sm btn-ghost" href="/projects/{{ j.project }}">Open website</a>
+            <a class="link link-hover text-xs text-base-content/65" href="/jobs/{{ j.id }}">Task details</a>
         </div>
-    </form>
-{{ f.panel_close() }}
-
-<!-- Table -->
-<div id="jobs-table" class="card border border-base-300 bg-base-100 min-w-0">
-    <div class="overflow-x-auto">
-        <table class="table table-sm">
-            <thead>
-                <tr>
-                    <th>{{ ('Type') }}</th>
-                    <th class="hidden xl:table-cell">{{ ('Project') }}</th>
-                    <th>{{ ('Status') }}</th>
-                    <th class="hidden sm:table-cell">{{ ('Progress') }}</th>
-                    <th class="hidden 2xl:table-cell">{{ ('Message') }}</th>
-                    <th class="hidden xl:table-cell">{{ ('Attempt') }}</th>
-                    <th class="hidden xl:table-cell">{{ ('Time') }}</th>
-                    <th><span class="sr-only">{{ ('Actions') }}</span></th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for j in jobs %}
-                <tr>
-                    <td class="max-w-28 text-xs"><a href="/jobs/{{ j.id }}" class="link link-primary break-words sm:whitespace-nowrap">{{ j.type }}</a></td>
-                    <td class="hidden text-xs opacity-60 xl:table-cell">{{ j.project[:8] }}</td>
-                    <td>
-                        <span class="badge badge-sm {{ j.status|status_badge }}">{{ j.status|status_label }}</span>
-                        <div class="mt-1 flex items-center gap-1 sm:hidden">
-                            <progress class="progress progress-primary h-1.5 w-14" value="{{ j.progress or 0 }}" max="100" aria-label="{{ ('Progress') }}"></progress>
-                            <span class="text-[0.65rem] tabular-nums">{{ ('%(n)s%%') % {'n': j.progress or 0} }}</span>
-                        </div>
-                    </td>
-                    <td class="hidden w-32 sm:table-cell">
-                        <div class="flex items-center gap-2">
-                            <progress class="progress progress-primary w-16 h-1.5" value="{{ j.progress or 0 }}" max="100"></progress>
-                            <span class="text-xs tabular-nums">{{ ('%(n)s%%') % {'n': j.progress or 0} }}</span>
-                        </div>
-                    </td>
-                    <td class="hidden max-w-48 text-xs 2xl:table-cell">
-                        <p class="truncate">{{ j.progressMessage or '—' }}</p>
-                        {% if j.stage %}<p class="opacity-50 text-xs" dir="ltr">{{ j.stage }}</p>{% endif %}
-                        {% if j.currentItem and j.totalItems %}<p class="opacity-50">{{ j.currentItem }} / {{ j.totalItems }}</p>{% endif %}
-                    </td>
-                    <td class="hidden text-xs tabular-nums xl:table-cell">{{ j.attempts or 0 }}/{{ j.maxAttempts or 3 }}</td>
-                    <td class="hidden whitespace-nowrap text-xs opacity-50 xl:table-cell">{{ j.created|loc_dt }}</td>
-                    <td class="whitespace-nowrap">
-                        {% if j.status in ['pending', 'retrying', 'running'] %}
-                        <button class="btn btn-ghost btn-sm text-warning"
-                                hx-post="/jobs/{{ j.id }}/cancel" hx-swap="none" hx-confirm="{{ ('Cancel this job?') }}">{{ ('Cancel') }}</button>
-                        {% elif j.status == 'failed' %}
-                        <button class="btn btn-ghost btn-sm text-primary"
-                                hx-post="/jobs/{{ j.id }}/retry" hx-swap="none">{{ ('Retry') }}</button>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% else %}
-                <tr><td colspan="8"><div class="flex flex-col items-center justify-center gap-3 text-center py-8"><p class="font-bold text-base-content/70">{{ ('No jobs match these filters') }}</p></div></td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</div>
-
-{% if provider_metrics %}
-<details class="card group border border-base-300 bg-base-100 min-w-0" open>
-    <summary class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3 cursor-pointer text-sm font-bold select-none">{{ ('Provider metrics (last 7 days)') }}</summary>
-    <div class="overflow-x-auto p-4">
-        <table class="table table-sm">
-            <thead>
-                <tr>
-                    <th>{{ ('Provider') }}</th><th>{{ ('Model') }}</th><th>{{ ('Operation') }}</th><th>{{ ('Count') }}</th>
-                    <th>{{ ('Success') }}</th><th>{{ ('Failure') }}</th><th>{{ ('Average (ms)') }}</th><th>P95 (ms)</th>
-                    <th>{{ ('Retry') }}</th><th>{{ ('Tokens') }}</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for m in provider_metrics %}
-                <tr>
-                    <td class="text-xs" dir="ltr">{{ m.provider }}</td>
-                    <td class="text-xs" dir="ltr">{{ m.model or '—' }}</td>
-                    <td class="text-xs" dir="ltr">{{ m.operation }}</td>
-                    <td class="text-xs tabular-nums">{{ m.requestCount }}</td>
-                    <td class="text-xs text-success tabular-nums">{{ ('%(n)s%%') % {'n': (m.successRate * 100)|round(1)} }}</td>
-                    <td class="text-xs tabular-nums {{ 'text-error' if m.failureRate else 'opacity-50' }}">{{ ('%(n)s%%') % {'n': (m.failureRate * 100)|round(1)} }}</td>
-                    <td class="text-xs tabular-nums">{{ m.avgLatencyMs }}</td>
-                    <td class="text-xs font-bold tabular-nums">{{ m.p95LatencyMs }}</td>
-                    <td class="text-xs tabular-nums">{{ m.retryCount }}</td>
-                    <td class="text-xs opacity-60 tabular-nums">{{ m.promptTokens + m.completionTokens }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</details>
-{% endif %}
-
-{% if pages > 1 %}
-<div class="join">
-    {% for p in range(1, pages + 1) %}
-    <a href="/jobs?page={{ p }}&project={{ filters.project }}&job_type={{ filters.job_type }}&status={{ filters.status }}&worker={{ filters.worker }}&failure_type={{ filters.failure_type }}&date_from={{ filters.date_from }}&date_to={{ filters.date_to }}"
-       class="join-item btn btn-xs {{ 'btn-primary' if p == page }}">{{ p }}</a>
-    {% endfor %}
-</div>
-{% endif %}
-
-</div>{# /flex column #}
+    </li>
+{% else %}<li class="p-6">No activity here yet. Work will appear when you research, write, or publish content.</li>{% endfor %}
+</ul>
+{% if pages > 1 %}<nav class="join mt-4" aria-label="Activity pages">{% if page > 1 %}<a class="btn join-item" href="/jobs?page={{ page-1 }}&project={{ filters.project }}&status={{ filters.status }}">Previous</a>{% endif %}<span class="btn join-item">{{ page }} / {{ pages }}</span>{% if page < pages %}<a class="btn join-item" href="/jobs?page={{ page+1 }}&project={{ filters.project }}&status={{ filters.status }}">Next</a>{% endif %}</nav>{% endif %}
+<div hx-get="/jobs?project={{ filters.project }}&status={{ filters.status }}&page={{ page }}" hx-trigger="refreshJobs from:body" hx-target="#main-content" hx-swap="innerHTML"></div>
 {% endblock %}
