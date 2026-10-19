@@ -119,6 +119,8 @@
             {{ f.number('min_article_words', ('Minimum article words'), settings.minArticleWords or 300) }}
             {{ f.select('publishing_mode', ('Publish mode'),
                 [('draft', ('Draft')), ('publish', ('Live publish'))], settings.publishingMode) }}
+            {{ f.text('default_category', ('WordPress category'), settings.defaultCategory or '',
+                hint='Pinned for every article. Leave blank to pick from your site’s categories (and create one when nothing fits).') }}
             {{ f.select('autosave_enabled', ('Autosave'),
                 [('0', ('Inactive')), ('1', ('Active'))], '1' if settings.autosave.enabled else '0') }}
             {{ f.number('autosave_interval_minutes', ('Autosave interval (minutes)'), settings.autosave.interval_minutes or 5) }}
