@@ -137,14 +137,19 @@
     {{ f.disclosure(('Scheduling & retry'), ('Automatic runs and transient-error handling')) }}
         {% set sched_index = schedules | selectattr('kind', 'equalto', 'index') | first %}
         {% set sched_write = schedules | selectattr('kind', 'equalto', 'write') | first %}
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        {% set sched_publish = schedules | selectattr('kind', 'equalto', 'publish') | first %}
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
             {{ f.select('schedule_index_enabled', ('Auto-indexing'),
                 [('0', ('Inactive')), ('1', ('Active'))], '1' if sched_index and sched_index.enabled else '0') }}
             {{ f.number('schedule_index_interval', ('Indexing interval (minutes)'), sched_index.intervalMinutes if sched_index else 1440) }}
             {{ f.select('schedule_write_enabled', ('Auto-writing'),
                 [('0', ('Inactive')), ('1', ('Active'))], '1' if sched_write and sched_write.enabled else '0') }}
             {{ f.number('schedule_write_interval', ('Writing interval (minutes)'), sched_write.intervalMinutes if sched_write else 1440) }}
+            {{ f.select('schedule_publish_enabled', ('Auto-publishing'),
+                [('0', ('Inactive')), ('1', ('Active'))], '1' if sched_publish and sched_publish.enabled else '0') }}
+            {{ f.number('schedule_publish_interval', ('Publishing interval (minutes)'), sched_publish.intervalMinutes if sched_publish else 1440) }}
         </div>
+        <p class="text-xs opacity-60 mt-2">{{ ('Auto-publishing posts one ready article per interval (oldest first, at or above the score floor below), then indexes it into the knowledge base and builds its inbound internal links. It needs Auto-publish enabled.') }}</p>
         <p class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55 mb-3 mt-5 pt-4 border-t border-base-300/60">{{ ('Retry on transient errors') }}</p>
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
             {{ f.number('retry_max_attempts', ('Max attempts'), settings.retryPolicy.max_attempts) }}

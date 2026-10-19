@@ -58,6 +58,20 @@ class ArticleRepo(BaseRepo):
     def by_topic(self, topic_id: str) -> dict[str, Any] | None:
         return self.first(filter=f'topicId="{topic_id}"')
 
+    def next_to_publish(self, project_id: str, min_score: int = 0) -> dict[str, Any] | None:
+        """Oldest article that is ready to go live and clears the score floor.
+
+        This is the publish queue: research- and hand-written articles sit in
+        `review` until the publish schedule drains them (oldest first).
+        """
+        f = (
+            f'project="{project_id}"'
+            ' && (status="review" || status="approved" || status="ready_to_publish")'
+        )
+        if min_score:
+            f += f" && seoScore>={int(min_score)}"
+        return self.first(filter=f, sort="created")
+
     def set_status(self, article_id: str, status: str) -> dict[str, Any]:
         if status not in ARTICLE_STATUSES:
             raise ValueError(f"invalid article status: {status}")

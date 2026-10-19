@@ -427,6 +427,9 @@ def test_save_settings_persists_schedules(setup):
     write = ScheduleRepo(pb).first(filter=f'project="{proj_a["id"]}" && kind="write"')
     assert index is not None and index["enabled"] is True and index["intervalMinutes"] == 60
     assert write is not None and write["enabled"] is False and write["intervalMinutes"] == 120
+    # the publish schedule comes from the same form: 0 = created but inactive
+    publish = ScheduleRepo(pb).first(filter=f'project="{proj_a["id"]}" && kind="publish"')
+    assert publish is not None and publish["enabled"] is False
     # second save updates in place (no duplicate rows)
     call_route(
         P.save_settings,
@@ -436,7 +439,7 @@ def test_save_settings_persists_schedules(setup):
         schedule_index_interval="720",
     )
     rows = ScheduleRepo(pb).list_for_project(proj_a["id"])
-    assert len(rows) == 2
+    assert len(rows) == 3
     index = ScheduleRepo(pb).first(filter=f'project="{proj_a["id"]}" && kind="index"')
     assert index["enabled"] is False and index["intervalMinutes"] == 720
 

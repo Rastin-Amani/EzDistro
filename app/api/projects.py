@@ -786,6 +786,8 @@ def save_settings(
     schedule_index_interval: str = Form(""),
     schedule_write_enabled: str = Form(""),
     schedule_write_interval: str = Form(""),
+    schedule_publish_enabled: str = Form(""),
+    schedule_publish_interval: str = Form(""),
     target_locale: str = Form(""),
     target_country: str = Form(""),
     target_audience: str = Form(""),
@@ -853,6 +855,13 @@ def save_settings(
     )
     _persist_schedule(
         request.state.pb, project_id, "write", schedule_write_enabled, schedule_write_interval
+    )
+    _persist_schedule(
+        request.state.pb,
+        project_id,
+        "publish",
+        schedule_publish_enabled,
+        schedule_publish_interval,
     )
     return success_response("Settings saved")
 
@@ -1089,7 +1098,11 @@ def _persist_schedule(pb: Any, project_id: str, kind: str, enabled: str, interva
 # ---------------------------------------------------------------------------
 # Schedules
 # ---------------------------------------------------------------------------
-_SCHEDULE_KINDS = {"index": ("Auto-indexing"), "write": ("Auto-writing")}
+_SCHEDULE_KINDS = {
+    "index": ("Auto-indexing"),
+    "write": ("Auto-writing"),
+    "publish": ("Auto-publishing"),
+}
 
 
 @router.post("/projects/{project_id}/schedules")

@@ -12,10 +12,12 @@ from typing import Any
 
 import structlog
 
+from app.repositories.articles import ArticleRepo
 from app.repositories.jobs import JobRepo, now_utc
 from app.repositories.projects import ProjectRepo
 from app.repositories.schedules import ScheduleRepo
 from app.repositories.topics import TopicRepo
+from app.services.settings import ProjectConfig
 
 logger = structlog.get_logger("worker.scheduler")
 
@@ -97,6 +99,39 @@ def _fire_schedule(pb: Any, jobs: JobRepo, projects: ProjectRepo, schedule: dict
                 "topicId": topic["id"],
             },
             ("topic", topic["id"]),
+        )
+    elif kind == "publish":
+        # The publish schedule drains the ready queue: one article per fire,
+        # oldest first, above the auto-publish score floor. Publishing chains
+        # the RAG reindex and the inbound link-building job.
+        auto = ProjectConfig.load(pb, project_id).auto_publish
+        article = None
+        if auto["enabled"]:
+            article = ArticleRepo(pb).next_to_publish(project_id, int(auto["min_score"]))
+        if article is None:
+            next_run = now_utc() + dt.timedelta(minutes=interval_minutes)
+            ScheduleRepo(pb).mark_run(schedule["id"], next_run)
+            logger.info(
+                "schedule fired without a publishable article",
+                schedule_id=schedule["id"],
+                kind=kind,
+                project=project_id,
+                auto_publish=auto["enabled"],
+            )
+            return False
+        idempotency_key = f"publish:article:{article['id']}:{window}"
+        # Picking it IS the approval (the score floor above already gated it),
+        # exactly like the auto-publish path in the assembler does.
+        ArticleRepo(pb).set_status(article["id"], "approved")
+        job_type, payload, entity = (
+            "publish_article",
+            {
+                "trigger": "schedule",
+                "scheduleId": schedule["id"],
+                "articleId": article["id"],
+                "action": "publish",
+            },
+            ("article", article["id"]),
         )
     else:
         logger.warning("schedule with unknown kind skipped", schedule_id=schedule["id"], kind=kind)
