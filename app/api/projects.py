@@ -220,9 +220,16 @@ def create_project(
     request: Request,
     name: str = Form(""),
     slug: str = Form(""),
+    source_project_id: str = Form(""),
 ):
     require_hx(request)
     user = require_user(request)
+    source_id = safe_str(source_project_id)
+    # Validate the source BEFORE creating anything: copying hands the caller
+    # that project's provider credentials, so it must be a project they can write.
+    if source_id:
+        require_project_access(request, source_id)
+        require_project_role(request, source_id)
     slug_value = slug.strip().lower() or None
     if not slug_value:
         slug_value = (
@@ -236,7 +243,19 @@ def create_project(
     )
     # Creator becomes owner of the project (authorization).
     MemberRepo(request.state.pb).add(project=project["id"], user=user.get("id", ""), role="owner")
-    return ok_with_redirect(("Project created"), f"/projects/{project['id']}")
+    message: str = "Project created"
+    if source_id:
+        from app.services.project_clone import clone_project_configuration, clone_summary
+
+        counts = clone_project_configuration(
+            request.state.pb,
+            source_id=source_id,
+            target_id=project["id"],
+            user_id=user.get("id", ""),
+        )
+        copied = clone_summary(counts)
+        message = f"Project created — duplicated {copied}" if copied else "Project created"
+    return ok_with_redirect(message, f"/projects/{project['id']}")
 
 
 @router.post("/projects/{project_id}/delete")
