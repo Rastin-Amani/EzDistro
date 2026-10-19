@@ -213,7 +213,15 @@ def projects_list(request: Request):
     else:
         projects = []
     return templates.TemplateResponse(
-        request, "pages/projects/list.html", {"title": ("Projects"), "projects": projects}
+        request,
+        "pages/projects/list.html",
+        {
+            "title": ("Projects"),
+            "projects": stats.project_overviews(request.state.pb, projects),
+            # "New project" modal: optional source project to duplicate config from.
+            "clone_options": [("", "Start empty")]
+            + [(p["id"], p.get("name") or "") for p in projects],
+        },
     )
 
 
