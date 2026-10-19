@@ -324,6 +324,7 @@ class JobRepo(BaseRepo):
         self,
         *,
         project_id: str = "",
+        project_scope: list[str] | None = None,
         job_type: str = "",
         status: str = "",
         worker: str = "",
@@ -335,6 +336,12 @@ class JobRepo(BaseRepo):
     ) -> tuple[list[dict[str, Any]], int]:
         """Filtered job search (admin monitor). Returns (rows, total)."""
         parts = []
+        if project_scope is not None:
+            parts.append(
+                "(" + " || ".join(f'project="{pid}"' for pid in project_scope) + ")"
+                if project_scope
+                else 'project="__no_access__"'
+            )
         if project_id:
             parts.append(f'project="{project_id}"')
         if job_type:

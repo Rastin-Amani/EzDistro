@@ -85,7 +85,7 @@ app/
   templates.py       Jinja2 env + locale date/number filters + status badge styles
   utils.py           HTMX response helpers (hx_toast, mutation_response, …)
   api/               HTTP/HTMX routers — auth, dashboard, projects, articles,
-                     images, research, workspace, jobs, workers, logs
+                     images, research, workspace, jobs, schedules, workers, logs
                      (+ dev-only debug)
   routes/            pwa (manifest/sw/offline), debug (dev only)
   domain/            Pure logic, zero I/O: chunker, parsing, prompt_render,

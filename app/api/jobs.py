@@ -72,12 +72,11 @@ def jobs_monitor(
         project_filter = "(" + " || ".join(f'id="{s}"' for s in scope) + ")"
     else:
         project_filter = 'id="__no_access__"'
-    from app.services.metrics import query_provider_metrics
-
     loaded = fanout(
         {
             "search": lambda: JobRepo(pb).search(
                 project_id=project or (scope[0] if scope and len(scope) == 1 else ""),
+                project_scope=scope,
                 job_type=job_type,
                 status=status,
                 worker=worker,
@@ -90,23 +89,15 @@ def jobs_monitor(
             "projects": lambda: ProjectRepo(pb).list_records(
                 filter=project_filter, sort="name", per_page=200
             ),
-            "error_codes": lambda: JobRepo(pb).error_codes(),
-            "provider_metrics": lambda: query_provider_metrics(pb, project_id=project, days=7),
-            "scheduler_heartbeat": lambda: _scheduler_heartbeat(pb),
         }
     )
     rows, total = loaded["search"]
     projects = loaded["projects"]
-    error_codes = loaded["error_codes"]
-    provider_metrics = loaded["provider_metrics"]
-    scheduler_heartbeat = loaded["scheduler_heartbeat"]
     return templates.TemplateResponse(
         request,
         "pages/jobs/monitor.html",
         {
-            "title": ("Jobs"),
-            "provider_metrics": provider_metrics,
-            "scheduler_heartbeat": scheduler_heartbeat,
+            "title": ("Activity"),
             "jobs": rows,
             "total": total,
             "page": max(1, page),
@@ -114,7 +105,6 @@ def jobs_monitor(
             "projects": projects,
             "job_types": JOB_TYPES,
             "statuses": JOB_STATUSES,
-            "error_codes": error_codes,
             # NOTE: never call this key `f` — templates import the form macros
             # as `f`, and the import shadows any context value of the same name,
             # which silently reset every filter field to its default.
