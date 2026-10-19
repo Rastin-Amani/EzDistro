@@ -4,8 +4,10 @@ The research engine never writes articles and never creates a second content
 pipeline. `accept_opportunity` does the smallest thing that connects the two:
 
 - ``generate``/``support`` → a topic (status ``planned``, which is what the
-  existing writer treats as "ready to write") + a draft article + a
-  ``write_article`` job, so the EXISTING generation pipeline runs unchanged;
+  existing writer treats as "ready to write") + a draft article. A
+  ``write_article`` job is queued immediately ONLY when the project has no
+  enabled ``write`` schedule; when it has one, the schedule owns the cadence
+  and picks the topic up at its interval;
 - ``update``/``expand`` with a matched existing article → the topic is linked
   to that article; no new article is created and no duplicate URL is generated;
 - ``reject`` → nothing is created (the caller just stores the status).
@@ -23,6 +25,7 @@ from typing import Any
 from app.domain.article_html import slugify
 from app.repositories.articles import ArticleRepo
 from app.repositories.jobs import JobRepo
+from app.repositories.schedules import ScheduleRepo
 from app.repositories.topics import TopicRepo
 
 LINKED_ACTIONS = frozenset({"update", "expand"})
@@ -98,7 +101,7 @@ def accept_opportunity(
     )
     topics.link_article(topic["id"], article["id"])
 
-    if action in WRITE_ACTIONS:
+    if action in WRITE_ACTIONS and not _write_schedule_enabled(pb, project_id):
         JobRepo(pb).create(
             project=project_id,
             type="write_article",
@@ -109,6 +112,14 @@ def accept_opportunity(
             max_attempts=3,
         )
     return articles.get(article["id"]) or article
+
+
+def _write_schedule_enabled(pb: Any, project_id: str) -> bool:
+    """True when the project runs a write schedule — it then owns the cadence."""
+    return (
+        ScheduleRepo(pb).first(filter=f'project="{project_id}" && kind="write" && enabled=true')
+        is not None
+    )
 
 
 def _demo() -> None:

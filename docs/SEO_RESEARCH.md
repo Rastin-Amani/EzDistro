@@ -279,11 +279,16 @@ excluded — `scoreComponents.serp` is `null` and the UI says so.
 
 - `update` / `expand` attach a brief to the existing article — no new URL;
 - `generate` / `support` create a topic (left at status `planned` so the
-  existing writer runs) + an article, then queue the **existing** `write_article`
-  job with `idempotencyKey=write_article:{articleId}` (re-accepting is a no-op).
+  existing writer runs) + an article. The **existing** `write_article` job is
+  queued immediately only when the project has **no enabled `write`
+  schedule** (`idempotencyKey=write_article:{articleId}`, re-accepting is a
+  no-op); when a write schedule is enabled it owns the cadence and picks the
+  topic up at its interval.
 
-Publishing, auto-publishing rules and scheduling are untouched: the research
-engine feeds the current pipeline, it does not replace it.
+Publishing and auto-publishing rules are untouched: the research engine feeds
+the current pipeline, it does not replace it. Scheduling is *not* bypassed —
+accepting 100 opportunities with an 8-hour write schedule queues no jobs at all;
+the schedule writes one topic per interval.
 
 ## Cost, retention and caps
 
