@@ -239,6 +239,8 @@ COLLECTIONS: list[dict[str, Any]] = [
             num("minArticleWords"),
             json_field("retryPolicy"),
             select("publishingMode", ["draft", "publish"]),
+            # optional pinned WordPress category (blank = pick from the live list)
+            t("defaultCategory"),
             # localization & brand (multilingual engine prompt context)
             t("targetLocale"),
             t("targetCountry"),
@@ -339,6 +341,8 @@ COLLECTIONS: list[dict[str, Any]] = [
                     "cluster_user",
                     "opportunity_system",
                     "opportunity_user",
+                    "category_system",
+                    "category_user",
                 ],
                 required=True,
             ),
@@ -430,6 +434,9 @@ COLLECTIONS: list[dict[str, Any]] = [
             date("publishedAt"),
             num("wordpressPostId"),
             t("wordpressUrl"),
+            # chosen at assembly from the site's own taxonomy, created at publish
+            num("wordpressCategoryId"),
+            t("wordpressCategory"),
             # ------------------------------------------------ WordPress mirror
             # Mirrored WordPress posts live in the same Articles section as
             # generated drafts. Remote identity (connection + post id) is
@@ -689,6 +696,9 @@ COLLECTIONS: list[dict[str, Any]] = [
             select("mode", ["draft", "publish"]),
             num("wordpressPostId"),
             t("wordpressUrl"),
+            # chosen at assembly from the site's own taxonomy, created at publish
+            num("wordpressCategoryId"),
+            t("wordpressCategory"),
             json_field("responseMetadata"),
             json_field("error"),
             date("startedAt"),
@@ -1313,6 +1323,30 @@ DEFAULT_PROMPTS: dict[str, str] = {
     "article_repair_user": "Repair this article using the QA findings.\n\n## ARTICLE\n\n{{ article.content }}\n\n## QA FINDINGS\n\n{{ qa_issues }}\n\n## ARTICLE CONTEXT\n\nTitle:\n{{ article.title }}\n\nPrimary query:\n{{ topic.keyword }}\n\nLanguage:\n{{ language }}\n\nLocale:\n{{ locale }}\n\nAudience:\n{{ audience }}\n\nBrand voice:\n{{ brand_voice }}\n\nResearch:\n{{ research }}\n\nVerified internal links:\n{{ internal_links }}\n\nSEO/content contract:\n{{ seo_rules }}\n\n## REQUIREMENTS\n\nFix every critical and high-severity issue.\n\nFix medium issues when doing so clearly improves quality.\n\nDo not introduce new claims that are not supported by the supplied research.\n\nDo not remove valid information simply to shorten the article.\n\nDo not add keyword repetitions.\n\nDo not add filler.\n\nDo not force headings.\n\nDo not force lists.\n\nDo not force links.\n\nMake the final article sound native to the target language and locale.\n\nReturn ONLY the complete corrected HTML article.",
     "image_plan_system": "You are an editorial art director for a high-quality multilingual publication.\n\nCreate image opportunities that genuinely improve the reader's understanding.\n\n## PRINCIPLE\n\nAn image must earn its place.\n\nPrefer:\n- diagrams\n- process illustrations\n- comparisons\n- conceptual explanations\n- data visualizations\n- product/interface demonstrations\n- meaningful real-world scenes\n\nAvoid:\n- generic stock imagery\n- decorative filler\n- repeated concepts\n- images that merely restate the title\n- images with no information value\n\n## IMAGE SELECTION\n\nFor each possible image, ask:\n\n1. Does this section contain something visual?\n2. Would a reader understand it faster visually?\n3. Can a diagram communicate the idea better?\n4. Is there original data worth visualizing?\n5. Does this image provide information unavailable from surrounding text?\n\nDo not add images merely because a section exists.\n\n## ALT TEXT\n\nAlt text must describe the actual visual content naturally.\n\nDo not:\n- repeat the article title\n- stuff keywords\n- describe the prompt\n- add SEO phrases that don't describe the image\n\n## PROMPT LANGUAGE\n\nVisual generation prompt language:\n{{ prompt_language }}\n\nArticle language:\n{{ language }}\n\nThese are independent.\n\nThe visual prompt must be written naturally for the image-generation model.\n\n## IMAGE TEXT\n\nDo not request text, letters, labels, UI copy, typography, or readable words inside generated images unless the image specifically requires them and the rendering system supports them reliably.\n\n## OUTPUT\n\nReturn JSON only.",
     "image_plan_user": 'Create the image plan for this article.\n\n## ARTICLE\n\nTitle:\n{{ article.title }}\n\nPrimary query:\n{{ topic.keyword }}\n\nLanguage:\n{{ language }}\n\nPrompt language:\n{{ prompt_language }}\n\nLocale:\n{{ locale }}\n\n## CONTENT\n\nSections:\n{{ sections }}\n\nArticle content:\n{{ article.content }}\n\n## DESIGN\n\nStyle profile:\n{{ style_profile }}\n\nMaximum interior images:\n{{ max_interior_images }}\n\n## OUTPUT\n\nReturn ONLY:\n\n{\n  "images": [\n    {\n      "role": "cover",\n      "purpose": "...",\n      "prompt": "...",\n      "aspect_ratio": "16:9",\n      "alt_text": "...",\n      "caption": ""\n    },\n    {\n      "role": "interior",\n      "section_key": "section-1",\n      "purpose": "...",\n      "prompt": "...",\n      "aspect_ratio": "16:9",\n      "alt_text": "...",\n      "caption": ""\n    }\n  ]\n}\n\nRules:\n\nExactly one cover image.\n\nInterior images are optional.\n\nNever exceed:\n{{ max_interior_images }}\n\nOnly create an interior image when it adds genuine informational value.\n\nDo not place interior images in consecutive sections unless clearly justified.\n\nAlt text must describe the actual scene.\n\nAlt text must be written in the article language.\n\nPrompt must be written in {{ prompt_language }}.\n\nNever stuff keywords into alt text.\n\nNever mention the prompt inside alt text.\n\nAvoid decorative or repetitive images.\n\nDo not ask the image model to place arbitrary readable text inside images.\n\nOutput ONLY JSON.',
+    "category_system": (
+        "You file a finished article under ONE WordPress category.\n\n"
+        "The site's existing categories are the taxonomy; the site is the source of truth.\n\n"
+        "## RULES\n\n"
+        "1. Prefer an existing category. Return its name EXACTLY as given.\n"
+        "2. Propose a new category only when no existing category covers this article.\n"
+        "3. A new name is a broad, evergreen grouping of several articles — two or three\n"
+        "   words, in the site's language, never a headline, never a product name.\n"
+        "4. Never propose 'Uncategorized', 'General', 'Other' or 'Misc'.\n"
+        "5. Never invent fact — the article title, keyword and summary are all you know.\n\n"
+        "## OUTPUT\n\n"
+        'Return ONLY JSON: {"category": "<name>"}\n'
+    ),
+    "category_user": (
+        "Choose the WordPress category for this article.\n\n"
+        "## ARTICLE\n\n"
+        "Title:\n{{ article.title }}\n\n"
+        "Primary query:\n{{ topic.keyword }}\n\n"
+        "Summary:\n{{ article.meta_description }}\n\n"
+        "## SITE CATEGORIES (use one of these when it fits)\n\n"
+        "{{ categories }}\n\n"
+        "## ANSWER\n\n"
+        'Return ONLY JSON: {"category": "<existing name verbatim, or a short new broad name>"}\n'
+    ),
     "cluster_system": 'You are an SEO information-architecture specialist.\n\nYou group keyword queries into topical clusters that each deserve the same piece of content.\n\n## PRINCIPLE\n\nA cluster is a set of queries that share the same search intent and the same underlying user need.\n\nQuery variants of the same need belong together:\n- "best gym software" / "top gym software" / "gym software comparison"\n\nDifferent user needs belong apart — even when the wording overlaps:\n- "how much does gym software cost" is its own need, not a variant of the list query above.\n\n## RULES\n\n1. Never invent search volumes, competition, or click data.\n2. Never invent keywords that were not supplied.\n3. Every supplied keyword id must appear in exactly one cluster.\n4. Prefer a small number of meaningful clusters over many near-duplicates.\n5. A cluster label is a short topic phrase in the target language, not a keyword list.\n6. Modifiers that change intent (pricing, comparison, how-to, review, tutorial, local) usually split clusters.\n7. Language: {{ language }}\nLocale: {{ locale }}\nAudience: {{ audience }}\n\nReturn JSON only.\n',
     "cluster_user": 'Group these keyword queries into topical clusters.\n\n## KEYWORDS\n\n{{ keywords }}\n\n## EXISTING SITE CLUSTERS\n\n{{ topical_clusters }}\n\n## SITE CONTEXT\n\n{{ site_context }}\n\n## OUTPUT\n\nReturn ONLY valid JSON:\n\n{\n  "clusters": [\n    {\n      "label": "short topic phrase",\n      "intent": "informational|commercial|transactional|navigational|local|comparison",\n      "member_ids": ["1", "4", "9"]\n    }\n  ]\n}\n\nEvery supplied id must appear exactly once across all clusters.\n\nDo not invent ids.\n\nUse the shortest accurate label.\n\nOutput ONLY the JSON object.',
     "opportunity_system": 'You are a senior SEO strategist turning real research data into an editorial roadmap.\n\n## HARD RULES\n\n1. NEVER invent metrics. Search volume, trend, CPC and competition only come from the supplied data.\n2. Google Ads competition is PAID advertising competition. It is never organic difficulty. Never call it difficulty.\n3. Never claim a ranking position. You have no ranking data unless it is supplied.\n4. Never guarantee that a page will rank.\n5. Do not keyword-stuff titles. No fake urgency, no "Ultimate Guide" filler, no invented years.\n6. Do not create one page per keyword variant. Group variants that share one intent.\n7. Do not regenerate content that already exists and is adequate.\n8. A title is a publishable headline. Never put commentary, notes about the query, or your own reasoning in it.\n\n## ACTIONS\n\n- generate: no existing page covers this need\n- update: an existing page covers this need and should be improved\n- expand: this belongs inside an existing page rather than a new URL\n- support: a genuinely useful supporting page that builds topical coverage\n- reject: duplicate, low value, off-goal, or cannibalising\n\n## WHAT A PAGE HAS TO DO\n\nWrite for search engines and for AI answer engines (AI Overviews, ChatGPT, Perplexity, Copilot).\n\n- One page per search intent. Two pages with the same intent compete with each other and neither gets cited.\n- The answer comes first: the opening sentences of the brief must answer the query plainly, in under 60 words.\n- Name entities and verifiable facts (platforms, prices, integrations, specs). Answer engines cite what they can check and what a competitor cannot copy.\n- Prefer the formats that get quoted: comparison, alternatives, pricing, review, how-to, FAQ, definition, checklist.\n\n## GOAL\n\nThe user goal materially changes what you propose. Commercial and evaluation intent for a lead-generation goal. Pillar/supporting structure for an authority goal. Gaps and freshness for an update goal.\n\n## LANGUAGE\n\nWrite titles, angles and briefs in the target language. Do not translate an English idea.\nLanguage: {{ language }}\nLocale: {{ locale }}\nAudience: {{ audience }}\n\n## EVIDENCE\n\nIf evidence for a claim is absent, leave the field empty rather than filling it with an estimate.\n\nReturn JSON only.\n',

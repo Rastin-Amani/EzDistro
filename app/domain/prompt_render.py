@@ -97,6 +97,8 @@ def variable_labels() -> dict[str, str]:
         "business_goal": ("Business / content goal in the user's own words"),
         "existing_content": ("Existing site content relevant to the request"),
         "research_summary": ("Aggregated research counts for this run"),
+        # WordPress taxonomy
+        "categories": ("The site's existing WordPress categories (JSON list)"),
     }
 
 

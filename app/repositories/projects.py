@@ -87,6 +87,8 @@ DEFAULT_SETTINGS: dict[str, Any] = {
     "minArticleWords": 300,
     "retryPolicy": {"max_attempts": 3, "backoff_base": 30, "backoff_max": 3600},
     "publishingMode": "publish",
+    # pinned WordPress category; blank = choose from the site's live taxonomy
+    "defaultCategory": "",
     # localization & brand (multilingual engine: locale/market/voice context)
     # US English is the default market/locale; the language derives from the locale.
     "targetLocale": "en-US",

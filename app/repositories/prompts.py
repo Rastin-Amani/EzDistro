@@ -39,6 +39,9 @@ PROMPT_TYPES = (
     "cluster_user",
     "opportunity_system",
     "opportunity_user",
+    # WordPress taxonomy: choose the article's category from the site's own
+    "category_system",
+    "category_user",
 )
 
 

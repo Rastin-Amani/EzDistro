@@ -746,6 +746,21 @@
         "id": "selectf4046311"
       },
       {
+        "name": "defaultCategory",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0,
+        "id": "text79f7cbaf"
+      },
+      {
         "name": "targetLocale",
         "type": "text",
         "required": false,
@@ -1444,7 +1459,9 @@
           "cluster_system",
           "cluster_user",
           "opportunity_system",
-          "opportunity_user"
+          "opportunity_user",
+          "category_system",
+          "category_user"
         ],
         "id": "select8cde5729"
       },
@@ -2066,6 +2083,34 @@
         "min": 0,
         "max": 0,
         "id": "text6004c8ad"
+      },
+      {
+        "name": "wordpressCategoryId",
+        "type": "number",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false,
+        "id": "numberbec1d3b6"
+      },
+      {
+        "name": "wordpressCategory",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0,
+        "id": "text1c87fed7"
       },
       {
         "name": "source",
@@ -4470,6 +4515,34 @@
         "min": 0,
         "max": 0,
         "id": "text6004c8ad"
+      },
+      {
+        "name": "wordpressCategoryId",
+        "type": "number",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false,
+        "id": "numberbec1d3b6"
+      },
+      {
+        "name": "wordpressCategory",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0,
+        "id": "text1c87fed7"
       },
       {
         "name": "responseMetadata",
