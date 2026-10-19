@@ -169,6 +169,17 @@ async def handle_publish_article(ctx: JobContext) -> dict[str, Any]:
         from app.domain.gutenberg import to_gutenberg_blocks
 
         html = to_gutenberg_blocks(html)
+
+        # WordPress category: reuse the one chosen at assembly, extend the
+        # site's taxonomy when it does not exist yet. Never fatal — a taxonomy
+        # problem must not cost an article.
+        from app.services.wp_categories import resolve_category
+
+        category_id, category_name = await resolve_category(
+            ctx, article=article, publisher=publisher
+        )
+        categories = [category_id] if category_id else None
+
         existing_wp_id = int(article.get("wordpressPostId") or 0)
         if existing_wp_id:
             # Safe publishing: UPDATE the existing post instead of creating a duplicate.
@@ -179,6 +190,7 @@ async def handle_publish_article(ctx: JobContext) -> dict[str, Any]:
                 status=mode,
                 slug=article.get("slug") or slugify(article.get("title") or "post"),
                 excerpt=article.get("metaDescription") or "",
+                categories=categories,
             )
             ctx.info(
                 "wordpress post updated (no duplicate created)",
@@ -205,6 +217,7 @@ async def handle_publish_article(ctx: JobContext) -> dict[str, Any]:
                     status=mode,
                     slug=article.get("slug") or slugify(article.get("title") or "post"),
                     excerpt=article.get("metaDescription") or "",
+                    categories=categories,
                 )
                 ctx.info(
                     "orphaned post recovered via meta (updated, no duplicate)",
@@ -219,6 +232,7 @@ async def handle_publish_article(ctx: JobContext) -> dict[str, Any]:
                     slug=article.get("slug") or slugify(article.get("title") or "post"),
                     meta={"ezdistro_article_id": article_id, "ezdistro_request_id": request_id},
                     excerpt=article.get("metaDescription") or "",
+                    categories=categories,
                 )
         if featured_media_id:
             # cover image → WP featured image (drives og:image in the theme)
@@ -242,6 +256,14 @@ async def handle_publish_article(ctx: JobContext) -> dict[str, Any]:
         },
     )
     articles.mark_published(article_id, result.post_id, result.link)
+    if category_id:
+        articles.update(
+            article_id,
+            {
+                "wordpressCategoryId": category_id,
+                **({"wordpressCategory": category_name} if category_name else {}),
+            },
+        )
     topic = article.get("topicId")
     if topic:
         TopicRepo(ctx.pb).set_status(topic, "published")
