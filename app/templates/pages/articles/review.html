@@ -56,12 +56,7 @@
     </ul>
 </div>{% endset %}
 
-<div id="review-body"
-     hx-get="/projects/{{ project.id }}/articles/{{ article.id }}/review"
-     hx-trigger="refreshArticle from:body"
-     hx-target="this"
-     hx-swap="outerHTML"
-     hx-select="#review-body">
+<div id="review-body">
 
 {{ a.header(project, article, '/projects/' ~ project.id ~ '/articles/' ~ article.id ~ '/workspace', ('Back to workspace'), eyebrow=('Write · Review'), actions=actions) }}
 
@@ -279,5 +274,14 @@
         </form>
     </div>
 </dialog>
+
+{# Sibling trigger, not a wrapper — see the note in detail.html: inherited
+   hx-select would blank the page for every link inside #review-body. #}
+<div class="hidden"
+     hx-get="/projects/{{ project.id }}/articles/{{ article.id }}/review"
+     hx-trigger="refreshArticle from:body"
+     hx-target="#review-body"
+     hx-swap="outerHTML"
+     hx-select="#review-body"></div>
 
 {% endblock %}

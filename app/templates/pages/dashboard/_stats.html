@@ -1,8 +1,4 @@
-<div id="stats-row"
-     hx-get="/dashboard/partial/stats"
-     hx-trigger="every 8s"
-     hx-target="this"
-     hx-swap="outerHTML" class="flex flex-col gap-4">
+<div id="stats-row" class="flex flex-col gap-4">
     <section class="card overflow-hidden border border-base-300 bg-base-100" aria-labelledby="content-pipeline-title">
         <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
             <h2 id="content-pipeline-title" class="font-mono text-xs font-normal uppercase text-base-content/55 tracking-[0.073em]">{{ ('Content pipeline') }}</h2>
@@ -67,3 +63,12 @@
         </dl>
     </details>
 </div>
+
+{# Sibling trigger, not a wrapper: hx-target/hx-swap are inherited, so the
+   links inside #stats-row (View projects, failed jobs, workers) would swap the
+   whole response into the anchor instead of navigating. #}
+<div class="hidden"
+     hx-get="/dashboard/partial/stats"
+     hx-trigger="every 8s"
+     hx-target="#stats-row"
+     hx-swap="outerHTML"></div>

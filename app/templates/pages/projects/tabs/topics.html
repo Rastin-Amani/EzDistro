@@ -1,10 +1,6 @@
 {% import 'macros/forms.html' as f %}
 
-<div id="topics-tab"
-     hx-get="/projects/{{ project.id }}/tabs/topics"
-     hx-trigger="refreshTopics from:body"
-     hx-target="this"
-     hx-swap="outerHTML">
+<div id="topics-tab">
 
     {{ f.section_head(('Topics'), ('Plan and generate articles. Search, filter by status, or add a topic.')) }}
 
@@ -157,3 +153,12 @@
 
     {% include "components/topics/import_modal.html" %}
 </div>
+
+{# Sibling trigger, not a wrapper: hx-target/hx-swap are inherited, so every
+   link in the topic table would swap the response into the anchor instead of
+   navigating. #}
+<div class="hidden"
+     hx-get="/projects/{{ project.id }}/tabs/topics"
+     hx-trigger="refreshTopics from:body"
+     hx-target="#topics-tab"
+     hx-swap="outerHTML"></div>

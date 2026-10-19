@@ -18,12 +18,7 @@
     </ul>
 </div>{% endset %}
 
-<div id="article-body"
-     hx-get="/projects/{{ project.id }}/articles/{{ article.id }}"
-     hx-trigger="refreshArticle from:body"
-     hx-target="this"
-     hx-swap="outerHTML"
-     hx-select="#article-body">
+<div id="article-body">
 
 {{ a.header(project, article, '/projects/' ~ project.id ~ '?tab=articles', ('Back to articles'), eyebrow=project.name, actions=actions) }}
 
@@ -165,5 +160,17 @@
     </aside>
 </div>
 </div>
+
+{# The refresh trigger is a SIBLING of the container, never a wrapper: hx-target,
+   hx-swap and hx-select are inherited by descendant htmx requests, so a link
+   inside #article-body (the back button, Review, the overflow menu) would ask
+   for another page and then select #article-body from a response that has no
+   such element — an empty swap and a blank screen. #}
+<div class="hidden"
+     hx-get="/projects/{{ project.id }}/articles/{{ article.id }}"
+     hx-trigger="refreshArticle from:body"
+     hx-target="#article-body"
+     hx-swap="outerHTML"
+     hx-select="#article-body"></div>
 
 {% endblock %}

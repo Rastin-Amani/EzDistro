@@ -10,12 +10,7 @@
 {{ f.page_header(('Workers'), ('Live status of worker processes, the job queue and automatic schedule health.'), ('Operations & monitoring'),
     '<span class="badge badge-sm badge-soft badge-info"><span class="loading loading-spinner loading-xs me-1"></span>' ~ ('Auto-refreshes every 5 seconds') ~ '</span>') }}
 
-<div id="workers-content" class="flex flex-col gap-4"
-     hx-get="/workers"
-     hx-trigger="every 5s"
-     hx-target="this"
-     hx-swap="outerHTML"
-     hx-select="#workers-content">
+<div id="workers-content" class="flex flex-col gap-4">
 
     <!-- Overview metrics -->
     <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
@@ -182,5 +177,15 @@
     {% endif %}
 
 </div>
+
+{# Sibling trigger, not a wrapper — see the note in articles/detail.html:
+   inherited hx-select would blank the page for every link inside the card
+   (the job-queue links) instead of navigating. #}
+<div class="hidden"
+     hx-get="/workers"
+     hx-trigger="every 5s"
+     hx-target="#workers-content"
+     hx-swap="outerHTML"
+     hx-select="#workers-content"></div>
 
 {% endblock %}

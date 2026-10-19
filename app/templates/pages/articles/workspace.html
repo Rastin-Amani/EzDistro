@@ -30,10 +30,7 @@
     </ul>
 </div>{% endset %}
 
-<div id="workspace-page" class="flex flex-col gap-4"
-     hx-get="/projects/{{ project.id }}/articles/{{ article.id }}/workspace"
-     hx-trigger="refreshArticle from:body{% if article.status == 'generating' or generating %}, every 4s{% endif %}"
-     hx-swap="outerHTML" hx-target="this" hx-select="#workspace-page">
+<div id="workspace-page" class="flex flex-col gap-4">
 
 {{ a.header(project, article, '/projects/' ~ project.id ~ '?tab=articles', ('Back to articles'), eyebrow=('Write · Draft'), actions=actions) }}
 
@@ -239,5 +236,14 @@
     </aside>
 </div>
 </div>
+
+{# Sibling trigger, not a wrapper — see the note in detail.html: inherited
+   hx-select would blank the page for every link inside #workspace-page. #}
+<div class="hidden"
+     hx-get="/projects/{{ project.id }}/articles/{{ article.id }}/workspace"
+     hx-trigger="refreshArticle from:body{% if article.status == 'generating' or generating %}, every 4s{% endif %}"
+     hx-target="#workspace-page"
+     hx-swap="outerHTML"
+     hx-select="#workspace-page"></div>
 
 {% endblock %}
