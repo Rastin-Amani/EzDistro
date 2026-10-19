@@ -298,6 +298,24 @@ def _parse_retry_after(value: str | None) -> int | None:
     return None
 
 
+def llm_budget_exhausted(data: Any) -> bool:
+    """True when the model returned no answer because it hit its token budget.
+
+    A reasoning model counts its reasoning against `max_tokens`, so an empty
+    completion with `finish_reason == "length"` means "it needed more room",
+    not "the request was wrong" — callers retry with a bigger budget instead of
+    failing the job.
+    """
+    try:
+        choice = data["choices"][0]
+        content = choice["message"]["content"]
+    except (IndexError, KeyError, TypeError):
+        return False
+    if isinstance(content, str) and content.strip():
+        return False
+    return str(choice.get("finish_reason") or "") == "length"
+
+
 def validate_llm_json_response(data: Any, what: str) -> dict[str, Any]:
     if not isinstance(data, dict) or "choices" not in data:
         raise PermanentError(f"{what}: unexpected chat.completions response shape")

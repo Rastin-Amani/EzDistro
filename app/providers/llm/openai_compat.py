@@ -10,6 +10,7 @@ usage + latency metrics, model metadata, per-call timeout.
 from __future__ import annotations
 
 import json
+import logging
 from collections.abc import AsyncIterator
 from typing import Any
 
@@ -23,6 +24,7 @@ from app.providers.base import (
 )
 from app.providers.http import (
     acquire_async_client,
+    llm_budget_exhausted,
     raise_for_provider,
     validate_llm_json_response,
     with_retry,
@@ -30,6 +32,15 @@ from app.providers.http import (
 from app.providers.metrics import MetricMixin
 
 PROVIDER_NAME = "openai_compat"
+
+logger = logging.getLogger(__name__)
+
+# A reasoning model that spends its whole completion budget on reasoning gets
+# more room before the call is called a failure: up to 2 escalations, doubling
+# each time, never beyond the ceiling most gateways accept.
+LLM_BUDGET_ESCALATIONS = 2
+LLM_ESCALATED_MIN_TOKENS = 8192
+LLM_MAX_TOKENS_CEILING = 64000
 
 
 class OpenAICompatLLM(MetricMixin):
@@ -115,6 +126,33 @@ class OpenAICompatLLM(MetricMixin):
             retry_counter=retry_counter,
         )
 
+    async def _post_chat(
+        self, body: dict[str, Any], retry_counter: list[int], what: str
+    ) -> dict[str, Any]:
+        """POST /chat/completions, doubling the budget when the model needs more.
+
+        A streaming answer is not an option here, and a role's `max_tokens` is a
+        starting point rather than a cliff: when the model spends the whole
+        completion budget on its reasoning and returns nothing, ask again with
+        twice the room (up to LLM_MAX_TOKENS_CEILING) before giving up.
+        """
+        data: dict[str, Any] = {}
+        for _ in range(LLM_BUDGET_ESCALATIONS + 1):
+            response = await self._request(body, retry_counter)
+            raise_for_provider(response, what=what)
+            data = response.json()
+            if not llm_budget_exhausted(data):
+                return data
+            budget = int(body.get("max_tokens") or 0)
+            raised = min(max(budget * 2, LLM_ESCALATED_MIN_TOKENS), LLM_MAX_TOKENS_CEILING)
+            if raised <= budget:
+                return data
+            logger.warning(
+                "llm budget escalated: %s -> %s tokens (model %s)", budget, raised, self._model
+            )
+            body = {**body, "max_tokens": raised}
+        return data
+
     async def generate(
         self,
         *,
@@ -127,9 +165,8 @@ class OpenAICompatLLM(MetricMixin):
         retry_counter: list[int] = []
 
         async def _run() -> LLMResult:
-            response = await self._request(body, retry_counter)
-            raise_for_provider(response, what="llm.generate")
-            data = validate_llm_json_response(response.json(), "llm.generate")
+            data = await self._post_chat(body, retry_counter, "llm.generate")
+            data = validate_llm_json_response(data, "llm.generate")
             content = data["choices"][0]["message"]["content"]
             usage = data.get("usage") or {}
             return LLMResult(
@@ -157,9 +194,8 @@ class OpenAICompatLLM(MetricMixin):
         retry_counter: list[int] = []
 
         async def _run() -> dict[str, Any]:
-            response = await self._request(body, retry_counter)
-            raise_for_provider(response, what="llm.generate_json")
-            data = validate_llm_json_response(response.json(), "llm.generate_json")
+            data = await self._post_chat(body, retry_counter, "llm.generate_json")
+            data = validate_llm_json_response(data, "llm.generate_json")
             content = data["choices"][0]["message"]["content"]
             # Robust extraction: fence-stripping + balanced-brace scan.
             from app.domain.parsing import extract_json
