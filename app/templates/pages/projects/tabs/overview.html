@@ -1,0 +1,49 @@
+{% import 'macros/forms.html' as f %}
+{% set p = projects[0] %}
+{{ f.section_head('Website overview', 'Your content, your next decision, and the work still in progress.') }}
+<div class="grid gap-6 lg:grid-cols-3">
+    <section class="lg:col-span-2">
+        <div class="card border border-base-300 bg-base-100">
+            <div class="card-body gap-4 p-6">
+                <h3 class="font-mono text-xs uppercase tracking-widest text-base-content/65">Next action</h3>
+                {% if p.attention %}
+                <h4 class="text-xl font-bold">{{ p.attention }} {{ 'task needs' if p.attention == 1 else 'tasks need' }} another look</h4>
+                <p class="text-sm text-base-content/65">Check which tasks could not finish before starting more work.</p>
+                <div class="card-actions"><a class="btn btn-primary" href="/jobs?project={{ p.id }}&status=failed">Check activity</a></div>
+                {% elif p.review %}
+                <h4 class="text-xl font-bold">{{ p.review }} {{ 'article' if p.review == 1 else 'articles' }} ready for you</h4>
+                <p class="text-sm text-base-content/65">Read through your drafts and choose what is ready to publish.</p>
+                <div class="card-actions"><a class="btn btn-primary" href="/projects/{{ p.id }}?tab=articles">Review articles</a></div>
+                {% elif p.planned %}
+                <h4 class="text-xl font-bold">Choose your next article</h4>
+                <p class="text-sm text-base-content/65">You have {{ p.planned }} {{ 'idea' if p.planned == 1 else 'ideas' }} in your content plan. Choose what to write next.</p>
+                <div class="card-actions"><a class="btn btn-primary" href="/projects/{{ p.id }}?tab=topics">Open content plan</a></div>
+                {% else %}
+                <h4 class="text-xl font-bold">Make room for your next idea</h4>
+                <p class="text-sm text-base-content/65">Explore topics for your audience and add useful ideas to your content plan.</p>
+                <div class="card-actions"><a class="btn btn-primary" href="/projects/{{ p.id }}?tab=research">Find opportunities</a></div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="mt-8">
+            <h3 class="border-b border-base-300 pb-3 font-mono text-xs uppercase tracking-widest text-base-content/65">Content at each stage</h3>
+            <dl class="divide-y divide-base-300">
+                {% for label, value, destination in [('Ideas to write', p.planned, 'topics'), ('Articles being written', p.writing, 'articles'), ('Ready to review or publish', p.review, 'articles'), ('Published articles', p.published, 'articles')] %}
+                <div class="flex items-center justify-between gap-4 py-4"><dt class="text-sm"><a class="link link-hover" href="/projects/{{ p.id }}?tab={{ destination }}">{{ label }}</a></dt><dd class="font-mono text-sm tabular-nums">{{ value }}</dd></div>
+                {% endfor %}
+            </dl>
+        </div>
+    </section>
+    <aside class="card self-start bg-base-200">
+        <div class="card-body p-6">
+            <h3 class="mb-2 font-mono text-xs uppercase tracking-widest text-base-content/65">Website controls</h3>
+            <ul class="menu p-0 gap-1">
+                <li><a href="/projects/{{ p.id }}?tab=settings">Website setup <span aria-hidden="true">→</span></a></li>
+                <li><a href="/projects/{{ p.id }}?tab=integrations">Connected services <span aria-hidden="true">→</span></a></li>
+                <li><a href="/jobs?project={{ p.id }}">Website activity <span aria-hidden="true">→</span></a></li>
+                <li><a href="/schedules">Automation <span aria-hidden="true">→</span></a></li>
+            </ul>
+            <p class="mt-4 border-t border-base-300 pt-4 text-xs leading-relaxed text-base-content/65">Counts cover content created here. Search traffic and Google rankings are not measured on this page.</p>
+        </div>
+    </aside>
+</div>

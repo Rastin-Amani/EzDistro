@@ -43,6 +43,7 @@ from app.repositories.prompts import PromptRepo
 from app.repositories.publishing_runs import PublishingRunRepo
 from app.repositories.schedules import ScheduleRepo
 from app.repositories.topics import TopicRepo
+from app.services import stats
 from app.services.billing import BillingError, BillingService
 from app.services.prompt_service import PromptService
 from app.services.secrets import SecretsService, get_secrets_service
@@ -94,6 +95,8 @@ RESEARCH_LANGUAGES = [
 router = APIRouter()
 
 TABS = [
+    "overview",
+    "advanced",
     # Writer-first: daily flow opens on Topics, setup lives behind Setup.
     "topics",
     "articles",
@@ -728,14 +731,14 @@ def _tab_context(
 
 
 @router.get("/projects/{project_id}", response_class=HTMLResponse)
-def project_detail(request: Request, project_id: str, tab: str = "topics"):
+def project_detail(request: Request, project_id: str, tab: str = "overview"):
     try:
         project = require_project_access(request, project_id)
     except (PermissionError, ValueError):
         return templates.TemplateResponse(
             request, "pages/projects/not_found.html", {"title": ("Project not found")}
         )
-    active = tab if tab in TABS else "topics"
+    active = tab if tab in TABS else "overview"
     context = _tab_context(
         request.state.pb,
         project,
@@ -747,6 +750,8 @@ def project_detail(request: Request, project_id: str, tab: str = "topics"):
         ga=request.query_params.get("ga") or "",
     )
     context["title"] = project.get("name", ("Project"))
+    if active == "overview":
+        context["projects"] = stats.project_overviews(request.state.pb, [project])
     context["active_tab"] = active
     context["tabs"] = TABS
     return templates.TemplateResponse(request, "pages/projects/detail.html", context)
@@ -774,6 +779,8 @@ def project_tab(request: Request, project_id: str, tab: str):
         user=current_user(request),
         ga=request.query_params.get("ga") or "",
     )
+    if tab == "overview":
+        context["projects"] = stats.project_overviews(request.state.pb, [project])
     return templates.TemplateResponse(request, f"pages/projects/tabs/{tab}.html", context)
 
 

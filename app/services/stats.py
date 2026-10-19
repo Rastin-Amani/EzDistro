@@ -144,6 +144,30 @@ def dashboard_extra(
     )
 
 
+def project_overviews(pb: Any, projects: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Small, user-facing summary for each visible website."""
+
+    def one(project: dict[str, Any]) -> dict[str, Any]:
+        pid = project.get("id") or ""
+        topics = TopicRepo(pb)
+        articles = ArticleRepo(pb)
+        jobs = JobRepo(pb)
+        return {
+            **project,
+            "planned": topics.count_by_status(pid, "planned"),
+            "writing": articles.count(
+                filter=f'project="{pid}" && (status="generating" || status="outline_ready")'
+            ),
+            "review": articles.count(
+                filter=f'project="{pid}" && (status="review" || status="approved")'
+            ),
+            "published": articles.count(filter=f'project="{pid}" && status="published"'),
+            "attention": jobs.count(filter=f'project="{pid}" && status="failed"'),
+        }
+
+    return list(fanout({str(p.get("id")): partial(one, p) for p in projects}).values())
+
+
 def _active_workers(pb: Any) -> int:
     """Workers whose heartbeat is fresher than ~45s (missed ≤2 beats)."""
     import datetime as dt

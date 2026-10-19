@@ -1,0 +1,7 @@
+<h2 class="text-lg font-semibold">Advanced settings</h2>
+<p class="my-3">Connections and specialist tools. You do not need these for everyday content planning.</p>
+<ul class="menu bg-base-200 rounded-box">
+{% for tab, label in [('integrations', 'Connect WordPress and writing services'), ('ai_models', 'AI model configuration'), ('prompts', 'Writing instructions'), ('images', 'Article image settings'), ('retrieval', 'Content search configuration'), ('indexing', 'Saved website content'), ('jobs', 'Technical task history'), ('logs', 'Diagnostic logs')] %}
+<li><a href="/projects/{{ project.id }}?tab={{ tab }}">{{ label }}</a></li>
+{% endfor %}
+</ul>
