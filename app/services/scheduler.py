@@ -47,6 +47,17 @@ def run_schedule_poll(pb: Any) -> int:
 
     _write_heartbeat(pb, due=len(schedules), created=created, failed=failed)
     logger.info("schedule.poll.completed", due=len(schedules), created=created, failed=failed)
+
+    # Same cadence, same workers: finish what a lost job left behind. Cheap
+    # (one query per in-progress state) and idempotent, so N workers are fine.
+    try:
+        from app.services.reaper import reconcile_stuck
+
+        recovered = reconcile_stuck(pb)
+        if recovered:
+            logger.info("reaper.completed", **recovered)
+    except Exception:
+        logger.exception("reaper.error")
     return created
 
 

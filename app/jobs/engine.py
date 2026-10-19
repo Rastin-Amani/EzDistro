@@ -351,7 +351,41 @@ class JobEngine:
         else:
             self.jobs.fail(job_id, error_code, error_message, error_details, attempts=attempts)
             self._failed += 1
+            self._settle_artifact(job)
             logger.error("job failed permanently", job_id=job_id, error_code=error_code)
+
+    def _settle_artifact(self, job: dict[str, Any]) -> None:
+        """Take the failed job's artifact out of its in-progress state.
+
+        A job that dies permanently must never leave an article at "generating"
+        or a topic at "writing": that is the stuck state with no way forward —
+        the dashboard shows work in flight that no job will ever finish.
+        `failed` is terminal, visible, and resumable from the UI.
+
+        Diagnostics only: a failure here must never mask the job failure.
+        """
+        try:
+            from app.repositories.articles import ArticleRepo
+            from app.repositories.topics import TopicRepo
+
+            articles = ArticleRepo(self.pb)
+            topics = TopicRepo(self.pb)
+            entity_type = str(job.get("entityType") or "")
+            entity_id = str(job.get("entityId") or "")
+            article = articles.get(entity_id) if entity_type == "article" and entity_id else None
+            topic = topics.get(entity_id) if entity_type == "topic" and entity_id else None
+            if article is None and topic is not None:
+                linked = str(topic.get("articleId") or "")
+                article = articles.get(linked) if linked else None
+            if topic is None and article is not None:
+                linked = str(article.get("topicId") or "")
+                topic = topics.get(linked) if linked else None
+            if article is not None and article.get("status") in ("generating", "publishing"):
+                articles.set_status(article["id"], "failed")
+            if topic is not None and topic.get("status") in ("queued", "writing", "outline_ready"):
+                topics.set_status(topic["id"], "failed")
+        except Exception:
+            logger.exception("job.artifact_settle.failed", job_id=job.get("id"))
 
     # ---------------------------------------------------------------------------
     # Heartbeat & cancellation
