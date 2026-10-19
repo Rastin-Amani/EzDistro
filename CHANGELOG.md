@@ -9,6 +9,37 @@ release builds on. Format is based on [Keep a Changelog](https://keepachangelog.
 
 ## [Unreleased]
 
+## [v1.24.0] — 2026-10-19
+
+### Added
+- **WordPress categories.** Publishing files each article under a category from
+  the site's own taxonomy (exact match → token match; created when missing),
+  chosen at assembly by an LLM pick, a pinned per-project default, or an
+  industry fallback. Never fatal — taxonomy problems publish without one.
+- **Duplicate a website's setup.** Creating a project can copy another site's
+  settings, integrations, active prompts and schedules (never content or
+  research), with write-access validation on the source.
+- **Automation monitor** (`/schedules`): worker heartbeat/late warnings,
+  per-website routines with enable/pause/delete, next-run countdowns and kind
+  forecasts.
+- **Website overview tab.** Each project opens on an overview (next action,
+  content at each stage, schedule summary); the dashboard and website list show
+  per-website progress and attention counts.
+
+### Fixed
+- Stuck articles and topics whose job record is gone now recover: the engine
+  settles linked artifacts on permanent failure and a reaper resumes or parks
+  orphans on every schedule poll.
+- QA and metadata generation never fail an article — provider errors there only
+  cost the enhancement.
+- An empty length-truncated completion now escalates the token budget (doubled,
+  8k floor, 64k ceiling) instead of failing unactionably.
+
+### Changed
+- Navigation speaks plain website language: Your work (Overview, Websites) and
+  Behind the scenes (Activity, Automation); the jobs monitor is the Activity
+  page with friendly labels.
+
 ## [v1.23.0] — 2026-10-19
 
 ### Added
