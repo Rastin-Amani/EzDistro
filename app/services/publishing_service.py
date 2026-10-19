@@ -261,6 +261,17 @@ async def handle_publish_article(ctx: JobContext) -> dict[str, Any]:
             entity_type="article",
             entity_id=article_id,
         )
+        # Inbound link building: now that this page exists (and is indexed), the
+        # pages most related to it can link to it. Text-preserving, no LLM.
+        JobRepo(ctx.pb).create(
+            project=ctx.project_id,
+            type="build_internal_links",
+            payload={"articleId": article_id},
+            idempotency_key=f"links:inbound:{article_id}:{int(time.time())}",
+            max_attempts=3,
+            entity_type="article",
+            entity_id=article_id,
+        )
 
     ctx.stage_completed("publishing", ("Article updated on WordPress"))
     ctx.progress(100, stage="done", message=("Article updated on WordPress"))
