@@ -348,16 +348,16 @@ def test_project_detail_missing_project_renders_not_found(setup):
 
 
 def test_project_detail_renders_active_tab_with_context(setup):
-    """Direct load of /projects/{id} renders the default topics tab without 500."""
+    """Direct load of /projects/{id} renders the default overview tab without 500."""
     req = make_req(setup["pb"], make_user(), setup["proj_a"]["id"])
     resp = call_route(P.project_detail, req, setup["proj_a"]["id"])
     assert resp.status_code == 200
     body = resp.body.decode()
     assert ">A</h1>" in body  # project name heading
-    assert 'id="topics-tab"' in body  # default topics tab partial rendered inline
+    assert 'Website overview' in body  # default overview tab partial rendered inline
     assert '<nav id="project-tabs"' in body
-    assert f'href="/projects/{setup["proj_a"]["id"]}?tab=topics"' in body
-    assert 'data-tab="topics"' in body and 'aria-current="page"' in body
+    assert f'href="/projects/{setup["proj_a"]["id"]}?tab=overview"' in body
+    assert 'data-tab="overview"' in body and 'aria-current="page"' in body
     assert 'role="tab"' not in body
 
 
