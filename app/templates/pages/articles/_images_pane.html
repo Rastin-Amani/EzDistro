@@ -5,17 +5,17 @@
 {% set base = '/projects/' ~ project.id ~ '/articles/' ~ article.id ~ '/images' %}
 <div class="card border border-base-300 bg-base-100 min-w-0" id="images-pane">
 
-    <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
+    <div class="flex items-center justify-between gap-2 border-b border-base-300 px-5 py-3.5">
 
         <div class="flex items-center gap-2">
 
-            <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Article images') }}</h2>
+            <h2 class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">{{ ('Article images') }}</h2>
 
             {% if plan %}<span class="badge badge-ghost badge-sm">v{{ article.imagePlanVersion or 1 }}</span>{% endif %}
 
         </div>
 
-        <button class="btn btn-outline btn-xs" hx-post="{{ base }}/plan" hx-swap="none"
+        <button class="btn btn-ghost btn-sm" hx-post="{{ base }}/plan" hx-swap="none"
                 hx-confirm="{{ ('Rebuild the image plan? The current prompts will be replaced.') }}">
             <span class="loading loading-spinner loading-xs htmx-indicator"></span>
             {{ ('Image plan') }}
@@ -23,22 +23,22 @@
 
     </div>
 
-    <div class="p-4 flex flex-col gap-4">
+    <div class="p-5 flex flex-col gap-4">
 
         {% if not plan %}
 
             <div class="flex flex-col items-center justify-center gap-3 text-center py-6">
 
-                <p class="font-bold text-base-content/75">{{ ('The image plan has not been created') }}</p>
+                <p class="font-bold text-base-content/80">{{ ('The image plan has not been created') }}</p>
 
-                <p class="text-sm text-base-content/50">{{ ('Build the image plan first to generate the cover and in-text images.') }}</p>
+                <p class="text-sm text-base-content/60">{{ ('Build the image plan first to generate the cover and in-text images.') }}</p>
 
             </div>
 
         {% else %}
 
             {% set interior_count = plan.images | selectattr('role', 'equalto', 'interior') | list | length %}
-            <p class="text-xs opacity-50 leading-relaxed">
+            <p class="text-xs text-base-content/60 leading-relaxed">
                 {{ ('%(n)s images in the plan: 1 cover + %(m)s in-text images. Each regeneration creates a new version; successful versions are never overwritten.') % {'n': plan.images | length, 'm': interior_count} }}
             </p>
 
@@ -50,7 +50,7 @@
         {% set spec = slot.spec %}
         {% set is_cover = slot.role == 'cover' %}
 
-        <div class="rounded-box border border-base-300/60 p-3 flex flex-col gap-3" data-image-slot="{{ slot.key }}">
+        <div class="rounded-box border border-base-300 p-3 flex flex-col gap-3" data-image-slot="{{ slot.key }}">
 
             <div class="flex items-center justify-between gap-2">
 
@@ -62,14 +62,14 @@
 
                     {% if row %}<span class="badge badge-sm {{ row.status|status_badge }}">{{ row.status|status_label }}</span>{% endif %}
 
-                    {% if spec and spec.purpose %}<span class="text-xs opacity-60 truncate">{{ spec.purpose }}</span>{% endif %}
+                    {% if spec and spec.purpose %}<span class="text-xs text-base-content/65 truncate">{{ spec.purpose }}</span>{% endif %}
 
                 </div>
 
                 {% if row and row.estimatedCost %}
                     <span class="text-xs tabular-nums whitespace-nowrap" title="{{ ('Estimated generation cost') }}">${{ '%.3f'|format(row.estimatedCost) }}</span>
                 {% elif row and row.status == 'ready' %}
-                    <span class="text-xs opacity-50 whitespace-nowrap">{{ ('Cost: unknown') }}</span>
+                    <span class="text-xs text-base-content/60 whitespace-nowrap">{{ ('Cost: unknown') }}</span>
                 {% endif %}
 
             </div>
@@ -80,21 +80,21 @@
 
                     <img src="{{ row.id|pb_file(row.optimizedFile) }}" alt="{{ row.altText or spec.alt_text or '' }}"
                          {% if row.width %}width="{{ row.width }}"{% endif %} {% if row.height %}height="{{ row.height }}"{% endif %}
-                         class="rounded-lg w-full object-cover border border-base-300/50"
+                         class="rounded-field w-full object-cover border border-base-300/50"
                          {% if not is_cover %}loading="lazy"{% endif %} decoding="async">
 
-                    {% if row.caption %}<figcaption class="text-xs opacity-60">{{ row.caption }}</figcaption>{% endif %}
+                    {% if row.caption %}<figcaption class="text-xs text-base-content/65">{{ row.caption }}</figcaption>{% endif %}
 
                 </figure>
 
             {% elif row and row.status == 'failed' and row.error %}
 
-                <div class="text-xs text-error bg-error/10 rounded-lg p-2 leading-relaxed">
+                <div class="text-xs text-error bg-error/10 rounded-field p-2 leading-relaxed">
 
                     <span class="font-bold">{{ ('Error') }} ({{ row.error.category or 'unknown' }}):</span>
                     {{ row.error.message or '—' }}
 
-                    {% if row.error.retryable %}<span class="opacity-70">— {{ ('Retryable') }}</span>{% endif %}
+                    {% if row.error.retryable %}<span class="text-base-content/65">— {{ ('Retryable') }}</span>{% endif %}
 
                 </div>
 
@@ -102,7 +102,7 @@
 
             {% if spec %}
 
-                <div class="text-xs opacity-60 flex flex-wrap gap-x-4 gap-y-1">
+                <div class="text-xs text-base-content/65 flex flex-wrap gap-x-4 gap-y-1">
 
                     {% if spec.aspect_ratio %}<span>{{ ('Aspect ratio') }}: {{ spec.aspect_ratio }}</span>{% endif %}
 
@@ -112,11 +112,11 @@
 
                 </div>
 
-                <details class="collapse collapse-arrow bg-base-200/40 rounded-lg">
+                <details class="collapse collapse-arrow bg-base-200/40 rounded-field">
 
                     <summary class="collapse-title text-xs py-2 min-h-0">{{ ('Image prompt') }}</summary>
 
-                    <div class="collapse-content text-xs opacity-75 leading-relaxed">
+                    <div class="collapse-content text-xs text-base-content/80 leading-relaxed">
 
                         <p dir="auto" class="whitespace-pre-wrap">{{ spec.prompt }}</p>
 
@@ -144,7 +144,7 @@
 
                 {% elif row.status in ['ready'] %}
 
-                    <button class="btn btn-outline btn-xs"
+                    <button class="btn btn-ghost btn-xs"
                             hx-post="{{ base }}/{{ row.id }}/regenerate" hx-swap="none"
                             hx-confirm="{{ ('Create a new version? The current version is kept.') }}">
                         <span class="loading loading-spinner loading-xs htmx-indicator"></span>
@@ -168,7 +168,7 @@
 
                 {% else %}
 
-                    <span class="text-xs opacity-50">{{ ('Processing…') }}</span>
+                    <span class="text-xs text-base-content/60">{{ ('Processing…') }}</span>
 
                 {% endif %}
 
@@ -201,7 +201,7 @@
 
                 </label>
 
-                <div><button type="submit" class="btn btn-outline btn-xs">{{ ('Save info') }}</button></div>
+                <div><button type="submit" class="btn btn-ghost btn-sm">{{ ('Save info') }}</button></div>
 
             </form>
 
@@ -210,7 +210,7 @@
             {# version history: compare + select + remove #}
             {% if slot.versions | length > 1 %}
 
-            <details class="collapse collapse-arrow bg-base-200/30 rounded-lg">
+            <details class="collapse collapse-arrow bg-base-200/30 rounded-field">
 
                 <summary class="collapse-title text-xs py-2 min-h-0">
                     {{ ('Versions') }} ({{ slot.versions | length }})
@@ -228,7 +228,7 @@
 
                             <span class="badge badge-ghost badge-xs {{ v.status|status_badge }}">{{ v.status|status_label }}</span>
 
-                            {% if v.provider %}<span class="opacity-50">{{ v.provider }}/{{ v.model }}</span>{% endif %}
+                            {% if v.provider %}<span class="text-base-content/60">{{ v.provider }}/{{ v.model }}</span>{% endif %}
 
                             {% if v.optimizedFile %}<img src="{{ v.id|pb_file(v.optimizedFile) }}" alt="" class="h-8 w-14 object-cover rounded" loading="lazy">{% endif %}
 

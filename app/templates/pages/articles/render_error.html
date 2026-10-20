@@ -1,8 +1,8 @@
 {% extends "layouts/platform.html" %}
 {% block dashboard_content %}
 <div class="card border border-base-300 bg-base-100 min-w-0">
-    <div class="p-4 flex flex-col items-center gap-3 py-12 text-center">
-        <p class="text-sm opacity-60">{{ message or ('Something went wrong loading this page.') }}</p>
+    <div class="p-5 flex flex-col items-center gap-3 py-12 text-center">
+        <p class="text-sm text-base-content/65">{{ message or ('Something went wrong loading this page.') }}</p>
         <a href="{{ back_url or '/projects/' ~ (project.id or '') ~ '?tab=articles' }}" class="btn btn-primary btn-sm mt-2">{{ back_label or ('Back to articles') }}</a>
     </div>
 </div>

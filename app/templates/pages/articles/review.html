@@ -43,18 +43,16 @@
 {% endif %}
 {% endset %}
 
-{% set actions %}{% if article.status in ['review', 'approved'] %}<button type="button" class="btn btn-ghost btn-sm text-warning" @click="$store.ui.openModal('sendback-note')">{{ ('Return for changes') }}</button>{% endif %}{{ approve }}<div class="dropdown dropdown-end">
-    <button type="button" tabindex="0" class="btn btn-ghost btn-sm btn-square" aria-label="{{ ('More actions') }}">
+{% set actions %}{% if article.status in ['review', 'approved'] %}<button type="button" class="btn btn-ghost btn-sm text-warning" @click="$store.ui.openModal('sendback-note')">{{ ('Return for changes') }}</button>{% endif %}{{ approve }}<button type="button" popovertarget="article-actions" class="btn btn-ghost btn-sm btn-square" aria-label="{{ ('More actions') }}">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-4" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.75h.008v.008H12V6.75Zm0 5.25h.008v.008H12V12Zm0 5.25h.008v.008H12v-.008Z" /></svg>
     </button>
-    <ul tabindex="0" class="dropdown-content menu z-50 mt-1 w-56 rounded-box border border-base-300/70 bg-base-100 p-1.5 [&_a:hover]:bg-base-200 [&_button:hover]:bg-base-200 [&_label:hover]:bg-base-200">
+    <ul id="article-actions" popover class="dropdown dropdown-end menu w-56 rounded-box border border-base-300 bg-base-100 p-1.5 [&_a:hover]:bg-base-200 [&_button:hover]:bg-base-200 [&_label:hover]:bg-base-200">
         <li><a href="/projects/{{ project.id }}/articles/{{ article.id }}/workspace">{{ ('Open writing workspace') }}</a></li>
         <li><a href="/projects/{{ project.id }}/articles/{{ article.id }}">{{ ('Edit sections and meta') }}</a></li>
         {% if article.status in ['review', 'approved', 'sent_back', 'failed'] %}
         <li><button type="button" class="text-warning" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/regenerate" hx-swap="none" hx-disabled-elt="this" hx-confirm="{{ ('The current version is saved to history; continue full regeneration?') }}">{{ ('Regenerate the article') }}</button></li>
         {% endif %}
-    </ul>
-</div>{% endset %}
+    </ul>{% endset %}
 
 <div id="review-body">
 
@@ -70,7 +68,7 @@
         {{ a.verdict(False, ('%(n)s blocker(s) to clear before approval') % {'n': blockers},
                      ('Fix the items in Checks on the right, then approve.') ) }}
     {% endif %}
-    <div class="grid grid-cols-2 gap-px bg-base-300/70 sm:grid-cols-4">
+    <div class="grid grid-cols-2 gap-3 p-5 sm:grid-cols-4">
         {% set s = report.stats %}
         {{ f.stat(('Words'), s.words, 'bg-primary', ('minimum %(n)s') % {'n': s.min_words}) }}
         {{ f.stat(('Sections'), s.sections, 'bg-info') }}
@@ -84,9 +82,9 @@
     {# ── Read the article first ────────────────────────────────────────── #}
     <div class="flex min-w-0 flex-col gap-4">
         <section class="card border border-base-300 bg-base-100 min-w-0">
-            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
-                <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Article') }}</h2>
-                <div class="min-w-0 text-xs opacity-55">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-base-300 px-5 py-3.5">
+                <h2 class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">{{ ('Article') }}</h2>
+                <div class="min-w-0 text-xs text-base-content/60">
                     <code class="font-mono" dir="ltr">/{{ article.slug or '' }}</code>
                 </div>
             </div>
@@ -97,9 +95,9 @@
                 {{ f.empty(('No content has been generated'), ('Regenerate the article, then review it here.'), compact=true) }}
                 {% endif %}
                 {% if article.metaDescription %}
-                <div class="mt-5 border-t border-base-300/70 pt-3">
-                    <p class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Meta description') }}</p>
-                    <p class="mt-1 text-sm opacity-70 leading-relaxed">{{ article.metaDescription }}</p>
+                <div class="mt-5 border-t border-base-300 pt-3">
+                    <p class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">{{ ('Meta description') }}</p>
+                    <p class="mt-1 text-sm text-base-content/65 leading-relaxed">{{ article.metaDescription }}</p>
                 </div>
                 {% endif %}
             </div>
@@ -107,16 +105,16 @@
 
         {% if article.outline and article.outline.sections %}
         <details class="card group border border-base-300 bg-base-100 min-w-0">
-            <summary class="flex cursor-pointer select-none items-center gap-2 border-b border-base-300/70 px-4 py-3">
-                <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Outline') }}</h2>
+            <summary class="flex cursor-pointer select-none items-center gap-2 group-open:border-b group-open:border-base-300 px-5 py-3.5">
+                <h2 class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">{{ ('Outline') }}</h2>
                 <span class="badge badge-soft badge-neutral badge-xs tabular-nums">{{ article.outline.sections|length }}</span>
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="ms-auto size-3.5 transition-transform group-open:rotate-180" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
             </summary>
-            <ol class="flex flex-col gap-1.5 p-4">
+            <ol class="flex flex-col gap-1.5 p-5">
                 {% for plan in article.outline.sections %}
-                <li class="rounded-box border border-base-300/70 px-3 py-1.5 text-sm">
+                <li class="rounded-box border border-base-300 px-3 py-1.5 text-sm">
                     <span class="font-semibold">{{ loop.index }}. {{ plan.heading }}</span>
-                    {% if plan.content_brief %}<p class="mt-0.5 text-xs opacity-50">{{ plan.content_brief }}</p>{% endif %}
+                    {% if plan.content_brief %}<p class="mt-0.5 text-xs text-base-content/60">{{ plan.content_brief }}</p>{% endif %}
                 </li>
                 {% endfor %}
             </ol>
@@ -133,13 +131,13 @@
     {# ── The evidence ──────────────────────────────────────────────────── #}
     <aside class="flex min-w-0 flex-col gap-4 lg:sticky lg:top-4">
         <section class="card overflow-hidden border {{ 'border-success/40' if report.ok else 'border-error/40' }} bg-base-100 min-w-0">
-            <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
-                <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Checks') }}</h2>
+            <div class="flex items-center justify-between gap-2 border-b border-base-300 px-5 py-3.5">
+                <h2 class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">{{ ('Checks') }}</h2>
                 <span class="badge badge-sm {{ 'badge-soft badge-success' if report.ok else 'badge-soft badge-error' }}">{{ ('Passed') if report.ok else (report.issues|length ~ ' ' ~ ('issue' if report.issues|length == 1 else 'issues')) }}</span>
             </div>
-            <div class="p-4 text-xs">
+            <div class="p-5 text-xs">
                 {% if report.ok %}
-                <p class="opacity-60">{{ ('All checks passed — the article can be approved.') }}</p>
+                <p class="text-base-content/65">{{ ('All checks passed — the article can be approved.') }}</p>
                 {% else %}
                 {{ a.issues(report_issues) }}
                 {% endif %}
@@ -147,30 +145,30 @@
         </section>
 
         <section class="card overflow-hidden border {{ 'border-success/40' if qa_ready else ('border-warning/40' if qa_ran else 'border-base-300') }} bg-base-100 min-w-0">
-            <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
-                <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Editorial QA') }}</h2>
+            <div class="flex items-center justify-between gap-2 border-b border-base-300 px-5 py-3.5">
+                <h2 class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">{{ ('Editorial QA') }}</h2>
                 {% if qa_ran %}
                 <span class="badge badge-sm {{ 'badge-soft badge-success' if qa_ready else 'badge-soft badge-warning' }}">{{ ('Clean') if qa_ready else ('Needs attention') }}</span>
                 {% else %}
                 <span class="badge badge-sm badge-soft badge-neutral">{{ ('Not audited') }}</span>
                 {% endif %}
             </div>
-            <div class="p-4 flex flex-col gap-2 text-xs">
+            <div class="p-5 flex flex-col gap-2 text-xs">
                 {% if not qa_ran %}
-                <p class="opacity-60">{{ ('No LLM audit ran for this article — configure the Article QA prompts to enable it.') }}</p>
+                <p class="text-base-content/65">{{ ('No LLM audit ran for this article — configure the Article QA prompts to enable it.') }}</p>
                 {% else %}
-                {% if qa.get('summary') %}<p class="leading-relaxed opacity-80">{{ qa.get('summary') }}</p>{% endif %}
+                {% if qa.get('summary') %}<p class="leading-relaxed text-base-content/80">{{ qa.get('summary') }}</p>{% endif %}
                 {% if qa.get('repaired') %}<p class="text-success">{{ ('Repaired automatically from QA findings and re-validated.') }}</p>{% endif %}
-                {% if qa_issues %}{{ a.issues(qa_issues) }}{% else %}<p class="opacity-60">{{ ('No issues reported.') }}</p>{% endif %}
+                {% if qa_issues %}{{ a.issues(qa_issues) }}{% else %}<p class="text-base-content/65">{{ ('No issues reported.') }}</p>{% endif %}
                 {% endif %}
             </div>
         </section>
 
         <section class="card border border-base-300 bg-base-100 min-w-0">
-            <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
-                <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Article details') }}</h2>
+            <div class="flex items-center justify-between gap-2 border-b border-base-300 px-5 py-3.5">
+                <h2 class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">{{ ('Article details') }}</h2>
             </div>
-            <dl class="flex flex-col gap-1.5 p-4 text-xs">
+            <dl class="flex flex-col gap-1.5 p-5 text-xs">
                 {{ a.kv(('Revision'), 'v' ~ (article.lastGeneratedRevision or '—')) }}
                 {{ a.kv(('Generated'), article.generatedAt|loc_dt if article.generatedAt else '—') }}
                 {{ a.kv(('SEO score'), (article.seoScore or 0) ~ '/100', 'font-bold text-primary') }}
@@ -192,11 +190,11 @@
 
         {% if internal_links %}
         <section class="card border border-base-300 bg-base-100 min-w-0">
-            <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
-                <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Internal links') }}</h2>
+            <div class="flex items-center justify-between gap-2 border-b border-base-300 px-5 py-3.5">
+                <h2 class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">{{ ('Internal links') }}</h2>
                 <span class="badge badge-soft badge-neutral badge-xs tabular-nums">{{ internal_links|length }}</span>
             </div>
-            <ul class="flex flex-col gap-1.5 p-4 text-xs">
+            <ul class="flex flex-col gap-1.5 p-5 text-xs">
                 {% for link in internal_links %}
                 <li class="truncate"><a href="{{ link.url }}" target="_blank" rel="noopener" class="link link-primary" dir="ltr">{{ link.title }}</a></li>
                 {% endfor %}
@@ -206,18 +204,18 @@
 
         {% if sections %}
         <details class="card group border border-base-300 bg-base-100 min-w-0">
-            <summary class="flex cursor-pointer select-none items-center gap-2 border-b border-base-300/70 px-4 py-3">
-                <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Section provenance') }}</h2>
+            <summary class="flex cursor-pointer select-none items-center gap-2 group-open:border-b group-open:border-base-300 px-5 py-3.5">
+                <h2 class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">{{ ('Section provenance') }}</h2>
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="ms-auto size-3.5 transition-transform group-open:rotate-180" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
             </summary>
-            <ul class="flex flex-col gap-1 p-4 text-xs">
+            <ul class="flex flex-col gap-1 p-5 text-xs">
                 {% for s in sections %}
-                <li class="flex items-center justify-between gap-2 rounded-box border border-base-300/70 px-2 py-1">
-                    <span class="truncate opacity-70">{{ loop.index }}. {{ s.heading }}</span>
+                <li class="flex items-center justify-between gap-2 rounded-box border border-base-300 px-2 py-1">
+                    <span class="truncate text-base-content/65">{{ loop.index }}. {{ s.heading }}</span>
                     <span class="flex shrink-0 items-center gap-1">
-                        {% if s.model %}<span class="hidden font-mono opacity-60 sm:inline" dir="ltr">{{ s.provider }}/{{ s.model }}</span>{% endif %}
+                        {% if s.model %}<span class="hidden font-mono text-base-content/65 sm:inline" dir="ltr">{{ s.provider }}/{{ s.model }}</span>{% endif %}
                         {% if s.promptVersion %}<span class="badge badge-soft badge-info badge-xs">v{{ s.promptVersion }}</span>{% endif %}
-                        {% if s.generationLatency %}<span class="opacity-40 tabular-nums">{{ s.generationLatency }}ms</span>{% endif %}
+                        {% if s.generationLatency %}<span class="text-base-content/60 tabular-nums">{{ s.generationLatency }}ms</span>{% endif %}
                     </span>
                 </li>
                 {% endfor %}
@@ -226,20 +224,20 @@
         {% endif %}
 
         <details class="card group border border-base-300 bg-base-100 min-w-0">
-            <summary class="flex cursor-pointer select-none items-center gap-2 border-b border-base-300/70 px-4 py-3">
-                <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Version history') }}</h2>
+            <summary class="flex cursor-pointer select-none items-center gap-2 group-open:border-b group-open:border-base-300 px-5 py-3.5">
+                <h2 class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">{{ ('Version history') }}</h2>
                 {% if revisions %}<span class="badge badge-soft badge-neutral badge-xs tabular-nums">{{ revisions|length }}</span>{% endif %}
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="ms-auto size-3.5 transition-transform group-open:rotate-180" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
             </summary>
-            <div class="p-4">
+            <div class="p-5">
                 {% if revisions %}
                 <ul class="flex flex-col gap-1 text-xs">
                     {% for r in revisions %}
-                    <li class="flex items-center justify-between gap-2 rounded-box border border-base-300/70 px-2 py-1">
+                    <li class="flex items-center justify-between gap-2 rounded-box border border-base-300 px-2 py-1">
                         <span class="flex min-w-0 items-center gap-1.5">
                             <span class="badge badge-soft badge-neutral badge-xs shrink-0">v{{ r.revision }}</span>
                             <span class="badge badge-soft badge-info badge-xs shrink-0">{{ r.kind }}</span>
-                            <span class="truncate opacity-60">{{ r.note or r.created|loc_dt }}</span>
+                            <span class="truncate text-base-content/65">{{ r.note or r.created|loc_dt }}</span>
                         </span>
                         {% if r.revision != article.lastGeneratedRevision %}
                         <button class="btn btn-ghost btn-xs shrink-0" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/revisions/{{ r.id }}/rollback" hx-swap="none" hx-confirm="{{ ('Restore this version? The current version is saved to history.') }}">{{ ('Restore') }}</button>
@@ -248,7 +246,7 @@
                     {% endfor %}
                 </ul>
                 {% else %}
-                <p class="text-xs opacity-50">{{ ('No history recorded.') }}</p>
+                <p class="text-xs text-base-content/60">{{ ('No history recorded.') }}</p>
                 {% endif %}
             </div>
         </details>
@@ -258,7 +256,7 @@
 
 <!-- Return note -->
 <dialog id="sendback-note" class="modal modal-bottom sm:modal-middle">
-    <div class="modal-box bg-base-100">
+    <div class="modal-box border border-base-300 bg-base-100">
         <div class="flex items-center gap-3 mb-3">
             <span class="grid size-11 place-items-center rounded-box bg-warning/15 text-warning">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="size-6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" /></svg>

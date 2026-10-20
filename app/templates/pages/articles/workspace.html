@@ -11,11 +11,10 @@
 
 {# Writing is the point of this page, so the next action is the primary one and
    everything that overwrites the article lives in the overflow menu. #}
-{% set actions %}{% if article.status == 'review' %}<a href="/projects/{{ project.id }}/articles/{{ article.id }}/review" class="btn btn-primary btn-sm">{{ ('Review and approve') }}</a>{% elif article.status == 'approved' %}<button class="btn btn-primary btn-sm" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/publish" hx-swap="none" hx-disabled-elt="this" hx-confirm="{{ ('Send the article to WordPress?') }}"><span class="loading loading-spinner loading-xs htmx-indicator"></span>{{ ('Publish') }}</button>{% elif article.status == 'published' %}<button class="btn btn-primary btn-sm" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/update" hx-swap="none" hx-disabled-elt="this" hx-confirm="{{ ('Update the WordPress post with the current version?') }}"><span class="loading loading-spinner loading-xs htmx-indicator"></span>{{ ('Update') }}</button>{% elif article.status in ['sent_back', 'failed'] and resume_job %}<button class="btn btn-primary btn-sm" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/resume" hx-swap="none" hx-disabled-elt="this" title="{{ ('Continue from the last failed step without regenerating content') }}"><span class="loading loading-spinner loading-xs htmx-indicator"></span>{{ ('Resume %(stage)s') % {'stage': resume_label} }}</button>{% endif %}{% if article.status in ['review', 'approved', 'sent_back'] %}<a class="btn btn-ghost btn-sm" href="/projects/{{ project.id }}/articles/{{ article.id }}/review">{{ ('Review') }}</a>{% endif %}<div class="dropdown dropdown-end">
-    <button type="button" tabindex="0" class="btn btn-ghost btn-sm btn-square" aria-label="{{ ('More actions') }}">
+{% set actions %}{% if article.status == 'review' %}<a href="/projects/{{ project.id }}/articles/{{ article.id }}/review" class="btn btn-primary btn-sm">{{ ('Review and approve') }}</a>{% elif article.status == 'approved' %}<button class="btn btn-primary btn-sm" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/publish" hx-swap="none" hx-disabled-elt="this" hx-confirm="{{ ('Send the article to WordPress?') }}"><span class="loading loading-spinner loading-xs htmx-indicator"></span>{{ ('Publish') }}</button>{% elif article.status == 'published' %}<button class="btn btn-primary btn-sm" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/update" hx-swap="none" hx-disabled-elt="this" hx-confirm="{{ ('Update the WordPress post with the current version?') }}"><span class="loading loading-spinner loading-xs htmx-indicator"></span>{{ ('Update') }}</button>{% elif article.status in ['sent_back', 'failed'] and resume_job %}<button class="btn btn-primary btn-sm" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/resume" hx-swap="none" hx-disabled-elt="this" title="{{ ('Continue from the last failed step without regenerating content') }}"><span class="loading loading-spinner loading-xs htmx-indicator"></span>{{ ('Resume %(stage)s') % {'stage': resume_label} }}</button>{% endif %}{% if article.status in ['review', 'approved', 'sent_back'] %}<a class="btn btn-ghost btn-sm" href="/projects/{{ project.id }}/articles/{{ article.id }}/review">{{ ('Review') }}</a>{% endif %}<button type="button" popovertarget="article-actions" class="btn btn-ghost btn-sm btn-square" aria-label="{{ ('More actions') }}">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-4" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.75h.008v.008H12V6.75Zm0 5.25h.008v.008H12V12Zm0 5.25h.008v.008H12v-.008Z" /></svg>
     </button>
-    <ul tabindex="0" class="dropdown-content menu z-50 mt-1 w-60 rounded-box border border-base-300/70 bg-base-100 p-1.5 [&_a:hover]:bg-base-200 [&_button:hover]:bg-base-200 [&_label:hover]:bg-base-200">
+    <ul id="article-actions" popover class="dropdown dropdown-end menu w-60 rounded-box border border-base-300 bg-base-100 p-1.5 [&_a:hover]:bg-base-200 [&_button:hover]:bg-base-200 [&_label:hover]:bg-base-200">
         <li><a href="/projects/{{ project.id }}/articles/{{ article.id }}">{{ ('Article detail') }}</a></li>
         {% if article.wordpressUrl %}<li><a href="{{ article.wordpressUrl }}" target="_blank" rel="noopener">{{ ('View on WordPress') }}</a></li>{% endif %}
         {% if article.finalHtml and article.status not in ['published', 'publishing'] and (article.status != 'generating' or all_sections_done) %}
@@ -27,8 +26,7 @@
         {% if article.status == 'published' %}
         <li><button type="button" class="text-warning" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/unpublish" hx-swap="none" hx-disabled-elt="this" hx-confirm="{{ ('Make the WordPress post private (unpublish)?') }}">{{ ('Unpublish') }}</button></li>
         {% endif %}
-    </ul>
-</div>{% endset %}
+    </ul>{% endset %}
 
 <div id="workspace-page" class="flex flex-col gap-4">
 
@@ -43,7 +41,7 @@
             {% elif generating %}{{ ('Writing sections — %(a)s of %(b)s ready') % {'a': done_count, 'b': sections|length} }}
             {% else %}{{ ('Sections ready — building the final article') }}{% endif %}
         </strong>
-        <span class="mt-0.5 block text-xs opacity-70">{{ ('This page refreshes itself until the article moves to Review. If a section fails, regenerate that section.') }}</span>
+        <span class="mt-0.5 block text-xs text-base-content/65">{{ ('This page refreshes itself until the article moves to Review. If a section fails, regenerate that section.') }}</span>
     </span>
 </div>
 {% endif %}
@@ -59,9 +57,9 @@
         {% for s in sections %}
         {% set section = s %}{# _section_status.html expects `section` #}
         <div class="card border border-base-300 bg-base-100 min-w-0" id="section-{{ s.id }}">
-            <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
+            <div class="flex items-center justify-between gap-2 border-b border-base-300 px-5 py-3.5">
                 <h3 class="flex min-w-0 items-center gap-2 text-sm font-bold">
-                    <span class="tabular-nums text-xs opacity-40">{{ loop.index }}.</span>
+                    <span class="tabular-nums text-xs text-base-content/60">{{ loop.index }}.</span>
                     <span class="truncate">{{ s.heading }}</span>
                 </h3>
                 <span id="section-status-{{ s.id }}">
@@ -70,11 +68,11 @@
             </div>
 
             {% set _generating_section = s.status in ['pending', 'generating'] %}
-            <form hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/sections/{{ s.id }}" hx-swap="none" class="flex flex-col gap-4 p-4">
+            <form hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/sections/{{ s.id }}" hx-swap="none" class="flex flex-col gap-4 p-5">
                 {% if _generating_section %}
                 <div id="live-{{ s.id }}" class="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-box border border-warning/20 bg-warning/5 px-2.5 py-1.5 text-xs">
                     {% include "pages/articles/_section_status.html" %}
-                    <span class="opacity-60">{{ ('Writing this section — saving is disabled until it finishes.') }}</span>
+                    <span class="text-base-content/65">{{ ('Writing this section — saving is disabled until it finishes.') }}</span>
                 </div>
                 {% endif %}
 
@@ -98,8 +96,8 @@
                     <textarea id="section-content-{{ s.id }}" {% if not _generating_section %}hx-preserve="true"{% endif %} name="content" class="textarea w-full font-mono text-xs min-h-40" dir="auto" {% if _generating_section %}disabled{% endif %}>{{ s.content or '' }}</textarea>
                 </label>
 
-                <div class="flex flex-wrap items-center justify-between gap-2 border-t border-base-300/60 pt-3">
-                    <span class="flex min-w-0 items-center gap-2 text-xs opacity-50">
+                <div class="flex flex-wrap items-center justify-between gap-2 border-t border-base-300 pt-3">
+                    <span class="flex min-w-0 items-center gap-2 text-xs text-base-content/60">
                         {% if s.generationLatency %}{{ ('Written in %(n)sms') % {'n': s.generationLatency} }}{% endif %}
                         {% if s.model %}<span class="truncate font-mono" dir="ltr">{{ s.provider }}/{{ s.model }}</span>{% endif %}
                     </span>
@@ -118,8 +116,8 @@
     {# ── Outline: jump between sections while writing ─────────────────── #}
     <aside class="order-2 min-w-0 lg:col-span-2 lg:col-start-1 lg:row-start-2 2xl:col-span-1 2xl:col-start-1 2xl:row-start-1 2xl:sticky 2xl:top-16">
         <div class="card border border-base-300 bg-base-100 min-w-0">
-            <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
-                <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Outline') }}</h2>
+            <div class="flex items-center justify-between gap-2 border-b border-base-300 px-5 py-3.5">
+                <h2 class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">{{ ('Outline') }}</h2>
                 <span class="badge badge-soft badge-neutral badge-xs tabular-nums">{{ sections|length }}</span>
             </div>
             <div class="p-3">
@@ -131,10 +129,10 @@
     {# ── Context: the fields that decide what happens next ─────────────── #}
     <aside class="order-3 flex min-w-0 flex-col gap-4 lg:col-start-2 lg:row-start-1 2xl:col-start-3 2xl:sticky 2xl:top-16">
         <section class="card border border-base-300 bg-base-100 min-w-0">
-            <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
-                <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Title and meta') }}</h2>
+            <div class="flex items-center justify-between gap-2 border-b border-base-300 px-5 py-3.5">
+                <h2 class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">{{ ('Title and meta') }}</h2>
             </div>
-            <form hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/meta" hx-swap="none" class="p-4 flex flex-col gap-4">
+            <form hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/meta" hx-swap="none" class="p-5 flex flex-col gap-4">
                 <label class="flex flex-col gap-1 min-w-0">
                     <span class="truncate text-xs font-medium">{{ ('Title') }}</span>
                     <input id="article-meta-title" hx-preserve="true" name="title" class="input w-full" dir="auto" value="{{ article.title }}" />
@@ -151,17 +149,17 @@
         </section>
 
         <section class="card overflow-hidden border {{ 'border-error/40' if article.validation and not article.validation.ok else 'border-base-300' }} bg-base-100 min-w-0">
-            <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
-                <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Checks') }}</h2>
+            <div class="flex items-center justify-between gap-2 border-b border-base-300 px-5 py-3.5">
+                <h2 class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">{{ ('Checks') }}</h2>
                 {% if article.validation %}
                 <span class="badge badge-sm {{ 'badge-soft badge-success' if article.validation.ok else 'badge-soft badge-error' }}">{% set n_issues = article.validation.issues|length %}{{ ('Passed') if article.validation.ok else (n_issues ~ ' ' ~ ('issue' if n_issues == 1 else 'issues')) }}</span>
                 {% endif %}
             </div>
-            <div class="p-4 text-xs">
+            <div class="p-5 text-xs">
                 {% if not article.validation %}
-                <p class="opacity-60">{{ ('Not validated yet — checks run when the article is reviewed.') }}</p>
+                <p class="text-base-content/65">{{ ('Not validated yet — checks run when the article is reviewed.') }}</p>
                 {% elif article.validation.ok %}
-                <p class="opacity-60">{{ ('All checks passed.') }}</p>
+                <p class="text-base-content/65">{{ ('All checks passed.') }}</p>
                 {% else %}
                 {% set rows = [] %}
                 {% for issue in article.validation.issues %}
@@ -170,7 +168,7 @@
                 {{ a.issues(rows) }}
                 {% endif %}
                 {% if article.validation and article.validation.stats %}
-                <p class="mt-2 border-t border-base-300/70 pt-2 opacity-55">
+                <p class="mt-2 border-t border-base-300 pt-2 text-base-content/60">
                     {{ ('%(a)s words · %(b)s sections · minimum %(c)s') % {'a': article.validation.stats.words, 'b': article.validation.stats.sections, 'c': article.validation.stats.min_words} }}
                 </p>
                 {% endif %}
@@ -178,10 +176,10 @@
         </section>
 
         <section class="card border border-base-300 bg-base-100 min-w-0">
-            <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
-                <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Article') }}</h2>
+            <div class="flex items-center justify-between gap-2 border-b border-base-300 px-5 py-3.5">
+                <h2 class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">{{ ('Article') }}</h2>
             </div>
-            <dl class="flex flex-col gap-1.5 p-4 text-xs">
+            <dl class="flex flex-col gap-1.5 p-5 text-xs">
                 {{ a.kv(('SEO score'), (article.seoScore or 0) ~ '/100', 'font-bold text-primary') }}
                 {{ a.kv(('Outline version'), 'v' ~ (article.outlineVersion or 0)) }}
                 {% if topic %}{{ a.kv(('Keyword'), topic.keyword or '—') }}{% endif %}
@@ -190,10 +188,10 @@
         </section>
 
         <section class="card border border-base-300 bg-base-100 min-w-0">
-            <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
-                <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Internal links') }}</h2>
+            <div class="flex items-center justify-between gap-2 border-b border-base-300 px-5 py-3.5">
+                <h2 class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">{{ ('Internal links') }}</h2>
             </div>
-            <div class="p-4 text-xs">
+            <div class="p-5 text-xs">
                 {% if internal_links %}
                 <ul class="flex flex-col gap-1">
                     {% for link in internal_links %}
@@ -208,21 +206,21 @@
 
         {% if publish_runs %}
         <details class="card group border border-base-300 bg-base-100 min-w-0">
-            <summary class="flex cursor-pointer select-none items-center gap-2 border-b border-base-300/70 px-4 py-3">
-                <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Publish history') }}</h2>
+            <summary class="flex cursor-pointer select-none items-center gap-2 group-open:border-b group-open:border-base-300 px-5 py-3.5">
+                <h2 class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">{{ ('Publish history') }}</h2>
                 <span class="badge badge-soft badge-neutral badge-xs tabular-nums">{{ publish_runs|length }}</span>
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="ms-auto size-3.5 transition-transform group-open:rotate-180" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
             </summary>
-            <ul class="flex flex-col gap-2 p-4">
+            <ul class="flex flex-col gap-2 p-5">
                 {% for r in publish_runs %}
                 <li class="flex items-center justify-between gap-2 text-xs">
                     <span class="flex min-w-0 items-center gap-1.5">
                         <span class="badge badge-xs {{ r.status|status_badge }}">{{ r.status|status_label }}</span>
                         <span class="badge badge-soft badge-neutral badge-xs">{{ r.mode }}</span>
-                        {% if r.responseStatus %}<span class="opacity-40 tabular-nums">HTTP {{ r.responseStatus }}</span>{% endif %}
+                        {% if r.responseStatus %}<span class="text-base-content/60 tabular-nums">HTTP {{ r.responseStatus }}</span>{% endif %}
                     </span>
                     <span class="flex shrink-0 items-center gap-1.5">
-                        <span class="whitespace-nowrap opacity-60">{{ r.created|loc_dt }}</span>
+                        <span class="whitespace-nowrap text-base-content/65">{{ r.created|loc_dt }}</span>
                         {% if r.wordpressUrl %}<a href="{{ r.wordpressUrl }}" target="_blank" rel="noopener" class="link link-primary" dir="ltr">{{ ('Post %(n)s') % {'n': r.wordpressPostId} }}</a>{% endif %}
                         {% if r.status == 'failed' %}
                         <button type="button" class="btn btn-ghost btn-xs" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/publish-runs/{{ r.id }}/retry" hx-swap="none">{{ ('Retry') }}</button>

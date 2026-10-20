@@ -14,7 +14,7 @@
 {% if section.status == 'failed' and section.error %}
 <details class="mt-1">
     <summary class="text-xs text-error cursor-pointer">{{ ('View technical details') }}</summary>
-    <pre class="text-xs bg-error/5 border border-error/20 rounded-lg p-2 font-mono overflow-auto max-h-40" dir="ltr">{{ section.error.message }}
+    <pre class="text-xs bg-error/5 border border-error/20 rounded-field p-2 font-mono overflow-auto max-h-40" dir="ltr">{{ section.error.message }}
 {{ section.error|tojson }}</pre>
 </details>
 {% endif %}
