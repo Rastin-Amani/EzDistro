@@ -9,6 +9,57 @@ release builds on. Format is based on [Keep a Changelog](https://keepachangelog.
 
 ## [Unreleased]
 
+## [v1.25.0] — 2026-10-20
+
+### Changed
+- **Interface refresh.** The shell, page headers, dashboard pipeline, project
+  tabs, lists, tables, forms and modals were rebuilt on the same DaisyUI theme
+  with a calmer display scale, a single 44px control height, consistent
+  hairline surfaces, accessible secondary-text contrast, an underline project
+  tab strip, a solid-blue active mobile dock, press feedback, one reduced-motion-
+  safe page entrance and a foreground-only progress bar. `DESIGN.md` documents
+  the updated tokens; no bespoke CSS classes or new dependencies were added.
+- **Billing stays in the rail** under an Account group (also in the account
+  menu), so the plan is one click from anywhere.
+- **Status badges are softer** (8px corners, no hard 2px tag variants), and
+  **closed accordions no longer show a stray divider** — the rule appears only
+  while a disclosure is open.
+- **Workers, Events, Activity and Automation** were rebuilt on the same list
+  vocabulary (status dots, medallions, live badges, coloured schedule kinds),
+  and every filter form now uses one stacked label + control alignment instead
+  of DaisyUI's floating `fieldset` legends.
+- **Dark theme is a graphite ramp, not a void.** Ground `#1a1b21` (page) →
+  `#23252d` (panels) → `#383b47` (hairlines) mirrors the light paper → ash →
+  mist steps, the brand blue keeps its hue and is lifted only to reach contrast
+  (`#7575ff`, 4.7:1 as text, dark ink on its fills), and every text token now
+  sits at `text-base-content/60` or heavier (≥4.9:1) instead of the old
+  `/40`–`/55` greys.
+- **The mobile dock's active item is a filled chip only** — DaisyUI's
+  `dock-active` underline bar is no longer applied.
+- **The Advanced tab is grouped** into Services & models / Content pipeline /
+  Diagnostics with a one-line description per destination.
+- **The dashboard shows stage shares** — per-stage progress bars and proper
+  singular/plural counts — and the **Workers page leads with a Live status
+  rail** instead of five stat cards.
+
+### Fixed
+- **Every Alpine-driven modal opened from the shell was dead.** Alpine only
+  initializes subtrees that contain an `x-data` root, and the shell had none,
+  so `@click="$store.ui.openModal(…)` on Add website / Add topic / Delete
+  project did nothing (the Connections editor worked because it carries its own
+  `x-data`). `<body>` now declares the scope, and `tests/test_shell_alpine.py`
+  guards it.
+- **Menus no longer land behind other elements or off-screen.** Every action,
+  account and data menu is now a popover in the top layer, positioned against
+  its invoker by one shared helper (flip up near the bottom edge, clamp to the
+  viewport, scroll when taller than the screen) instead of relying on CSS
+  anchor positioning, which Firefox does not support. The rail also carries
+  `md:z-30` so its menus are never painted under the sticky project tabs.
+- **The account menu was never rendered.** No template context ever set `user`,
+  so the shell's `{% if user %}` block — avatar, plan link, **sign out** — was
+  skipped on every page. A context processor now exposes the authenticated
+  user to full-page renders (htmx fragments skip it).
+
 ## [v1.24.0] — 2026-10-19
 
 ### Added
