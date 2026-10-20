@@ -3,54 +3,45 @@ name: EzDistro Atlas
 description: Wireframe-atlas operations UI — paper canvas, carbon ink, one rationed electric blue over DaisyUI.
 colors:
   paper: "#ffffff"
-  ash: "#f2f2f2"
-  mist: "#b1b7c3"
-  carbon: "#000000"
+  ash: "#f6f6f7"
+  mist: "#e4e4e7"
+  carbon: "#111113"
   graphite: "#323232"
   slate: "#717886"
   electric-blue: "#0000ff"
   wireframe-green: "#098551"
-  ink-ground: "#0b0b10"
-  blue-dark: "#3333ff"
+  ink-ground: "#1a1b21"
+  blue-dark: "#7575ff"
   green-dark: "#3fce7d"
 typography:
   display:
     fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "clamp(2.5rem, 4vw + 1.5rem, 5rem)"
+    fontSize: "clamp(1.9rem, 1.35rem + 1.7vw, 3rem)"
     fontWeight: 800
-    lineHeight: 0.95
-    letterSpacing: "-0.04em"
+    lineHeight: 1.02
+    letterSpacing: "-0.035em"
   body:
     fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif"
     fontSize: "1rem"
     fontWeight: 400
     lineHeight: 1.5
-    letterSpacing: "-0.014em"
+    letterSpacing: "-0.011em"
   mono-label:
     fontFamily: "JetBrains Mono, IBM Plex Mono, ui-monospace, Menlo, Consolas, monospace"
-    fontSize: "0.72rem"
+    fontSize: "0.7rem"
     fontWeight: 400
     lineHeight: 1.43
     letterSpacing: "0.073em"
-  rail-chrome:
-    fontSize: "0.65rem"
-    fontWeight: 400
-    letterSpacing: "0.073em"
-  dock-label:
-    fontSize: "0.6rem"
-    fontWeight: 400
-    letterSpacing: "0.02em"
   metric-count:
-    fontSize: "2rem"
-    fontWeight: 900
+    fontSize: "2.25rem"
+    fontWeight: 800
     lineHeight: 1
     letterSpacing: "-0.04em"
 rounded:
   tag: "2px"
-  surface: "8px"
-  dock: "16px"
-  dock-item: "12px"
-  scrollbar-thumb: "9999px"
+  field: "10px"
+  surface: "12px"
+  selector: "6px"
 spacing:
   unit: "4px"
   section: "48px"
@@ -59,78 +50,84 @@ components:
   button-primary:
     backgroundColor: "{colors.electric-blue}"
     textColor: "{colors.paper}"
-    rounded: "{rounded.surface}"
+    rounded: "{rounded.field}"
     padding: "12px 16px"
   button-ghost:
     backgroundColor: "{colors.paper}"
     textColor: "{colors.carbon}"
-    rounded: "{rounded.surface}"
+    rounded: "{rounded.field}"
     padding: "12px 16px"
   logo-block:
     backgroundColor: "{colors.electric-blue}"
     textColor: "{colors.paper}"
-    rounded: "0px"
-    size: "40px"
-  nav-active-bar:
-    backgroundColor: "{colors.electric-blue}"
-    width: "2px"
+    rounded: "{rounded.field}"
+    size: "36px"
+  nav-active-chip:
+    backgroundColor: "primary/10"
+    textColor: "{colors.electric-blue}"
 ---
 
 ## Overview
 
-EzDistro is a lightweight **Operate-mode** writing tool: the operator's loop is Topics → Draft → Review → Publish. The interface is a wireframe atlas on white paper: hairline rules form the terrain, oversized tight-tracked display titles open top-level pages only, mono uppercase labels pin every section, and electric blue (`#0000ff`) is rationed to exactly three contexts — the logo block, the primary action, and live data nodes. Surfaces are flat (no shadows, no gradients); structure comes from spacing, hairlines, and type scale. Dark theme translates the same rationing onto an ink ground with a one-step-brightened blue. The interface is English-only, laid out with logical properties so it stays direction-agnostic.
+EzDistro is a lightweight **Operate-mode** writing tool: the operator's loop is Topics → Draft → Review → Publish. The interface is a wireframe atlas on white paper: hairline rules form the terrain, tight-tracked display titles open top-level pages only, mono uppercase labels pin every section, and electric blue (`#0000ff`) is rationed to exactly three contexts — the logo block, the primary action, and live data nodes. Surfaces are flat (no card shadows, no gradients); structure comes from spacing, hairlines, and type scale. Dark theme translates the same rationing onto an ink ground with a one-step-brightened blue. The interface is English-only, laid out with logical properties so it stays direction-agnostic.
 
-Information architecture follows the writing flow, not the data model. Project tabs are grouped **Write** (Topics, Articles, Images, Publish) → **Research** → **Setup** (Settings, Connections, AI models, Prompts) → **System** (Retrieval, Indexing, Jobs, Events). The project landing tab is **Topics**; the project header's primary action is **Continue writing**. Global nav is Workspace (Dashboard, Projects) → Operations (Jobs, Workers, Events) → Account (Billing); Failed jobs live behind Jobs, not as a top-level scare. Styling is standard **DaisyUI + theme tokens** with Tailwind utilities inline in the templates — `input.css` holds only the two theme plugins, base accessibility, the htmx indicator and two Tailwind layer-order fixes. There is no bespoke component layer: all component visuals (cards, stats, menus, docks, toasts, tables, badges, buttons, modals) come from DaisyUI directly.
+Information architecture follows the writing flow, not the data model. Project tabs are grouped **Grow your website** (Overview, Find opportunities, Content plan, Articles, Published) → **Set it up** (Website setup, Advanced); specialist surfaces (Connections, AI models, Writing rules, Images, Search settings, Site health, Task history, Diagnostic logs) live one level down under Advanced. Global nav is **Workspace** (Overview, Websites) → **Operations** (Activity, Automation, Workers, Events) → **Account** (Plan & billing), with billing also reachable from the account menu. Styling is standard **DaisyUI + theme tokens** with Tailwind utilities inline in the templates — `input.css` holds only the two theme plugins, base accessibility, the htmx indicator, two table display-order fixes and the theme cross-fade rule. There is no bespoke component layer: all component visuals (cards, stats, menus, docks, toasts, tables, badges, buttons, modals, tabs) come from DaisyUI directly.
 
 ## Colors
 
-- Paper `#ffffff` page canvas; Ash `#f2f2f2` panel/secondary fill; Mist `#b1b7c3` hairlines, dividers, input outlines.
-- Carbon `#000000` primary text and headlines; Graphite `#323232` strong secondary; Slate `#717886` body prose and mono labels.
-- Electric blue `#0000ff`: logo block, primary filled button, live pipeline node, active-nav bar/icon, focus ring, selection. Never body text, icons at rest, or decoration.
+- Paper `#ffffff` page canvas; Ash `#f6f6f7` panel/secondary fill; Mist `#e4e4e7` hairlines, dividers, input outlines.
+- Carbon `#111113` primary text and headlines; Graphite `#323232` strong secondary; Slate `#717886` body prose and mono labels.
+- Electric blue `#0000ff`: logo block, primary filled button, live pipeline node, active-nav chip, focus ring, selection. Never body text, icons at rest, or decoration.
 - Wireframe green `#098551`: published/indexed/healthy nodes and success states.
-- Dark (`ezdistro-dark`): ground `#0b0b10`, panel `#14151c`, hairline `#2c2e3a`, ink `#f5f5f5`, blue `#3333ff`, green `#3fce7d`. Same rationing.
+- Dark (`ezdistro-dark`): graphite ground `#1a1b21` (a step above pure black, so panels, hairlines and floating layers all separate), panel `#23252d`, hairline `#383b47`, ink `#e9eaee`, blue `#7575ff`, green `#3fce7d`. The dark ramp mirrors the light paper → ash → mist steps instead of inverting them, which is what previously produced a black-on-black page. The blue keeps the brand hue (240°) and is lifted only as far as contrast requires: `#0000ff` sits at ~2.2:1 on the ground, `#7575ff` at 4.7:1, and its fill carries dark ink (`#0d0e13`, 5.3:1) so the primary button is readable too.
 
 ## Typography
 
-- Display: Inter, 800, `clamp(2.5rem, 4vw + 1.5rem, 5rem)`, `-0.04em`, `0.95` — page titles only (the `forms.page_header` macro). Clamp keeps display type inside mobile viewports.
-- Body: 16px/1.5, `-0.014em`, Slate-tinted secondary text (the `page_header` subtitle).
-- Mono labels: uppercase, `+0.073em` tracking, Slate — section tags, panel titles, metric labels, rail labels, nav groups, with a short leading rule on page eyebrows. Content labels are `0.72rem`; chrome labels step down to `0.65rem` and DaisyUI dock labels to `0.6rem`.
-- Data numerals use `tabular-nums` (`stat-value`, `.font-mono`, tables, metrics). Hero counts step to `2rem` black, `-0.04em`. Dates render Gregorian through the `loc_*` filters.
-- Brand face: Inter ships as a committed local variable font — `app/static/assets/InterVariable.woff2` (352 KB) preferred, with the `InterVariable.ttf` fallback, `@font-face` in `input.css`; no webfont deps.
+- Display: Inter, 800, `clamp(1.9rem, 1.35rem + 1.7vw, 3rem)`, `-0.035em`, `1.02` — top-level page titles only (the `forms.page_header` macro) and the login headline. The restrained ceiling keeps content above the fold on laptops and phones while still reading as an atlas title.
+- Body: 16px/1.5, `-0.011em`, Slate-tinted secondary text (`text-base-content/65`) for subtitles and prose. **Text floor:** every text token is at least `text-base-content/60` (4.9:1 on paper, 5.9:1 on the dark ground); `/30` survives only on `aria-hidden` separators, never on words.
+- Mono labels: uppercase, `+0.073em` tracking, `0.7rem`, `text-base-content/60` — section tags, panel titles, metric labels, rail group labels, table headers, with a short leading rule on page eyebrows. One size for every chrome label; no second scale.
+- Data numerals use `tabular-nums` (`stat-value`, `.font-mono`, tables, metrics). Hero counts step to `2.25rem` extrabold, `-0.04em`. Dates render Gregorian through the `loc_*` filters.
+- Brand face: Inter ships as a committed local variable font — `app/static/assets/InterVariable.woff2` (352 KB) preferred, with the `InterVariable.ttf` fallback, `@font-face` in `input.css`; no webfont deps. `font-optical-sizing: auto` and `text-rendering: optimizeLegibility` are set globally.
 
 ## Layout
 
-- Desktop: fixed 220px rail (`md:w-55 lg:w-60`) — blue 40px logo block, flat nav items with chevrons, bottom-anchored Start panel (hairline above, mono `START HERE` label, one blue primary), then account/theme foot. Content column fills remaining width, max `75rem`.
-- Mobile: sticky blurred top bar (logo + theme switcher + account); floating thumb-zone dock pill (**4 items**: Dashboard, Projects, Jobs, Events — active = solid blue block); `pb-32` content clearance + safe-area insets. Project tabs become a sticky scrollable strip.
-- Top-level pages open with the atlas header: mono eyebrow + display title + slate subhead (+ actions right). **Inside the project, tabs use the compact `section_head`** (18px extrabold + hint) — the giant display title never repeats per tab. The workspace and review pages carry a 3-step progress strip (Draft → Review → Publish) driven by article status.
-- Dashboard hero is the pipeline rail: 4 cells split by hairlines, node row threaded by one rule (2×2 mobile → 1 row ≥sm), counts at 32px black with micro bars; only the "being written" node breathes. The old activity sparkline strip is removed (it duplicated the rail); per-run bars live only on the Indexing tab where they describe runs.
+- Desktop: fixed 240px rail (`md:w-60 lg:w-64`) — blue 36px logo block, flat nav items with 18px icons and no chevrons, bottom-anchored Start panel (hairline above, mono `START HERE` label, one blue primary), then a single foot row with the theme switcher and the account menu. Content column fills remaining width, max `75rem`, `px-5 → px-10`, `pt-6 → pt-8`.
+- Mobile: sticky blurred top bar (logo + theme switcher + account); floating thumb-zone dock pill (**4 items**: Overview, Websites, Activity, Automation — active = solid blue block); `pb-32` content clearance + safe-area insets. Project tabs become a sticky scrollable underline strip (`tabs tabs-border`).
+- Top-level pages open with the atlas header: mono eyebrow + display title + slate subhead (+ actions right). **Inside the project, tabs use the compact `section_head`** (20px bold + hint) — the display title never repeats per tab. The workspace and review pages carry the shared article header; review leads with a single verdict card.
+- Dashboard hero is the pipeline rail: 4 cells split by hairlines, mono labels, counts at 36px, a micro share bar per stage; only the "Writing" node breathes. The old activity sparkline strip stays removed (it duplicated the rail); per-run bars live only on the Indexing tab where they describe runs.
 
 ## Elevation & Depth
 
-No shadows anywhere (`--depth: 0`, `--noise: 0`). Elevation = paper → ash fill → blue action surface. One orchestrated entrance per navigation (the page header rises once, `prefers-reduced-motion` respected); one breathing live node on the rail; theme switch cross-fades in 0.25s and defaults to **Auto** — the OS colour scheme sets the first paint, while an explicit Light or Dark pick is stored and wins.
+No card shadows and no gradients. Elevation is paper → ash fill → blue action surface. Two deliberate exceptions, both from DaisyUI itself:
+
+1. `--depth: 1` gives buttons, inputs, toggles and tabs a one-pixel inset highlight — the tactile "solid" quality of a real control without lifting the surface.
+2. Floating layers (modal, dropdown, dock, toast) keep DaisyUI's own soft shadow so they read as materials above the page rather than holes in it.
+
+Motion: one orchestrated entrance per navigation (`animate-rise` on the page header, 420 ms, `cubic-bezier(.22,1,.36,1)`, gated by `motion-safe`); tab fragments fade in 240 ms; the top progress bar responds on request start; theme switch cross-fades in 0.25 s and defaults to **Auto** — the OS colour scheme sets the first paint, while an explicit Light or Dark pick is stored and wins. `prefers-reduced-motion` removes the entrance, press scale and theme cross-fade.
 
 ## Shapes
 
-- 8px (`rounded-lg`) for cards, panels, buttons, inputs, modals, dropdowns. Tags/badges 2px (`rounded-[2px]`). Logo block and rail nodes: square. The mobile bar is DaisyUI's `dock`, whose own radii are the one sanctioned rounded shape.
-- Active nav: a tinted primary chip (`bg-primary/10`) with primary text/icon, driven by `aria-current="page"` utilities — no side bar. Focus: 2px blue outline. Selection: blue fill, white ink; caret blue.
+- 12px (`rounded-box`) for cards, panels, modals, dropdowns, stat tiles. 10px (`rounded-field`) for buttons, inputs, selects, icon chips and nav items. 8px (`--radius-selector`) for checkboxes, radios, toggles and status badges, so every tag reads as a soft chip rather than a hard rectangle. The logo block and rail nodes are square; the mobile dock is the one sanctioned large radius (`rounded-2xl`).
+- Active nav: a tinted primary chip (`bg-primary/10`) with primary text/icon, driven by `aria-current="page"` utilities — no side bar. Project tabs: underline (`tabs-border`). Accordions: the divider only appears when a disclosure is open (`group-open:border-b`), so a closed card has no stray rule. Focus: 2px blue outline, 2px offset. Selection: blue fill, white ink; caret blue. Buttons compress to 0.98 on press (120 ms) for immediate feedback.
 
 ## Components
 
-- DaisyUI is the component library — use it directly, no overrides: `card` (+ `card-body`) for panels, `stat` (+ `stat-title`/`stat-value`/`stat-desc`) for metrics, `steps`/`step-primary` for flow progress, `table`/`table-sm` for data, `badge` + `badge-soft` in 2px tags for status, `btn`/`btn-primary`/`btn-ghost` for actions, `menu` for the sidebar nav, `dock` (**4 items**) for the mobile bar, `toast` + `alert alert-soft` for notifications, `modal`/`dropdown`/`join`/`progress` as shipped. Touch targets ≥32px, fields ≥44px.
-- There is **no bespoke component layer**. `input.css` keeps only the two theme plugins, base accessibility (focus ring, selection, scrollbars, cursors), the `.htmx-indicator` contract and two Tailwind layer-order fixes (`.table.hidden`, `.theme-switching`). The shell, desktop rail, mobile dock, project subnav and page frame are Tailwind utility classes written inline in `base.html`, `layouts/platform.html` and the shared macros — no `.ezdistro-*` classes exist.
-- Shared structure lives in macros: `macros/forms.html` (`page_header`, `panel`, `stat`, `empty`, form controls, disclosures) and `macros/article.html` (one header shared by the article detail, review and workspace pages).
-- Status: `badge-soft` in 2px tags; edge color lives in the tag fill + icon chip, never side borders. Rail node colors: planned = mist, writing = blue (live), review = amber, published = green.
+- DaisyUI is the component library — use it directly, no overrides: `card` (+ `card-body`) for panels, `stat` (+ `stat-title`/`stat-value`/`stat-desc`) for metrics, `tabs tabs-border` for project sections, `table`/`table-sm` for data with mono uppercase headers, `badge` + `badge-soft` for status (2px only on compact type tags), `btn`/`btn-primary`/`btn-ghost` for actions, `menu` for the sidebar nav, `dock` (**4 items**) for the mobile bar, `toast` + `alert alert-soft` for notifications, `modal`/`dropdown`/`join`/`progress` as shipped. Touch targets ≥32px, fields 44px (`--size-field: 0.275rem`).
+- There is **no bespoke component layer**. `input.css` keeps only the two theme plugins, base accessibility (focus ring, selection, scrollbars, cursors, press scale), the `.htmx-indicator` contract, two table display-order fixes (`.table.hidden`, `.sm\:table.hidden`) and the `.theme-switching` cross-fade rule. The shell, desktop rail, mobile dock, project subnav and page frame are Tailwind utility classes written inline in `base.html`, `layouts/platform.html` and the shared macros — no `.ezdistro-*` classes exist.
+- Menus (row actions, account, event data) are **popover** menus, not absolute dropdowns: they live in the top layer, so a sticky bar, a card or an `overflow-x-auto` table can never cover or clip them. DaisyUI's `dropdown[popover]` relies on CSS anchor positioning (unsupported in Firefox) and the UA default centres a popover, so `base.html` positions every open popover against its invoker — flip up near the bottom, clamp to the viewport, scroll when taller than the screen. One helper, every menu.
+- Shared structure lives in macros: `macros/forms.html` (`page_header`, `section_head`, `panel`, `stat`, `empty`, form controls, disclosures) and `macros/article.html` (one header shared by the article detail, review and workspace pages).
+- Status: `badge-soft` tags with 8px corners; edge color lives in the tag fill + icon chip, never side borders. Rail node colors: planned = mist, writing = blue (live), review = amber, published = green. Job rows use a status medallion (check / warning / spinner / clock) instead of glyphs.
 - Workspace discipline: the editor is one column of section cards (Title/meta first, then sections, then images). The right rail holds **Status → Validation (only when invalid) → Internal links → Publish history (`<details>` collapsed)**. The duplicate "Generating sections" list is deleted — the outline pane is the single source of section status. Review page: Validation + Editorial QA + Research snapshot + Generation info stay; **Version history is a collapsed `<details>`**.
 
 ## Do's and Don'ts
 
-- Do ration blue to logo / primary action / live nodes; everything else is ink, slate, mist.
+- Do ration blue to logo / primary action / live nodes / active nav; everything else is ink, slate, mist.
 - Do pin a mono uppercase label above every block; never add kickers above headings or section numbers.
 - Do keep backgrounds paper (light) / ink-ground (dark); ash only for secondary fills.
-- Do reach for DaisyUI first (`card`, `stat`, `steps`, `table`, `badge-soft`, `btn`, `menu`, `dock`, `toast`); write layout as inline Tailwind utilities.
-- Do keep the writing flow one tap away: Topics default tab, Continue-writing primary, 4-item mobile dock, 3-step progress strips on workspace/review.
-- Don't add shadows, gradients, glass, or radii other than 8px / 2px / square.
+- Do reach for DaisyUI first (`card`, `stat`, `tabs`, `table`, `badge-soft`, `btn`, `menu`, `dock`, `toast`); write layout as inline Tailwind utilities.
+- Do keep the writing flow one tap away: Overview and Websites first in the rail, Continue-writing primary on the project, 4-item mobile dock, underline project tabs.
+- Don't add card shadows, gradients, glass or radii other than 12px / 10px / 6px / 2px / square.
 - Don't use color for hierarchy — use display scale, weight, and Carbon/Slate contrast.
 - Don't break the rail + fluid-content shell; use logical properties for direction-agnostic layout, never offset hacks.
 - Don't reintroduce a bespoke component layer into `input.css` (buttons, inputs, tables, badges, cards, or `.ezdistro-*` class families) or dead motifs — put the utilities on the element in the template instead.
-- Detector-accepted exceptions: Inter flagged as an overused face — kept as the committed brand asset under the DaisyUI-only, no-new-deps constraint (PRODUCT.md); the themed scrollbar thumb (`border-radius: 9999px` on the UA scrollbar pseudo-element in `input.css` — a browser surface, not a component); the mobile dock's larger radii, pinned by the floating dock-pill brief.
+- Detector-accepted exceptions: Inter flagged as an overused face — kept as the committed brand asset under the DaisyUI-only, no-new-deps constraint (PRODUCT.md); the themed scrollbar thumb (`border-radius: 9999px` on the UA scrollbar pseudo-element in `input.css` — a browser surface, not a component); the mobile dock's larger radius and soft shadow, pinned by the floating dock-pill brief; DaisyUI's own modal/dropdown elevation.
