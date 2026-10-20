@@ -4,33 +4,83 @@
 {{ f.page_header('Activity', 'Follow the work and pick up anything that needs another try.', 'Work history', '<a class="btn btn-ghost btn-sm" href="/schedules">View automation</a>') }}
 {% set labels = {'index_project': 'Refresh website content', 'write_article': 'Write an article', 'publish_article': 'Publish an article', 'research_run': 'Find content opportunities', 'wordpress_sync': 'Read WordPress pages', 'analyze_landing_page': 'Learn about your business', 'generate_images': 'Create article images'} %}
 {% set states = {'pending': 'Waiting to start', 'running': 'In progress', 'retrying': 'Trying again automatically', 'failed': 'Needs attention', 'completed': 'Finished', 'cancelled': 'Stopped'} %}
-<form method="get" action="/jobs" class="flex flex-wrap items-end gap-3 mb-6 rounded-box bg-base-200 px-5 py-3">
-    <label class="fieldset min-w-0 w-full sm:w-auto"><span class="fieldset-legend">Website</span><select name="project" class="select w-full sm:w-56"><option value="">All websites</option>{% for p in projects %}<option value="{{ p.id }}" {{ 'selected' if filters.project == p.id }}>{{ p.name }}</option>{% endfor %}</select></label>
-    <label class="fieldset min-w-0 w-full sm:w-auto"><span class="fieldset-legend">Status</span><select name="status" class="select w-full sm:w-56"><option value="">All activity</option>{% for s in statuses %}<option value="{{ s }}" {{ 'selected' if filters.status == s }}>{{ states.get(s, s) }}</option>{% endfor %}</select></label>
-    <button class="btn btn-primary" type="submit">Show activity</button>
-    {% if filters.project or filters.status %}<a class="btn btn-ghost" href="/jobs">Clear filters</a>{% endif %}
+
+<form method="get" action="/jobs" class="mb-6 rounded-box border border-base-300 bg-base-200/50 p-5">
+    <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+        <label class="flex w-full min-w-0 flex-col gap-1.5 sm:w-56">
+            <span class="text-xs font-medium text-base-content/70">{{ ('Website') }}</span>
+            <select name="project" class="select w-full">
+                <option value="">{{ ('All websites') }}</option>
+                {% for p in projects %}<option value="{{ p.id }}" {{ 'selected' if filters.project == p.id }}>{{ p.name }}</option>{% endfor %}
+            </select>
+        </label>
+        <label class="flex w-full min-w-0 flex-col gap-1.5 sm:w-56">
+            <span class="text-xs font-medium text-base-content/70">{{ ('Status') }}</span>
+            <select name="status" class="select w-full">
+                <option value="">{{ ('All activity') }}</option>
+                {% for s in statuses %}<option value="{{ s }}" {{ 'selected' if filters.status == s }}>{{ states.get(s, s) }}</option>{% endfor %}
+            </select>
+        </label>
+        <div class="flex items-center gap-2">
+            <button class="btn btn-primary" type="submit">{{ ('Show activity') }}</button>
+            {% if filters.project or filters.status %}<a class="btn btn-ghost" href="/jobs">{{ ('Clear filters') }}</a>{% endif %}
+        </div>
+    </div>
 </form>
-<div class="mb-2 flex flex-wrap items-center justify-between gap-2 border-b border-base-300 pb-3"><h2 class="font-mono text-xs uppercase tracking-widest text-base-content/65">Latest work</h2><p class="text-xs text-base-content/65">{{ total }} results · newest first</p></div>
-<ul id="jobs-table" class="list bg-base-100">
+
+<div class="mb-1 flex flex-wrap items-baseline justify-between gap-2 border-b border-base-300 pb-3">
+    <h2 class="font-mono text-[0.7rem] uppercase tracking-[0.073em] text-base-content/60">Latest work</h2>
+    <p class="text-xs tabular-nums text-base-content/60">{{ total }} results · newest first</p>
+</div>
+<ul id="jobs-table" class="divide-y divide-base-300">
 {% for j in jobs %}
     {% set site = projects|selectattr('id', 'equalto', j.project)|first %}
-    <li class="list-row px-0 py-5">
-        <span class="flex size-8 items-center justify-center rounded-box {{ 'bg-success/10 text-success' if j.status == 'completed' else ('bg-warning/10 text-warning' if j.status == 'failed' else 'bg-base-200') }}" aria-hidden="true">{{ '✓' if j.status == 'completed' else ('!' if j.status == 'failed' else '·') }}</span>
-        <div class="list-col-grow min-w-0">
-            <h2 class="font-semibold">{{ labels.get(j.type, j.type|replace('_', ' ')|capitalize) }}</h2>
-            <p class="mt-1 text-sm text-base-content/65">{{ site.name if site else 'Website' }} · {{ j.created|loc_dt }}</p>
-            <span class="badge badge-sm rounded-[2px] mt-2 {{ 'badge-soft badge-neutral' if j.status == 'pending' else j.status|status_badge }}">{{ states.get(j.status, j.status) }}</span>
+    <li class="flex flex-wrap items-center gap-x-4 gap-y-3 py-4">
+        <span class="grid size-8 flex-none place-items-center rounded-full {{ 'bg-success/10 text-success' if j.status == 'completed' else ('bg-error/10 text-error' if j.status == 'failed' else ('bg-primary/10 text-primary' if j.status in ['running', 'retrying'] else 'bg-base-200 text-base-content/60')) }}" aria-hidden="true">
+            {% if j.status == 'completed' %}
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.4" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+            {% elif j.status == 'failed' %}
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.4" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m0 3.75h.008M12 3l9 18H3l9-18Z" /></svg>
+            {% elif j.status in ['running', 'retrying'] %}
+            <span class="loading loading-spinner loading-xs"></span>
+            {% else %}
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+            {% endif %}
+        </span>
+        <div class="min-w-0 flex-1">
+            <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <h2 class="text-sm font-semibold">{{ labels.get(j.type, j.type|replace('_', ' ')|capitalize) }}</h2>
+                <span class="badge badge-sm {{ 'badge-soft badge-neutral' if j.status == 'pending' else j.status|status_badge }}">{{ states.get(j.status, j.status) }}</span>
+            </div>
+            <p class="mt-0.5 truncate text-xs text-base-content/60">{{ site.name if site else 'Website' }} · {{ j.created|loc_dt }}</p>
+            {% if j.status == 'failed' %}<p class="mt-1.5 text-xs leading-relaxed text-error/90">This task could not finish. Try again or check the website’s connections.</p>{% endif %}
         </div>
-        <div class="col-span-full row-start-2 flex flex-wrap items-center gap-2 sm:col-span-1 sm:row-start-1">
-            {% if j.status == 'running' %}<progress class="progress progress-primary w-40" value="{{ j.progress or 0 }}" max="100" aria-label="Task progress"></progress><span>{{ j.progress or 0 }}%</span>{% endif %}
-            {% if j.status == 'failed' %}<p class="text-sm">This task could not finish. Try again or check the website’s connections.</p><button class="btn btn-sm btn-primary" hx-post="/jobs/{{ j.id }}/retry" hx-swap="none" hx-disabled-elt="this">Try again</button>{% endif %}
+        <div class="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto">
+            {% if j.status == 'running' %}<progress class="progress progress-primary w-32" value="{{ j.progress or 0 }}" max="100" aria-label="Task progress"></progress><span class="text-xs tabular-nums text-base-content/60">{{ j.progress or 0 }}%</span>{% endif %}
+            {% if j.status == 'failed' %}<button class="btn btn-sm btn-primary" hx-post="/jobs/{{ j.id }}/retry" hx-swap="none" hx-disabled-elt="this">Try again</button>{% endif %}
             {% if j.status in ['pending', 'running', 'retrying'] %}<button class="btn btn-sm btn-ghost" hx-post="/jobs/{{ j.id }}/cancel" hx-swap="none" hx-disabled-elt="this" hx-confirm="Stop this task?">Stop task</button>{% endif %}
-            <a class="btn btn-sm btn-ghost" href="/projects/{{ j.project }}">Open website</a>
-            <a class="link link-hover text-xs text-base-content/65" href="/jobs/{{ j.id }}">Task details</a>
+            <a class="btn btn-sm btn-ghost" href="/jobs/{{ j.id }}">Details</a>
+            <a class="btn btn-sm btn-ghost text-base-content/60" href="/projects/{{ j.project }}">Open website</a>
         </div>
     </li>
-{% else %}<li class="p-6">No activity here yet. Work will appear when you research, write, or publish content.</li>{% endfor %}
+{% else %}
+    <li class="py-6">
+        {{ f.empty(
+            ('No activity yet'),
+            ('Work will appear here when you research, write, or publish content.'),
+            '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" /></svg>'
+        ) }}
+    </li>
+{% endfor %}
 </ul>
-{% if pages > 1 %}<nav class="join mt-4" aria-label="Activity pages">{% if page > 1 %}<a class="btn join-item" href="/jobs?page={{ page-1 }}&project={{ filters.project }}&status={{ filters.status }}">Previous</a>{% endif %}<span class="btn join-item">{{ page }} / {{ pages }}</span>{% if page < pages %}<a class="btn join-item" href="/jobs?page={{ page+1 }}&project={{ filters.project }}&status={{ filters.status }}">Next</a>{% endif %}</nav>{% endif %}
+{% if pages > 1 %}
+<nav class="mt-4 flex justify-end" aria-label="Activity pages">
+    <div class="join">
+        {% if page > 1 %}<a class="btn join-item btn-sm" href="/jobs?page={{ page-1 }}&project={{ filters.project }}&status={{ filters.status }}">Previous</a>{% endif %}
+        <span class="btn join-item btn-sm pointer-events-none text-base-content/60">{{ page }} / {{ pages }}</span>
+        {% if page < pages %}<a class="btn join-item btn-sm" href="/jobs?page={{ page+1 }}&project={{ filters.project }}&status={{ filters.status }}">Next</a>{% endif %}
+    </div>
+</nav>
+{% endif %}
 <div hx-get="/jobs?project={{ filters.project }}&status={{ filters.status }}&page={{ page }}" hx-trigger="refreshJobs from:body" hx-target="#main-content" hx-swap="innerHTML"></div>
 {% endblock %}

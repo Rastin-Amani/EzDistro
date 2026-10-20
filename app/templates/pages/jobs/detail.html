@@ -3,18 +3,19 @@
 {% set active = job.status in ['pending', 'retrying', 'running'] %}
 {% import 'macros/forms.html' as f %}
 
-<div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-    <div class="flex items-center gap-2.5 min-w-0">
-        <a href="/jobs" class="btn btn-ghost btn-circle btn-sm shrink-0" aria-label="{{ ('Back') }}">
+<div class="mb-5 flex flex-wrap items-start justify-between gap-x-4 gap-y-3 motion-safe:animate-rise">
+    <div class="flex min-w-0 items-start gap-2.5">
+        <a href="/jobs" class="btn btn-ghost btn-circle btn-sm mt-0.5 shrink-0" aria-label="{{ ('Back') }}">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5 ltr:rotate-180"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
         </a>
         <div class="min-w-0">
-            <div class="flex items-center gap-2">
-                <h1 class="font-bold text-sm font-mono truncate" dir="ltr">{{ job.id[:12] }}</h1>
+            <p class="font-mono text-[0.7rem] uppercase tracking-[0.073em] text-base-content/60">{{ ('Task') }}</p>
+            <div class="mt-0.5 flex flex-wrap items-center gap-2">
+                <h1 class="truncate font-mono text-base font-bold tracking-[-0.01em]" dir="ltr">{{ job.id[:12] }}</h1>
                 <span class="badge badge-sm {{ job.status|status_badge }}">{{ job.status|status_label }}</span>
-                <span class="badge badge-soft badge-neutral badge-sm">{{ job.type }}</span>
+                <span class="badge badge-sm badge-soft badge-neutral">{{ job.type }}</span>
             </div>
-            {% if project %}<p class="text-xs opacity-50 truncate">{{ project.name }}</p>{% endif %}
+            {% if project %}<p class="mt-1 truncate text-xs text-base-content/60">{{ project.name }}</p>{% endif %}
         </div>
     </div>
     <div class="flex items-center gap-2">
@@ -26,75 +27,90 @@
     </div>
 </div>
 
-<div class="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-4 items-start">
+<div class="grid grid-cols-1 items-start gap-4 lg:grid-cols-[19rem_minmax(0,1fr)]">
     <!-- Meta -->
-    <aside class="flex flex-col gap-4">
-        <div class="card border border-base-300 bg-base-100 min-w-0">
-            <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3"><h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Details') }}</h2></div>
-            <div class="p-4 text-xs flex flex-col gap-1.5">
-                <div class="flex justify-between gap-2"><span class="opacity-50">{{ ('ID') }}</span><span class="font-mono truncate" dir="ltr">{{ job.id }}</span></div>
-                <div class="flex justify-between"><span class="opacity-50">{{ ('Type') }}</span><span>{{ job.type }}</span></div>
-                <div class="flex justify-between gap-2"><span class="opacity-50">{{ ('Entity') }}</span><span class="truncate"><span class="opacity-60">{{ job.entityType or '—' }}</span> <code class="font-mono">{{ job.entityId or '—' }}</code></span></div>
-                <div class="flex justify-between"><span class="opacity-50">{{ ('Project') }}</span><span class="font-mono">{{ job.project[:8] }}{% if project %} — {{ project.name }}{% endif %}</span></div>
-                <div class="flex justify-between"><span class="opacity-50">{{ ('Status') }}</span><span>{{ job.status|status_label }}</span></div>
-                <div class="flex justify-between"><span class="opacity-50">{{ ('Attempts') }}</span><span class="tabular-nums">{{ job.attempts or 0 }}/{{ job.maxAttempts or 3 }}</span></div>
-                <div class="flex justify-between"><span class="opacity-50">{{ ('Priority') }}</span><span class="tabular-nums">{{ job.priority or 0 }}</span></div>
+    <aside class="flex min-w-0 flex-col gap-4">
+        <section class="card min-w-0 border border-base-300 bg-base-100">
+            <div class="border-b border-base-300 px-5 py-3.5">
+                <h2 class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">{{ ('Details') }}</h2>
             </div>
-        </div>
+            <dl class="flex flex-col gap-2 p-5 text-xs">
+                <div class="flex items-baseline justify-between gap-3"><dt class="shrink-0 text-base-content/60">{{ ('ID') }}</dt><dd class="min-w-0 truncate font-mono text-base-content/80" dir="ltr">{{ job.id }}</dd></div>
+                <div class="flex items-baseline justify-between gap-3"><dt class="shrink-0 text-base-content/60">{{ ('Type') }}</dt><dd class="min-w-0 truncate text-base-content/80">{{ job.type }}</dd></div>
+                <div class="flex items-baseline justify-between gap-3"><dt class="shrink-0 text-base-content/60">{{ ('Entity') }}</dt><dd class="min-w-0 truncate text-end text-base-content/80"><span class="text-base-content/60">{{ job.entityType or '—' }}</span> <code class="font-mono">{{ job.entityId or '—' }}</code></dd></div>
+                <div class="flex items-baseline justify-between gap-3"><dt class="shrink-0 text-base-content/60">{{ ('Project') }}</dt><dd class="min-w-0 truncate text-end font-mono text-base-content/80">{{ job.project[:8] }}{% if project %} — {{ project.name }}{% endif %}</dd></div>
+                <div class="flex items-baseline justify-between gap-3"><dt class="shrink-0 text-base-content/60">{{ ('Attempts') }}</dt><dd class="font-semibold tabular-nums">{{ job.attempts or 0 }}/{{ job.maxAttempts or 3 }}</dd></div>
+                <div class="flex items-baseline justify-between gap-3"><dt class="shrink-0 text-base-content/60">{{ ('Priority') }}</dt><dd class="tabular-nums text-base-content/80">{{ job.priority or 0 }}</dd></div>
+            </dl>
+        </section>
 
-        <div class="card border border-base-300 bg-base-100 min-w-0">
-            <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3"><h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Schedule') }}</h2></div>
-            <div class="p-4 text-xs flex flex-col gap-1.5">
-                <div class="flex justify-between"><span class="opacity-50">{{ ('Created') }}</span><span>{{ job.created|loc_dt }}</span></div>
-                <div class="flex justify-between"><span class="opacity-50">{{ ('Started') }}</span><span>{{ job.startedAt|loc_dt if job.startedAt else '—' }}</span></div>
-                <div class="flex justify-between"><span class="opacity-50">{{ ('Finished') }}</span><span>{{ job.finishedAt|loc_dt if job.finishedAt else '—' }}</span></div>
-                <div class="flex justify-between"><span class="opacity-50">{{ ('Ready since') }}</span><span>{{ job.availableAt|loc_dt if job.availableAt else '—' }}</span></div>
-                {% if job.nextRetryAt %}<div class="flex justify-between"><span class="opacity-50">{{ ('Next attempt') }}</span><span>{{ job.nextRetryAt|loc_dt }}</span></div>{% endif %}
+        <section class="card min-w-0 border border-base-300 bg-base-100">
+            <div class="border-b border-base-300 px-5 py-3.5">
+                <h2 class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">{{ ('Schedule') }}</h2>
             </div>
-        </div>
+            <dl class="flex flex-col gap-2 p-5 text-xs">
+                <div class="flex items-baseline justify-between gap-3"><dt class="text-base-content/60">{{ ('Created') }}</dt><dd class="tabular-nums text-base-content/80">{{ job.created|loc_dt }}</dd></div>
+                <div class="flex items-baseline justify-between gap-3"><dt class="text-base-content/60">{{ ('Started') }}</dt><dd class="tabular-nums text-base-content/80">{{ job.startedAt|loc_dt if job.startedAt else '—' }}</dd></div>
+                <div class="flex items-baseline justify-between gap-3"><dt class="text-base-content/60">{{ ('Finished') }}</dt><dd class="tabular-nums text-base-content/80">{{ job.finishedAt|loc_dt if job.finishedAt else '—' }}</dd></div>
+                <div class="flex items-baseline justify-between gap-3"><dt class="text-base-content/60">{{ ('Ready since') }}</dt><dd class="tabular-nums text-base-content/80">{{ job.availableAt|loc_dt if job.availableAt else '—' }}</dd></div>
+                {% if job.nextRetryAt %}<div class="flex items-baseline justify-between gap-3"><dt class="text-base-content/60">{{ ('Next attempt') }}</dt><dd class="tabular-nums text-warning">{{ job.nextRetryAt|loc_dt }}</dd></div>{% endif %}
+            </dl>
+        </section>
 
-        <div class="card border border-base-300 bg-base-100 min-w-0">
-            <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3"><h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Progress') }}</h2></div>
-            <div class="p-4 text-xs flex flex-col gap-2">
-                <progress class="progress progress-primary w-full" value="{{ job.progress or 0 }}" max="100"></progress>
-                <p class="text-center font-bold tabular-nums">{{ ('%(n)s%%') % {'n': job.progress or 0} }}</p>
-                {% if job.stage %}<p class="opacity-60" dir="ltr">{{ job.stage }}</p>{% endif %}
-                {% if job.progressMessage %}<p class="opacity-70">{{ job.progressMessage }}</p>{% endif %}
+        <section class="card min-w-0 border border-base-300 bg-base-100">
+            <div class="border-b border-base-300 px-5 py-3.5">
+                <h2 class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">{{ ('Progress') }}</h2>
             </div>
-        </div>
+            <div class="flex flex-col gap-2.5 p-5">
+                <div class="flex items-baseline justify-between gap-2">
+                    <span class="text-xs text-base-content/60">{{ ('Completed') }}</span>
+                    <span class="font-mono text-sm font-bold tabular-nums">{{ job.progress or 0 }}%</span>
+                </div>
+                <progress class="progress progress-primary w-full" value="{{ job.progress or 0 }}" max="100" aria-label="{{ ('Job progress') }}"></progress>
+                {% if job.stage %}<p class="truncate font-mono text-xs text-base-content/60" dir="ltr">{{ job.stage }}</p>{% endif %}
+                {% if job.progressMessage %}<p class="text-xs leading-relaxed text-base-content/65">{{ job.progressMessage }}</p>{% endif %}
+            </div>
+        </section>
 
-        <div class="card border border-base-300 bg-base-100 min-w-0">
-            <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3"><h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Run') }}</h2></div>
-            <div class="p-4 text-xs flex flex-col gap-1.5">
-                <div class="flex justify-between gap-2"><span class="opacity-50">{{ ('Worker') }}</span><span class="font-mono" dir="ltr">{{ job.lockedBy or '—' }}</span></div>
-                <div class="flex justify-between"><span class="opacity-50">{{ ('Locked by') }}</span><span>{{ job.lockedAt|loc_dt if job.lockedAt else '—' }}</span></div>
-                <div class="flex justify-between"><span class="opacity-50">{{ ('Lease expiry') }}</span><span>{{ job.leaseExpiresAt|loc_dt if job.leaseExpiresAt else '—' }}</span></div>
-                <div class="flex justify-between"><span class="opacity-50">{{ ('Heartbeat') }}</span><span>{{ job.heartbeatAt|loc_dt if job.heartbeatAt else '—' }}</span></div>
+        <section class="card min-w-0 border border-base-300 bg-base-100">
+            <div class="border-b border-base-300 px-5 py-3.5">
+                <h2 class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">{{ ('Run') }}</h2>
             </div>
-        </div>
+            <dl class="flex flex-col gap-2 p-5 text-xs">
+                <div class="flex items-baseline justify-between gap-3"><dt class="text-base-content/60">{{ ('Worker') }}</dt><dd class="min-w-0 truncate font-mono text-base-content/80" dir="ltr">{{ job.lockedBy or '—' }}</dd></div>
+                <div class="flex items-baseline justify-between gap-3"><dt class="text-base-content/60">{{ ('Locked by') }}</dt><dd class="tabular-nums text-base-content/80">{{ job.lockedAt|loc_dt if job.lockedAt else '—' }}</dd></div>
+                <div class="flex items-baseline justify-between gap-3"><dt class="text-base-content/60">{{ ('Lease expiry') }}</dt><dd class="tabular-nums text-base-content/80">{{ job.leaseExpiresAt|loc_dt if job.leaseExpiresAt else '—' }}</dd></div>
+                <div class="flex items-baseline justify-between gap-3"><dt class="text-base-content/60">{{ ('Heartbeat') }}</dt><dd class="tabular-nums text-base-content/80">{{ job.heartbeatAt|loc_dt if job.heartbeatAt else '—' }}</dd></div>
+            </dl>
+        </section>
 
         {% if job.errorCode %}
-        <div class="card border border-base-300 bg-base-100 min-w-0 border-error/40">
-            <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3"><h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55 text-error">{{ ('Error') }}</h2></div>
-            <div class="p-4 text-xs flex flex-col gap-2">
-                <p><span class="font-mono text-error" dir="ltr">{{ job.errorCode }}</span></p>
-                <p class="opacity-80">{{ job.errorMessage }}</p>
+        <section class="card min-w-0 border border-error/30 bg-base-100">
+            <div class="border-b border-base-300 px-5 py-3.5">
+                <h2 class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-error">{{ ('Error') }}</h2>
+            </div>
+            <div class="flex flex-col gap-2 p-5 text-xs">
+                <p class="font-mono font-semibold text-error" dir="ltr">{{ job.errorCode }}</p>
+                <p class="leading-relaxed text-base-content/80">{{ job.errorMessage }}</p>
                 {% if is_admin and job.errorDetails %}
                 <details>
-                    <summary class="text-xs text-error cursor-pointer select-none">{{ ('Technical details (admin)') }}</summary>
-                    <pre class="bg-error/5 border border-error/20 rounded-lg p-2 font-mono overflow-auto max-h-60" dir="ltr">{{ job.errorDetails|tojson(indent=2) }}</pre>
+                    <summary class="cursor-pointer select-none text-xs text-error">{{ ('Technical details (admin)') }}</summary>
+                    <pre class="mt-2 max-h-60 overflow-auto rounded-field border border-error/20 bg-error/5 p-2 font-mono" dir="ltr">{{ job.errorDetails|tojson(indent=2) }}</pre>
                 </details>
                 {% endif %}
             </div>
-        </div>
+        </section>
         {% endif %}
     </aside>
 
     <!-- Timeline -->
-    <section class="card border border-base-300 bg-base-100 min-w-0"
+    <section class="card min-w-0 border border-base-300 bg-base-100"
              {% if active %}hx-get="/jobs/{{ job.id }}/events" hx-trigger="every 5s" hx-target="#job-timeline" hx-swap="outerHTML"{% endif %}>
-        <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3"><h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Timeline') }}</h2></div>
-        <div class="p-4">
+        <div class="flex items-center justify-between gap-2 border-b border-base-300 px-5 py-3.5">
+            <h2 class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">{{ ('Timeline') }}</h2>
+            {% if active %}<span class="badge badge-sm badge-soft badge-warning gap-1.5"><span class="loading loading-spinner loading-xs"></span>{{ ('Live') }}</span>{% endif %}
+        </div>
+        <div class="p-5">
             {% include "pages/jobs/_timeline.html" %}
         </div>
     </section>

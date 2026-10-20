@@ -1,11 +1,11 @@
-<div id="job-timeline" class="flex flex-col gap-1.5 text-xs">
+<div id="job-timeline" class="flex flex-col gap-2 text-xs">
     {% for e in events %}
-    <div class="flex items-start gap-2 border border-base-300/70 rounded-lg px-2 py-1.5">
+    <div class="flex items-start gap-3 rounded-field border border-base-300 px-3 py-2.5">
         <span class="badge badge-xs mt-0.5 shrink-0 {{ e.eventType|status_badge }}">{{ e.eventType|status_label }}</span>
         <div class="min-w-0 flex-1">
-            <p class="truncate">{{ e.message }}</p>
+            <p class="break-words leading-relaxed text-base-content/80">{{ e.message }}</p>
             {% if e.eventType == 'provider_call' and e.metadata %}
-            <p class="opacity-60 truncate" dir="ltr">
+            <p class="mt-0.5 truncate font-mono text-[0.7rem] text-base-content/60" dir="ltr">
                 {{ e.metadata.provider }}/{{ e.metadata.model }} — {{ e.metadata.operation }} —
                 {{ e.metadata.latency_ms }}ms{% if e.metadata.success %} ✓{% else %} ✗ {{ e.metadata.error_category }}{% endif %}
                 {% if e.metadata.retries %} ({{ e.metadata.retries }} retries){% endif %}
@@ -13,20 +13,20 @@
             </p>
             {% endif %}
             {% if e.eventType == 'job.retry_scheduled' and e.metadata %}
-            <p class="opacity-60">{{ ('Attempt %(a)s/%(b)s — delay %(c)ss') % {'a': e.metadata.attempt, 'b': e.metadata.max_attempts, 'c': e.metadata.delay_seconds} }}</p>
+            <p class="mt-0.5 text-[0.7rem] text-warning">{{ ('Attempt %(a)s/%(b)s — delay %(c)ss') % {'a': e.metadata.attempt, 'b': e.metadata.max_attempts, 'c': e.metadata.delay_seconds} }}</p>
             {% endif %}
             {% if e.metadata and e.eventType not in ['provider_call', 'job.retry_scheduled'] and e.metadata != {} %}
                 {% if is_admin %}
-                <details class="mt-0.5">
-                    <summary class="opacity-40 cursor-pointer">JSON</summary>
-                    <pre class="bg-base-200/60 rounded-lg p-2 font-mono overflow-auto max-h-40" dir="ltr">{{ e.metadata|tojson(indent=2) }}</pre>
+                <details class="mt-1">
+                    <summary class="cursor-pointer text-[0.7rem] text-base-content/60">{{ ('Data') }}</summary>
+                    <pre class="mt-1 max-h-40 overflow-auto rounded-field bg-base-200/60 p-2 font-mono" dir="ltr">{{ e.metadata|tojson(indent=2) }}</pre>
                 </details>
                 {% endif %}
             {% endif %}
         </div>
-        <span class="opacity-40 whitespace-nowrap shrink-0">{{ e.created|loc_dt }}</span>
+        <span class="shrink-0 whitespace-nowrap text-[0.7rem] tabular-nums text-base-content/60">{{ e.created|loc_dt }}</span>
     </div>
     {% else %}
-    <p class="opacity-50 py-4 text-center">{{ ('No events recorded.') }}</p>
+    <p class="py-6 text-center text-xs text-base-content/60">{{ ('No events recorded.') }}</p>
     {% endfor %}
 </div>

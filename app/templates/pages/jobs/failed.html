@@ -4,96 +4,98 @@
 
 {{ f.page_header(('Failed jobs'), ('Jobs that hit errors and need attention'), ('Monitoring'), '<a href="/jobs" class="btn btn-ghost btn-sm">' ~ ('All jobs') ~ '</a>') }}
 
-<div class="flex flex-col gap-4">
+<div class="flex flex-col gap-5">
 
     {# Filters — project / stage / reason #}
-    <section class="card border border-base-300 bg-base-100 min-w-0">
-        <form method="get" action="/failed" class="p-4 flex flex-col gap-3">
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <label class="flex flex-col gap-1 min-w-0">
-                    <span class="truncate text-xs font-medium">{{ ('Project') }}</span>
-                    <select name="project" class="select select-sm w-full">
-                        <option value="">{{ ('All projects') }}</option>
-                        {% for p in projects %}
-                        <option value="{{ p.id }}" {{ 'selected' if filters.project == p.id }}>{{ p.name }}</option>
-                        {% endfor %}
-                    </select>
-                </label>
-                <label class="flex flex-col gap-1 min-w-0">
-                    <span class="truncate text-xs font-medium">{{ ('Stage') }}</span>
-                    <select name="stage" class="select select-sm w-full">
-                        <option value="">{{ ('All stages') }}</option>
-                        {% for t in job_types %}
-                        <option value="{{ t }}" {{ 'selected' if filters.stage == t }}>{{ t }}</option>
-                        {% endfor %}
-                    </select>
-                </label>
-                <label class="flex flex-col gap-1 min-w-0">
-                    <span class="truncate text-xs font-medium">{{ ('Reason') }}</span>
-                    <select name="reason" class="select select-sm w-full">
-                        <option value="">{{ ('All reasons') }}</option>
-                        {% for code in reasons %}
-                        <option value="{{ code }}" {{ 'selected' if filters.reason == code }}>{{ code }}</option>
-                        {% endfor %}
-                    </select>
-                </label>
-            </div>
+    <form method="get" action="/failed" class="rounded-box border border-base-300 bg-base-200/50 p-5">
+        <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+            <label class="flex w-full min-w-0 flex-col gap-1.5 sm:w-52">
+                <span class="text-xs font-medium text-base-content/70">{{ ('Project') }}</span>
+                <select name="project" class="select w-full">
+                    <option value="">{{ ('All projects') }}</option>
+                    {% for p in projects %}
+                    <option value="{{ p.id }}" {{ 'selected' if filters.project == p.id }}>{{ p.name }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label class="flex w-full min-w-0 flex-col gap-1.5 sm:w-52">
+                <span class="text-xs font-medium text-base-content/70">{{ ('Stage') }}</span>
+                <select name="stage" class="select w-full">
+                    <option value="">{{ ('All stages') }}</option>
+                    {% for t in job_types %}
+                    <option value="{{ t }}" {{ 'selected' if filters.stage == t }}>{{ t }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label class="flex w-full min-w-0 flex-col gap-1.5 sm:w-44">
+                <span class="text-xs font-medium text-base-content/70">{{ ('Reason') }}</span>
+                <select name="reason" class="select w-full">
+                    <option value="">{{ ('All reasons') }}</option>
+                    {% for code in reasons %}
+                    <option value="{{ code }}" {{ 'selected' if filters.reason == code }}>{{ code }}</option>
+                    {% endfor %}
+                </select>
+            </label>
             <div class="flex items-center gap-2">
-                <button type="submit" class="btn btn-primary btn-sm">{{ ('Apply filter') }}</button>
-                <a href="/failed" class="btn btn-ghost btn-sm">{{ ('Clear') }}</a>
-                <span class="ms-auto text-xs opacity-50 tabular-nums">{{ total }} {{ ('failed') }}</span>
-            </div>
-        </form>
-    </section>
-
-    {% if jobs %}
-    <div class="flex flex-col gap-3" id="failed-list">
-        {% for j in jobs %}
-        <div class="card border border-base-300 bg-base-100 min-w-0 border-error/40">
-            <div class="p-4 flex flex-col gap-2">
-                <div class="flex items-center justify-between gap-2">
-                    <div class="flex items-center gap-2 min-w-0">
-                        <span class="badge badge-sm badge-soft badge-error">{{ j.type }}</span>
-                        <span class="text-xs opacity-60">{{ j.project[:8] }}</span>
-                        <span class="text-xs opacity-40">{{ j.updated|loc_dt }}</span>
-                    </div>
-                    <button class="btn btn-primary btn-xs" hx-post="/jobs/{{ j.id }}/retry" hx-swap="none">{{ ('Retry') }}</button>
-                </div>
-                {% if j.errorCode %}
-                <div class="text-xs bg-error/5 border border-error/20 rounded-lg p-2 font-mono break-words" dir="ltr">
-                    <span class="text-error">{{ j.errorCode }}:</span>
-                    <span class="line-clamp-2 align-top" title="{{ j.errorMessage }}">{{ j.errorMessage }}</span>
-                    {% if j.errorDetails and j.errorDetails.attempts %}<span class="opacity-50">{{ ('(attempt %(n)s)') % {'n': j.errorDetails.attempts} }}</span>{% endif %}
-                </div>
-                {% endif %}
+                <button type="submit" class="btn btn-primary">{{ ('Apply filter') }}</button>
+                <a href="/failed" class="btn btn-ghost">{{ ('Clear') }}</a>
             </div>
         </div>
-        {% endfor %}
+    </form>
+
+    <div class="flex flex-wrap items-baseline justify-between gap-2 border-b border-base-300 pb-3">
+        <h2 class="font-mono text-[0.7rem] uppercase tracking-[0.073em] text-base-content/60">{{ ('Needs attention') }}</h2>
+        <p class="text-xs tabular-nums text-base-content/60">{{ total }} {{ ('failed') }}</p>
     </div>
 
-    {% if pages > 1 %}
-    <div class="join">
-        {% for p in range(1, pages + 1) %}
-        <a href="/failed?page={{ p }}&project={{ filters.project }}&stage={{ filters.stage }}&reason={{ filters.reason }}"
-           class="join-item btn btn-xs {{ 'btn-primary' if p == page }}">{{ p }}</a>
+    {% if jobs %}
+    <ul class="flex flex-col gap-2.5" id="failed-list">
+        {% for j in jobs %}
+        <li class="rounded-box border border-error/25 bg-base-100 p-5">
+            <div class="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+                <div class="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1">
+                    <span class="badge badge-sm badge-soft badge-error">{{ j.type }}</span>
+                    <span class="font-mono text-[0.7rem] text-base-content/60" dir="ltr">{{ j.project[:8] }}</span>
+                    <span class="text-[0.7rem] tabular-nums text-base-content/60">{{ j.updated|loc_dt }}</span>
+                </div>
+                <button class="btn btn-primary btn-sm shrink-0" hx-post="/jobs/{{ j.id }}/retry" hx-swap="none">{{ ('Retry') }}</button>
+            </div>
+            {% if j.errorCode %}
+            <div class="mt-2.5 rounded-field border border-error/20 bg-error/5 px-3 py-2 font-mono text-xs leading-relaxed" dir="ltr">
+                <span class="font-semibold text-error">{{ j.errorCode }}:</span>
+                <span class="line-clamp-2 align-top text-base-content/70" title="{{ j.errorMessage }}">{{ j.errorMessage }}</span>
+                {% if j.errorDetails and j.errorDetails.attempts %}<span class="text-base-content/60">(attempt {{ j.errorDetails.attempts }})</span>{% endif %}
+            </div>
+            {% endif %}
+            <div class="mt-2.5 flex justify-end">
+                <a class="btn btn-ghost btn-xs" href="/jobs/{{ j.id }}">{{ ('Open job') }}</a>
+            </div>
+        </li>
         {% endfor %}
-    </div>
+    </ul>
+
+    {% if pages > 1 %}
+    <nav class="flex justify-end" aria-label="{{ ('Failed job pages') }}">
+        <div class="join">
+            {% if page > 1 %}
+            <a class="btn join-item btn-sm" href="/failed?page={{ page - 1 }}&project={{ filters.project }}&stage={{ filters.stage }}&reason={{ filters.reason }}">{{ ('Previous') }}</a>
+            {% endif %}
+            <span class="btn join-item btn-sm pointer-events-none text-base-content/60">{{ page }} / {{ pages }}</span>
+            {% if page < pages %}
+            <a class="btn join-item btn-sm" href="/failed?page={{ page + 1 }}&project={{ filters.project }}&stage={{ filters.stage }}&reason={{ filters.reason }}">{{ ('Next') }}</a>
+            {% endif %}
+        </div>
+    </nav>
     {% endif %}
 
     {% else %}
-    <div class="card border border-base-300 bg-base-100 min-w-0">
-        <div class="flex flex-col items-center justify-center gap-3 py-12 text-center">
-            <div class="grid size-14 place-items-center rounded-lg bg-base-200 text-base-content/40">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
-            </div>
-            <p class="font-bold text-base-content/75">
-                {% if filters.project or filters.stage or filters.reason %}{{ ('No failed jobs match these filters') }}{% else %}{{ ('No failed jobs') }}{% endif %}
-            </p>
-            <p class="text-sm text-base-content/50">
-                {% if filters.project or filters.stage or filters.reason %}{{ ('Try clearing a filter.') }}{% else %}{{ ('Everything is running as planned.') }}{% endif %}
-            </p>
-        </div>
-    </div>
+    <section class="card border border-base-300 bg-base-100">
+        {{ f.empty(
+            ('No failed jobs match these filters' if filters.project or filters.stage or filters.reason else 'No failed jobs'),
+            ('Try clearing a filter.' if filters.project or filters.stage or filters.reason else 'Everything is running as planned.'),
+            '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>'
+        ) }}
+    </section>
     {% endif %}
 </div>
 {% endblock %}
