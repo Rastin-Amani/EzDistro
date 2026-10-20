@@ -43,8 +43,8 @@
      hx-get="/projects/{{ project.id }}/research/{{ run.id }}/status"
      hx-trigger="every 1s" hx-swap="outerHTML"
      {% endif %}>
-  <div class="flex flex-wrap items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
-    <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">Progress</h2>
+  <div class="flex flex-wrap items-center justify-between gap-2 border-b border-base-300 px-5 py-3.5">
+    <h2 class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">Progress</h2>
     <div class="flex items-center gap-2 text-xs">
       {% if running %}
         <span class="inline-flex items-center gap-1.5 font-semibold">
@@ -54,11 +54,11 @@
       {% else %}
         <span class="font-semibold">{{ ns.label or run.status|status_label }}</span>
       {% endif %}
-      <span class="tabular-nums opacity-60">{{ run.progress|int }}%</span>
+      <span class="tabular-nums text-base-content/65">{{ run.progress|int }}%</span>
     </div>
   </div>
 
-  <div class="space-y-4 p-4">
+  <div class="space-y-4 p-5">
     <progress class="progress progress-primary w-full" value="{{ run.progress|int }}" max="100"
               aria-label="{{ ('Run progress') }}"></progress>
 
@@ -84,7 +84,7 @@
                           else ('bg-error' if state == 'failed'
                           else ('bg-primary motion-safe:animate-pulse' if state == 'active'
                           else 'bg-base-300')) }}" aria-hidden="true"></span>
-          <span class="{{ 'font-semibold' if state in ('active', 'failed') else 'opacity-55' }}">{{ label }}</span>
+          <span class="{{ 'font-semibold' if state in ('active', 'failed') else 'text-base-content/60' }}">{{ label }}</span>
         </li>
       {% endfor %}
     </ol>
@@ -97,7 +97,7 @@
       </div>
     {% endif %}
 
-    <p class="text-xs opacity-55">
+    <p class="text-xs text-base-content/60">
       {% if running %}
         {{ ('Running in the background — progress updates every second. You can leave this page.') }}
       {% elif run.status == 'completed' %}
@@ -109,8 +109,8 @@
 
     {# The raw job log stays available but is no longer the page. #}
     {% if logs %}
-      <details class="group border-t border-base-300/70 pt-3">
-        <summary class="flex cursor-pointer select-none items-center gap-2 text-xs opacity-70">
+      <details class="group border-t border-base-300 pt-3">
+        <summary class="flex cursor-pointer select-none items-center gap-2 text-xs text-base-content/65">
           <span>{{ ('Activity log') }}</span>
           <span class="badge badge-soft badge-neutral badge-xs tabular-nums">{{ logs|length }}</span>
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="ms-auto size-3.5 transition-transform group-open:rotate-180" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
@@ -118,9 +118,9 @@
         <ul class="mt-2 max-h-56 space-y-1 overflow-y-auto text-xs" aria-live="polite">
           {% for entry in logs %}
             <li class="flex items-start gap-2">
-              <span class="shrink-0 opacity-40 tabular-nums">{{ entry.created|loc_dt }}</span>
+              <span class="shrink-0 text-base-content/60 tabular-nums">{{ entry.created|loc_dt }}</span>
               <span class="badge badge-soft badge-xs shrink-0">{{ entry.eventType }}</span>
-              <span class="opacity-80">{{ entry.message }}</span>
+              <span class="text-base-content/80">{{ entry.message }}</span>
             </li>
           {% endfor %}
         </ul>

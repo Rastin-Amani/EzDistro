@@ -11,34 +11,30 @@
 <div class="flex flex-col gap-5">
 
 {% if not overview.billing_enabled %}
-{{ f.panel() }}
-    <div class="flex items-start gap-3">
-        <span class="badge badge-soft badge-neutral mt-0.5">{{ ('Disabled') }}</span>
-        <div class="min-w-0 text-sm">
-            <p class="font-semibold">{{ ('Billing is turned off') }}</p>
-            <p class="mt-1 text-base-content/60 leading-relaxed">
-                {{ ('Article generation is not metered on this instance. An operator enables it with') }}
-                <code class="font-mono text-xs" dir="ltr">BILLING_ENABLED=true</code>.
-            </p>
-        </div>
+<div class="alert alert-soft alert-neutral items-start" role="status">
+    <span class="badge badge-soft badge-neutral mt-0.5">{{ ('Disabled') }}</span>
+    <div class="min-w-0 text-sm">
+        <p class="font-semibold">{{ ('Billing is turned off') }}</p>
+        <p class="mt-1 leading-relaxed text-base-content/65">
+            {{ ('Article generation is not metered on this instance. An operator enables it with') }}
+            <code class="font-mono text-xs" dir="ltr">BILLING_ENABLED=true</code>.
+        </p>
     </div>
-{{ f.panel_close() }}
+</div>
 {% elif not configured %}
-{{ f.panel() }}
-    <div class="flex items-start gap-3">
-        <span class="badge badge-soft badge-warning mt-0.5">{{ ('Setup') }}</span>
-        <div class="min-w-0 text-sm">
-            <p class="font-semibold">{{ ('Payment provider not configured') }}</p>
-            <p class="mt-1 text-base-content/60 leading-relaxed">
-                {{ ('Set PAYRAM_BASE_URL and PAYRAM_API_KEY, then register the webhook endpoint, before credit packs can be purchased.') }}
-            </p>
-        </div>
+<div class="alert alert-soft alert-warning items-start" role="status">
+    <span class="badge badge-soft badge-warning mt-0.5">{{ ('Setup') }}</span>
+    <div class="min-w-0 text-sm">
+        <p class="font-semibold">{{ ('Payment provider not configured') }}</p>
+        <p class="mt-1 leading-relaxed text-base-content/65">
+            {{ ('Set PAYRAM_BASE_URL and PAYRAM_API_KEY, then register the webhook endpoint, before credit packs can be purchased.') }}
+        </p>
     </div>
-{{ f.panel_close() }}
+</div>
 {% endif %}
 
 <!-- Usage -->
-<div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+<div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
     {{ f.stat(('Free generations left'), overview.free_remaining, 'bg-success',
               (overview.free_used ~ ' of ' ~ overview.free_allowance ~ ' used')) }}
     {{ f.stat(('Credits'), overview.credit_balance, 'bg-info',
@@ -50,20 +46,20 @@
 </div>
 
 <!-- Credit packs -->
-{{ f.panel(('Credit packs'), '<span class="text-xs opacity-50">' ~ ('Each generates one article per credit') ~ '</span>') }}
+{{ f.panel(('Credit packs'), '<span class="text-xs text-base-content/60">' ~ ('Each generates one article per credit') ~ '</span>') }}
     {% if products %}
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
         {% for p in products %}
-        <div class="border border-base-300/70 rounded-box p-4 flex flex-col gap-3">
+        <div class="flex flex-col gap-3 rounded-box border border-base-300 p-5">
             <div>
-                <p class="font-bold">{{ p.name }}</p>
-                {% if p.description %}<p class="mt-0.5 text-xs text-base-content/55 leading-relaxed">{{ p.description }}</p>{% endif %}
+                <p class="font-semibold">{{ p.name }}</p>
+                {% if p.description %}<p class="mt-0.5 text-xs leading-relaxed text-base-content/60">{{ p.description }}</p>{% endif %}
             </div>
-            <div class="flex items-baseline gap-2">
-                <span class="text-2xl font-extrabold tabular-nums">{{ p.priceCents|money_cents }}</span>
-                <span class="text-xs opacity-50">{{ p.currency }}</span>
+            <div class="flex items-baseline gap-1.5">
+                <span class="text-2xl font-extrabold tabular-nums tracking-[-0.03em]">{{ p.priceCents|money_cents }}</span>
+                <span class="text-xs uppercase text-base-content/60">{{ p.currency }}</span>
             </div>
-            <p class="text-xs opacity-60">{{ p.credits }} {{ ('credits') }}</p>
+            <p class="text-xs text-base-content/60">{{ p.credits }} {{ ('credits') }}</p>
             <form hx-post="/billing/checkout" hx-swap="none" class="mt-auto">
                 <input type="hidden" name="product_code" value="{{ p.code }}" />
                 <button type="submit" class="btn btn-primary btn-sm w-full"
@@ -81,7 +77,7 @@
 {{ f.panel_close() }}
 
 <!-- Invoice history -->
-{{ f.panel(('Payment history'), '<span class="text-xs opacity-50">' ~ ('Your most recent purchases') ~ '</span>') }}
+{{ f.panel(('Payment history'), '<span class="text-xs text-base-content/60">' ~ ('Your most recent purchases') ~ '</span>') }}
     {% if invoices %}
     {% include "pages/billing/_invoices.html" %}
     {% else %}

@@ -14,5 +14,5 @@
        hx-target="#research-content" hx-push-url="?tab={{ tab }}"
        hx-swap="innerHTML" hx-indicator="#research-indicator">{{ tab_labels.get(tab, tab) }}</a>
   {% endfor %}
-  <span id="research-indicator" class="htmx-indicator self-center text-xs opacity-50 ms-2">Loading…</span>
+  <span id="research-indicator" class="htmx-indicator self-center text-xs text-base-content/60 ms-2">Loading…</span>
 </nav>

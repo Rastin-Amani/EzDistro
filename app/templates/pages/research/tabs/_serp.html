@@ -10,18 +10,18 @@
       </span>
     </div>
     <div class="grid gap-3 sm:grid-cols-2">
-      <div class="card border border-base-300 bg-base-100 min-w-0 p-4">
-        <div class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55 mb-2">Still available</div>
-        <ul class="text-sm space-y-1.5 opacity-80">
+      <div class="card border border-base-300 bg-base-100 min-w-0 p-5">
+        <div class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60 mb-2">Still available</div>
+        <ul class="text-sm space-y-1.5 text-base-content/80">
           <li class="flex items-center gap-2"><span class="size-1.5 shrink-0 rounded-full bg-success" aria-hidden="true"></span>Search demand</li>
           <li class="flex items-center gap-2"><span class="size-1.5 shrink-0 rounded-full bg-success" aria-hidden="true"></span>Keyword universe</li>
           <li class="flex items-center gap-2"><span class="size-1.5 shrink-0 rounded-full bg-success" aria-hidden="true"></span>Historical trends</li>
           <li class="flex items-center gap-2"><span class="size-1.5 shrink-0 rounded-full bg-success" aria-hidden="true"></span>Competitor content</li>
         </ul>
       </div>
-      <div class="card border border-base-300 bg-base-100 min-w-0 p-4">
-        <div class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55 mb-2">Also available</div>
-        <ul class="text-sm space-y-1.5 opacity-80">
+      <div class="card border border-base-300 bg-base-100 min-w-0 p-5">
+        <div class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60 mb-2">Also available</div>
+        <ul class="text-sm space-y-1.5 text-base-content/80">
           <li class="flex items-center gap-2"><span class="size-1.5 shrink-0 rounded-full bg-success" aria-hidden="true"></span>Content gaps</li>
           <li class="flex items-center gap-2"><span class="size-1.5 shrink-0 rounded-full bg-success" aria-hidden="true"></span>Semantic clusters</li>
           <li class="flex items-center gap-2"><span class="size-1.5 shrink-0 rounded-full bg-success" aria-hidden="true"></span>New / update opportunities</li>
@@ -29,7 +29,7 @@
         </ul>
       </div>
     </div>
-    <p class="text-xs opacity-60">
+    <p class="text-xs text-base-content/65">
       Connect a SERP provider in
       <a class="link" href="/projects/{{ project.id }}?tab=integrations">Connections</a>
       and re-run with a SERP budget to fill this tab in later — existing research stays valid.
@@ -47,16 +47,16 @@
 
     <div class="overflow-x-auto">
       <table class="table table-sm">
-        <thead><tr class="text-xs opacity-60">
+        <thead><tr class="text-[0.7rem] uppercase tracking-[0.073em] text-base-content/60">
           <th>Keyword</th><th>Provider</th><th class="text-end">Results</th><th>Observed</th><th></th>
         </tr></thead>
         <tbody>
         {% for row in queries %}
           <tr>
             <td class="text-sm">{{ row.keyword }}</td>
-            <td class="text-xs opacity-60">{{ row.provider }}</td>
+            <td class="text-xs text-base-content/65">{{ row.provider }}</td>
             <td class="text-end text-xs tabular-nums">{{ row.resultCount|loc_int }}</td>
-            <td class="text-xs opacity-60">{{ row.observedAt|loc_dt }}</td>
+            <td class="text-xs text-base-content/65">{{ row.observedAt|loc_dt }}</td>
             <td class="text-end">
               <button class="btn btn-xs btn-ghost"
                       hx-get="/projects/{{ project.id }}/research/{{ run.id }}/keywords/{{ row.id }}"
@@ -74,7 +74,7 @@
           <button class="btn btn-xs btn-ghost" hx-get="{{ prev_url }}"
                   hx-target="#research-content" hx-swap="innerHTML">Previous</button>
         {% else %}<span></span>{% endif %}
-        <span class="opacity-50">Page {{ page }}</span>
+        <span class="text-base-content/60">Page {{ page }}</span>
         {% if next_url %}
           <button class="btn btn-xs btn-ghost" hx-get="{{ next_url }}"
                   hx-target="#research-content" hx-swap="innerHTML">Next</button>
@@ -83,7 +83,7 @@
     {% endif %}
 
     {% if count %}
-      <p class="text-xs opacity-60">{{ count }} observed queries. SERP data is time-sensitive — refresh a keyword from its detail drawer.</p>
+      <p class="text-xs text-base-content/65">{{ count }} observed queries. SERP data is time-sensitive — refresh a keyword from its detail drawer.</p>
     {% endif %}
   {% endif %}
 

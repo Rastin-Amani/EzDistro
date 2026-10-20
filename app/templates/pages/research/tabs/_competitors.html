@@ -16,25 +16,25 @@
     </form>
   {{ f.panel_close() }}
 
-  {{ f.panel('Competitor pages', actions='<span class="text-xs opacity-60">' ~ total ~ ' pages</span>') }}
+  {{ f.panel('Competitor pages', actions='<span class="text-xs text-base-content/65">' ~ total ~ ' pages</span>') }}
     {% if pages %}
       <div class="overflow-x-auto">
         <table class="table table-sm">
-          <thead><tr class="text-xs opacity-60">
+          <thead><tr class="text-[0.7rem] uppercase tracking-[0.073em] text-base-content/60">
             <th>Domain</th><th>Title</th><th>Type</th><th class="text-end">Words</th><th>Status</th><th>Fetched</th><th></th>
           </tr></thead>
           <tbody>
           {% for p in pages %}
             <tr>
-              <td class="text-xs opacity-70">{{ p.domain or '—' }}</td>
+              <td class="text-xs text-base-content/65">{{ p.domain or '—' }}</td>
               <td class="text-sm">
                 {{ p.title or p.url }}
-                <a class="link text-xs opacity-50" href="{{ p.url }}" target="_blank" rel="noopener">open</a>
+                <a class="link text-xs text-base-content/60" href="{{ p.url }}" target="_blank" rel="noopener">open</a>
               </td>
               <td class="text-xs">{{ p.contentType or '—' }}</td>
               <td class="text-end text-xs tabular-nums">{{ p.wordCount|loc_int }}</td>
               <td><span class="badge {{ p.status|status_badge }}">{{ p.status|status_label }}</span></td>
-              <td class="text-xs opacity-60">{{ p.fetchedAt|loc_dt }}</td>
+              <td class="text-xs text-base-content/65">{{ p.fetchedAt|loc_dt }}</td>
               <td class="text-end">
                 {% if p.headings %}
                   <button type="button" popovertarget="headings-{{ p.id or loop.index }}" class="btn btn-xs btn-ghost">Headings</button>
@@ -57,7 +57,7 @@
             <button class="btn btn-xs btn-ghost" hx-get="{{ prev_url }}"
                     hx-target="#research-content" hx-swap="innerHTML">Previous</button>
           {% else %}<span></span>{% endif %}
-          <span class="opacity-50">Page {{ page }}</span>
+          <span class="text-base-content/60">Page {{ page }}</span>
           {% if next_url %}
             <button class="btn btn-xs btn-ghost" hx-get="{{ next_url }}"
                     hx-target="#research-content" hx-swap="innerHTML">Next</button>

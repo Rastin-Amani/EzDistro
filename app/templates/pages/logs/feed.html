@@ -10,19 +10,25 @@
 ) }}
 
 {# Level filter — mirrors the allow-listed ?level= values in app/api/logs.py #}
-<div class="join mb-4 overflow-x-auto" role="group" aria-label="{{ ('Filter by level') }}">
-    <a href="/logs" class="join-item btn btn-xs {{ 'btn-primary' if not level_filter }}" aria-current="{{ 'true' if not level_filter else 'false' }}">{{ ('All') }}</a>
-    {% for level in ['info', 'warning', 'error'] %}
-    <a href="/logs?level={{ level }}" class="join-item btn btn-xs {{ 'btn-primary' if level_filter == level }}" aria-current="{{ 'true' if level_filter == level else 'false' }}">{{ level|status_label }}</a>
-    {% endfor %}
+<div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+    <div class="join" role="group" aria-label="{{ ('Filter by level') }}">
+        <a href="/logs" class="join-item btn btn-sm {{ 'btn-neutral' if not level_filter }}" aria-current="{{ 'true' if not level_filter else 'false' }}">{{ ('All') }}</a>
+        {% for level in ['info', 'warning', 'error'] %}
+        <a href="/logs?level={{ level }}" class="join-item btn btn-sm {{ 'btn-neutral' if level_filter == level }}" aria-current="{{ 'true' if level_filter == level else 'false' }}">
+            <span class="size-1.5 rounded-full {{ 'bg-primary' if level == 'info' else ('bg-warning' if level == 'warning' else 'bg-error') }}" aria-hidden="true"></span>
+            {{ level|status_label }}
+        </a>
+        {% endfor %}
+    </div>
+    <p class="text-xs tabular-nums text-base-content/60">{{ events|length }} {{ ('events') }}{% if level_filter %} · {{ ('filtered') }}{% endif %}</p>
 </div>
 
 {% if load_error %}
-<div class="card border border-base-300 bg-base-100 min-w-0 border-error/40 mb-4">
-    <div class="flex flex-wrap items-center justify-between gap-3 p-4">
+<div class="mb-4 rounded-box border border-error/30 bg-error/5 p-5">
+    <div class="flex flex-wrap items-center justify-between gap-3">
         <div class="min-w-0">
-            <p class="font-bold text-error">{{ ('Could not load events') }}</p>
-            <p class="text-sm opacity-60">{{ ('The event feed could not be reached. This is usually a temporary connection problem — your filters are kept.') }}</p>
+            <p class="font-semibold text-error">{{ ('Could not load events') }}</p>
+            <p class="mt-1 text-sm leading-relaxed text-base-content/65">{{ ('The event feed could not be reached. This is usually a temporary connection problem — your filters are kept.') }}</p>
         </div>
         <a class="btn btn-primary btn-sm shrink-0" href="/logs{{ '?level=' ~ level_filter if level_filter }}">{{ ('Try again') }}</a>
     </div>
@@ -30,58 +36,62 @@
 {% endif %}
 
 {% if events %}
-<div class="card border border-base-300 bg-base-100 min-w-0">
-    <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
-        <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Activity') }}</h2>
-        <span class="text-xs opacity-50 tabular-nums">{{ events|length }} {{ ('events') }}</span>
+<section class="card overflow-hidden border border-base-300 bg-base-100" aria-labelledby="events-title">
+    <div class="flex items-center justify-between gap-2 border-b border-base-300 px-5 py-3.5">
+        <h2 id="events-title" class="font-mono text-[0.7rem] uppercase tracking-[0.073em] text-base-content/60">{{ ('Activity') }}</h2>
+        <span class="text-xs text-base-content/60">{{ ('Newest first') }}</span>
     </div>
-    <div class="overflow-x-auto" aria-live="polite">
-        <table class="table table-sm">
-            <thead>
-                <tr class="text-xs opacity-60">
-                    <th>{{ ('Type') }}</th>
-                    <th>{{ ('Message') }}</th>
-                    <th class="hidden md:table-cell">{{ ('Project') }}</th>
-                    <th class="hidden sm:table-cell">{{ ('Job') }}</th>
-                    <th class="hidden lg:table-cell">{{ ('Data') }}</th>
-                    <th>{{ ('Time') }}</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for e in events %}
-                <tr>
-                    <td><span class="badge badge-sm {{ e.eventType|status_badge }}">{{ e.eventType|status_label }}</span></td>
-                    <td class="max-w-64 text-sm"><p class="break-words">{{ e.message or '—' }}</p></td>
-                    <td class="hidden text-xs opacity-60 md:table-cell">
-                        {% if e.project %}<a href="/projects/{{ e.project }}" class="link link-hover font-mono" dir="ltr">{{ e.project[:8] }}</a>{% else %}—{% endif %}
-                    </td>
-                    <td class="hidden text-xs sm:table-cell">
-                        {% if e.job %}<a href="/jobs/{{ e.job }}" class="link link-hover font-mono" dir="ltr">{{ e.job[:8] }}</a>{% else %}—{% endif %}
-                    </td>
-                    <td class="hidden text-xs lg:table-cell">
-                        {% if e.metadata and e.metadata != {} %}
-                        <button type="button" popovertarget="meta-{{ e.id }}" class="btn btn-ghost btn-xs">JSON</button>
-                        <div id="meta-{{ e.id }}" popover class="dropdown dropdown-end max-h-48 w-80 overflow-auto rounded-box border border-base-300 bg-base-100 p-3 font-mono text-xs">
-                            <pre>{{ e.metadata|tojson }}</pre>
-                        </div>
-                        {% else %}—{% endif %}
-                    </td>
-                    <td class="whitespace-nowrap text-xs opacity-50">{{ e.created|loc_dt }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</div>
+    <ul class="divide-y divide-base-300" aria-live="polite">
+        {% for e in events %}
+        {% set tone = 'error' if 'error' in (e.eventType or '') or e.eventType == 'error' else ('warning' if 'retry' in (e.eventType or '') or 'cancel' in (e.eventType or '') or e.eventType == 'warning' else ('success' if 'completed' in (e.eventType or '') or e.eventType == 'info' else 'neutral')) %}
+        <li class="flex flex-wrap items-start gap-x-4 gap-y-2 px-5 py-3.5 transition-colors hover:bg-base-200/40">
+            <span class="mt-1.5 size-1.5 flex-none rounded-full {{ 'bg-error' if tone == 'error' else ('bg-warning' if tone == 'warning' else ('bg-success' if tone == 'success' else 'bg-primary')) }}" aria-hidden="true"></span>
+
+            <div class="min-w-0 flex-1">
+                <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <span class="badge badge-sm {{ e.eventType|status_badge }}">{{ e.eventType|status_label }}</span>
+                    <p class="min-w-0 break-words text-sm leading-relaxed text-base-content/80">{{ e.message or '—' }}</p>
+                </div>
+                {% if e.project or e.job %}
+                <p class="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.7rem] text-base-content/60">
+                    {% if e.project %}
+                    <a href="/projects/{{ e.project }}" class="inline-flex items-center gap-1 hover:text-primary">
+                        <span class="uppercase tracking-[0.073em] text-base-content/60">{{ ('Website') }}</span>
+                        <span class="font-mono" dir="ltr">{{ e.project[:8] }}</span>
+                    </a>
+                    {% endif %}
+                    {% if e.job %}
+                    <a href="/jobs/{{ e.job }}" class="inline-flex items-center gap-1 hover:text-primary">
+                        <span class="uppercase tracking-[0.073em] text-base-content/60">{{ ('Job') }}</span>
+                        <span class="font-mono" dir="ltr">{{ e.job[:8] }}</span>
+                    </a>
+                    {% endif %}
+                </p>
+                {% endif %}
+            </div>
+
+            <div class="flex flex-none items-center gap-2">
+                {% if e.metadata and e.metadata != {} %}
+                <button type="button" popovertarget="meta-{{ e.id }}" class="btn btn-ghost btn-xs">{{ ('Data') }}</button>
+                <div id="meta-{{ e.id }}" popover class="dropdown dropdown-end max-h-60 w-80 max-w-[calc(100vw-2rem)] overflow-auto rounded-box border border-base-300 bg-base-100 p-3 font-mono text-xs">
+                    <pre class="whitespace-pre-wrap break-words">{{ e.metadata|tojson }}</pre>
+                </div>
+                {% endif %}
+                <span class="whitespace-nowrap text-[0.7rem] tabular-nums text-base-content/60">{{ e.created|loc_dt }}</span>
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+</section>
 {% else %}
 {% if not load_error %}
-<div class="card border border-base-300 bg-base-100 min-w-0">
+<section class="card border border-base-300 bg-base-100">
     {{ f.empty(
         ('No events recorded'),
         ('Job activity, provider errors and configuration changes will appear here.'),
         '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" /></svg>'
     ) }}
-</div>
+</section>
 {% endif %}
 {% endif %}
 {% endblock %}

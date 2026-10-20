@@ -26,7 +26,7 @@
     </form>
   {{ f.panel_close() }}
 
-  {{ f.panel('Article opportunities', actions='<span class="text-xs opacity-60">' ~ total ~ ' ideas</span>') }}
+  {{ f.panel('Article opportunities', actions='<span class="text-xs text-base-content/65">' ~ total ~ ' ideas</span>') }}
     {% if ideas %}
       <div class="mb-3 flex flex-wrap items-center gap-2">
         <form hx-post="/projects/{{ project.id }}/research/{{ run.id }}/opportunities/bulk"
@@ -48,7 +48,7 @@
         </div>
 
         {% for idea in ideas %}
-          <div class="rounded-lg border border-base-300 p-3">
+          <div class="rounded-field border border-base-300 p-3">
             <div class="flex flex-wrap items-start justify-between gap-2">
               <div class="flex min-w-0 items-start gap-2">
                 {% if idea.status == 'proposed' %}
@@ -57,7 +57,7 @@
                 {% endif %}
                 <div class="min-w-0">
                   <div class="text-sm font-medium">{{ idea.title }}</div>
-                  <div class="mt-1 flex flex-wrap items-center gap-2 text-xs opacity-60">
+                  <div class="mt-1 flex flex-wrap items-center gap-2 text-xs text-base-content/65">
                     <span class="badge badge-soft badge-xs">{{ idea.action }}</span>
                     {% if idea.intent %}<span>{{ idea.intent }}</span>{% endif %}
                     {% if idea.contentType %}<span>· {{ idea.contentType }}</span>{% endif %}
@@ -66,28 +66,28 @@
                     {% if idea.confidence %}<span>· confidence {{ idea.confidence }}</span>{% endif %}
                   </div>
                   {% if idea.primaryKeyword %}
-                    <div class="mt-1 text-xs">Primary keyword: <span class="opacity-70">{{ idea.primaryKeyword }}</span></div>
+                    <div class="mt-1 text-xs">Primary keyword: <span class="text-base-content/65">{{ idea.primaryKeyword }}</span></div>
                   {% endif %}
                 </div>
               </div>
               <div class="text-end">
                 <div class="text-lg font-semibold tabular-nums">{{ idea.opportunityScore|round(0)|int if idea.opportunityScore else 0 }}</div>
-                <div class="text-xs opacity-50">score</div>
+                <div class="text-xs text-base-content/60">score</div>
               </div>
             </div>
 
             {% if idea.recommendedAngle or idea.uniqueValueProposition %}
-              <p class="mt-2 text-xs opacity-70">{{ idea.uniqueValueProposition or '' }}{% if idea.recommendedAngle %} — {{ idea.recommendedAngle }}{% endif %}</p>
+              <p class="mt-2 text-xs text-base-content/65">{{ idea.uniqueValueProposition or '' }}{% if idea.recommendedAngle %} — {{ idea.recommendedAngle }}{% endif %}</p>
             {% endif %}
 
             {% if idea.scoreComponents %}
               <details class="mt-2 text-xs">
-                <summary class="cursor-pointer opacity-60">Why this score?</summary>
+                <summary class="cursor-pointer text-base-content/65">Why this score?</summary>
                 <div class="mt-1 grid grid-cols-2 gap-1 sm:grid-cols-3">
                   {% for key, value in idea.scoreComponents.items() %}
                     {% if value is number %}
                       <div class="flex items-center justify-between gap-2 border-b border-base-200 py-0.5">
-                        <span class="opacity-60">{{ key }}</span><span>{{ value|round(2) }}</span>
+                        <span class="text-base-content/65">{{ key }}</span><span>{{ value|round(2) }}</span>
                       </div>
                     {% endif %}
                   {% endfor %}
@@ -97,8 +97,8 @@
 
             {% if idea.evidence %}
               <details class="mt-2 text-xs">
-                <summary class="cursor-pointer opacity-60">Evidence / provenance</summary>
-                <pre class="mt-1 overflow-x-auto text-xs opacity-60">{{ idea.evidence | tojson(indent=2) }}</pre>
+                <summary class="cursor-pointer text-base-content/65">Evidence / provenance</summary>
+                <pre class="mt-1 overflow-x-auto text-xs text-base-content/65">{{ idea.evidence | tojson(indent=2) }}</pre>
               </details>
             {% endif %}
 
@@ -120,7 +120,7 @@
                 {% endif %}
               {% endif %}
               {% if idea.canonicalExistingUrl %}
-                <a class="link text-xs opacity-60" href="{{ idea.canonicalExistingUrl }}" target="_blank" rel="noopener">existing page</a>
+                <a class="link text-xs text-base-content/65" href="{{ idea.canonicalExistingUrl }}" target="_blank" rel="noopener">existing page</a>
               {% endif %}
             </div>
           </div>
@@ -133,7 +133,7 @@
             <button class="btn btn-xs btn-ghost" hx-get="{{ prev_url }}"
                     hx-target="#research-content" hx-swap="innerHTML">Previous</button>
           {% else %}<span></span>{% endif %}
-          <span class="opacity-50">Page {{ page }}</span>
+          <span class="text-base-content/60">Page {{ page }}</span>
           {% if next_url %}
             <button class="btn btn-xs btn-ghost" hx-get="{{ next_url }}"
                     hx-target="#research-content" hx-swap="innerHTML">Next</button>

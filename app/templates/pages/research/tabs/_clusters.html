@@ -23,7 +23,7 @@
     </form>
   {{ f.panel_close() }}
 
-  {{ f.panel('Topic clusters', actions='<span class="text-xs opacity-60">' ~ clusters|length ~ ' clusters</span>') }}
+  {{ f.panel('Topic clusters', actions='<span class="text-xs text-base-content/65">' ~ clusters|length ~ ' clusters</span>') }}
     {% if clusters %}
       <div class="mb-3 flex flex-wrap items-center gap-2">
         <form hx-post="/projects/{{ project.id }}/research/{{ run.id }}/clusters/bulk"
@@ -44,7 +44,7 @@
 
         <div class="mt-2 overflow-x-auto">
           <table class="table table-sm">
-            <thead><tr class="text-xs opacity-60">
+            <thead><tr class="text-[0.7rem] uppercase tracking-[0.073em] text-base-content/60">
               <th></th><th>Cluster</th><th class="text-end">Keywords</th><th>Method</th>
               <th>Primary keyword</th><th>Decision</th><th>Sample queries</th><th></th>
             </tr></thead>
@@ -59,10 +59,10 @@
                 </td>
                 <td class="text-sm">{{ c.name }}</td>
                 <td class="text-end text-xs tabular-nums">{{ c.size|default(0) }}</td>
-                <td class="text-xs opacity-60">{{ c.method or '—' }}</td>
-                <td class="text-xs opacity-70">{{ c.primaryKeyword or '—' }}</td>
+                <td class="text-xs text-base-content/65">{{ c.method or '—' }}</td>
+                <td class="text-xs text-base-content/65">{{ c.primaryKeyword or '—' }}</td>
                 <td><span class="badge {{ decision|status_badge }}">{{ decision|status_label }}</span></td>
-                <td class="text-xs opacity-60">
+                <td class="text-xs text-base-content/65">
                   {% set sample = (c.meta or {}).get('sample') or [] %}
                   {{ sample|join(', ') }}
                 </td>
@@ -87,7 +87,7 @@
         </div>
       </form>
 
-      <p class="mt-2 text-xs opacity-50">
+      <p class="mt-2 text-xs text-base-content/60">
         A cluster groups queries that share one search intent. Accept the ones that are genuinely
         related ideas; reject the rest so they stop feeding opportunities.
       </p>

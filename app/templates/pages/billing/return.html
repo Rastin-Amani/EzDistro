@@ -15,7 +15,7 @@
         <span class="badge badge-soft badge-neutral mt-0.5">{{ ('Unknown') }}</span>
         <div class="text-sm">
             <p class="font-semibold">{{ ('We could not find that payment') }}</p>
-            <p class="mt-1 text-base-content/60 leading-relaxed">
+            <p class="mt-1 text-base-content/65 leading-relaxed">
                 {{ ('If you just paid, your credits will appear on the billing page once the network confirms the transaction.') }}
             </p>
         </div>
@@ -25,7 +25,7 @@
         <span class="badge badge-soft badge-success mt-0.5">{{ ('Paid') }}</span>
         <div class="text-sm">
             <p class="font-semibold">{{ ('Payment confirmed — credits added') }}</p>
-            <p class="mt-1 text-base-content/60 leading-relaxed">
+            <p class="mt-1 text-base-content/65 leading-relaxed">
                 {{ invoice.credits }} {{ ('credits were added to your account.') }}
             </p>
             <div class="mt-3 flex gap-2">
@@ -39,7 +39,7 @@
         <span class="badge badge-soft badge-warning mt-0.5">{{ invoice.status|status_label }}</span>
         <div class="text-sm">
             <p class="font-semibold">{{ ('Waiting for confirmation') }}</p>
-            <p class="mt-1 text-base-content/60 leading-relaxed">
+            <p class="mt-1 text-base-content/65 leading-relaxed">
                 {{ ('Your payment has not been confirmed yet. Crypto payments can take a few minutes; you can close this page — credits are added automatically.') }}
             </p>
             <div class="mt-3 flex gap-2">

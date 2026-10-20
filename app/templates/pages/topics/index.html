@@ -8,9 +8,9 @@
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5 ltr:rotate-180"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
         </a>
         <div class="min-w-0">
-            <p class="font-mono text-[0.65rem] uppercase tracking-[0.073em] text-base-content/45">{{ ('Write · Topics') }}</p>
+            <p class="font-mono text-[0.7rem] uppercase tracking-[0.073em] text-base-content/60">{{ ('Write · Topics') }}</p>
             <h1 class="font-extrabold text-lg truncate">{{ ('Topics') }}</h1>
-            <span class="text-xs opacity-50">{{ ('%(n)s items · %(v)s') % {'n': total, 'v': project.name} }}</span>
+            <span class="text-xs text-base-content/60">{{ ('%(n)s items · %(v)s') % {'n': total, 'v': project.name} }}</span>
         </div>
     </div>
     <div class="flex items-center gap-2">
@@ -34,26 +34,26 @@
 
     <div class="flex flex-wrap items-center gap-1.5">
         <a href="/projects/{{ project.id }}/topics?q={{ q }}&sort={{ sort }}"
-           class="btn btn-xs {{ 'btn-primary' if not status_filter }}">{{ ('All (%(n)s)') % {'n': counts.values()|sum} }}</a>
+           class="btn btn-xs {{ 'btn-neutral' if not status_filter }}">{{ ('All (%(n)s)') % {'n': counts.values()|sum} }}</a>
         {% for s in statuses %}
         <a href="/projects/{{ project.id }}/topics?status={{ s }}&q={{ q }}&sort={{ sort }}"
-           class="btn btn-xs {{ 'btn-primary' if status_filter == s }}">
+           class="btn btn-xs {{ 'btn-neutral' if status_filter == s }}">
             {{ s|status_label }} ({{ counts.get(s, 0) }})
         </a>
         {% endfor %}
     </div>
 
-    <div class="flex items-center gap-1.5 text-xs opacity-70">
+    <div class="flex items-center gap-1.5 text-xs text-base-content/65">
         <span>{{ ('Sort:') }}</span>
         {% for key, label in [('priority', ('Priority')), ('priority_asc', ('Priority ↑')), ('created', ('Newest')), ('title', ('Title'))] %}
         <a href="/projects/{{ project.id }}/topics?sort={{ key }}&status={{ status_filter }}&q={{ q }}"
-           class="btn btn-xs {{ 'btn-primary' if sort == key }}">{{ label }}</a>
+           class="btn btn-xs {{ 'btn-neutral' if sort == key }}">{{ label }}</a>
         {% endfor %}
     </div>
 </div>
 
 <!-- Bulk bar -->
-<div class="flex items-center gap-2 mb-3 text-xs px-3 py-2 rounded-lg bg-primary/5 border border-primary/20 text-primary font-medium" id="bulk-bar" hidden>
+<div class="flex items-center gap-2 mb-3 text-xs px-3 py-2 rounded-field bg-primary/5 border border-primary/20 text-primary font-medium" id="bulk-bar" hidden>
     <span id="bulk-count">0</span> {{ ('Selected —') }}
     <button class="btn btn-primary btn-xs" data-bulk-action="generate" data-confirm="{{ ('Generate articles for the selected topics? This queues writing jobs.') }}">{{ ('Generate article') }}</button>
     <button class="btn btn-ghost btn-xs" data-bulk-action="retry" data-confirm="{{ ('Retry the selected topics?') }}">{{ ('Retry') }}</button>
@@ -95,7 +95,7 @@
                     <td class="whitespace-nowrap">
                         <div class="flex items-center justify-end gap-1">
                         {% if t.status in ['planned', 'failed', 'cancelled'] %}
-                        <button class="btn btn-primary btn-sm"
+                        <button class="btn btn-ghost btn-sm text-primary"
                                 hx-post="/projects/{{ project.id }}/topics/{{ t.id }}/write" hx-swap="none">{{ ('Generate') }}</button>
                         {% elif t.articleId %}
                         <a class="btn btn-ghost btn-sm" href="/projects/{{ project.id }}/articles/{{ t.articleId }}/workspace">{{ ('Article') }}</a>
@@ -118,11 +118,11 @@
                 {% else %}
                 <tr><td colspan="7">
                     <div class="flex flex-col items-center justify-center gap-3 text-center py-8">
-                        <div class="grid size-14 place-items-center rounded-lg bg-base-200 text-base-content/40">
+                        <div class="grid size-14 place-items-center rounded-field bg-base-200 text-base-content/60">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 0 0-1.883 2.542l.857 6a2.25 2.25 0 0 0 2.227 1.932H19.05a2.25 2.25 0 0 0 2.227-1.932l.857-6a2.25 2.25 0 0 0-1.883-2.542m-16.5 0V6A2.25 2.25 0 0 1 6 3.75h12A2.25 2.25 0 0 1 20.25 6v3.776" /></svg>
                         </div>
-                        <p class="font-bold text-base-content/75">{{ ('No topic found') }}</p>
-                        <p class="text-sm text-base-content/50 max-w-xs">{{ ('Add the first topic or use CSV import.') }}</p>
+                        <p class="font-bold text-base-content/80">{{ ('No topic found') }}</p>
+                        <p class="text-sm text-base-content/60 max-w-xs">{{ ('Add the first topic or use CSV import.') }}</p>
                         <button class="btn btn-primary btn-sm mt-1" @click="$store.ui.openModal('new-topic-modal')">{{ ('+ New topic') }}</button>
                     </div>
                 </td></tr>
@@ -136,7 +136,7 @@
 <div class="join mt-4">
     {% for p in range(1, pages + 1) %}
     <a href="/projects/{{ project.id }}/topics?page={{ p }}&status={{ status_filter }}&q={{ q }}&sort={{ sort }}"
-       class="join-item btn btn-xs {{ 'btn-primary' if p == page }}">{{ p }}</a>
+       class="join-item btn btn-xs {{ 'btn-neutral' if p == page }}">{{ p }}</a>
     {% endfor %}
 </div>
 {% endif %}
@@ -173,7 +173,7 @@
 
 <!-- New topic modal -->
 <dialog id="new-topic-modal" class="modal modal-bottom sm:modal-middle">
-    <div class="modal-box bg-base-100">
+    <div class="modal-box border border-base-300 bg-base-100">
         <div class="flex items-center justify-between mb-4">
             <h3 class="font-bold text-lg">{{ ('New topic') }}</h3>
             <button type="button" class="btn btn-ghost btn-sm btn-circle" @click="$store.ui.closeModal('new-topic-modal')" aria-label="{{ ('Close') }}">

@@ -16,14 +16,16 @@
     </div>
   {% endif %}
 
-  <div class="flex flex-wrap items-start justify-between gap-3">
-    <div>
-      <div class="inline-flex items-center gap-2 font-mono text-[0.72rem] font-normal uppercase tracking-[0.073em] text-base-content/55"><span class="h-px w-5 bg-primary" aria-hidden="true"></span>{{ project.name }}</div>
-      <h1 class="font-extrabold leading-[0.95] tracking-[-0.04em] text-base-content text-[clamp(2.5rem,4vw+1.5rem,5rem)]">
-        {{ run.name or 'Research run' }}
-        <span class="badge {{ run.status|status_badge }} ms-2 align-middle">{{ run.status|status_label }}</span>
-      </h1>
-      <p class="mt-3 max-w-xl text-base leading-relaxed text-base-content/60 tracking-[-0.014em]">
+  <div class="mb-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-4 motion-safe:animate-rise">
+    <div class="min-w-0">
+      <p class="flex items-center gap-2 font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60"><span class="h-px w-4 bg-primary" aria-hidden="true"></span>{{ project.name }}</p>
+      <div class="mt-1.5 flex flex-wrap items-center gap-3">
+        <h1 class="text-[clamp(1.9rem,1.35rem+1.7vw,3rem)] font-extrabold leading-[1.02] tracking-[-0.035em] text-base-content">
+          {{ run.name or 'Research run' }}
+        </h1>
+        <span class="badge {{ run.status|status_badge }}">{{ run.status|status_label }}</span>
+      </div>
+      <p class="mt-2.5 max-w-2xl text-[0.9375rem] leading-relaxed tracking-[-0.011em] text-base-content/65">
         {% set t = run.targeting or {} %}
         {{ t.locale or 'en' }}
         {% if t.country %} · {{ t.country }}{% endif %}
@@ -33,7 +35,7 @@
         {% if run.researchType == 'import' %} · imported file{% endif %}
       </p>
     </div>
-    <div class="flex items-center gap-2">
+    <div class="flex flex-wrap items-center gap-2">
       <a class="btn btn-sm btn-ghost" href="/projects/{{ project.id }}?tab=research">All runs</a>
       <a class="btn btn-sm btn-ghost" href="/projects/{{ project.id }}/research/{{ run.id }}/opportunities.csv"
          download hx-boost="false">Export CSV</a>
