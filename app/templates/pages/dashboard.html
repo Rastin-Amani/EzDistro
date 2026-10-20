@@ -6,44 +6,92 @@
 {% set review = project_overviews|sum(attribute='review') %}
 {% set published = project_overviews|sum(attribute='published') %}
 {% set attention = project_overviews|sum(attribute='attention') %}
+{% set total = planned + writing + review + published %}
+{% set stages = [
+    ('Planned', planned, 'ideas to write', 'bg-base-300'),
+    ('Writing', writing, 'articles in progress', 'bg-primary'),
+    ('Ready', review, 'to review or publish', 'bg-warning'),
+    ('Published', published, 'articles published', 'bg-success'),
+] %}
 {{ f.page_header('Overview', 'Your content progress and the decisions that need you.', 'Across your websites', '<a class="btn btn-ghost btn-sm" href="/projects">Manage websites</a>') }}
-<section class="card border border-base-300 bg-base-100 overflow-hidden" aria-labelledby="content-progress-title">
-    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-base-300 px-6 py-4">
-        <h2 id="content-progress-title" class="font-mono text-xs uppercase tracking-widest text-base-content/65">Content progress</h2>
-        <span class="text-xs text-base-content/65">{{ project_overviews|length }} websites · all time</span>
+
+<section class="card overflow-hidden border border-base-300 bg-base-100" aria-labelledby="content-progress-title">
+    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-base-300 px-5 py-3.5">
+        <h2 id="content-progress-title" class="font-mono text-[0.7rem] uppercase tracking-[0.073em] text-base-content/60">Content progress</h2>
+        <span class="text-xs tabular-nums text-base-content/60">{{ project_overviews|length }} {{ 'website' if project_overviews|length == 1 else 'websites' }} · all time</span>
     </div>
     <ol class="grid grid-cols-2 gap-px bg-base-300 sm:grid-cols-4">
-        {% for label, value, note, color in [('Planned', planned, 'ideas to write', 'bg-base-300'), ('Writing', writing, 'articles in progress', 'bg-primary'), ('Ready', review, 'to review or publish', 'bg-warning'), ('Published', published, 'articles published', 'bg-success')] %}
-        <li class="stat min-w-0 bg-base-100 px-4 py-6 sm:px-6">
-            <div class="flex items-center gap-2 mb-4" aria-hidden="true"><span class="size-2 shrink-0 {{ color }} {{ 'motion-safe:animate-pulse' if label == 'Writing' and value }}"></span><span class="h-px grow bg-base-300"></span></div>
-            <span class="stat-title whitespace-normal font-mono text-xs uppercase tracking-widest text-base-content/65">{{ label }}</span>
-            <span class="stat-value my-2 text-[2rem] font-black leading-none tracking-tight tabular-nums">{{ value }}</span>
-            <span class="stat-desc whitespace-normal text-xs text-base-content/65">{{ note }}</span>
+        {% for label, value, note, color in stages %}
+        {% set share = (value / total * 100)|round|int if total else 0 %}
+        <li class="flex min-w-0 flex-col gap-3 bg-base-100 px-5 py-5">
+            <span class="flex items-center gap-2">
+                <span class="size-1.5 flex-none rounded-full {{ color }} {{ 'motion-safe:animate-pulse' if label == 'Writing' and value }}" aria-hidden="true"></span>
+                <span class="truncate font-mono text-[0.7rem] uppercase tracking-[0.073em] text-base-content/60">{{ label }}</span>
+            </span>
+            <span class="text-[2.25rem] font-extrabold leading-none tracking-[-0.04em] tabular-nums">{{ value }}</span>
+            <span class="truncate text-xs text-base-content/60">{{ note }}</span>
+            <span class="mt-auto flex h-1 w-full overflow-hidden rounded-full bg-base-200" aria-hidden="true">
+                <span class="{{ color }} h-full rounded-full transition-[width] duration-700 ease-out" style="width: {{ [share, 3]|max if value else 0 }}%"></span>
+            </span>
         </li>
         {% endfor %}
     </ol>
 </section>
-<div class="mt-12 grid gap-8 lg:grid-cols-3">
-    <section class="lg:col-span-2">
-        <div class="mb-2 flex items-center justify-between border-b border-base-300 pb-4"><h2 class="font-mono text-xs uppercase tracking-widest text-base-content/65">Needs your attention</h2><span class="text-xs text-base-content/65">By website</span></div>
-        <ul class="list">
+
+<div class="mt-8 grid gap-8 lg:grid-cols-3 lg:gap-10">
+    <section class="min-w-0 lg:col-span-2">
+        <div class="mb-1 flex items-baseline justify-between gap-3 border-b border-base-300 pb-3">
+            <h2 class="font-mono text-[0.7rem] uppercase tracking-[0.073em] text-base-content/60">Needs your attention</h2>
+            <span class="text-xs text-base-content/60">By website</span>
+        </div>
+        <ul class="divide-y divide-base-300">
         {% for p in project_overviews if p.attention or p.review or p.planned %}
-            <li class="list-row px-0 py-5">
-                <span class="avatar avatar-placeholder"><span class="flex size-10 items-center justify-center rounded-box bg-base-200 font-semibold">{{ p.name[:1] }}</span></span>
-                <div class="list-col-grow min-w-0"><h3 class="font-semibold break-words">{{ p.name }}</h3><p class="mt-1 text-sm text-base-content/65">{% if p.attention %}{{ p.attention }} {{ 'task' if p.attention == 1 else 'tasks' }} could not finish.{% elif p.review %}{{ p.review }} {{ 'article' if p.review == 1 else 'articles' }} ready to review or publish.{% else %}{{ p.planned }} {{ 'idea' if p.planned == 1 else 'ideas' }} waiting to be written.{% endif %}</p></div>
-                <a class="btn btn-sm btn-ghost col-span-full row-start-2 justify-self-end sm:col-span-1 sm:row-start-1" href="{% if p.attention %}/jobs?project={{ p.id }}&status=failed{% else %}/projects/{{ p.id }}?tab={{ 'articles' if p.review else 'topics' }}{% endif %}">{{ 'Check activity' if p.attention else ('Review articles' if p.review else 'Open plan') }} <span aria-hidden="true">→</span></a>
+            <li class="flex flex-wrap items-center gap-x-4 gap-y-3 py-4">
+                <span class="grid size-9 flex-none place-items-center rounded-field bg-base-200 text-sm font-bold uppercase text-base-content/70" aria-hidden="true">{{ p.name[:1] }}</span>
+                <div class="min-w-0 flex-1">
+                    <h3 class="truncate text-sm font-semibold">{{ p.name }}</h3>
+                    <p class="mt-0.5 text-sm leading-relaxed text-base-content/60">{% if p.attention %}{{ p.attention }} {{ 'task' if p.attention == 1 else 'tasks' }} could not finish.{% elif p.review %}{{ p.review }} {{ 'article' if p.review == 1 else 'articles' }} ready to review or publish.{% else %}{{ p.planned }} {{ 'idea' if p.planned == 1 else 'ideas' }} waiting to be written.{% endif %}</p>
+                </div>
+                <a class="btn btn-ghost btn-sm flex-none" href="{% if p.attention %}/jobs?project={{ p.id }}&status=failed{% else %}/projects/{{ p.id }}?tab={{ 'articles' if p.review else 'topics' }}{% endif %}">
+                    {{ 'Check activity' if p.attention else ('Review articles' if p.review else 'Open content plan') }}
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5 text-base-content/60" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" /></svg>
+                </a>
             </li>
         {% else %}
-            <li class="rounded-box bg-base-200 p-6"><h3 class="font-semibold">{{ 'Nothing waiting for your attention' if project_overviews else 'Your first website starts here' }}</h3><p class="mt-2 text-sm text-base-content/65">{{ 'Open a website to explore new ideas or check work in progress.' if project_overviews else 'Add your website, connect your services, and start planning content.' }}</p><a class="btn btn-primary mt-4" href="/projects">{{ 'Explore websites' if project_overviews else 'Add website' }}</a></li>
+            <li class="py-6">
+                <div class="rounded-box bg-base-200 p-6">
+                    <h3 class="text-[0.9375rem] font-semibold">{{ 'Nothing waiting for your attention' if project_overviews else 'Your first website starts here' }}</h3>
+                    <p class="mt-1.5 max-w-md text-sm leading-relaxed text-base-content/65">{{ 'Open a website to explore new ideas or check work in progress.' if project_overviews else 'Add your website, connect your services, and start planning content.' }}</p>
+                    <a class="btn btn-primary btn-sm mt-4" href="/projects">{{ 'Explore websites' if project_overviews else 'Add website' }}</a>
+                </div>
+            </li>
         {% endfor %}
         </ul>
     </section>
-    <aside class="card bg-base-200 p-6 self-start">
-        <h2 class="font-mono text-xs uppercase tracking-widest text-base-content/65">Behind the scenes</h2>
-        <div class="divider my-3"></div>
-        <a class="flex items-center justify-between gap-3 py-3" href="/jobs"><span><strong class="block text-sm">Activity</strong><span class="text-sm text-base-content/65">{{ attention ~ ' tasks to check' if attention else 'See what ran and what finished' }}</span></span><span aria-hidden="true">↗</span></a>
-        <a class="flex items-center justify-between gap-3 py-3" href="/schedules"><span><strong class="block text-sm">Automation</strong><span class="text-sm text-base-content/65">Know what happens next</span></span><span aria-hidden="true">↗</span></a>
+
+    <aside class="min-w-0 self-start rounded-box bg-base-200 p-5">
+        <h2 class="font-mono text-[0.7rem] uppercase tracking-[0.073em] text-base-content/60">Behind the scenes</h2>
+        <div class="mt-3 flex flex-col">
+            <a class="group flex items-start gap-3 rounded-field px-2 py-3 transition-colors hover:bg-base-100" href="/jobs">
+                <span class="mt-0.5 grid size-8 flex-none place-items-center rounded-field bg-base-100 text-base-content/65 group-hover:text-primary" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor" class="size-4"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" /></svg>
+                </span>
+                <span class="min-w-0">
+                    <strong class="block text-sm font-semibold">Activity</strong>
+                    <span class="mt-0.5 block text-xs leading-relaxed text-base-content/60">{{ attention ~ ' tasks to check' if attention else 'See what ran and what finished' }}</span>
+                </span>
+            </a>
+            <a class="group flex items-start gap-3 rounded-field px-2 py-3 transition-colors hover:bg-base-100" href="/schedules">
+                <span class="mt-0.5 grid size-8 flex-none place-items-center rounded-field bg-base-100 text-base-content/65 group-hover:text-primary" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor" class="size-4"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+                </span>
+                <span class="min-w-0">
+                    <strong class="block text-sm font-semibold">Automation</strong>
+                    <span class="mt-0.5 block text-xs leading-relaxed text-base-content/60">Know what happens next</span>
+                </span>
+            </a>
+        </div>
     </aside>
 </div>
-<p class="mt-8 text-xs text-base-content/60">Content production totals, not search traffic or ranking measurements.</p>
+<p class="mt-8 text-xs leading-relaxed text-base-content/60">Content production totals, not search traffic or ranking measurements.</p>
 {% endblock %}

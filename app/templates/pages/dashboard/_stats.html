@@ -1,9 +1,9 @@
 <div id="stats-row" class="flex flex-col gap-4">
     <section class="card overflow-hidden border border-base-300 bg-base-100" aria-labelledby="content-pipeline-title">
-        <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
+        <div class="flex items-center justify-between gap-2 border-b border-base-300 px-5 py-3.5">
             <div>
                 <h2 id="content-pipeline-title" class="font-semibold">{{ ('Your content') }}</h2>
-                <p class="mt-0.5 text-sm text-base-content/55">{{ ('A simple view of every article moving through your plan.') }}</p>
+                <p class="mt-0.5 text-sm text-base-content/60">{{ ('A simple view of every article moving through your plan.') }}</p>
             </div>
             <a href="/projects" class="btn btn-ghost btn-sm">{{ ('View websites') }}</a>
         </div>
@@ -18,12 +18,12 @@
             (('Live on your site'), n_published, 'bg-accent', false),
         ] %}
         {% set maxv = [n_planned, n_writing, n_review, n_published]|max %}
-        <ol class="grid grid-cols-2 gap-px bg-base-300/70 sm:grid-cols-4">
+        <ol class="grid grid-cols-2 gap-px bg-base-300 sm:grid-cols-4">
             {% for label, value, color, live in stages %}
             <li class="relative flex min-w-0 flex-col gap-2 bg-base-100 px-4 py-4">
-                <span class="absolute inset-x-0 top-[1.35rem] z-0 h-px bg-base-300/70" aria-hidden="true"></span>
+                <span class="absolute inset-x-0 top-[1.35rem] z-0 h-px bg-base-300" aria-hidden="true"></span>
                 <span class="relative z-[1] size-2.5 shrink-0 self-start rounded-full ring-4 ring-base-100 {{ color }}{{ ' motion-safe:animate-pulse' if live and value }}" aria-hidden="true"></span>
-                <span class="truncate text-sm text-base-content/60">{{ label }}</span>
+                <span class="truncate text-sm text-base-content/65">{{ label }}</span>
                 <span class="text-[2rem] font-black leading-none tracking-[-0.04em] tabular-nums">{{ value }}</span>
                 <span class="h-1.5 w-full overflow-hidden rounded-full bg-base-200" aria-hidden="true">
                     {% set w = (value / maxv * 100)|round|int if maxv else 0 %}
@@ -36,28 +36,28 @@
     </section>
 
     <details class="card border border-base-300 bg-base-100 group">
-        <summary class="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-base-content sm:px-5">
+        <summary class="flex min-h-14 cursor-pointer list-none items-center gap-3 px-5 py-3.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-base-content sm:px-5">
              <span class="font-semibold">{{ ('Is everything running?') }}</span>
             {% if stats.jobs_failed %}<span class="badge badge-soft badge-error">{{ stats.jobs_failed }} {{ ('Failed') }}</span>{% endif %}
             <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="ms-auto size-4 transition-transform group-open:rotate-180"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6" /></svg>
         </summary>
-        <dl class="grid grid-cols-1 gap-x-8 border-t border-base-300/70 px-4 py-2 sm:grid-cols-2 sm:px-5">
-            <div class="flex items-center justify-between gap-3 border-b border-base-300/60 py-3">
+        <dl class="grid grid-cols-1 gap-x-8 border-t border-base-300 px-4 py-2 sm:grid-cols-2 sm:px-5">
+            <div class="flex items-center justify-between gap-3 border-b border-base-300 py-3">
                 <dt class="text-sm text-base-content/65">{{ ('Work waiting to start') }}</dt><dd class="font-semibold tabular-nums">{{ stats.jobs_pending }}</dd>
             </div>
-            <div class="flex items-center justify-between gap-3 border-b border-base-300/60 py-3">
+            <div class="flex items-center justify-between gap-3 border-b border-base-300 py-3">
                 <dt class="text-sm text-base-content/65">{{ ('Work happening now') }}</dt><dd class="font-semibold tabular-nums">{{ stats.jobs_running + stats.jobs_retrying }}</dd>
             </div>
-            <div class="flex items-center justify-between gap-3 border-b border-base-300/60 py-3">
+            <div class="flex items-center justify-between gap-3 border-b border-base-300 py-3">
                 <dt class="text-sm text-base-content/65">{{ ('Work that needs attention') }}</dt><dd class="font-semibold tabular-nums">{{ stats.jobs_failed }}</dd>
             </div>
-            <div class="flex items-center justify-between gap-3 border-b border-base-300/60 py-3">
+            <div class="flex items-center justify-between gap-3 border-b border-base-300 py-3">
                 <dt class="text-sm text-base-content/65">{{ ('Your site content') }}</dt><dd class="text-end text-sm"><span class="font-semibold text-success">{{ stats.indexing_ok }}{{ (' up to date') }}</span><span class="ms-2 text-warning">{{ stats.indexing_failed }}{{ (' needs checking') }}</span></dd>
             </div>
-            <div class="flex items-center justify-between gap-3 border-b border-base-300/60 py-3">
+            <div class="flex items-center justify-between gap-3 border-b border-base-300 py-3">
                 <dt class="text-sm text-base-content/65">{{ ('Connected services') }}</dt><dd class="text-end text-sm"><span class="font-semibold text-success">{{ stats.provider_healthy }}{{ (' working') }}</span><span class="ms-2 text-warning">{{ stats.provider_unhealthy }}{{ (' need attention') }}</span></dd>
             </div>
-            <div class="flex items-center justify-between gap-3 border-b border-base-300/60 py-3">
+            <div class="flex items-center justify-between gap-3 border-b border-base-300 py-3">
                 <dt class="text-sm text-base-content/65">{{ ('Problems') }}</dt><dd><a href="/failed" class="link link-error font-semibold tabular-nums">{{ stats.jobs_failed }} {{ ('See what needs fixing') }}</a></dd>
             </div>
             <div class="flex items-center justify-between gap-3 py-3">
