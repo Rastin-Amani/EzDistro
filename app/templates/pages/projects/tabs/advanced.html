@@ -1,7 +1,42 @@
-<h2 class="text-lg font-semibold">Advanced settings</h2>
-<p class="my-3">Connections and specialist tools. You do not need these for everyday content planning.</p>
-<ul class="menu bg-base-200 rounded-box">
-{% for tab, label in [('integrations', 'Connect WordPress and writing services'), ('ai_models', 'AI model configuration'), ('prompts', 'Writing instructions'), ('images', 'Article image settings'), ('retrieval', 'Content search configuration'), ('indexing', 'Saved website content'), ('jobs', 'Technical task history'), ('logs', 'Diagnostic logs')] %}
-<li><a href="/projects/{{ project.id }}?tab={{ tab }}">{{ label }}</a></li>
+{% import 'macros/forms.html' as f %}
+{{ f.section_head(('Advanced'), 'Connections and specialist tools. You do not need these for everyday content planning.') }}
+
+{% set groups = [
+    ('Services & models', 'What the writer reads from and writes with', [
+        ('integrations', 'Connections', 'WordPress, AI providers, search and images'),
+        ('ai_models', 'AI models', 'Which model handles each step'),
+        ('prompts', 'Writing rules', 'Instructions and prompt versions'),
+    ]),
+    ('Content pipeline', 'How your site is read, searched and illustrated', [
+        ('images', 'Article images', 'Generation and placement'),
+        ('retrieval', 'Search settings', 'Chunking, retrieval and reranking'),
+        ('indexing', 'Site health', 'Saved website content and indexing runs'),
+    ]),
+    ('Diagnostics', 'When something needs a closer look', [
+        ('jobs', 'Technical task history', 'Every run for this website'),
+        ('logs', 'Diagnostic logs', 'Events and errors'),
+    ]),
+] %}
+
+<div class="grid gap-6 lg:grid-cols-3">
+{% for title, hint, items in groups %}
+    <section class="min-w-0">
+        <h3 class="border-b border-base-300 pb-2 font-mono text-[0.7rem] uppercase tracking-[0.073em] text-base-content/60">{{ title }}</h3>
+        <p class="mt-2 text-xs leading-relaxed text-base-content/60">{{ hint }}</p>
+        <ul class="mt-3 flex flex-col gap-1">
+        {% for tab, label, desc in items %}
+            <li>
+                <a href="/projects/{{ project.id }}?tab={{ tab }}"
+                   class="group flex items-start gap-3 rounded-field px-3 py-2.5 transition-colors hover:bg-base-200">
+                    <span class="min-w-0 flex-1">
+                        <span class="block text-sm font-medium">{{ label }}</span>
+                        <span class="mt-0.5 block text-xs leading-relaxed text-base-content/60">{{ desc }}</span>
+                    </span>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="mt-1 size-3.5 flex-none text-base-content/60 transition-transform group-hover:translate-x-0.5 group-hover:text-base-content/65" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" /></svg>
+                </a>
+            </li>
+        {% endfor %}
+        </ul>
+    </section>
 {% endfor %}
-</ul>
+</div>
