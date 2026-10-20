@@ -1,5 +1,5 @@
 {# ═══════════════════════════════════════════════════════════════════════
-   Shared building blocks — ezdistro design vocabulary.
+   Shared building blocks — EzDistro design vocabulary.
    Usage: {% import 'macros/forms.html' as f %}
    Layout helpers (page_header / panel / empty / stat) sit alongside the
    field macros so every page can stay consistent with one import.
@@ -7,12 +7,12 @@
 
 {# ── Field macros ────────────────────────────────────────────────────── #}
 {% macro tip(tip_text) -%}
-    {% if tip_text %}<span class="tooltip tooltip-left sm:tooltip-top" data-tip="{{ tip_text }}"><span class="cursor-help text-base-content/40 hover:text-base-content/70" tabindex="0" role="img" aria-label="{{ tip_text }}"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/></svg></span></span>{% endif %}
+    {% if tip_text %}<span class="tooltip tooltip-left sm:tooltip-top" data-tip="{{ tip_text }}"><span class="cursor-help text-base-content/60 hover:text-base-content/65" tabindex="0" role="img" aria-label="{{ tip_text }}"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/></svg></span></span>{% endif %}
 {%- endmacro %}
 
 {% macro label(label_text, tip_text='', required=false) -%}
     <span class="label px-0 pb-1.5">
-        <span class="truncate font-medium text-sm text-base-content/80">
+        <span class="truncate text-[0.8125rem] font-medium text-base-content/80">
             {{ label_text }}{% if required %} <span class="text-error">*</span>{% endif %}
         </span>
         {{ tip(tip_text) }}
@@ -20,7 +20,7 @@
 {%- endmacro %}
 
 {% macro text(name, label_text, value='', tip_text='', placeholder='', required=false, dir='', hint='', autocomplete='off') -%}
-    <label class="flex flex-col gap-1 min-w-0 w-full">
+    <label class="flex w-full min-w-0 flex-col gap-1">
         {{ label(label_text, tip_text, required) }}
         <input type="text" name="{{ name }}" value="{{ value }}"
                class="input w-full"
@@ -28,36 +28,36 @@
                {% if required %}required{% endif %}
                {% if dir %}dir="{{ dir }}"{% endif %}
                {% if autocomplete %}autocomplete="{{ autocomplete }}"{% endif %} />
-        {% if hint %}<p class="text-xs opacity-50 mt-1 leading-relaxed">{{ hint }}</p>{% endif %}
+        {% if hint %}<p class="text-xs leading-relaxed text-base-content/60">{{ hint }}</p>{% endif %}
     </label>
 {%- endmacro %}
 
 {% macro number(name, label_text, value='', tip_text='', step='', min='', max='', required=false, hint='', placeholder='') -%}
-    <label class="flex flex-col gap-1 min-w-0 w-full">
+    <label class="flex w-full min-w-0 flex-col gap-1">
         {{ label(label_text, tip_text, required) }}
         <input type="number" name="{{ name }}" value="{{ value }}"
-               class="input w-full"
+               class="input w-full tabular-nums"
                {% if placeholder %}placeholder="{{ placeholder }}"{% endif %}
                {% if step %}step="{{ step }}"{% endif %}
                {% if min %}min="{{ min }}"{% endif %}
                {% if max %}max="{{ max }}"{% endif %}
                {% if required %}required{% endif %} />
-        {% if hint %}<p class="text-xs opacity-50 mt-1 leading-relaxed">{{ hint }}</p>{% endif %}
+        {% if hint %}<p class="text-xs leading-relaxed text-base-content/60">{{ hint }}</p>{% endif %}
     </label>
 {%- endmacro %}
 
 {% macro password(name, label_text, value='', tip_text='', placeholder='', hint='') -%}
-    <label class="flex flex-col gap-1 min-w-0 w-full">
+    <label class="flex w-full min-w-0 flex-col gap-1">
         {{ label(label_text, tip_text) }}
         <input type="password" name="{{ name }}" value="{{ value }}"
                class="input w-full" dir="ltr" autocomplete="new-password"
                {% if placeholder %}placeholder="{{ placeholder }}"{% endif %} />
-        {% if hint %}<p class="text-xs opacity-50 mt-1 leading-relaxed">{{ hint }}</p>{% endif %}
+        {% if hint %}<p class="text-xs leading-relaxed text-base-content/60">{{ hint }}</p>{% endif %}
     </label>
 {%- endmacro %}
 
 {% macro select(name, label_text, options, selected='', tip_text='', required=false, hint='') -%}
-    <label class="flex flex-col gap-1 min-w-0 w-full">
+    <label class="flex w-full min-w-0 flex-col gap-1">
         {{ label(label_text, tip_text, required) }}
         <select name="{{ name }}" class="select w-full" {% if required %}required{% endif %}>
             {% for opt in options %}
@@ -68,7 +68,7 @@
             {% endif %}
             {% endfor %}
         </select>
-        {% if hint %}<p class="text-xs opacity-50 mt-1 leading-relaxed">{{ hint }}</p>{% endif %}
+        {% if hint %}<p class="text-xs leading-relaxed text-base-content/60">{{ hint }}</p>{% endif %}
     </label>
 {%- endmacro %}
 
@@ -80,7 +80,7 @@
                class="checkbox checkbox-sm mt-0.5 shrink-0" {% if checked %}checked{% endif %} />
         <span class="min-w-0 text-sm leading-snug">
             {{ label_text }}
-            {% if hint %}<span class="mt-0.5 block text-xs opacity-50 leading-relaxed">{{ hint }}</span>{% endif %}
+            {% if hint %}<span class="mt-0.5 block text-xs leading-relaxed text-base-content/60">{{ hint }}</span>{% endif %}
         </span>
         {{ tip(tip_text) }}
     </label>
@@ -90,32 +90,32 @@
     {# Mono section label + hairline rule — groups fields inside one panel
        without nesting a card inside a card. #}
     <div class="flex items-center gap-3">
-        <span class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55 shrink-0">{{ title }}</span>
-        {% if hint %}<span class="shrink-0 text-xs opacity-50">{{ hint }}</span>{% endif %}
-        <span class="h-px flex-1 bg-base-300/70" aria-hidden="true"></span>
+        <span class="shrink-0 font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">{{ title }}</span>
+        {% if hint %}<span class="shrink-0 text-xs text-base-content/60">{{ hint }}</span>{% endif %}
+        <span class="h-px flex-1 bg-base-300" aria-hidden="true"></span>
     </div>
 {%- endmacro %}
 
 {% macro textarea(name, label_text, value='', tip_text='', rows=4, required=false, placeholder='', hint='', dir='auto', classes='') -%}
-    <label class="flex flex-col gap-1 min-w-0 w-full">
+    <label class="flex w-full min-w-0 flex-col gap-1">
         {{ label(label_text, tip_text, required) }}
         <textarea name="{{ name }}" rows="{{ rows }}" {% if dir %}dir="{{ dir }}"{% endif %}
                   class="textarea w-full font-mono text-xs leading-relaxed {{ classes }}"
                   {% if placeholder %}placeholder="{{ placeholder }}"{% endif %}
                   {% if required %}required{% endif %}>{{ value }}</textarea>
-        {% if hint %}<p class="text-xs opacity-50 mt-1 leading-relaxed">{{ hint }}</p>{% endif %}
+        {% if hint %}<p class="text-xs leading-relaxed text-base-content/60">{{ hint }}</p>{% endif %}
     </label>
 {%- endmacro %}
 
 {# Legacy card-section wrapper (kept for settings tab compatibility) #}
 {% macro section_open(title, tip_text='', description='') -%}
-    <section class="card bg-base-100 border border-base-300/70">
-        <div class="card-body p-5 gap-4">
+    <section class="card border border-base-300 bg-base-100">
+        <div class="card-body gap-4 p-5">
             <div class="flex items-center gap-2">
-                <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ title }}</h2>
+                <h2 class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">{{ title }}</h2>
                 {{ tip(tip_text) }}
             </div>
-            {% if description %}<p class="text-xs opacity-50 leading-relaxed -mt-2">{{ description }}</p>{% endif %}
+            {% if description %}<p class="-mt-2 text-xs leading-relaxed text-base-content/60">{{ description }}</p>{% endif %}
 {%- endmacro %}
 
 {% macro section_close() -%}
@@ -124,9 +124,9 @@
 {%- endmacro %}
 
 {% macro sticky_save(label_text, tip_text='') -%}
-    <div class="sticky bottom-20 md:bottom-4 z-20 mt-2">
-        <div class="bg-base-100 border border-base-300/70 rounded-box p-2 flex items-center gap-2">
-            <span class="text-xs opacity-60 px-2 flex-1">{{ ('Save your changes when you are done') }}</span>
+    <div class="sticky bottom-20 z-20 mt-2 md:bottom-4">
+        <div class="flex items-center gap-2 rounded-box border border-base-300 bg-base-100/95 p-2 backdrop-blur-xl">
+            <span class="flex-1 px-2 text-xs text-base-content/60">{{ ('Save your changes when you are done') }}</span>
             <button type="submit" class="btn btn-primary" hx-disabled-elt="this">
                 <span class="loading loading-spinner loading-xs htmx-indicator"></span>
                 {{ label_text }}
@@ -139,37 +139,37 @@
 {# actions / icon / action are HTML content slots — callers pass trusted,
    static template markup only (never user input). Marked safe on purpose. #}
 {% macro page_header(title, subtitle='', eyebrow='', actions='') -%}
-<header class="flex flex-wrap items-end justify-between gap-3 mb-5 sm:mb-7">
+<header class="mb-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-4 motion-safe:animate-rise sm:mb-8">
     <div class="min-w-0">
-        {% if eyebrow %}<span class="inline-flex items-center gap-2 font-mono text-[0.72rem] font-normal uppercase tracking-[0.073em] text-base-content/55"><span class="h-px w-5 bg-primary" aria-hidden="true"></span>{{ eyebrow }}</span>{% endif %}
-        <h1 class="font-extrabold leading-[0.95] tracking-[-0.04em] text-base-content text-[clamp(2.5rem,4vw+1.5rem,5rem)]">{{ title }}</h1>
-        {% if subtitle %}<p class="mt-3 max-w-xl text-base leading-relaxed text-base-content/60 tracking-[-0.014em]">{{ subtitle }}</p>{% endif %}
+        {% if eyebrow %}<p class="flex items-center gap-2 font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60"><span class="h-px w-4 bg-primary" aria-hidden="true"></span>{{ eyebrow }}</p>{% endif %}
+        <h1 class="mt-1.5 text-[clamp(1.9rem,1.35rem+1.7vw,3rem)] font-extrabold leading-[1.02] tracking-[-0.035em] text-base-content">{{ title }}</h1>
+        {% if subtitle %}<p class="mt-2.5 max-w-2xl text-[0.9375rem] leading-relaxed tracking-[-0.011em] text-base-content/65">{{ subtitle }}</p>{% endif %}
     </div>
-    {% if actions %}<div class="flex items-center gap-2 flex-wrap ms-auto">{{ actions|safe }}</div>{% endif %}
+    {% if actions %}<div class="flex flex-wrap items-center gap-2">{{ actions|safe }}</div>{% endif %}
 </header>
 {%- endmacro %}
 
 {# Compact header for content rendered inside a project tab (the giant atlas
    title is reserved for the top-level project header, not every tab). #}
 {% macro section_head(title, hint='', actions='') -%}
-<div class="mb-4 flex flex-wrap items-end justify-between gap-x-4 gap-y-1">
+<div class="mb-4 flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
     <div class="min-w-0">
-        <h2 class="text-lg font-extrabold tracking-tight">{{ title }}</h2>
-        {% if hint %}<p class="mt-0.5 text-sm text-base-content/50">{{ hint }}</p>{% endif %}
+        <h2 class="text-xl font-bold tracking-[-0.02em]">{{ title }}</h2>
+        {% if hint %}<p class="mt-1 max-w-2xl text-sm leading-relaxed text-base-content/60">{{ hint }}</p>{% endif %}
     </div>
-    {% if actions %}<div class="flex items-center gap-2">{{ actions|safe }}</div>{% endif %}
+    {% if actions %}<div class="flex flex-wrap items-center gap-2">{{ actions|safe }}</div>{% endif %}
 </div>
 {%- endmacro %}
 
 {# Collapsible settings group: a panel whose head is the toggle. #}
 {% macro disclosure(title, hint='', open=false) -%}
-<details class="card group border border-base-300 bg-base-100 min-w-0" {{ 'open' if open }}>
-    <summary class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3 cursor-pointer select-none">
-        <h3 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ title }}</h3>
-        {% if hint %}<span class="hidden truncate text-xs opacity-50 sm:inline">{{ hint }}</span>{% endif %}
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="transition-transform group-open:rotate-180 ms-auto size-4 shrink-0"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
+<details class="card group min-w-0 border border-base-300 bg-base-100" {{ 'open' if open }}>
+    <summary class="flex cursor-pointer select-none items-center gap-2 px-5 py-3.5 transition-colors hover:bg-base-200/60">
+        <h3 class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">{{ title }}</h3>
+        {% if hint %}<span class="hidden truncate text-xs text-base-content/60 sm:inline">{{ hint }}</span>{% endif %}
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="ms-auto size-4 shrink-0 text-base-content/60 transition-transform group-open:rotate-180"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
     </summary>
-    <div class="p-4">
+    <div class="border-t border-base-300 p-5">
 {%- endmacro %}
 
 {% macro disclosure_close() -%}
@@ -177,11 +177,11 @@
 </details>
 {%- endmacro %}
 
-{% macro panel(title='', actions='', id='', body_class='card-body p-4') -%}
-<div class="card border border-base-300 bg-base-100 min-w-0" {% if id %}id="{{ id }}"{% endif %}>
+{% macro panel(title='', actions='', id='', body_class='card-body p-5') -%}
+<div class="card min-w-0 border border-base-300 bg-base-100" {% if id %}id="{{ id }}"{% endif %}>
     {% if title or actions %}
-    <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
-        {% if title %}<h2 class="font-mono text-xs font-normal uppercase text-base-content/55 tracking-[0.073em]">{{ title }}</h2>{% endif %}
+    <div class="flex items-center justify-between gap-3 border-b border-base-300 px-5 py-3.5">
+        {% if title %}<h2 class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">{{ title }}</h2>{% endif %}
         {% if actions %}<div class="flex items-center gap-2">{{ actions|safe }}</div>{% endif %}
     </div>
     {% endif %}
@@ -194,11 +194,11 @@
 {%- endmacro %}
 
 {% macro empty(title, hint='', icon='', action='', compact=false) -%}
-<div class="flex flex-col items-center justify-center gap-3 text-center {{ 'py-6' if compact else 'py-12' }}">
-    {% if icon %}<div class="grid size-14 place-items-center rounded-lg bg-base-200 text-base-content/40">{{ icon|safe }}</div>{% endif %}
-    <p class="font-bold text-base-content/75">{{ title }}</p>
-    {% if hint %}<p class="text-sm text-base-content/50 max-w-sm leading-relaxed">{{ hint }}</p>{% endif %}
-    {% if action %}<div class="mt-1">{{ action|safe }}</div>{% endif %}
+<div class="flex flex-col items-center justify-center gap-2.5 text-center {{ 'py-6' if compact else 'py-14' }}">
+    {% if icon %}<div class="grid size-12 place-items-center rounded-box bg-base-200 text-base-content/60">{{ icon|safe }}</div>{% endif %}
+    <p class="text-[0.9375rem] font-semibold text-base-content/80">{{ title }}</p>
+    {% if hint %}<p class="max-w-sm text-sm leading-relaxed text-base-content/60">{{ hint }}</p>{% endif %}
+    {% if action %}<div class="mt-2">{{ action|safe }}</div>{% endif %}
 </div>
 {%- endmacro %}
 
@@ -206,12 +206,12 @@
 {# DaisyUI's stat* parts are all `white-space: nowrap`, so a long number or
    label used to spill straight through the card. Clip inside the card, and let
    the value shrink with the viewport instead of overflowing. #}
-<div class="stat w-full min-w-0 overflow-hidden rounded-box border border-base-300 bg-base-100 p-4">
+<div class="stat w-full min-w-0 overflow-hidden rounded-box border border-base-300 bg-base-100 p-5">
     <div class="flex min-w-0 items-start gap-2">
-        {% if swatch %}<span class="mt-0.5 size-2.5 shrink-0 rounded-full {{ swatch }}"></span>{% endif %}
-        <span class="stat-title min-w-0 whitespace-normal break-words font-mono text-xs font-normal uppercase tracking-[0.073em]">{{ label }}</span>
+        {% if swatch %}<span class="mt-1 size-2 flex-none rounded-full {{ swatch }}" aria-hidden="true"></span>{% endif %}
+        <span class="stat-title min-w-0 whitespace-normal break-words font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em]">{{ label }}</span>
     </div>
-    <span class="stat-value min-w-0 truncate text-[clamp(1.25rem,2.2vw,2rem)] font-black leading-none tracking-[-0.04em] tabular-nums">{{ value }}</span>
+    <span class="stat-value min-w-0 truncate text-[clamp(1.35rem,2.2vw,1.9rem)] font-extrabold leading-none tracking-[-0.03em] tabular-nums">{{ value }}</span>
     {% if sub %}<span class="stat-desc min-w-0 whitespace-normal break-words text-xs">{{ sub }}</span>{% endif %}
 </div>
 {%- endmacro %}

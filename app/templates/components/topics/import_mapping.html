@@ -8,7 +8,7 @@
 
     <div class="flex flex-wrap items-center justify-between gap-2">
 
-        <p class="text-xs opacity-70 truncate">
+        <p class="text-xs text-base-content/65 truncate">
 
             <span class="font-semibold">{{ filename }}</span>
 
@@ -32,13 +32,13 @@
 
     <div class="card border border-base-300 bg-base-100 min-w-0">
 
-        <div class="overflow-x-auto p-4">
+        <div class="overflow-x-auto p-5">
 
             <table class="table table-sm">
 
                 <thead>
 
-                    <tr class="text-xs opacity-60">
+                    <tr class="text-[0.7rem] uppercase tracking-[0.073em] text-base-content/60">
 
                         <th>#</th>
 
@@ -60,7 +60,7 @@
 
                     <tr class="text-xs">
 
-                        <td class="opacity-40">{{ loop.index + (1 if has_header else 0) }}</td>
+                        <td class="text-base-content/60">{{ loop.index + (1 if has_header else 0) }}</td>
 
                         {% for cell in row[:6] %}
 
@@ -68,7 +68,7 @@
 
                         {% endfor %}
 
-                        {% if row|length > 6 %}<td class="opacity-40">+{{ row|length - 6 }}</td>{% endif %}
+                        {% if row|length > 6 %}<td class="text-base-content/60">+{{ row|length - 6 }}</td>{% endif %}
 
                     </tr>
 
@@ -124,7 +124,7 @@
 
         </div>
 
-        <p class="text-xs opacity-50 leading-relaxed">
+        <p class="text-xs text-base-content/60 leading-relaxed">
 
             {{ ('Rows whose title or keyword already exists in the project (or in this file) are skipped automatically.') }}
 

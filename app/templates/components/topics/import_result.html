@@ -18,7 +18,7 @@
 
             <p class="text-2xl font-bold text-success">{{ summary.created }}</p>
 
-            <p class="text-xs opacity-60">{{ ('Added') }}</p>
+            <p class="text-xs text-base-content/65">{{ ('Added') }}</p>
 
         </div>
 
@@ -26,7 +26,7 @@
 
             <p class="text-2xl font-bold">{{ summary.skipped }}</p>
 
-            <p class="text-xs opacity-60">{{ ('Duplicate (skipped)') }}</p>
+            <p class="text-xs text-base-content/65">{{ ('Duplicate (skipped)') }}</p>
 
         </div>
 
@@ -34,7 +34,7 @@
 
             <p class="text-2xl font-bold {{ 'text-error' if summary.error_count else '' }}">{{ summary.error_count }}</p>
 
-            <p class="text-xs opacity-60">{{ ('Error') }}</p>
+            <p class="text-xs text-base-content/65">{{ ('Error') }}</p>
 
         </div>
 
@@ -50,7 +50,7 @@
 
             <thead>
 
-                <tr class="text-xs opacity-60">
+                <tr class="text-[0.7rem] uppercase tracking-[0.073em] text-base-content/60">
 
                     <th class="w-16">{{ ('Row') }}</th>
 
@@ -66,7 +66,7 @@
 
                 <tr class="text-xs">
 
-                    <td class="opacity-60">{{ e.row }}</td>
+                    <td class="text-base-content/65">{{ e.row }}</td>
 
                     <td>{{ e.reason }}</td>
 
@@ -82,7 +82,7 @@
 
     {% if summary.has_more_errors %}
 
-    <p class="text-xs opacity-50">{{ ('… and more errors not shown here.') }}</p>
+    <p class="text-xs text-base-content/60">{{ ('… and more errors not shown here.') }}</p>
 
     {% endif %}
 
@@ -92,7 +92,7 @@
 
     {% if summary.coerced %}
 
-    <p class="text-xs opacity-60 leading-relaxed">
+    <p class="text-xs text-base-content/65 leading-relaxed">
 
         {{ ('%(n)s rows had a free-form type label (e.g. “Troubleshooting guide” or “Q&A”) and were added with the default type “Article”.') % {'n': summary.coerced} }}
 

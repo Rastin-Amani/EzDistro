@@ -1,5 +1,5 @@
 {# One schedule row — a standalone form (never nested inside another form) #}
-<form class="card border border-base-300 bg-base-100 min-w-0 p-4 flex flex-wrap items-end gap-4" id="sched-{{ kind }}"
+<form class="card border border-base-300 bg-base-100 min-w-0 p-5 flex flex-wrap items-end gap-4" id="sched-{{ kind }}"
       hx-post="/projects/{{ project.id }}/schedules"
       hx-target="#sched-{{ kind }}"
       hx-swap="outerHTML">
@@ -18,6 +18,6 @@
     </div>
     <button type="submit" class="btn btn-ghost btn-sm" hx-disabled-elt="this">{{ ('Save') }}</button>
     {% if sched and sched.lastRunAt %}
-    <span class="text-xs opacity-40">{{ ('Last run: %(v)s') % {'v': sched.lastRunAt|loc_dt} }}</span>
+    <span class="text-xs text-base-content/60">{{ ('Last run: %(v)s') % {'v': sched.lastRunAt|loc_dt} }}</span>
     {% endif %}
 </form>

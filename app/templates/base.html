@@ -87,16 +87,16 @@
         <!-- Global confirmation dialog — replaces native window.confirm() for
              every hx-confirm action (driven by js/confirm-dialog.js). -->
         <dialog id="confirm-dialog" class="modal modal-bottom sm:modal-middle" hx-boost="false">
-            <div class="modal-box bg-base-100">
+            <div class="modal-box border border-base-300 bg-base-100">
                 <div class="flex items-start gap-4">
-                    <div class="shrink-0 grid size-11 place-items-center rounded-lg bg-warning/15 text-warning">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-6">
+                    <div class="grid size-10 shrink-0 place-items-center rounded-field bg-warning/10 text-warning">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
                         </svg>
                     </div>
                     <div class="min-w-0">
-                        <h3 class="font-bold text-lg">{{ ('Confirm action') }}</h3>
-                        <p class="py-2 text-sm opacity-70 leading-relaxed" data-confirm-text></p>
+                        <h3 class="text-lg font-bold tracking-[-0.02em]">{{ ('Confirm action') }}</h3>
+                        <p class="py-2 text-sm leading-relaxed text-base-content/65" data-confirm-text></p>
                     </div>
                 </div>
                 <div class="modal-action flex gap-3">
@@ -104,7 +104,7 @@
                     <button type="button" class="btn btn-error flex-1" data-confirm-ok>{{ ('Confirm') }}</button>
                 </div>
             </div>
-            <div class="modal-backdrop bg-black/40 backdrop-blur-sm cursor-pointer" data-confirm-backdrop></div>
+            <div class="modal-backdrop cursor-pointer bg-black/40 backdrop-blur-sm" data-confirm-backdrop></div>
         </dialog>
 
         {% block body_end %}{% endblock %}

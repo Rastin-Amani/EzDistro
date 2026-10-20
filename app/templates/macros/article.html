@@ -6,21 +6,21 @@
    ═══════════════════════════════════════════════════════════════════════ #}
 
 {% macro header(project, article, back_url, back_label, eyebrow='', actions='', wordpress=True) -%}
-<header class="mb-5 flex flex-wrap items-start justify-between gap-3">
-    <div class="flex min-w-0 items-center gap-2.5">
-        <a href="{{ back_url }}" class="btn btn-ghost btn-circle btn-sm shrink-0" aria-label="{{ back_label }}">
+<header class="mb-5 flex flex-wrap items-start justify-between gap-x-6 gap-y-3 motion-safe:animate-rise">
+    <div class="flex min-w-0 items-start gap-2.5">
+        <a href="{{ back_url }}" class="btn btn-ghost btn-circle btn-sm mt-0.5 flex-none" aria-label="{{ back_label }}">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5 ltr:rotate-180" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
         </a>
         <div class="min-w-0">
-            {% if eyebrow %}<p class="font-mono text-[0.65rem] uppercase tracking-[0.073em] text-base-content/45">{{ eyebrow }}</p>{% endif %}
-            <h1 class="truncate text-base font-extrabold tracking-tight">{{ article.title }}</h1>
-            <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-base-content/55">
+            {% if eyebrow %}<p class="font-mono text-[0.7rem] uppercase tracking-[0.073em] text-base-content/60">{{ eyebrow }}</p>{% endif %}
+            <h1 class="mt-0.5 truncate text-lg font-extrabold tracking-[-0.02em] sm:text-xl">{{ article.title }}</h1>
+            <div class="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-base-content/60">
                 <span class="badge badge-sm {{ article.status|status_badge }}">{{ article.status|status_label }}</span>
                 <span class="tabular-nums">{{ ('%(n)s words') % {'n': article.wordCount or 0} }}</span>
                 {% if article.seoScore is not none %}
                     <span class="badge badge-soft badge-info badge-sm" title="{{ ('SEO score') }}">SEO {{ article.seoScore }}/100</span>
                 {% endif %}
-                <span class="tabular-nums opacity-80" title="{{ ('Revision') }}">v{{ article.lastGeneratedRevision or article.outlineVersion or 0 }}</span>
+                <span class="tabular-nums text-base-content/60" title="{{ ('Revision') }}">v{{ article.lastGeneratedRevision or article.outlineVersion or 0 }}</span>
                 {% if wordpress and article.wordpressUrl %}
                     <a href="{{ article.wordpressUrl }}" target="_blank" rel="noopener" class="link link-primary" dir="ltr">{{ ('WordPress') }}</a>
                 {% endif %}
@@ -31,12 +31,11 @@
 </header>
 {%- endmacro %}
 
-
 {# A single verdict line: "can this be approved?" — the question the detail and
    review pages both exist to answer. `blockers` is the number of hard problems. #}
 {% macro verdict(ok, headline, hint='') -%}
-<div class="flex items-start gap-3 border-b border-base-300/70 px-4 py-3">
-    <span class="mt-0.5 grid size-8 shrink-0 place-items-center rounded-box {{ 'bg-success/15 text-success' if ok else 'bg-error/15 text-error' }}">
+<div class="flex items-start gap-3 border-b border-base-300 px-5 py-4">
+    <span class="mt-0.5 grid size-8 flex-none place-items-center rounded-field {{ 'bg-success/10 text-success' if ok else 'bg-error/10 text-error' }}">
         {% if ok %}
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-4" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
         {% else %}
@@ -44,28 +43,26 @@
         {% endif %}
     </span>
     <div class="min-w-0">
-        <p class="font-semibold">{{ headline }}</p>
-        {% if hint %}<p class="mt-0.5 text-xs text-base-content/60 leading-relaxed">{{ hint }}</p>{% endif %}
+        <p class="font-semibold leading-snug">{{ headline }}</p>
+        {% if hint %}<p class="mt-1 text-xs leading-relaxed text-base-content/65">{{ hint }}</p>{% endif %}
     </div>
 </div>
 {%- endmacro %}
-
 
 {# Issue list shared by the validation panel and the QA panel. #}
 {% macro issues(items) -%}
 <ul class="flex flex-col gap-1.5">
     {% for issue in items %}
-    <li class="rounded-box border px-2.5 py-1.5 {{ 'border-error/20 bg-error/5' if issue.tone == 'error' else 'border-warning/20 bg-warning/5' }}">
+    <li class="rounded-field border px-2.5 py-1.5 {{ 'border-error/20 bg-error/5' if issue.tone == 'error' else 'border-warning/20 bg-warning/5' }}">
         <div class="flex items-center gap-2 text-xs">
             {% if issue.tag %}<span class="badge badge-soft badge-xs shrink-0 {{ 'badge-error' if issue.tone == 'error' else 'badge-warning' }}">{{ issue.tag }}</span>{% endif %}
             <span class="{{ 'text-error' if issue.tone == 'error' else 'text-warning' }}">{{ issue.message }}</span>
         </div>
-        {% if issue.detail %}<p class="mt-1 text-xs text-base-content/60">{{ issue.detail }}</p>{% endif %}
+        {% if issue.detail %}<p class="mt-1 text-xs text-base-content/65">{{ issue.detail }}</p>{% endif %}
     </li>
     {% endfor %}
 </ul>
 {%- endmacro %}
-
 
 {# Readable article body without a typography plugin: style the sanitized
    WordPress HTML from the outside with descendant utilities. #}
@@ -73,11 +70,10 @@
 text-[0.95rem] leading-relaxed text-base-content [&_h1]:mb-3 [&_h1]:mt-6 [&_h1]:text-2xl [&_h1]:font-extrabold [&_h1]:tracking-tight [&_h2]:mb-2 [&_h2]:mt-6 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:tracking-tight [&_h3]:mb-2 [&_h3]:mt-5 [&_h3]:text-base [&_h3]:font-bold [&_p]:mt-3 [&_p]:leading-relaxed [&_ul]:mt-3 [&_ul]:list-disc [&_ul]:ps-5 [&_ol]:mt-3 [&_ol]:list-decimal [&_ol]:ps-5 [&_li]:mt-1.5 [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2 [&_strong]:font-semibold [&_blockquote]:mt-4 [&_blockquote]:border-s-2 [&_blockquote]:border-primary/40 [&_blockquote]:ps-4 [&_blockquote]:italic [&_blockquote]:opacity-80 [&_img]:my-4 [&_img]:h-auto [&_img]:max-w-full [&_img]:rounded-box [&_code]:rounded [&_code]:bg-base-200 [&_code]:px-1 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-[0.85em] [&_table]:mt-3 [&_table]:w-full [&_th]:text-start [&_th]:font-semibold [&_td]:py-1 [&_td]:pe-3 [&>:first-child]:mt-0
 {%- endmacro %}
 
-
 {# Label/value row for the compact metadata cards. #}
 {% macro kv(label, value, tone='') -%}
 <div class="flex items-baseline justify-between gap-3">
-    <dt class="shrink-0 text-base-content/50">{{ label }}</dt>
+    <dt class="shrink-0 text-base-content/60">{{ label }}</dt>
     <dd class="min-w-0 break-words text-end {{ tone }}">{{ value }}</dd>
 </div>
 {%- endmacro %}

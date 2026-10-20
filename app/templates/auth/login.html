@@ -1,81 +1,61 @@
 {% extends "base.html" %}
 {% block content %}
 <main class="min-h-dvh bg-base-100 text-base-content">
-    <div class="mx-auto grid min-h-dvh w-full max-w-7xl lg:grid-cols-[minmax(0,1fr)_minmax(27rem,36rem)]">
-        <aside class="hidden flex-col justify-between border-e border-base-300 bg-base-200/40 px-8 py-10 lg:flex xl:px-14" aria-label="{{ ('SEO automation and content generation platform') }}">
+    <div class="mx-auto grid min-h-dvh w-full max-w-7xl lg:grid-cols-[minmax(0,1fr)_minmax(26rem,34rem)]">
+        <aside class="hidden flex-col justify-between border-e border-base-300 bg-base-200/50 px-8 py-10 lg:flex xl:px-14" aria-label="{{ ('SEO automation and content generation platform') }}">
             <div class="flex items-center gap-3">
-                <span class="grid place-items-center rounded-box bg-primary font-black text-primary-content overflow-hidden size-11" aria-hidden="true">{% include "components/brand_mark.html" %}</span>
-                <span class="text-lg font-bold tracking-tight">EzDistro</span>
+                <span class="grid size-10 place-items-center overflow-hidden rounded-field bg-primary text-primary-content" aria-hidden="true">{% include "components/brand_mark.html" %}</span>
+                <span class="text-lg font-extrabold tracking-tight">{{ app_name }}</span>
             </div>
 
-            <div class="mx-auto w-full max-w-xl py-12">
-                <p class="inline-flex items-center gap-2 font-mono text-[0.72rem] font-normal uppercase tracking-[0.073em] text-base-content/55"><span class="h-px w-5 bg-primary" aria-hidden="true"></span>{{ ('SEO automation and content generation platform') }}</p>
-                <h2 class="mt-5 max-w-lg text-4xl font-bold leading-[1.12] tracking-tight text-base-content xl:text-5xl">
+            <div class="mx-auto w-full max-w-lg py-12">
+                <p class="flex items-center gap-2 font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60"><span class="h-px w-4 bg-primary" aria-hidden="true"></span>{{ ('SEO automation and content generation platform') }}</p>
+                <h2 class="mt-4 text-[clamp(2rem,2.4vw+1rem,3.25rem)] font-extrabold leading-[1.02] tracking-[-0.04em] text-base-content">
                     {{ ('From search opportunity to published article.') }}
                 </h2>
-                <p class="mt-5 max-w-lg text-base leading-7 text-base-content/65">
+                <p class="mt-4 max-w-md text-[0.9375rem] leading-relaxed text-base-content/65">
                     {{ ('Find the right topics, build articles, and publish them to WordPress.') }}
                 </p>
 
-                <figure class="mt-12 max-w-xl overflow-hidden rounded-lg border border-base-300 bg-base-100">
-                    <figcaption class="flex items-center justify-between gap-4 border-b border-base-300/70 px-5 py-4">
-                        <span class="text-xs font-bold uppercase tracking-[0.12em] text-base-content/55">{{ ('Publishing path') }}</span>
-                        <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4 text-primary">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 7h5m0 0-2-2m2 2-2 2m11 8h-5m0 0 2 2m-2-2 2-2M9 7h6a3 3 0 0 1 3 3v1m-3 6H9a3 3 0 0 1-3-3v-1" />
-                        </svg>
-                    </figcaption>
-                    <ol class="flex items-start gap-2 px-5 py-5 sm:px-6">
-                        <li class="min-w-0 flex-1">
-                            <span class="mb-3 grid size-9 place-items-center rounded-lg border border-base-300 text-primary">
-                                <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
-                                    <circle cx="10.5" cy="10.5" r="6.25" />
-                                    <path stroke-linecap="round" d="m15 15 5 5" />
-                                </svg>
-                            </span>
-                            <span class="block break-words text-xs font-semibold leading-5">{{ ('Topics') }}</span>
-                        </li>
-                        <li aria-hidden="true" class="mt-[1.125rem] h-px w-5 shrink-0 bg-base-300 sm:w-9"></li>
-                        <li class="min-w-0 flex-1">
-                            <span class="mb-3 grid size-9 place-items-center rounded-lg border border-base-300 text-primary">
-                                <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 3.75h6l4.75 4.75v11.75h-11V3.75Z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 3.75V9h4.75M10 13h5m-5 3h5" />
-                                </svg>
-                            </span>
-                            <span class="block break-words text-xs font-semibold leading-5">{{ ('Article') }}</span>
-                        </li>
-                        <li aria-hidden="true" class="mt-[1.125rem] h-px w-5 shrink-0 bg-base-300 sm:w-9"></li>
-                        <li class="min-w-0 flex-1">
-                            <span class="mb-3 grid size-9 place-items-center rounded-lg border border-base-300 text-primary">
-                                <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 15.75V3.75m0 0-4.5 4.5m4.5-4.5 4.5 4.5M5.25 14.25v5.25h13.5v-5.25" />
-                                </svg>
-                            </span>
-                            <span class="block break-words text-xs font-semibold leading-5">{{ ('Publishing (WordPress)') }}</span>
-                        </li>
-                    </ol>
-                </figure>
+                <ol class="mt-10 flex flex-col gap-0.5 border-t border-base-300">
+                    {% for label, hint, icon in [
+                        (('Topics'), ('Find what your audience searches for'), 'M10.5 4.25a6.25 6.25 0 1 0 0 12.5 6.25 6.25 0 0 0 0-12.5Zm4.5 10.75 5 5'),
+                        (('Article'), ('Draft, review and refine with AI'), 'M7.5 3.75h6l4.75 4.75v11.75h-11V3.75Zm6 0V9h4.75M10 13h5m-5 3h5'),
+                        (('Publish'), ('Send it live to WordPress'), 'M12 15.75V3.75m0 0-4.5 4.5m4.5-4.5 4.5 4.5M5.25 14.25v5.25h13.5v-5.25'),
+                    ] %}
+                    <li class="flex items-center gap-3 border-b border-base-300 py-3.5">
+                        <span class="grid size-9 flex-none place-items-center rounded-field border border-base-300 bg-base-100 text-primary" aria-hidden="true">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" class="size-4"><path stroke-linecap="round" stroke-linejoin="round" d="{{ icon }}" /></svg>
+                        </span>
+                        <span class="min-w-0">
+                            <span class="block text-sm font-semibold">{{ label }}</span>
+                            <span class="mt-0.5 block text-xs leading-relaxed text-base-content/60">{{ hint }}</span>
+                        </span>
+                        <span class="ms-auto font-mono text-[0.7rem] tabular-nums text-base-content/60">0{{ loop.index }}</span>
+                    </li>
+                    {% endfor %}
+                </ol>
             </div>
 
-            <p class="text-xs text-base-content/45">{{ ('Version %(v)s') % {'v': app_version} }}</p>
+            <p class="text-xs text-base-content/60">{{ ('Version %(v)s') % {'v': app_version} }}</p>
         </aside>
 
-        <section aria-labelledby="login-title" class="relative flex min-h-dvh flex-col justify-center px-4 pb-10 pt-24 sm:px-8 lg:px-12 xl:px-16">
-            <div class="absolute top-4 end-4 flex items-center gap-1" aria-label="{{ ('Display settings') }}">
+        <section aria-labelledby="login-title" class="relative flex min-h-dvh flex-col justify-center px-4 pb-12 pt-24 sm:px-8 lg:px-12 xl:px-16">
+            <div class="absolute end-4 top-4 flex items-center gap-1" aria-label="{{ ('Display settings') }}">
                 {% include "components/theme_switcher.html" %}
             </div>
 
-            <div class="mx-auto w-full max-w-md">
-                <div class="mb-8 flex items-center gap-3 lg:hidden">
-                    <span class="grid place-items-center rounded-box bg-primary font-black text-primary-content overflow-hidden size-11" aria-hidden="true">{% include "components/brand_mark.html" %}</span>
-                    <span class="text-lg font-bold tracking-tight">EzDistro</span>
+            <div class="mx-auto w-full max-w-sm">
+                <div class="mb-10 flex items-center gap-2.5 lg:hidden">
+                    <span class="grid size-10 place-items-center overflow-hidden rounded-field bg-primary text-primary-content" aria-hidden="true">{% include "components/brand_mark.html" %}</span>
+                    <span class="text-lg font-extrabold tracking-tight">{{ app_name }}</span>
                 </div>
 
                 <header class="mb-7">
-                    <h1 id="login-title" class="text-3xl font-bold tracking-tight text-base-content sm:text-4xl">
-                        {{ ('Sign in to %(v)s') % {'v': app_name} }}
+                    <h1 id="login-title" class="text-[1.75rem] font-extrabold leading-tight tracking-[-0.03em] text-base-content">
+                        {{ ('Sign in to %(v)s') % {'v': app_name or 'EzDistro'} }}
                     </h1>
-                    <p class="mt-3 text-sm leading-6 text-base-content/60">{{ ('SEO automation and content generation platform') }}</p>
+                    <p class="mt-2 text-sm leading-relaxed text-base-content/65">{{ ('Use the account your administrator created for you.') }}</p>
                 </header>
 
                 {% if error %}
@@ -85,35 +65,21 @@
                 {% endif %}
 
                 <!-- Native POST keeps the session cookie reliable on mobile browsers. -->
-                <form method="post" action="/login" hx-boost="false" class="card border border-base-300 bg-base-100 min-w-0 flex flex-col gap-5 p-5 sm:p-7">
+                <form method="post" action="/login" hx-boost="false" class="flex flex-col gap-5">
                     <div>
-                        <label for="login-email" class="mb-2 block text-sm font-semibold">{{ ('Email') }}</label>
-                        <div class="relative">
-                            <span aria-hidden="true" class="pointer-events-none absolute inset-y-0 start-3 flex items-center text-base-content/45">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5A2.25 2.25 0 0 1 19.5 19.5h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15A2.25 2.25 0 0 0 2.25 6.75m19.5 0-8.36 5.307a2.625 2.625 0 0 1-2.78 0L2.25 6.75" />
-                                </svg>
-                            </span>
-                            <input id="login-email" type="email" name="email" value="{{ email|default('') }}" class="input validator h-12 w-full ps-10" placeholder="you@example.com" required autocomplete="email" autocapitalize="none" spellcheck="false" inputmode="email" dir="ltr" />
-                        </div>
+                        <label for="login-email" class="mb-1.5 block text-[0.8125rem] font-medium text-base-content/80">{{ ('Email') }}</label>
+                        <input id="login-email" type="email" name="email" value="{{ email|default('') }}" class="input validator h-12 w-full" placeholder="you@example.com" required autocomplete="email" autocapitalize="none" spellcheck="false" inputmode="email" dir="ltr" />
                     </div>
 
                     <div>
-                        <label for="login-password" class="mb-2 block text-sm font-semibold">{{ ('Password') }}</label>
-                        <div class="relative">
-                            <span aria-hidden="true" class="pointer-events-none absolute inset-y-0 start-3 flex items-center text-base-content/45">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 0 0-9 0v3.75m-2.25 0h13.5v10.5H5.25V10.5Z" />
-                                </svg>
-                            </span>
-                            <input id="login-password" type="password" name="password" class="input validator h-12 w-full ps-10" required autocomplete="current-password" dir="ltr" />
-                        </div>
+                        <label for="login-password" class="mb-1.5 block text-[0.8125rem] font-medium text-base-content/80">{{ ('Password') }}</label>
+                        <input id="login-password" type="password" name="password" class="input validator h-12 w-full" required autocomplete="current-password" dir="ltr" />
                     </div>
 
-                    <button type="submit" class="btn btn-primary mt-1 h-12 min-h-12 w-full font-semibold">{{ ('Sign in') }}</button>
+                    <button type="submit" class="btn btn-primary mt-1 h-12 min-h-12 w-full text-[0.9375rem] font-semibold">{{ ('Sign in') }}</button>
                 </form>
 
-                <p class="mt-6 text-center text-xs text-base-content/45">{{ ('Version %(v)s') % {'v': app_version} }}</p>
+                <p class="mt-10 text-center text-xs text-base-content/60">{{ ('Version %(v)s') % {'v': app_version} }}</p>
             </div>
         </section>
     </div>
