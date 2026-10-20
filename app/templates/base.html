@@ -35,6 +35,7 @@
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="theme-color" content="#ffffff" />
+        <meta name="color-scheme" content="light dark" />
 
         <link rel="manifest" href="/manifest.json" />
         <link rel="icon" href="/static/brand/ezdistro/favicon.ico" sizes="any" />
@@ -53,7 +54,12 @@
         <link rel="stylesheet" href="{{ url_for('static', path='/app.css') }}?v={{ asset_version() }}" />
     </head>
 
+    {# `x-data` below is load-bearing: Alpine only initializes the subtrees it
+       finds an `x-data` (or `x-init`) root in, so without a scope on <body>
+       every `@click="$store.ui.openModal(…)"` outside a component (the Add
+       website / Add topic / Delete project modals) silently does nothing. #}
     <body
+        x-data
         class="bg-base-100 font-sans antialiased"
         hx-boost="true"
         hx-target="#main-content"
@@ -61,12 +67,11 @@
     >
         {% block body_start %}{% endblock %}
 
-        <!-- Top loading progress bar — HIDDEN for now (kept intact for easy
-             re-enable: just remove the `hidden` attribute below). -->
+        <!-- Top loading progress bar: immediate, continuous feedback while an
+             htmx request is in flight (Apple's "respond on pointer-down"). -->
         <div
             id="top-progress-bar"
-            hidden
-            class="fixed top-0 start-0 h-0.5 bg-primary z-[9999] transition-all duration-300 ease-out w-0 opacity-0 pointer-events-none"
+            class="pointer-events-none fixed start-0 top-0 z-[9999] h-0.5 w-0 bg-primary opacity-0 transition-all duration-300 ease-out"
         ></div>
 
         {% block content %}{% endblock %}
@@ -127,16 +132,105 @@
             });
         </script>
 
-        <!-- Popover row menus live in the top layer, so they cannot stretch a
-             table row or be clipped by `overflow-x-auto`. Close one as soon as
-             an item inside it is chosen. -->
+        <!-- Popover menus live in the top layer, so they cannot stretch a table
+             row, be clipped by `overflow-x-auto`, or hide behind a sticky bar.
+             Two things the platform does not give us for free:
+
+             1. Position. The UA default centres a popover in the viewport, and
+                DaisyUI's `.dropdown[popover]` relies on CSS anchor positioning,
+                which Firefox does not support yet — so menus opened in the
+                middle of the screen or past its edge. We place them against the
+                invoker ourselves: flip up near the bottom, clamp to the
+                viewport, scroll when taller than the screen.
+                ponytail: fixed placement + viewport clamp, no collision library.
+                Swap in `position-anchor` + `position-try-fallbacks` once Firefox
+                ships anchor positioning.
+             2. Closing. Native popovers close on outside click and Escape; a
+                chosen item must also dismiss the menu.
+        -->
         <script>
-            document.addEventListener('click', function (evt) {
-                var target = evt.target;
-                if (!target || !target.closest) return;
-                var pop = target.closest('[popover].dropdown');
-                if (pop && target.closest('a, button')) pop.hidePopover();
-            });
+            (function () {
+                var GAP = 6;
+                var PAD = 8;
+                var openPopover = null;
+
+                function place(pop) {
+                    var invoker = pop.__invoker;
+                    if (!invoker || !invoker.getBoundingClientRect) return;
+                    var r = invoker.getBoundingClientRect();
+                    var vw = document.documentElement.clientWidth;
+                    var vh = document.documentElement.clientHeight;
+                    var room = vh - PAD * 2;
+
+                    // Reset before measuring so a previous clamp cannot stick.
+                    pop.style.maxHeight = '';
+                    pop.style.overflowY = '';
+                    pop.style.maxWidth = Math.max(160, vw - PAD * 2) + 'px';
+                    var w = pop.offsetWidth;
+                    var h = pop.offsetHeight;
+
+                    // Never taller than the space we can offer.
+                    if (h > room) {
+                        pop.style.maxHeight = room + 'px';
+                        pop.style.overflowY = 'auto';
+                        h = room;
+                    }
+
+                    var top = r.bottom + GAP;
+                    if (top + h > vh - PAD) top = r.top - GAP - h; // flip up
+                    if (top < PAD) top = PAD;
+
+                    var end = pop.classList.contains('dropdown-end');
+                    var left = end ? r.right - w : r.left;
+                    if (left + w > vw - PAD) left = vw - PAD - w;
+                    if (left < PAD) left = PAD;
+
+                    // `position-area` (DaisyUI's anchor positioning) would make
+                    // top/left relative to the anchor region instead of the
+                    // viewport, so switch it off explicitly.
+                    pop.style.position = 'fixed';
+                    pop.style.positionArea = 'none';
+                    pop.style.inset = 'auto';
+                    pop.style.margin = '0';
+                    pop.style.top = Math.round(top) + 'px';
+                    pop.style.left = Math.round(left) + 'px';
+                }
+
+                // Remember which control opened it (capture: `toggle` does not
+                // bubble, and the click may land on a child of the button).
+                document.addEventListener('click', function (evt) {
+                    var el = evt.target;
+                    var btn = el && el.closest && el.closest('[popovertarget]');
+                    if (!btn) return;
+                    var pop = document.getElementById(btn.getAttribute('popovertarget'));
+                    if (pop) pop.__invoker = btn;
+                }, true);
+
+                document.addEventListener('toggle', function (evt) {
+                    var pop = evt.target;
+                    if (!pop || !pop.matches || !pop.matches('[popover]')) return;
+                    if (evt.newState === 'open') {
+                        openPopover = pop;
+                        place(pop);
+                    } else if (openPopover === pop) {
+                        openPopover = null;
+                    }
+                }, true);
+
+                function replace() {
+                    if (openPopover && openPopover.matches(':popover-open')) place(openPopover);
+                }
+                window.addEventListener('resize', replace, { passive: true });
+                document.addEventListener('scroll', replace, { passive: true, capture: true });
+
+                // Choosing an item dismisses the menu.
+                document.addEventListener('click', function (evt) {
+                    var el = evt.target;
+                    if (!el || !el.closest) return;
+                    var pop = el.closest('[popover]');
+                    if (pop && el.closest('a, button')) pop.hidePopover();
+                });
+            })();
         </script>
 
         <script type="module" src="{{ url_for('static', path='/js/integrations.js') }}?v={{ asset_version() }}"></script>
@@ -149,9 +243,11 @@
             function getProgressBar() {
                 return document.getElementById('top-progress-bar');
             }
+            let progressActive = false;
             function startProgress() {
                 const bar = getProgressBar();
                 if (!bar) return;
+                progressActive = true;
                 bar.style.transition = 'width 0.3s ease-out, opacity 0.1s ease-in';
                 bar.style.opacity = '1';
                 bar.style.width = '30%';
@@ -160,6 +256,8 @@
                 }, 400);
             }
             function stopProgress() {
+                if (!progressActive) return;
+                progressActive = false;
                 const bar = getProgressBar();
                 if (!bar) return;
                 bar.style.transition = 'width 0.2s ease-out, opacity 0.3s ease-out';
@@ -172,7 +270,17 @@
                     }, 300);
                 }, 300);
             }
-            document.addEventListener('htmx:beforeRequest', startProgress);
+            // Foreground requests only: background polls (`every 5s`,
+            // `refreshX from:body`) must not flash the bar — that reads as
+            // noise, not progress.
+            function isBackgroundRequest(evt) {
+                var elt = evt.detail && evt.detail.elt;
+                var trigger = (elt && elt.getAttribute && elt.getAttribute('hx-trigger')) || '';
+                return /\bevery\b|from:body/.test(trigger);
+            }
+            document.addEventListener('htmx:beforeRequest', function (evt) {
+                if (!isBackgroundRequest(evt)) startProgress();
+            });
             document.addEventListener('htmx:afterSettle', stopProgress);
             window.addEventListener('beforeunload', startProgress);
             document.addEventListener('DOMContentLoaded', stopProgress);

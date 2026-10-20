@@ -48,9 +48,22 @@ def _has_projects(request):
     return {"has_projects": total > 0}
 
 
+def _current_user(request):
+    """Expose the signed-in user to every full-page template.
+
+    The shell renders its account menu (plan, sign out) only when this is set,
+    and nothing else put `user` in the context — so the menu silently vanished
+    from every page. Skipped for htmx fragments: they never render the shell,
+    and the hot path stays one dict lookup.
+    """
+    if request.headers.get("HX-Request") == "true":
+        return {}
+    return {"user": getattr(request.state, "user", None)}
+
+
 templates = Jinja2Templates(
     directory=os.path.join(BASE_DIR, "templates"),
-    context_processors=[_hx_partial, _has_projects],
+    context_processors=[_hx_partial, _has_projects, _current_user],
 )
 
 
