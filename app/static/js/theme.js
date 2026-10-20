@@ -12,7 +12,7 @@
 
     var STORAGE_KEY = 'ezdistro-theme';
     var THEMES = { light: 'ezdistro', dark: 'ezdistro-dark' };
-    var CHROME_COLORS = { light: '#ffffff', dark: '#0b0b10' };
+    var CHROME_COLORS = { light: '#ffffff', dark: '#1a1b21' };
     var mqDark = window.matchMedia('(prefers-color-scheme: dark)');
 
     function savedPref() {

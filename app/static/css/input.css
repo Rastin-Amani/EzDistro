@@ -7,6 +7,30 @@
 @theme {
     --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
     --font-mono: 'JetBrains Mono', 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+    /* One orchestrated entrance per navigation (see macros/forms.html).
+       Tailwind turns this into `animate-rise`; `motion-safe:` gates it. */
+    --animate-rise: rise 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+    --animate-fade: fade 0.24s ease-out both;
+
+    @keyframes rise {
+        from {
+            opacity: 0;
+            transform: translateY(6px);
+        }
+        to {
+            opacity: 1;
+            transform: none;
+        }
+    }
+    @keyframes fade {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
 }
 
 /* EzDistro Atlas — the two themes are the only place colour is decided.
@@ -20,9 +44,9 @@
     color-scheme: light;
 
     --color-base-100: #ffffff;
-    --color-base-200: #f2f2f2;
-    --color-base-300: #b1b7c3;
-    --color-base-content: #000000;
+    --color-base-200: #f6f6f7;
+    --color-base-300: #e4e4e7;
+    --color-base-content: #111113;
 
     --color-primary: #0000ff;
     --color-primary-content: #ffffff;
@@ -30,7 +54,7 @@
     --color-secondary-content: #ffffff;
     --color-accent: #098551;
     --color-accent-content: #ffffff;
-    --color-neutral: #000000;
+    --color-neutral: #111113;
     --color-neutral-content: #ffffff;
 
     --color-info: #0000ff;
@@ -43,12 +67,13 @@
     --color-error-content: #ffffff;
 
     --radius-selector: 0.5rem;
-    --radius-field: 0.5rem;
-    --radius-box: 0.5rem;
+    --radius-field: 0.625rem;
+    --radius-box: 0.75rem;
     --size-selector: 0.25rem;
-    --size-field: 0.25rem;
+    --size-field: 0.275rem;
     --border: 1px;
-    --depth: 0;
+    /* 1 = DaisyUI's whisper of inset depth on controls only (cards stay flat). */
+    --depth: 1;
     --noise: 0;
 }
 
@@ -58,36 +83,44 @@
     prefersdark: true;
     color-scheme: dark;
 
-    --color-base-100: #0b0b10;
-    --color-base-200: #14151c;
-    --color-base-300: #2c2e3a;
-    --color-base-content: #f5f5f5;
+    /* Graphite ground, not a void: the page sits a step above pure black so
+       panels, hairlines and floating layers all stay readable. Mirrors the
+       light theme's paper → ash → mist ramp one step down instead of inverting
+       it, which is what turned the old dark mode into "black everywhere". */
+    --color-base-100: #1a1b21;
+    --color-base-200: #23252d;
+    --color-base-300: #383b47;
+    --color-base-content: #e9eaee;
 
-    --color-primary: #3333ff;
-    --color-primary-content: #ffffff;
-    --color-secondary: #323232;
-    --color-secondary-content: #ffffff;
-    --color-accent: #098551;
-    --color-accent-content: #ffffff;
-    --color-neutral: #f5f5f5;
-    --color-neutral-content: #0b0b10;
+    /* Same hue as the brand blue (#0000ff, hue 240) lifted only as far as
+       contrast requires. Dark ink on the fill keeps the primary button above
+       4.5:1 while the colour itself stays legible as link/nav text on the
+       ground — pure #0000ff would sit at ~2.2:1 here. */
+    --color-primary: #7575ff;
+    --color-primary-content: #0d0e13;
+    --color-secondary: #d4d5db;
+    --color-secondary-content: #1a1b21;
+    --color-accent: #3fce7d;
+    --color-accent-content: #062015;
+    --color-neutral: #e9eaee;
+    --color-neutral-content: #1a1b21;
 
-    --color-info: #3333ff;
-    --color-info-content: #ffffff;
-    --color-success: #098551;
-    --color-success-content: #ffffff;
+    --color-info: #7575ff;
+    --color-info-content: #0d0e13;
+    --color-success: #3fce7d;
+    --color-success-content: #062015;
     --color-warning: #e7bd66;
     --color-warning-content: #2e2410;
     --color-error: #f17b82;
     --color-error-content: #351417;
 
     --radius-selector: 0.5rem;
-    --radius-field: 0.5rem;
-    --radius-box: 0.5rem;
+    --radius-field: 0.625rem;
+    --radius-box: 0.75rem;
     --size-selector: 0.25rem;
-    --size-field: 0.25rem;
+    --size-field: 0.275rem;
     --border: 1px;
-    --depth: 0;
+    --depth: 1;
     --noise: 0;
 }
 
@@ -105,6 +138,8 @@
 @layer base {
     html {
         -webkit-text-size-adjust: 100%;
+        font-optical-sizing: auto;
+        text-rendering: optimizeLegibility;
     }
 
     /* Keyboard focus must stay visible everywhere, including plain links and
@@ -129,6 +164,14 @@
         caret-color: var(--color-primary);
     }
 
+    /* Press feedback lands on pointer-down, not on release (fluid interfaces). */
+    :where(.btn):active:not(:disabled, [disabled]) {
+        transform: scale(0.98);
+    }
+    :where(.btn) {
+        transition: transform 120ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
     * {
         scrollbar-width: thin;
         scrollbar-color: var(--color-base-300) transparent;
@@ -148,6 +191,15 @@
         html,
         body {
             overflow-x: clip;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        :where(.btn) {
+            transition: none;
+        }
+        :where(.btn):active:not(:disabled, [disabled]) {
+            transform: none;
         }
     }
 }
