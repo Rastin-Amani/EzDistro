@@ -39,17 +39,17 @@
 
         <details class="card group border border-base-300 bg-base-100 min-w-0">
 
-            <summary class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3 cursor-pointer">
+            <summary class="flex items-center gap-2 group-open:border-b group-open:border-base-300 px-5 py-3.5 cursor-pointer">
 
-                <span class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Provider metrics') }}</span>
+                <span class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">{{ ('Provider metrics') }}</span>
 
             </summary>
 
-            <div class="overflow-x-auto p-4">
+            <div class="overflow-x-auto p-5">
 
                 <table class="table table-sm">
 
-                    <thead><tr class="text-xs opacity-60"><th>{{ ('Provider') }}</th><th>{{ ('Model') }}</th><th>{{ ('Operation') }}</th><th>{{ ('Count') }}</th><th>{{ ('Success') }}</th><th>{{ ('Average (ms)') }}</th><th>P95 (ms)</th></tr></thead>
+                    <thead><tr class="text-[0.7rem] uppercase tracking-[0.073em] text-base-content/60"><th>{{ ('Provider') }}</th><th>{{ ('Model') }}</th><th>{{ ('Operation') }}</th><th>{{ ('Count') }}</th><th>{{ ('Success') }}</th><th>{{ ('Average (ms)') }}</th><th>P95 (ms)</th></tr></thead>
 
                     <tbody>
 
@@ -93,19 +93,19 @@
 
         <div class="card border border-base-300 bg-base-100 min-w-0">
 
-            <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3"><h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Indexing runs') }}</h2><span class="text-xs opacity-60">{{ runs|length }} {{ ('runs') }}</span></div>
+            <div class="flex items-center justify-between gap-2 border-b border-base-300 px-5 py-3.5"><h2 class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">{{ ('Indexing runs') }}</h2><span class="text-xs text-base-content/65">{{ runs|length }} {{ ('runs') }}</span></div>
 
             {% set recent_runs = runs[:7]|reverse|list %}
             {% set ns = namespace(vals=[]) %}
             {% for r in recent_runs %}{% set ns.vals = ns.vals + [(r.indexedDocuments or 0)] %}{% endfor %}
             {% set rmax = ns.vals|max if ns.vals else 0 %}
             <div class="px-4 pt-3">
-                <p class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55 mb-2">{{ ('Recent output') }}</p>
+                <p class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60 mb-2">{{ ('Recent output') }}</p>
                 <div class="flex h-14 items-end gap-1 tabular-nums" role="img" aria-label="{{ ('Indexed documents per recent run') }}">
                     {% for r in recent_runs %}
                     {% set v = r.indexedDocuments or 0 %}
                     {% set h = (v / rmax * 100)|round|int if rmax else 0 %}
-                    <i class="block min-h-1 min-w-2 flex-1 rounded-[2px] {{ 'bg-accent' if r.status == 'completed' else ('bg-primary' if r.status == 'running' else 'bg-base-300') }}" style="height: {{ h if h >= 8 else (8 if v else 3) }}%" title="{{ r.startedAt|loc_dt }}: {{ v }}"></i>
+                    <i class="block min-h-1 min-w-2 flex-1 rounded-xs {{ 'bg-accent' if r.status == 'completed' else ('bg-primary' if r.status == 'running' else 'bg-base-300') }}" style="height: {{ h if h >= 8 else (8 if v else 3) }}%" title="{{ r.startedAt|loc_dt }}: {{ v }}"></i>
                     {% endfor %}
                 </div>
             </div>
@@ -116,7 +116,7 @@
 
                     <thead>
 
-                        <tr class="text-xs opacity-60">
+                        <tr class="text-[0.7rem] uppercase tracking-[0.073em] text-base-content/60">
 
                             <th>{{ ('Status') }}</th>
 
@@ -172,7 +172,7 @@
 
                             <td class="text-xs">{{ r.elapsedSeconds or 0 }}</td>
 
-                            <td class="text-xs opacity-50 whitespace-nowrap">{{ r.startedAt|loc_dt }}</td>
+                            <td class="text-xs text-base-content/60 whitespace-nowrap">{{ r.startedAt|loc_dt }}</td>
 
                             <td>
 
@@ -206,7 +206,7 @@
 
         <div class="card border border-base-300 bg-base-100 min-w-0">
 
-            <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3"><h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Recent documents') }}</h2><span class="text-xs opacity-60">{{ indexed_count }} {{ ('indexed') }}</span></div>
+            <div class="flex items-center justify-between gap-2 border-b border-base-300 px-5 py-3.5"><h2 class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">{{ ('Recent documents') }}</h2><span class="text-xs text-base-content/65">{{ indexed_count }} {{ ('indexed') }}</span></div>
 
             <div class="overflow-x-auto">
 
@@ -214,7 +214,7 @@
 
                     <thead>
 
-                        <tr class="text-xs opacity-60">
+                        <tr class="text-[0.7rem] uppercase tracking-[0.073em] text-base-content/60">
 
                             <th>{{ ('Title') }}</th>
 
@@ -242,15 +242,15 @@
 
                             <td class="text-xs max-w-50"><p class="truncate">{{ d.title }}</p></td>
 
-                            <td class="text-xs opacity-60" dir="ltr">{{ d.sourceType }}:{{ d.sourceId }}</td>
+                            <td class="text-xs text-base-content/65" dir="ltr">{{ d.sourceType }}:{{ d.sourceId }}</td>
 
-                            <td class="text-xs opacity-60" dir="ltr">{{ d.embeddingModel or '—' }}</td>
+                            <td class="text-xs text-base-content/65" dir="ltr">{{ d.embeddingModel or '—' }}</td>
 
                             <td class="text-xs">{{ d.chunkCount or 0 }}</td>
 
                             <td><span class="badge badge-sm {{ d.indexStatus|status_badge }}">{{ d.indexStatus|status_label }}</span></td>
 
-                            <td class="text-xs opacity-50">{{ d.updated|loc_dt }}</td>
+                            <td class="text-xs text-base-content/60">{{ d.updated|loc_dt }}</td>
 
                             <td>
 

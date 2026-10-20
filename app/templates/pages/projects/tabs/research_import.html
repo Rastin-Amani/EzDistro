@@ -1,10 +1,10 @@
 {% import 'macros/forms.html' as f %}
 
 <div id="research-import-form">
-  <p class="mb-3 text-sm opacity-70">
+  <p class="mb-3 text-sm text-base-content/65">
     {{ ('This is the simplest way to start. No Google Ads API access is required — upload a Keyword Planner export, then we will classify and cluster it.') }}
   </p>
-  <p class="text-sm opacity-70 mb-3">
+  <p class="text-sm text-base-content/65 mb-3">
     Export your keyword ideas from <span class="font-medium">Google Keyword Planner</span> as CSV/XLSX and upload
     them here. The Google metrics are kept exactly as they are; AI classifies intent, clusters keywords and proposes
     article opportunities — like the API path.
@@ -23,7 +23,7 @@
         <span class="label px-0 pb-1.5"><span class="truncate font-medium text-sm">{{ ('Keyword Planner file (CSV or XLSX)') }}</span></span>
         <input id="import-file" type="file" name="file" accept=".csv,.xlsx,.xlsm"
                class="file-input w-full" required />
-        <p class="text-xs opacity-50 mt-1">{{ ('Up to 20 MB. Columns are detected automatically.') }}</p>
+        <p class="text-xs text-base-content/60 mt-1">{{ ('Up to 20 MB. Columns are detected automatically.') }}</p>
       </label>
     </div>
     {{ f.textarea('keywords', 'Seed keywords (optional)', rows=3,
@@ -46,7 +46,7 @@
         <span id="import-busy" class="loading loading-spinner loading-xs htmx-indicator"></span>
         {{ ('Analyse imported keywords') }}
       </button>
-      <span class="text-xs opacity-60">{{ ('You can review the detected columns before starting.') }}</span>
+      <span class="text-xs text-base-content/65">{{ ('You can review the detected columns before starting.') }}</span>
     </div>
   </form>
 </div>

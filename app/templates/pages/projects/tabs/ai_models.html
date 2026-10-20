@@ -16,11 +16,11 @@
 
         <section class="card border border-base-300 bg-base-100 min-w-0">
 
-            <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
+            <div class="flex items-center justify-between gap-2 border-b border-base-300 px-5 py-3.5">
 
                 <div class="flex items-center gap-2">
 
-                    <h3 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ label }}</h3>
+                    <h3 class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">{{ label }}</h3>
 
                     {{ f.tip(('Roles: Outline builds the outline, Section writes the sections, Meta and Review are optional. If left empty, the global default is used.')) }}
 
@@ -28,7 +28,7 @@
 
             </div>
 
-<div class="p-4 flex flex-col gap-3">
+<div class="p-5 flex flex-col gap-3">
 
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
 
@@ -60,7 +60,7 @@
 
                         </select>
 
-                        <span class="text-xs opacity-40 mt-1 leading-relaxed">
+                        <span class="text-xs text-base-content/60 mt-1 leading-relaxed">
 
                             {% if opts %}{{ ('A connection from the Connections tab. Its saved model is used as the default.') }}{% else %}{{ ('No LLM connection yet — add one on the Connections tab.') }}{% endif %}
 
@@ -104,7 +104,7 @@
 
                         <datalist id="models-{{ role }}"></datalist>
 
-                        <span class="text-xs opacity-40 mt-1">{{ ('You can enter the model ID manually.') }}</span>
+                        <span class="text-xs text-base-content/60 mt-1">{{ ('You can enter the model ID manually.') }}</span>
 
                     </label>
 
@@ -120,7 +120,7 @@
 
                         </div>
 
-                        <div class="text-xs opacity-60 border border-base-300/70 rounded-lg px-3 py-2.5" dir="ltr">
+                        <div class="text-xs text-base-content/65 border border-base-300 rounded-field px-3 py-2.5" dir="ltr">
 
                             {% if global_defaults.get(role) and global_defaults[role].provider %}
 
@@ -138,9 +138,9 @@
 
                 {% if with_params %}
 
-                <details class="border-t border-base-300/60 pt-3">
+                <details class="border-t border-base-300 pt-3">
 
-                    <summary class="cursor-pointer select-none text-xs font-medium opacity-70">{{ ('Advanced — sampling, tokens, timeout & retries') }}</summary>
+                    <summary class="cursor-pointer select-none text-xs font-medium text-base-content/65">{{ ('Advanced — sampling, tokens, timeout & retries') }}</summary>
 
                 <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-3">
 
@@ -251,11 +251,11 @@
 
     <section class="card border border-base-300 bg-base-100 min-w-0">
 
-        <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
+        <div class="flex items-center justify-between gap-2 border-b border-base-300 px-5 py-3.5">
 
             <div class="flex items-center gap-2">
 
-                <h3 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Global defaults (admin only)') }}</h3>
+                <h3 class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">{{ ('Global defaults (admin only)') }}</h3>
 
                 {{ f.tip(('Values that all new projects use as defaults; project settings always take precedence.')) }}
 
@@ -263,9 +263,9 @@
 
         </div>
 
-        <div class="p-4 flex flex-col gap-3">
+        <div class="p-5 flex flex-col gap-3">
 
-            <p class="text-xs opacity-50">{{ ('Project settings always take precedence over these values.') }}</p>
+            <p class="text-xs text-base-content/60">{{ ('Project settings always take precedence over these values.') }}</p>
 
             <form hx-post="/projects/{{ project.id }}/ai-models/global" hx-swap="none" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
 
@@ -273,7 +273,7 @@
 
                 {% set g = global_defaults.get(role) or {} %}
 
-                <div class="flex flex-col gap-2 border border-base-300/70 rounded-lg p-3">
+                <div class="flex flex-col gap-2 border border-base-300 rounded-field p-3">
 
                     <span class="text-xs font-semibold">{{ role }}</span>
 

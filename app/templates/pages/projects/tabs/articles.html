@@ -2,28 +2,34 @@
 {{ f.section_head(('Articles'), ('Articles generated for this project.')) }}
 <div id="articles-tab">
     {% if articles %}
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+    <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
         {% for a in articles %}
-        <a href="/projects/{{ project.id }}/articles/{{ a.id }}/workspace" class="card border border-base-300 bg-base-100 min-w-0 hover:border-primary/40 transition-colors block">
-            <div class="p-4 flex flex-col gap-2">
-                <div class="flex items-center justify-between gap-2">
-                    <h3 class="font-bold text-sm truncate">{{ a.title }}</h3>
+        <a href="/projects/{{ project.id }}/articles/{{ a.id }}/workspace" class="card group min-w-0 border border-base-300 bg-base-100 transition-colors hover:border-primary/40">
+            <div class="flex flex-col gap-2 p-5">
+                <div class="flex items-start justify-between gap-2">
+                    <h3 class="line-clamp-2 min-w-0 text-sm font-semibold leading-snug">{{ a.title }}</h3>
                     <span class="badge badge-sm shrink-0 {{ a.status|status_badge }}">{{ a.status|status_label }}</span>
                 </div>
-                <div class="flex items-center gap-3 text-xs opacity-50">
-                    <span>{{ ('%(n)s words') % {'n': a.wordCount or 0} }}</span>
-                    {% if a.wordpressUrl %}<span class="truncate" dir="ltr">{{ a.wordpressUrl }}</span>{% endif %}
-                    <span>{{ a.updated|loc_dt }}</span>
+                <div class="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 pt-2 text-xs text-base-content/60">
+                    <span class="tabular-nums">{{ ('%(n)s words') % {'n': a.wordCount or 0} }}</span>
+                    <span class="tabular-nums">{{ a.updated|loc_dt }}</span>
+                    {% if a.wordpressUrl %}
+                    <span class="flex items-center gap-1 text-success"><span class="size-1.5 rounded-full bg-success" aria-hidden="true"></span>{{ ('Published') }}</span>
+                    {% endif %}
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="ms-auto size-3.5 text-base-content/60 transition-transform group-hover:translate-x-0.5 group-hover:text-primary" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" /></svg>
                 </div>
             </div>
         </a>
         {% endfor %}
     </div>
     {% else %}
-    <div class="card border border-base-300 bg-base-100 min-w-0">
-        <div class="p-4 flex flex-col items-center gap-3 py-8 text-center">
-            <p class="text-sm opacity-50">{{ ('No articles generated yet. Pick a topic from the “Topics” tab.') }}</p>
-        </div>
+    <div class="card min-w-0 border border-base-300 bg-base-100">
+        {{ f.empty(
+            ('No articles yet'),
+            ('Pick an idea from the content plan and write your first article.'),
+            '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 3.75h6l4.75 4.75v11.75h-11V3.75Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 3.75V9h4.75M10 13h5m-5 3h5" /></svg>',
+            '<a class="btn btn-primary btn-sm" href="/projects/' ~ project.id ~ '?tab=topics">Open content plan</a>'
+        ) }}
     </div>
     {% endif %}
 </div>

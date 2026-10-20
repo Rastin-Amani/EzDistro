@@ -13,47 +13,49 @@
     ('Set it up', ['settings', 'advanced']),
 ] %}
 
-<header class="mb-5 flex flex-wrap items-center justify-between gap-3">
-    <div class="flex items-center gap-2.5 min-w-0">
-        <a href="/projects" class="btn btn-ghost btn-circle btn-sm shrink-0" aria-label="{{ ('Back') }}">
+<header class="mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-3 motion-safe:animate-rise">
+    <div class="flex min-w-0 items-center gap-2.5">
+        <a href="/projects" class="btn btn-ghost btn-circle btn-sm flex-none" aria-label="{{ ('Back') }}">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5 ltr:rotate-180"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
         </a>
         <div class="min-w-0">
-            <h1 class="font-extrabold text-lg truncate">{{ project.name }}</h1>
-            <p class="text-xs opacity-50 truncate">{{ ('Website') }}</p>
+            <h1 class="truncate text-lg font-extrabold tracking-[-0.02em] sm:text-xl">{{ project.name }}</h1>
+            <p class="mt-0.5 flex items-center gap-1.5 text-xs text-base-content/60">
+                <span class="truncate font-mono" dir="ltr">{{ project.slug }}</span>
+                <span aria-hidden="true">·</span>
+                <span>{{ ('Website') }}</span>
+            </p>
         </div>
     </div>
     <div class="flex flex-wrap items-center gap-2">
         {% include "pages/projects/_status_toggle.html" %}
-        <a href="/projects/{{ project.id }}?tab=topics" class="btn btn-ghost btn-sm">{{ ('Continue writing') }}</a>
+        <a href="/projects/{{ project.id }}?tab=topics" class="btn btn-primary btn-sm">{{ ('Continue writing') }}</a>
         <button class="btn btn-ghost btn-sm" hx-post="/projects/{{ project.id }}/run-index" hx-swap="none" hx-disabled-elt="this" title="{{ ('Re-indexes only changed documents') }}">
             <span class="loading loading-spinner loading-xs htmx-indicator"></span>
             {{ ('Refresh site content') }}
         </button>
         {# Destructive + rarely used actions live behind an overflow menu so they
-           never compete with the primary action. #}
-        <div class="dropdown dropdown-end">
-            <button type="button" tabindex="0" class="btn btn-ghost btn-sm btn-square" aria-label="{{ ('More actions') }}">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-4"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.75h.008v.008H12V6.75Zm0 5.25h.008v.008H12V12Zm0 5.25h.008v.008H12v-.008Z" /></svg>
-            </button>
-            <ul tabindex="0" class="dropdown-content menu z-50 mt-1 w-52 rounded-lg border border-base-300/70 bg-base-100 p-1.5 [&_a:hover]:bg-base-200 [&_button:hover]:bg-base-200 [&_label:hover]:bg-base-200">
-                <li><button type="button" class="text-error" @click="$store.ui.openModal('delete-project-modal')">{{ ('Delete project') }}</button></li>
-            </ul>
-        </div>
+           never compete with the primary action. Popover (top layer) so the
+           menu is never clipped by the tab strip or pushed off-screen. #}
+        <button type="button" popovertarget="project-actions" class="btn btn-ghost btn-sm btn-square" aria-label="{{ ('More actions') }}">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-4" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.75h.008v.008H12V6.75Zm0 5.25h.008v.008H12V12Zm0 5.25h.008v.008H12v-.008Z" /></svg>
+        </button>
+        <ul id="project-actions" popover class="dropdown dropdown-end menu w-52 rounded-box border border-base-300 bg-base-100 p-1.5 text-sm">
+            <li><button type="button" class="text-error" @click="$store.ui.openModal('delete-project-modal')">{{ ('Delete project') }}</button></li>
+        </ul>
     </div>
 </header>
 
-<div class="flex flex-col gap-4">
-    <nav id="project-tabs" class="sticky top-[calc(3.5rem_+_env(safe-area-inset-top))] z-20 min-w-0 bg-base-100 md:top-0" aria-label="{{ ('Website sections') }}">
+<div class="flex flex-col gap-5">
+    <nav id="project-tabs" class="sticky top-[calc(3.5rem_+_env(safe-area-inset-top))] z-20 min-w-0 border-b border-base-300 bg-base-100 md:top-0" aria-label="{{ ('Website sections') }}">
         {# One horizontal tab strip at every width: a project rail beside the app
            sidebar reads as a second navigation column, which is what it is. #}
-        <ul class="menu menu-horizontal w-full flex-nowrap overflow-x-auto rounded-box border border-base-300 bg-base-100 p-1.5">
+        <div class="tabs tabs-border w-full flex-nowrap overflow-x-auto">
         {% for group_name, group_items in project_groups %}
         {% for tab in group_items %}
-        <li>
             <a href="/projects/{{ project.id }}?tab={{ tab }}"
                data-tab="{{ tab }}"
-               class="whitespace-nowrap text-sm font-medium hover:bg-base-200 aria-[current=page]:bg-primary/10 aria-[current=page]:text-primary aria-[current=page]:hover:bg-primary/15"
+               class="tab whitespace-nowrap text-sm font-medium"
                {% if tab == active_tab %}aria-current="page"{% endif %}
                hx-get="/projects/{{ project.id }}/tabs/{{ tab }}"
                hx-target="#tab-content"
@@ -62,15 +64,14 @@
                hx-indicator="#tab-indicator">
                 <span>{{ project_labels[tab] }}</span>
             </a>
-        </li>
         {% endfor %}
         {% endfor %}
-        </ul>
+        </div>
     </nav>
 
     <div class="min-w-0">
-        <span id="tab-indicator" class="htmx-indicator mb-2 block text-xs opacity-60">{{ ('Loading…') }}</span>
-        <div id="tab-content">
+        <span id="tab-indicator" class="htmx-indicator mb-2 block text-xs text-base-content/60">{{ ('Loading…') }}</span>
+        <div id="tab-content" class="motion-safe:animate-fade">
             {% include "pages/projects/tabs/" ~ active_tab ~ ".html" %}
         </div>
     </div>
@@ -78,15 +79,15 @@
 
 <!-- Delete project modal -->
 <dialog id="delete-project-modal" class="modal modal-bottom sm:modal-middle">
-    <div class="modal-box bg-base-100">
-        <div class="flex items-center gap-3 mb-2">
-            <div class="grid size-11 place-items-center rounded-lg bg-error/15 text-error">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg>
+    <div class="modal-box border border-base-300 bg-base-100">
+        <div class="mb-2 flex items-center gap-3">
+            <div class="grid size-10 place-items-center rounded-field bg-error/10 text-error">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="size-5"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg>
             </div>
-            <h3 class="font-bold text-lg">{{ ('Delete project') }}</h3>
+            <h3 class="text-lg font-bold">{{ ('Delete project') }}</h3>
         </div>
-        <p class="text-sm opacity-70 leading-relaxed">{{ ('Project “%(v)s” and all related data will be deleted. This cannot be undone.') % {'v': project.name} }}</p>
-        <div class="flex gap-3 mt-6">
+        <p class="text-sm leading-relaxed text-base-content/65">{{ ('Project “%(v)s” and all related data will be deleted. This cannot be undone.') % {'v': project.name} }}</p>
+        <div class="mt-6 flex gap-3">
             <form hx-post="/projects/{{ project.id }}/delete" hx-swap="none" class="flex-1">
                 <button type="submit" class="btn btn-error w-full" hx-disabled-elt="this">{{ ('Delete project') }}</button>
             </form>

@@ -4,60 +4,69 @@
 {{ f.page_header('Websites', 'A workspace for every website. Pick up where you left off.', 'Workspace', '<button class="btn btn-primary" @click="$store.ui.openModal(\'new-project-modal\')">Add website</button>') }}
 
 {% if projects %}
-<div class="mb-4 flex items-center justify-between border-b border-base-300 pb-3">
-    <h2 class="font-mono text-xs uppercase tracking-widest text-base-content/65">Your workspaces</h2>
-    <span class="text-xs tabular-nums text-base-content/65">{{ projects|length }} websites</span>
+<div class="mb-4 flex items-baseline justify-between gap-3 border-b border-base-300 pb-3">
+    <h2 class="font-mono text-[0.7rem] uppercase tracking-[0.073em] text-base-content/60">Your workspaces</h2>
+    <span class="text-xs tabular-nums text-base-content/60">{{ projects|length }} {{ 'website' if projects|length == 1 else 'websites' }}</span>
 </div>
 <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
 {% for p in projects %}
-    <article class="card border border-base-300 bg-base-100 min-w-0">
-        <div class="card-body gap-0 p-6">
-            <div class="mb-5 flex items-center justify-between gap-3">
-                <span class="avatar avatar-placeholder" aria-hidden="true"><span class="flex size-10 items-center justify-center rounded-box bg-base-200 font-semibold">{{ p.name[:1] }}</span></span>
-                <span class="badge badge-soft badge-neutral rounded-[2px]">{{ 'Paused' if p.status == 'inactive' else 'Active' }}</span>
+    <article class="card min-w-0 border border-base-300 bg-base-100 transition-colors hover:border-primary/40">
+        <div class="card-body gap-0 p-5">
+            <div class="flex items-center justify-between gap-3">
+                <span class="grid size-9 flex-none place-items-center rounded-field bg-base-200 text-sm font-bold uppercase text-base-content/70" aria-hidden="true">{{ p.name[:1] }}</span>
+                <span class="badge badge-soft badge-neutral badge-sm">{{ 'Paused' if p.status == 'inactive' else 'Active' }}</span>
             </div>
-            <h3 class="card-title break-words text-lg"><a href="/projects/{{ p.id }}?tab=overview" class="link link-hover">{{ p.name }}</a></h3>
-            <p class="mt-1 truncate text-xs text-base-content/65" title="{{ p.slug }}">{{ p.slug }}</p>
-            <div class="mt-6 border-y border-base-300 py-4">
+            <h3 class="mt-4 min-w-0 text-lg font-bold leading-snug tracking-[-0.015em]"><a href="/projects/{{ p.id }}?tab=overview" class="link link-hover line-clamp-2">{{ p.name }}</a></h3>
+            <p class="mt-1 truncate font-mono text-xs text-base-content/60" title="{{ p.slug }}">{{ p.slug }}</p>
+
+            <div class="mt-5 border-y border-base-300 py-3.5">
                 {% if p.attention %}
-                <span class="badge badge-soft badge-warning rounded-[2px]">Needs attention</span>
-                <p class="mt-2 text-sm">{{ p.attention }} {{ 'task' if p.attention == 1 else 'tasks' }} could not finish.</p>
+                <span class="badge badge-soft badge-warning badge-sm">Needs attention</span>
+                <p class="mt-2 text-sm leading-relaxed text-base-content/65">{{ p.attention }} {{ 'task' if p.attention == 1 else 'tasks' }} could not finish.</p>
                 {% elif p.review %}
-                <span class="badge badge-soft badge-warning rounded-[2px]">Ready for you</span>
-                <p class="mt-2 text-sm">{{ p.review }} {{ 'article' if p.review == 1 else 'articles' }} to review or publish.</p>
+                <span class="badge badge-soft badge-warning badge-sm">Ready for you</span>
+                <p class="mt-2 text-sm leading-relaxed text-base-content/65">{{ p.review }} {{ 'article' if p.review == 1 else 'articles' }} to review or publish.</p>
                 {% elif p.writing %}
-                <span class="badge badge-soft badge-info rounded-[2px]">Writing</span>
-                <p class="mt-2 text-sm">{{ p.writing }} {{ 'article' if p.writing == 1 else 'articles' }} in progress.</p>
+                <span class="badge badge-soft badge-info badge-sm">Writing</span>
+                <p class="mt-2 text-sm leading-relaxed text-base-content/65">{{ p.writing }} {{ 'article' if p.writing == 1 else 'articles' }} in progress.</p>
                 {% elif p.planned %}
-                <span class="badge badge-soft badge-neutral rounded-[2px]">Plan ready</span>
-                <p class="mt-2 text-sm">{{ p.planned }} {{ 'idea' if p.planned == 1 else 'ideas' }} waiting to be written.</p>
+                <span class="badge badge-soft badge-neutral badge-sm">Plan ready</span>
+                <p class="mt-2 text-sm leading-relaxed text-base-content/65">{{ p.planned }} {{ 'idea' if p.planned == 1 else 'ideas' }} waiting to be written.</p>
                 {% else %}
-                <span class="badge badge-soft badge-neutral rounded-[2px]">Plan your next article</span>
-                <p class="mt-2 text-sm">Find an idea to add to your content plan.</p>
+                <span class="badge badge-soft badge-neutral badge-sm">Plan your next article</span>
+                <p class="mt-2 text-sm leading-relaxed text-base-content/65">Find an idea to add to your content plan.</p>
                 {% endif %}
             </div>
-            <div class="card-actions mt-4 items-center justify-between gap-2">
-                <span class="text-xs text-base-content/65">{{ p.published }} published</span>
-                <a class="btn btn-ghost btn-sm" aria-label="Open {{ p.name }}" href="/projects/{{ p.id }}?tab=overview">Open website <span aria-hidden="true">→</span></a>
+
+            <div class="card-actions mt-3 items-center justify-between gap-2">
+                <span class="text-xs tabular-nums text-base-content/60">{{ p.published }} published</span>
+                <a class="btn btn-ghost btn-sm -me-2" aria-label="Open {{ p.name }}" href="/projects/{{ p.id }}?tab=overview">
+                    Open website
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5 text-base-content/60" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" /></svg>
+                </a>
             </div>
         </div>
     </article>
 {% endfor %}
 </div>
 {% else %}
-<section class="card border border-base-300 bg-base-100"><div class="card-body p-8 sm:p-12">
-    <h2 class="card-title text-xl">Your first website starts here</h2>
-    <p class="max-w-md text-base-content/65">Add its name, connect your services, and start building a content plan.</p>
+<section class="card border border-base-300 bg-base-100"><div class="card-body items-start p-8 sm:p-10">
+    <span class="grid size-12 place-items-center rounded-box bg-base-200 text-base-content/60" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" /></svg>
+    </span>
+    <h2 class="mt-2 text-xl font-bold tracking-[-0.02em]">Your first website starts here</h2>
+    <p class="max-w-md text-sm leading-relaxed text-base-content/65">Add its name, connect your services, and start building a content plan.</p>
+    <button class="btn btn-primary btn-sm mt-3" @click="$store.ui.openModal('new-project-modal')">Add website</button>
 </div></section>
 {% endif %}
 
 <dialog id="new-project-modal" class="modal modal-bottom sm:modal-middle" aria-labelledby="new-website-title">
-    <div class="modal-box bg-base-100">
-        <h2 id="new-website-title" class="text-xl font-bold">Add a website</h2>
-        <p class="mt-2 text-sm text-base-content/65">Connect WordPress and your writing services after this step.</p>
+    <div class="modal-box border border-base-300 bg-base-100">
+        <h2 id="new-website-title" class="text-xl font-bold tracking-[-0.02em]">Add a website</h2>
+        <p class="mt-1.5 text-sm leading-relaxed text-base-content/65">Connect WordPress and your writing services after this step.</p>
         <form hx-post="/projects" hx-swap="none" class="mt-5 flex flex-col gap-4">
             {{ f.text('name', 'Website name', required=true, placeholder='Your business name') }}
-            <details class="collapse collapse-arrow bg-base-200">
+            <details class="collapse-arrow collapse border border-base-300 bg-base-200/60">
                 <summary class="collapse-title text-sm font-medium">Optional setup</summary>
                 <div class="collapse-content flex flex-col gap-4">
                     {{ f.text('slug', 'Internal address label', hint='Leave empty to create this automatically.') }}

@@ -4,9 +4,9 @@
             <span class="badge badge-soft {{ 'badge-success' if result.validation.ok is true else ('badge-error' if result.validation.ok is false else 'badge-neutral') }} badge-sm">
                 {% if result.validation.ok is true %}{{ ('Validation: passed') }}{% elif result.validation.ok is false %}{{ ('Validation: failed') }}{% else %}{{ ('No validation') }}{% endif %}
             </span>
-            <span class="opacity-70" dir="ltr">{{ result.model }}</span>
-            <span class="opacity-70">{{ ('Latency: %(n)sms') % {'n': result.latency_ms} }}</span>
-            <span class="opacity-70">{{ ('Tokens: %(n)s') % {'n': result.usage.completion_tokens or 0} }}</span>
+            <span class="text-base-content/65" dir="ltr">{{ result.model }}</span>
+            <span class="text-base-content/65">{{ ('Latency: %(n)sms') % {'n': result.latency_ms} }}</span>
+            <span class="text-base-content/65">{{ ('Tokens: %(n)s') % {'n': result.usage.completion_tokens or 0} }}</span>
         </div>
         {% if result.validation.issues %}
         <ul class="flex flex-col gap-1">
@@ -16,12 +16,12 @@
         </ul>
         {% endif %}
         <div>
-            <p class="font-bold mb-1 opacity-70">{{ ('Rendered prompt') }}</p>
-            <pre class="bg-base-200/60 rounded-lg p-3 max-h-48 overflow-auto whitespace-pre-wrap font-mono" dir="auto">{{ result.rendered }}</pre>
+            <p class="font-bold mb-1 text-base-content/65">{{ ('Rendered prompt') }}</p>
+            <pre class="bg-base-200/60 rounded-field p-3 max-h-48 overflow-auto whitespace-pre-wrap font-mono" dir="auto">{{ result.rendered }}</pre>
         </div>
         <div>
-            <p class="font-bold mb-1 opacity-70">{{ ('Model response') }}</p>
-            <pre class="bg-base-200/60 rounded-lg p-3 max-h-64 overflow-auto whitespace-pre-wrap font-mono" dir="auto">{{ result.response }}</pre>
+            <p class="font-bold mb-1 text-base-content/65">{{ ('Model response') }}</p>
+            <pre class="bg-base-200/60 rounded-field p-3 max-h-64 overflow-auto whitespace-pre-wrap font-mono" dir="auto">{{ result.response }}</pre>
         </div>
     </div>
 </div>

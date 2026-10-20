@@ -11,10 +11,10 @@
      hx-target="this"
      hx-swap="outerHTML">
 
-    <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
+    <div class="mb-4 flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
         <div class="min-w-0">
-            <h2 class="text-lg font-extrabold tracking-tight">{{ ('Connections') }}</h2>
-            <p class="mt-0.5 text-sm text-base-content/50">
+            <h2 class="text-xl font-bold tracking-[-0.02em]">{{ ('Connections') }}</h2>
+            <p class="mt-1 max-w-2xl text-sm leading-relaxed text-base-content/60">
                 {{ ('Providers this project uses — one connection per provider. Test, activate or edit them here; pick them in Settings and the other tabs.') }}
             </p>
         </div>
@@ -30,9 +30,9 @@
         {% set integs = integrations | selectattr('category', 'equalto', category) | list %}
         {% if integs %}
         <section class="card border border-base-300 bg-base-100 min-w-0">
-            <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
+            <div class="flex items-center justify-between gap-2 border-b border-base-300 px-5 py-3.5">
                 <div class="flex items-center gap-2">
-                    <h3 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ label }}</h3>
+                    <h3 class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">{{ label }}</h3>
                     <span class="badge badge-soft badge-neutral badge-sm tabular-nums">{{ integs|length }}</span>
                 </div>
                 <button type="button" class="btn btn-ghost btn-xs" @click="openEditor(null, '{{ category }}')">{{ ('Add') }}</button>
@@ -40,7 +40,7 @@
             <div class="overflow-x-auto">
                 <table class="table table-sm">
                     <thead>
-                        <tr class="text-xs opacity-60">
+                        <tr class="text-[0.7rem] uppercase tracking-[0.073em] text-base-content/60">
                             <th>{{ ('Name') }}</th>
                             <th class="hidden xl:table-cell">{{ ('Provider') }}</th>
                             <th class="hidden xl:table-cell">{{ ('Key') }}</th>
@@ -55,10 +55,10 @@
                         {% set cfg = i.configuration or {} %}
                         <tr>
                             <td class="max-w-32 truncate text-xs font-medium sm:max-w-none">{{ i.displayName }}</td>
-                            <td class="hidden text-xs opacity-70 xl:table-cell" dir="ltr">{{ i.provider }}</td>
-                            <td class="hidden text-xs font-mono opacity-70 xl:table-cell" dir="ltr">{{ cfg.masked if cfg.masked else '—' }}</td>
+                            <td class="hidden text-xs text-base-content/65 xl:table-cell" dir="ltr">{{ i.provider }}</td>
+                            <td class="hidden text-xs font-mono text-base-content/65 xl:table-cell" dir="ltr">{{ cfg.masked if cfg.masked else '—' }}</td>
                             <td><span id="health-badge-{{ i.id }}" class="badge badge-sm {{ i.healthStatus|status_badge }}">{{ health_labels.get(i.healthStatus, i.healthStatus) }}</span></td>
-                            <td class="hidden whitespace-nowrap text-xs opacity-60 md:table-cell"><span id="health-tested-{{ i.id }}">{{ i.lastTestedAt|loc_dt if i.lastTestedAt else '—' }}</span></td>
+                            <td class="hidden whitespace-nowrap text-xs text-base-content/65 md:table-cell"><span id="health-tested-{{ i.id }}">{{ i.lastTestedAt|loc_dt if i.lastTestedAt else '—' }}</span></td>
                             <td>
                                 <label class="tooltip tooltip-top cursor-pointer" data-tip="{{ ('Active — click to deactivate') if i.enabled else ('Inactive — click to activate') }}">
                                     <input type="checkbox" class="toggle toggle-xs toggle-primary" {% if i.enabled %}checked{% endif %}
@@ -105,8 +105,8 @@
     {% else %}
     <div class="card border border-base-300 bg-base-100 min-w-0">
         <div class="flex flex-col items-center justify-center gap-3 text-center py-10">
-            <p class="font-bold text-base-content/75">{{ ('No connections yet') }}</p>
-            <p class="text-sm text-base-content/50">{{ ('Add a connection to use an LLM, embeddings, a vector store, WordPress, images, SERP or Google Ads.') }}</p>
+            <p class="font-bold text-base-content/80">{{ ('No connections yet') }}</p>
+            <p class="text-sm text-base-content/60">{{ ('Add a connection to use an LLM, embeddings, a vector store, WordPress, images, SERP or Google Ads.') }}</p>
             <button type="button" class="btn btn-primary btn-sm mt-2" @click="openEditor(null, 'llm')">{{ ('Add your first connection') }}</button>
         </div>
     </div>
@@ -149,7 +149,7 @@
                         <div class="label px-0 pb-1">
                             <span class="truncate font-medium text-sm">{{ ('Display name') }} <span class="text-error">*</span></span>
                             <span class="tooltip tooltip-left sm:tooltip-top" data-tip="{{ (( 'The name you see in the connections list, e.g. “Main OpenAI”' )) }}">
-                                <span class="cursor-help text-base-content/40"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/></svg></span>
+                                <span class="cursor-help text-base-content/60"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/></svg></span>
                             </span>
                         </div>
                         <input name="display_name" class="input w-full" x-model="form.display_name" required />
@@ -164,14 +164,14 @@
                                 <option :value="p.provider" x-text="p.provider"></option>
                             </template>
                         </select>
-                        <span class="text-xs opacity-50 mt-1 leading-relaxed" x-text="providerDescription()"></span>
+                        <span class="text-xs text-base-content/60 mt-1 leading-relaxed" x-text="providerDescription()"></span>
                     </label>
 
                     <label class="flex flex-col gap-1 min-w-0" x-show="requiresModel()">
                         <div class="label px-0 pb-1">
                             <span class="truncate font-medium text-sm">{{ ('Model') }} <span class="text-error">*</span></span>
                             <span class="tooltip tooltip-left sm:tooltip-top" data-tip="{{ (( 'Model this connection uses by default. On a gateway/router use the namespaced ID it exposes (e.g. openrouter/text-embedding-3-small); a bare name may be rejected.' )) }}">
-                                <span class="cursor-help text-base-content/40"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/></svg></span>
+                                <span class="cursor-help text-base-content/60"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/></svg></span>
                             </span>
                         </div>
                         <div class="flex gap-2">
@@ -187,8 +187,8 @@
                             </button>
                         </div>
                         <datalist id="int-models"></datalist>
-                        <span class="text-xs opacity-40 mt-1" x-show="isEdit && supportsModels()">{{ ('Fetched from the saved connection — you can also type the model ID.') }}</span>
-                        <span class="text-xs opacity-40 mt-1" x-show="!isEdit">{{ ('Save first to fetch models, or type the model ID now.') }}</span>
+                        <span class="text-xs text-base-content/60 mt-1" x-show="isEdit && supportsModels()">{{ ('Fetched from the saved connection — you can also type the model ID.') }}</span>
+                        <span class="text-xs text-base-content/60 mt-1" x-show="!isEdit">{{ ('Save first to fetch models, or type the model ID now.') }}</span>
                     </label>
                 </div>
 
@@ -196,7 +196,7 @@
                     <div class="label px-0 pb-1">
                         <span class="truncate font-medium text-sm">{{ ('Base URL') }}</span>
                         <span class="tooltip tooltip-left sm:tooltip-top" data-tip="{{ (( 'API URL — for OpenAI usually …/v1, for Qdrant usually http://127.0.0.1:6333. Without a protocol, https:// is added.' )) }}">
-                            <span class="cursor-help text-base-content/40"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/></svg></span>
+                            <span class="cursor-help text-base-content/60"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/></svg></span>
                         </span>
                     </div>
                     <input name="base_url" class="input w-full" dir="ltr" x-model="form.base_url" :placeholder="baseUrlPlaceholder()" />
@@ -242,7 +242,7 @@
                     <div class="label px-0 pb-1">
                         <span class="truncate font-medium text-sm" x-text="secretLabel()"></span>
                         <span class="tooltip tooltip-left sm:tooltip-top" data-tip="{{ (( 'When editing, leave empty to keep the existing key. The key is never stored or displayed in plaintext — only an encrypted version is kept' )) }}">
-                            <span class="cursor-help text-base-content/40"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/></svg></span>
+                            <span class="cursor-help text-base-content/60"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/></svg></span>
                         </span>
                     </div>
                     <input type="password" name="secret" class="input w-full" dir="ltr"

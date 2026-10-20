@@ -13,9 +13,9 @@
 
 {{ f.panel('Detected columns') }}
   <div class="text-sm space-y-1">
-    <div><span class="opacity-60">Format:</span> {{ report.format }}</div>
-    <div><span class="opacity-60">Rows read:</span> {{ report.ideas }} keywords, {{ report.skipped }} skipped</div>
-    <div><span class="opacity-60">Mapped fields:</span>
+    <div><span class="text-base-content/65">Format:</span> {{ report.format }}</div>
+    <div><span class="text-base-content/65">Rows read:</span> {{ report.ideas }} keywords, {{ report.skipped }} skipped</div>
+    <div><span class="text-base-content/65">Mapped fields:</span>
       {% if report.columns %}
         {% for field, index in report.columns.items() %}
           <span class="badge badge-soft badge-sm mr-1">{{ field }} → col {{ index }}</span>
@@ -30,7 +30,7 @@
     <div class="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       <table class="table table-sm">
         <thead>
-          <tr class="text-xs opacity-60">
+          <tr class="text-[0.7rem] uppercase tracking-[0.073em] text-base-content/60">
             <th>Keyword</th><th>Searches</th><th>Paid comp.</th>
             <th>Index</th><th>Avg CPC</th>
           </tr>
@@ -49,7 +49,7 @@
       </table>
     </div>
     {% if ideas | length > 20 %}
-      <p class="text-xs opacity-60 mt-2">Showing the first 20 of {{ ideas | length }} keywords.</p>
+      <p class="text-xs text-base-content/65 mt-2">Showing the first 20 of {{ ideas | length }} keywords.</p>
     {% endif %}
   {{ f.panel_close() }}
 {% endif %}

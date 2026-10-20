@@ -6,8 +6,8 @@
 
     {% set statuses = ['planned', 'queued', 'planning', 'outline_ready', 'writing', 'review', 'publishing', 'published', 'failed', 'cancelled'] %}
 
-    <div class="mb-4 flex flex-wrap items-center gap-2">
-        <form class="flex min-w-0 flex-1 items-center gap-2"
+    <div class="mb-4 flex flex-wrap items-center gap-3">
+        <form class="flex min-w-0 flex-1 flex-wrap items-center gap-2"
               hx-get="/projects/{{ project.id }}/tabs/topics"
               hx-target="#tab-content" hx-swap="innerHTML" hx-trigger="submit">
             <input name="q" type="search" value="{{ q }}" class="input input-sm w-full max-w-72"
@@ -30,7 +30,7 @@
         </form>
         <div class="flex items-center gap-2">
             <button class="btn btn-ghost btn-sm" @click="$store.ui.openModal('topic-import-modal')">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-4"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" /></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-4" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" /></svg>
                 {{ ('Import CSV') }}
             </button>
             <button class="btn btn-primary btn-sm" @click="$store.ui.openModal('new-topic-modal')">{{ ('Add topic') }}</button>
@@ -38,21 +38,21 @@
     </div>
 
     <a href="/projects/{{ project.id }}/topics"
-       class="mb-3 inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline">
+       class="mb-3 inline-flex items-center gap-1.5 text-xs font-medium text-base-content/60 hover:text-primary">
         {{ ('Bulk actions — select topics and generate, retry, reset to planned or cancel') }}
-        <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+        <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" /></svg>
     </a>
 
     {% if topics %}
     <section class="card border border-base-300 bg-base-100 min-w-0">
-        <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
-            <h3 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Topics') }}</h3>
-            <span class="text-xs opacity-50 tabular-nums">{{ topics|length }}</span>
+        <div class="flex items-center justify-between gap-2 border-b border-base-300 px-5 py-3.5">
+            <h3 class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">{{ ('Topics') }}</h3>
+            <span class="text-xs text-base-content/60 tabular-nums">{{ topics|length }}</span>
         </div>
         <div class="overflow-x-auto">
             <table class="table table-sm">
                 <thead>
-                    <tr class="text-xs opacity-60">
+                    <tr class="text-[0.7rem] uppercase tracking-[0.073em] text-base-content/60">
                         <th>{{ ('Title') }}</th>
                         <th class="hidden sm:table-cell">{{ ('Keyword') }}</th>
                         <th class="hidden lg:table-cell">{{ ('Pillar / cluster') }}</th>
@@ -103,10 +103,10 @@
     {% else %}
     <div class="card border border-base-300 bg-base-100 min-w-0">
         <div class="flex flex-col items-center justify-center gap-3 text-center py-10">
-            <p class="font-bold text-base-content/75">
+            <p class="font-bold text-base-content/80">
                 {% if q or status_filter %}{{ ('No topics match these filters') }}{% else %}{{ ('No topics yet') }}{% endif %}
             </p>
-            <p class="text-sm text-base-content/50">
+            <p class="text-sm text-base-content/60">
                 {% if q or status_filter %}{{ ('Try clearing a filter.') }}{% else %}{{ ('Add a topic or import a Keyword Planner / research list.') }}{% endif %}
             </p>
             <button class="btn btn-primary btn-sm mt-2" @click="$store.ui.openModal('new-topic-modal')">{{ ('Add topic') }}</button>

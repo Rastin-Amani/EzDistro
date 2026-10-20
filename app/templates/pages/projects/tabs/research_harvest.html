@@ -1,10 +1,10 @@
 {% import 'macros/forms.html' as f %}
 
 <div id="research-harvest-form">
-  <p class="mb-3 text-sm opacity-70">
+  <p class="mb-3 text-sm text-base-content/65">
     {{ ('Free, and no Google Ads account needed: your seeds are expanded through public autocomplete — the queries people actually type into Google, YouTube, Bing, DuckDuckGo and Amazon — then clustered and turned into article opportunities.') }}
   </p>
-  <p class="text-sm opacity-70 mb-3">
+  <p class="text-sm text-base-content/65 mb-3">
     {{ ('A keyword only carries a search volume here if this project already collected one (an earlier Keyword Planner export or research run); everything else is left unmeasured rather than estimated.') }}
   </p>
   <form hx-post="/projects/{{ project.id }}/research/harvest"
@@ -34,7 +34,7 @@
         <span id="harvest-busy" class="loading loading-spinner loading-xs htmx-indicator"></span>
         {{ ('Harvest and build the roadmap') }}
       </button>
-      <span class="text-xs opacity-60">{{ ('Runs in the background — you can leave this page.') }}</span>
+      <span class="text-xs text-base-content/65">{{ ('Runs in the background — you can leave this page.') }}</span>
     </div>
   </form>
 </div>

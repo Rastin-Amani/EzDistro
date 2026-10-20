@@ -3,11 +3,11 @@
 <div id="publishing-tab">
     {% if records %}
     <div class="card border border-base-300 bg-base-100 min-w-0">
-        <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3"><h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Publish history') }}</h2></div>
+        <div class="flex items-center justify-between gap-2 border-b border-base-300 px-5 py-3.5"><h2 class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">{{ ('Publish history') }}</h2></div>
         <div class="overflow-x-auto">
             <table class="table table-sm">
                 <thead>
-                    <tr class="text-xs opacity-60">
+                    <tr class="text-[0.7rem] uppercase tracking-[0.073em] text-base-content/60">
                         <th>{{ ('Article') }}</th>
                         <th>{{ ('Attempt') }}</th>
                         <th>{{ ('Mode') }}</th>
@@ -28,7 +28,7 @@
                         <td class="text-xs max-w-40">
                             {% if r.wordpressUrl %}<a href="{{ r.wordpressUrl }}" target="_blank" rel="noopener" class="link link-primary truncate block" dir="ltr">{{ r.wordpressUrl }}</a>{% else %}—{% endif %}
                         </td>
-                        <td class="text-xs opacity-50 whitespace-nowrap">{{ r.created|loc_dt }}</td>
+                        <td class="text-xs text-base-content/60 whitespace-nowrap">{{ r.created|loc_dt }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -37,8 +37,8 @@
     </div>
     {% else %}
     <div class="card border border-base-300 bg-base-100 min-w-0">
-        <div class="p-4 flex flex-col items-center gap-3 py-8 text-center">
-            <p class="text-sm opacity-50">{{ ('No publishes recorded yet.') }}</p>
+        <div class="p-5 flex flex-col items-center gap-3 py-8 text-center">
+            <p class="text-sm text-base-content/60">{{ ('No publishes recorded yet.') }}</p>
         </div>
     </div>
     {% endif %}

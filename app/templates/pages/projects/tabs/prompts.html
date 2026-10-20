@@ -51,14 +51,14 @@
 
     {# ── Editor for the selected type ────────────────────────────────── #}
     <section class="card border border-base-300 bg-base-100 min-w-0">
-        <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
-            <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ prompt_types.get(active_ptype, active_ptype) }}</h2>
+        <div class="flex items-center justify-between gap-2 border-b border-base-300 px-5 py-3.5">
+            <h2 class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">{{ prompt_types.get(active_ptype, active_ptype) }}</h2>
             {% if versions|length > 1 %}
-            <span class="text-xs opacity-50 tabular-nums">{{ versions|length }} {{ ('versions') }}</span>
+            <span class="text-xs text-base-content/60 tabular-nums">{{ versions|length }} {{ ('versions') }}</span>
             {% endif %}
         </div>
 
-        <div class="p-4 flex flex-col gap-4">
+        <div class="p-5 flex flex-col gap-4">
             <form hx-post="/projects/{{ project.id }}/prompts" hx-swap="none" class="flex flex-col gap-2">
                 {{ f.textarea(active_ptype, ('Prompt text'), active.content if active else '', rows=8,
                     classes='min-h-48',
@@ -72,8 +72,8 @@
             </form>
 
             {# Tester #}
-            <details class="border-t border-base-300/60 pt-3">
-                <summary class="cursor-pointer select-none text-xs font-medium opacity-70">{{ ('Test this prompt without saving') }}</summary>
+            <details class="border-t border-base-300 pt-3">
+                <summary class="cursor-pointer select-none text-xs font-medium text-base-content/65">{{ ('Test this prompt without saving') }}</summary>
                 <form hx-post="/projects/{{ project.id }}/prompts/test" hx-target="#test-result-{{ active_ptype }}" hx-swap="innerHTML" class="mt-3 grid grid-cols-1 sm:grid-cols-4 gap-4">
                     <input type="hidden" name="ptype" value="{{ active_ptype }}" />
                     <input type="hidden" name="content" value="{{ active.content if active else '' }}" />
@@ -105,12 +105,12 @@
 
             {# Version history #}
             {% if versions|length > 1 %}
-            <details class="border-t border-base-300/60 pt-3">
-                <summary class="cursor-pointer select-none text-xs font-medium opacity-70">{{ ('Version history') }} ({{ versions|length }})</summary>
+            <details class="border-t border-base-300 pt-3">
+                <summary class="cursor-pointer select-none text-xs font-medium text-base-content/65">{{ ('Version history') }} ({{ versions|length }})</summary>
                 <div class="mt-3 overflow-x-auto">
                     <table class="table table-sm">
                         <thead>
-                            <tr class="text-xs opacity-60">
+                            <tr class="text-[0.7rem] uppercase tracking-[0.073em] text-base-content/60">
                                 <th>{{ ('Version') }}</th>
                                 <th>{{ ('Author') }}</th>
                                 <th class="hidden sm:table-cell">{{ ('Time') }}</th>
@@ -123,7 +123,7 @@
                             <tr class="{{ 'bg-primary/5' if v.active }}">
                                 <td class="font-mono text-xs">v{{ v.version }}</td>
                                 <td class="text-xs">{{ v.updatedBy or '—' }}</td>
-                                <td class="hidden whitespace-nowrap text-xs opacity-60 sm:table-cell">{{ v.created|loc_dt }}</td>
+                                <td class="hidden whitespace-nowrap text-xs text-base-content/65 sm:table-cell">{{ v.created|loc_dt }}</td>
                                 <td>
                                     {% if v.active %}
                                     <span class="badge badge-soft badge-success badge-xs">{{ ('Active') }}</span>
@@ -163,14 +163,14 @@
 
     {# Variables reference #}
     <details class="card group border border-base-300 bg-base-100 min-w-0">
-        <summary class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3 cursor-pointer select-none">
-            <span class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Available variables') }}</span>
+        <summary class="flex items-center gap-2 group-open:border-b group-open:border-base-300 px-5 py-3.5 cursor-pointer select-none">
+            <span class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">{{ ('Available variables') }}</span>
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="transition-transform group-open:rotate-180 ms-auto size-4 shrink-0"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
         </summary>
-        <div class="p-4 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs">
+        <div class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs">
             {% for name, desc in variables.items() %}
             <code class="bg-base-200/60 rounded px-2 py-1 font-mono" dir="ltr">{{ '{{ ' ~ name ~ ' }}' }}</code>
-            <span class="opacity-70 leading-relaxed">{{ desc }}</span>
+            <span class="text-base-content/65 leading-relaxed">{{ desc }}</span>
             {% endfor %}
         </div>
     </details>

@@ -1,10 +1,10 @@
 <div class="flex flex-col gap-4">
     <div class="card border border-base-300 bg-base-100 min-w-0">
-        <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
-            <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Results for: “%(v)s”') % {'v': query} }}</h2>
+        <div class="flex items-center justify-between gap-2 border-b border-base-300 px-5 py-3.5">
+            <h2 class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">{{ ('Results for: “%(v)s”') % {'v': query} }}</h2>
         </div>
-        <div class="p-4 flex flex-col gap-2">
-            <p class="text-xs opacity-50">
+        <div class="p-5 flex flex-col gap-2">
+            <p class="text-xs text-base-content/60">
                 {{ ('%(a)s results — candidates: %(b)s') % {'a': results|length, 'b': options.candidate_count} }}
                 {% if options.similarity_threshold %} — {{ ('Threshold: %(n)s') % {'n': options.similarity_threshold} }}{% endif %}
                 {% if options.rerank %} — {{ ('Rerank: %(n)s final results') % {'n': options.rerank_top_n} }}{% endif %}
@@ -14,7 +14,7 @@
             <div class="overflow-x-auto mt-2">
                 <table class="table table-sm">
                     <thead>
-                        <tr class="text-xs opacity-60">
+                        <tr class="text-[0.7rem] uppercase tracking-[0.073em] text-base-content/60">
                             <th>#</th>
                             <th>{{ ('Title') }}</th>
                             <th>{{ ('URL') }}</th>
@@ -27,7 +27,7 @@
                     <tbody>
                         {% for r in results %}
                         <tr>
-                            <td class="text-xs opacity-50">{{ loop.index }}</td>
+                            <td class="text-xs text-base-content/60">{{ loop.index }}</td>
                             <td class="text-xs max-w-40"><p class="truncate">{{ r.title }}</p></td>
                             <td class="text-xs max-w-40">
                                 {% if r.source_url %}<a href="{{ r.source_url }}" target="_blank" rel="noopener" class="link link-primary truncate block" dir="ltr">{{ r.source_url }}</a>{% else %}—{% endif %}
@@ -42,22 +42,22 @@
                 </table>
             </div>
             {% else %}
-            <p class="text-sm opacity-50 py-4 text-center">{{ ('No results found (check the similarity threshold or whether the index is empty).') }}</p>
+            <p class="text-sm text-base-content/60 py-4 text-center">{{ ('No results found (check the similarity threshold or whether the index is empty).') }}</p>
             {% endif %}
         </div>
     </div>
 
     {% if context.links %}
     <div class="card border border-base-300 bg-base-100 min-w-0">
-        <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
-            <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Internal link candidates (%(n)s)') % {'n': context.links|length} }}</h2>
+        <div class="flex items-center justify-between gap-2 border-b border-base-300 px-5 py-3.5">
+            <h2 class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">{{ ('Internal link candidates (%(n)s)') % {'n': context.links|length} }}</h2>
         </div>
-        <div class="p-4">
+        <div class="p-5">
             <ul class="flex flex-col gap-1">
                 {% for link in context.links %}
-                <li class="flex items-center justify-between gap-2 text-sm border border-base-300/70 rounded-lg px-3 py-1.5">
+                <li class="flex items-center justify-between gap-2 text-sm border border-base-300 rounded-field px-3 py-1.5">
                     <span class="truncate">{{ link.title }}</span>
-                    <span class="text-xs opacity-50 truncate" dir="ltr">{{ link.url }}</span>
+                    <span class="text-xs text-base-content/60 truncate" dir="ltr">{{ link.url }}</span>
                     <span class="badge badge-soft badge-primary badge-sm">{{ '%.2f'|format(link.relevance_score) }}</span>
                 </li>
                 {% endfor %}
@@ -68,11 +68,11 @@
 
     {% if context.passages %}
     <div class="card border border-base-300 bg-base-100 min-w-0">
-        <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
-            <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Prompt context (%(a)s chunks — %(b)s characters)') % {'a': context.passages|length, 'b': context.used_chars} }}</h2>
+        <div class="flex items-center justify-between gap-2 border-b border-base-300 px-5 py-3.5">
+            <h2 class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">{{ ('Prompt context (%(a)s chunks — %(b)s characters)') % {'a': context.passages|length, 'b': context.used_chars} }}</h2>
         </div>
-        <div class="p-4">
-            <pre class="text-xs bg-base-200/60 rounded-lg p-3 whitespace-pre-wrap max-h-72 overflow-auto">{{ context.format_for_prompt }}</pre>
+        <div class="p-5">
+            <pre class="text-xs bg-base-200/60 rounded-field p-3 whitespace-pre-wrap max-h-72 overflow-auto">{{ context.format_for_prompt }}</pre>
         </div>
     </div>
     {% endif %}

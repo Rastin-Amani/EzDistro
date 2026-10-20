@@ -6,43 +6,37 @@
      hx-swap="outerHTML">
     {{ f.section_head(('Events'), ('Project event history.')) }}
     {% if events %}
-    <div class="card border border-base-300 bg-base-100 min-w-0">
-        <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3"><h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Events') }}</h2></div>
-        <div class="overflow-x-auto">
-            <table class="table table-sm">
-                <thead>
-                    <tr class="text-xs opacity-60">
-                        <th>{{ ('Level') }}</th>
-                        <th>{{ ('Message') }}</th>
-                        <th>{{ ('Data') }}</th>
-                        <th>{{ ('Time') }}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for e in events %}
-                    <tr>
-                        <td><span class="badge badge-sm {{ e.eventType|status_badge }}">{{ e.eventType|status_label }}</span></td>
-                        <td class="text-xs max-w-60"><p class="truncate">{{ e.message }}</p></td>
-                        <td class="text-xs max-w-40">
-                            {% if e.metadata and e.metadata != {} %}
-                            <button type="button" popovertarget="meta-{{ e.id }}" class="btn btn-ghost btn-xs">JSON</button>
-                            <div id="meta-{{ e.id }}" popover class="dropdown dropdown-end max-h-48 w-80 overflow-auto rounded-box border border-base-300 bg-base-100 p-3 text-xs font-mono">
-                                <pre>{{ e.metadata|tojson }}</pre>
-                            </div>
-                            {% else %}—{% endif %}
-                        </td>
-                        <td class="text-xs opacity-50 whitespace-nowrap">{{ e.created|loc_dt }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+    <section class="card overflow-hidden border border-base-300 bg-base-100" aria-labelledby="project-events-title">
+        <div class="flex items-center justify-between gap-2 border-b border-base-300 px-5 py-3.5">
+            <h2 id="project-events-title" class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">{{ ('Events') }}</h2>
+            <span class="text-xs tabular-nums text-base-content/60">{{ events|length }} {{ ('events') }}</span>
         </div>
-    </div>
+        <ul class="divide-y divide-base-300" aria-live="polite">
+            {% for e in events %}
+            <li class="flex flex-wrap items-start gap-x-4 gap-y-2 px-5 py-3.5 transition-colors hover:bg-base-200/40">
+                <span class="mt-1.5 size-1.5 flex-none rounded-full {{ 'bg-error' if 'error' in (e.eventType or '') or e.eventType == 'error' else ('bg-warning' if 'retry' in (e.eventType or '') or e.eventType == 'warning' else ('bg-success' if 'completed' in (e.eventType or '') or e.eventType == 'info' else 'bg-primary')) }}" aria-hidden="true"></span>
+                <div class="min-w-0 flex-1">
+                    <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <span class="badge badge-sm {{ e.eventType|status_badge }}">{{ e.eventType|status_label }}</span>
+                        <p class="min-w-0 break-words text-sm leading-relaxed text-base-content/80">{{ e.message or '—' }}</p>
+                    </div>
+                </div>
+                <div class="flex flex-none items-center gap-2">
+                    {% if e.metadata and e.metadata != {} %}
+                    <button type="button" popovertarget="meta-{{ e.id }}" class="btn btn-ghost btn-xs">{{ ('Data') }}</button>
+                    <div id="meta-{{ e.id }}" popover class="dropdown dropdown-end max-h-60 w-80 max-w-[calc(100vw-2rem)] overflow-auto rounded-box border border-base-300 bg-base-100 p-3 font-mono text-xs">
+                        <pre class="whitespace-pre-wrap break-words">{{ e.metadata|tojson }}</pre>
+                    </div>
+                    {% endif %}
+                    <span class="whitespace-nowrap text-[0.7rem] tabular-nums text-base-content/60">{{ e.created|loc_dt }}</span>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+    </section>
     {% else %}
-    <div class="card border border-base-300 bg-base-100 min-w-0">
-        <div class="p-4 flex flex-col items-center gap-3 py-8 text-center">
-            <p class="text-sm opacity-50">{{ ('No events recorded.') }}</p>
-        </div>
-    </div>
+    <section class="card border border-base-300 bg-base-100">
+        {{ f.empty(('No events recorded'), ('This website has no activity yet.'), compact=true) }}
+    </section>
     {% endif %}
 </div>

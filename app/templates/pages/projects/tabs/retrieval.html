@@ -6,11 +6,11 @@
 
     <div class="card border border-base-300 bg-base-100 min-w-0">
 
-        <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
+        <div class="flex items-center justify-between gap-2 border-b border-base-300 px-5 py-3.5">
 
             <div class="flex items-center gap-2">
 
-                <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Retrieval diagnostics') }}</h2>
+                <h2 class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">{{ ('Retrieval diagnostics') }}</h2>
 
                 {{ f.tip(('Enter a query to run the real retrieval path (embedding → Qdrant search → optional rerank) and inspect the result.')) }}
 
@@ -18,9 +18,9 @@
 
         </div>
 
-        <div class="p-4 flex flex-col gap-4">
+        <div class="p-5 flex flex-col gap-4">
 
-            <p class="text-xs opacity-50 leading-relaxed">
+            <p class="text-xs text-base-content/60 leading-relaxed">
 
                 {{ ('Enter a query to run real retrieval and inspect the result. Defaults come from project settings.') }}
 

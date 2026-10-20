@@ -11,9 +11,9 @@
 
         <div class="card border border-base-300 bg-base-100 min-w-0">
 
-            <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3"><h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Image generation models') }}</h2></div>
+            <div class="flex items-center justify-between gap-2 border-b border-base-300 px-5 py-3.5"><h2 class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">{{ ('Image generation models') }}</h2></div>
 
-            <div class="p-4 flex flex-col gap-4">
+            <div class="p-5 flex flex-col gap-4">
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
@@ -37,7 +37,7 @@
 
                         </select>
 
-                        {% if not cover_opts %}<p class="text-xs opacity-50 mt-1">{{ ('No image connection yet — add one on the Connections tab.') }}</p>{% endif %}
+                        {% if not cover_opts %}<p class="text-xs text-base-content/60 mt-1">{{ ('No image connection yet — add one on the Connections tab.') }}</p>{% endif %}
 
                     </label>
 
@@ -71,7 +71,7 @@
 
                         </select>
 
-                        {% if not interior_opts %}<p class="text-xs opacity-50 mt-1">{{ ('No image connection yet — add one on the Connections tab.') }}</p>{% endif %}
+                        {% if not interior_opts %}<p class="text-xs text-base-content/60 mt-1">{{ ('No image connection yet — add one on the Connections tab.') }}</p>{% endif %}
 
                     </label>
 
@@ -115,9 +115,9 @@
 
                 </div>
 
-                <details class="border-t border-base-300/60 pt-3">
+                <details class="border-t border-base-300 pt-3">
 
-                    <summary class="cursor-pointer select-none text-xs font-medium opacity-70">{{ ('Advanced — aspect ratios, formats & review') }}</summary>
+                    <summary class="cursor-pointer select-none text-xs font-medium text-base-content/65">{{ ('Advanced — aspect ratios, formats & review') }}</summary>
 
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-3">
 
@@ -151,11 +151,11 @@
 
         <details class="card group border border-base-300 bg-base-100 min-w-0">
 
-            <summary class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3 cursor-pointer select-none">
+            <summary class="flex items-center gap-2 group-open:border-b group-open:border-base-300 px-5 py-3.5 cursor-pointer select-none">
 
-                <h2 class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55">{{ ('Visual style profile') }}</h2>
+                <h2 class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">{{ ('Visual style profile') }}</h2>
 
-                <span class="truncate text-xs opacity-50">{{ ('Added to every image prompt') }}</span>
+                <span class="truncate text-xs text-base-content/60">{{ ('Added to every image prompt') }}</span>
 
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="transition-transform group-open:rotate-180 ms-auto size-4 shrink-0"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
 
@@ -163,7 +163,7 @@
 
             {% set style = settings.imageStyle if settings.imageStyle is mapping else {} %}
 
-            <div class="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
 
                 {{ f.text('style_tone', ('Tone and feel'), style.tone or '', ('e.g. minimal, professional, warm')) }}
 
@@ -184,7 +184,7 @@
     </form>
 
     {{ f.panel('Image generation test') }}
-        <p class="text-sm opacity-70 mb-3">
+        <p class="text-sm text-base-content/65 mb-3">
             {{ ('Generates one small test image with the saved cover settings (each click costs money).') }}
         </p>
         <button type="button"

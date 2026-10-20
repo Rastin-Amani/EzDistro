@@ -21,14 +21,14 @@
                     <option value="{{ model }}" label="{{ dims }} dims"></option>
                     {% endfor %}
                 </datalist>
-                <p class="text-xs opacity-50 mt-1">
+                <p class="text-xs text-base-content/60 mt-1">
                     {% if embedding_connection %}{{ ('From connection') }} {{ embedding_connection.name }}{% else %}{{ ('Converts text to vectors for semantic search.') }}{% endif %}
                 </p>
             </label>
             <label class="flex flex-col gap-1 min-w-0 w-full">
                 <span class="label px-0 pb-1.5"><span class="truncate font-medium text-sm text-base-content/80">{{ ('Dimensions') }}</span></span>
                 <input id="embedding_dimensions" name="embedding_dimensions" type="number" class="input w-full" value="{{ embedding_dims }}" />
-                <p class="text-xs opacity-50 mt-1">{{ ('Changing the model or dimensions creates a new vector space — a full reindex is required.') }}</p>
+                <p class="text-xs text-base-content/60 mt-1">{{ ('Changing the model or dimensions creates a new vector space — a full reindex is required.') }}</p>
             </label>
             {{ f.select('target_locale', ('Target locale'), locales, settings.targetLocale, hint=('fa-IR, en-US, de-DE…')) }}
             {{ f.select('target_country', ('Target country / market'), countries, settings.targetCountry) }}
@@ -49,10 +49,10 @@
             {{ f.text('forbidden_terminology', ('Forbidden terminology'), settings.forbiddenTerminology, hint='Comma separated.') }}
             {{ f.text('url_policy', ('URL policy'), settings.urlPolicy, hint='Slug convention for non-Latin scripts.') }}
         </div>
-        <div class="mt-4 rounded-lg border border-base-300/70 p-4 flex flex-col gap-3">
+        <div class="mt-4 rounded-field border border-base-300 p-5 flex flex-col gap-3">
             <div>
                 <p class="text-sm font-semibold">{{ ('Landing page analysis') }}</p>
-                <p class="text-xs opacity-50">{{ ('Crawls the page once and stores the product context used in every article.') }}</p>
+                <p class="text-xs text-base-content/60">{{ ('Crawls the page once and stores the product context used in every article.') }}</p>
             </div>
             <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
                 <div class="min-w-0 max-w-md flex-1">
@@ -72,7 +72,7 @@
 
     {# ── Retrieval & chunking ──────────────────────────────────────────── #}
     {{ f.disclosure(('Retrieval & chunking'), ('How documents are split and searched')) }}
-        <p class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55 mb-3">{{ ('Chunking') }}</p>
+        <p class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60 mb-3">{{ ('Chunking') }}</p>
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {{ f.number('chunk_size', ('Chunk size (words)'), settings.chunkSize or 500, hint='Smaller = more precise, more expensive.') }}
             {{ f.number('chunk_overlap', ('Overlap'), settings.chunkOverlap or 100, hint='15–20% of chunk size.') }}
@@ -82,7 +82,7 @@
             {{ f.number('max_chunk_count', ('Max chunks (0 = unlimited)'), settings.maxChunkCount or 0) }}
         </div>
 
-        <p class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55 mb-3 mt-5 pt-4 border-t border-base-300/60">{{ ('Retrieval & reranking') }}</p>
+        <p class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60 mb-3 mt-5 pt-4 border-t border-base-300">{{ ('Retrieval & reranking') }}</p>
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {{ f.number('retrieval_top_k', ('Candidates (Top K)'), settings.retrievalTopK or 20, hint='Fetched before reranking.') }}
             {{ f.number('similarity_threshold', ('Similarity threshold'), settings.similarityThreshold or 0.35, step='0.05', hint='0–1. Higher = fewer, more precise.') }}
@@ -100,11 +100,11 @@
                     <option value="{{ opt.id }}" data-model="{{ opt.model }}" {{ 'selected' if opt.selected }}>{{ opt.name }} — {{ opt.provider }}</option>
                     {% endfor %}
                 </select>
-                {% if not reranker_connections %}<p class="text-xs opacity-50 mt-1">{{ ('No reranker connection yet — add one on the Connections tab.') }}</p>{% endif %}
+                {% if not reranker_connections %}<p class="text-xs text-base-content/60 mt-1">{{ ('No reranker connection yet — add one on the Connections tab.') }}</p>{% endif %}
             </label>
         </div>
 
-        <p class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55 mb-3 mt-5 pt-4 border-t border-base-300/60">{{ ('Prompt context budget') }}</p>
+        <p class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60 mb-3 mt-5 pt-4 border-t border-base-300">{{ ('Prompt context budget') }}</p>
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
             {{ f.number('context_max_links', ('Max internal links'), settings.contextMaxLinks or 5) }}
             {{ f.number('context_max_passages', ('Max related chunks'), settings.contextMaxPassages or 5) }}
@@ -125,7 +125,7 @@
                 [('0', ('Inactive')), ('1', ('Active'))], '1' if settings.autosave.enabled else '0') }}
             {{ f.number('autosave_interval_minutes', ('Autosave interval (minutes)'), settings.autosave.interval_minutes or 5) }}
         </div>
-        <p class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55 mb-3 mt-5 pt-4 border-t border-base-300/60">{{ ('Auto-publish') }}</p>
+        <p class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60 mb-3 mt-5 pt-4 border-t border-base-300">{{ ('Auto-publish') }}</p>
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
             {{ f.select('auto_publish_enabled', ('Auto-publish'),
                 [('0', ('Inactive')), ('1', ('Active'))], '1' if settings.autoPublish.enabled else '0',
@@ -151,8 +151,8 @@
                 [('0', ('Inactive')), ('1', ('Active'))], '1' if sched_publish and sched_publish.enabled else '0') }}
             {{ f.number('schedule_publish_interval', ('Publishing interval (minutes)'), sched_publish.intervalMinutes if sched_publish else 1440) }}
         </div>
-        <p class="text-xs opacity-60 mt-2">{{ ('Auto-publishing posts one ready article per interval (oldest first, at or above the score floor below), then indexes it into the knowledge base and builds its inbound internal links. It needs Auto-publish enabled.') }}</p>
-        <p class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55 mb-3 mt-5 pt-4 border-t border-base-300/60">{{ ('Retry on transient errors') }}</p>
+        <p class="text-xs text-base-content/65 mt-2">{{ ('Auto-publishing posts one ready article per interval (oldest first, at or above the score floor below), then indexes it into the knowledge base and builds its inbound internal links. It needs Auto-publish enabled.') }}</p>
+        <p class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60 mb-3 mt-5 pt-4 border-t border-base-300">{{ ('Retry on transient errors') }}</p>
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
             {{ f.number('retry_max_attempts', ('Max attempts'), settings.retryPolicy.max_attempts) }}
             {{ f.number('retry_backoff_base', ('Base delay (seconds)'), settings.retryPolicy.backoff_base, hint='Grows exponentially.') }}

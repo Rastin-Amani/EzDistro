@@ -21,24 +21,24 @@
 
         {# ── Start here: expand seed keywords ───────────────────────────── #}
         <details class="card group border border-base-300 bg-base-100 min-w-0" open>
-            <summary class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3 cursor-pointer select-none">
+            <summary class="flex items-center gap-2 group-open:border-b group-open:border-base-300 px-5 py-3.5 cursor-pointer select-none">
                 <h2 class="font-semibold">{{ ('Start with what you already know') }}</h2>
-                <span class="text-xs opacity-50">{{ ('Recommended') }}</span>
+                <span class="text-xs text-base-content/60">{{ ('Recommended') }}</span>
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="transition-transform group-open:rotate-180 ms-auto size-4 shrink-0"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
             </summary>
-            <div class="p-4">
+            <div class="p-5">
                 {% include "pages/projects/tabs/research_harvest.html" %}
             </div>
         </details>
 
         {# ── Bring an export ─────────────────────────────────────────────── #}
         <details class="card group border border-base-300 bg-base-100 min-w-0">
-            <summary class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3 cursor-pointer select-none">
+            <summary class="flex items-center gap-2 group-open:border-b group-open:border-base-300 px-5 py-3.5 cursor-pointer select-none">
                 <h2 class="font-semibold">{{ ('Already have a keyword list?') }}</h2>
-                <span class="text-xs opacity-50">{{ ('Upload it here') }}</span>
+                <span class="text-xs text-base-content/60">{{ ('Upload it here') }}</span>
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="transition-transform group-open:rotate-180 ms-auto size-4 shrink-0"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
             </summary>
-            <div class="p-4">
+            <div class="p-5">
                 {% include "pages/projects/tabs/research_import.html" %}
             </div>
         </details>
@@ -46,7 +46,7 @@
 
         {# ── Optional data connection ────────────────────────────────────── #}
         <details class="card group border border-base-300 bg-base-100 min-w-0">
-            <summary class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3 cursor-pointer select-none">
+            <summary class="flex items-center gap-2 group-open:border-b group-open:border-base-300 px-5 py-3.5 cursor-pointer select-none">
                 <h2 class="font-semibold">{{ ('Connect Google for more detailed search data') }}</h2>
                 {% if connections %}
                 <span class="badge badge-soft badge-success badge-sm">{{ ('Connected') }}</span>
@@ -57,8 +57,8 @@
                 {% endif %}
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="transition-transform group-open:rotate-180 ms-auto size-4 shrink-0"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
             </summary>
-            <div class="flex flex-col gap-4 p-4">
-                <p class="text-xs opacity-60 leading-relaxed">
+            <div class="flex flex-col gap-4 p-5">
+                <p class="text-xs text-base-content/65 leading-relaxed">
                     {{ ('Keyword research needs a Google Ads OAuth client for this project.') }}
                     {% if not google_ads_configured %}
                     {{ ('Add it under') }} <b>{{ ('Connections → Google Ads') }}</b> {{ ('(client ID, redirect URI, client secret), then connect below. Competitor and site research works without it.') }}
@@ -68,16 +68,16 @@
                 {% if connections %}
                 <div class="overflow-x-auto">
                     <table class="table table-sm">
-                        <thead><tr class="text-xs opacity-60"><th>{{ ('Google account') }}</th><th>{{ ('Status') }}</th><th class="hidden sm:table-cell">{{ ('Last verified') }}</th><th></th></tr></thead>
+                        <thead><tr class="text-[0.7rem] uppercase tracking-[0.073em] text-base-content/60"><th>{{ ('Google account') }}</th><th>{{ ('Status') }}</th><th class="hidden sm:table-cell">{{ ('Last verified') }}</th><th></th></tr></thead>
                         <tbody>
                         {% for c in connections %}
                             <tr>
                                 <td class="text-sm">
                                     {{ c.email or c.googleAccountId or 'Google Ads account' }}
-                                    {% if c.displayName %}<span class="block text-xs opacity-50">{{ c.displayName }}</span>{% endif %}
+                                    {% if c.displayName %}<span class="block text-xs text-base-content/60">{{ c.displayName }}</span>{% endif %}
                                 </td>
                                 <td><span class="badge {{ c.status|status_badge }}">{{ c.status|status_label }}</span></td>
-                                <td class="hidden text-xs opacity-60 sm:table-cell">{{ c.lastVerifiedAt|loc_dt }}</td>
+                                <td class="hidden text-xs text-base-content/65 sm:table-cell">{{ c.lastVerifiedAt|loc_dt }}</td>
                                 <td class="text-end whitespace-nowrap">
                                     <button class="btn btn-xs btn-ghost" hx-post="/projects/{{ project.id }}/google-ads/customers/discover" hx-swap="none" hx-indicator="#ga-busy">{{ ('Refresh accounts') }}</button>
                                     <button class="btn btn-xs btn-ghost text-error" hx-post="/projects/{{ project.id }}/google-ads/disconnect" hx-swap="none" hx-target="#research-tab" hx-confirm="{{ ('Disconnect this Google Ads account?') }}">{{ ('Disconnect') }}</button>
@@ -86,22 +86,22 @@
                         {% endfor %}
                         </tbody>
                     </table>
-                    <span id="ga-busy" class="htmx-indicator text-xs opacity-60">{{ ('Fetching accounts…') }}</span>
+                    <span id="ga-busy" class="htmx-indicator text-xs text-base-content/65">{{ ('Fetching accounts…') }}</span>
                 </div>
 
                 {% if customers %}
-                <div class="border-t border-base-300/60 pt-3">
-                    <p class="font-mono text-xs font-normal uppercase tracking-[0.073em] text-base-content/55 mb-2">{{ ('Accounts') }}</p>
+                <div class="border-t border-base-300 pt-3">
+                    <p class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60 mb-2">{{ ('Accounts') }}</p>
                     <div class="overflow-x-auto">
                         <table class="table table-sm">
-                            <thead><tr class="text-xs opacity-60"><th>{{ ('Account') }}</th><th>{{ ('Customer ID') }}</th><th class="hidden sm:table-cell">{{ ('Currency') }}</th><th class="hidden md:table-cell">{{ ('Time zone') }}</th><th></th></tr></thead>
+                            <thead><tr class="text-[0.7rem] uppercase tracking-[0.073em] text-base-content/60"><th>{{ ('Account') }}</th><th>{{ ('Customer ID') }}</th><th class="hidden sm:table-cell">{{ ('Currency') }}</th><th class="hidden md:table-cell">{{ ('Time zone') }}</th><th></th></tr></thead>
                             <tbody>
                             {% for c in customers %}
                                 <tr>
                                     <td class="text-sm">{{ c.descriptiveName or c.customerId }}{% if c.isManager %}<span class="badge badge-soft badge-xs ms-1">Manager</span>{% endif %}</td>
-                                    <td class="font-mono text-xs opacity-70">{{ c.customerId }}</td>
-                                    <td class="hidden text-xs opacity-60 sm:table-cell">{{ c.currencyCode or '—' }}</td>
-                                    <td class="hidden text-xs opacity-60 md:table-cell">{{ c.timeZone or '—' }}</td>
+                                    <td class="font-mono text-xs text-base-content/65">{{ c.customerId }}</td>
+                                    <td class="hidden text-xs text-base-content/65 sm:table-cell">{{ c.currencyCode or '—' }}</td>
+                                    <td class="hidden text-xs text-base-content/65 md:table-cell">{{ c.timeZone or '—' }}</td>
                                     <td class="text-end">
                                         <button class="btn btn-xs btn-primary" hx-post="/projects/{{ project.id }}/google-ads/customers/select" hx-vals='{"customer_record_id": "{{ c.id }}"}' hx-swap="none">{{ ('Use for research') }}</button>
                                     </td>
@@ -125,14 +125,14 @@
 
         {# ── Run research ──────────────────────────────────────────────── #}
         <details class="card group border border-base-300 bg-base-100 min-w-0">
-            <summary class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3 cursor-pointer select-none">
+            <summary class="flex items-center gap-2 group-open:border-b group-open:border-base-300 px-5 py-3.5 cursor-pointer select-none">
                 <h2 class="font-semibold">{{ ('Tell us about your goals') }}</h2>
                 {% if not serp_configured %}
-                <span class="text-xs opacity-50">{{ ('SERP not configured — Google Ads + site intelligence mode') }}</span>
+                <span class="text-xs text-base-content/60">{{ ('SERP not configured — Google Ads + site intelligence mode') }}</span>
                 {% endif %}
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="transition-transform group-open:rotate-180 ms-auto size-4 shrink-0"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
             </summary>
-            <form hx-post="/projects/{{ project.id }}/research/start" hx-swap="none" hx-target="#research-tab" class="flex flex-col gap-5 p-4">
+            <form hx-post="/projects/{{ project.id }}/research/start" hx-swap="none" hx-target="#research-tab" class="flex flex-col gap-5 p-5">
                  <p class="text-sm text-base-content/65">{{ ('Use any combination of these. You do not need to understand SEO terms.') }}</p>
                 <div class="grid gap-4 md:grid-cols-2">
                      <div class="md:col-span-2">{{ f.text('name', 'Name this plan', placeholder='Ideas for my gardening shop', hint='Optional. This helps you find it later.') }}</div>
@@ -151,8 +151,8 @@
                 <div class="md:col-span-2">{{ f.textarea('goal', 'What would success look like?', rows=3, placeholder='Bring more people to my shop and help them choose the right products.', hint='Write this in your own words. It helps us suggest better ideas.') }}</div>
 
                 {# Targeting + limits are rarely changed — disclose. #}
-                <details class="border-t border-base-300/60 pt-3">
-                     <summary class="cursor-pointer select-none text-xs font-medium opacity-70">{{ ('More options') }}</summary>
+                <details class="border-t border-base-300 pt-3">
+                     <summary class="cursor-pointer select-none text-xs font-medium text-base-content/65">{{ ('More options') }}</summary>
                     <div class="mt-4 flex flex-col gap-5">
                         <div class="grid gap-4 md:grid-cols-2">
                             {{ f.select('country', 'Country', countries, selected='US') }}
@@ -176,25 +176,25 @@
 
                 <div class="flex flex-wrap items-center gap-3">
                     <button class="btn btn-primary btn-sm" type="submit" hx-disabled-elt="this">{{ ('Find opportunities') }}</button>
-                    <span class="htmx-indicator text-xs opacity-60">{{ ('Starting…') }}</span>
-                    <span class="text-xs opacity-50">{{ ('Runs in the background — you can leave this page.') }}</span>
+                    <span class="htmx-indicator text-xs text-base-content/65">{{ ('Starting…') }}</span>
+                    <span class="text-xs text-base-content/60">{{ ('Runs in the background — you can leave this page.') }}</span>
                 </div>
             </form>
         </details>
 
         {# ── Runs ──────────────────────────────────────────────────────── #}
         <section class="card border border-base-300 bg-base-100 min-w-0">
-            <div class="flex items-center justify-between gap-2 border-b border-base-300/70 px-4 py-3">
+            <div class="flex items-center justify-between gap-2 border-b border-base-300 px-5 py-3.5">
                 <div>
                     <h2 class="font-semibold">{{ ('Your opportunity searches') }}</h2>
-                    <p class="mt-0.5 text-sm text-base-content/55">{{ ('Open one to see the ideas we found.') }}</p>
+                    <p class="mt-0.5 text-sm text-base-content/60">{{ ('Open one to see the ideas we found.') }}</p>
                 </div>
-                <span class="text-xs opacity-60 tabular-nums">{{ runs|length }}</span>
+                <span class="text-xs text-base-content/65 tabular-nums">{{ runs|length }}</span>
             </div>
             {% if runs %}
             <div class="overflow-x-auto">
                 <table class="table table-sm">
-                    <thead><tr class="text-xs opacity-60">
+                    <thead><tr class="text-[0.7rem] uppercase tracking-[0.073em] text-base-content/60">
                         <th>{{ ('Name') }}</th><th>{{ ('Status') }}</th><th class="hidden md:table-cell">{{ ('Progress') }}</th><th class="hidden lg:table-cell">{{ ('Created') }}</th><th></th>
                     </tr></thead>
                     <tbody>
@@ -202,8 +202,8 @@
                         <tr>
                             <td class="text-sm">{{ r.name or 'Research run' }}</td>
                             <td><span class="badge {{ r.status|status_badge }}">{{ r.status|status_label }}</span></td>
-                            <td class="hidden text-xs opacity-70 tabular-nums md:table-cell">{{ r.progress|int }}%</td>
-                            <td class="hidden text-xs opacity-60 lg:table-cell">{{ r.created|loc_dt }}</td>
+                            <td class="hidden text-xs text-base-content/65 tabular-nums md:table-cell">{{ r.progress|int }}%</td>
+                            <td class="hidden text-xs text-base-content/65 lg:table-cell">{{ r.created|loc_dt }}</td>
                             <td class="text-end"><a class="btn btn-xs btn-ghost" href="/projects/{{ project.id }}/research/{{ r.id }}">{{ ('Open') }}</a></td>
                         </tr>
                     {% endfor %}
