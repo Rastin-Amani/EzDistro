@@ -280,12 +280,23 @@ class JobRepo(BaseRepo):
         return record
 
     def reset_for_retry(self, job_id: str) -> dict[str, Any]:
-        """Human retry: failed → retrying, immediately claimable."""
+        """Human retry: failed → retrying with a fresh attempt budget.
+
+        `attempts` is reset because a manual retry is a new decision: keeping
+        the exhausted counter made the retry single-shot — the next transient
+        failure immediately exceeded `maxAttempts` and the job died again, so
+        "Retry" appeared to do nothing no matter how often it was clicked.
+        """
         record = self.update(
             job_id,
             {
                 "status": "retrying",
                 "availableAt": pb_dt(now_utc()),
+                "attempts": 0,
+                "progress": 0,
+                "stage": "",
+                "currentItem": 0,
+                "totalItems": 0,
                 "errorCode": "",
                 "errorMessage": "",
                 "errorDetails": {},

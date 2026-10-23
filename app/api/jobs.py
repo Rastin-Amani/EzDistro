@@ -17,6 +17,7 @@ from app.api.errors import hx_error, page_guard
 from app.jobs.handlers import JOB_TYPES
 from app.repositories.jobs import JobEventRepo, JobRepo
 from app.repositories.projects import ProjectRepo
+from app.repositories.worker_heartbeats import WorkerHeartbeatRepo
 from app.templates import templates
 from app.utils import error_response, fanout, success_response, toast_response
 
@@ -271,8 +272,26 @@ def retry_job(request: Request, job_id: str):
             type="retry_failed_job",
             payload={"targetJobId": job_id},
             idempotency_key=f"retry:job:{job_id}:{int(time.time())}",
-            max_attempts=1,
+            # The handler is idempotent; a transient PocketBase error must not
+            # drop a human's retry on the floor.
+            max_attempts=3,
             entity_type="job",
             entity_id=job_id,
+        )
+    # Be honest: with no live worker the retry just sits in the queue. Saying
+    # "scheduled" sent people into retry-loop confusion while the background
+    # service was down (see the Workers page / Automation warning).
+    try:
+        live = WorkerHeartbeatRepo(request.state.pb).any_live()
+    except Exception:
+        live = True  # diagnostics only — never block the retry itself
+    if not live:
+        return toast_response(
+            (
+                "Retry queued — no background worker is running, so it will start "
+                "once the service is back"
+            ),
+            type="warning",
+            extra_events={"refreshJobs": True},
         )
     return success_response(("Retry scheduled"), extra_events={"refreshJobs": True})

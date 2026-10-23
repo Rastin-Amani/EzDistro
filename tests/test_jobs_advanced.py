@@ -355,6 +355,11 @@ def test_retry_failed_job_resets_target():
     assert updated["status"] == "retrying"
     assert updated["errorCode"] == ""
     assert updated["cancelRequested"] is False
+    # A manual retry is a fresh decision: the exhausted attempt counter must be
+    # reset, or the next transient failure would exceed maxAttempts at once and
+    # the retry would look like it did nothing.
+    assert updated["attempts"] == 0
+    assert updated["progress"] == 0
     # re-running is a no-op (target no longer failed)
     result2 = asyncio.run(handle_retry_failed_job(ctx))
     assert result2["retried"] is False

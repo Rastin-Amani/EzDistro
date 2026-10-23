@@ -12,6 +12,7 @@ from app.repositories.jobs import JobRepo
 from app.repositories.members import MemberRepo
 from tests.helpers import (
     call_route,
+    hx_events,
     make_job,
     make_job_event,
     make_pb,
@@ -277,6 +278,32 @@ def test_retry_job_refuses_non_failed():
     resp = call_route(J.retry_job, req, job["id"])
     assert "This job is not in the failed state" in toast_message(resp)
     assert len(JobRepo(pb).list_for_project(proj_a["id"], per_page=10)) == 1
+
+
+def test_retry_job_says_the_truth_when_no_worker_is_alive():
+    """Queueing a retry while the background service is down must not pretend."""
+    pb, proj_a, _ = _setup()
+    job = make_job(pb, proj_a["id"], job_type="assemble_article", status="failed")
+    req = make_req(pb, make_user(), proj_a["id"])
+    resp = call_route(J.retry_job, req, job["id"])
+    message = toast_message(resp)
+    assert "no background worker is running" in message
+    assert hx_events(resp)["show-toast"]["type"] == "warning"
+    # the retry is still queued, so it runs the moment the worker returns
+    jobs = JobRepo(pb).list_for_project(proj_a["id"], per_page=10)
+    assert any(j["type"] == "retry_failed_job" for j in jobs)
+
+
+def test_retry_job_reports_scheduled_with_a_live_worker():
+    from app.repositories.jobs import now_utc, pb_dt
+    from app.repositories.worker_heartbeats import WorkerHeartbeatRepo
+
+    pb, proj_a, _ = _setup()
+    WorkerHeartbeatRepo(pb).upsert("worker-1", {"lastHeartbeatAt": pb_dt(now_utc())})
+    job = make_job(pb, proj_a["id"], job_type="assemble_article", status="failed")
+    req = make_req(pb, make_user(), proj_a["id"])
+    resp = call_route(J.retry_job, req, job["id"])
+    assert toast_message(resp) == "Retry scheduled"
 
 
 def test_retry_job_foreign_rejected():
