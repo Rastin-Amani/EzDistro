@@ -4,6 +4,7 @@ from app.repositories.jobs import JobRepo
 from tests.helpers import (
     call_route,
     make_article,
+    make_job,
     make_member,
     make_pb,
     make_project,
@@ -39,3 +40,39 @@ def test_overview_counts_real_content_and_excludes_other_websites():
     assert rows == [] and count == 0
     rows, count = JobRepo(pb).search(project_scope=[])
     assert rows == [] and count == 0
+
+
+def test_attention_counts_failed_articles_not_each_failed_attempt():
+    """A broken article adds one item, and it clears once the article is fixed.
+
+    Counting failed job rows made one stuck article look like four problems,
+    and the number never dropped after the article was recovered.
+    """
+    from app.services.stats import project_overviews
+
+    pb = make_pb()
+    site = make_project(pb, name="Site")
+    article = make_article(pb, site["id"], status="failed")
+    make_job(
+        pb,
+        site["id"],
+        job_type="generate_cover_image",
+        status="failed",
+        payload={"articleId": article["id"]},
+    )
+    make_job(
+        pb,
+        site["id"],
+        job_type="publish_article",
+        status="failed",
+        payload={"articleId": article["id"], "action": "publish"},
+    )
+
+    summary = project_overviews(pb, [site])
+    assert summary[0]["attention"] == 1
+
+    from app.repositories.articles import ArticleRepo
+
+    ArticleRepo(pb).set_status(article["id"], "published")
+    summary = project_overviews(pb, [site])
+    assert summary[0]["attention"] == 0

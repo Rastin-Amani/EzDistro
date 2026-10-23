@@ -39,6 +39,30 @@ release builds on. Format is based on [Keep a Changelog](https://keepachangelog.
   stored content and failed again. The assembler now drops a section's repeated
   leading heading and de-duplicates any H2 that still collides, so the
   validator's invariant holds on the output it produces.
+- **Copying a website no longer clones its content.** The copy carried the
+  source's WordPress connection, so the first indexing/research run mirrored
+  that site's published posts into the new project as articles (with the source
+  site's `wordpressPostId`, so publishing from the copy would have UPDATED the
+  original posts). The site connection and its schedules now stay with the
+  source; models, credentials, prompts and settings still copy.
+- **Covers generate instead of failing forever.** Some image gateways route per
+  (model, size) and answer `no_healthy_sellers` for the planned 1600×896 cover
+  while 1280-wide has sellers. A generation now retries one size bucket smaller
+  (same aspect ratio, never below the 1200px SEO floor) instead of failing every
+  attempt. An article's failed image jobs and the publish that gave up waiting
+  for them are resumed together, so "Resume" actually moves the article.
+- **Live research progress no longer stalls the app.** The progress fragment
+  polled every second and each poll ran a dozen `article_ideas` count queries;
+  while a run was active this saturated PocketBase and the browser's connection
+  pool. It now polls every 5s and summarises the run with one paged read.
+- **Article opportunities generate in parallel.** A 339-cluster run issued 170
+  sequential LLM calls (~40s each) and sat at 94% for over an hour. Independent
+  batches now run four at a time; prompts and merge order are unchanged, so the
+  output is identical — the stage just takes minutes instead of hours.
+- **"Needs attention" counts broken work, not failed history.** It counted every
+  failed job row, so one stuck article looked like four problems and the number
+  stayed after the article was fixed. It now counts failed articles/topics plus
+  failed jobs that own no artifact.
 
 ## [v1.25.0] — 2026-10-20
 

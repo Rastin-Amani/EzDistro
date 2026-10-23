@@ -288,6 +288,51 @@ def test_fallback_provider_used_on_primary_failure():
     assert row["model"] == "fb-1"
 
 
+def test_generation_retries_a_smaller_canvas_when_no_seller_has_the_planned_size():
+    """A gateway with no seller at 1600x896 must not kill the cover forever.
+
+    venice-chroma answers `no_healthy_sellers` for 1600x896 while 1280x704
+    works, so every cover failed and every Resume press re-failed identically.
+    """
+    from app.providers.base import TransientError
+    from app.services.images import _smaller_canvas
+
+    pb = make_pb()
+    project = make_project(pb)
+    article = make_plan_article(pb, project["id"])
+    set_plan(pb, article["id"], [])
+    # The planner sizes covers at 1600x896 (16:9, >= the 1200 SEO floor).
+    plan = ArticleRepo(pb).get(article["id"])["imagePlan"]
+    plan["images"][0]["suggested_size"] = [1600, 896]
+    ArticleRepo(pb).set_image_plan(article["id"], plan, 1)
+    registry = FakeRegistry()
+    provider = img_provider(registry, "gemini")
+    provider.queue(
+        TransientError(
+            "openai_image.generate failed with HTTP 503: "
+            '{"error":{"code":"no_healthy_sellers","message":"No available sellers"}}',
+            {"status": 503},
+        )
+    )
+
+    run_job(
+        pb,
+        registry,
+        "generate_cover_image",
+        {"projectId": project["id"], "articleId": article["id"]},
+    )
+
+    assert len(provider.calls) == 2
+    assert provider.calls[0].width > provider.calls[1].width
+    assert provider.calls[1].width == 1280
+    row = ArticleImageRepo(pb).active_for_role(article["id"], "cover")
+    assert row["status"] == "ready"
+    # the smaller canvas keeps the aspect ratio and still clears the SEO floor
+    assert abs(provider.calls[1].height / provider.calls[1].width - 9 / 16) < 0.03
+    assert provider.calls[1].width >= 1200
+    assert _smaller_canvas(provider.calls[0], min_width=1600) is None
+
+
 def test_quality_gate_failure_marks_row_failed():
     pb = make_pb()
     project = make_project(pb)

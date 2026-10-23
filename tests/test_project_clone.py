@@ -36,6 +36,16 @@ def _seed_source(pb):
         configuration={"base_url": "https://api.example.com", "masked": "sk-…"},
         secrets_enc="ciphertext",
     )
+    # The site binding must stay with the source: copying it made the new
+    # project mirror the source site's published posts.
+    IntegrationRepo(pb).create(
+        project=source["id"],
+        category="publisher",
+        provider="wordpress",
+        display_name="WordPress",
+        configuration={"base_url": "https://source.example/blog"},
+        secrets_enc="wp-ciphertext",
+    )
     PromptRepo(pb).save_version(
         project_id=source["id"], ptype="outline_system", name="default", content="Outline v1"
     )
@@ -66,9 +76,10 @@ def test_create_project_duplicates_configuration_not_content():
     assert ProjectSettingsRepo(pb).get_for_project(target["id"])["brandName"] == "Acme"
     assert ProjectSettingsRepo(pb).get_for_project(target["id"])["targetLocale"] == "de-DE"
 
-    # connections, secrets ciphertext included; health reset
+    # connections, secrets ciphertext included; health reset — but never the
+    # WordPress site binding
     copied = IntegrationRepo(pb).list_for_project(target["id"])
-    assert len(copied) == 1
+    assert [row["category"] for row in copied] == ["llm"]
     assert copied[0]["model"] == "gpt-x"
     assert copied[0]["secretsEnc"] == "ciphertext"
     assert copied[0]["healthStatus"] == "unknown"
@@ -77,11 +88,8 @@ def test_create_project_duplicates_configuration_not_content():
     prompts = PromptRepo(pb).list_for_project(target["id"])
     assert [(p["version"], p["content"], p["active"]) for p in prompts] == [(1, "Outline v2", True)]
 
-    # schedules copied, next run scheduled afresh
-    schedules = ScheduleRepo(pb).list_for_project(target["id"])
-    assert [(s["kind"], s["intervalMinutes"], s["enabled"]) for s in schedules] == [
-        ("write", 60, True)
-    ]
+    # schedules are site-bound automation: the copy starts without any
+    assert ScheduleRepo(pb).list_for_project(target["id"]) == []
 
     # content is NOT copied
     assert len(pb.storage.records("topics")) == 1

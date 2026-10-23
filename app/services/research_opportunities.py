@@ -22,6 +22,7 @@ Design rules that matter here:
 
 from __future__ import annotations
 
+import asyncio
 import json
 import math
 import re
@@ -50,6 +51,11 @@ GOAL_SOURCE = "goal_heuristic_v1"
 LLM_SOURCE = "opportunity_v1"
 
 LLM_CLUSTERS_PER_BATCH = 2
+# Independent LLM batches in flight at once. Each batch is a single blocking
+# round trip (~35-40 s on a reasoning model), and a run with 300+ clusters is
+# ~170 batches — sequential it sat for over an hour at 94%. Accuracy does not
+# change: batches are still generated independently and merged in batch order.
+OPPORTUNITY_CONCURRENCY = 4
 KEYWORDS_PER_CLUSTER = 40
 COMPETITORS_PER_CLUSTER = 8
 MAX_OPPORTUNITIES = 0  # 0 → no cap; more opportunities is better
@@ -704,10 +710,7 @@ async def generate_opportunities(
     errors: list[str] = []
     created = duplicates = updates = skipped = batches = 0
 
-    for start in range(0, len(order), LLM_CLUSTERS_PER_BATCH):
-        if limit and created >= limit:
-            break
-        await ctx.check_cancelled()
+    def _payload_for(start: int) -> tuple[list[dict[str, Any]], dict[str, Any]]:
         batch = order[start : start + LLM_CLUSTERS_PER_BATCH]
         payload_clusters = []
         cluster_by_label: dict[str, tuple[str, list[dict[str, Any]]]] = {}
@@ -739,6 +742,13 @@ async def generate_opportunities(
                     "competitors": _competitors_for(group, competitors),
                 }
             )
+        return payload_clusters, cluster_by_label
+
+    async def _generate_batch(
+        start: int,
+    ) -> tuple[int, list[dict[str, Any]] | None, dict[str, Any], str]:
+        """One LLM call. Returns (start, opportunities | None, labels, error)."""
+        payload_clusters, cluster_by_label = _payload_for(start)
         try:
             context = service.build_context(
                 ctx.config,
@@ -774,87 +784,103 @@ async def generate_opportunities(
             raw = data.get("opportunities") if isinstance(data, dict) else None
             if not isinstance(raw, list):
                 raise ValueError("opportunity response contained no opportunities list")
+            return start, raw, cluster_by_label, ""
         except Exception as exc:  # one bad batch must not kill the run
-            errors.append(
-                f"opportunity batch {start // LLM_CLUSTERS_PER_BATCH + 1} failed: {str(exc)[:200]}"
-            )
-            ctx.warning("opportunity batch failed", {"error": str(exc)[:300]})
-            continue
+            return start, None, cluster_by_label, str(exc)[:200]
 
-        batches += 1
-        rows: list[dict[str, Any]] = []
-        for item in raw:
-            if not isinstance(item, dict) or (limit and created + len(rows) >= limit):
+    starts = list(range(0, len(order), LLM_CLUSTERS_PER_BATCH))
+    for window_at in range(0, len(starts), OPPORTUNITY_CONCURRENCY):
+        if limit and created >= limit:
+            break
+        await ctx.check_cancelled()
+        window = starts[window_at : window_at + OPPORTUNITY_CONCURRENCY]
+        # Independent batches run together (provider concurrency stays bounded
+        # by the LLM semaphore); results are consumed in batch order, so the
+        # de-duplication outcome is identical to a fully sequential run.
+        results = await asyncio.gather(*(_generate_batch(start) for start in window))
+        for start, raw, cluster_by_label, error in results:
+            if raw is None:
+                errors.append(
+                    f"opportunity batch {start // LLM_CLUSTERS_PER_BATCH + 1} failed: {error}"
+                )
+                ctx.warning("opportunity batch failed", {"error": error})
                 continue
-            row, reason = _build_row(
-                item,
-                cluster_by_label=cluster_by_label,
-                existing=existing,
-                goal=goal,
-                gaps=gaps,
-                locale=locale,
-                language=language,
-                prompt_version=prompt_version,
-                model=getattr(llm, "model_name", ""),
-                provider=getattr(llm, "provider_name", ""),
-            )
-            if row is None:
-                skipped += 1
-                if reason != "duplicate":
-                    errors.append(f"skipped opportunity: {reason}")
-                else:
+
+            batches += 1
+            rows: list[dict[str, Any]] = []
+            for item in raw:
+                if not isinstance(item, dict) or (limit and created + len(rows) >= limit):
+                    continue
+                row, reason = _build_row(
+                    item,
+                    cluster_by_label=cluster_by_label,
+                    existing=existing,
+                    goal=goal,
+                    gaps=gaps,
+                    locale=locale,
+                    language=language,
+                    prompt_version=prompt_version,
+                    model=getattr(llm, "model_name", ""),
+                    provider=getattr(llm, "provider_name", ""),
+                )
+                if row is None:
+                    skipped += 1
+                    if reason != "duplicate":
+                        errors.append(f"skipped opportunity: {reason}")
+                    else:
+                        duplicates += 1
+                    continue
+                row["project"] = ctx.project_id
+                row["run"] = run_id
+                intent_key = _intent_key(row)
+                intent_row = accepted_intents.get(intent_key) if intent_key else None
+                if intent_row is not None:
                     duplicates += 1
-                continue
-            row["project"] = ctx.project_id
-            row["run"] = run_id
-            intent_key = _intent_key(row)
-            intent_row = accepted_intents.get(intent_key) if intent_key else None
-            if intent_row is not None:
-                duplicates += 1
-                _merge_duplicate(intent_row, row, similarity=1.0, reason="same search intent")
-                _persist_merge(idea_repo, intent_row)
-                continue
-            dup_row, dup_score = accepted.best(row["title"], threshold=DUPLICATE_THRESHOLD)
-            if dup_row is not None:
-                duplicates += 1
-                _merge_duplicate(dup_row, row, similarity=dup_score)
-                _persist_merge(idea_repo, dup_row)
-                continue
-            if intent_key:
-                accepted_intents[intent_key] = row
-            row["uniquenessScore"] = round(max(0.0, 1.0 - _seen_similarity(seen, row)), 3)
-            row["opportunityScore"], row["scoreComponents"] = score_opportunity(
-                volume=row["searchVolume"],
-                intent=row["intent"],
-                action=row["action"],
-                content_type=row["contentType"],
-                goal=goal,
-                gap_score=float(row.pop("_gapScore")),
-                existing_similarity=float(row.pop("_existingSimilarity")),
-                uniqueness=row["uniquenessScore"],
-            )
-            row["confidence"] = _confidence(row["opportunityScore"], row["searchVolume"])
-            seen.append(row)
-            accepted.add(row["title"], row)
-            rows.append(row)
-            if row["action"] == "update":
-                updates += 1
+                    _merge_duplicate(intent_row, row, similarity=1.0, reason="same search intent")
+                    _persist_merge(idea_repo, intent_row)
+                    continue
+                dup_row, dup_score = accepted.best(row["title"], threshold=DUPLICATE_THRESHOLD)
+                if dup_row is not None:
+                    duplicates += 1
+                    _merge_duplicate(dup_row, row, similarity=dup_score)
+                    _persist_merge(idea_repo, dup_row)
+                    continue
+                if intent_key:
+                    accepted_intents[intent_key] = row
+                row["uniquenessScore"] = round(max(0.0, 1.0 - _seen_similarity(seen, row)), 3)
+                row["opportunityScore"], row["scoreComponents"] = score_opportunity(
+                    volume=row["searchVolume"],
+                    intent=row["intent"],
+                    action=row["action"],
+                    content_type=row["contentType"],
+                    goal=goal,
+                    gap_score=float(row.pop("_gapScore")),
+                    existing_similarity=float(row.pop("_existingSimilarity")),
+                    uniqueness=row["uniquenessScore"],
+                )
+                row["confidence"] = _confidence(row["opportunityScore"], row["searchVolume"])
+                seen.append(row)
+                accepted.add(row["title"], row)
+                rows.append(row)
+                if row["action"] == "update":
+                    updates += 1
 
-        if rows:
-            idea_repo.create_many(rows)
-            created += len(rows)  # The run's own progress only moved between stages, so a long
-        # opportunity stage sat at 88% for its whole duration and looked hung.
-        # Move the run inside the stage as well (88 → 96 across the batches).
-        done = start + len(batch)
-        ResearchRunRepo(ctx.pb).set_stage(
-            run_id, "opportunities", progress=88 + int(8 * done / max(1, len(order)))
-        )
-        ctx.progress(
-            min(95, int(100 * done / max(1, len(order)))),
-            stage="opportunities",
-            message=f"Generating article opportunities ({done}/{len(order)} clusters)…",
-            current=created,
-        )
+            if rows:
+                idea_repo.create_many(rows)
+                created += len(rows)  # The run's own progress only moved between stages, so a long
+            # opportunity stage sat at 88% for its whole duration and looked hung.
+            # Move the run inside the stage as well (88 → 96 across the batches).
+            done = start + len(order[start : start + LLM_CLUSTERS_PER_BATCH])
+            ResearchRunRepo(ctx.pb).set_stage(
+                run_id, "opportunities", progress=88 + int(8 * done / max(1, len(order)))
+            )
+            ctx.progress(
+                min(95, int(100 * done / max(1, len(order)))),
+                stage="opportunities",
+                message=f"Generating article opportunities ({done}/{len(order)} clusters)…",
+                current=done,
+                total=len(order),
+            )
 
     if created == 0 and order:
         first_error = next((e for e in errors if "failed" in e), "")

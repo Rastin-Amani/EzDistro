@@ -19,6 +19,7 @@ from tests.fakes import default_unique_fields
 from tests.helpers import (
     call_route,
     make_article,
+    make_job,
     make_member,
     make_pb,
     make_project,
@@ -611,3 +612,33 @@ def test_article_mutations_reject_viewer_role(fn):
     req = make_req(pb, make_user("v1"), proj_a["id"])
     resp = call_route(fn, req, proj_a["id"], article["id"])
     assert "failed" in toast_message(resp) or "role" in toast_message(resp)
+
+
+def test_resume_requeues_the_cover_and_the_publish_that_waited_for_it():
+    """One blocker, two jobs: resuming only the newest did nothing visible.
+
+    The cover failed with no sellers, the publish then failed because the cover
+    was missing, and Resume regenerated the cover while leaving the publish
+    failed — so the article never moved.
+    """
+    pb, proj_a, _ = _setup()
+    article = make_article(pb, proj_a["id"], status="failed", final_html="<p>x</p>")
+    cover = make_job(
+        pb,
+        proj_a["id"],
+        job_type="generate_cover_image",
+        status="failed",
+        payload={"articleId": article["id"], "role": "cover"},
+    )
+    publish = make_job(
+        pb,
+        proj_a["id"],
+        job_type="publish_article",
+        status="failed",
+        payload={"articleId": article["id"], "action": "publish"},
+    )
+    req = make_req(pb, make_user(), proj_a["id"])
+    resp = call_route(A.resume_article, req, proj_a["id"], article["id"])
+    assert resp.status_code == 200
+    assert JobRepo(pb).get(cover["id"])["status"] in ("retrying", "pending")
+    assert JobRepo(pb).get(publish["id"])["status"] in ("retrying", "pending")

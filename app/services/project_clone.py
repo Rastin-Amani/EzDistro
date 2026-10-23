@@ -1,11 +1,17 @@
 """Duplicate a project's configuration into a freshly created project.
 
 Copies what makes a project *behave* alike: settings (models, namespace/brand,
-image config, landing-page product profile), provider connections — secret
-ciphertext included, since the same server key decrypts it — the ACTIVE prompt
-versions and the schedules. Content and research are never copied: topics,
-articles, sections, images, index documents and keyword research stay in the
-source project.
+image config, landing-page product profile), non-site provider connections —
+secret ciphertext included, since the same server key decrypts it — and the
+ACTIVE prompt versions. Content and research are never copied: topics, articles,
+sections, images, index documents and keyword research stay in the source
+project. Schedules are site-bound automation, so they stay behind too.
+
+The PUBLISHER connection is deliberately NOT copied: it binds a project to one
+specific website. Copying it made the new project an alias of the source site —
+the first index/research run then mirrored that site's published posts into the
+copy (articles with the source's wordpressPostId, so publishing there would
+UPDATE the original site's posts).
 """
 
 from __future__ import annotations
@@ -15,7 +21,6 @@ from typing import Any
 from app.repositories.integrations import IntegrationRepo
 from app.repositories.projects import ProjectSettingsRepo
 from app.repositories.prompts import PromptRepo
-from app.repositories.schedules import ScheduleRepo
 
 # PocketBase system fields + the relation we rewrite for the target project.
 _SYSTEM_FIELDS = frozenset({"id", "created", "updated", "collectionId", "collectionName", "expand"})
@@ -39,6 +44,8 @@ def clone_project_configuration(
 
     integrations = IntegrationRepo(pb)
     for row in integrations.list_for_project(source_id):
+        if (row.get("category") or "") == "publisher":
+            continue
         integrations.create(
             project=target_id,
             category=row.get("category") or "",
@@ -67,18 +74,9 @@ def clone_project_configuration(
         )
         counts["prompts"] += 1
 
-    schedules = ScheduleRepo(pb)
-    for row in schedules.list_for_project(source_id):
-        kind = row.get("kind") or "index"
-        schedules.create(
-            project=target_id,
-            name=row.get("name") or kind,
-            kind=kind,
-            interval_minutes=int(row.get("intervalMinutes") or 1440),
-            payload=row.get("payload") or {},
-            enabled=bool(row.get("enabled")),
-        )
-        counts["schedules"] += 1
+    # Schedules are site-bound automation (index the site, write, publish to it);
+    # with no publisher connection copied they could only produce failing jobs.
+    counts["schedules"] = 0
 
     return counts
 

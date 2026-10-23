@@ -41,7 +41,7 @@
 <div id="research-status" class="card overflow-hidden border border-base-300 bg-base-100 min-w-0"
      {% if running %}
      hx-get="/projects/{{ project.id }}/research/{{ run.id }}/status"
-     hx-trigger="every 1s" hx-swap="outerHTML"
+     hx-trigger="every 5s" hx-swap="outerHTML" hx-sync="this:replace"
      {% endif %}>
   <div class="flex flex-wrap items-center justify-between gap-2 border-b border-base-300 px-5 py-3.5">
     <h2 class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">Progress</h2>

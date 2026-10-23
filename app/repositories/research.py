@@ -778,15 +778,36 @@ class ArticleIdeaRepo(BaseRepo):
         return self.list_records(filter=f, sort="-created", per_page=per_page)
 
     def summarize_run(self, run_id: str) -> dict[str, int]:
-        from app.utils import fanout
+        """Idea counts for one run — ONE paged read, never a dozen counts.
 
-        base = f"run={q(run_id)}"
-        tasks: dict[str, Any] = {"total": lambda: self.count(filter=base)}
+        This feeds the live progress fragment, which polls while a run is
+        active; 12 separate count round trips per poll (plus the tab queries)
+        saturated PocketBase and the browser's connection pool.
+        """
+        summary = {"total": 0}
         for action in ("generate", "update", "expand", "support", "reject"):
-            tasks[action] = lambda action=action: self.count(filter=f"{base} && action={q(action)}")
+            summary[action] = 0
         for status in ("proposed", "accepted", "roadmap", "rejected", "merged", "generated"):
-            tasks[status] = lambda status=status: self.count(filter=f"{base} && status={q(status)}")
-        return fanout(tasks)
+            summary[status] = 0
+        page = 1
+        while True:
+            rows = self.list_records(
+                filter=f"run={q(run_id)}",
+                fields="action,status",
+                page=page,
+                per_page=500,
+            )
+            for row in rows:
+                summary["total"] += 1
+                action = str(row.get("action") or "")
+                status = str(row.get("status") or "")
+                if action in summary:
+                    summary[action] += 1
+                if status in summary:
+                    summary[status] += 1
+            if len(rows) < 500:
+                return summary
+            page += 1
 
     @staticmethod
     def _run_filter(run_id: str, *, status: str = "", action: str = "", extra: str = "") -> str:

@@ -1392,3 +1392,60 @@ def test_map_by_normalized_recovers_from_a_rejected_chunk():
     found = repo.map_by_normalized(project["id"], "en", "US", ["alpha", "beta", "gamma", "delta"])
     assert calls["rejected"] == 1
     assert set(found) == {"alpha", "beta", "gamma", "delta"}
+
+
+def test_opportunity_batches_run_concurrently_and_stay_deterministic():
+    """3 hours → minutes: independent batches share the wire.
+
+    A run with hundreds of clusters issued one ~40 s LLM call after another,
+    so the stage sat at 94% for over an hour. Batches are independent; running
+    a window of them together keeps each prompt identical (same accuracy) and
+    merges the results in batch order (same de-duplication).
+    """
+    keywords = [
+        ("alpha api", 100),
+        ("bravo crm", 90),
+        ("charlie app", 80),
+        ("delta tool", 70),
+        ("echo kit", 60),
+        ("foxtrot hub", 50),
+    ]
+    pb, project, registry = _setup()
+    responses = [
+        json.dumps(
+            {
+                "opportunities": [
+                    {
+                        "title": f"A page about {keywords[i][0]}",
+                        "primary_keyword": keywords[i][0],
+                        "intent": "informational",
+                        "content_type": "guide",
+                        "action": "generate",
+                    }
+                ]
+            }
+        )
+        for i in range(0, len(keywords), 2)
+    ]
+    registry.llm = FakeLLM(responses, delay=0.05)
+    job = _run_job(pb, project["id"], key="opp-parallel")
+    ctx = make_ctx(pb, registry, job)
+    run = ResearchRunRepo(pb).create_run(
+        project=project["id"],
+        name="r",
+        research_type="keywords",
+        config={},
+        targeting={},
+        fingerprint="fp",
+    )
+    _seed_keywords(pb, project["id"], run["id"], keywords)
+    asyncio.run(cluster_run(ctx, run_id=run["id"], method="deterministic"))
+
+    result = asyncio.run(generate_opportunities(ctx, run_id=run["id"], goal_text="grow"))
+
+    assert result["created"] == 3
+    assert registry.llm.max_active > 1, (
+        "opportunity batches ran one after another — the stage will crawl again"
+    )
+    titles = {row["title"] for row in ArticleIdeaRepo(pb).all_for_run(run["id"])}
+    assert titles == {f"A page about {keywords[i][0]}" for i in range(0, len(keywords), 2)}

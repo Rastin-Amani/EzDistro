@@ -70,7 +70,7 @@
                 <summary class="collapse-title text-sm font-medium">Optional setup</summary>
                 <div class="collapse-content flex flex-col gap-4">
                     {{ f.text('slug', 'Internal address label', hint='Leave empty to create this automatically.') }}
-                    {{ f.select('source_project_id', 'Copy setup from another website', clone_options, hint='Copies connections and settings, not content.') }}
+                    {{ f.select('source_project_id', 'Copy setup from another website', clone_options, hint='Copies models and AI connections, not content or the WordPress site connection.') }}
                 </div>
             </details>
             <div class="modal-action">

@@ -28,6 +28,7 @@ import hashlib
 import io
 import re
 import time
+from dataclasses import replace
 from typing import Any
 
 from app.config import settings as app_settings
@@ -52,6 +53,28 @@ from app.repositories.article_images import ArticleImageRepo
 from app.repositories.articles import ArticleRepo
 
 _FILE_URL = "{base}/api/files/article_images/{record}/{filename}"
+
+# Several image gateways route per (model, size) and their seller pool tops out
+# at this canvas width; a planned 1600px cover then answers `no_healthy_sellers`
+# while 1280px has sellers. Used only as a one-step fallback, never as the plan.
+FALLBACK_CANVAS_WIDTH = 1280
+
+
+def _no_sellers(exc: Exception) -> bool:
+    """Provider says it has no seller for this (model, size) right now."""
+    text = str(exc).lower()
+    return "no_healthy_sellers" in text or "no available sellers" in text
+
+
+def _smaller_canvas(request: ImageRequest, *, min_width: int) -> ImageRequest | None:
+    """Same request one size bucket smaller (32-grid, same aspect ratio)."""
+    if request.width <= FALLBACK_CANVAS_WIDTH:
+        return None
+    width = FALLBACK_CANVAS_WIDTH
+    if min_width and width < min_width:
+        return None
+    height = max(32, int(round(request.height * width / request.width / 32.0)) * 32)
+    return replace(request, width=width, height=height)
 
 
 # ---------------------------------------------------------------------------
@@ -392,34 +415,72 @@ async def _generate_image(ctx: JobContext, *, role: str, section_key: str) -> di
         output_format="png",
         seed=payload.get("seed") or None,
     )
+    min_canvas_width = imgs["cover_min_width"] if role == "cover" else 0
     try:
         provider = _build_image_provider(ctx, provider_cfg, cache)
         try:
             result = await provider.generate_image(request)
-        except ProviderError:
-            if not fallback_cfg["provider"] or fallback_cfg["provider"] == provider_cfg["provider"]:
+        except ProviderError as exc:
+            # Some gateways route requests per (model, size) and answer
+            # `no_healthy_sellers` for a canvas their sellers do not offer
+            # (e.g. 1600x896 while 1280x704 works). Retry one bucket smaller
+            # before giving up — a cover that can never be generated blocks the
+            # whole article, and every "Resume" clicked on it fails the same way.
+            shrunk = (
+                _smaller_canvas(request, min_width=min_canvas_width) if _no_sellers(exc) else None
+            )
+            if shrunk is None:
                 raise
+            ctx.warning(
+                "image provider has no sellers for the planned size — retrying a smaller canvas",
+                {
+                    "role": role,
+                    "planned": [request.width, request.height],
+                    "retry": [shrunk.width, shrunk.height],
+                },
+            )
+            request = shrunk
+            result = await provider.generate_image(request)
+    except ProviderError as exc:
+        if fallback_cfg["provider"] and fallback_cfg["provider"] != provider_cfg["provider"]:
             ctx.warning(
                 f"primary image provider failed — trying fallback {fallback_cfg['provider']}",
                 {"role": role, "sectionKey": section_key},
             )
             used_cfg = fallback_cfg
             fallback = _build_image_provider(ctx, fallback_cfg, cache)
-            result = await fallback.generate_image(request)
-    except ProviderError as exc:
-        repo.mark_failed(
-            image_id,
-            {
-                "category": (
-                    (getattr(exc, "details", {}) or {}).get("category")
-                    or classify_error(str(exc), getattr(exc, "retryable", False))
-                ),
-                "message": str(exc)[:1000],
-                "retryable": getattr(exc, "retryable", False),
-                "attempts": attempts,
-            },
-        )
-        raise
+            try:
+                result = await fallback.generate_image(replace(request, width=width, height=height))
+            except ProviderError as fallback_exc:
+                repo.mark_failed(
+                    image_id,
+                    {
+                        "category": (
+                            (getattr(fallback_exc, "details", {}) or {}).get("category")
+                            or classify_error(
+                                str(fallback_exc), getattr(fallback_exc, "retryable", False)
+                            )
+                        ),
+                        "message": str(fallback_exc)[:1000],
+                        "retryable": getattr(fallback_exc, "retryable", False),
+                        "attempts": attempts,
+                    },
+                )
+                raise
+        else:
+            repo.mark_failed(
+                image_id,
+                {
+                    "category": (
+                        (getattr(exc, "details", {}) or {}).get("category")
+                        or classify_error(str(exc), getattr(exc, "retryable", False))
+                    ),
+                    "message": str(exc)[:1000],
+                    "retryable": getattr(exc, "retryable", False),
+                    "attempts": attempts,
+                },
+            )
+            raise
 
     # deterministic quality gate + optional AI QA + optimization + storage —
     # a failure in any of these marks the row failed (job still surfaces it)
@@ -429,7 +490,7 @@ async def _generate_image(ctx: JobContext, *, role: str, section_key: str) -> di
             result.mime_type,
             role=role,
             min_width=imgs["cover_min_width"] if role == "cover" else 0,
-            expected=(width, height),
+            expected=(request.width, request.height),
         )
         if gate.get("aspect_drift"):
             ctx.warning("generated image aspect drifted from plan", {"imageId": image_id})

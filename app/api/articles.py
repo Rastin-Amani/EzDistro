@@ -215,22 +215,40 @@ def find_resume_job(pb: Any, article: dict) -> dict | None:
     Used by the article UI so a failure can be continued from the exact stage
     instead of regenerating everything.
     """
+    failed = find_failed_jobs(pb, article)
+    return failed[0] if failed else None
+
+
+def find_failed_jobs(pb: Any, article: dict) -> list[dict]:
+    """Every failed job linked to the article, newest first."""
     article_id = article.get("id") or ""
     if not article_id:
-        return None
-    topic_id = article.get("topicId") or ""
-    filters = [
+        return []
+    terms = [
         f'entityType="article" && entityId="{article_id}"',
         f'payload.articleId="{article_id}"',
     ]
+    topic_id = article.get("topicId") or ""
     if topic_id:
-        filters.append(f'payload.topicId="{topic_id}"')
-    repo = JobRepo(pb)
-    for base in filters:
-        job = repo.first(filter=f'{base} && status="failed"', sort="-created")
-        if job:
-            return job
-    return None
+        terms.append(f'payload.topicId="{topic_id}"')
+    return JobRepo(pb).list_records(
+        filter='status="failed" && (' + " || ".join(terms) + ")",
+        sort="-created",
+        per_page=50,
+    )
+
+
+# A failed image and the publish that gave up waiting for it are ONE blocker:
+# resuming only the newest job regenerates the image, leaves the publish failed,
+# and the article still looks untouched.
+IMAGE_JOB_TYPES = (
+    "plan_article_images",
+    "generate_cover_image",
+    "generate_interior_image",
+    "generate_article_image",
+    "optimize_article_image",
+    "publish_article_image",
+)
 
 
 def _queue_publish_job(request: Request, project_id: str, article_id: str, action: str) -> None:
@@ -325,11 +343,26 @@ def resume_article(request: Request, project_id: str, article_id: str):
     if not article or article.get("project") != project_id:
         return error_response("Article not found")
 
-    job = find_resume_job(request.state.pb, article)
-    if job:
-        JobRepo(request.state.pb).reset_for_retry(job["id"])
+    failed = find_failed_jobs(request.state.pb, article)
+    jobs = JobRepo(request.state.pb)
+    # Resume every blocker of the same pipeline step together: a failed cover
+    # image and the publish that gave up waiting on it must both be requeued,
+    # or pressing Resume appears to do nothing (the image regenerates, the
+    # publish stays failed and the article never moves).
+    blockers = [
+        j for j in failed if j.get("type") in IMAGE_JOB_TYPES or j.get("type") == "publish_article"
+    ]
+    if blockers:
+        for job in blockers:
+            jobs.reset_for_retry(job["id"])
         return success_response(
-            f"Resuming from {resume_job_label(job)}",
+            "Resuming the image and publishing steps",
+            extra_events={"refreshArticle": True, "refreshJobs": True},
+        )
+    if failed:
+        jobs.reset_for_retry(failed[0]["id"])
+        return success_response(
+            f"Resuming from {resume_job_label(failed[0])}",
             extra_events={"refreshArticle": True, "refreshJobs": True},
         )
 

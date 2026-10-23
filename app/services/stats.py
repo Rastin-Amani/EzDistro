@@ -151,7 +151,6 @@ def project_overviews(pb: Any, projects: list[dict[str, Any]]) -> list[dict[str,
         pid = project.get("id") or ""
         topics = TopicRepo(pb)
         articles = ArticleRepo(pb)
-        jobs = JobRepo(pb)
         return {
             **project,
             "planned": topics.count_by_status(pid, "planned"),
@@ -162,10 +161,47 @@ def project_overviews(pb: Any, projects: list[dict[str, Any]]) -> list[dict[str,
                 filter=f'project="{pid}" && (status="review" || status="approved")'
             ),
             "published": articles.count(filter=f'project="{pid}" && status="published"'),
-            "attention": jobs.count(filter=f'project="{pid}" && status="failed"'),
+            "attention": _attention_count(pb, pid),
         }
 
     return list(fanout({str(p.get("id")): partial(one, p) for p in projects}).values())
+
+
+def _attention_count(pb: Any, project_id: str) -> int:
+    """Work that still needs a human in this project.
+
+    Counts *artifacts* that are failed, not failed job rows: a single broken
+    article used to add one per attempt (its image job, the publish that gave
+    up waiting, …), and the count never dropped after the article was fixed.
+    """
+    from app.repositories.jobs import JobRepo
+
+    failed_articles = ArticleRepo(pb).list_records(
+        filter=f'project="{project_id}" && status="failed"', fields="id", per_page=200
+    )
+    article_ids = {str(row.get("id")) for row in failed_articles}
+    failed_topics = TopicRepo(pb).list_records(
+        filter=f'project="{project_id}" && status="failed"', fields="id,articleId", per_page=200
+    )
+    # A failed topic behind a failed article is the same problem, counted once.
+    extra_topics = [
+        row for row in failed_topics if str(row.get("articleId") or "") not in article_ids
+    ]
+    # Failed jobs without an article/topic of their own (research runs, indexing,
+    # publishing maintenance…) each still need attention; jobs that only point at
+    # an artifact through their payload are covered by that artifact's state.
+    orphan_refs: set[tuple[str, str]] = set()
+    for row in JobRepo(pb).list_records(
+        filter=f'project="{project_id}" && status="failed"',
+        fields="entityType,entityId",
+        per_page=200,
+    ):
+        entity_type = str(row.get("entityType") or "")
+        entity_id = str(row.get("entityId") or "")
+        if entity_type in ("article", "topic") or not entity_id:
+            continue
+        orphan_refs.add((entity_type, entity_id))
+    return len(article_ids) + len(extra_topics) + len(orphan_refs)
 
 
 def _active_workers(pb: Any) -> int:
