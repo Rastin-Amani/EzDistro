@@ -19,6 +19,7 @@ import signal
 import socket
 import sys
 import time
+from typing import Any
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
@@ -34,6 +35,32 @@ SCHEDULE_INTERVAL = max(10.0, settings.schedule_poll_interval_seconds)
 HEARTBEAT_INTERVAL = max(10.0, settings.heartbeat_interval_seconds)
 
 
+def admin_pb_with_retry(max_delay: float = 30.0) -> Any:
+    """Admin client for startup, retrying while PocketBase is unreachable.
+
+    The container starts the web and the workers together, so during a redeploy
+    PocketBase can be unavailable for a few seconds. Exiting on that first
+    attempt left the whole worker pool permanently dead (the entrypoint only
+    anchors on the web process): the UI stayed up, schedules went late and
+    retried jobs were merely queued. Keep trying with capped backoff instead.
+    """
+    delay = 1.0
+    attempt = 0
+    while True:
+        attempt += 1
+        try:
+            return get_admin_pb()
+        except Exception as exc:
+            logger.warning(
+                "worker.pocketbase_unavailable",
+                attempt=attempt,
+                retry_in=delay,
+                error=str(exc),
+            )
+            time.sleep(delay)
+            delay = min(delay * 2.0, max_delay)
+
+
 async def main() -> None:
     worker_id = settings.derived_worker_id
     logger.info(
@@ -46,7 +73,7 @@ async def main() -> None:
         publish_concurrency=settings.publish_concurrency,
     )
 
-    pb = get_admin_pb()
+    pb = admin_pb_with_retry()
     ensure_registered()
     from app.jobs.handlers import JOB_TYPES, get_handler
 

@@ -17,14 +17,14 @@ from fastapi.responses import HTMLResponse
 from app.api.errors import page_guard
 from app.config import settings
 from app.repositories.jobs import JobRepo
-from app.repositories.worker_heartbeats import WorkerHeartbeatRepo
+from app.repositories.worker_heartbeats import LIVE_AFTER_SECONDS, WorkerHeartbeatRepo
 from app.services.stats import job_status_counts
 from app.templates import templates
 from app.utils import fanout
 
 router = APIRouter()
 
-ACTIVE_AFTER_S = 45  # heartbeat every ~15s; 45s → missed ≤2 beats
+ACTIVE_AFTER_S = LIVE_AFTER_SECONDS  # heartbeat every ~15s; 45s → missed ≤2 beats
 STALE_AFTER_S = 300  # 5 min without a beat → effectively offline
 
 
