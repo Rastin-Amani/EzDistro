@@ -9,6 +9,37 @@ release builds on. Format is based on [Keep a Changelog](https://keepachangelog.
 
 ## [Unreleased]
 
+## [v1.25.1] — 2026-10-23
+
+### Fixed
+- **Deleting a website works again.** PocketBase removes non-cascade relations
+  by unlinking them (`prompts.project` → `""`) before deleting the record, and
+  that unlink collided with the global prompt of the same type/name/version in
+  the unique index — so any project with a prompt failed with
+  `validation_not_unique`. Project prompts now cascade with their project
+  (global prompts still survive), and a schema test keeps every unique
+  `project` index backed by a cascade relation.
+- **Creating a website with an existing name no longer fails.** The slug is
+  derived from the name, so a second "My Site" hit the unique slug index; the
+  generated slug now gets a `-2`, `-3`… suffix. A clone that fails mid-copy
+  also deletes the half-created project instead of leaving a broken one whose
+  slug blocks the retry.
+- **A worker that dies comes back, and a retried job can actually succeed.**
+  The container entrypoint only supervised the web process, so workers that
+  exited (an unavailable PocketBase during a redeploy, a crash) stayed dead
+  while the app kept serving — jobs queued, schedules went late and retries sat
+  untouched. Each worker slot is now restarted in place, and worker startup
+  retries PocketBase instead of exiting on the first failed login. Manual retry
+  now resets the attempt budget, and the retry toast says so when no worker is
+  alive instead of promising a run that cannot happen.
+- **Assembly can no longer fail the whole article on a repeated H2.** Section
+  writers often echo their heading as the first block of the body, so the
+  assembler printed the same `<h2>` twice; the article validator rejected it
+  (`duplicate_heading`) as permanent, and every retry re-ran the identical
+  stored content and failed again. The assembler now drops a section's repeated
+  leading heading and de-duplicates any H2 that still collides, so the
+  validator's invariant holds on the output it produces.
+
 ## [v1.25.0] — 2026-10-20
 
 ### Changed
