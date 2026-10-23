@@ -7,6 +7,7 @@ repositories, job creation through JobRepo.
 from __future__ import annotations
 
 import base64
+import contextlib
 import re
 import time
 from functools import partial
@@ -241,13 +242,24 @@ def create_project(
     if source_id:
         require_project_access(request, source_id)
         require_project_role(request, source_id)
+    repo = ProjectRepo(request.state.pb)
+    if slug.strip() and repo.by_slug(slug.strip().lower()):
+        return error_response("That internal address label is already in use")
     slug_value = slug.strip().lower() or None
     if not slug_value:
         slug_value = (
             re.sub(r"[^a-z0-9-]+", "-", name.strip().lower()).strip("-")
             or f"project-{int(time.time())}"
         )
-    project = ProjectRepo(request.state.pb).create(
+        # The slug is derived, not chosen: a second website with the same name
+        # must not fail on the unique index (that was the "create failed" loop
+        # after a project could not be deleted). Suffix instead of erroring.
+        base = slug_value
+        suffix = 2
+        while repo.by_slug(slug_value):
+            slug_value = f"{base}-{suffix}"
+            suffix += 1
+    project = repo.create(
         name=safe_str(name),
         slug=slug_value,
         created_by=user.get("id", ""),
@@ -258,12 +270,19 @@ def create_project(
     if source_id:
         from app.services.project_clone import clone_project_configuration, clone_summary
 
-        counts = clone_project_configuration(
-            request.state.pb,
-            source_id=source_id,
-            target_id=project["id"],
-            user_id=user.get("id", ""),
-        )
+        try:
+            counts = clone_project_configuration(
+                request.state.pb,
+                source_id=source_id,
+                target_id=project["id"],
+                user_id=user.get("id", ""),
+            )
+        except Exception:
+            # Never leave a half-copied project behind: its slug would block the
+            # retry and its config would look valid while missing connections.
+            with contextlib.suppress(Exception):
+                repo.delete(project["id"])
+            raise
         copied = clone_summary(counts)
         message = f"Project created — duplicated {copied}" if copied else "Project created"
     return ok_with_redirect(message, f"/projects/{project['id']}")

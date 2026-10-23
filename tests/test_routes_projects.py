@@ -70,8 +70,19 @@ def test_create_project_duplicate_slug_returns_error():
     make_project(pb, slug="dup")
     req = make_req(pb, make_user(), "")
     resp = call_route(P.create_project, req, name="duplicate", slug="dup")
-    assert "failed" in toast_message(resp)
+    assert "already in use" in toast_message(resp)
     assert len(pb.collection("projects").get_full_list()) == 1
+
+
+def test_create_project_with_same_name_suffixes_the_generated_slug():
+    """Two websites with the same name must not fight over the unique slug."""
+    pb = make_pb()
+    req = make_req(pb, make_user(), "")
+    call_route(P.create_project, req, name="Same Name", slug="")
+    resp = call_route(P.create_project, req, name="Same Name", slug="")
+    assert resp.status_code == 200
+    slugs = sorted(p["slug"] for p in pb.collection("projects").get_full_list())
+    assert slugs == ["same-name", "same-name-2"]
 
 
 def test_create_project_rejects_non_hx():

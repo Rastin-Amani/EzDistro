@@ -108,3 +108,20 @@ def test_create_project_refuses_unwritable_source():
     )
     assert "failed" in toast_message(resp)
     assert ProjectRepo(pb).by_slug("steal") is None
+
+
+def test_failed_clone_removes_the_half_created_project(monkeypatch):
+    """A clone failure must not leave a project (and its slug) behind."""
+    pb = make_pb()
+    source = _seed_source(pb)
+    req = make_req(pb, make_user(), "")
+
+    def boom(*_args, **_kwargs):
+        raise RuntimeError("clone exploded")
+
+    monkeypatch.setattr("app.services.project_clone.clone_project_configuration", boom)
+    resp = call_route(
+        P.create_project, req, name="Clone", slug="clone", source_project_id=source["id"]
+    )
+    assert "failed" in toast_message(resp)
+    assert ProjectRepo(pb).by_slug("clone") is None
