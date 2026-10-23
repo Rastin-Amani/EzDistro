@@ -39,6 +39,16 @@ release builds on. Format is based on [Keep a Changelog](https://keepachangelog.
   stored content and failed again. The assembler now drops a section's repeated
   leading heading and de-duplicates any H2 that still collides, so the
   validator's invariant holds on the output it produces.
+
+## [v1.25.2] — 2026-10-23
+
+### Fixed
+- **Deleting a website works in production too.** The cascade rule shipped in
+  v1.25.1 only reached fresh databases — `collections.import` never updates an
+  existing relation field, so production kept `cascadeDelete=false` and deletes
+  still failed. Bootstrap now reconciles drifted relation options
+  (`cascadeDelete`/`required`) on the live database, the same way it already
+  reconciles select values, and a schema test pins the invariant.
 - **Copying a website no longer clones its content.** The copy carried the
   source's WordPress connection, so the first indexing/research run mirrored
   that site's published posts into the new project as articles (with the source
