@@ -176,3 +176,56 @@ def test_targeted_schema_migration_adds_model_field(monkeypatch):
     model = next(field for field in patched[0] if field["name"] == "model")
     assert model["type"] == "text"
     assert model["id"] == bootstrap._field_id("text", "model")
+
+
+def test_relation_options_reconciler_patches_an_existing_field(monkeypatch):
+    """A live field whose cascadeDelete drifted must be fixed by bootstrap.
+
+    `collections.import` does not update an existing relation's options in
+    production: prompts.project stayed cascadeDelete=false, so deleting any
+    project with a prompt still failed. The reconciler PATCHes the raw field.
+    """
+    from types import SimpleNamespace
+
+    import app.scripts.bootstrap_pb as bootstrap
+
+    spec = {
+        "name": "prompts",
+        "fields": [
+            {"name": "project", "type": "relation", "cascadeDelete": True, "required": False}
+        ],
+    }
+    schema = {
+        "fields": [
+            {"name": "project", "type": "relation", "cascadeDelete": False, "required": False}
+        ]
+    }
+    patched: list[dict] = []
+
+    class Response:
+        status_code = 200
+        text = ""
+
+        def json(self):
+            return {"fields": schema["fields"]}
+
+    def get(_url, **_kwargs):
+        return Response()
+
+    def patch(_url, *, json, **_kwargs):
+        patched.append(json["fields"])
+        schema["fields"] = json["fields"]
+        return Response()
+
+    monkeypatch.setattr(bootstrap, "COLLECTIONS", [spec])
+    monkeypatch.setattr(bootstrap.httpx, "get", get)
+    monkeypatch.setattr(bootstrap.httpx, "patch", patch)
+    pb = SimpleNamespace(
+        base_url="https://pb.example/",
+        auth_store=SimpleNamespace(token="admin-token"),
+        collections=SimpleNamespace(get_full_list=lambda: [SimpleNamespace(name="prompts")]),
+    )
+
+    bootstrap.ensure_relation_options(pb)
+
+    assert patched and patched[0][0]["cascadeDelete"] is True

@@ -1514,6 +1514,59 @@ def ensure_select_values(pb: PocketBase) -> None:
                 )
 
 
+def ensure_relation_options(pb: PocketBase) -> None:
+    """Reconcile relation options (cascadeDelete / required) on LIVE collections.
+
+    ``import_collections`` adds new fields but does not reliably update the
+    options of a field that already exists (verified live: ``prompts.project``
+    stayed ``cascadeDelete=false`` after the import, so deleting any project
+    with a prompt still failed with ``validation_not_unique``). Read the raw
+    camelCase field metadata and PATCH only the fields that differ — never the
+    SDK's lossy ``collections.update``.
+    """
+    try:
+        live = {c.name for c in pb.collections.get_full_list()}
+    except Exception:
+        return
+    base = str(pb.base_url).rstrip("/")
+    headers = {"Authorization": getattr(pb.auth_store, "token", "")}
+    for spec in COLLECTIONS:
+        name = spec["name"]
+        if name not in live:
+            continue
+        wanted = {f["name"]: f for f in spec.get("fields", []) if f.get("type") == "relation"}
+        if not wanted:
+            continue
+        response = httpx.get(f"{base}/api/collections/{name}", headers=headers, timeout=30)
+        if response.status_code != 200:
+            continue
+        fields = response.json().get("fields") or []
+        changed = False
+        for field in fields:
+            target = wanted.get(str(field.get("name")))
+            if field.get("type") != "relation" or target is None:
+                continue
+            for key in ("cascadeDelete", "required"):
+                value = bool(target.get(key))
+                if bool(field.get(key)) != value:
+                    field[key] = value
+                    changed = True
+                    print(f"{name}.{field['name']}: {key} -> {value}")
+        if changed:
+            patched = httpx.patch(
+                f"{base}/api/collections/{name}",
+                headers=headers,
+                json={"fields": fields},
+                timeout=30,
+            )
+            if patched.status_code != 200:
+                print(
+                    f"WARNING: could not update {name} relation options: "
+                    f"{patched.status_code} {patched.text[:200]}",
+                    file=sys.stderr,
+                )
+
+
 def ensure_integration_model_field(pb: PocketBase) -> None:
     """Add the dedicated model field without importing unrelated collection indexes."""
     base = str(pb.base_url).rstrip("/")
@@ -1952,6 +2005,7 @@ def main() -> None:
     time.sleep(0.5)
     ensure_integration_model_field(pb)
     ensure_select_values(pb)
+    ensure_relation_options(pb)
     backfill_integration_models(pb)
     ensure_users_fields(pb)
     ensure_users_rules(pb)
