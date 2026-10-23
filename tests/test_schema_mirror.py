@@ -48,6 +48,27 @@ def test_research_type_select_covers_every_written_value():
         assert written in values, f"research_runs.researchType is missing {written!r}"
 
 
+def test_project_relations_in_unique_indexes_cascade():
+    """A non-cascade project relation breaks project deletion in PocketBase.
+
+    PB deletes by *unlinking* non-cascade relations (project → "") before
+    removing the record. If a UNIQUE index includes `project`, that unlink
+    collides with an existing global row and the whole delete fails with
+    `validation_not_unique` — this is how prompts (unique on project/type/name/
+    version) made every project with a prompt undeletable. Keep the invariant.
+    """
+    for coll in COLLECTIONS:
+        unique = [idx for idx in coll.get("indexes") or [] if "UNIQUE" in idx]
+        touching_project = [idx for idx in unique if "(project" in idx]
+        if not touching_project:
+            continue
+        field = next((f for f in coll["fields"] if f["name"] == "project"), None)
+        assert field is not None, f"{coll['name']} has a project index but no project field"
+        assert field.get("cascadeDelete") is True, (
+            f"{coll['name']}.project must cascadeDelete: {touching_project}"
+        )
+
+
 def test_import_json_relations_resolve():
     ids = {c["id"] for c in _mirror()}
     for coll in _mirror():

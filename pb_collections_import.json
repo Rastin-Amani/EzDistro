@@ -1420,7 +1420,7 @@
         "presentable": false,
         "help": "",
         "collectionId": "pbc_1cddebbd",
-        "cascadeDelete": false,
+        "cascadeDelete": true,
         "minSelect": 0,
         "maxSelect": 1,
         "id": "relation2fb3d0ee"

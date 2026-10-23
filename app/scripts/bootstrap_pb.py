@@ -312,7 +312,12 @@ COLLECTIONS: list[dict[str, Any]] = [
     col(
         "prompts",
         [
-            rel("project", "projects"),  # nullable → global default
+            # nullable → global default. MUST cascade: PocketBase deletes a
+            # project by *unlinking* non-cascade relations (project → ""), and
+            # that unlink collides with the global prompt of the same
+            # (type, name, version) in the unique index below — so the whole
+            # project deletion fails with validation_not_unique.
+            rel("project", "projects", cascade=True),
             select(
                 "type",
                 [
