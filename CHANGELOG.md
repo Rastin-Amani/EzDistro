@@ -59,6 +59,11 @@ release builds on. Format is based on [Keep a Changelog](https://keepachangelog.
   sequential LLM calls (~40s each) and sat at 94% for over an hour. Independent
   batches now run four at a time; prompts and merge order are unchanged, so the
   output is identical — the stage just takes minutes instead of hours.
+- **A 429's own wait time is honoured.** Some gateways send the recovery window
+  in the body ("reset after 1m 4s") instead of a `Retry-After` header; the engine
+  retried inside that window and burned every attempt on a transient capacity
+  blip (internal linking failed right after publishing). The hint is parsed into
+  `retry_after_seconds`, so the retry waits it out.
 - **"Needs attention" counts broken work, not failed history.** It counted every
   failed job row, so one stuck article looked like four problems and the number
   stayed after the article was fixed. It now counts failed articles/topics plus

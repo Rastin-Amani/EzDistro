@@ -841,3 +841,28 @@ async def test_full_batch_crash_and_restart_everything_recovers():
 
     assembles = [j for j in jobs if j["type"] == "assemble_article"]
     assert len(assembles) == 3
+
+
+def test_429_body_hint_reaches_the_job_retry_backoff():
+    """A gateway that says "reset after 1m 4s" must not be retried inside that window.
+
+    The embedding provider answers 429 with the wait in the BODY (no
+    Retry-After header); the engine then retried at ~30s and ~60s and burned all
+    three attempts on a transient capacity blip, failing build_internal_links
+    right after publishing.
+    """
+    import httpx
+
+    from app.providers.http import raise_for_provider
+
+    response = httpx.Response(
+        429,
+        text=(
+            '{"error":{"message":"[mistral/mistral-embed] [429]: Not enough capacity '
+            'available, please retry later. (reset after 1m 4s)"}}'
+        ),
+        request=httpx.Request("POST", "https://gateway.test/v1/embeddings"),
+    )
+    with pytest.raises(Exception) as excinfo:
+        raise_for_provider(response, what="embedding.batch")
+    assert excinfo.value.details["retry_after_seconds"] == 64

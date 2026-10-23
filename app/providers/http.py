@@ -16,6 +16,7 @@ import contextlib
 import datetime
 import hashlib
 import logging
+import re
 import threading
 import time as _time
 from collections.abc import Awaitable, Callable
@@ -228,6 +229,14 @@ def raise_for_provider(response: httpx.Response, *, what: str) -> None:
     retry_after = _parse_retry_after(response.headers.get("Retry-After"))
     if retry_after is not None:
         details["retry_after_seconds"] = retry_after
+    else:
+        # Some gateways put the wait in the body instead of a header
+        # ("Not enough capacity … reset after 1m 4s"). Without this the job
+        # retried inside the provider's own recovery window and burned all its
+        # attempts on a transient 429.
+        hinted = _parse_retry_hint(body)
+        if hinted is not None:
+            details["retry_after_seconds"] = hinted
     if _looks_like_html(body):
         # A web UI (dashboard, landing page) was returned instead of an API
         # response — almost always a base URL pointing at the site root
@@ -296,6 +305,21 @@ def _parse_retry_after(value: str | None) -> int | None:
     except (TypeError, ValueError):
         pass
     return None
+
+
+def _parse_retry_hint(body: str) -> int | None:
+    """Wait time embedded in a 429 body ("reset after 1m 4s", "retry after 30s")."""
+    match = re.search(
+        r"(?:reset|retry|try again)\s+(?:after|in)\s+(?:(\d+)\s*m(?:in)?s?\s*)?(\d+)\s*s",
+        body or "",
+        re.IGNORECASE,
+    )
+    if not match:
+        return None
+    minutes = int(match.group(1) or 0)
+    seconds = int(match.group(2) or 0)
+    total = minutes * 60 + seconds
+    return total or None
 
 
 def llm_budget_exhausted(data: Any) -> bool:
