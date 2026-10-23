@@ -96,6 +96,53 @@ def test_build_article_html_dedupes_headings_and_keeps_order():
     assert "<hr>" not in html
 
 
+def test_build_article_html_strips_a_repeated_leading_heading():
+    """The model echoes the section heading inside the body.
+
+    Rendering both prints the same <h2> twice and ArticleValidator rejects the
+    whole article with `duplicate_heading` — a permanent failure that a job
+    retry can never fix, because the stored section content does not change.
+    """
+    from app.domain.article_validation import ArticleValidator
+
+    html = build_article_html(
+        title="T",
+        sections=[
+            {
+                "heading": "How member count drives your bill",
+                "content": (
+                    "<h2>How member count drives your bill</h2>"
+                    "<p>Pricing tiers start with a member band.</p>"
+                ),
+            }
+        ],
+    )
+    assert html.count("<h2>How member count drives your bill</h2>") == 1
+    report = ArticleValidator(min_words=1).validate(
+        title="T", slug="t", outline=None, sections=[], html=html
+    )
+    assert "duplicate_heading" not in [issue.code for issue in report.issues]
+
+
+def test_build_article_html_dedupes_headings_inside_bodies():
+    """Two sections repeating the same subheading must not fail validation."""
+    from app.domain.article_validation import ArticleValidator
+
+    html = build_article_html(
+        title="T",
+        sections=[
+            {"heading": "First", "content": "<h2>Pricing</h2><p>one</p>"},
+            {"heading": "Second", "content": "<h2>Pricing</h2><p>two</p>"},
+        ],
+    )
+    assert html.count("<h2>Pricing</h2>") == 1
+    assert "<h2>Pricing (2)</h2>" in html
+    report = ArticleValidator(min_words=1).validate(
+        title="T", slug="t", outline=None, sections=[], html=html
+    )
+    assert "duplicate_heading" not in [issue.code for issue in report.issues]
+
+
 def test_build_article_html_removes_markdown_fences():
     html = build_article_html(
         title="T",

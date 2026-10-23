@@ -2,7 +2,8 @@
 
 The assembler:
 - preserves section ordering
-- generates H2 headings (deduplicated — no repeated heading text)
+- generates H2 headings (deduplicated — no repeated heading text, including
+  headings the model echoed inside a section body)
 - sanitizes invalid HTML per section
 - removes markdown fences
 - normalizes whitespace
@@ -22,6 +23,8 @@ from app.domain.sanitize import sanitize_html
 _FENCE_RE = re.compile(r"```|~~~", re.MULTILINE)
 _WS_RE = re.compile(r"[ \t]+")
 _BLANK_RE = re.compile(r"\n{3,}")
+_LEADING_HEADING_RE = re.compile(r"^\s*<h([1-6])[^>]*>(.*?)</h\1>", re.IGNORECASE | re.DOTALL)
+_H2_RE = re.compile(r"(<h2[^>]*>)(.*?)(</h2>)", re.IGNORECASE | re.DOTALL)
 
 
 def slugify(text: str, fallback: str = "post") -> str:
@@ -118,9 +121,14 @@ def build_article_html(
         heading = normalize_article_html(section.get("heading") or "")
         if not heading:
             heading = f"Section {i}"
-        heading = _dedupe_heading(heading, used_headings)
         raw = normalize_article_html(section.get("content") or "")
         content = sanitize_html(raw) if sanitize else raw
+        # Models often echo the section heading as the first block of the body.
+        # We render that heading ourselves, so keeping it prints the same <h2>
+        # twice — and the article validator rejects the whole article
+        # (`duplicate_heading`), a deterministic failure no retry can fix.
+        content = _strip_repeated_leading_heading(content, heading)
+        heading = _dedupe_heading(heading, used_headings)
         if not content:
             continue
         parts.append(f"<h2>{_escape(heading)}</h2>")
@@ -135,7 +143,44 @@ def build_article_html(
         )
         parts.append(f"<ul>{items}</ul>")
 
-    return "\n".join(parts)
+    return _dedupe_h2("\n".join(parts))
+
+
+def _heading_key(text: str) -> str:
+    # Same normalization as ArticleValidator's duplicate-heading check: strip
+    # tags, trim, lowercase. Dedupe is only a guarantee if the keys agree.
+    return re.sub(r"<[^>]+>", "", text).strip().lower()
+
+
+def _strip_repeated_leading_heading(content: str, heading: str) -> str:
+    """Drop an opening heading in the body that repeats the section heading."""
+    leading = _LEADING_HEADING_RE.match(content)
+    if leading and _heading_key(leading.group(2)) == _heading_key(heading):
+        return content[leading.end() :].lstrip()
+    return content
+
+
+def _dedupe_h2(html: str) -> str:
+    """Guarantee unique H2 text in the final article.
+
+    Section headings are already deduplicated when they are emitted; this pass
+    covers H2s the model wrote *inside* section bodies (two sections can repeat
+    the same subheading). Suffixes match `_dedupe_heading`'s `(2)` convention.
+    """
+    used: dict[str, int] = {}
+
+    def replace(match: re.Match[str]) -> str:
+        text = match.group(2)
+        key = _heading_key(text)
+        if not key:
+            return match.group(0)
+        count = used.get(key, 0) + 1
+        used[key] = count
+        if count == 1:
+            return match.group(0)
+        return f"{match.group(1)}{text} ({count}){match.group(3)}"
+
+    return _H2_RE.sub(replace, html)
 
 
 def _dedupe_heading(heading: str, used: dict[str, int]) -> str:
