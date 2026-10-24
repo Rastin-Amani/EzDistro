@@ -113,23 +113,39 @@ def _secure_cookie(request: Request) -> bool:
     return settings.is_prod or request.url.scheme == "https"
 
 
+def oauth_callback_url(request: Request) -> str:
+    """Absolute OAuth callback for this browser request.
+
+    Built from the origin the user actually reached, not from PUBLIC_APP_URL:
+    a stale canonical URL (e.g. the marketing domain) makes every provider
+    reject the callback with `redirect_uri_mismatch`. The resulting URL must be
+    registered at Google/GitHub; an unregistered one is rejected by them, so a
+    spoofed Host header cannot receive an auth code.
+    """
+    host = request.headers.get("host", "")
+    if not host:
+        return settings.oauth_callback_url
+    scheme = "https" if settings.is_prod or request.url.scheme == "https" else request.url.scheme
+    return f"{scheme}://{host}{settings.oauth_callback_path}"
+
+
 # ---------------------------------------------------------------------------
 # PocketBase providers
 # ---------------------------------------------------------------------------
-def provider_href(auth_url: str) -> str:
+def provider_href(auth_url: str, callback_url: str) -> str:
     """Point the provider URL at our callback (PB leaves redirect_uri blank)."""
     parts = urllib.parse.urlsplit(auth_url)
     query = {
         key: values[0]
         for key, values in urllib.parse.parse_qs(parts.query, keep_blank_values=True).items()
     }
-    query["redirect_uri"] = settings.oauth_callback_url
+    query["redirect_uri"] = callback_url
     return urllib.parse.urlunsplit(
         (parts.scheme, parts.netloc, parts.path, urllib.parse.urlencode(query), parts.fragment)
     )
 
 
-def load_providers() -> tuple[list[dict], str | None]:
+def load_providers(callback_url: str) -> tuple[list[dict], str | None]:
     """Enabled Google/GitHub providers, ordered, plus an error flag for the UI."""
     try:
         methods = get_pb().send("/api/collections/users/auth-methods", {"method": "GET"})
@@ -153,7 +169,7 @@ def load_providers() -> tuple[list[dict], str | None]:
             providers[name] = {
                 "name": name,
                 "label": PROVIDER_LABELS[name],
-                "href": provider_href(auth_url),
+                "href": provider_href(auth_url, callback_url),
                 "state": state,
                 "verifier": verifier,
             }
@@ -165,7 +181,8 @@ def load_providers() -> tuple[list[dict], str | None]:
 # Pages
 # ---------------------------------------------------------------------------
 def _render_auth(request: Request, mode: str, error: str | None, status_code: int = 200):
-    providers, problem = load_providers()
+    callback_url = oauth_callback_url(request)
+    providers, problem = load_providers(callback_url)
     message, toast_type = ERROR_MESSAGES.get(error or "", (None, "error"))
     if not problem and not providers:
         # PocketBase answered, but neither provider is configured. This is an
@@ -279,7 +296,7 @@ def oauth_callback(request: Request):
                     "provider": provider,
                     "code": params.get("code", ""),
                     "codeVerifier": verifier,
-                    "redirectURL": settings.oauth_callback_url,
+                    "redirectURL": oauth_callback_url(request),
                     "createData": {"role": "member", "emailVisibility": False},
                 },
             },

@@ -83,9 +83,9 @@ class Settings(BaseSettings):
     page_size: int = 25  # default pagination for UI lists
 
     # --- public app URL ---
-    # Canonical origin of THIS app, used for the OAuth callback and the billing
-    # checkout return URL. No trailing slash. Must match the redirect URI
-    # registered at Google/GitHub (see docs/CONFIGURATION.md).
+    # Canonical origin of THIS app, used for the billing checkout return URL and
+    # as the OAuth callback fallback (normally the callback follows the origin
+    # the browser actually reached). No trailing slash.
     public_app_url: str = "http://localhost:8000"
     oauth_callback_path: str = "/auth/oauth2/callback"
 
