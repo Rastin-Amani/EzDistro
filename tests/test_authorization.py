@@ -354,7 +354,7 @@ def test_project_detail_renders_active_tab_with_context(setup):
     assert resp.status_code == 200
     body = resp.body.decode()
     assert ">A</h1>" in body  # project name heading
-    assert 'Website overview' in body  # default overview tab partial rendered inline
+    assert "Website overview" in body  # default overview tab partial rendered inline
     assert '<nav id="project-tabs"' in body
     assert f'href="/projects/{setup["proj_a"]["id"]}?tab=overview"' in body
     assert 'data-tab="overview"' in body and 'aria-current="page"' in body
