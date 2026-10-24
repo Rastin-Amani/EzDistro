@@ -15,7 +15,6 @@ import pytest
 from fastapi.testclient import TestClient
 from pocketbase.errors import ClientResponseError
 
-from app.config import settings
 from app.main import app
 from tests.fakes import FakePocketBase, default_unique_fields
 
@@ -159,7 +158,6 @@ def fake_pb(monkeypatch):
             "displayName": "admin",
         }
     )
-    monkeypatch.setattr(settings, "public_app_url", "https://app.test")
     monkeypatch.setattr("app.middleware.get_pb", lambda: pb)
     monkeypatch.setattr("app.middleware.get_data_pb", lambda: pb)
     monkeypatch.setattr("app.api.auth.get_pb", lambda: pb)
@@ -216,7 +214,7 @@ def test_public_pages_reachable_anonymously(fake_pb):
 # Login page
 # ---------------------------------------------------------------------------
 def test_login_page_offers_only_google_and_github(fake_pb):
-    with TestClient(app) as client:
+    with TestClient(app, base_url="https://app.test") as client:
         resp = client.get("/login")
     assert resp.status_code == 200
     assert 'href="/signup"' in resp.text
