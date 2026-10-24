@@ -130,9 +130,11 @@ cleanup.
       otherwise. Losing this key makes every stored integration secret undecryptable.
       Rotating it also invalidates them (re-enter credentials afterwards).
 - [ ] `PB_URL` + `PB_ADMIN_EMAIL/PASSWORD` set (worker + bootstrap need admin creds)
-- [ ] `PUBLIC_APP_URL` is the public origin, and
-      `PUBLIC_APP_URL/auth/oauth2/callback` is registered **exactly** at both
-      Google and GitHub (scheme, host, path, no trailing slash)
+- [ ] The app's public origin + `/auth/oauth2/callback` is registered
+      **exactly** at both Google and GitHub (scheme, host, path; no trailing
+      slash). The app builds the callback from the origin the browser reached,
+      so `PUBLIC_APP_URL` being stale no longer breaks sign-in — but keep it
+      correct for billing return URLs
 - [ ] `make bootstrap` ran after configuring the OAuth providers — it disables
       password/OTP/MFA and prints `sign-in providers = google, github`
 - [ ] Sign in once with the Google/GitHub account whose email is

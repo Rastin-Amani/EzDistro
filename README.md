@@ -127,9 +127,9 @@ make web                        # uvicorn app.main:app --port 8000
 make worker                     # python -m app.workers.worker
 ```
 
-Sign in with Google or GitHub (there is no password login). Set
-`PUBLIC_APP_URL` and register `PUBLIC_APP_URL/auth/oauth2/callback` at both
-providers before the first sign-in; see
+Sign in with Google or GitHub (there is no password login). Register the app’s
+`/auth/oauth2/callback` URL at both providers before the first sign-in (the app
+builds it from the public origin it is served on); see
 [docs/CONFIGURATION.md](docs/CONFIGURATION.md#sign-in-oauth-only-google--github).
 
 ### Workflow

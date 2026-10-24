@@ -44,7 +44,7 @@ an already-configured provider untouched when the env values are empty.
 
 | Variable | Default | Effect |
 |---|---|---|
-| `PUBLIC_APP_URL` | `http://localhost:8000` | Canonical public origin. The OAuth callback is `PUBLIC_APP_URL` + `/auth/oauth2/callback` and must be registered **exactly** at both providers; also used as the billing return URL |
+| `PUBLIC_APP_URL` | `http://localhost:8000` | Canonical public origin used for the billing return URL and as the OAuth callback fallback. The OAuth callback follows the origin the browser actually reached (`https://<host>/auth/oauth2/callback`); register that URL **exactly** at both providers |
 | `GOOGLE_OAUTH_CLIENT_ID` / `GOOGLE_OAUTH_CLIENT_SECRET` | *(empty)* | Google Cloud OAuth 2.0 Web client. Authorized redirect URI: `https://your-app.example.com/auth/oauth2/callback` |
 | `GITHUB_OAUTH_CLIENT_ID` / `GITHUB_OAUTH_CLIENT_SECRET` | *(empty)* | GitHub OAuth App (Settings → Developer settings → OAuth Apps). Authorization callback URL: the same `/auth/oauth2/callback` |
 

@@ -144,7 +144,7 @@ Authentication is PocketBase-native **OAuth2 only** (Google and GitHub). There i
 no password sign-in: `make bootstrap` disables password/OTP/MFA on the `users`
 collection and enables the two providers. `GET /login` (and `/signup`, same page
 with different copy) asks PocketBase for the enabled providers, appends the app
-callback (`PUBLIC_APP_URL` + `/auth/oauth2/callback`) to each provider URL, and
+callback (`<request origin>/auth/oauth2/callback`) to each provider URL, and
 keeps the one-off `state` + PKCE `codeVerifier` in a signed, HttpOnly
 `oauth_state` cookie (10 min, path `/auth`). The provider returns to
 `GET /auth/oauth2/callback`, the app exchanges the code with
