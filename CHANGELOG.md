@@ -4,10 +4,26 @@ All notable changes to EzDistro Platform. Versions follow the repository's git
 tags (`git tag`); see [docs/](docs/README.md) for the architecture that each
 release builds on. Format is based on [Keep a Changelog](https://keepachangelog.com/).
 
-> `APP_VERSION` in `app/config.py` (`0.2.0`) is an independent, env-overridable
-> app label and does not track these release tags.
+> `APP_VERSION` in `app/config.py` tracks the release tag (env-overridable
+> app label).
 
 ## [Unreleased]
+
+### Changed
+- **Sign-in and sign-up are Google and GitHub only.** Passwords are gone:
+  bootstrap disables password, OTP and MFA auth on the PocketBase `users`
+  collection, and `/login` and `/signup` render one provider card each instead of
+  a form. The app implements PocketBase's manual OAuth2 code exchange
+  (`/auth/oauth2/callback`), keeps the one-off `state` + PKCE verifier in a
+  signed, HttpOnly, 10-minute cookie, rejects forged/expired states, refuses
+  disabled accounts, and sets the same `pb_auth` session cookie as before. A
+  first-time provider login creates the account (`role=member`); an existing
+  record is linked by verified email, so a `SEED_ADMIN_EMAIL` account keeps its
+  admin role. `PUBLIC_APP_URL` now also defines the callback origin and must
+  match the redirect URI registered at both providers. Bootstrap can provision
+  the provider credentials from `GOOGLE_OAUTH_CLIENT_ID/SECRET` and
+  `GITHUB_OAUTH_CLIENT_ID/SECRET`, and promotes an existing `SEED_ADMIN_EMAIL`
+  account to admin on re-run.
 
 ## [v1.25.1] — 2026-10-23
 

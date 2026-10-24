@@ -123,8 +123,8 @@ Layering conventions (by convention, not enforced):
 1. `AuthMiddleware` assigns an 8-char `req_id`, binds structured-log context, resolves
    the `pb_auth` cookie against the PocketBase `users` collection, and gates access:
    unauthenticated requests are redirected to `/login` (303) except public paths
-   (`/login`, `/static/*`, `/manifest.json`, `/sw.js`, `/favicon.ico`, `/health`,
-   `/openapi.json`, `/docs`, `/offline`, and `/`).
+   (`/login`, `/signup`, `/auth/oauth2/*`, `/static/*`, `/manifest.json`, `/sw.js`,
+   `/favicon.ico`, `/health`, `/openapi.json`, `/docs`, `/offline`, and `/`).
 2. Route dependencies enforce authorization:
    - Platform roles: `users.role ∈ {admin, member}`. Global admins see everything.
    - Project membership: non-admins are restricted to projects where they have a
@@ -140,10 +140,21 @@ Layering conventions (by convention, not enforced):
    `ok_with_redirect`, `delayed_redirect`, `error_response`) — user-facing toast messages,
    HX event triggers, never raw JSON from UI routes.
 
-Authentication is PocketBase-native: `POST /login` calls
-`users.auth_with_password`, stores the token in the `pb_auth` cookie
+Authentication is PocketBase-native **OAuth2 only** (Google and GitHub). There is
+no password sign-in: `make bootstrap` disables password/OTP/MFA on the `users`
+collection and enables the two providers. `GET /login` (and `/signup`, same page
+with different copy) asks PocketBase for the enabled providers, appends the app
+callback (`PUBLIC_APP_URL` + `/auth/oauth2/callback`) to each provider URL, and
+keeps the one-off `state` + PKCE `codeVerifier` in a signed, HttpOnly
+`oauth_state` cookie (10 min, path `/auth`). The provider returns to
+`GET /auth/oauth2/callback`, the app exchanges the code with
+`users.auth_with_oauth2`, and stores the token in the `pb_auth` cookie
 (`HttpOnly`, `SameSite=Lax`, `Secure` when in production or arrived over TLS,
-30-day max-age), and `POST /logout` clears it.
+30-day max-age). `POST /login` is intentionally gone but answers 303 to
+`/login?error=password` so stale cached forms never 405; `POST /logout` clears
+both cookies. Sign-up is the same action — PocketBase creates the record on the
+first provider login (role `member`), and links an existing record by verified
+email.
 
 Dev-only surface (disabled when `ENV=production`): Swagger UI at `/docs`,
 `/openapi.json`, and a debug router.

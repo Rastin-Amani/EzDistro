@@ -545,7 +545,11 @@ platform admins bypass membership checks entirely.
 ### 3.21 users (built-in, extended)
 
 Added by bootstrap if missing: `role` (sel: `admin` \| `member`) and `displayName`
-(text). Seeded admin account comes from `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD`.
+(text). Sign-in is **OAuth2 only** — bootstrap disables `passwordAuth`, `otp` and
+`mfa`, enables the Google/GitHub providers, and keeps the collection's API rules
+superuser-only. New OAuth sign-ups get `role=member`; `SEED_ADMIN_EMAIL` (with
+`SEED_ADMIN_PASSWORD` only when the record must be pre-created) provisions the
+platform admin by email.
 
 ### 3.22 google_ads_connections
 

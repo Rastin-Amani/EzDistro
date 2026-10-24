@@ -27,6 +27,7 @@ npm install && make css
 - `tests/test_jobs_advanced.py::test_retry_uses_jittered_backoff` is **flaky** — it asserts jittered-backoff bounds against the wall clock and intermittently fails. Rerun it before debugging if the full suite reports it.
 - `app/scripts/benchmark.py` is a **heavy load-test** (real engine + handlers, fake providers, defaults of 10 concurrent jobs / 100 topics) — not a fixture; don't run casually. It is excluded from mypy.
 - The SSRF guard rejects private/loopback hosts by default — set `ALLOW_PRIVATE_NETWORKS=1` for local dev against localhost Qdrant/WP/PocketBase.
+- **Sign-in is OAuth-only (Google + GitHub) via PocketBase.** Bootstrap disables password/OTP/MFA on `users`; `app/api/auth.py` implements the manual code-exchange flow and keeps the OAuth `state`+PKCE verifier in a signed `oauth_state` cookie. The callback is `PUBLIC_APP_URL + /auth/oauth2/callback` and must be registered exactly at both providers. Never reintroduce a password form or mint session tokens by hand.
 - `SECRETS_KEY` (Fernet) required in prod; dev derives a deterministic key. Stored credentials are encrypted at rest (`app/services/secrets.py`) and never logged or rendered plaintext.
 
 ## Checks

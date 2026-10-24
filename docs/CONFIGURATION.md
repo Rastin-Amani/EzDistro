@@ -22,7 +22,7 @@ whitespace/comments after empty values (pydantic-settings captures everything af
 | Variable | Default | Effect |
 |---|---|---|
 | `ENV` | `dev` | `dev` \| `production`. Production: JSON logs, requires `SECRETS_KEY`, hides `/docs` + `/openapi.json` + debug router |
-| `APP_VERSION` | `0.2.0` | Shown in UI footer / `/health` |
+| `APP_VERSION` | `1.27.0` | Shown in UI footer / `/health` — tracks the release tag |
 | `SECRETS_KEY` | *(empty)* | Fernet key (32-byte urlsafe base64). **Required in production** — startup fails without it. Dev derives a deterministic key from `pb_url`+env. Generate: `python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"`. ⚠️ Rotating it invalidates all stored integration secrets (they must be re-entered) |
 
 ### PocketBase
@@ -31,8 +31,46 @@ whitespace/comments after empty values (pydantic-settings captures everything af
 |---|---|---|
 | `PB_URL` | `http://127.0.0.1:8090` | Source-of-truth server; both processes need it |
 | `PB_ADMIN_EMAIL` / `PB_ADMIN_PASSWORD` | *(empty)* | Superuser auth for worker + bootstrap (auth falls back `_superusers` → `_admins` for PB < 0.23) |
-| `SEED_ADMIN_EMAIL` | `admin@ezdistro.local` | Platform admin user created by bootstrap when password set |
-| `SEED_ADMIN_PASSWORD` | *(empty)* | Empty ⇒ no seed user is created |
+| `SEED_ADMIN_EMAIL` | `admin@ezdistro.local` | Platform admin matched by email: bootstrap promotes this account, or creates it (`verified`) when `SEED_ADMIN_PASSWORD` is set. The admin signs in with Google/GitHub using exactly this email — the password is never a login secret and only satisfies PocketBase's required field |
+| `SEED_ADMIN_PASSWORD` | *(empty)* | Optional; only used when the seed account does not exist yet. Empty ⇒ no seed user is created |
+
+### Sign-in (OAuth-only: Google + GitHub)
+
+There is no password login. PocketBase users authenticate through the two
+OAuth2 providers; `make bootstrap` disables password, OTP and MFA auth and
+writes the provider credentials below into the `users` collection. Configure
+providers in the PocketBase dashboard instead if you prefer — bootstrap leaves
+an already-configured provider untouched when the env values are empty.
+
+| Variable | Default | Effect |
+|---|---|---|
+| `PUBLIC_APP_URL` | `http://localhost:8000` | Canonical public origin. The OAuth callback is `PUBLIC_APP_URL` + `/auth/oauth2/callback` and must be registered **exactly** at both providers; also used as the billing return URL |
+| `GOOGLE_OAUTH_CLIENT_ID` / `GOOGLE_OAUTH_CLIENT_SECRET` | *(empty)* | Google Cloud OAuth 2.0 Web client. Authorized redirect URI: `https://your-app.example.com/auth/oauth2/callback` |
+| `GITHUB_OAUTH_CLIENT_ID` / `GITHUB_OAUTH_CLIENT_SECRET` | *(empty)* | GitHub OAuth App (Settings → Developer settings → OAuth Apps). Authorization callback URL: the same `/auth/oauth2/callback` |
+
+> In Google Cloud Console the redirect URI belongs on the **same** OAuth client
+> whose id/secret are stored in PocketBase. The provider dashboard shows the
+> client id and secret once; PocketBase redacts the secret on read, so bootstrap
+> resends providers without it and PocketBase merges by provider name.
+
+**Setting up the two apps**
+
+1. **Google** — Google Cloud Console → APIs & Services → Credentials → *Create
+   credentials* → *OAuth client ID* → *Web application*. Add
+   `https://your-app.example.com/auth/oauth2/callback` under **Authorized
+   redirect URIs**. Copy the client id/secret to `GOOGLE_OAUTH_CLIENT_ID` /
+   `GOOGLE_OAUTH_CLIENT_SECRET` (or paste them in PocketBase → Collections →
+   `users` → Options → OAuth2 → Google).
+2. **GitHub** — GitHub → Settings → Developer settings → OAuth Apps → *New OAuth
+   App*. Homepage URL: `https://your-app.example.com`. Authorization callback
+   URL: `https://your-app.example.com/auth/oauth2/callback`. Copy the client
+   id/secret to `GITHUB_OAUTH_CLIENT_ID` / `GITHUB_OAUTH_CLIENT_SECRET` (or add
+   the provider in the PocketBase dashboard).
+3. Run `make bootstrap`. It prints
+   `users collection: sign-in providers = google, github` and disables every
+   other auth method. The login page only renders providers that PocketBase
+   reports as enabled, so a missing credential shows one button, not a broken
+   one.
 
 ### Qdrant (defaults)
 

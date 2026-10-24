@@ -48,7 +48,8 @@ make bootstrap        # python -m app.scripts.bootstrap_pb
 Bootstrap does, in order: import/patch all 38 collections (`delete_missing=False`),
 union any new select values into live collections (`ensure_select_values`), add
 `role`/`displayName` to `users`, seed the `app_settings` singleton + all 25 global
-default prompts, and create the platform admin if `SEED_ADMIN_PASSWORD` is set.
+default prompts, enforce OAuth-only sign-in (Google/GitHub), and promote/create the
+platform admin for `SEED_ADMIN_EMAIL`.
 It prints explicit confirmation lines for each step; on failure it raises with a
 hint about reachability/credentials/PB version.
 
@@ -129,7 +130,14 @@ cleanup.
       otherwise. Losing this key makes every stored integration secret undecryptable.
       Rotating it also invalidates them (re-enter credentials afterwards).
 - [ ] `PB_URL` + `PB_ADMIN_EMAIL/PASSWORD` set (worker + bootstrap need admin creds)
-- [ ] Seed admin password changed after first login
+- [ ] `PUBLIC_APP_URL` is the public origin, and
+      `PUBLIC_APP_URL/auth/oauth2/callback` is registered **exactly** at both
+      Google and GitHub (scheme, host, path, no trailing slash)
+- [ ] `make bootstrap` ran after configuring the OAuth providers — it disables
+      password/OTP/MFA and prints `sign-in providers = google, github`
+- [ ] Sign in once with the Google/GitHub account whose email is
+      `SEED_ADMIN_EMAIL` (or re-run bootstrap after that account exists to
+      promote it to `role=admin`)
 - [ ] `ALLOW_PRIVATE_NETWORKS=0` (default) unless you intentionally proxy private hosts
 - [ ] TLS in front of the web process — the session cookie gets its `Secure` flag
       automatically in production or on https requests

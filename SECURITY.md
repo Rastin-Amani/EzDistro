@@ -19,20 +19,26 @@ There is currently no formal bug-bounty program.
 
 ## Supported versions
 
-The project is pre-1.0 in application versioning (`APP_VERSION` in
-`app/config.py`) and ships from git tags (`vX.Y.Z`). Security fixes target the latest
+The project versions the application with `APP_VERSION` in
+`app/config.py`, kept equal to the release tag (`vX.Y.Z`). Security fixes target the latest
 tag on the default branch; older tags are best-effort.
 
 ## Security model (what is actually implemented)
 
 These are concrete, code-verified mechanisms, not guarantees:
 
-- **Authentication** — PocketBase-native. `POST /login` calls
-  `users.auth_with_password`; the token is stored in an `HttpOnly`, `SameSite=Lax`
-  cookie (`Secure` in production or over TLS; 30-day max-age). `AuthMiddleware`
-  gates every route; unauthenticated requests redirect to `/login` (303) except a
-  small allow-list (`/login`, `/static/*`, `/manifest.json`, `/sw.js`,
-  `/favicon.ico`, `/health`, `/openapi.json`, `/docs`, `/offline`, `/`).
+- **Authentication** — PocketBase-native **OAuth2 only (Google, GitHub)**. There
+  is no password login: bootstrap disables `passwordAuth`/`otp`/`mfa` on the
+  `users` collection. The provider is chosen on `/login`/`/signup`; the one-off
+  OAuth `state` + PKCE `codeVerifier` are kept in a signed (HMAC), `HttpOnly`,
+  `SameSite=Lax`, 10-minute `oauth_state` cookie scoped to `/auth`. The callback
+  (`/auth/oauth2/callback`) verifies that state and exchanges the code with
+  `users.auth_with_oauth2`; the token is stored in the same `HttpOnly`,
+  `SameSite=Lax` `pb_auth` cookie (`Secure` in production or over TLS; 30-day
+  max-age). `AuthMiddleware` gates every route; unauthenticated requests redirect
+  to `/login` (303) except a small allow-list (`/login`, `/signup`,
+  `/auth/oauth2/*`, `/static/*`, `/manifest.json`, `/sw.js`, `/favicon.ico`,
+  `/health`, `/openapi.json`, `/docs`, `/offline`, `/`).
 - **Authorization** — platform roles `admin`/`member`; per-project membership roles
   `owner > admin > editor > viewer`, enforced per route (`app/api/deps.py`). An
   empty membership list means no access. `ensure_record_in_project()` rejects
@@ -74,4 +80,7 @@ These are concrete, code-verified mechanisms, not guarantees:
 - [ ] Keep `ALLOW_PRIVATE_NETWORKS=0`.
 - [ ] Store `SECRETS_KEY` in a secret manager, separate from PocketBase backups.
 - [ ] Use a dedicated PocketBase superuser for the app, not your dashboard login.
-- [ ] Change the seeded admin password immediately after first login.
+- [ ] Keep password/OTP/MFA auth disabled on `users` (bootstrap enforces it) and
+      register the exact `/auth/oauth2/callback` URL at both providers.
+- [ ] Sign in as `SEED_ADMIN_EMAIL` once, then re-run bootstrap if the account
+      needs promoting to `role=admin`.

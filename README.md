@@ -116,7 +116,8 @@ pip install -r requirements.txt
 npm install && npm run css:build
 
 # 2. Configure
-cp .env.example .env            # PB_URL, PB_ADMIN_EMAIL/PASSWORD, SECRETS_KEY (prod)
+cp .env.example .env            # PB_URL, PB_ADMIN_EMAIL/PASSWORD, SECRETS_KEY,
+                                # PUBLIC_APP_URL + Google/GitHub OAuth credentials
 
 # 3. Bootstrap PocketBase collections (idempotent)
 make bootstrap
@@ -126,7 +127,10 @@ make web                        # uvicorn app.main:app --port 8000
 make worker                     # python -m app.workers.worker
 ```
 
-Login with the seeded admin user (`SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD`).
+Sign in with Google or GitHub (there is no password login). Set
+`PUBLIC_APP_URL` and register `PUBLIC_APP_URL/auth/oauth2/callback` at both
+providers before the first sign-in; see
+[docs/CONFIGURATION.md](docs/CONFIGURATION.md#sign-in-oauth-only-google--github).
 
 ### Workflow
 
