@@ -1175,18 +1175,46 @@ COLLECTIONS: list[dict[str, Any]] = [
             t("code", required=True),
             t("name", required=True),
             t("description", max_len=2000),
-            select("type", ["credit_pack"], required=True),
+            # plan = prepaid hosting period (+ optional managed-AI credits);
+            # credit_pack = managed-AI top-up; service = one-time (e.g. setup).
+            select("type", ["plan", "credit_pack", "service"], required=True),
             boolean("active"),
             # Prices in minor units (cents) — never floats.
             num("priceCents", required=True),
             t("currency", required=True),
-            num("credits", required=True),
+            # Managed-AI article credits included (0 for BYO-only plans).
+            num("credits"),
+            # Days of hosting/plan access granted (0 for top-ups/services).
+            num("planDays"),
+            json_field("features"),
             num("sortOrder"),
             json_field("metadata"),
         ],
         indexes=[
             "CREATE UNIQUE INDEX idx_billing_products_code ON billing_products (code)",
             "CREATE INDEX idx_billing_products_active ON billing_products (active, sortOrder)",
+        ],
+    ),
+    # --------------------------------------------------- billing_entitlements
+    # One row per purchased hosting period. Prepaid time (PayRam cannot
+    # auto-recur), so a renewal extends from the current expiry.
+    col(
+        "billing_entitlements",
+        [
+            rel("user", "users", required=True),
+            rel("product", "billing_products"),
+            t("planCode"),
+            t("planName"),
+            select("status", ["active", "expired", "cancelled"], required=True),
+            date("startsAt"),
+            date("expiresAt"),
+            rel("invoice", "billing_invoices"),
+            json_field("metadata"),
+        ],
+        indexes=[
+            "CREATE INDEX idx_billing_ent_user_status ON billing_entitlements (user, status)",
+            "CREATE INDEX idx_billing_ent_expires ON billing_entitlements (expiresAt)",
+            "CREATE UNIQUE INDEX idx_billing_ent_invoice ON billing_entitlements (invoice)",
         ],
     ),
     # ------------------------------------------------------ billing_invoices
@@ -1201,9 +1229,11 @@ COLLECTIONS: list[dict[str, Any]] = [
             # change an existing invoice.
             t("productCode"),
             t("productName"),
+            t("productType"),
             num("priceCents"),
             t("currency"),
             num("credits"),
+            num("planDays"),
             select(
                 "status",
                 [
@@ -1735,43 +1765,66 @@ def ensure_users_rules(pb: PocketBase) -> None:
 # ---------------------------------------------------------------------------
 DEFAULT_BILLING_PRODUCTS: list[dict[str, Any]] = [
     {
-        "code": "starter",
-        "name": "Starter",
-        "description": "25 article generations.",
-        "type": "credit_pack",
+        "code": "cloud",
+        "name": "Cloud",
+        "description": "Managed EzDistro instance — unlimited projects, your own provider keys.",
+        "type": "plan",
         "active": True,
-        "priceCents": 900,
+        "priceCents": 4900,
         "currency": "USD",
-        "credits": 25,
+        "credits": 0,
+        "planDays": 30,
+        "features": [
+            "Managed instance",
+            "Unlimited projects",
+            "Bring your own provider keys",
+            "Backups & upgrades",
+        ],
         "sortOrder": 10,
     },
     {
-        "code": "growth",
-        "name": "Growth",
-        "description": "100 article generations.",
-        "type": "credit_pack",
-        "active": True,
-        "priceCents": 2900,
-        "currency": "USD",
-        "credits": 100,
-        "sortOrder": 20,
-    },
-    {
-        "code": "scale",
-        "name": "Scale",
-        "description": "500 article generations.",
-        "type": "credit_pack",
+        "code": "cloud_ai",
+        "name": "Cloud + Managed AI",
+        "description": "Everything in Cloud, plus ~30 managed-AI articles per month.",
+        "type": "plan",
         "active": True,
         "priceCents": 9900,
         "currency": "USD",
-        "credits": 500,
+        "credits": 30,
+        "planDays": 30,
+        "features": [
+            "Everything in Cloud",
+            "~30 managed-AI articles per month",
+            "Top up any time",
+        ],
+        "sortOrder": 20,
+    },
+    {
+        "code": "setup",
+        "name": "Setup & onboarding",
+        "description": "We deploy EzDistro and connect your providers.",
+        "type": "service",
+        "active": True,
+        "priceCents": 29900,
+        "currency": "USD",
+        "credits": 0,
+        "planDays": 0,
+        "features": ["Deployment", "Provider setup", "Handover call"],
         "sortOrder": 30,
     },
 ]
 
+# Credit-pack codes from the earlier per-article model. Deactivated (not
+# deleted) so existing invoices keep resolving.
+LEGACY_BILLING_CODES = ("starter", "growth", "scale")
+
 
 def seed_billing_products(pb: PocketBase) -> None:
-    """Create the default credit packs once; never overwrite operator edits."""
+    """Create the plan catalog once and retire the old credit-pack codes.
+
+    Existing rows are never overwritten — operators may re-price or rename
+    products in the PocketBase admin and a re-bootstrap must not undo that.
+    """
     for spec in DEFAULT_BILLING_PRODUCTS:
         try:
             pb.collection("billing_products").get_first_list_item(
@@ -1781,7 +1834,20 @@ def seed_billing_products(pb: PocketBase) -> None:
         except Exception:
             pass
         pb.collection("billing_products").create(spec)
-    print("billing_products: defaults ensured")
+    for code in LEGACY_BILLING_CODES:
+        try:
+            row = pb.collection("billing_products").get_first_list_item(
+                f'code="{code}"', {"perPage": 1}
+            )
+        except Exception:
+            continue
+        from app.repositories.base import record_to_dict
+
+        row = record_to_dict(row) if not isinstance(row, dict) else row
+        if row.get("active"):
+            pb.collection("billing_products").update(row["id"], {"active": False})
+            print(f"billing_products: retired legacy pack {code}")
+    print("billing_products: plan catalog ensured")
 
 
 def seed_defaults(pb: PocketBase) -> None:

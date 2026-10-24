@@ -8633,7 +8633,9 @@
         "help": "",
         "maxSelect": 1,
         "values": [
-          "credit_pack"
+          "plan",
+          "credit_pack",
+          "service"
         ],
         "id": "select8cde5729"
       },
@@ -8678,7 +8680,7 @@
       {
         "name": "credits",
         "type": "number",
-        "required": true,
+        "required": false,
         "system": false,
         "hidden": false,
         "presentable": false,
@@ -8687,6 +8689,30 @@
         "max": null,
         "onlyInt": false,
         "id": "number4117d17e"
+      },
+      {
+        "name": "planDays",
+        "type": "number",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false,
+        "id": "number0a5cf1ff"
+      },
+      {
+        "name": "features",
+        "type": "json",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSize": 0,
+        "id": "jsonbfc0dc13"
       },
       {
         "name": "sortOrder",
@@ -8757,6 +8783,181 @@
     "updateRule": null,
     "deleteRule": null,
     "id": "pbc_b5098d23",
+    "system": false
+  },
+  {
+    "name": "billing_entitlements",
+    "type": "base",
+    "fields": [
+      {
+        "name": "user",
+        "type": "relation",
+        "required": true,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "collectionId": "_pb_users_auth_",
+        "cascadeDelete": false,
+        "minSelect": 0,
+        "maxSelect": 1,
+        "id": "relation8d93d649"
+      },
+      {
+        "name": "product",
+        "type": "relation",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "collectionId": "pbc_b5098d23",
+        "cascadeDelete": false,
+        "minSelect": 0,
+        "maxSelect": 1,
+        "id": "relationd34a04ad"
+      },
+      {
+        "name": "planCode",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0,
+        "id": "text96ad3d01"
+      },
+      {
+        "name": "planName",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0,
+        "id": "textbf9b739f"
+      },
+      {
+        "name": "status",
+        "type": "select",
+        "required": true,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSelect": 1,
+        "values": [
+          "active",
+          "expired",
+          "cancelled"
+        ],
+        "id": "select7b00651c"
+      },
+      {
+        "name": "startsAt",
+        "type": "date",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": "",
+        "max": "",
+        "id": "date1380f8d1"
+      },
+      {
+        "name": "expiresAt",
+        "type": "date",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": "",
+        "max": "",
+        "id": "date2b8c7d2f"
+      },
+      {
+        "name": "invoice",
+        "type": "relation",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "collectionId": "pbc_6c9cf8ec",
+        "cascadeDelete": false,
+        "minSelect": 0,
+        "maxSelect": 1,
+        "id": "relation90651744"
+      },
+      {
+        "name": "metadata",
+        "type": "json",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "maxSize": 0,
+        "id": "json4f143414"
+      },
+      {
+        "name": "id",
+        "type": "text",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "primaryKey": true,
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "pattern": "",
+        "min": 0,
+        "max": 15,
+        "id": "textbf396750"
+      },
+      {
+        "name": "created",
+        "type": "date",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "onCreate": true,
+        "id": "dateb23db7b8"
+      },
+      {
+        "name": "updated",
+        "type": "date",
+        "required": false,
+        "system": true,
+        "hidden": false,
+        "presentable": false,
+        "onUpdate": true,
+        "id": "datec69b96f7"
+      }
+    ],
+    "indexes": [
+      "CREATE INDEX idx_billing_ent_user_status ON billing_entitlements (user, status)",
+      "CREATE INDEX idx_billing_ent_expires ON billing_entitlements (expiresAt)",
+      "CREATE UNIQUE INDEX idx_billing_ent_invoice ON billing_entitlements (invoice)"
+    ],
+    "listRule": null,
+    "viewRule": null,
+    "createRule": null,
+    "updateRule": null,
+    "deleteRule": null,
+    "id": "pbc_efe70f38",
     "system": false
   },
   {
@@ -8837,6 +9038,21 @@
         "id": "text53559cdd"
       },
       {
+        "name": "productType",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "primaryKey": false,
+        "autogeneratePattern": "",
+        "pattern": "",
+        "min": 0,
+        "max": 0,
+        "id": "text81a8b5f2"
+      },
+      {
         "name": "priceCents",
         "type": "number",
         "required": false,
@@ -8876,6 +9092,19 @@
         "max": null,
         "onlyInt": false,
         "id": "number4117d17e"
+      },
+      {
+        "name": "planDays",
+        "type": "number",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "presentable": false,
+        "help": "",
+        "min": null,
+        "max": null,
+        "onlyInt": false,
+        "id": "number0a5cf1ff"
       },
       {
         "name": "status",
