@@ -89,6 +89,16 @@ release builds on. Format is based on [Keep a Changelog](https://keepachangelog.
   stayed after the article was fixed. It now counts failed articles/topics plus
   failed jobs that own no artifact.
 
+## [v1.26.0] — 2026-10-24
+
+### Changed
+- **Billing is now plans, not credit packs with a free allowance.** Users who
+  bring their own LLM key are unmetered; only managed-AI generation consumes
+  credits. Paid plans (`Cloud`, `Cloud+AI`) grant prepaid access periods that
+  stack on renewal, plus a one-off `Setup` service — tracked in a new
+  `billing_entitlements` ledger. The free allowance and its reset are gone;
+  existing invoices keep their snapshots and nothing historical is reinterpreted.
+
 ## [v1.25.0] — 2026-10-20
 
 ### Changed
