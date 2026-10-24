@@ -74,6 +74,10 @@ release builds on. Format is based on [Keep a Changelog](https://keepachangelog.
   retried inside that window and burned every attempt on a transient capacity
   blip (internal linking failed right after publishing). The hint is parsed into
   `retry_after_seconds`, so the retry waits it out.
+
+## [v1.25.3] — 2026-10-24
+
+### Fixed
 - **Approving an opportunity adds it to the content plan, nothing else.** The
   handoff created a draft article (and sometimes a write job) at approval time,
   so "approve all" filled Articles with hundreds of empty drafts for topics that
