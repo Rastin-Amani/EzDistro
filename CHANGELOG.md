@@ -9,6 +9,14 @@ release builds on. Format is based on [Keep a Changelog](https://keepachangelog.
 
 ## [Unreleased]
 
+## [v1.27.2] — 2026-10-24
+
+### Fixed
+- **Version strings read the release again.** The `APP_VERSION` default and
+  its documented literals still said `1.27.0` after the v1.27.1 tag, so the
+  footer, `/health`, worker versions and the PWA cache key reported a stale
+  version. They now read `1.27.1`.
+
 ## [v1.27.1] — 2026-10-24
 
 ### Fixed
