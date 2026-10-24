@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-<main class="min-h-dvh bg-base-100 text-base-content">
+<main class="min-h-dvh bg-base-100 text-base-content" hx-boost="false">
     <div class="mx-auto grid min-h-dvh w-full max-w-7xl lg:grid-cols-[minmax(0,1fr)_minmax(26rem,34rem)]">
         <aside class="hidden flex-col justify-between border-e border-base-300 bg-base-200/50 px-8 py-10 lg:flex xl:px-14" aria-label="{{ ('SEO automation and content generation platform') }}">
             <div class="flex items-center gap-3">
@@ -40,7 +40,7 @@
             <p class="text-xs text-base-content/60">{{ ('Version %(v)s') % {'v': app_version} }}</p>
         </aside>
 
-        <section aria-labelledby="login-title" class="relative flex min-h-dvh flex-col justify-center px-4 pb-12 pt-24 sm:px-8 lg:px-12 xl:px-16">
+        <section aria-labelledby="auth-title" class="relative flex min-h-dvh flex-col justify-center px-4 pb-12 pt-24 sm:px-8 lg:px-12 xl:px-16">
             <div class="absolute end-4 top-4 flex items-center gap-1" aria-label="{{ ('Display settings') }}">
                 {% include "components/theme_switcher.html" %}
             </div>
@@ -52,32 +52,77 @@
                 </div>
 
                 <header class="mb-7">
-                    <h1 id="login-title" class="text-[1.75rem] font-extrabold leading-tight tracking-[-0.03em] text-base-content">
+                    <h1 id="auth-title" class="text-[1.75rem] font-extrabold leading-tight tracking-[-0.03em] text-base-content">
+                        {% if mode == 'signup' %}
+                        {{ ('Create your account') }}
+                        {% else %}
                         {{ ('Sign in to %(v)s') % {'v': app_name or 'EzDistro'} }}
+                        {% endif %}
                     </h1>
-                    <p class="mt-2 text-sm leading-relaxed text-base-content/65">{{ ('Use the account your administrator created for you.') }}</p>
+                    <p class="mt-2 text-sm leading-relaxed text-base-content/65">
+                        {% if mode == 'signup' %}
+                        {{ ('Use your %(v)s account to get started. No password to remember.') % {'v': provider_text} }}
+                        {% else %}
+                        {{ ('Continue with %(v)s. No password to remember.') % {'v': provider_text} }}
+                        {% endif %}
+                    </p>
                 </header>
 
                 {% if error %}
-                <span hidden data-toast-type="error" data-toast-message="{{ error }}"></span>
-                {% elif disabled %}
-                <span hidden data-toast-type="warning" data-toast-message="{{ ('Your account has been deactivated. Contact an administrator to reactivate it.') }}"></span>
+                <div class="mb-6 border-s-2 px-4 py-3 {% if toast_type == 'warning' %}border-warning bg-warning/5{% else %}border-error bg-error/5{% endif %}" role="{{ 'status' if toast_type == 'warning' else 'alert' }}">
+                    <p class="text-sm font-medium text-base-content">{{ error }}</p>
+                </div>
                 {% endif %}
 
-                <!-- Native POST keeps the session cookie reliable on mobile browsers. -->
-                <form method="post" action="/login" hx-boost="false" class="flex flex-col gap-5">
-                    <div>
-                        <label for="login-email" class="mb-1.5 block text-[0.8125rem] font-medium text-base-content/80">{{ ('Email') }}</label>
-                        <input id="login-email" type="email" name="email" value="{{ email|default('') }}" class="input validator h-12 w-full" placeholder="you@example.com" required autocomplete="email" autocapitalize="none" spellcheck="false" inputmode="email" dir="ltr" />
-                    </div>
+                {% if problem == 'unavailable' %}
+                <div class="mb-6 border-s-2 border-warning bg-warning/5 px-4 py-3" role="status">
+                    <p class="text-sm font-medium text-base-content">{{ ('Sign-in is temporarily unavailable.') }}</p>
+                    <p class="mt-1 text-xs leading-relaxed text-base-content/65">{{ ('The authentication service could not be reached. Try again in a moment.') }}</p>
+                </div>
+                {% elif problem == 'not_configured' %}
+                <div class="mb-6 border-s-2 border-warning bg-warning/5 px-4 py-3" role="status">
+                    <p class="text-sm font-medium text-base-content">{{ ('Sign-in is not configured yet.') }}</p>
+                    <p class="mt-1 text-xs leading-relaxed text-base-content/65">{{ ('An administrator needs to enable Google or GitHub sign-in.') }}</p>
+                </div>
+                {% endif %}
 
-                    <div>
-                        <label for="login-password" class="mb-1.5 block text-[0.8125rem] font-medium text-base-content/80">{{ ('Password') }}</label>
-                        <input id="login-password" type="password" name="password" class="input validator h-12 w-full" required autocomplete="current-password" dir="ltr" />
-                    </div>
+                {% if providers %}
+                <div class="flex flex-col gap-3">
+                    {% for provider in providers %}
+                    <a href="{{ provider.href }}" rel="nofollow" class="btn h-12 min-h-12 w-full justify-center gap-3 border border-base-300 bg-base-100 text-[0.9375rem] font-semibold text-base-content hover:border-base-content/25 hover:bg-base-200/60">
+                        {% if provider.name == 'google' %}
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 18" class="size-[1.125rem] flex-none" aria-hidden="true" focusable="false">
+                            <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.91c1.7-1.57 2.69-3.88 2.69-6.62Z" />
+                            <path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.91-2.26c-.81.54-1.84.86-3.05.86-2.34 0-4.32-1.58-5.03-3.71H.96v2.33A9 9 0 0 0 9 18Z" />
+                            <path fill="#FBBC05" d="M3.97 10.71a5.4 5.4 0 0 1 0-3.42V4.96H.96a9 9 0 0 0 0 8.08l3.01-2.33Z" />
+                            <path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.59A9 9 0 0 0 .96 4.96l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58Z" />
+                        </svg>
+                        {% elif provider.name == 'github' %}
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="size-[1.125rem] flex-none fill-current" aria-hidden="true" focusable="false">
+                            <path d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56v-2.17c-3.2.7-3.87-1.36-3.87-1.36-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.56-.29-5.25-1.28-5.25-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.79 0c2.21-1.49 3.18-1.18 3.18-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.42-2.7 5.39-5.27 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.68.8.56A11.51 11.51 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5Z" />
+                        </svg>
+                        {% endif %}
+                        <span>{{ ('Continue with %(v)s') % {'v': provider.label} }}</span>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% elif problem == 'unavailable' %}
+                <a href="{{ request.url.path }}" class="btn h-12 min-h-12 w-full border border-base-300 bg-base-100 text-[0.9375rem] font-semibold">{{ ('Try again') }}</a>
+                {% endif %}
 
-                    <button type="submit" class="btn btn-primary mt-1 h-12 min-h-12 w-full text-[0.9375rem] font-semibold">{{ ('Sign in') }}</button>
-                </form>
+                <p class="mt-8 text-center text-sm text-base-content/65">
+                    {% if mode == 'signup' %}
+                    {{ ('Already have an account?') }}
+                    <a href="/login" class="link font-semibold text-base-content underline-offset-4">{{ ('Sign in') }}</a>
+                    {% else %}
+                    {{ ('New to %(v)s?') % {'v': app_name or 'EzDistro'} }}
+                    <a href="/signup" class="link font-semibold text-base-content underline-offset-4">{{ ('Create an account') }}</a>
+                    {% endif %}
+                </p>
+
+                <p class="mt-6 text-center text-xs leading-relaxed text-base-content/60">
+                    {{ ('We only receive your name, email address and profile picture from your provider.') }}
+                </p>
 
                 <p class="mt-10 text-center text-xs text-base-content/60">{{ ('Version %(v)s') % {'v': app_version} }}</p>
             </div>

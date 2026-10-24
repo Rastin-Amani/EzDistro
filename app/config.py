@@ -82,14 +82,33 @@ class Settings(BaseSettings):
     # --- web ---
     page_size: int = 25  # default pagination for UI lists
 
+    # --- public app URL ---
+    # Canonical origin of THIS app, used for the OAuth callback and the billing
+    # checkout return URL. No trailing slash. Must match the redirect URI
+    # registered at Google/GitHub (see docs/CONFIGURATION.md).
+    public_app_url: str = "http://localhost:8000"
+    oauth_callback_path: str = "/auth/oauth2/callback"
+
+    @property
+    def oauth_callback_url(self) -> str:
+        return self.public_app_url.rstrip("/") + self.oauth_callback_path
+
+    # --- OAuth sign-in providers (written to PocketBase by bootstrap) ---
+    # Google/GitHub are the only sign-in methods. Credentials live in the
+    # PocketBase users collection auth options; these env vars let `make
+    # bootstrap` provision/rotate them without the PB dashboard. Empty values
+    # leave an already-configured provider untouched.
+    google_oauth_client_id: str = ""
+    google_oauth_client_secret: str = ""
+    github_oauth_client_id: str = ""
+    github_oauth_client_secret: str = ""
+
     # --- billing / payments ---
     # Disabled by default so existing deployments keep working unchanged until
     # an operator turns monetization on. When enabled, article generation is
     # metered against the per-user free allowance and purchased credits.
     billing_enabled: bool = False
     billing_provider: str = "payram"
-    # Public base URL of THIS app (used for the checkout return URL). No trailing slash.
-    public_app_url: str = "http://localhost:8000"
     billing_currency: str = "USD"
     # BYO provider keys are unmetered. Managed-AI generations (a project with no
     # enabled LLM integration) consume purchased managed-AI credits.

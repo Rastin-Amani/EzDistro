@@ -15,6 +15,8 @@ from app.repositories.base import record_to_dict
 # Routes anyone can access without a token.
 PUBLIC_PATHS = [
     "/login",
+    "/signup",
+    "/auth/oauth2",
     "/static",
     "/manifest.json",
     "/sw.js",
@@ -39,6 +41,7 @@ NO_AUTH_PATHS = (
     "/openapi.json",
     "/docs",
     "/offline",
+    "/auth/oauth2",
 )
 
 # Session validation cache. A PocketBase `auth_refresh()` is a full network
@@ -141,7 +144,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
         # ---- Gate: authenticated users only ----
         is_public = path == "/" or any(path.startswith(p) for p in PUBLIC_PATHS)
         if not request.state.user and not is_public:
-            login_url = "/login?disabled=1" if disabled else "/login"
+            login_url = "/login?error=disabled" if disabled else "/login"
             if request.headers.get("HX-Request") == "true":
                 # A partial swap must not inject the login page into the target:
                 # tell HTMX to navigate the whole browser instead.

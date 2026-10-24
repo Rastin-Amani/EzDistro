@@ -1760,6 +1760,119 @@ def ensure_users_rules(pb: PocketBase) -> None:
         print("users collection: API rules locked to superuser-only")
 
 
+def ensure_users_auth(pb: PocketBase) -> None:
+    """Make Google + GitHub OAuth2 the only way to sign in or sign up.
+
+    Password, OTP and MFA auth are disabled on the users collection. Providers
+    are configured from ``GOOGLE_OAUTH_CLIENT_ID/SECRET`` and
+    ``GITHUB_OAUTH_CLIENT_ID/SECRET`` when both values are present; otherwise an
+    already-configured provider is left untouched (so a live database keeps its
+    existing Google client).
+
+    Uses the RAW admin API with camelCase keys, like ``ensure_users_fields``.
+    PocketBase merges partially submitted provider configs by name, which is
+    what lets us resend a provider without its redacted ``clientSecret``. On an
+    older server without that merge the PATCH fails validation instead of
+    wiping the secret — we then retry with only the auth-method flags.
+    """
+    base = str(pb.base_url).rstrip("/")
+    headers = {"Authorization": getattr(pb.auth_store, "token", "")}
+    url = f"{base}/api/collections/users"
+    response = httpx.get(url, headers=headers, timeout=15)
+    if response.status_code != 200:
+        raise RuntimeError(
+            f"Could not read the users schema (HTTP {response.status_code}): {response.text[:200]}"
+        )
+    data = response.json()
+
+    oauth2 = dict(data.get("oauth2") or {})
+    providers = [
+        dict(p)
+        for p in (oauth2.get("providers") or [])
+        if str(p.get("name") or "") in {"google", "github"}
+    ]
+    by_name = {str(p.get("name")): p for p in providers}
+
+    credentials = {
+        "google": (settings.google_oauth_client_id, settings.google_oauth_client_secret),
+        "github": (settings.github_oauth_client_id, settings.github_oauth_client_secret),
+    }
+    for name, (client_id, client_secret) in credentials.items():
+        if not client_id:
+            continue
+        provider = by_name.get(name)
+        if provider is None:
+            if not client_secret:
+                continue
+            provider = {
+                "pkce": None,
+                "name": name,
+                "clientId": client_id,
+                "clientSecret": client_secret,
+                "authURL": "",
+                "tokenURL": "",
+                "userInfoURL": "",
+                "displayName": "",
+                "extra": {},
+            }
+            providers.append(provider)
+            by_name[name] = provider
+        else:
+            provider["clientId"] = client_id
+            if client_secret:
+                provider["clientSecret"] = client_secret
+
+    oauth2["providers"] = providers
+    oauth2["enabled"] = bool(providers)
+
+    auth_flags = {
+        # Keep the read objects intact (identityFields, templates, duration…)
+        # and only flip the switch: a partial nested object would reset them.
+        "passwordAuth": {**(data.get("passwordAuth") or {}), "enabled": False},
+        "otp": {**(data.get("otp") or {}), "enabled": False},
+        "mfa": {**(data.get("mfa") or {}), "enabled": False},
+    }
+
+    patched = httpx.patch(url, headers=headers, json={"oauth2": oauth2, **auth_flags}, timeout=20)
+    if patched.status_code != 200:
+        if "clientSecret" not in patched.text:
+            raise RuntimeError(
+                f"Could not update the users auth options (HTTP {patched.status_code}): "
+                f"{patched.text[:300]}"
+            )
+        # Old PocketBase: provider configs cannot be merged without resending
+        # the secret. Still enforce OAuth-only sign-in, leave providers as-is.
+        fallback = httpx.patch(url, headers=headers, json=auth_flags, timeout=20)
+        if fallback.status_code != 200:
+            raise RuntimeError(
+                f"Could not disable password sign-in (HTTP {fallback.status_code}): "
+                f"{fallback.text[:300]}"
+            )
+        print(
+            "WARNING: OAuth providers were left unchanged (server cannot merge "
+            "redacted client secrets). Configure Google/GitHub in the PocketBase "
+            "dashboard, then re-run bootstrap."
+        )
+    else:
+        print("users collection: OAuth-only sign-in enabled (google, github)")
+        print("users collection: sign-in providers = " + (", ".join(sorted(by_name)) or "none"))
+
+    if patched.status_code != 200:
+        existing = [
+            str(p.get("name") or "") for p in (data.get("oauth2") or {}).get("providers") or []
+        ]
+        print(
+            "users collection: sign-in providers = "
+            + (", ".join(sorted(n for n in existing if n)) or "none")
+        )
+    elif not by_name:
+        print(
+            "WARNING: no OAuth provider is configured — nobody can sign in. Set "
+            "GOOGLE_OAUTH_CLIENT_ID/SECRET or GITHUB_OAUTH_CLIENT_ID/SECRET and "
+            "re-run bootstrap."
+        )
+
+
 # ---------------------------------------------------------------------------
 # Billing: default credit packs (idempotent; safe to re-run)
 # ---------------------------------------------------------------------------
@@ -1939,17 +2052,31 @@ def _upsert_prompt(
 
 
 def seed_admin_user(pb: PocketBase) -> None:
-    email = os.getenv("SEED_ADMIN_EMAIL", "admin@ezdistro.local")
+    """Provision (or promote) the platform admin, matched by email.
+
+    Sign-in is OAuth-only, so ``SEED_ADMIN_PASSWORD`` is never a login secret:
+    it only exists because the PocketBase users collection requires a password
+    field. The admin must sign in with Google/GitHub using exactly
+    ``SEED_ADMIN_EMAIL`` — PocketBase links the OAuth identity to the existing
+    record by verified email, and the admin role stays. Running bootstrap again
+    also promotes an account that signed up first, which is the recovery path
+    when nobody had the role yet.
+    """
+    email = os.getenv("SEED_ADMIN_EMAIL", "admin@ezdistro.local").strip()
     password = os.getenv("SEED_ADMIN_PASSWORD", "")
-    if not password:
-        print("SKIP: SEED_ADMIN_PASSWORD not set — no seed admin user created.")
-        return
     try:
-        pb.collection("users").get_first_list_item(f'email="{email}"', {"perPage": 1})
-        print("seed admin already exists:", email)
+        existing = pb.collection("users").get_first_list_item(f'email="{email}"', {"perPage": 1})
+        if str(existing.role or "") != "admin":
+            pb.collection("users").update(existing.id, {"role": "admin"})
+            print(f"seed admin promoted: {email}")
+        else:
+            print("seed admin already exists:", email)
         return
     except Exception:
         pass
+    if not password:
+        print(f"SKIP: no user {email} yet (set SEED_ADMIN_PASSWORD to pre-create it).")
+        return
     pb.collection("users").create(
         {
             "email": email,
@@ -1960,7 +2087,10 @@ def seed_admin_user(pb: PocketBase) -> None:
             "verified": True,
         }
     )
-    print(f"seed admin created: {email} (CHANGE THE PASSWORD IMMEDIATELY!)")
+    print(
+        f"seed admin created: {email} — sign in with Google/GitHub using this "
+        "exact email to claim the admin role."
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -2075,6 +2205,7 @@ def main() -> None:
     backfill_integration_models(pb)
     ensure_users_fields(pb)
     ensure_users_rules(pb)
+    ensure_users_auth(pb)
     seed_defaults(pb)
     seed_billing_products(pb)
     seed_admin_user(pb)
