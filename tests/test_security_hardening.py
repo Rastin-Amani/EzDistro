@@ -121,54 +121,56 @@ def test_disabled_user_with_valid_session_is_logged_out(pb):
         client.cookies.set("pb_auth", "tok-u2")
         resp = client.get("/dashboard", follow_redirects=False)
         assert resp.status_code == 303
-        assert resp.headers["location"] == "/login?disabled=1"
+        assert resp.headers["location"] == "/login?error=disabled"
         # dead cookie dropped (header check — httpx's jar keeps manually-set
         # cookies, same quirk test_logout_clears_cookie works around)
         assert "Max-Age=0" in resp.headers.get("set-cookie", "")
         # no bounce loop: the notice page itself is public
-        follow = client.get("/login?disabled=1")
+        follow = client.get("/login?error=disabled")
         assert follow.status_code == 200
-        assert 'data-toast-type="warning"' in follow.text
-        assert 'class="alert' not in follow.text
+        assert 'role="status"' in follow.text
         assert "deactivated" in follow.text
 
 
-def test_login_refuses_disabled_account_native(pb):
-    """AC7b: native form POST → Persian error page, no session cookie."""
+def test_login_page_has_no_password_form(pb):
+    """AC7b: passwords are gone, so there is no credential form to attack."""
     with TestClient(app) as client:
-        resp = client.post("/login", data={"email": "off@x.com", "password": "pw123456"})
+        resp = client.get("/login")
         assert resp.status_code == 200
-        assert 'data-toast-type="error"' in resp.text
-        assert 'class="alert' not in resp.text
-        assert "Your account is disabled" in resp.text
-        assert "pb_auth" not in resp.headers.get("set-cookie", "")
-        # still anonymous afterwards
-        assert client.get("/projects", follow_redirects=False).status_code == 303
+        assert 'type="password"' not in resp.text
+        assert "<form" not in resp.text
+        assert "Continue with Google" in resp.text
 
 
-def test_login_refuses_disabled_account_htmx(pb):
+def test_disabled_account_cannot_get_a_session(pb):
+    """AC7b: the OAuth callback refuses a disabled account."""
+    pb.storage.records("users")[0]["disabled"] = True
     with TestClient(app) as client:
-        resp = client.post(
-            "/login",
-            data={"email": "off@x.com", "password": "pw123456"},
-            headers={"HX-Request": "true"},
-        )
-        assert resp.status_code == 200
-        events = json.loads(resp.headers.get("hx-trigger", "{}"))
-        assert "disabled" in events["show-toast"]["message"]
-        assert "pb_auth" not in resp.headers.get("set-cookie", "")
-
-
-def test_enabled_user_login_still_works(pb):
-    """Regression: the disabled check must not break normal login."""
-    with TestClient(app) as client:
-        resp = client.post(
-            "/login",
-            data={"email": "ok@x.com", "password": "pw123456"},
+        assert "state=st-google" in client.get("/login").text
+        resp = client.get(
+            "/auth/oauth2/callback?code=good-code&state=st-google",
             follow_redirects=False,
         )
         assert resp.status_code == 303
-        assert "pb_auth=tok-u1" in resp.headers.get("set-cookie", "")
+        assert resp.headers["location"] == "/login?error=disabled"
+        assert not any(
+            cookie.startswith("pb_auth=") and "Max-Age=0" not in cookie
+            for cookie in resp.headers.get_list("set-cookie")
+        )
+        assert client.get("/projects", follow_redirects=False).status_code == 303
+
+
+def test_enabled_user_login_still_works(pb):
+    """Regression: the disabled check must not break normal OAuth sign-in."""
+    with TestClient(app) as client:
+        assert "state=st-google" in client.get("/login").text
+        resp = client.get(
+            "/auth/oauth2/callback?code=good-code&state=st-google",
+            follow_redirects=False,
+        )
+        assert resp.status_code == 303
+        assert resp.headers["location"] == "/dashboard"
+        assert any("pb_auth=tok-u1" in cookie for cookie in resp.headers.get_list("set-cookie"))
         assert client.get("/dashboard").status_code == 200
 
 

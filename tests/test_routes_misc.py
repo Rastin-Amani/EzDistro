@@ -59,12 +59,13 @@ def test_debug_page_dev_only():
     assert payload == {"user": "admin1"}
 
 
-def test_login_page_renders():
+def test_login_page_renders(monkeypatch):
     from app.api.auth import login_page
 
     pb = make_pb()
     req = make_req(pb, make_user(), "")
     req.state.user = None
+    monkeypatch.setattr("app.api.auth.get_pb", lambda: pb)
     resp = login_page(req)
     assert resp.status_code == 200
     assert "Sign in to EzDistro" in resp.body.decode()

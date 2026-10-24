@@ -31,6 +31,7 @@ def make_req(pb: FakePocketBase, user: dict, project_id: str) -> SimpleNamespace
     return SimpleNamespace(
         state=SimpleNamespace(pb=pb, user=user, req_id="r1"),
         headers={"HX-Request": "true"},
+        cookies={},
         url=SimpleNamespace(path=f"/projects/{project_id}"),
         query_params={},
         url_for=url_for,

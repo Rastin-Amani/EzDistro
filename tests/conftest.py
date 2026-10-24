@@ -45,3 +45,5 @@ def _fake_middleware_pb(monkeypatch):
     fake = FakePocketBase(default_unique_fields())
     monkeypatch.setattr("app.middleware.get_pb", lambda: fake)
     monkeypatch.setattr("app.middleware.get_data_pb", lambda: fake)
+    # The login page lists OAuth providers through its own client.
+    monkeypatch.setattr("app.api.auth.get_pb", lambda: fake)
