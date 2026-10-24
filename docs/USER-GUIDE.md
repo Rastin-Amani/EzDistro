@@ -25,7 +25,7 @@ UI language:           English (LTR) · PWA-enabled
    - **Jobs** (`/jobs`) — job monitor; the **Failed jobs** dead-letter view opens from here,
    - **Workers** (`/workers`) — worker liveness from heartbeats (desktop rail),
    - **Events** (`/logs`) — platform event feed,
-   - **Billing** (`/billing`) — balance, credit packs and payment history.
+   - **Billing** (`/billing`) — current plan, managed-AI allowance and payment history.
 
 **Expected result:** the dashboard shows content/article counters, job pipeline
 counts, indexing health per project, provider health, failure rate and average

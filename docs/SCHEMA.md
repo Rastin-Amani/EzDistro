@@ -87,11 +87,12 @@ and payments (§3.35–§3.39, [BILLING.md](BILLING.md)).
 | `article_ideas` | Scored opportunities (`generate`/`update`/`expand`/`support`/`reject`) | — |
 | `serp_queries` | Cached SERP observations (optional provider) | unique `(project, keyword, provider, locale, location)` |
 | `serp_results` | Individual organic results for a SERP query | — |
-| `billing_products` | Purchasable credit packs (trusted prices/credits) | unique `code` |
+| `billing_products` | Plans / managed-AI top-ups / one-time services (trusted prices) | unique `code` |
+| `billing_entitlements` | Prepaid plan periods per user (renewal extends expiry) | unique `invoice` |
 | `billing_invoices` | One per checkout; snapshots the purchased terms | unique `invoiceNumber` |
 | `billing_payment_events` | Verified provider webhook notifications | unique `eventKey` |
-| `billing_usage` | One row per metered generation (free/credit) | unique `operationKey` |
-| `credit_transactions` | **Append-only** credit ledger | unique `idempotencyKey` |
+| `billing_usage` | One row per metered managed-AI generation | unique `operationKey` |
+| `credit_transactions` | **Append-only** managed-AI credit ledger | unique `idempotencyKey` |
 
 ### Entity relationships
 
@@ -766,24 +767,45 @@ Index: (query, position).
 
 ### 3.35 billing_products
 
-Purchasable credit packs — trusted server-side rows (prices are integers in minor
-units, never floats). Seeded once by `seed_billing_products` (never overwritten).
+Purchasable plans, managed-AI top-ups and one-time services — trusted server-side
+rows (prices are integers in minor units, never floats). Seeded once by
+`seed_billing_products` (never overwritten); legacy credit-pack codes are retired
+(inactive), not deleted.
 
 | field | type | notes |
 |---|---|---|
 | code* | text | U; stable identifier used by checkout |
 | name* / description | text | |
-| type* | sel | `credit_pack` |
-| active | bool | only active rows are listed/ purchasable |
+| type* | sel | `plan` \| `credit_pack` \| `service` |
+| active | bool | only active rows are listed/purchasable |
 | priceCents* | num | integer minor units (cents) |
 | currency* | text | e.g. `USD` |
-| credits* | num | article generations granted |
+| credits | num | managed-AI articles included (0 for BYO-only plans) |
+| planDays | num | hosting days granted (0 for top-ups/services) |
+| features | json | display bullets |
 | sortOrder | num | display order |
 | metadata | json | |
 
 Indexes: UNIQUE code; (active, sortOrder).
 
-### 3.36 billing_invoices
+### 3.36 billing_entitlements
+
+One row per purchased plan period. PayRam cannot auto-recur, so plans are prepaid
+periods and a renewal extends from the current expiry.
+
+| field | type | notes |
+|---|---|---|
+| user* R | users | |
+| product R | billing_products | |
+| planCode / planName | text | snapshot |
+| status* | sel | `active` \| `expired` \| `cancelled` |
+| startsAt / expiresAt | date | prepaid window |
+| invoice R | billing_invoices | U; exactly one entitlement per paid invoice |
+| metadata | json | |
+
+Indexes: (user, status); (expiresAt); UNIQUE invoice.
+
+### 3.37 billing_invoices
 
 One row per checkout attempt; snapshots the purchased terms so later product edits
 never change an existing invoice.
@@ -793,8 +815,9 @@ never change an existing invoice.
 | user* R | users | no cascade |
 | product R | billing_products | |
 | invoiceNumber* | text | U; `INV-<epoch>-<hex>` |
-| productCode / productName | text | snapshot |
+| productCode / productName / productType | text | snapshot |
 | priceCents / currency / credits | num/text/num | snapshot |
+| planDays | num | snapshot of the plan period |
 | status* | sel | `pending` \| `awaiting_payment` \| `paid` \| `partially_paid` \| `failed` \| `expired` \| `cancelled` \| `refunded` \| `needs_review` |
 | provider / providerReference / checkoutUrl | text | provider linkage |
 | expectedAmountUsd / paidAmountUsd / overpaidAmountUsd | num | USD |
@@ -804,7 +827,7 @@ never change an existing invoice.
 
 Indexes: UNIQUE invoiceNumber; (user, created); (provider, providerReference); (status).
 
-### 3.37 billing_payment_events
+### 3.38 billing_payment_events
 
 Verified provider webhook notifications (dedup key unique). Append-mostly.
 
@@ -820,30 +843,32 @@ Verified provider webhook notifications (dedup key unique). Append-mostly.
 
 Indexes: UNIQUE eventKey; (invoice); (processed).
 
-### 3.38 billing_usage
+### 3.39 billing_usage
 
-One row per metered generation attempt — the free-allowance / credit accounting.
+One row per metered generation attempt — **managed-AI only**. Projects with their
+own LLM integration (BYO keys) are unmetered and create no usage row.
 
 | field | type | notes |
 |---|---|---|
 | user* R | users | no cascade |
 | project R | projects | |
 | operationKey* | text | U; e.g. `write:article:<topicId>` |
-| source* | sel | `free` \| `credit` |
-| quantity | num | generations consumed |
+| source* | sel | `credit` (legacy rows may be `free`) |
+| quantity | num | managed-AI credits consumed |
 | unit | text | `article` |
 | status* | sel | `reserved` \| `completed` \| `released` |
 | job | text | job id (audit, not a relation) |
 | creditTransaction R | credit_transactions | set for a credit spend |
 | completedAt / releasedAt | date | |
-| metadata | json | |
+| metadata | json | `{metered: "managed_ai"}` |
 
 Indexes: UNIQUE operationKey; (user, created); (user, source, status); (job).
 
-### 3.39 credit_transactions
+### 3.40 credit_transactions
 
-**Append-only** credit ledger: `grant` (+) on paid invoice, `spend` (−) on a credit
-generation, `refund` (+) on release, `adjustment` (±) manual. Never edited.
+**Append-only** managed-AI credit ledger: `grant` (+) on a paid plan/top-up,
+`spend` (−) on a managed-AI generation, `refund` (+) on release, `adjustment` (±)
+manual. Never edited.
 
 | field | type | notes |
 |---|---|---|
@@ -853,7 +878,7 @@ generation, `refund` (+) on release, `adjustment` (±) manual. Never edited.
 | reason | text | |
 | invoice R | billing_invoices | |
 | usage R | billing_usage | |
-| idempotencyKey* | text | U; `invoice:<id>:grant`, `usage:<id>`, `refund:<id>` |
+| idempotencyKey* | text | U; `invoice:<id>:credits`, `usage:<id>`, `refund:<id>` |
 | metadata | json | |
 
 Indexes: UNIQUE idempotencyKey; (user, created); (invoice).

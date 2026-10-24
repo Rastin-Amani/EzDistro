@@ -1,52 +1,73 @@
-# Billing & Payments
+# Billing, plans & managed AI
 
-EzDistro meters its core product — **generating one article** (the
-`write_article` job). Each user gets a free allowance; beyond that they buy
-**credit packs**, paid in crypto through **PayRam**. Billing is off by default so
-existing deployments are unchanged until an operator enables it.
+EzDistro's monetization follows `EzDistro-Marketing/PRICING-STRATEGY.md`:
 
-Facts only: credits are integer units, prices are integer minor units
-(cents), and money never mixes with credits.
+- **Self-hosted / bring-your-own keys** — free, all features, **unmetered**.
+- **Cloud** — a managed instance with unlimited projects and BYO keys.
+- **Cloud + Managed AI** — the same, plus ~30 managed-AI articles per period.
+- **Setup & onboarding** — a one-time service.
 
-## Model
+Payments are crypto, through **PayRam**. Billing is off by default; existing
+deployments are unchanged until an operator enables it.
 
-- **Free allowance** — `BILLING_FREE_ALLOWANCE` article generations per user,
-  lifetime by default (`BILLING_FREE_RESET=none`) or resetting each UTC calendar
-  month (`BILLING_FREE_RESET=monthly`).
-- **Credits** — purchased in packs. One generation costs
-  `BILLING_ARTICLE_COST` credits (default 1). Free allowance is consumed first.
-- **Charge timing** — a generation is *reserved* when the job is queued, and the
-  reservation is *released* (credits refunded) if the generation fails or the
-  topic is cancelled. It is *completed* when the article assembles successfully.
-- **Subscriptions** — not implemented. PayRam does not perform recurring
-  auto-charges; the supported model is one-time credit packs. (A future provider
-  adapter can add subscriptions without touching the ledger or usage metering.)
+## What is metered (and what is not)
+
+| Project setup | Article generation |
+|---|---|
+| Has an enabled **LLM integration** (BYO keys) | **Unmetered** — the user pays their provider directly. No usage row, no paywall. |
+| No LLM integration (**managed AI**) | Consumes **managed-AI credits** (1 per article by default). |
+
+This is the whole model: the only paid counter is managed AI. There is **no
+feature gating** — every capability is available on every plan, and projects are
+unlimited.
+
+When managed-AI credits run out, generation is refused with a clear message:
+add your own provider keys on the Connections tab, or buy a top-up. Only that
+path is blocked; everything else keeps working.
+
+## Plans are prepaid periods, not auto-recurring
+
+PayRam performs one-time crypto payments and has no recurring subscription
+charge. A plan therefore grants a **prepaid period** (`planDays`, e.g. 30 days)
+and a renewal **extends from the current expiry** (buying twice is safe and
+stacks). Renewal is manual: the user pays again before/after expiry.
+
+The seeded catalog (editable in the PocketBase admin):
+
+| Code | Type | Price | Period | Managed-AI credits |
+|---|---|---|---|---|
+| `cloud` | plan | $49 | 30 days | 0 |
+| `cloud_ai` | plan | $99 | 30 days | 30 |
+| `setup` | service | $299 | — | 0 |
+
+Top-up packs are `type=credit_pack` (set `credits`). None are seeded because the
+strategy document does not set a top-up price — add one in the admin if you
+sell them. Legacy `starter`/`growth`/`scale` credit packs are retired (set
+inactive) by the bootstrap, never deleted, so old invoices still resolve.
 
 ## PocketBase schema
 
-Five collections are added by `make bootstrap` (source of truth:
+Six collections are added by `make bootstrap` (source of truth:
 `app/scripts/bootstrap_pb.py`):
 
 | Collection | Purpose |
 | --- | --- |
-| `billing_products` | Purchasable credit packs (trusted prices/credits). |
+| `billing_products` | Plans, managed-AI top-ups and one-time services. |
+| `billing_entitlements` | Prepaid plan periods per user (one per paid invoice). |
 | `billing_invoices` | One per checkout; snapshots the purchased terms. |
 | `billing_payment_events` | Verified webhook notifications (dedup key unique). |
-| `billing_usage` | One row per generation attempt (free/credit metering). |
-| `credit_transactions` | **Append-only** ledger; `idempotencyKey` unique. |
+| `billing_usage` | Managed-AI generation attempts only. |
+| `credit_transactions` | **Append-only** managed-AI credit ledger. |
 
-All five are bootstrapped **locked** (superuser-only API rules), like the rest of
-the schema: the app reads/writes through the superuser client and authorization
+All are bootstrapped **locked** (superuser-only API rules), like the rest of the
+schema: the app reads/writes through the superuser client and authorization
 lives in `app/api/` + `app/services/billing.py`.
-
-Default credit packs are seeded once (`seed_billing_products`) and are **never
-overwritten** — edit them in the PocketBase admin to change pricing, or add rows.
 
 ### Existing users
 
-No historical usage exists, so every user starts with the full free allowance and
-zero credits. Nothing is fabricated and no allowance is reset on deploy
-(`seed_billing_products` only inserts missing products).
+No historical usage is fabricated. Every user starts with no plan and no
+managed-AI credits; BYO projects keep working unmetered immediately. Old
+`billing_usage` free-tier rows remain as history but no longer affect decisions.
 
 ## Configuration
 
@@ -59,9 +80,7 @@ Set these in the environment (see `.env.example`); never commit secrets.
 | `PAYRAM_BASE_URL` | yes | PayRam Site URL (dashboard → Settings → Site URL). |
 | `PAYRAM_API_KEY` | yes | Project API key (server-side only). |
 | `PAYRAM_WEBHOOK_SECRET` | no | Distinct signing secret; defaults to the API key. |
-| `BILLING_FREE_ALLOWANCE` | no | Free generations per user (default 3). |
-| `BILLING_FREE_RESET` | no | `none` (default) or `monthly`. |
-| `BILLING_ARTICLE_COST` | no | Credits per generation (default 1). |
+| `BILLING_ARTICLE_COST` | no | Managed-AI credits per article (default 1). |
 | `BILLING_CURRENCY` | no | Display currency (default USD). |
 | `BILLING_PROVIDER` | no | `payram` (default). |
 | `PAYRAM_TIMEOUT_SECONDS` | no | Provider call timeout (default 20). |
@@ -87,13 +106,13 @@ Set these in the environment (see `.env.example`); never commit secrets.
 
 PayRam → internal: `OPEN → awaiting_payment`, `PARTIALLY_FILLED →
 partially_paid`, `FILLED`/`OVER_FILLED → paid`, `CANCELLED → cancelled`.
-Only `paid` grants credits, exactly once. Overpayment is recorded (never grants
-extra credits). Partial payment grants nothing.
+Only `paid` grants the plan/credits, exactly once. Overpayment is recorded
+(never grants extra). Partial payment grants nothing.
 
 ## Local development
 
 ```bash
-make bootstrap          # creates the billing collections + default packs
+make bootstrap          # creates billing collections + plan catalog
 BILLING_ENABLED=true PAYRAM_BASE_URL=... PAYRAM_API_KEY=... make web
 ```
 
@@ -114,12 +133,15 @@ Tests use an in-memory fake provider and never touch PayRam:
 - **Recover a delayed webhook** — PayRam retries final events for up to 48h; if
   delivery is exhausted, use *Check status* or re-open the return page. Nothing
   requires the browser to stay open.
-- **Confirm fulfilment** — a fulfilled invoice has `status=paid`,
-  `fulfilledAt` set, and a matching `credit_transactions` row with
-  `idempotencyKey = invoice:{id}:grant`.
-- **Refunds** — PayRam crypto payments are not auto-refundable here. Record any
-  manual refund as an `adjustment` row in `credit_transactions` (never edit
-  history) and set the invoice `status=refunded`. Prefer a compensating grant.
+- **Confirm fulfilment** — a plan invoice has `status=paid`, `fulfilledAt` set,
+  a `billing_entitlements` row, and (for Cloud + Managed AI) a
+  `credit_transactions` row with `idempotencyKey = invoice:<id>:credits`.
+- **Extend a plan manually** — create the entitlement row, or let the user buy
+  another period; renewals stack from the current expiry.
+- **Grant managed-AI credits** — append a `grant` row to `credit_transactions`
+  with a unique `idempotencyKey` (never edit history).
+- **Refunds** — PayRam crypto payments are not auto-refundable here. Record a
+  compensating `adjustment` row and set the invoice `status=refunded`.
 - **Rotate the API key** — update `PAYRAM_API_KEY` (and the webhook signing
   secret if PayRam re-signs with it), restart the web process, then send a test
   payment. Existing invoices are unaffected.
@@ -134,7 +156,7 @@ Tests use an in-memory fake provider and never touch PayRam:
 | Checkout button disabled | Same as above, or no active `billing_products`. |
 | Webhook returns 401 | Signature mismatch — wrong `PAYRAM_API_KEY`/`PAYRAM_WEBHOOK_SECRET`, or a proxy altered the body. |
 | Webhook returns 503 | PayRam unreachable during authoritative re-read; PayRam retries automatically. |
-| Paid but no credits | Check the invoice; press **Check status**. Look for a `billing_payment_events` row with `processed=false` and an `error`. |
-| "used your free generations and have no credits" | Expected paywall; buy a pack on `/billing`. |
-| Scheduled writes fail after enabling billing | The project owner has no allowance/credits. Buy credits or raise `BILLING_FREE_ALLOWANCE`. |
+| Paid but no plan | Check the invoice; press **Check status**. Look for a `billing_payment_events` row with `processed=false` and an `error`. |
+| "managed-AI allowance is used up" | Expected: that project has no LLM integration. Add keys on Connections, or buy credits. |
+| BYO project still charged | It has no enabled `llm` integration — add one; BYO is detected from an enabled `integrations` row in category `llm`. |
 | PocketBase permission errors | Re-run `make bootstrap` (collections must be locked/superuser-only). |
