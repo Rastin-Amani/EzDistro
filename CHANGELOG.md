@@ -9,6 +9,8 @@ release builds on. Format is based on [Keep a Changelog](https://keepachangelog.
 
 ## [Unreleased]
 
+## [v1.27.0] — 2026-10-24
+
 ### Changed
 - **Sign-in and sign-up are Google and GitHub only.** Passwords are gone:
   bootstrap disables password, OTP and MFA auth on the PocketBase `users`
