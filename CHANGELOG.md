@@ -9,6 +9,16 @@ release builds on. Format is based on [Keep a Changelog](https://keepachangelog.
 
 ## [Unreleased]
 
+## [v1.27.1] — 2026-10-24
+
+### Fixed
+- **Sign-in no longer depends on a correct `PUBLIC_APP_URL`.** The OAuth
+  callback was built from the configured canonical origin, so a stale value
+  made every provider reject the login with `redirect_uri_mismatch`. The
+  callback is now built from the scheme and host the browser actually reached
+  (falling back to the setting without a Host header); register that exact URL
+  at both providers. Billing return URLs still use `PUBLIC_APP_URL`.
+
 ## [v1.27.0] — 2026-10-24
 
 ### Changed
