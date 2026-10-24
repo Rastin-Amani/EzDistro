@@ -1170,16 +1170,23 @@ def opportunity_action(
 
     from app.services.research_handoff import accept_opportunity
 
-    article = accept_opportunity(request.state.pb, idea=idea, config={"project": project_id})
-    ideas.update(idea_id, {"status": "accepted", "article": article["id"]})
+    result = accept_opportunity(request.state.pb, idea=idea, config={"project": project_id})
+    changes: dict[str, Any] = {"status": "accepted"}
+    if result.get("article"):
+        changes["article"] = result["article"]["id"]
+    ideas.update(idea_id, changes)
+    added = result.get("article") or result.get("topic") or {}
+    verb = (
+        "Linked to the existing article" if result.get("article") else "Added to the content plan"
+    )
     return success_response(
-        f"Draft queued in Articles: {article.get('title')}",
+        f"{verb}: {added.get('title')}",
         extra_events={"refreshResearch": True},
     )
 
 
 def _apply_idea_action(pb: Any, idea: dict[str, Any], action: str, project_id: str) -> str:
-    """Apply one opportunity action. Returns 'rejected'|'roadmap'|article title."""
+    """Apply one opportunity action. Returns 'rejected'|'roadmap'|planned title."""
     ideas = ArticleIdeaRepo(pb)
     if action == "reject":
         ideas.update(idea["id"], {"status": "rejected"})
@@ -1189,9 +1196,13 @@ def _apply_idea_action(pb: Any, idea: dict[str, Any], action: str, project_id: s
         return "roadmap"
     from app.services.research_handoff import accept_opportunity
 
-    article = accept_opportunity(pb, idea=idea, config={"project": project_id})
-    ideas.update(idea["id"], {"status": "accepted", "article": article["id"]})
-    return str(article.get("title") or "draft")
+    result = accept_opportunity(pb, idea=idea, config={"project": project_id})
+    changes: dict[str, Any] = {"status": "accepted"}
+    if result.get("article"):
+        changes["article"] = result["article"]["id"]
+    ideas.update(idea["id"], changes)
+    added = result.get("article") or result.get("topic") or {}
+    return str(added.get("title") or "opportunity")
 
 
 @router.post("/projects/{project_id}/research/{run_id}/opportunities/bulk")

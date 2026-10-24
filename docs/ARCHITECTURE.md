@@ -512,9 +512,9 @@ validate → wordpress_sync → keyword_collection → competitor_crawl → serp
 - **Opportunities** (`article_ideas`) are scored transparently (`scoreVersion`,
   `scoreComponents`) and classified `generate`/`update`/`expand`/`support`/`reject`.
 - **Handoff** (`research_handoff.accept_opportunity`): `update`/`expand` attach a brief
-  to an existing article; `generate`/`support` create a topic + article and queue the
-  existing `write_article` job (idempotent). The engine never writes or publishes
-  itself.
+  to an existing article; `generate`/`support` create a planned topic only — the
+  writer creates the article when the topic is actually written. The engine never
+  writes or publishes itself.
 - **Run cache**: `ResearchRunRepo.fingerprint(targeting, seeds)` reuses an identical
   previous run unless **Refresh** is ticked.
 - Job key `research_run:{runId}` makes double submission a no-op.

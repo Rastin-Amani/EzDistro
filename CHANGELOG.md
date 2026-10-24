@@ -74,6 +74,12 @@ release builds on. Format is based on [Keep a Changelog](https://keepachangelog.
   retried inside that window and burned every attempt on a transient capacity
   blip (internal linking failed right after publishing). The hint is parsed into
   `retry_after_seconds`, so the retry waits it out.
+- **Approving an opportunity adds it to the content plan, nothing else.** The
+  handoff created a draft article (and sometimes a write job) at approval time,
+  so "approve all" filled Articles with hundreds of empty drafts for topics that
+  were only planned. It now creates a planned topic and stops; the writer makes
+  the article when the topic is actually written. Empty drafts from the old
+  behaviour were removed and their topics kept in the plan.
 - **"Needs attention" counts broken work, not failed history.** It counted every
   failed job row, so one stuck article looked like four problems and the number
   stayed after the article was fixed. It now counts failed articles/topics plus

@@ -4,17 +4,16 @@ The research engine never writes articles and never creates a second content
 pipeline. `accept_opportunity` does the smallest thing that connects the two:
 
 - ``generate``/``support`` → a topic (status ``planned``, which is what the
-  existing writer treats as "ready to write") + a draft article. A
-  ``write_article`` job is queued immediately ONLY when the project has no
-  enabled ``write`` schedule; when it has one, the schedule owns the cadence
-  and picks the topic up at its interval;
+  existing writer treats as "ready to write"). Nothing is written and no article
+  row exists yet: an approved opportunity is CONTENT-PLAN work. The article is
+  created by the writer when the topic is actually written (the write schedule
+  picks planned topics, or the user starts one by hand);
 - ``update``/``expand`` with a matched existing article → the topic is linked
   to that article; no new article is created and no duplicate URL is generated;
 - ``reject`` → nothing is created (the caller just stores the status).
 
 Idempotent: re-accepting the same idea reuses its topic/article and never
-queues a second write job (the job's idempotency key is derived from the
-article id).
+queues a second write job.
 """
 
 from __future__ import annotations
@@ -22,10 +21,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from app.domain.article_html import slugify
 from app.repositories.articles import ArticleRepo
-from app.repositories.jobs import JobRepo
-from app.repositories.schedules import ScheduleRepo
 from app.repositories.topics import TopicRepo
 
 LINKED_ACTIONS = frozenset({"update", "expand"})
@@ -53,7 +49,11 @@ def _cluster_name(pb: Any, idea: dict[str, Any]) -> str:
 def accept_opportunity(
     pb: Any, *, idea: dict[str, Any], config: dict[str, Any] | None = None
 ) -> dict[str, Any]:
-    """Create/link an article for an accepted opportunity. Returns the article row."""
+    """Add an accepted opportunity to the content plan.
+
+    Returns ``{"topic": <planned topic row>, "article": <existing article|None>}``.
+    A new idea only ever produces a planned topic — never a draft article.
+    """
     config = config or {}
     project_id = str(config.get("project") or idea.get("project") or "")
     if not project_id:
@@ -83,9 +83,11 @@ def accept_opportunity(
                         "cluster": cluster_name or None,
                     },
                 )
-            return article
+            return {"topic": None, "article": article}
 
     # GENERATE / SUPPORT: a topic at 'planned' is what the writer waits for.
+    # No article row until writing starts; no write job is queued by approval —
+    # the write schedule (or the user) owns when the plan is written.
     topic = topics.create(
         project=project_id,
         title=title,
@@ -93,33 +95,7 @@ def accept_opportunity(
         cluster=cluster_name,
         type="article",
     )
-    article = articles.create(
-        project=project_id,
-        topic_id=topic["id"],
-        title=title,
-        slug=slugify(title, fallback="research-article"),
-    )
-    topics.link_article(topic["id"], article["id"])
-
-    if action in WRITE_ACTIONS and not _write_schedule_enabled(pb, project_id):
-        JobRepo(pb).create(
-            project=project_id,
-            type="write_article",
-            payload={"topicId": topic["id"], "trigger": "research"},
-            idempotency_key=f"write_article:{article['id']}",
-            entity_type="article",
-            entity_id=article["id"],
-            max_attempts=3,
-        )
-    return articles.get(article["id"]) or article
-
-
-def _write_schedule_enabled(pb: Any, project_id: str) -> bool:
-    """True when the project runs a write schedule — it then owns the cadence."""
-    return (
-        ScheduleRepo(pb).first(filter=f'project="{project_id}" && kind="write" && enabled=true')
-        is not None
-    )
+    return {"topic": topic, "article": None}
 
 
 def _demo() -> None:

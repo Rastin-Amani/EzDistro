@@ -278,17 +278,11 @@ excluded — `scoreComponents.serp` is `null` and the UI says so.
 `accept_opportunity` (in `app/services/research_handoff.py`):
 
 - `update` / `expand` attach a brief to the existing article — no new URL;
-- `generate` / `support` create a topic (left at status `planned` so the
-  existing writer runs) + an article. The **existing** `write_article` job is
-  queued immediately only when the project has **no enabled `write`
-  schedule** (`idempotencyKey=write_article:{articleId}`, re-accepting is a
-  no-op); when a write schedule is enabled it owns the cadence and picks the
-  topic up at its interval.
-
-Publishing and auto-publishing rules are untouched: the research engine feeds
-the current pipeline, it does not replace it. Scheduling is *not* bypassed —
-accepting 100 opportunities with an 8-hour write schedule queues no jobs at all;
-the schedule writes one topic per interval.
+- `generate` / `support` create **only** a topic at status `planned` — the
+  content plan. No article row and no `write_article` job exist until the topic
+  is actually written: the project's `write` schedule picks planned topics, or
+  the user starts one from the content plan. Approving 100 opportunities adds
+  100 planned topics and changes nothing in Articles.
 
 ## Cost, retention and caps
 

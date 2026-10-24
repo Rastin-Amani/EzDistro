@@ -31,10 +31,10 @@
       <div class="mb-3 flex flex-wrap items-center gap-2">
         <form hx-post="/projects/{{ project.id }}/research/{{ run.id }}/opportunities/bulk"
               hx-target="#research-content" hx-swap="innerHTML" hx-indicator="#research-indicator"
-              hx-confirm="Accept and draft every proposed opportunity? This can queue many articles at once.">
+              hx-confirm="Add every proposed opportunity to the content plan? Nothing is written until a topic is started.">
           <input type="hidden" name="action" value="accept">
           <input type="hidden" name="all" value="1">
-          <button class="btn btn-sm btn-primary">Accept all proposed</button>
+          <button class="btn btn-sm btn-primary">Add all to content plan</button>
         </form>
       </div>
 
@@ -42,7 +42,7 @@
             hx-target="#research-content" hx-swap="innerHTML" hx-indicator="#research-indicator"
             class="space-y-3">
         <div class="flex flex-wrap items-center gap-2">
-          <button class="btn btn-xs btn-primary" name="action" value="accept">Accept selected</button>
+          <button class="btn btn-xs btn-primary" name="action" value="accept">Add selected to plan</button>
           <button class="btn btn-xs btn-ghost" name="action" value="roadmap">Roadmap selected</button>
           <button class="btn btn-xs btn-ghost text-error" name="action" value="reject" hx-confirm="Reject the selected opportunities?">Reject selected</button>
         </div>
@@ -106,7 +106,7 @@
               {% if idea.status == 'proposed' %}
                 <button type="button" class="btn btn-xs btn-primary"
                         hx-post="/projects/{{ project.id }}/research/{{ run.id }}/opportunities/{{ idea.id }}/action"
-                        hx-vals='{"action": "accept"}' hx-swap="none">Accept &amp; draft</button>
+                        hx-vals='{"action": "accept"}' hx-swap="none">Add to content plan</button>
                 <button type="button" class="btn btn-xs btn-ghost"
                         hx-post="/projects/{{ project.id }}/research/{{ run.id }}/opportunities/{{ idea.id }}/action"
                         hx-vals='{"action": "roadmap"}' hx-swap="none">Add to roadmap</button>

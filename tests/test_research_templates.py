@@ -468,21 +468,21 @@ def test_google_ads_connect_redirects_to_connect_when_unconfigured():
     assert resp.headers["location"] == "/?ga=unconfigured"
 
 
-def test_opportunity_accept_creates_an_article_and_a_write_job():
+def test_opportunity_accept_adds_a_planned_topic_without_an_article():
     pb, project, run, _ = _setup()
     idea = ArticleIdeaRepo(pb).all_for_run(run["id"])[0]
-    made = GoogleAdsConnectionRepo  # imported for parity with the real route
-    assert made is not None
-    before = len(pb.collection("jobs").get_full_list())
+    before_jobs = len(pb.collection("jobs").get_full_list())
     req = make_req(pb, make_user(), project["id"])
     resp = _call(R.opportunity_action, req, project["id"], run["id"], idea["id"], action="accept")
     assert resp.status_code == 200
     refreshed = ArticleIdeaRepo(pb).get(idea["id"])
     assert refreshed["status"] == "accepted"
-    assert refreshed["article"]
-    jobs = JobRepo(pb).list_for_project(project["id"], per_page=50)
-    assert any(j["type"] == "write_article" for j in jobs)
-    assert len(pb.collection("jobs").get_full_list()) == before + 1
+    # Approval is a content-plan decision: no article row, no write job.
+    assert not refreshed.get("article")
+    assert pb.collection("articles").get_full_list() == []
+    assert len(pb.collection("jobs").get_full_list()) == before_jobs
+    topics = pb.collection("topics").get_full_list()
+    assert [t["status"] for t in topics] == ["planned"]
 
 
 def test_resume_failed_run_queues_a_new_job_and_clears_the_error():
