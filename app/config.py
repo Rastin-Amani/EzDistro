@@ -91,11 +91,8 @@ class Settings(BaseSettings):
     # Public base URL of THIS app (used for the checkout return URL). No trailing slash.
     public_app_url: str = "http://localhost:8000"
     billing_currency: str = "USD"
-    # Free article generations per user. 0 disables the free tier entirely.
-    billing_free_allowance: int = 3
-    # none | monthly — monthly resets the free allowance at the start of each UTC month.
-    billing_free_reset: str = "none"
-    # Credits consumed by one article generation.
+    # BYO provider keys are unmetered. Managed-AI generations (a project with no
+    # enabled LLM integration) consume purchased managed-AI credits.
     billing_article_cost: int = 1
     # Record an overpayment but never grant extra credits (record | reject).
     billing_overpayment_policy: str = "record"

@@ -372,6 +372,7 @@ def default_unique_fields() -> dict[str, list[str]]:
         "billing_products": ["code"],
         "billing_invoices": ["invoiceNumber"],
         "billing_payment_events": ["eventKey"],
+        "billing_entitlements": ["invoice"],
         "billing_usage": ["operationKey"],
         "credit_transactions": ["idempotencyKey"],
     }

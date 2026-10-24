@@ -1,12 +1,19 @@
-"""Billing service — the single place that decides what a user may generate,
-records usage, grants credits on confirmed payment, and reconciles provider
-state.
+"""Billing service — plans + managed-AI metering.
 
-Monetized operation: one article generation (the ``write_article`` job). A user
-spends their free allowance first, then purchased credits.
+Model (per PRICING-STRATEGY.md):
+
+* Self-hosted / BYO provider keys → **unmetered**. The user pays their provider
+  directly, so article generation costs nothing here.
+* Managed AI (a project with no enabled LLM integration) → metered against
+  purchased **managed-AI credits**, granted by the Cloud + Managed AI plan
+  (~30/month, prepaid) or a top-up pack. Over the counter → add your own keys
+  or buy more.
+* **Plans** are prepaid hosting periods (PayRam cannot auto-charge a recurring
+  subscription), so a renewal extends from the current expiry.
+* No feature gating: every capability is available on every plan.
 
 Money and credits stay separate: invoices carry integer minor-unit prices;
-credits are integer units; the ledger is append-only.
+managed-AI credits are integer units; the ledger is append-only.
 """
 
 from __future__ import annotations
@@ -31,63 +38,56 @@ from app.providers.payments.base import (
 from app.repositories.billing import (
     BillingProductRepo,
     CreditRepo,
+    EntitlementRepo,
     InvoiceRepo,
     PaymentEventRepo,
     UsageRepo,
 )
+from app.repositories.integrations import IntegrationRepo
 from app.repositories.jobs import now_utc, pb_dt
 from app.repositories.members import MemberRepo
 
 logger = get_logger(__name__)
 
 UNIT = "article"
-_FREE = "free"
 _CREDIT = "credit"
+
+# Billing is per-user. When billing is disabled there is no metering at all, and
+# BYO projects are never metered even when billing is on.
+LOCAL_LOCKS: dict[str, threading.Lock] = {}
+_LOCKS_GUARD = threading.Lock()
 
 
 class BillingError(ValueError):
-    """A user-facing billing problem (quota exhausted, bad product, …)."""
+    """A user-facing billing problem (allowance exhausted, bad product, …)."""
 
 
 class WebhookVerificationError(Exception):
     """The provider signature could not be verified — the request must be rejected."""
 
 
-# Process-local per-user lock serializing reserve/release. All user-initiated
-# reservations happen in the web process; the worker only ever adds credits
-# back (release/grant), which cannot overspend. Cross-process concurrent
-# spend of the same last credit is therefore not serialized by this lock — the
-# ledger's unique idempotency keys still prevent duplicate charges.
-# ponytail: process-local lock, move to a DB counter if multi-web replicas.
-_locks_guard = threading.Lock()
-_user_locks: dict[str, threading.Lock] = {}
-
-
 def _user_lock(user_id: str) -> threading.Lock:
-    with _locks_guard:
-        lock = _user_locks.get(user_id)
+    with _LOCKS_GUARD:
+        lock = LOCAL_LOCKS.get(user_id)
         if lock is None:
             lock = threading.Lock()
-            _user_locks[user_id] = lock
+            LOCAL_LOCKS[user_id] = lock
         return lock
 
 
 def clear_billing_locks() -> None:
     """Test/rotation helper — drop cached per-user locks."""
-    with _locks_guard:
-        _user_locks.clear()
+    with _LOCKS_GUARD:
+        LOCAL_LOCKS.clear()
 
 
-def _period_start() -> str:
-    """PB timestamp marking the start of the current free-allowance window.
-
-    ``none`` → lifetime allowance (returns ""). ``monthly`` → midnight UTC on the
-    first of the current month. Derived, never stored, so it cannot double-grant.
-    """
-    if str(settings.billing_free_reset).lower() != "monthly":
-        return ""
-    now = now_utc()
-    return pb_dt(now.replace(day=1, hour=0, minute=0, second=0, microsecond=0))
+def _parse_pb_dt(value: Any) -> dt.datetime | None:
+    if not value:
+        return None
+    try:
+        return dt.datetime.strptime(str(value)[:19], "%Y-%m-%d %H:%M:%S").replace(tzinfo=dt.UTC)
+    except (TypeError, ValueError):
+        return None
 
 
 def owner_id_for_project(pb: Any, project_id: str) -> str:
@@ -109,6 +109,8 @@ class BillingService:
         self.usage = UsageRepo(pb)
         self.credits = CreditRepo(pb)
         self.events = PaymentEventRepo(pb)
+        self.entitlements = EntitlementRepo(pb)
+        self._integrations = IntegrationRepo(pb)
 
     # -- configuration -----------------------------------------------------------
     @property
@@ -116,49 +118,45 @@ class BillingService:
         return bool(settings.billing_enabled)
 
     @property
-    def free_allowance(self) -> int:
-        return max(0, int(settings.billing_free_allowance))
-
-    @property
     def article_cost(self) -> int:
         return max(1, int(settings.billing_article_cost))
 
-    # -- read model --------------------------------------------------------------
-    def free_used(self, user_id: str) -> int:
-        return self.usage.count_active_for_user(user_id, source=_FREE, since=_period_start())
+    def is_byo(self, project_id: str) -> bool:
+        """True when the project brings its own LLM keys (unmetered).
 
+        A project with an enabled ``llm`` integration pays its provider directly,
+        so generation must not consume managed-AI credits.
+        """
+        if not project_id:
+            return False
+        return self._integrations.get_active(project_id, "llm") is not None
+
+    # -- read model --------------------------------------------------------------
     def credit_balance(self, user_id: str) -> int:
+        """Managed-AI credits remaining (append-only ledger sum)."""
         return self.credits.balance(user_id)
 
+    def current_plan(self, user_id: str) -> dict[str, Any] | None:
+        return self.entitlements.current(user_id)
+
     def overview(self, user_id: str) -> dict[str, Any]:
-        free_used = self.free_used(user_id)
-        allowance = self.free_allowance
         balance = self.credit_balance(user_id)
         cost = self.article_cost
-        free_remaining = max(0, allowance - free_used)
+        plan = self.current_plan(user_id)
         return {
             "billing_enabled": self.enabled,
             "configured": settings.payram_configured,
             "currency": settings.billing_currency,
             "article_cost": cost,
-            "free_allowance": allowance,
-            "free_used": free_used,
-            "free_remaining": free_remaining,
-            "free_reset": settings.billing_free_reset,
-            "credit_balance": balance,
-            "generations_remaining": free_remaining + (balance // cost),
+            "managed_credits": balance,
+            "managed_articles_remaining": balance // cost,
+            "plan": plan,
+            "plan_active": plan is not None,
             "products": self.products.list_active(),
             "invoices": self.invoices.list_for_user(user_id, per_page=10),
         }
 
-    def can_generate(self, user_id: str) -> bool:
-        if not self.enabled:
-            return True
-        if self.free_used(user_id) < self.free_allowance:
-            return True
-        return self.credit_balance(user_id) >= self.article_cost
-
-    # -- metering -----------------------------------------------------------------
+    # -- metering (managed AI only) ----------------------------------------------
     def authorize_generation(
         self,
         user_id: str,
@@ -167,59 +165,54 @@ class BillingService:
         *,
         job_id: str = "",
     ) -> dict[str, Any] | None:
-        """Reserve one article generation for ``operation_key`` (idempotent).
+        """Reserve one managed-AI article generation for ``operation_key``.
 
-        Returns the usage record, or None when billing is disabled. Raises
-        :class:`BillingError` when the user has neither free allowance nor credits.
+        Returns None (no charge, no reservation) when billing is disabled or the
+        project uses its own provider keys. Raises :class:`BillingError` when the
+        managed-AI counter is exhausted.
         """
         if not self.enabled:
+            return None
+        if self.is_byo(project_id):
             return None
         if not operation_key:
             raise BillingError("Cannot bill this operation: it has no identifier.")
         if not user_id:
             raise BillingError("Cannot bill this operation: no user is associated with it.")
+
         with _user_lock(user_id):
             existing = self.usage.by_operation(operation_key)
             if existing and existing.get("status") != "released":
                 return existing
-            source = _FREE
-            if self.free_used(user_id) >= self.free_allowance:
-                if self.credit_balance(user_id) < self.article_cost:
-                    raise BillingError(
-                        "You have used your free article generations and have no credits "
-                        "left. Buy more to keep generating."
-                    )
-                source = _CREDIT
+            if self.credit_balance(user_id) < self.article_cost:
+                raise BillingError(
+                    "Your managed-AI allowance is used up. Add your own provider keys on "
+                    "the Connections tab, or buy more managed-AI credits on the Billing page."
+                )
             data = {
                 "user": user_id,
                 "project": project_id or "",
                 "operationKey": operation_key,
-                "source": source,
+                "source": _CREDIT,
                 "quantity": self.article_cost,
                 "unit": UNIT,
                 "status": "reserved",
                 "job": job_id,
-                "metadata": {},
+                "metadata": {"metered": "managed_ai"},
             }
             if existing:  # previously released → re-reserve in place
                 record = self.usage.update(existing["id"], {**data, "releasedAt": ""})
             else:
                 record = self.usage.create(data)
-            if source == _CREDIT:
-                self.credits.append(
-                    user=user_id,
-                    kind="spend",
-                    quantity=-self.article_cost,
-                    reason="article generation",
-                    usage=record["id"],
-                    idempotency_key=f"usage:{record['id']}",
-                )
-            logger.info(
-                "billing.reserved",
+            self.credits.append(
                 user=user_id,
-                source=source,
-                operation=operation_key,
+                kind="spend",
+                quantity=-self.article_cost,
+                reason="managed-AI article",
+                usage=record["id"],
+                idempotency_key=f"usage:{record['id']}",
             )
+            logger.info("billing.reserved", user=user_id, operation=operation_key)
             return record
 
     def complete(self, operation_key: str) -> None:
@@ -269,6 +262,7 @@ class BillingService:
             raise BillingError("That plan is misconfigured (no price).")
         currency = str(product.get("currency") or settings.billing_currency)
         credits = int(product.get("credits") or 0)
+        plan_days = int(product.get("planDays") or 0)
 
         # Reuse a just-created open invoice instead of stacking duplicates
         # (double-click / retry). Never trusts a client-supplied amount.
@@ -286,9 +280,11 @@ class BillingService:
                 "invoiceNumber": invoice_number,
                 "productCode": product.get("code") or "",
                 "productName": product.get("name") or "",
+                "productType": product.get("type") or "",
                 "priceCents": price_cents,
                 "currency": currency,
                 "credits": credits,
+                "planDays": plan_days,
                 "status": "pending",
                 "provider": provider.name,
                 "providerReference": "",
@@ -436,26 +432,32 @@ class BillingService:
         self.invoices.update(invoice["id"], patch)
 
     def _fulfill(self, invoice: dict[str, Any], *, paid_usd: float) -> dict[str, Any]:
-        """Grant the purchased credits exactly once and mark the invoice paid."""
+        """Grant the purchased credits/plan exactly once and mark the invoice paid."""
         user_id = str(invoice.get("user") or "")
         credits = int(invoice.get("credits") or 0)
-        idem = f"invoice:{invoice['id']}:grant"
         expected = float(invoice.get("expectedAmountUsd") or 0)
         overpaid = max(0.0, float(paid_usd or 0) - expected)
 
-        if self.credits.by_idempotency(idem) is None and credits > 0:
-            self.credits.append(
-                user=user_id,
-                kind="grant",
-                quantity=credits,
-                reason=f"purchase {invoice.get('productCode') or ''}".strip(),
-                invoice=invoice["id"],
-                idempotency_key=idem,
-                metadata={"paid_usd": paid_usd, "overpaid_usd": overpaid},
-            )
-            logger.info("billing.fulfilled", invoice=invoice["id"], user=user_id, credits=credits)
-        elif overpaid > 0:
-            logger.info("billing.overpayment", invoice=invoice["id"], overpaid=overpaid)
+        if credits > 0:
+            idem = f"invoice:{invoice['id']}:credits"
+            if self.credits.by_idempotency(idem) is None:
+                self.credits.append(
+                    user=user_id,
+                    kind="grant",
+                    quantity=credits,
+                    reason=f"managed AI · {invoice.get('productCode') or ''}".strip(),
+                    invoice=invoice["id"],
+                    idempotency_key=idem,
+                    metadata={"paid_usd": paid_usd, "overpaid_usd": overpaid},
+                )
+                logger.info(
+                    "billing.credits_granted",
+                    invoice=invoice["id"],
+                    user=user_id,
+                    credits=credits,
+                )
+
+        self._grant_entitlement(invoice)
 
         updated = self.invoices.update(
             invoice["id"],
@@ -469,6 +471,45 @@ class BillingService:
             },
         )
         return updated
+
+    def _grant_entitlement(self, invoice: dict[str, Any]) -> dict[str, Any] | None:
+        """Create the prepaid plan period exactly once; renewals stack."""
+        plan_days = int(invoice.get("planDays") or 0)
+        if plan_days <= 0:
+            return None
+        user_id = str(invoice.get("user") or "")
+        existing = self.entitlements.by_invoice(invoice["id"])
+        if existing:
+            return existing
+
+        now = now_utc()
+        start = now
+        current = self.entitlements.current(user_id)
+        current_expires = _parse_pb_dt((current or {}).get("expiresAt"))
+        if current_expires and current_expires > now:
+            start = current_expires  # prepaid renewal extends the current period
+        expires = start + dt.timedelta(days=plan_days)
+
+        entitlement = self.entitlements.create(
+            {
+                "user": user_id,
+                "product": invoice.get("product") or "",
+                "planCode": invoice.get("productCode") or "",
+                "planName": invoice.get("productName") or "",
+                "status": "active",
+                "startsAt": pb_dt(start),
+                "expiresAt": pb_dt(expires),
+                "invoice": invoice["id"],
+                "metadata": {"plan_days": plan_days},
+            }
+        )
+        logger.info(
+            "billing.entitlement_granted",
+            invoice=invoice["id"],
+            user=user_id,
+            expires_at=pb_dt(expires),
+        )
+        return entitlement
 
     async def reconcile_invoice(self, invoice: dict[str, Any]) -> dict[str, Any]:
         """Fetch authoritative provider state for an unsettled invoice."""

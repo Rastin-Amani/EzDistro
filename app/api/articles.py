@@ -174,12 +174,12 @@ def regenerate_article(
     op_key = f"write:article:{topic_id}:regen:{int(__import__('time').time())}"
     billing = BillingService(request.state.pb)
     try:
-        billing.authorize_generation(user.get("id", ""), project_id, op_key)
+        reservation = billing.authorize_generation(user.get("id", ""), project_id, op_key)
     except BillingError as exc:
         return error_response(str(exc))
     ArticleRepo(request.state.pb).set_status(article_id, "generating")
     payload: dict[str, Any] = {"topicId": topic_id, "regenerate": True}
-    if billing.enabled:
+    if reservation is not None:
         payload["billingKey"] = op_key
         payload["billingUserId"] = user.get("id", "")
     JobRepo(request.state.pb).create(

@@ -431,13 +431,13 @@ def topics_bulk(
         ):
             op_key = f"write:article:{topic_id}"
             try:
-                billing.authorize_generation(user.get("id", ""), project_id, op_key)
+                reservation = billing.authorize_generation(user.get("id", ""), project_id, op_key)
             except BillingError:
                 blocked += 1
                 continue
             topic = repo.set_status(topic_id, "queued")
             payload: dict[str, Any] = {"topicId": topic_id}
-            if billing.enabled:
+            if reservation is not None:
                 payload["billingKey"] = op_key
                 payload["billingUserId"] = user.get("id", "")
             jobs.create(
@@ -1697,12 +1697,12 @@ def write_topic(request: Request, project_id: str, topic_id: str):
     op_key = f"write:article:{topic_id}"
     billing = BillingService(request.state.pb)
     try:
-        billing.authorize_generation(user.get("id", ""), project_id, op_key)
+        reservation = billing.authorize_generation(user.get("id", ""), project_id, op_key)
     except BillingError as exc:
         return error_response(str(exc))
     topic = TopicRepo(request.state.pb).set_status(topic_id, "queued")
     payload: dict[str, Any] = {"topicId": topic_id}
-    if billing.enabled:
+    if reservation is not None:
         payload["billingKey"] = op_key
         payload["billingUserId"] = user.get("id", "")
     JobRepo(request.state.pb).create(

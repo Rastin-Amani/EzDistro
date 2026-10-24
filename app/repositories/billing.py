@@ -54,6 +54,33 @@ class PaymentEventRepo(BaseRepo):
         return self.first(filter=f'eventKey="{event_key}"')
 
 
+class EntitlementRepo(BaseRepo):
+    collection = "billing_entitlements"
+
+    def current(self, user_id: str) -> dict[str, Any] | None:
+        """Active entitlement that has not yet expired (latest expiry wins)."""
+        from app.repositories.jobs import now_utc, pb_dt
+
+        now = pb_dt(now_utc())
+        return self.first(
+            filter=f'user="{user_id}" && status="active" && expiresAt > "{now}"',
+            sort="-expiresAt",
+        )
+
+    def latest(self, user_id: str) -> dict[str, Any] | None:
+        return self.first(filter=f'user="{user_id}"', sort="-expiresAt")
+
+    def by_invoice(self, invoice_id: str) -> dict[str, Any] | None:
+        return self.first(filter=f'invoice="{invoice_id}"')
+
+    def list_for_user(
+        self, user_id: str, *, page: int = 1, per_page: int = 20
+    ) -> list[dict[str, Any]]:
+        return self.list_records(
+            filter=f'user="{user_id}"', sort="-created", page=page, per_page=per_page
+        )
+
+
 class UsageRepo(BaseRepo):
     collection = "billing_usage"
 
