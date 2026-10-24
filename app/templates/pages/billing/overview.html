@@ -4,84 +4,130 @@
 
 {{ f.page_header(
     ('Billing'),
-    ('Article generations included with your account, plus credit packs you can buy.'),
+    ('Your hosting plan, managed-AI allowance and payment history.'),
     ('Account')
 ) }}
 
 <div class="flex flex-col gap-5">
 
 {% if not overview.billing_enabled %}
-<div class="alert alert-soft alert-neutral items-start" role="status">
-    <span class="badge badge-soft badge-neutral mt-0.5">{{ ('Disabled') }}</span>
-    <div class="min-w-0 text-sm">
-        <p class="font-semibold">{{ ('Billing is turned off') }}</p>
-        <p class="mt-1 leading-relaxed text-base-content/65">
-            {{ ('Article generation is not metered on this instance. An operator enables it with') }}
-            <code class="font-mono text-xs" dir="ltr">BILLING_ENABLED=true</code>.
-        </p>
+{{ f.panel() }}
+    <div class="flex items-start gap-3">
+        <span class="badge badge-soft badge-neutral mt-0.5">{{ ('Disabled') }}</span>
+        <div class="min-w-0 text-sm">
+            <p class="font-semibold">{{ ('Billing is turned off') }}</p>
+            <p class="mt-1 text-base-content/60 leading-relaxed">
+                {{ ('This instance is not metered — every feature is available and article generation is free. An operator enables plans with') }}
+                <code class="font-mono text-xs" dir="ltr">BILLING_ENABLED=true</code>.
+            </p>
+        </div>
     </div>
-</div>
+{{ f.panel_close() }}
 {% elif not configured %}
-<div class="alert alert-soft alert-warning items-start" role="status">
-    <span class="badge badge-soft badge-warning mt-0.5">{{ ('Setup') }}</span>
-    <div class="min-w-0 text-sm">
-        <p class="font-semibold">{{ ('Payment provider not configured') }}</p>
-        <p class="mt-1 leading-relaxed text-base-content/65">
-            {{ ('Set PAYRAM_BASE_URL and PAYRAM_API_KEY, then register the webhook endpoint, before credit packs can be purchased.') }}
-        </p>
+{{ f.panel() }}
+    <div class="flex items-start gap-3">
+        <span class="badge badge-soft badge-warning mt-0.5">{{ ('Setup') }}</span>
+        <div class="min-w-0 text-sm">
+            <p class="font-semibold">{{ ('Payment provider not configured') }}</p>
+            <p class="mt-1 text-base-content/60 leading-relaxed">
+                {{ ('Set PAYRAM_BASE_URL and PAYRAM_API_KEY, then register the webhook endpoint, before plans can be purchased.') }}
+            </p>
+        </div>
     </div>
-</div>
+{{ f.panel_close() }}
 {% endif %}
 
-<!-- Usage -->
-<div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
-    {{ f.stat(('Free generations left'), overview.free_remaining, 'bg-success',
-              (overview.free_used ~ ' of ' ~ overview.free_allowance ~ ' used')) }}
-    {{ f.stat(('Credits'), overview.credit_balance, 'bg-info',
-              (overview.article_cost ~ ' credit(s) per article')) }}
-    {{ f.stat(('Articles remaining'), overview.generations_remaining, 'bg-primary',
-              ('free + purchased, combined')) }}
-    {{ f.stat(('Free allowance resets'), ('Monthly' if overview.free_reset == 'monthly' else 'Never'),
-              'bg-neutral', ('lifetime trial' if overview.free_reset != 'monthly' else 'calendar month, UTC')) }}
+<!-- Current plan -->
+{{ f.panel(('Current plan')) }}
+    {% if overview.plan %}
+    <div class="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+        <div class="min-w-0">
+            <div class="flex items-center gap-2">
+                <span class="font-bold">{{ overview.plan.planName }}</span>
+                <span class="badge badge-sm badge-soft badge-success">{{ ('Active') }}</span>
+            </div>
+            <p class="mt-1 text-xs text-base-content/55">
+                {{ ('Renews / expires') }} {{ overview.plan.expiresAt|loc_date }}
+                <span class="mx-1.5">·</span>{{ ('Unlimited projects') }}
+            </p>
+        </div>
+        <a href="#plans" class="btn btn-ghost btn-sm">{{ ('Extend plan') }}</a>
+    </div>
+    {% else %}
+    <div class="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+        <div class="min-w-0">
+            <p class="font-semibold">{{ ('No active plan') }}</p>
+            <p class="mt-1 text-xs text-base-content/55 leading-relaxed">
+                {{ ('Projects with your own provider keys are free and unmetered. A plan adds managed hosting and optionally managed AI.') }}
+            </p>
+        </div>
+        <a href="#plans" class="btn btn-primary btn-sm">{{ ('View plans') }}</a>
+    </div>
+    {% endif %}
+{{ f.panel_close() }}
+
+<!-- Usage / allowance -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    {{ f.stat(('Managed-AI articles left'), overview.managed_articles_remaining, 'bg-success',
+              ('one credit per article')) }}
+    {{ f.stat(('Managed-AI credits'), overview.managed_credits, 'bg-info',
+              ('top-ups add here')) }}
+    {{ f.stat(('Plan'), (overview.plan.planName if overview.plan else 'None'), 'bg-primary',
+              (('active' if overview.plan else 'bring your own keys'))) }}
+    {{ f.stat(('Projects'), ('Unlimited'), 'bg-neutral',
+              ('all plans, no per-project fees')) }}
 </div>
 
-<!-- Credit packs -->
-{{ f.panel(('Credit packs'), '<span class="text-xs text-base-content/60">' ~ ('Each generates one article per credit') ~ '</span>') }}
+<!-- Plans -->
+<div id="plans" class="scroll-mt-6">
+{{ f.panel(('Plans'), '<span class="text-xs opacity-50">' ~ ('Prepaid periods · crypto via PayRam') ~ '</span>') }}
     {% if products %}
-    <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {% for p in products %}
-        <div class="flex flex-col gap-3 rounded-box border border-base-300 p-5">
+        <div class="border border-base-300/70 rounded-box p-4 flex flex-col gap-3">
             <div>
-                <p class="font-semibold">{{ p.name }}</p>
-                {% if p.description %}<p class="mt-0.5 text-xs leading-relaxed text-base-content/60">{{ p.description }}</p>{% endif %}
+                <div class="flex items-center gap-2">
+                    <p class="font-bold">{{ p.name }}</p>
+                    <span class="badge badge-xs badge-soft {{ 'badge-primary' if p.type == 'plan' else 'badge-neutral' }}">
+                        {{ ('Plan' if p.type == 'plan' else ('Top-up' if p.type == 'credit_pack' else 'One-time')) }}
+                    </span>
+                </div>
+                {% if p.description %}<p class="mt-0.5 text-xs text-base-content/55 leading-relaxed">{{ p.description }}</p>{% endif %}
             </div>
-            <div class="flex items-baseline gap-1.5">
-                <span class="text-2xl font-extrabold tabular-nums tracking-[-0.03em]">{{ p.priceCents|money_cents }}</span>
-                <span class="text-xs uppercase text-base-content/60">{{ p.currency }}</span>
+            <div class="flex items-baseline gap-2">
+                <span class="text-2xl font-extrabold tabular-nums">{{ p.priceCents|money_cents }}</span>
+                <span class="text-xs opacity-50">
+                    {{ p.currency }}{% if p.planDays %} / {{ p.planDays }} {{ ('days') }}{% endif %}
+                </span>
             </div>
-            <p class="text-xs text-base-content/60">{{ p.credits }} {{ ('credits') }}</p>
+            <ul class="flex flex-col gap-1.5 text-xs text-base-content/65">
+                {% if p.credits %}<li class="flex items-start gap-2"><span class="mt-1.5 size-1.5 shrink-0 rounded-full bg-base-content/30" aria-hidden="true"></span><span>{{ p.credits }} {{ ('managed-AI articles') }}</span></li>{% endif %}
+                {% if p.planDays %}<li class="flex items-start gap-2"><span class="mt-1.5 size-1.5 shrink-0 rounded-full bg-base-content/30" aria-hidden="true"></span><span>{{ p.planDays }} {{ ('days of hosting') }}</span></li>{% endif %}
+                {% for feature in (p.features or []) %}<li class="flex items-start gap-2"><span class="mt-1.5 size-1.5 shrink-0 rounded-full bg-base-content/30" aria-hidden="true"></span><span>{{ feature }}</span></li>{% endfor %}
+            </ul>
             <form hx-post="/billing/checkout" hx-swap="none" class="mt-auto">
                 <input type="hidden" name="product_code" value="{{ p.code }}" />
-                <button type="submit" class="btn btn-primary btn-sm w-full"
+                <button type="submit" class="btn {{ 'btn-primary' if p.type == 'plan' else 'btn-ghost' }} btn-sm w-full"
                         hx-disabled-elt="this" {% if not configured %}disabled{% endif %}>
                     <span class="loading loading-spinner loading-xs htmx-indicator"></span>
-                    {{ ('Buy') }}
+                    {% if p.type == 'plan' %}{{ ('Pay for period') }}{% elif p.type == 'credit_pack' %}{{ ('Buy top-up') }}{% else %}{{ ('Buy') }}{% endif %}
                 </button>
             </form>
         </div>
         {% endfor %}
     </div>
     {% else %}
-    {{ f.empty(('No credit packs available'), ('An operator can add products in the PocketBase admin.'), compact=true) }}
+    {{ f.empty(('No plans available'), ('An operator can add products in the PocketBase admin.'), compact=true) }}
     {% endif %}
 {{ f.panel_close() }}
+</div>
 
 <!-- Invoice history -->
-{{ f.panel(('Payment history'), '<span class="text-xs text-base-content/60">' ~ ('Your most recent purchases') ~ '</span>') }}
+{{ f.panel(('Payment history'), '<span class="text-xs opacity-50">' ~ ('Your most recent purchases') ~ '</span>') }}
     {% if invoices %}
     {% include "pages/billing/_invoices.html" %}
     {% else %}
-    {{ f.empty(('No payments yet'), ('Credit-pack purchases will appear here.'), compact=true) }}
+    {{ f.empty(('No payments yet'), ('Plan and top-up purchases will appear here.'), compact=true) }}
     {% endif %}
 {{ f.panel_close() }}
 

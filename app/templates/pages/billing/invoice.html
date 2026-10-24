@@ -23,7 +23,8 @@
         <div class="flex justify-between gap-4"><dt class="text-base-content/65">{{ ('Invoice number') }}</dt><dd class="font-mono" dir="ltr">{{ invoice.invoiceNumber }}</dd></div>
         <div class="flex justify-between gap-4"><dt class="text-base-content/65">{{ ('Status') }}</dt><dd><span class="badge badge-sm {{ invoice.status|status_badge }}">{{ invoice.status|status_label }}</span></dd></div>
         <div class="flex justify-between gap-4"><dt class="text-base-content/65">{{ ('Product') }}</dt><dd>{{ invoice.productName or invoice.productCode }}</dd></div>
-        <div class="flex justify-between gap-4"><dt class="text-base-content/65">{{ ('Credits') }}</dt><dd class="tabular-nums">{{ invoice.credits }}</dd></div>
+        {% if invoice.planDays %}<div class="flex justify-between gap-4"><dt class="text-base-content/65">{{ ('Plan period') }}</dt><dd class="tabular-nums">{{ invoice.planDays }} {{ ('days') }}</dd></div>{% endif %}
+        <div class="flex justify-between gap-4"><dt class="text-base-content/65">{{ ('Managed-AI credits') }}</dt><dd class="tabular-nums">{{ invoice.credits }}</dd></div>
         <div class="flex justify-between gap-4"><dt class="text-base-content/65">{{ ('Amount due') }}</dt><dd class="tabular-nums">{{ invoice.expectedAmountUsd|money_usd }}</dd></div>
         <div class="flex justify-between gap-4"><dt class="text-base-content/65">{{ ('Amount paid') }}</dt><dd class="tabular-nums">{{ invoice.paidAmountUsd|money_usd }}</dd></div>
         <div class="flex justify-between gap-4"><dt class="text-base-content/65">{{ ('Provider') }}</dt><dd>{{ invoice.provider }}</dd></div>
@@ -34,7 +35,7 @@
     <p class="mt-4 text-xs text-warning">{{ invoice.error }}</p>
     {% endif %}
     <p class="mt-4 border-t border-base-300 pt-3 text-[11px] text-base-content/60 leading-relaxed">
-        {{ ('This record documents your crypto payment. It is not a tax invoice. Blockchain confirmation can take time; credits are added automatically once the payment is confirmed.') }}
+        {{ ('This record documents your crypto payment. It is not a tax invoice. Blockchain confirmation can take time; your plan is activated automatically once the payment is confirmed.') }}
     </p>
 {{ f.panel_close() }}
 {% endif %}
