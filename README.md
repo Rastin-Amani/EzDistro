@@ -1,5 +1,28 @@
 # EzDistro Platform — SEO Automation (Indexer + Writer)
 
+[![CI](https://img.shields.io/github/actions/workflow/status/Rastin-Amani/EzDistro/ci.yml?branch=main&label=CI&logo=github&style=flat-square)](https://github.com/Rastin-Amani/EzDistro/actions/workflows/ci.yml)
+[![License: Apache 2.0](https://img.shields.io/github/license/Rastin-Amani/EzDistro?style=flat-square&color=blue)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/Rastin-Amani/EzDistro?style=flat-square&color=0000ff)](https://github.com/Rastin-Amani/EzDistro/releases)
+[![Container](https://img.shields.io/badge/GHCR-ezdistro-2496ED?style=flat-square&logo=docker&logoColor=white)](https://github.com/Rastin-Amani/EzDistro/pkgs/container/ezdistro)
+[![Stars](https://img.shields.io/github/stars/Rastin-Amani/EzDistro?style=flat-square&logo=github&logoColor=black)](https://github.com/Rastin-Amani/EzDistro/stargazers)
+[![Last commit](https://img.shields.io/github/last-commit/Rastin-Amani/EzDistro?style=flat-square)](https://github.com/Rastin-Amani/EzDistro/commits/main)
+
+[![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![HTMX](https://img.shields.io/badge/HTMX-3366CC?style=flat-square&logo=htmx&logoColor=white)](https://htmx.org/)
+[![PocketBase](https://img.shields.io/badge/PocketBase-b8dbe4?style=flat-square&logo=pocketbase&logoColor=black)](https://pocketbase.io/)
+[![Qdrant](https://img.shields.io/badge/Qdrant-DC244C?style=flat-square&logo=qdrant&logoColor=white)](https://qdrant.tech/)
+[![WordPress](https://img.shields.io/badge/WordPress-21759B?style=flat-square&logo=wordpress&logoColor=white)](https://wordpress.org/)
+[![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white)](docs/OPERATIONS.md#docker)
+[![PWA](https://img.shields.io/badge/PWA-installable-5A0FC8?style=flat-square&logo=pwa&logoColor=white)](#stack)
+
+[![Self-hosted](https://img.shields.io/badge/self--hosted-0000ff?style=flat-square&logo=linux&logoColor=white)](docs/OPERATIONS.md)
+[![No Redis](https://img.shields.io/badge/no-Redis-DC382D?style=flat-square&logo=redis&logoColor=white)](docs/ARCHITECTURE.md)
+[![No Celery](https://img.shields.io/badge/no-Celery-37814A?style=flat-square&logo=celery&logoColor=white)](docs/ARCHITECTURE.md)
+[![No n8n](https://img.shields.io/badge/no-n8n-EA4B71?style=flat-square&logo=n8n&logoColor=white)](docs/ARCHITECTURE.md)
+[![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-fe5196?style=flat-square&logo=conventionalcommits&logoColor=white)](https://www.conventionalcommits.org/)
+[![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square&logo=git&logoColor=white)](CONTRIBUTING.md)
+
 Production-grade, reusable SEO automation platform: fetches WordPress posts, chunks and
 embeds them into Qdrant (Indexer), and generates fully-formed articles from topics that
 are written section-by-section by an LLM and published back to WordPress (Writer).
@@ -176,6 +199,9 @@ make lint          # ruff check + format check
 make typecheck     # mypy app/
 make check         # all three
 ```
+
+CI (`.github/workflows/ci.yml`) runs the same four steps on every push to `main`
+and on every pull request, on Python 3.12.
 
 ## Interface language
 
