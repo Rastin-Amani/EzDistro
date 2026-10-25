@@ -39,15 +39,44 @@
   <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square&logo=git&logoColor=white" alt="PRs welcome"></a>
 </p>
 
-Production-grade, reusable SEO automation platform: fetches WordPress posts, chunks and
-embeds them into Qdrant (Indexer), and generates fully-formed articles from topics that
-are written section-by-section by an LLM and published back to WordPress (Writer).
+<p align="center">
+  <a href="https://ezdistro.space/en/">Website</a> ·
+  <a href="https://ezdistro.space/en/how-it-works">How it works</a> ·
+  <a href="https://ezdistro.space/en/features">Features</a> ·
+  <a href="https://ezdistro.space/en/self-hosting">Self-hosting</a> ·
+  <a href="https://ezdistro.space/en/integrations">Integrations</a> ·
+  <a href="https://ezdistro.space/en/pricing">Pricing</a> ·
+  <a href="https://ezdistro.space/en/faq">FAQ</a> ·
+  <a href="docs/README.md">Docs</a>
+</p>
+
+Production-grade, reusable SEO automation platform: fetch WordPress posts, chunk and embed
+them into Qdrant ([Indexer](https://ezdistro.space/en/features/indexer)), write fully-formed articles section by
+section with an LLM, and publish them back to WordPress ([Writer](https://ezdistro.space/en/features/writer)) —
+one loop, on your own server, owned end to end.
 
 Built as a **modular monolith**: FastAPI + HTMX + DaisyUI (PWA) front end,
 PocketBase as the source of truth, Qdrant for vectors, and pluggable cloud providers for
 LLM / embeddings / reranking / publishing. No Redis, no Celery, no n8n.
 
 Architecture, data model, job-state design and provider interfaces: see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+## Contents
+
+- [Screenshots](#screenshots)
+- [Features](#features)
+- [Stack](#stack)
+- [Data model](#data-model)
+- [Quick start](#quick-start)
+  - [Container image](#container-image)
+  - [Workflow](#workflow)
+- [Who it is for](#who-it-is-for)
+- [How it compares](#how-it-compares)
+- [Development](#development)
+- [Interface language](#interface-language)
+- [Process model](#process-model)
+- [Documentation & contributing](#documentation--contributing)
+- [License](#license)
 
 ## Screenshots
 
@@ -71,17 +100,17 @@ Architecture, data model, job-state design and provider interfaces: see [docs/AR
 
 ## Features
 
-- **Production content workspace**: 3-pane article editor (outline navigation /
+- **[Production content workspace](https://ezdistro.space/en/features/review-publishing)**: 3-pane article editor (outline navigation /
   content+section editor / metadata+SEO+links+status), live section-generation
   progress with elapsed time, versioned outline editing (move/add/delete/brief),
   bulk topic management with search/filter/sort/pagination, pipeline dashboard
   with indexing + provider health, custom `ezdistro` DaisyUI theme.
 
-- **Multi-project**: every project has its own WordPress config, Qdrant namespace,
+- **[Multi-project](https://ezdistro.space/en/features/projects)**: every project has its own WordPress config, Qdrant namespace,
   embedding provider/model/dimensions, LLM provider/model, prompts, SEO rules, writing
   style, language, chunking, retrieval & reranking, publishing mode, concurrency,
   schedules and internal-linking rules — all configurable from the UI.
-- **Persistent async jobs on PocketBase** (no Redis):
+- **[Persistent async jobs](https://ezdistro.space/en/features/jobs) on PocketBase** (no Redis):
   - atomic lease-based claiming via a unique-constrained `job_leases` collection
   - lease expiry → abandoned-job recovery
   - retries with exponential backoff + jitter, honoring provider Retry-After
@@ -96,20 +125,20 @@ Architecture, data model, job-state design and provider interfaces: see [docs/AR
     generate_cover_image, generate_interior_image, generate_article_image,
     optimize_article_image, publish_article_image) plus 2 research types
     (research_run, wordpress_sync)
-- **Indexer job** (`index_run`): fetch WP posts (id-ordered, resumable) → strip HTML →
+- **[Indexer job](https://ezdistro.space/en/features/indexer)** (`index_run`): fetch WP posts (id-ordered, resumable) → strip HTML →
   chunk (size/overlap per project) → batch embed → upsert Qdrant (stable point ids) →
   per-post content-hash metadata; unchanged posts are skipped; crashed runs resume
   from `lastWpId`.
-- **Writer job** (`write_article`): pick pending topic → retrieve related docs →
+- **[Writer job](https://ezdistro.space/en/features/writer)** (`write_article`): pick pending topic → retrieve related docs →
   internal-link context → LLM outline **validated by pydantic schema** → section records →
   per-section generation with bounded concurrency → sanitized HTML assembly →
   chains a `publish_article` job.
-- **Publish job** (`publish_article`): WordPress REST (application passwords), draft or
+- **[Publish job](https://ezdistro.space/en/features/review-publishing)** (`publish_article`): WordPress REST (application passwords), draft or
   live, idempotent (consults `publishing` records before calling WP). Uploads ready
   article images to the WP media library idempotently, resolves placeholders, and
   attaches the cover as the post featured image (missing cover blocks publish unless
   overridden with `publishWithoutCover`).
-- **Image pipeline** (`plan_article_images` → `generate_cover/interior_image` →
+- **[Image pipeline](https://ezdistro.space/en/features/images)** (`plan_article_images` → `generate_cover/interior_image` →
   `optimize_article_image`): LLM-planned cover + purposeful interior images (density
   capped by word count, max 4), generated via the project's image providers with
   fallback, quality-gated (dimensions/format decoded before storage), optimized to
@@ -117,15 +146,15 @@ Architecture, data model, job-state design and provider interfaces: see [docs/AR
   never overwrites). Auto-chained from `assemble_article`; manageable from the
   article workspace **images pane** and the project **Images** settings tab (includes
   a one-click generation test).
-- **SEO research engine** (`research_run`): Google Ads Keyword Planner data (OAuth,
+- **[SEO research engine](https://ezdistro.space/en/features/research)** (`research_run`): Google Ads Keyword Planner data (OAuth,
   per-project client) or an uploaded Keyword Planner CSV/XLSX file → WordPress mirror
   (`wordpress_sync`) → competitor crawl → clustering (deterministic / embedding / LLM)
   → content gaps → transparent `GENERATE`/`UPDATE`/`EXPAND`/`SUPPORT`/`REJECT`
   opportunities → one-click handoff to the existing writer. Facts-first: it never
   invents volume/CPC/competition. Optional SERP provider; degrades gracefully without
   Google Ads, SERP or LLM. See [docs/SEO_RESEARCH.md](docs/SEO_RESEARCH.md).
-- **Scheduler**: per-project interval schedules → idempotent job creation (per-window keys).
-- **Security**: Fernet-encrypted credentials at rest (masked in UI, never plaintext),
+- **[Scheduler](https://ezdistro.space/en/how-it-works)**: per-project interval schedules → idempotent job creation (per-window keys).
+- **[Security](https://ezdistro.space/en/security)**: Fernet-encrypted credentials at rest (masked in UI, never plaintext),
   SSRF guard on all provider URLs, HTML sanitization (bleach allowlist), HX-Request
   checks on mutations, per-project access control.
 - **Observability**: structured logs (structlog) with correlation ids (web) / job ids
@@ -137,15 +166,15 @@ Architecture, data model, job-state design and provider interfaces: see [docs/AR
 |---|---|
 | Web | FastAPI, Jinja2, HTMX 2, Alpine.js (minimal), DaisyUI 5, Tailwind 4, PWA |
 | Source of truth | PocketBase (≥ 0.23) — schema: [docs/SCHEMA.md](docs/SCHEMA.md) |
-| Vectors | Qdrant (HTTP) |
-| LLM / embeddings / rerank / images | Provider registry: OpenAI-compatible chat (generate/json/stream), native Gemini, **Cohere Embed v4.0** (search_document/search_query), Cohere-compatible rerank, image generation (`gemini` / `bfl` FLUX / `openai_compat`) — selectable per project from the UI |
-| Publishing | WordPress REST API |
+| Vectors | [Qdrant](https://ezdistro.space/en/features/retrieval) (HTTP) |
+| LLM / embeddings / rerank / images | [Provider registry](https://ezdistro.space/en/features/providers): OpenAI-compatible chat (generate/json/stream), native Gemini, **Cohere Embed v4.0** (search_document/search_query), Cohere-compatible rerank, image generation (`gemini` / `bfl` FLUX / `openai_compat`) — selectable per project from the UI |
+| Publishing | WordPress REST API ([approval gate + idempotent publish](https://ezdistro.space/en/features/review-publishing)) |
 | Worker | Standalone asyncio process (`python -m app.workers.worker`) |
 
 ## Data model
 
 The PocketBase schema is designed around the product domain (not the old n8n
-workflows): **38 collections** covering projects, flat project settings
+workflows; the [reference](https://ezdistro.space/en/docs) is generated from it): **38 collections** covering projects, flat project settings
 (incl. image-generation and multilingual config), configurable integrations
 (encrypted secrets; categories incl. `image`, `serp`, `google_ads`), versioned
 prompts (incl. `image_plan_*`, `research_*`, `cluster_*`, `opportunity_*`),
@@ -204,6 +233,8 @@ sign-in (the app builds it from the public origin it is served on); see
 
 ### Workflow
 
+New here? The [first-article walkthrough](https://ezdistro.space/en/how-to/first-article) follows these steps with screenshots.
+
 1. Create a **project**.
 2. **Integrations** tab: add active credentials — WordPress (site URL + username +
    application password), LLM (base URL + API key), Embedding (base URL + key),
@@ -222,8 +253,34 @@ sign-in (the app builds it from the public origin it is served on); see
    dead-letter view opens from **Jobs**).
 8. **Full re-index** button (or schedule): index WordPress posts into Qdrant.
 
+Already running another stack? See [migrating to EzDistro](https://ezdistro.space/en/migrate) and the
+[integration list](https://ezdistro.space/en/integrations).
+
 The documentation set in `docs/` is also served in-app at `/help/` (auth-gated) —
 the Research tab's **Setup guide** link points there.
+
+## Who it is for
+
+- **[Solo operators](https://ezdistro.space/en/for/solo-operators)** — one or two sites, your own provider keys, everything
+  on one box.
+- **[Agencies](https://ezdistro.space/en/for/agencies)** — many client sites, each with its own voice, prompts and schedule.
+- **[Content refresh](https://ezdistro.space/en/for/content-refresh)** — improve pages that already rank instead of only
+  publishing new ones.
+- **[Multilingual publishing](https://ezdistro.space/en/for/multilingual)** — one project per market and locale.
+
+## How it compares
+
+| If you are weighing | Read |
+|---|---|
+| n8n / Make workflows | [EzDistro vs n8n](https://ezdistro.space/en/vs/n8n) — durable jobs and an editorial UI instead of hand-built flows |
+| Jasper, Copy.ai and AI writers | [EzDistro vs AI writers](https://ezdistro.space/en/vs/ai-writers) — retrieval-grounded drafts plus the publishing pipeline |
+| Yoast, Rank Math and SEO plugins | [EzDistro vs SEO plugins](https://ezdistro.space/en/vs/seo-plugins) — they optimise a page, this writes and ships it |
+| Freelance writers | [EzDistro vs freelancers](https://ezdistro.space/en/vs/freelancers) — cost and throughput, with a human approval gate |
+| Gluing scripts together | [EzDistro vs DIY scripts](https://ezdistro.space/en/vs/diy-scripts) |
+| Chatting with an LLM | [EzDistro vs ChatGPT](https://ezdistro.space/en/vs/chatgpt) — context from your own site, not a blank prompt |
+
+Self-hosted is free and unmetered with your own provider keys; the managed cloud is
+optional — see [pricing](https://ezdistro.space/en/pricing) and the [security model](https://ezdistro.space/en/security).
 
 ## Development
 
@@ -245,6 +302,9 @@ The UI is **English-only**. Dates and numbers render through the `loc_*` filters
 
 Machine-readable enum values stay unformatted; display labels are plain English strings.
 
+Content language is a per-project setting (one project per market), covered in
+[multilingual publishing](https://ezdistro.space/en/for/multilingual).
+
 ## Process model
 
 ```
@@ -264,6 +324,7 @@ leases make multi-worker safe).
 
 ## Documentation & contributing
 
+- Product documentation: [ezdistro.space/docs](https://ezdistro.space/en/docs) · common questions: [FAQ](https://ezdistro.space/en/faq).
 - Full docs index: [docs/README.md](docs/README.md) — also served in-app at
   `/help/` (auth-gated).
 - Architecture, schema, configuration, operations, failure modes and the SEO
