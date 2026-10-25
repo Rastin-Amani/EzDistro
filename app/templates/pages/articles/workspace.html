@@ -30,7 +30,11 @@
 
 <div id="workspace-page" class="flex flex-col gap-4">
 
-{{ a.header(project, article, '/projects/' ~ project.id ~ '?tab=articles', ('Back to articles'), eyebrow=('Write · Draft'), actions=actions) }}
+{# The eyebrow follows the article's real state: it used to say "Draft" on a
+   published article, which contradicted the badge right underneath it. #}
+{% set eyebrow = {'review': 'Write · Review', 'approved': 'Write · Approved', 'publishing': 'Write · Publishing', 'published': 'Write · Published', 'generating': 'Write · Writing', 'failed': 'Write · Failed'}.get(article.status, 'Write · Draft') %}
+
+{{ a.header(project, article, '/projects/' ~ project.id ~ '?tab=articles', ('Back to articles'), eyebrow=eyebrow, actions=actions) }}
 
 {% if article.status == 'generating' %}
 <div class="alert alert-soft alert-info items-start" role="status">

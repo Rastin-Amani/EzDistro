@@ -1,27 +1,43 @@
-# EzDistro Platform — SEO Automation (Indexer + Writer)
+<p align="center">
+  <img src="app/static/brand/ezdistro/ezdistro-app-icon.svg" width="88" height="88" alt="EzDistro logo">
+</p>
 
-[![CI](https://img.shields.io/github/actions/workflow/status/Rastin-Amani/EzDistro/ci.yml?branch=main&label=CI&logo=github&style=flat-square)](https://github.com/Rastin-Amani/EzDistro/actions/workflows/ci.yml)
-[![License: Apache 2.0](https://img.shields.io/github/license/Rastin-Amani/EzDistro?style=flat-square&color=blue)](LICENSE)
-[![Release](https://img.shields.io/github/v/release/Rastin-Amani/EzDistro?style=flat-square&color=0000ff)](https://github.com/Rastin-Amani/EzDistro/releases)
-[![Container](https://img.shields.io/badge/GHCR-ezdistro-2496ED?style=flat-square&logo=docker&logoColor=white)](https://github.com/Rastin-Amani/EzDistro/pkgs/container/ezdistro)
-[![Stars](https://img.shields.io/github/stars/Rastin-Amani/EzDistro?style=flat-square&logo=github&logoColor=black)](https://github.com/Rastin-Amani/EzDistro/stargazers)
-[![Last commit](https://img.shields.io/github/last-commit/Rastin-Amani/EzDistro?style=flat-square)](https://github.com/Rastin-Amani/EzDistro/commits/main)
+<h1 align="center">EzDistro</h1>
 
-[![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![HTMX](https://img.shields.io/badge/HTMX-3366CC?style=flat-square&logo=htmx&logoColor=white)](https://htmx.org/)
-[![PocketBase](https://img.shields.io/badge/PocketBase-b8dbe4?style=flat-square&logo=pocketbase&logoColor=black)](https://pocketbase.io/)
-[![Qdrant](https://img.shields.io/badge/Qdrant-DC244C?style=flat-square&logo=qdrant&logoColor=white)](https://qdrant.tech/)
-[![WordPress](https://img.shields.io/badge/WordPress-21759B?style=flat-square&logo=wordpress&logoColor=white)](https://wordpress.org/)
-[![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white)](docs/OPERATIONS.md#docker)
-[![PWA](https://img.shields.io/badge/PWA-installable-5A0FC8?style=flat-square&logo=pwa&logoColor=white)](#stack)
+<p align="center">
+  <strong>Self-hosted SEO content automation</strong><br>
+  Index your WordPress content, write retrieval-grounded articles with your own LLM,<br>
+  review them, publish them — no Redis, no Celery, no n8n.
+</p>
 
-[![Self-hosted](https://img.shields.io/badge/self--hosted-0000ff?style=flat-square&logo=linux&logoColor=white)](docs/OPERATIONS.md)
-[![No Redis](https://img.shields.io/badge/no-Redis-DC382D?style=flat-square&logo=redis&logoColor=white)](docs/ARCHITECTURE.md)
-[![No Celery](https://img.shields.io/badge/no-Celery-37814A?style=flat-square&logo=celery&logoColor=white)](docs/ARCHITECTURE.md)
-[![No n8n](https://img.shields.io/badge/no-n8n-EA4B71?style=flat-square&logo=n8n&logoColor=white)](docs/ARCHITECTURE.md)
-[![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-fe5196?style=flat-square&logo=conventionalcommits&logoColor=white)](https://www.conventionalcommits.org/)
-[![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square&logo=git&logoColor=white)](CONTRIBUTING.md)
+<p align="center">
+  <a href="https://github.com/Rastin-Amani/EzDistro/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Rastin-Amani/EzDistro/ci.yml?branch=main&label=CI&logo=github&style=flat-square" alt="CI"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/Rastin-Amani/EzDistro?style=flat-square&color=blue" alt="License: Apache 2.0"></a>
+  <a href="https://github.com/Rastin-Amani/EzDistro/releases"><img src="https://img.shields.io/github/v/release/Rastin-Amani/EzDistro?style=flat-square&color=0000ff" alt="Release"></a>
+  <a href="https://github.com/Rastin-Amani/EzDistro/pkgs/container/ezdistro"><img src="https://img.shields.io/badge/GHCR-ezdistro-2496ED?style=flat-square&logo=docker&logoColor=white" alt="Container"></a>
+  <a href="https://github.com/Rastin-Amani/EzDistro/stargazers"><img src="https://img.shields.io/github/stars/Rastin-Amani/EzDistro?style=flat-square&logo=github&logoColor=black" alt="Stars"></a>
+  <a href="https://github.com/Rastin-Amani/EzDistro/commits/main"><img src="https://img.shields.io/github/last-commit/Rastin-Amani/EzDistro?style=flat-square" alt="Last commit"></a>
+</p>
+
+<p align="center">
+  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.12-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python 3.12"></a>
+  <a href="https://fastapi.tiangolo.com/"><img src="https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white" alt="FastAPI"></a>
+  <a href="https://htmx.org/"><img src="https://img.shields.io/badge/HTMX-3366CC?style=flat-square&logo=htmx&logoColor=white" alt="HTMX"></a>
+  <a href="https://pocketbase.io/"><img src="https://img.shields.io/badge/PocketBase-b8dbe4?style=flat-square&logo=pocketbase&logoColor=black" alt="PocketBase"></a>
+  <a href="https://qdrant.tech/"><img src="https://img.shields.io/badge/Qdrant-DC244C?style=flat-square&logo=qdrant&logoColor=white" alt="Qdrant"></a>
+  <a href="https://wordpress.org/"><img src="https://img.shields.io/badge/WordPress-21759B?style=flat-square&logo=wordpress&logoColor=white" alt="WordPress"></a>
+  <a href="docs/OPERATIONS.md#docker"><img src="https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white" alt="Docker"></a>
+  <a href="#stack"><img src="https://img.shields.io/badge/PWA-installable-5A0FC8?style=flat-square&logo=pwa&logoColor=white" alt="PWA"></a>
+</p>
+
+<p align="center">
+  <a href="docs/OPERATIONS.md"><img src="https://img.shields.io/badge/self--hosted-0000ff?style=flat-square&logo=linux&logoColor=white" alt="Self-hosted"></a>
+  <a href="docs/ARCHITECTURE.md"><img src="https://img.shields.io/badge/no-Redis-DC382D?style=flat-square&logo=redis&logoColor=white" alt="No Redis"></a>
+  <a href="docs/ARCHITECTURE.md"><img src="https://img.shields.io/badge/no-Celery-37814A?style=flat-square&logo=celery&logoColor=white" alt="No Celery"></a>
+  <a href="docs/ARCHITECTURE.md"><img src="https://img.shields.io/badge/no-n8n-EA4B71?style=flat-square&logo=n8n&logoColor=white" alt="No n8n"></a>
+  <a href="https://www.conventionalcommits.org/"><img src="https://img.shields.io/badge/Conventional%20Commits-1.0.0-fe5196?style=flat-square&logo=conventionalcommits&logoColor=white" alt="Conventional Commits"></a>
+  <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square&logo=git&logoColor=white" alt="PRs welcome"></a>
+</p>
 
 Production-grade, reusable SEO automation platform: fetches WordPress posts, chunks and
 embeds them into Qdrant (Indexer), and generates fully-formed articles from topics that
@@ -32,6 +48,24 @@ PocketBase as the source of truth, Qdrant for vectors, and pluggable cloud provi
 LLM / embeddings / reranking / publishing. No Redis, no Celery, no n8n.
 
 Architecture, data model, job-state design and provider interfaces: see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+## Screenshots
+
+**Writing workspace** — outline navigation, section editor and the checks that gate publishing, in one screen.
+
+![Article writing workspace](.github/assets/screenshots/workspace.png)
+
+**Review gate** — structural checks and editorial QA decide whether Publish is enabled.
+
+![Article review and approval](.github/assets/screenshots/review.png)
+
+**Overview** — pipeline state across every site you run, with what needs a human first.
+
+![Dashboard overview](.github/assets/screenshots/overview.png)
+
+**Activity** — durable jobs with live progress, retries and the reason a task stopped.
+
+![Job activity](.github/assets/screenshots/activity.png)
 
 ---
 
