@@ -24,10 +24,13 @@ Requires:              PocketBase ≥ 0.23
 6. Append-only audit: `job_events`, `article_revisions`, `publishing_runs` are
    insert-mostly.
 7. All collection API rules are superuser-only (`null` — PocketBase's "locked"
-   state; `""` would mean **public**, guests included, not "locked");
-   project-level authorization lives in the app layer (`app/api/deps.py`)
-   and all data access goes through the superuser client (`get_admin_pb()` /
-   `get_data_pb()`). Never relax to `@request.auth.id != ''` — any
+   state; `""` would mean **public**, guests included, not "locked"), with one
+   exception: `users.createRule = '@request.context = "oauth2"'` so PocketBase
+   can create an account on a first OAuth sign-in. Direct REST creates on the
+   users collection still fail the rule. Project-level authorization lives in
+   the app layer (`app/api/deps.py`) and all data access goes through the
+   superuser client (`get_admin_pb()` / `get_data_pb()`). Never relax to
+   `@request.auth.id != ''` — any
    authenticated user could then bypass tenant isolation via direct REST.
 
 ## 2. Collections overview
@@ -547,9 +550,11 @@ platform admins bypass membership checks entirely.
 Added by bootstrap if missing: `role` (sel: `admin` \| `member`) and `displayName`
 (text). Sign-in is **OAuth2 only** — bootstrap disables `passwordAuth`, `otp` and
 `mfa`, enables the Google/GitHub providers, and keeps the collection's API rules
-superuser-only. New OAuth sign-ups get `role=member`; `SEED_ADMIN_EMAIL` (with
-`SEED_ADMIN_PASSWORD` only when the record must be pre-created) provisions the
-platform admin by email.
+superuser-only **except `createRule = '@request.context = "oauth2"'`**, which
+lets PocketBase create the account on a first OAuth sign-in without opening the
+REST create endpoint. New OAuth sign-ups get `role=member`; `SEED_ADMIN_EMAIL`
+(with `SEED_ADMIN_PASSWORD` only when the record must be pre-created) provisions
+the platform admin by email.
 
 ### 3.22 google_ads_connections
 

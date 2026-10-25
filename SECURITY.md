@@ -29,8 +29,10 @@ These are concrete, code-verified mechanisms, not guarantees:
 
 - **Authentication** — PocketBase-native **OAuth2 only (Google, GitHub)**. There
   is no password login: bootstrap disables `passwordAuth`/`otp`/`mfa` on the
-  `users` collection. The provider is chosen on `/login`/`/signup`; the one-off
-  OAuth `state` + PKCE `codeVerifier` are kept in a signed (HMAC), `HttpOnly`,
+  `users` collection. There is a single page (`/login`; `/signup` redirects to
+  it): the provider signs in an existing email or creates the account on first
+  use, so no separate signup screen is needed. The one-off OAuth `state` + PKCE
+  `codeVerifier` are kept in a signed (HMAC), `HttpOnly`,
   `SameSite=Lax`, 10-minute `oauth_state` cookie scoped to `/auth`. The callback
   (`/auth/oauth2/callback`) verifies that state and exchanges the code with
   `users.auth_with_oauth2`; the token is stored in the same `HttpOnly`,
@@ -57,8 +59,11 @@ These are concrete, code-verified mechanisms, not guarantees:
 - **Content safety** — LLM HTML is sanitized with bleach allow-lists before storage
   and display; forbidden-pattern validators reject scripts/iframes/event handlers.
 - **PocketBase rules** — all app collections are `null` (superuser-only/locked;
-  `""` would mean public). All data access uses the superuser client; tenant
-  isolation lives in the app layer, so **never** relax a collection rule to
+  `""` would mean public), except `users.createRule =
+  '@request.context = "oauth2"'`, which PocketBase needs to create the account
+  on a first OAuth sign-in. Direct REST creates on the users collection still
+  fail the rule. All data access uses the superuser client; tenant isolation
+  lives in the app layer, so **never** relax a collection rule to
   `@request.auth.id != ''`.
 
 ## Known limitations (not claimed)

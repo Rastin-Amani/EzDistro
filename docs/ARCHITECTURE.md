@@ -142,11 +142,11 @@ Layering conventions (by convention, not enforced):
 
 Authentication is PocketBase-native **OAuth2 only** (Google and GitHub). There is
 no password sign-in: `make bootstrap` disables password/OTP/MFA on the `users`
-collection and enables the two providers. `GET /login` (and `/signup`, same page
-with different copy) asks PocketBase for the enabled providers, appends the app
-callback (`<request origin>/auth/oauth2/callback`) to each provider URL, and
-keeps the one-off `state` + PKCE `codeVerifier` in a signed, HttpOnly
-`oauth_state` cookie (10 min, path `/auth`). The provider returns to
+collection and enables the two providers. There is a **single page**: `/login`
+(or `/signup`, which redirects there) asks PocketBase for the enabled providers,
+appends the app callback (`<request origin>/auth/oauth2/callback`) to each
+provider URL, and keeps the one-off `state` + PKCE `codeVerifier` in a signed,
+HttpOnly `oauth_state` cookie (10 min, path `/auth`). The provider returns to
 `GET /auth/oauth2/callback`, the app exchanges the code with
 `users.auth_with_oauth2`, and stores the token in the `pb_auth` cookie
 (`HttpOnly`, `SameSite=Lax`, `Secure` when in production or arrived over TLS,
@@ -154,7 +154,10 @@ keeps the one-off `state` + PKCE `codeVerifier` in a signed, HttpOnly
 `/login?error=password` so stale cached forms never 405; `POST /logout` clears
 both cookies. Sign-up is the same action — PocketBase creates the record on the
 first provider login (role `member`), and links an existing record by verified
-email.
+email. That first-time create runs through `users.createRule`, which bootstrap
+sets to `@request.context = "oauth2"` (direct REST creates stay blocked); a
+locked rule makes every new signup fail with 403 while existing users still log
+in.
 
 Dev-only surface (disabled when `ENV=production`): Swagger UI at `/docs`,
 `/openapi.json`, and a debug router.
@@ -652,8 +655,11 @@ Concrete mechanisms (verified in code):
   development against localhost services.
 - **Content safety**: LLM HTML sanitized with bleach allowlists before storage/display;
   forbidden-pattern validators reject scripts/iframes/event-handlers before acceptance.
-- **PocketBase rules**: every app collection requires an authenticated user
-  (`@request.auth.id != ''`); finer-grained access is enforced in the app layer.
+- **PocketBase rules**: every app collection is `null` (locked = superuser-only),
+  except `users.createRule = '@request.context = "oauth2"'`, which PocketBase
+  requires to create the account on a first OAuth sign-in. Direct REST creates on
+  the users collection still fail the rule; finer-grained access is enforced in
+  the app layer.
 
 Not claimed: penetration-tested security, rate limiting on login, or audit-grade
 tamper evidence. `job_events`/`publishing_runs` are append-only by convention of the
