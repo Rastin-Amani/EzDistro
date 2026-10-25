@@ -22,7 +22,7 @@ whitespace/comments after empty values (pydantic-settings captures everything af
 | Variable | Default | Effect |
 |---|---|---|
 | `ENV` | `dev` | `dev` \| `production`. Production: JSON logs, requires `SECRETS_KEY`, hides `/docs` + `/openapi.json` + debug router |
-| `APP_VERSION` | `1.27.1` | Shown in UI footer / `/health` — tracks the release tag |
+| `APP_VERSION` | `1.27.2` | Shown in UI footer / `/health` — tracks the release tag |
 | `SECRETS_KEY` | *(empty)* | Fernet key (32-byte urlsafe base64). **Required in production** — startup fails without it. Dev derives a deterministic key from `pb_url`+env. Generate: `python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"`. ⚠️ Rotating it invalidates all stored integration secrets (they must be re-entered) |
 
 ### PocketBase
