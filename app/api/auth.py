@@ -1,9 +1,9 @@
 """Authentication — PocketBase OAuth2 (Google / GitHub) and the pb_auth cookie.
 
 There is no password sign-in: PocketBase's users collection only allows the
-Google and GitHub OAuth2 providers. Both sign-in and sign-up are the same
-action (the provider creates the account on first use), so `/login` and
-`/signup` render the same page with different copy.
+Google and GitHub OAuth2 providers. Sign-in and sign-up are the same action
+(the provider creates the account on first use and links an existing record by
+verified email), so there is a single page; `/signup` redirects to it.
 
 Flow (PocketBase "manual code exchange"):
 1. `GET /login` asks PocketBase for the enabled providers (`auth-methods`).
@@ -180,7 +180,7 @@ def load_providers(callback_url: str) -> tuple[list[dict], str | None]:
 # ---------------------------------------------------------------------------
 # Pages
 # ---------------------------------------------------------------------------
-def _render_auth(request: Request, mode: str, error: str | None, status_code: int = 200):
+def _render_auth(request: Request, error: str | None, status_code: int = 200):
     callback_url = oauth_callback_url(request)
     providers, problem = load_providers(callback_url)
     message, toast_type = ERROR_MESSAGES.get(error or "", (None, "error"))
@@ -192,8 +192,7 @@ def _render_auth(request: Request, mode: str, error: str | None, status_code: in
 
     html = templates.get_template("auth/login.html").render(
         request=request,
-        title=("Sign up for EzDistro" if mode == "signup" else "Sign in to EzDistro"),
-        mode=mode,
+        title=("Sign in to EzDistro"),
         providers=providers,
         provider_text=" or ".join(p["label"] for p in providers) or "Google or GitHub",
         problem=problem,
@@ -238,14 +237,14 @@ def login_page(request: Request):
     error = request.query_params.get("error") or (
         "disabled" if request.query_params.get("disabled") == "1" else None
     )
-    return _render_auth(request, "signin", error)
+    return _render_auth(request, error)
 
 
-@router.get("/signup", response_class=HTMLResponse)
+@router.get("/signup")
 def signup_page(request: Request):
-    if current_user(request):
-        return RedirectResponse(url="/dashboard", status_code=303)
-    return _render_auth(request, "signup", request.query_params.get("error"))
+    """Sign-in and sign-up are one OAuth page: the provider creates the account
+    on the first login and links an existing record by verified email."""
+    return RedirectResponse(url="/login", status_code=303)
 
 
 @router.post("/login")

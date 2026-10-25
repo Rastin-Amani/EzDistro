@@ -53,18 +53,10 @@
 
                 <header class="mb-7">
                     <h1 id="auth-title" class="text-[1.75rem] font-extrabold leading-tight tracking-[-0.03em] text-base-content">
-                        {% if mode == 'signup' %}
-                        {{ ('Create your account') }}
-                        {% else %}
-                        {{ ('Sign in to %(v)s') % {'v': app_name or 'EzDistro'} }}
-                        {% endif %}
+                        {{ ('Sign in or create an account') }}
                     </h1>
                     <p class="mt-2 text-sm leading-relaxed text-base-content/65">
-                        {% if mode == 'signup' %}
-                        {{ ('Use your %(v)s account to get started. No password to remember.') % {'v': provider_text} }}
-                        {% else %}
-                        {{ ('Continue with %(v)s. No password to remember.') % {'v': provider_text} }}
-                        {% endif %}
+                        {{ ("Continue with %(v)s. We'll sign you in, or create your account if you're new.") % {'v': provider_text} }}
                     </p>
                 </header>
 
@@ -110,17 +102,7 @@
                 <a href="{{ request.url.path }}" class="btn h-12 min-h-12 w-full border border-base-300 bg-base-100 text-[0.9375rem] font-semibold">{{ ('Try again') }}</a>
                 {% endif %}
 
-                <p class="mt-8 text-center text-sm text-base-content/65">
-                    {% if mode == 'signup' %}
-                    {{ ('Already have an account?') }}
-                    <a href="/login" class="link font-semibold text-base-content underline-offset-4">{{ ('Sign in') }}</a>
-                    {% else %}
-                    {{ ('New to %(v)s?') % {'v': app_name or 'EzDistro'} }}
-                    <a href="/signup" class="link font-semibold text-base-content underline-offset-4">{{ ('Create an account') }}</a>
-                    {% endif %}
-                </p>
-
-                <p class="mt-6 text-center text-xs leading-relaxed text-base-content/60">
+                <p class="mt-8 text-center text-xs leading-relaxed text-base-content/60">
                     {{ ('We only receive your name, email address and profile picture from your provider.') }}
                 </p>
 

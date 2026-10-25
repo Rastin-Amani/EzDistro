@@ -73,6 +73,20 @@ LOCKED_RULES: dict[str, None] = {
     "deleteRule": None,
 }
 
+# The built-in users collection: everything locked to superusers EXCEPT the
+# create rule, which must allow only PocketBase's internal OAuth2 signup.
+# A locked create rule silently breaks every first-time Google/GitHub signup
+# with 403 "Only superusers can perform this action" (existing accounts still
+# sign in). `@request.context` is PocketBase's documented OAuth discriminator,
+# so direct REST creates on /api/collections/users/records remain blocked.
+USERS_RULES: dict[str, str | None] = {
+    "listRule": None,
+    "viewRule": None,
+    "createRule": '@request.context = "oauth2"',
+    "updateRule": None,
+    "deleteRule": None,
+}
+
 
 def _base_field(name: str, ftype: str, *, required: bool = False) -> dict[str, Any]:
     """PocketBase >= 0.23 field shape: flat options (no nested ``options``)."""
@@ -1739,25 +1753,29 @@ def ensure_users_fields(pb: PocketBase) -> None:
 def ensure_users_rules(pb: PocketBase) -> None:
     """Lock the built-in users collection to superuser-only API access (18-A).
 
+    Exception: ``createRule`` is ``@request.context = "oauth2"`` so PocketBase
+    can create the account on a first Google/GitHub sign-in. Direct REST
+    creates on ``/api/collections/users/records`` have a different context and
+    stay blocked. Do NOT lock it again — that makes every new signup fail with
+    403 "Only superusers can perform this action" while existing users can
+    still log in, which is hard to spot.
+
     Only rule keys are sent (never ``fields`` — the SDK snake-cases field
     metadata on read, so round-tripping fields would corrupt them). Login and
     auth_refresh use PocketBase auth endpoints, which are not gated by these
-    rules; the app reads/writes users through the superuser client. Verify
-    against a live instance after bootstrap.
+    rules; the app reads/writes users through the superuser client.
     """
     users = pb.collections.get_one("users")
-    rules = {
+    current = {
         "listRule": users.list_rule,
         "viewRule": users.view_rule,
         "createRule": users.create_rule,
         "updateRule": users.update_rule,
         "deleteRule": users.delete_rule,
     }
-    # PocketBase rule semantics: None (JSON null) = "locked" = superusers only.
-    # "" (empty string) = the OPPOSITE — anyone, guests included.
-    if any(v is not None for v in rules.values()):
-        pb.collections.update("users", LOCKED_RULES)
-        print("users collection: API rules locked to superuser-only")
+    if any(current[key] != value for key, value in USERS_RULES.items()):
+        pb.collections.update("users", USERS_RULES)
+        print("users collection: API rules locked (OAuth2-only signup allowed)")
 
 
 def ensure_users_auth(pb: PocketBase) -> None:

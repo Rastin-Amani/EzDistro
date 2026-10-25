@@ -114,3 +114,30 @@ def test_unrelated_schema_error_is_not_swallowed(monkeypatch, patched):
     monkeypatch.setattr(bootstrap_pb.httpx, "patch", lambda *a, **k: _Response(400, text="boom"))
     with pytest.raises(RuntimeError):
         bootstrap_pb.ensure_users_auth(_pb())
+
+
+def test_users_rules_allow_only_oauth2_signup():
+    assert bootstrap_pb.USERS_RULES["createRule"] == '@request.context = "oauth2"'
+    for key in ("listRule", "viewRule", "updateRule", "deleteRule"):
+        assert bootstrap_pb.USERS_RULES[key] is None
+
+
+def test_ensure_users_rules_repairs_a_locked_create_rule():
+    class _Collections:
+        updated: dict | None = None
+
+        def get_one(self, name: str):
+            return SimpleNamespace(
+                list_rule=None,
+                view_rule=None,
+                create_rule=None,  # broken: blocks first-time OAuth signups
+                update_rule=None,
+                delete_rule=None,
+            )
+
+        def update(self, name: str, payload: dict) -> None:
+            self.updated = payload
+
+    collections = _Collections()
+    bootstrap_pb.ensure_users_rules(SimpleNamespace(collections=collections))
+    assert collections.updated == bootstrap_pb.USERS_RULES

@@ -217,9 +217,10 @@ def test_login_page_offers_only_google_and_github(fake_pb):
     with TestClient(app, base_url="https://app.test") as client:
         resp = client.get("/login")
     assert resp.status_code == 200
-    assert 'href="/signup"' in resp.text
     assert "Continue with Google" in resp.text
     assert "Continue with GitHub" in resp.text
+    # Sign-in and sign-up are one page.
+    assert "Sign in or create an account" in resp.text
     # No password UI survives.
     assert 'type="password"' not in resp.text
     assert "<form" not in resp.text
@@ -231,13 +232,11 @@ def test_login_page_offers_only_google_and_github(fake_pb):
     assert "oauth_state=" in cookies and "HttpOnly" in cookies and "Path=/auth" in cookies
 
 
-def test_signup_page_uses_signup_copy(fake_pb):
+def test_signup_redirects_to_the_single_login_page(fake_pb):
     with TestClient(app) as client:
-        resp = client.get("/signup")
-    assert resp.status_code == 200
-    assert "Create your account" in resp.text
-    assert "Continue with Google" in resp.text
-    assert 'href="/login"' in resp.text
+        resp = client.get("/signup", follow_redirects=False)
+    assert resp.status_code == 303
+    assert resp.headers["location"] == "/login"
 
 
 def test_login_page_hides_unconfigured_providers(fake_pb):
