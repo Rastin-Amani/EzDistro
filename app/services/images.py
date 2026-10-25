@@ -442,7 +442,11 @@ async def _generate_image(ctx: JobContext, *, role: str, section_key: str) -> di
             request = shrunk
             result = await provider.generate_image(request)
     except ProviderError as exc:
-        if fallback_cfg["provider"] and fallback_cfg["provider"] != provider_cfg["provider"]:
+        fallback_differs = (fallback_cfg["provider"], fallback_cfg["model"]) != (
+            provider_cfg["provider"],
+            provider_cfg["model"],
+        )
+        if fallback_cfg["provider"] and fallback_differs:
             ctx.warning(
                 f"primary image provider failed — trying fallback {fallback_cfg['provider']}",
                 {"role": role, "sectionKey": section_key},

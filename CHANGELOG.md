@@ -18,6 +18,11 @@ release builds on. Format is based on [Keep a Changelog](https://keepachangelog.
   `size` and hand back a square canvas that themes then hard-crop). The
   Chroma model bakes a "Venice" signature into every image, so both projects
   now generate with a clean model.
+- **Cheaper images with a real fallback.** Primary model is now
+  `venice-flux-2-pro` ($0.03/image, 16:9); the fallback can also be a different
+  model on the same connection (previously both had to be different
+  connections), so a model with no healthy sellers degrades to the next one
+  instead of failing the article.
 
 ## [v1.27.3] — 2026-10-25
 

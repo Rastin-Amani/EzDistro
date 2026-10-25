@@ -288,6 +288,40 @@ def test_fallback_provider_used_on_primary_failure():
     assert row["model"] == "fb-1"
 
 
+def test_fallback_can_use_another_model_on_the_same_connection():
+    """A gateway exposes many models behind ONE connection; when the primary
+    model has no healthy sellers, a different model is a valid fallback."""
+    pb = make_pb()
+    project = make_project(pb)
+    settings_id = pb.collection("project_settings").get_first_list_item(
+        f'project="{project["id"]}"'
+    )["id"]
+    pb.collection("project_settings").update(
+        settings_id,
+        {
+            "imageCoverProvider": "gw",
+            "imageCoverModel": "primary-model",
+            "imageFallbackProvider": "gw",
+            "imageFallbackModel": "fallback-model",
+        },
+    )
+    article = make_plan_article(pb, project["id"])
+    set_plan(pb, article["id"], [])
+    registry = FakeRegistry()
+    img_provider(registry, "gw").queue(PermanentError("no_healthy_sellers"))
+
+    run_job(
+        pb,
+        registry,
+        "generate_cover_image",
+        {"projectId": project["id"], "articleId": article["id"]},
+    )
+    row = ArticleImageRepo(pb).active_for_role(article["id"], "cover")
+    assert row["status"] == "ready"
+    assert row["provider"] == "gw"
+    assert row["model"] == "fallback-model"
+
+
 def test_generation_retries_a_smaller_canvas_when_no_seller_has_the_planned_size():
     """A gateway with no seller at 1600x896 must not kill the cover forever.
 
