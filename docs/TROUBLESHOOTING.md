@@ -5,13 +5,12 @@ changing anything. Deeper background: FAILURES.md (failure-mode matrix),
 ARCHITECTURE.md (how the engine works).
 
 ```text
-Documentation status:  Verified against code & failure handling paths
-                       (research engine)
-Last verified:         2026-10-04
+Documentation status:  Verified against code & failure handling paths (v1.27.3)
+Last verified:         2026-10-25
 ```
 
 How to read a job's history first (applies everywhere below):
-**Jobs** → job detail → event timeline. The timeline names the failing stage, the
+**Activity** → job detail → event timeline. The timeline names the failing stage, the
 provider, the error category, and whether the error was classified *retryable*
 (auto-retries with backoff) or *permanent* (needs human action). Admins additionally
 see structured `errorDetails` including the traceback tail for unexpected crashes.
@@ -22,7 +21,7 @@ see structured `errorDetails` including the traceback tail for unexpected crashe
 
 ### Symptom: every page redirects to /login even after logging in
 
-- **Verify:** `GET /health` → `503 {"status":"degraded","pocketbase":"unreachable"}`?
+- **Verify:** `GET /health` → `503 {"status":"degraded",…,"pocketbase":"unreachable"}`?
   Auth refreshes fail without PocketBase.
 - **Resolution:** restore/verify PocketBase first (`PB_URL` correct? PB process up?).
   The web process itself is fine — it gates everything on auth.
@@ -49,9 +48,9 @@ see structured `errorDetails` including the traceback tail for unexpected crashe
 - **Verify:** application passwords enabled for the WP account (WP Admin → Users →
   Profile → Application Passwords); username matches; URL includes the full site path
   and scheme.
-- **Resolution:** fix credentials in **Connections**, re-run **Test**, then re-dispatch the
-  failed publish job from **Failed jobs** (**Retry**). WordPress 401s are permanent
-  errors — jobs do not auto-retry them.
+- **Resolution:** fix credentials in **Connections**, re-run **Test**, then
+  re-dispatch the failed publish job from the dead-letter view (**Retry**). WordPress
+  401s are permanent errors — jobs do not auto-retry them.
 
 ## 3. Bootstrap / schema
 
@@ -80,8 +79,11 @@ Checklist, in order:
 2. Worker logs showing `worker.poll.error`? That means PocketBase calls fail — fix PB
    connectivity; polling resumes automatically afterwards.
 3. Job `availableAt` in the future? That's backoff/scheduling, not a bug — it will be
-   claimed when due (poll every ~5 s by default).
-4. Project archived? Scheduled work only fires for `active` projects.
+   claimed when due. The poll backs off when idle, so a newly due job can wait up to
+   ~25 s (5× the 5 s interval).
+4. Website paused? Scheduled work only fires for active projects.
+5. Worker crashed? In the container image each slot is restarted automatically; on
+   bare metal your supervisor must do it (the **Workers** page shows the gap).
 
 ### Symptom: job stuck `running` forever
 
@@ -89,7 +91,9 @@ Checklist, in order:
 - **Verify:** job detail shows `lockedBy`/`leaseExpiresAt`; if lease expiry passed,
   another poll cycle reclaims it automatically.
 - **Resolution:** wait out `LEASE_SECONDS` (300 s default) with some worker alive; no
-  manual reset required. Repeated immediate crashes → see the job's traceback tail
+  manual reset required. If the article/topic stays parked, the reaper (runs on the
+  schedule loop every ~60 s, 15-minute threshold) has already requeued or failed it.
+  Repeated immediate crashes → see the job's traceback tail
   (admins) and FAILURES.md crash matrix.
 
 ## 5. Retries & failures
@@ -137,15 +141,19 @@ Checklist, in order:
 - **Resolution:** run **Full re-index** — sources absent from the sweep are deleted in
   batches. Incremental runs never delete by design.
 
-## 7. Writing pipeline (**Topics** / **Articles**)
+## 7. Writing pipeline (**Content plan** / **Articles**)
 
 ### Symptom: article stuck with sections `pending`/`generating`
 
 - **Normal transient state:** section jobs run independently; the assembler polls
-  (20 s retry-after) until all are done. Watch the workspace (~2.5 s refresh).
-- **If permanently stuck:** inspect each section job in **Jobs**. Failed sections show a
+  (20 s retry-after) until all are done. Watch the workspace (4 s refresh).
+- **If permanently stuck:** the assembler refuses to wait for a pending section whose
+  `generate_section` job no longer exists — it marks those sections failed and the
+  article fails. Inspect the section jobs in **Activity**; failed sections show a
   human-readable error in the workspace plus technical detail for admins. Retry the
-  failed section job; the assembler will complete afterwards.
+  failed section job (or use **Resume <stage>** on the article), and the assembler
+  completes afterwards. The reaper parks an article that stays `generating` for 15
+  minutes with no live job.
 
 ### Symptom: section failed with "section failed validation"
 
@@ -153,13 +161,13 @@ Checklist, in order:
   `javascript:` URLs, markdown fences, H1, unbalanced HTML, too-short output). This is
   a deliberate gate — garbage is never stored silently.
 - **Resolution:** regenerate the section (or the article). If a specific prompt keeps
-  producing violations, tighten the section prompts in **Prompts**.
+  producing violations, tighten the section prompts in **Writing rules**.
 
 ### Symptom: write job failed with "prompt rendering failed (unknown variables…)"
 
 - **Cause:** a prompt contains `{{ variable }}` names outside the registry, or an
   unclosed `{{`. Caught before any LLM call.
-- **Resolution:** edit the prompt in **Prompts** using only listed variables; save
+- **Resolution:** edit the prompt in **Writing rules** using only listed variables; save
   creates a new version; reactivate the previous version to roll back instantly.
 
 ### Symptom: topic stuck in `planning`
@@ -206,11 +214,11 @@ content area — that's a theme setting, not a platform bug.
 - **By design.** `publish_article` blocks when no ready cover exists, unless the job
   payload sets `publishWithoutCover=true`.
 - **Verify:** workspace images pane — is there a `ready` + active cover version?
-- **Resolution:** generate/activate the cover (**Generate image** / **Use this image**),
-  then publish again. If the image provider is down, publishing text-only requires
-  the explicit override path.
+- **Resolution:** generate/activate the cover (**Image generation** / **Use this
+  image**), then publish again. If the image provider is down, publishing text-only
+  requires the explicit override path.
 
-## 9. Images (v1.3.0)
+## 9. Images
 
 ### Symptom: plan job fails with "article has no content yet"
 
@@ -221,15 +229,16 @@ content area — that's a theme setting, not a platform bug.
 
 - **Cause:** the plan was stored, but no *enabled* `image`-category integration
   exists, so generation jobs were never queued.
-- **Resolution:** **Connections** → add/enable an image integration (`gemini`/`bfl`/
-  `openai_compat`) → re-plan (**Image plan**) or generate per slot manually.
+- **Resolution:** **Advanced → Connections** → add/enable an image integration
+  (`gemini`/`bfl`/`openai_compat`) → re-plan (**Image plan**) or generate per slot
+  manually.
 
 ### Symptom: generation fails fast on provider/integration mismatch
 
 - Handlers fail fast (permanent) when the slot's configured provider has no
-  matching active integration — fix the **Images** tab mapping instead of retrying.
-  An HTML error page from the provider endpoint is classified distinctly from a
-  real generation failure; check the job's error details.
+  matching active integration — fix the **Advanced → Article images** mapping instead
+  of retrying. An HTML error page from the provider endpoint is classified distinctly
+  from a real generation failure; check the job's error details.
 
 ### Symptom: image stuck `generating`/`optimizing`
 
@@ -257,13 +266,15 @@ content area — that's a theme setting, not a platform bug.
 
 Checklist:
 
-1. Indexing actually ran? **Indexing** tab shows indexed counts > 0.
-2. Project has top-k > 0 and (optionally) threshold not filtering everything
-   (runtime default threshold is 0 = disabled).
-3. Use the **Retrieval** diagnostics tab with the topic's query — it shows raw hits,
-   rerank scores, surviving link candidates and the exact prompt context.
-4. Reranker enabled but its integration missing/unhealthy? Retrieval falls back to
-   vector order (never blocks writing).
+1. Indexing actually ran? **Advanced → Site health** shows indexed counts > 0.
+2. Project has top-k > 0 and the similarity threshold is not filtering everything
+   (default 0.35; `0` disables the filter).
+3. Use **Advanced → Search settings** diagnostics with the topic's query — it shows
+   raw hits, rerank scores, surviving link candidates and the exact prompt context.
+4. Reranker enabled but its integration missing? Retrieval falls back to vector order.
+   If the reranker is configured but the call fails, retrieval raises and the writer
+   continues **with no retrieved context** (warning event) rather than failing the
+   article — check the provider in the job timeline.
 
 ## 11. UI oddities
 
@@ -286,10 +297,11 @@ The most common ones:
 
 ### Symptom: "Google Ads is not configured for this project"
 
-- **Cause:** no enabled `google_ads` connection on the project, and env `GOOGLE_ADS_*`
-  is empty (env is only a fallback).
-- **Resolution:** **Connections** → add/edit the Google Ads connection (client id,
-  client secret, redirect URI) → connect the account on the **Research** tab.
+- **Cause:** no enabled `google_ads` connection on the project, and the env
+  `GOOGLE_ADS_*` fallback is incomplete (the fallback is per field).
+- **Resolution:** **Advanced → Connections** → add/edit the Google Ads connection
+  (client id, client secret, redirect URI) → connect the account on the **Find
+  opportunities** tab.
 
 ### Symptom: `redirect_uri_mismatch`
 
@@ -300,18 +312,37 @@ The most common ones:
 ### Symptom: research run stuck `running`
 
 - The worker must be running (`make worker`); runs are resumable and continue from the
-  last completed stage on restart. Check the run's job in **Jobs** for the failing stage.
+  last completed stage on restart (a crash inside a stage repeats that stage). Check
+  the run's job in **Activity** for the failing stage.
 
 ### Symptom: mirrored WordPress posts missing / `update_available`
 
-- Sync is paged and incremental; **Refresh accounts**/re-run the research. A remote
-  change over local work is flagged `update_available` by design — the engine refuses
-  to overwrite local edits.
+- Sync is paged and incremental and runs as a research stage — start a research run
+  (harvest, Google Ads or import) to refresh the mirror. **Refresh accounts** is a
+  Google Ads customer-list action, not a WordPress sync. A remote change over local
+  work sets `update_available` on the record by design — the engine refuses to
+  overwrite local edits. The Articles list does not render that badge yet; inspect
+  the record (or the run summary) to see it.
 
 ### Symptom: SERP tab shows "not configured"
 
 - Expected without a `serp` integration. Add a `serper` connection to enable SERP data;
   ranking/PAA/snippet fields are otherwise shown *unavailable*, never estimated.
+  The keyword drawer's SERP lookup currently matches on provider/location that the
+  stored rows do not carry, so it can report *unavailable* even with a working
+  provider — the run's **SERP** tab is the reliable view.
+
+## 13. Billing (only when enabled)
+
+See [BILLING.md](BILLING.md) for the full reconciliation runbook.
+
+| Symptom | First checks |
+|---|---|
+| "Payment provider not configured" | `PAYRAM_BASE_URL` / `PAYRAM_API_KEY` unset; restart the web process after setting them |
+| Paid but no plan | Open the invoice; press **Check status** (POST, idempotent); look for a `billing_payment_events` row whose `error` names the problem |
+| Webhook returns 401 | Signature mismatch — wrong API key/webhook secret, or a proxy rewrote the body |
+| Webhook returns 503 | PayRam unreachable during the authoritative re-read; PayRam retries |
+| "managed-AI allowance is used up" | The project has no enabled LLM connection. Buy credits **and** add provider keys — credits alone cannot generate (there is no platform LLM key) |
 
 ---
 

@@ -9,10 +9,10 @@ one standalone asyncio worker process, PocketBase as the source of truth, Qdrant
 vectors. No Redis, no Celery, no n8n.
 
 ```text
-Documentation status:  Verified against the working tree (research engine)
-Last verified:         2026-10-04
+Documentation status:  Verified against the working tree (v1.27.3)
+Last verified:         2026-10-25
 Companion documents:   SCHEMA.md · CONFIGURATION.md · OPERATIONS.md · TROUBLESHOOTING.md
-                       USER-GUIDE.md · FAILURES.md · SEO_RESEARCH.md
+                       USER-GUIDE.md · FAILURES.md · SEO_RESEARCH.md · BILLING.md
 ```
 
 ---
@@ -48,9 +48,9 @@ Companion documents:   SCHEMA.md · CONFIGURATION.md · OPERATIONS.md · TROUBLE
 
 | Store | Owns |
 |---|---|
-| **PocketBase** | Everything relational: projects, settings (incl. image-generation and multilingual config), integrations (encrypted secrets; categories incl. `image`, `serp`, `google_ads`), prompts (incl. `image_plan_*`, `research_*`, `cluster_*`, `opportunity_*`), topics, articles (incl. WordPress-mirror fields), sections, revisions, article images, documents metadata, index runs, jobs / leases / job events, publishing runs, provider metrics, schedules, worker heartbeats, app settings, project members, and the 13 research collections (`google_ads_connections`/`customers`, `research_runs`/`seeds`, `keywords`, `keyword_metrics`, `keyword_volumes`, `clusters`, `competitor_pages`, `content_gaps`, `article_ideas`, `serp_queries`/`results`) |
+| **PocketBase** | Everything relational: projects, settings (incl. image-generation, multilingual and landing-page config), integrations (encrypted secrets; categories incl. `image`, `serp`, `google_ads`), prompts (incl. `image_plan_*`, `research_*`, `cluster_*`, `opportunity_*`, `category_*`), topics, articles (incl. WordPress-mirror fields), sections, revisions, article images, documents metadata, index runs, jobs / leases / job events, publishing runs, provider metrics, schedules, worker heartbeats, app settings, project members, the 13 research collections (`google_ads_connections`/`customers`, `research_runs`/`seeds`, `keywords`, `keyword_metrics`, `keyword_volumes`, `clusters`, `competitor_pages`, `content_gaps`, `article_ideas`, `serp_queries`/`results`) and the 6 optional billing collections (`billing_products`, `billing_entitlements`, `billing_invoices`, `billing_payment_events`, `billing_usage`, `credit_transactions`) |
 | **Qdrant** | Vectors + payload (chunk text, source URL, title, ids). No vector data is duplicated into PocketBase; no secrets live in Qdrant payloads |
-| **External providers** | LLM generations, embeddings, reranking, WordPress posts, Google Ads Keyword Planner (research), SERP observations (research, optional) |
+| **External providers** | LLM generations, embeddings, reranking, WordPress posts, Google Ads Keyword Planner (research), SERP observations (research), images, PayRam payments (optional) |
 
 ## 2. Process model
 
@@ -62,15 +62,25 @@ worker memory.
 | Web | `uvicorn app.main:app --reload --port 8000` (`make web`) | Serves the HTMX UI on port **8000**; creates jobs idempotently |
 | Worker | `python -m app.workers.worker` (`make worker`) | Needs `PB_ADMIN_EMAIL` / `PB_ADMIN_PASSWORD` |
 
-The worker runs three async loops until SIGINT/SIGTERM:
+The worker runs four async tasks until SIGINT/SIGTERM:
 
 1. **Job poll loop** — every `POLL_INTERVAL_SECONDS` (default 5): claims due jobs and
    executes them under a global semaphore. When a cycle claims nothing it backs off
    multiplicatively up to 5× the interval, resetting as soon as work is found.
 2. **Schedule loop** — every `SCHEDULE_POLL_INTERVAL_SECONDS` (default 60, floor 10):
-   turns due per-project schedules into jobs (idempotent per time window).
-3. **Metrics loop** — every 30 s: flushes accumulated provider metrics to PocketBase
-   and closes idle pooled HTTP clients.
+   turns due per-project schedules into jobs (idempotent per time window) and runs the
+   **reaper** on the same tick.
+3. **Heartbeat loop** — upserts this worker's `worker_heartbeats` row (version,
+   running/completed/failed counters, schedule counters).
+4. **Metrics loop** — every 30 s: flushes accumulated provider metrics to PocketBase
+   and closes idle pooled HTTP clients. Buffered metrics since the last tick are lost
+   on shutdown (there is no flush-at-exit).
+
+The **reaper** (`app/services/reaper.py`) looks for work that is stale rather than
+running: articles/topics parked in `generating`/`publishing` with no live job for
+15 minutes are re-queued (assembly/publish) or marked `failed`, and a second
+recovery exhausts the retry budget. It is what stops a crashed job from leaving the
+UI spinning forever.
 
 Any number of workers can run concurrently; atomic lease claiming makes this safe.
 
@@ -85,22 +95,25 @@ app/
   templates.py       Jinja2 env + locale date/number filters + status badge styles
   utils.py           HTMX response helpers (hx_toast, mutation_response, …)
   api/               HTTP/HTMX routers — auth, dashboard, projects, articles,
-                     images, research, workspace, jobs, schedules, workers, logs
-                     (+ dev-only debug)
+                     images, research, workspace, jobs, schedules, workers, logs,
+                     billing, errors (+ dev-only debug)
   routes/            pwa (manifest/sw/offline), debug (dev only)
   domain/            Pure logic, zero I/O: chunker, parsing, prompt_render,
                      article_html, sanitize, seo_score, validation,
-                     article_validation, keywords, images, seo_enforce
+                     article_validation, keywords, images, seo_enforce, geo,
+                     gutenberg, product_profile, publishing_category
   schemas/           Pydantic models for LLM outputs & retrieval results
-  repositories/      The ONLY code that talks to PocketBase (38 collections)
+  repositories/      The ONLY code that talks to PocketBase (39 collections)
   providers/         External adapters behind protocols + table-driven registry
                      (llm, embedding, reranker, vector_store, publisher, image,
-                     serp, google_ads, payments)
+                     serp, google_ads, keyword_source, payments)
   services/          Orchestration: indexing, writing, publishing_service,
-                     retrieval, internal_linking, scheduler, secrets, settings,
-                     stats, metrics, revisions, outline_editor, prompt_service,
-                     wordpress_sync, billing, and the research engine (research,
-                     research_keywords, research_competitors, research_clustering,
+                     retrieval, internal_linking, link_building, landing_page,
+                     scheduler, reaper, secrets, settings, stats, metrics,
+                     revisions, outline_editor, prompt_service, wordpress_sync,
+                     wp_categories, topic_import, project_clone, billing, and the
+                     research engine (research, research_keywords,
+                     research_competitors, research_clustering,
                      research_opportunities, research_handoff, research_import,
                      google_ads)
   jobs/              Engine: state machine, claim/heartbeat/retry/finalize,
@@ -122,9 +135,11 @@ Layering conventions (by convention, not enforced):
 
 1. `AuthMiddleware` assigns an 8-char `req_id`, binds structured-log context, resolves
    the `pb_auth` cookie against the PocketBase `users` collection, and gates access:
-   unauthenticated requests are redirected to `/login` (303) except public paths
-   (`/login`, `/signup`, `/auth/oauth2/*`, `/static/*`, `/manifest.json`, `/sw.js`,
-   `/favicon.ico`, `/health`, `/openapi.json`, `/docs`, `/offline`, and `/`).
+   unauthenticated requests are redirected to `/login` (303); HTMX requests get
+   `200` + `HX-Redirect` instead of a body, except public paths
+   (`/login`, `/signup`, `/auth/oauth2/*`, `/webhooks/*`, `/static/*`,
+   `/manifest.json`, `/sw.js`, `/favicon.ico`, `/health`, `/openapi.json`, `/docs`,
+   `/offline`, and `/`).
 2. Route dependencies enforce authorization:
    - Platform roles: `users.role ∈ {admin, member}`. Global admins see everything.
    - Project membership: non-admins are restricted to projects where they have a
@@ -183,6 +198,7 @@ stateDiagram-v2
     running --> completed: success
     running --> failed: permanent error / retries exhausted
     running --> retrying: transient error (attempts left)
+    running --> pending: graceful shutdown requeue
     running --> cancelled: cancel acknowledged at checkpoint
     pending --> cancelled
     retrying --> cancelled
@@ -191,11 +207,12 @@ stateDiagram-v2
     cancelled --> [*]
 ```
 
-Transitions are validated centrally (`validate_transition`); illegal transitions raise.
+Transitions are validated centrally (`validate_transition`) on the claim path;
+`cancel`, `requeue`, `fail` and `schedule_retry` write status directly.
 
 ### 5.2 Claiming (atomic)
 
-Each poll cycle fetches up to 50 candidates:
+Each poll cycle fetches up to 100 candidates (50 fresh + 50 stale):
 
 - **fresh**: `(status = pending || status = retrying) && availableAt <= now`,
   ordered by priority desc, created asc;
@@ -214,7 +231,7 @@ Per claimed job the engine:
 
 1. Emits `job.started`.
 2. Loads `ProjectConfig` (project + merged flat settings + resolved active prompts +
-   global LLM defaults — batched into ~5 queries).
+   global LLM defaults — ~7 queries, cached for 60 s per project).
 3. Builds a lazy `ProviderStack`: providers are constructed on first access and wrapped
    in bounded-concurrency proxies (`BoundedLLM`, `BoundedEmbedding`, `BoundedPublisher`).
    A publish-only job never constructs (or fails on) LLM/embedding credentials.
@@ -242,7 +259,8 @@ availableAt = now + delay
 ```
 
 `backoff_base` (30 s) and `backoff_max` (3600 s) come from the project's
-`retryPolicy`; `max_attempts` defaults to 3. When retries are exhausted — or the error
+`retryPolicy`; `max_attempts` comes from the job row (the write pipeline copies it
+from `retryPolicy`, most other enqueue sites use 3). When retries are exhausted — or the error
 is permanent (`PermanentError`: bad credentials, invalid requests, schema/validation
 failures) — the job lands in `failed` with `errorCode` / `errorMessage` /
 `errorDetails`. Only a human retry (`retry_failed_job` job or the UI button) revives a
@@ -257,7 +275,8 @@ the provider's `Retry-After` header into error details so the job layer can hono
 The UI sets `cancelRequested` on the job (`POST /jobs/{id}/cancel`). Handlers call
 `ctx.check_cancelled()` at checkpoints (between posts, between sections, between
 batches); when set, `JobCancelled` is raised, the current step finishes cleanly and
-the job becomes `cancelled`.
+the job becomes `cancelled`. Only *running* handlers observe the flag: cancelling a
+`pending`/`retrying` job records the request but the job still runs when claimed.
 
 ### 5.6 Idempotency
 
@@ -265,12 +284,13 @@ Every job carries a unique `idempotencyKey`; creating a duplicate returns the ex
 record instead of raising. Keys used by the system include:
 
 - section generation: `generate:section:{sectionId}`
-- assembly: `assemble:article:{articleId}`
+- assembly: `assemble:article:{articleId}:{timestamp}`
 - scheduler windows: `index:project:{projectId}:{scheduleId}:{window}` and
-  `write:article:{projectId}:{scheduleId}:{window}` — `window = epoch // interval`,
+  `write:article:{topicId}:{window}` — `window = epoch // interval`,
   so a worker restart inside the same interval never double-fires a schedule.
-- UI-triggered publish/index actions use action-scoped keys deduplicated against
-  active jobs, so repeated clicks do not queue duplicates.
+- publish and single-document index keys are action-scoped and include the second
+  they were created, so a double-click in the same second deduplicates but a
+  deliberate second trigger later does not.
 
 Handlers are idempotent by construction (deterministic point IDs, unique constraints,
 update-instead-of-create guards); execution is at-least-once, side effects are
@@ -289,13 +309,14 @@ Append-only `job_events` rows (never updated) form the audit trail shown in the 
 | `info` / `warning` / `error` | handler progress notes |
 | `job.provider_error` | classified provider failure |
 | `provider_call` | every provider call (only when `PROVIDER_EVENTS_ENABLED=1`) — size/latency/tokens, never content |
-| `job.retry_scheduled` | transient failure scheduled for retry (also manual retry) |
+| `job.retry_scheduled` | transient failure scheduled for retry |
+| `job.requeued` | a running job was put back to `pending` on worker shutdown |
 | `job.completed` / `job.failed` / `job.cancelled` | terminal states |
 | `config.model_changed` | AI-model configuration change audit |
 
 ### 5.8 Registered job types
 
-Sixteen types, listed in `JOB_TYPES` (`app/jobs/handlers.py`) — which the worker
+Eighteen types, listed in `JOB_TYPES` (`app/jobs/handlers.py`) — which the worker
 and `app/api/jobs.py` derive from — and self-registered via `@register_job(...)`
 (imports triggered by `ensure_registered()`):
 
@@ -306,8 +327,9 @@ and `app/api/jobs.py` derive from — and self-registered via `@register_job(...
 | `write_article` | Orchestrator: topic → outline → section jobs → assembler |
 | `generate_outline` | Outline-only granular job |
 | `generate_section` | One independent job per article section |
-| `assemble_article` | Wait for sections, assemble, validate → review (auto-chains `plan_article_images`) |
+| `assemble_article` | Wait for sections, assemble, validate + editorial QA → review (auto-chains `plan_article_images` when an image-plan prompt resolves) |
 | `publish_article` | WordPress publish/update/unpublish (idempotent, audited; uploads images, sets featured media) |
+| `build_internal_links` | Add one contextual inbound link on up to 3 already-published related pages (§6.9) |
 | `retry_failed_job` | Human retry: resets a failed target job to `retrying` |
 | `plan_article_images` | LLM image plan: exactly one cover + ≤ `imageMaxInteriorImages` interiors (§6.6) |
 | `generate_cover_image` | Generate the cover slot (role-scoped provider/model, fallback on failure) |
@@ -316,7 +338,8 @@ and `app/api/jobs.py` derive from — and self-registered via `@register_job(...
 | `optimize_article_image` | Decode + quality-gate + re-encode to WebP/AVIF/JPEG + small variant |
 | `publish_article_image` | Upload one image to the WP media library (idempotent via stored media id) |
 | `wordpress_sync` | Mirror WordPress posts into `articles` (research engine; §6.8) |
-| `research_run` | The nine-stage research pipeline (§6.7) |
+| `research_run` | The research pipeline (§6.7) |
+| `analyze_landing_page` | Fetch the project's landing page and store a factual product profile (§6.10) |
 
 Adding a type = implement a handler decorated with `@register_job(...)` and add it to
 `JOB_TYPES` (the worker and jobs API read that single list).
@@ -330,14 +353,16 @@ topic → config + prompts → retrieval context → outline (LLM)
   → strict schema validation (+ one repair pass) → immutable outline snapshot
   → section records (outline IS the ordered rows)
   → N independent generate_section jobs → assemble_article
-  → whole-article validation → review state (NEVER auto-publish)
+  → whole-article validation → LLM editorial QA (+ one repair) → review
+  → (auto-publish only for schedule-generated articles that clear the score gate)
 ```
 
 Details verified in `app/services/writing.py`:
 
 - **Topic gating**: accepted source statuses are `queued`, `planned`, `failed`,
-  `cancelled`, `outline_ready`. A topic stuck in `planning` (crash artifact) is reset
-  to `planned` and resumed. Topics already in the pipeline are skipped when their
+  `outline_ready`. A topic stuck in `planning` (crash artifact) is reset
+  to `planned` and resumed. `cancelled` is deliberately excluded so cancelling
+  stops a queued write. Topics already in the pipeline are skipped when their
   article exists. On any failure the topic (and article, unless published/in review)
   is marked `failed`.
 - **Outline generation**: builds retrieval context (query = topic title + keyword),
@@ -366,16 +391,29 @@ the active `section_user` prompt version.
 
 **Assembly** (`assemble_article`): if sections are still pending it raises a
 transient error carrying `retry_after_seconds=20` (the engine reschedules it — a
-deterministic wait). If any section failed, the article fails explicitly. Otherwise:
+deterministic wait). A pending section whose `generate_section` job no longer exists
+can never finish, so the pipeline marks those sections failed and the article fails
+explicitly instead of waiting forever. If any section failed, the article fails.
+Otherwise:
 ordered `done` sections → `build_article_html` (deduped H2 headings, sanitized, no
 arbitrary separators, intended internal links preserved) → `ArticleValidator`
-(minimum word count configurable via `minArticleWords`, default 300) → report stored
+(minimum word count configurable via `minArticleWords`, default 300) → **editorial QA
+pass** (`article_qa_*`: critical/high findings trigger one `article_repair_*` pass,
+re-validated deterministically; the verdict is stored under `validation.qa` and shown
+on the review page) → report stored
 on the article → deterministic SEO score computed → final HTML persisted → revision
-snapshot (`kind=generated`) → topic moves to `review`.
+snapshot (`kind=generated`) → topic moves to `review` → image planning chained.
+
+**Auto-publish** is opt-in per project (`autoPublish.enabled`). It applies only to
+articles whose writer job was triggered by a schedule: score ≥ `min_score` (default
+90) sets the article to `approved` and queues `publish_article`; below the threshold
+the writer regenerates up to `max_attempts` (default 3) and then leaves the article in
+review. Manual **Write** never auto-publishes.
 
 ### 6.2 Review → publish workflow
 
-Generated articles never auto-publish. The explicit workflow:
+Generated articles do not publish until they are approved — except when the project
+turns on auto-publish for scheduled runs (§6.1). The explicit workflow:
 
 ```
 generated → review → approved → publishing → published
@@ -383,21 +421,27 @@ generated → review → approved → publishing → published
 ```
 
 Publishing is gated **in the job handler**, not just the UI: allowed from `approved`,
-from `published` for updates (content refresh), from `failed` only when nothing was
-ever successfully published, and from `publishing` only as crash recovery of the same
-job (its own run record must exist). Anything else is refused as a permanent error.
+from `published` for updates (content refresh), from **any** `failed` state (retry of
+a first publish or of a failed refresh), and from `publishing` as crash recovery when
+the article was already published or this same job has a run record. Anything else is
+refused as a permanent error. Publishing also waits (transient retry) while image jobs
+for the article are still queued, so a post never goes live before its images exist.
 
 Safe publishing (`app/services/publishing_service.py`):
 
 1. Leading `<h1>` is stripped (WordPress themes render the title themselves).
-2. Publishing mode comes from project settings (`draft` default, or `publish`).
-3. Every attempt writes an append-only `publishing_runs` row (attempt number,
-   mode, timestamps, response metadata, errors) with a fresh request id.
+2. Publishing mode comes from project settings (`publish` by default, or `draft`).
+3. Every attempt writes a `publishing_runs` row (attempt number,
+   mode, timestamps, response metadata, errors), updated in place with the outcome,
+   with a fresh request id.
 4. If the article already has a `wordpressPostId` → **UPDATE** that post (never
    duplicate). Otherwise the adapter looks up an orphaned post by slug (recovery from
    a crash between WP create and storing the id) and updates it; only if none exists
    is a new post created, tagged with `ezdistro_article_id` / `ezdistro_request_id` meta.
-5. Success records post id + URL on the article; topic → `published`.
+5. Success records post id + URL on the article (plus the WordPress category);
+   topic → `published`. In `publish` mode it then chains `index_document` (the live
+   post joins the retrieval corpus immediately) and `build_internal_links` (§6.9).
+   Draft pushes chain neither.
 6. Unpublish sets the WordPress post to **private** (WP has no true unpublish) —
    requires a stored WP post id. ⚠️ See §11: the unpublish path currently writes enum
    values the bootstrapped schema does not allow.
@@ -434,10 +478,10 @@ load settings → resolve WP publisher → ensure Qdrant collection (dimension c
 
 ### 6.4 Scheduler
 
-Interval-based per-project schedules (`kind`: `index` or `write`). The worker's
-schedule loop picks up due schedules of **active** projects and creates the matching
-job with a window-derived idempotency key (§5.6), then advances `nextRunAt` by the
-interval. Cron expressions are not supported (deliberate non-goal).
+Interval-based per-project schedules (`kind`: `index`, `write` or `publish`). The
+worker's schedule loop picks up due schedules of **active** projects and creates the
+matching job with a window-derived idempotency key (§5.6), then advances `nextRunAt`
+by the interval. Cron expressions are not supported (deliberate non-goal).
 
 ### 6.5 Manual retry
 
@@ -492,7 +536,7 @@ Details verified in `app/services/image_planning.py` + `app/services/images.py`:
   `publishWithoutCover=true`.
 - **Management**: the article workspace **images pane** (`_images_pane.html`)
   shows plan version, per-slot versions, prompts, and regenerate/use actions;
-   the project **Images** settings tab (`tabs/images.html`) edits all
+  the project **Article images** settings tab (`tabs/images.html`) edits all
   `image*` settings plus a one-click generation test that replicates real
   cover-request dimensions.
 
@@ -509,14 +553,17 @@ validate → wordpress_sync → keyword_collection → competitor_crawl → serp
   → clustering → gaps → opportunities → finalize
 ```
 
-- **Nine stages**, each writing a summary into `research_runs.stageState`; a re-run or
-  worker restart skips a stage whose summary already exists (resumable, and an
-  interrupted run never re-pays Google Ads).
-- **Keyword collection** is Google Ads Keyword Planning (GAQL/REST via
-  `app/providers/google_ads.py`) **or** an uploaded Keyword Planner CSV/XLSX
-  (`research_import.parse_keyword_file`, stdlib-only) with
+- **Stage summaries** are written into `research_runs.stageState` after each stage
+  finishes; a re-run or worker restart skips a stage whose summary already exists.
+  A crash **inside** a stage repeats that stage (Google Ads batches re-run; stored
+  keyword rows are not duplicated).
+- **Keyword sources** (three): free autocomplete **harvest** (`researchType="harvest"`,
+  `keyword_source`/`autocomplete` adapter, no credentials), Google Ads Keyword
+  Planning (GAQL/REST via `app/providers/google_ads.py`), or an uploaded Keyword
+  Planner CSV/XLSX (`research_import.parse_keyword_file`, stdlib-only) with
   `researchType="import"`. Metrics/volumes persist (`keyword_metrics`,
-  `keyword_volumes`) keyed per run/targeting.
+  `keyword_volumes`) keyed per run/targeting. Harvest and import runs store demand
+  only where the file/data provides it — never estimates.
 - **Competitor crawl** is sitemap-first, robots-respecting, cached by content hash
   (`competitor_pages`). **SERP** is optional (`serp_queries`/`serp_results`); without a
   provider the SERP component is simply excluded and reported as unavailable.
@@ -525,12 +572,16 @@ validate → wordpress_sync → keyword_collection → competitor_crawl → serp
   deterministic per failing batch).
 - **Opportunities** (`article_ideas`) are scored transparently (`scoreVersion`,
   `scoreComponents`) and classified `generate`/`update`/`expand`/`support`/`reject`.
-- **Handoff** (`research_handoff.accept_opportunity`): `update`/`expand` attach a brief
-  to an existing article; `generate`/`support` create a planned topic only — the
-  writer creates the article when the topic is actually written. The engine never
-  writes or publishes itself.
+  Operators can accept, reject, mark `roadmap`, act in bulk, cancel/resume a run and
+  export opportunities or keywords as CSV.
+- **Handoff** (`research_handoff.accept_opportunity`): an accepted idea becomes a
+  planned topic (keyword + cluster); for `update`/`expand` of an existing page the
+  topic points at that page and its keyword/cluster are refreshed. The content brief
+  stays on the idea — it is not copied onto the topic. The writer creates the article
+  when the topic is actually written. The engine never writes or publishes itself.
 - **Run cache**: `ResearchRunRepo.fingerprint(targeting, seeds)` reuses an identical
-  previous run unless **Refresh** is ticked.
+  previous run unless **Refresh cached data** is ticked. Harvest and import runs are
+  not fingerprinted (they always create a run).
 - Job key `research_run:{runId}` makes double submission a no-op.
 
 ### 6.8 WordPress synchronisation (`wordpress_sync`)
@@ -538,12 +589,43 @@ validate → wordpress_sync → keyword_collection → competitor_crawl → serp
 `app/services/wordpress_sync.py` mirrors WordPress posts into the existing `articles`
 collection (auto-creating a topic per post, since `articles.topicId` is required) so
 existing WP content appears in the **same Articles section** as generated drafts,
-badged by `source`. Remote identity is `(project, wordpressPostId)`; a cheap paged
+marked with `source=wordpress` (the list shows status/words/date; the mirror fields are
+available on the record and to the sync itself). Remote identity is
+`(project, wordpressPostId)`; a cheap paged
 inventory (`id, status, modified`) runs first and full content is fetched only for new
 or changed posts. Local edits are never overwritten — a remote change over local work
 flags `syncStatus='update_available'`; remote deletions flag
 `remoteStatus='deleted'`/`syncStatus='remote_deleted'`. Changed published posts are
 handed to the existing indexing pipeline (`index_project`/`index_document`).
+
+## 6.9 Inbound internal link building (`build_internal_links`)
+
+A new article ships with outbound internal links. `app/services/link_building.py`
+closes the other half: it asks the retrieval store which already-published pages are
+most related to the new article and adds **one contextual link to each** (max 3).
+
+- Text-preserving by construction: no LLM, no rewriting. It only wraps an existing
+  whole-word occurrence of the new article's keyword or title inside a text node, and
+  never touches text inside an existing `<a>`.
+- A page with no safe occurrence, or one that already links to the target, is
+  skipped.
+- Only the live post's `content` field is sent to WordPress; nothing else about the
+  post changes, and each edited post is re-queued for indexing (`index_document`).
+- Triggered automatically after a successful live publish (`mode=publish`).
+
+## 6.10 Landing-page analysis (`analyze_landing_page`)
+
+`app/services/landing_page.py` turns the brand's own page into product context:
+
+1. read the project's `landingPageUrl`;
+2. fetch it through the SSRF guard and extract visible text (20 000-char cap);
+3. ask the configured LLM to extract a **factual** product profile (JSON only; the
+   prompt forbids invented prices, metrics or claims);
+4. normalize the profile and store it on `project_settings.productProfile`.
+
+Every research, outline and section prompt can then read `{{ product_profile }}` /
+`{{ product_context }}`, so the writer knows what the site sells. Run it from
+**Website setup → Analyse page**; it is a durable job, so the page can be closed.
 
 ## 7. Retrieval subsystem
 
@@ -569,9 +651,11 @@ Used by the writer and exposed as a diagnostics tab in the project UI:
 All external access goes through protocols in `app/providers/base.py` —
 `LLMProvider`, `EmbeddingProvider`, `RerankerProvider`, `VectorStoreProvider`,
 `ImageGenerationProvider`, `PublisherProvider`, `KeywordResearchProvider`,
-`SERPProvider` — resolved by a **table-driven registry** (`app/providers/registry.py`).
+`SERPProvider`, `PaymentProvider` — resolved by a **table-driven registry** (`app/providers/registry.py`).
 The Google Ads OAuth client is a separate adapter (`GoogleAdsOAuthProvider`, category
-`google_ads`) used by the research engine. There are no provider-specific branches in
+`google_ads`) used by the research engine; the autocomplete harvester lives in
+`app/providers/keyword_harvest.py` (category `keyword_source`, needs no credentials).
+There are no provider-specific branches in
 application code; adding a provider = subclass a protocol and register the class in
 `registry._load_adapters()`.
 
@@ -591,19 +675,21 @@ application code; adding a provider = subclass a protocol and register the class
 | serp | `serper` | serper.dev Google SERP API | optional; organic results, PAA, related searches |
 | serp | `none` | no-op provider | first-class state: SERP data simply unavailable, never estimated |
 | google_ads | `google_ads` | Google Ads OAuth + Keyword Planning REST | per-project connection; refresh token encrypted; research only |
+| keyword_source | `autocomplete` | search-suggest harvesting | free, no credentials; used by the harvest run |
 
 Resolution rules:
 
 - **LLM roles** (`outline`, `section`, optional `meta`, `review`): provider =
-  role override → project `defaultLlmProvider` → `openai_compat`; model params
-  resolve project override → global default (`app_settings.llm.{role}`) → legacy
-  fields; fallback model `gpt-4o-mini`, temperature 0.7, max tokens 4096, timeout
-  120 s.
+  role override → global default → project `defaultLlmProvider` → `openai_compat`;
+  model = role override → global default → legacy `defaultLlmModel` → **the
+  connection's own model**. There is no hardcoded model: if all of those are empty
+  the provider raises a permanent error. Temperature 0.7, max tokens 4096, timeout
+  120 s are the parameter defaults.
 - Other categories resolve through the project's **active integration** of that
   category (enabled flag); a missing reranker integration simply disables reranking.
 - Model discovery (`list_models`) caches per integration for 10 minutes; manual model
   ids always allowed.
-- "Test connection" pings the provider (and lists models for LLMs), recording
+- "Test" pings the provider (and lists models for LLMs), recording
   latency + health status (`healthy` / `unhealthy` / `degraded`) on the integration.
 
 Failure taxonomy: `TransientError` (network, timeout, 429, 5xx) vs `PermanentError`
@@ -621,11 +707,12 @@ error category — never prompt content.
   (auto) then hard word-split. Size default 500 words (floor 50), overlap default 100
   (clamped below size), `maxChunkCount` caps output.
 - **Prompt rendering**: prompts are data. `{{ variable }}` substitution is pure regex
-  against a fixed variable registry (19 variables, with descriptions in the UI);
+  against a fixed variable registry (71 variables, with descriptions in the UI);
   unknown variables fail **before** anything reaches the LLM; unclosed `{{` is an
   error. No template engine, no code execution.
 - **Sanitization**: bleach allowlist — headings h1–h5, paragraphs, lists, emphasis,
-  links (`href/title/rel/target`), blockquote/code/pre, tables; protocols
+  links (`href/title/rel/target`), blockquote/code/pre, tables (with `colspan`/
+  `rowspan`), `img`/`figure`/`figcaption`, `br`/`hr`; protocols
   http/https/mailto; everything else stripped.
 - **SEO score** (deterministic, 0–100): keyword in title (25) / first paragraph (15)
   / headings (20) / sane density 0.5–3 % (10); structure points for title, meta
@@ -639,20 +726,24 @@ error category — never prompt content.
 Concrete mechanisms (verified in code):
 
 - **Authentication**: PocketBase users + `pb_auth` HttpOnly cookie (SameSite=Lax,
-  Secure in production/TLS, 30-day expiry); middleware gate on every route.
+  Secure in production/TLS, 30-day expiry); middleware gate on every route. Session
+  validation is cached for 30 s for rendering, but a disabled account is evicted
+  immediately (`?error=disabled`), so revocation is not delayed by the cache.
 - **Authorization**: platform `admin`/`member` roles; per-project membership roles
   `owner > admin > editor > viewer` enforced per route; cross-project id substitution
   blocked by `ensure_record_in_project`; empty membership = no access.
-- **Mutation hardening**: `require_hx` rejects non-HTMX mutations (CSRF-lite).
+- **Mutation hardening**: `require_hx` rejects non-HTMX mutations (CSRF-lite); the
+  exceptions are `/logout` and the HMAC-verified PayRam webhook.
 - **Secrets at rest**: integration API keys/passwords Fernet-encrypted into
-  `integrations.secretsEnc` under `SECRETS_KEY`. Production refuses to run without
-  `SECRETS_KEY`; dev derives a deterministic key from `pb_url`+env. Only masked
+  `integrations.secretsEnc` under `SECRETS_KEY`. Production raises when a secret is
+  first used if `SECRETS_KEY` is unset (there is no boot probe); dev derives a
+  deterministic key from `pb_url`+env. Only masked
   previews (first 4 … last 4 chars) reach the UI; plaintext is decrypted server-side
   only for provider calls and never logged. Rotating `SECRETS_KEY` makes previously
   stored credentials undecryptable (they must be re-entered).
 - **SSRF guard**: provider URLs validated for scheme (http/https) and private/
-  loopback/link-local targets; override only via `ALLOW_PRIVATE_NETWORKS=1` for local
-  development against localhost services.
+  loopback/link-local targets; override only via `ALLOW_PRIVATE_NETWORKS=1` (intended
+  for local development against localhost services; nothing enforces that in prod).
 - **Content safety**: LLM HTML sanitized with bleach allowlists before storage/display;
   forbidden-pattern validators reject scripts/iframes/event-handlers before acceptance.
 - **PocketBase rules**: every app collection is `null` (locked = superuser-only),
@@ -662,8 +753,9 @@ Concrete mechanisms (verified in code):
   the app layer.
 
 Not claimed: penetration-tested security, rate limiting on login, or audit-grade
-tamper evidence. `job_events`/`publishing_runs` are append-only by convention of the
-application code, not enforced by PB rules.
+tamper evidence. `job_events` is append-only by convention of the application code,
+not enforced by PB rules; `publishing_runs` keeps one row per publish attempt and is
+updated in place with the outcome.
 
 ## 11. Known issues found during this documentation audit
 
@@ -682,36 +774,42 @@ here honestly rather than papered over:
    drops it at rest. The request id survives only inside `responseMetadata.requestId`
    (which *is* written on completion). The older SCHEMA.md documented
    `request_id`/`response_status` columns that do not exist.
-3. **Collection count.** The bootstrap defines **38** base collections: the core 20
+3. **Collection count.** The bootstrap defines **39** base collections: the core 20
    (`article_images` in v1.3.0, `worker_heartbeats` in v1.1.0), the 13 research
-   collections added in 2026-10, and the 5 billing collections added in v1.19.0 —
+   collections added in 2026-10, and the 6 billing collections added in v1.19.0 —
    plus the extended `users` collection. Older
-   revisions said "17"/"18"/"20"/"33".
-4. **Embedding defaults differ by path.** `ProjectConfig.embedding` falls back to
-   `openai_compat` / `text-embedding-3-small` / 1536 dims, while the seeded global
-   `app_settings` advertises Cohere `embed-v4.0` / 1024 dims. Unlike LLM roles,
+   revisions said "17"/"18"/"20"/"33"/"38".
+4. **Embedding defaults differ by path.** `ProjectConfig.embedding` fixes the provider
+   to `openai_compat`, takes the model from project settings (falling back to
+   `text-embedding-3-small` at the provider) and dimensions 1536. Unlike LLM roles,
    embedding settings do **not** consult global defaults — a project without explicit
-   embedding settings gets the hardcoded fallback. Configure embeddings explicitly per
+   embedding settings gets those fallbacks. Configure embeddings explicitly per
    project.
 5. **Unused/dead settings.** `schedule_window_minutes` is defined in config but not
-   referenced anywhere; `generationConcurrency` is stored and editable in the UI but
-   no engine code reads it — effective section parallelism is bounded by the worker's
-   `MAX_CONCURRENT_JOBS` and `LLM_CONCURRENCY` semaphores.
-6. **Docs lag.** The previous ARCHITECTURE/SCHEMA documents described a `claimed` job
+   referenced anywhere; `billing_overpayment_policy` is defined but not read;
+   `generationConcurrency` is read into `ProjectConfig.generation` but section
+   generation is still bounded by the job/LLM semaphores, so it does not add
+   parallelism.
+6. **Managed-AI execution is not wired.** The billing service meters projects without
+   an enabled `llm` integration, but the provider registry can only build an LLM from
+   a project integration — there is no platform-level LLM key. A project without an
+   LLM connection therefore cannot generate, whatever its credit balance. Treat
+   managed-AI credits as recorded entitlements until a platform key is added.
+7. **Docs lag.** The previous ARCHITECTURE/SCHEMA documents described a `claimed` job
    status and other superseded details; this rewrite supersedes them.
 
 ## 12. Performance engineering notes
 
 Measured-first tooling: `app/scripts/benchmark.py` runs the real engine and handlers
 against instrumented fakes (defaults: 10 concurrent jobs, 100 topics). It is a load
-test, not a fixture. Optimizations present in code: batched prompt resolution (~5
-queries per job config), pooled keep-alive HTTP clients with an idle sweeper, batch
+test, not a fixture. Optimizations present in code: batched prompt resolution (~7
+queries per job config, cached 60 s per project), pooled keep-alive HTTP clients with an idle sweeper, batch
 embeddings, bounded concurrency at job and provider level, pagination everywhere,
 `fanout()` (`app/utils.py`) to overlap independent PocketBase round trips (dashboard
 aggregates, N+1 indexing/provider-health scans) into one wave, a process-wide warm
 PocketBase connection pool with batched `/api/batch` bulk writes (50 per request),
-HTMX partial updates with modest polling intervals (dashboard/jobs 5 s, monitor 8 s,
-workspace sections 2.5 s, indexing 10 s), and a 15-second TTL cache for derived
+HTMX partial updates with modest polling intervals (dashboard stats 8 s, jobs table
+5 s, workspace sections 4 s, indexing 10 s), and a 15-second TTL cache for derived
 dashboard and queue-depth aggregates (mutable entity state is never cached).
 Historical throughput
 numbers from earlier revisions are intentionally not reproduced here; re-run the
@@ -723,6 +821,7 @@ benchmark to measure current behavior.
 - Cron-expression scheduling (interval-based only)
 - Server-sent events / log streaming (HTMX polling instead)
 - Multi-region/sharded workers, Kubernetes autoscaling manifests
-- Billing, team invitations, webhooks
+- Team invitations, user-facing outbound webhooks
+- Managed-AI execution (billing meters it; no platform LLM key exists yet — §11.6)
 - Automatic embedding-drift detection (manual re-index instead)
 - Article diff preview against live WordPress content

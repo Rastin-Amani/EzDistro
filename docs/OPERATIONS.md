@@ -4,9 +4,8 @@ Operational procedures for deploying, running, monitoring and recovering the EzD
 platform. Audience: engineers or operators responsible for a running deployment.
 
 ```text
-Documentation status:  Verified against Makefile, Dockerfile, config, worker code
-                       (research engine)
-Last verified:         2026-10-04
+Documentation status:  Verified against Makefile, Dockerfile, deploy units, config, worker code
+Last verified:         2026-10-25 (v1.27.3)
 ```
 
 ---
@@ -26,7 +25,9 @@ External dependencies:
 |---|---|
 | PocketBase | **≥ 0.23** required (collection-import API shape); auth falls back `_superusers` → `_admins` |
 | Qdrant | HTTP endpoint; default `http://127.0.0.1:6333`, overridable per project integration |
-| Provider APIs | LLM / embeddings / rerank / WordPress — configured per project in the UI |
+| Provider APIs | LLM / embeddings / rerank / images / WordPress — configured per project in the UI |
+| Google Ads, SERP | Optional research capabilities; the platform runs without them |
+| PayRam | Optional; only when `BILLING_ENABLED=true` (see [BILLING.md](BILLING.md)) |
 
 Python 3.12 venv expected (`.venv/bin/python`). Node.js is needed only to build CSS.
 
@@ -45,13 +46,20 @@ export PB_ADMIN_EMAIL=… PB_ADMIN_PASSWORD=…   # or put them in .env
 make bootstrap        # python -m app.scripts.bootstrap_pb
 ```
 
-Bootstrap does, in order: import/patch all 38 collections (`delete_missing=False`),
-union any new select values into live collections (`ensure_select_values`), add
-`role`/`displayName` to `users`, seed the `app_settings` singleton + all 25 global
-default prompts, enforce OAuth-only sign-in (Google/GitHub), and promote/create the
+Bootstrap does, in order: import/patch all 39 collections (`delete_missing=False`),
+union any new select values into live collections (`ensure_select_values`),
+reconcile relation options such as `cascadeDelete` (`ensure_relation_options`),
+backfill the dedicated integration `model` column, add `role`/`displayName` to
+`users` and set its auth rules, seed the `app_settings` singleton + all 27 global
+default prompts, seed the example billing catalog (never overwriting existing
+rows), enforce OAuth-only sign-in (Google/GitHub), and promote/create the
 platform admin for `SEED_ADMIN_EMAIL`.
 It prints explicit confirmation lines for each step; on failure it raises with a
 hint about reachability/credentials/PB version.
+
+`SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` are read with `os.getenv`, so export them
+on the `make bootstrap` command line (values that exist only in `.env` are not in the
+process environment).
 
 An alternative artifact, `pb_collections_import.json`, mirrors the same schema for a
 manual import through the PocketBase Admin UI. It is generated from the code — after
@@ -76,25 +84,31 @@ make worker    # needs PB_ADMIN_EMAIL/PASSWORD at runtime
 Run each under your process supervisor of choice. Both processes are stateless;
 all durable state lives in PocketBase/Qdrant.
 
-Example systemd unit skeletons (adapt paths/user):
+Example systemd units are shipped in `deploy/` and installed with
+`make install-web-service` / `make install-worker-service` (they substitute `__ROOT__`
+and `__USER__`). The web unit binds `127.0.0.1:8000` — put a reverse proxy in front;
+add `Environment=ENV=production` there if you want JSON logs (the logger reads the
+**process** environment, not `.env`).
 
 ```ini
-# ezdistro-web.service
+# ezdistro-web.service (deploy/ezdistro-web.service.tpl)
 [Service]
-WorkingDirectory=/srv/ezdistro
-Environment=ENV=production
-ExecStart=/srv/ezdistro/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips "*"
+User=__USER__
+WorkingDirectory=__ROOT__
+ExecStart=__ROOT__/.venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 Restart=always
+RestartSec=5
+Environment=PYTHONUNBUFFERED=1
 
-# ezdistro-worker.service
+# ezdistro-worker.service (deploy/ezdistro-worker.service.tpl)
 [Service]
-WorkingDirectory=/srv/ezdistro
-Environment=ENV=production
-ExecStart=/srv/ezdistro/.venv/bin/python -m app.workers.worker
+User=__USER__
+WorkingDirectory=__ROOT__
+ExecStart=__ROOT__/.venv/bin/python -m app.workers.worker
 Restart=always
+RestartSec=5
+Environment=PYTHONUNBUFFERED=1
 ```
-
-(The exact uvicorn flags mirror the provided Dockerfile CMD.)
 
 ### Docker
 
@@ -116,33 +130,37 @@ docker run --env-file .env -p 8000:8000 ezdistro
 docker run --env-file .env ezdistro python -m app.workers.worker
 ```
 
-The entrypoint gives every worker slot a stable id (`worker-1…N`) and forwards
-`SIGTERM`/`SIGINT` to the whole pool, so `docker stop` shuts workers down
+The entrypoint gives every worker slot a stable id (`worker-1…N`), forwards
+`SIGTERM`/`SIGINT` to the whole pool, and restarts a crashed slot after
+`WORKER_RESTART_DELAY` seconds (default 5), so `docker stop` shuts workers down
 gracefully instead of killing them.
 
-Note the image copies only `requirements.txt`, `app/` and `docs/` — `.env` must come
-from the environment (`--env-file`) since it is gitignored.
+Note the image copies `requirements.txt`, `app/`, `docs/` and `docker-entrypoint.sh` —
+`.env` must come from the environment (`--env-file`) since it is gitignored.
 
 ### Graceful shutdown
 
 SIGINT/SIGTERM stop the worker cleanly: loops cancel, the job it was running
-goes straight back to the queue (`job.requeued`, no lock), and metrics flush at
-shutdown. Jobs interrupted by a hard kill (SIGKILL / lost host) are recovered by
-lease expiry (`LEASE_SECONDS`, default 300 s) — restarts never require manual
-cleanup.
+goes straight back to the queue (`job.requeued`, no lock). Metrics buffered since the
+last 30 s flush are **lost** on shutdown (there is no flush-at-exit). Jobs interrupted
+by a hard kill (SIGKILL / lost host) are recovered by lease expiry
+(`LEASE_SECONDS`, default 300 s) — restarts never require manual cleanup. The reaper
+also parks articles/topics whose job vanished, so the UI stops spinning after ~15
+minutes.
 
 ## 4. Production configuration checklist
 
 - [ ] `ENV=production`
-- [ ] `SECRETS_KEY` generated and stored safely — **required**, startup refuses
-      otherwise. Losing this key makes every stored integration secret undecryptable.
-      Rotating it also invalidates them (re-enter credentials afterwards).
+- [ ] `SECRETS_KEY` generated and stored safely — production refuses encrypted-secret
+      operations without it (there is no startup probe, so the process boots and
+      fails on first use). Losing this key makes every stored integration secret
+      undecryptable. Rotating it also invalidates them (re-enter credentials
+      afterwards).
 - [ ] `PB_URL` + `PB_ADMIN_EMAIL/PASSWORD` set (worker + bootstrap need admin creds)
 - [ ] The app's public origin + `/auth/oauth2/callback` is registered
       **exactly** at both Google and GitHub (scheme, host, path; no trailing
       slash). The app builds the callback from the origin the browser reached,
-      so `PUBLIC_APP_URL` being stale no longer breaks sign-in — but keep it
-      correct for billing return URLs
+      so `PUBLIC_APP_URL` being stale no longer breaks sign-in
 - [ ] `make bootstrap` ran after configuring the OAuth providers — it disables
       password/OTP/MFA and prints `sign-in providers = google, github`
 - [ ] `users.createRule` is `@request.context = "oauth2"` (bootstrap enforces
@@ -154,37 +172,45 @@ cleanup.
 - [ ] TLS in front of the web process — the session cookie gets its `Secure` flag
       automatically in production or on https requests
 - [ ] `/docs`, `/openapi.json`, debug routes are disabled automatically in production
-- [ ] Worker sizing: `MAX_CONCURRENT_JOBS=4`, `LLM_CONCURRENCY=4`,
-      `EMBEDDING_CONCURRENCY=4`, `PUBLISH_CONCURRENCY=2` reviewed against provider
-      rate limits
+- [ ] Worker sizing reviewed against provider rate limits. The image defaults are
+      `WORKERS=4` (container only), `MAX_CONCURRENT_JOBS=4`,
+      `LLM_CONCURRENCY=4`, `EMBEDDING_CONCURRENCY=4`, `PUBLISH_CONCURRENCY=2`;
+      `.env.example` ships a smaller single-box profile (2 / 3 / 4 / 2 / 1).
 - [ ] Qdrant reachable and sized for your embedding dimensions (per project+model
       collections are created on first index run)
+- [ ] If billing is enabled: `PAYRAM_BASE_URL`/`PAYRAM_API_KEY` set and the webhook
+      registered (see [BILLING.md](BILLING.md))
 
 ## 5. Health & monitoring
 
 **Liveness probe:** `GET /health`
 → `200 {"status":"ok","version":…,"pocketbase":"ok"}` when PocketBase answers,
-→ `503 {"status":"degraded","pocketbase":"unreachable"}` otherwise.
+→ `503 {"status":"degraded","version":…,"pocketbase":"unreachable"}` otherwise.
 Use it for container/orchestrator health checks; it checks PB only (Qdrant/provider
 health lives in per-integration status).
 
 **Logs:** structlog to stdout. Dev (`ENV=dev`) renders console lines; anything else
-renders JSON. Correlation: web requests carry `req_id`; workers log with job ids.
+renders JSON — but the logger reads the `ENV` **process** variable, so with the
+shipped systemd units add `Environment=ENV=production` if you want JSON. Correlation:
+web requests carry `req_id`; workers log with job ids.
 Uvicorn's access log is silenced in favour of request lifecycle events. Ship stdout
 with your normal collector; there is no in-app file logging or rotation.
 
 **In-app observability:**
-- Dashboard (`/dashboard`) — pipeline counts, failure rate, average durations,
-  indexing + provider health; aggregates cached 5 s.
-- Job monitor (`/jobs`), dead letters (`/failed`), per-job event timeline with
+- Overview (`/dashboard`) — content progress and the items needing attention.
+  Derived aggregates are cached 15 s.
+- Activity (`/jobs`), the dead-letter view (`/failed`), per-job event timeline with
   provider-call stats when `PROVIDER_EVENTS_ENABLED=1`.
+- Workers (`/workers`) — heartbeat rows: active/stale/offline, version, counters.
+- Automation (`/schedules`) — enabled/paused/overdue routines and the last schedule
+  poll.
 - `provider_metrics` collection — daily per `(project, provider, model, operation)`
   rows with latency histograms (P95 computed on read), token usage. Flushed every
-  30 s per worker and at shutdown.
+  30 s per worker (not at shutdown).
 
 **Retention gaps (no automated pruner exists):** `job_events`, `provider_metrics`,
-`publishing_runs`, `article_revisions`, `article_images` file fields grow unbounded
-by design (append-only audit / versioned generations). Plan periodic
+`article_revisions`, `article_images` file fields and `publishing_runs` grow
+unbounded by design (audit / versioned generations). Plan periodic
 archiving/pruning out-of-band if volume matters.
 
 ## 6. Scaling
@@ -217,25 +243,26 @@ archiving/pruning out-of-band if volume matters.
 
 | Asset | Backup method | Recoverability |
 |---|---|---|
-| PocketBase | Built-in backups or filesystem snapshot of its data dir (SQLite). **Source of truth** — projects, articles, jobs history, secrets ciphertext | Restore file, restart processes |
+| PocketBase | **You** must configure it: PocketBase's built-in backups, or a filesystem snapshot of its `pb_data` directory (SQLite). There is no backup code in this repo. **Source of truth** — projects, articles, jobs history, secrets ciphertext | Restore file, restart processes |
 | `SECRETS_KEY` | Store separately from PB backups (e.g. secret manager) | Without it, encrypted credentials cannot be decrypted — re-entering them is the only recovery |
 | Qdrant | Optional snapshots | Or: full reindex from WordPress (**Full re-index**) rebuilds everything deterministically from source posts + PB document metadata |
 | WordPress | Out of scope (your site's own backups) | Articles always remain in PB; republishing updates existing posts |
 
 DR drill sketch: restore PB snapshot → start web+worker with same env (incl.
-`SECRETS_KEY`) → check `/health` → verify dashboard counters render → optionally
+`SECRETS_KEY`) → check `/health` → verify the Overview counters render → optionally
 full-reindex one project into a fresh Qdrant.
 
 ## 9. Routine procedures
 
 | Task | Procedure |
 |---|---|
-| Rotate a provider API key | Project → **Connections** → edit connection → save new secret → **Test** |
-| Change publishing mode | Project settings → publishingMode `draft`/`publish` |
-| Add/remove schedule | Project scheduling form (interval-based; kind index/write) — schedules only fire while the project is `active` and a worker's schedule loop runs |
-| Purge stale vectors for deleted posts | Full reindex (**Full re-index**) — the only path that deletes unseen sources' vectors |
-| Requeue stuck work | Inspect `/failed` → **Retry** per job; running jobs self-heal via lease expiry |
-| Kill runaway generation | **Jobs** → job detail → **Cancel** (cooperative; stops at next checkpoint) |
+| Rotate a provider API key | Project → **Advanced → Connections** → edit connection → save new secret → **Test** |
+| Change publishing mode | **Website setup → Publishing & automation** (`draft`/`publish`) |
+| Add/remove a routine | **Automation** page or **Website setup → Scheduling & retry** (interval-based; kinds index/write/publish) — routines only fire while the website is active and a worker's schedule loop runs |
+| Purge stale vectors for deleted posts | **Advanced → Site health** → **Full reindex** — the only path that deletes unseen sources' vectors |
+| Requeue stuck work | Inspect the dead-letter view → **Retry** per job; running jobs self-heal via lease expiry and the reaper |
+| Kill runaway generation | **Activity** → job detail → **Cancel** (cooperative; stops at next checkpoint; queued jobs are not cancelled) |
+| Recover a broken article pipeline | **Articles** → open the article → **Resume <stage>** (continues from the failed step without regenerating content) |
 
 ## 10. Quick incident triage
 
@@ -255,24 +282,32 @@ Details and fixes: TROUBLESHOOTING.md · failure-mode matrix: FAILURES.md.
    `mode="unpublish"` / `status="unpublished"`, which the bootstrapped
    `publishing_runs` selects do not allow; expect validation failure until patched
    (schema migration or code fix).
-2. **`generationConcurrency` setting is inert** — effective section parallelism comes
-   from worker env caps only.
-3. **No retention pruner** for append-only audit collections (see §5).
-4. **Embedding fallback trap** — projects without explicit embedding settings fall
-   back to hardcoded OpenAI-compatible defaults, not the seeded global Cohere values.
+2. **`generationConcurrency` has limited effect** — it is read into
+   `ProjectConfig`, but section parallelism is still bounded by worker env caps.
+3. **No retention pruner** for audit collections (see §5).
+4. **Embedding defaults are not the global seed** — projects without explicit
+   embedding settings resolve to the OpenAI-compatible adapter with
+   `text-embedding-3-small` / 1536 dimensions. Set them explicitly per project.
 5. **Google Ads is configured per project, not globally.** The env `GOOGLE_ADS_*`
-   vars are only a fallback for a project with no enabled `google_ads` connection. A
+   vars are a per-field fallback for a project's `google_ads` connection. A
    research run's refresh token lives in `google_ads_connections.refreshTokenEnc`
    (Fernet, `SECRETS_KEY`) — back up `SECRETS_KEY` as you would any integration secret.
-   Research runs are resumable and re-run stage-checkpointed, so a worker restart
-   continues rather than re-paying Google Ads.
+   Research runs are stage-checkpointed, so a worker restart continues rather than
+   repeating completed stages (a crash inside the keyword stage repeats that stage).
+6. **The reaper runs on the schedule loop.** If the worker is down, stale articles
+   are not parked and overdue routines accumulate — the **Automation** banner is the
+   fastest signal.
+7. **Billing is optional and has two gaps to know before enabling it:** plans are
+   recorded entitlements with no feature gating, and managed-AI metering has no
+   platform LLM key, so a project without its own LLM connection cannot generate
+   (see [BILLING.md](BILLING.md)).
 
 ## 12. Verification commands (development)
 
 ```bash
 make lint        # ruff check + format check
 make typecheck   # mypy app/
-make test        # pytest (~3 min; no live services needed — fakes only)
+make test        # pytest (~5 min, ~990 tests; no live services needed — fakes only)
 make check       # all three
 ```
 

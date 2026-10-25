@@ -119,12 +119,13 @@ Architecture, data model, job-state design and provider interfaces: see [docs/AR
     (job.created → job.claimed → job.started → job.stage_* → job.completed/failed/cancelled)
   - bounded provider concurrency (LLM / embeddings / publishing rate limits)
   - idempotency keys; no duplicated irreversible operations (publish guard)
-  - 16 registered job types: the 8 content/indexing types incl. granular ones
-    (generate_outline, generate_section, assemble_article, index_document,
-    retry_failed_job) plus 6 image-pipeline types (plan_article_images,
-    generate_cover_image, generate_interior_image, generate_article_image,
-    optimize_article_image, publish_article_image) plus 2 research types
-    (research_run, wordpress_sync)
+  - 18 registered job types: 9 content/indexing types (index_project,
+    index_document, write_article, generate_outline, generate_section,
+    assemble_article, publish_article, build_internal_links, retry_failed_job),
+    6 image-pipeline types (plan_article_images, generate_cover_image,
+    generate_interior_image, generate_article_image, optimize_article_image,
+    publish_article_image) and 3 research types (research_run, wordpress_sync,
+    analyze_landing_page)
 - **[Indexer job](https://ezdistro.space/en/features/indexer)** (`index_run`): fetch WP posts (id-ordered, resumable) → strip HTML →
   chunk (size/overlap per project) → batch embed → upsert Qdrant (stable point ids) →
   per-post content-hash metadata; unchanged posts are skipped; crashed runs resume
@@ -144,8 +145,16 @@ Architecture, data model, job-state design and provider interfaces: see [docs/AR
   fallback, quality-gated (dimensions/format decoded before storage), optimized to
   WebP/AVIF/JPEG + small variant, versioned per slot (regenerate creates version+1,
   never overwrites). Auto-chained from `assemble_article`; manageable from the
-  article workspace **images pane** and the project **Images** settings tab (includes
-  a one-click generation test).
+  article workspace **images pane** and the project **Article images** settings tab
+  (includes a one-click generation test).
+- **Internal link building** (`build_internal_links`): after publishing, the
+  retrieval store locates the already-published pages most related to the new
+  article and adds one contextual inbound link to each (up to three). The edit is
+  text-preserving — it only wraps an existing occurrence of the article's keyword
+  or title, never rewrites prose, never nests a link.
+- **Landing-page analysis** (`analyze_landing_page`): fetch the brand's own
+  landing page, extract a factual product profile, and feed it to every research,
+  outline and section prompt so the writing knows what the site sells.
 - **[SEO research engine](https://ezdistro.space/en/features/research)** (`research_run`): Google Ads Keyword Planner data (OAuth,
   per-project client) or an uploaded Keyword Planner CSV/XLSX file → WordPress mirror
   (`wordpress_sync`) → competitor crawl → clustering (deterministic / embedding / LLM)
@@ -175,23 +184,24 @@ technical detail in [docs/SEO_RESEARCH.md](docs/SEO_RESEARCH.md).
 ## Data model
 
 The PocketBase schema is designed around the product domain (not the old n8n
-workflows; the [reference](https://ezdistro.space/en/docs) is generated from it): **38 collections** covering projects, flat project settings
-(incl. image-generation and multilingual config), configurable integrations
-(encrypted secrets; categories incl. `image`, `serp`, `google_ads`), versioned
-prompts (incl. `image_plan_*`, `research_*`, `cluster_*`, `opportunity_*`),
-topics with a full editorial pipeline, articles + sections (the outline IS the
+workflows; the [reference](https://ezdistro.space/en/docs) is generated from it): **39 collections**
+covering projects, flat project settings (incl. image-generation, multilingual and
+landing-page config), configurable integrations (encrypted secrets; categories incl.
+`image`, `serp`, `google_ads`, `keyword_source`), versioned prompts (incl.
+`image_plan_*`, `research_*`, `cluster_*`, `opportunity_*`, `category_*`), topics
+with a full editorial pipeline, articles + sections (the outline IS the
 ordered section rows; WordPress-mirror fields for `wordpress_sync`), article
 revisions (append-only history), article images (versioned generations +
 optimized files), indexed documents, index runs, the job engine (jobs / atomic
-leases / append-only job events), publishing runs (append-only publish audit),
+leases / append-only job events), publishing runs (publish audit, one row per attempt),
 provider metrics, schedules, worker heartbeats and project memberships (plus the
 built-in `users` collection extended with `role`/`displayName`), **plus 13 SEO
 research collections** (`google_ads_connections`, `google_ads_customers`,
 `research_runs`, `research_seeds`, `keywords`, `keyword_metrics`,
 `keyword_volumes`, `clusters`, `competitor_pages`, `content_gaps`,
-`article_ideas`, `serp_queries`, `serp_results`), **plus 5 billing collections**
-(`billing_products`, `billing_invoices`, `billing_payment_events`,
-`billing_usage`, `credit_transactions`).
+`article_ideas`, `serp_queries`, `serp_results`), **plus 6 billing collections**
+(`billing_products`, `billing_entitlements`, `billing_invoices`,
+`billing_payment_events`, `billing_usage`, `credit_transactions`).
 Relationships, cascades, uniqueness and the indexing strategy:
 [docs/SCHEMA.md](docs/SCHEMA.md).
 
@@ -237,28 +247,30 @@ sign-in (the app builds it from the public origin it is served on); see
 New here? The [first-article walkthrough](https://ezdistro.space/en/how-to/first-article) follows these steps with screenshots.
 
 1. Create a **project**.
-2. **Integrations** tab: add active credentials — WordPress (site URL + username +
+2. **Advanced → Connections**: add active credentials — WordPress (site URL + username +
    application password), LLM (base URL + API key), Embedding (base URL + key),
    Qdrant (URL, optional key), Reranker (optional).
-3. **Settings** tab: embedding model/dimensions, chunk size/overlap, retrieval
+3. **Website setup**: embedding model/dimensions, chunk size/overlap, retrieval
    top-k/threshold, rerank, LLM model/temperature, section concurrency, retry policy,
-   publishing mode, SEO rules, schedules.
-4. **[Prompts](https://ezdistro.space/en/features/prompts)** tab: system / outline / section / SEO prompts (per-project; global
+   publishing mode, SEO rules, routines.
+4. **[Writing rules](https://ezdistro.space/en/features/prompts)** (Advanced): system / outline / section / SEO prompts (per-project; global
    defaults seeded by bootstrap).
-5. **Topics** tab: add topics (manually or bulk-import CSV/TSV), click **Write article**
+5. **Content plan** tab: add topics (manually or bulk-import CSV/TSV), click **Write**
    → writer job → article appears in **Articles** (edit outline/sections there) →
    publish job → live/draft on WordPress.
-6. **Research** tab (optional): connect Google Ads on **Connections** (or upload a
-   Keyword Planner CSV/XLSX), run research, then accept opportunities to feed Topics.
-7. **Jobs** and **Events** tabs: monitor, cancel, retry (the **Failed jobs**
-   dead-letter view opens from **Jobs**).
-8. **Full re-index** button (or schedule): index WordPress posts into Qdrant.
+6. **Find opportunities** tab (optional): harvest autocomplete keywords for free,
+   connect Google Ads on **Connections** (or upload a Keyword Planner CSV/XLSX),
+   run research, then accept opportunities to feed the content plan.
+7. **Activity** and **Events** tabs: monitor, cancel, retry (the **Problems**
+   dead-letter view opens from **Overview** or `/failed`).
+8. **Site health** tab (**Full reindex** button) or an **Automation** routine: index
+   WordPress posts into Qdrant.
 
 Already running another stack? See [migrating to EzDistro](https://ezdistro.space/en/migrate) and the
 [integration list](https://ezdistro.space/en/integrations).
 
 The documentation set in `docs/` is also served in-app at `/help/` (auth-gated) —
-the Research tab's **Setup guide** link points there.
+the Find opportunities tab's **How this works** link points there.
 
 ## Who it is for
 
@@ -332,6 +344,7 @@ leases make multi-worker safe).
 - Architecture, schema, configuration, operations, failure modes and the SEO
   research engine: [`docs/`](docs/README.md).
 - Setup, checks, architecture rules and the schema workflow: [CONTRIBUTING.md](CONTRIBUTING.md).
+- Optional billing/plans (off by default for self-hosters): [docs/BILLING.md](docs/BILLING.md).
 - Release history: [CHANGELOG.md](CHANGELOG.md).
 - Security model and how to report a vulnerability: [SECURITY.md](SECURITY.md).
 - Background: [what EzDistro is](https://ezdistro.space/en/about) and [what is coming next](https://ezdistro.space/en/roadmap).

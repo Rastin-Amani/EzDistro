@@ -14,19 +14,19 @@ Two retry layers exist:
 2. **Job layer** (engine `_finalize_failure`) — a transient failure marks the job
    `retrying` with exponential backoff + jitter (±50 %), honoring the provider's
    `Retry-After` when present (`delay = max(delay, retry_after_seconds)`).
-   `max_attempts` comes from the project `retryPolicy` (default 3); backoff base
+   `max_attempts` comes from the job row (the writer copies it from the project
+   `retryPolicy`, default 3; most other enqueue sites use 3); backoff base
    30 s, cap 3600 s. After the last attempt → `failed` (permanent).
 
 Transient ⇒ retryable. Permanent ⇒ job fails; the UI shows the error and the job can
 be re-dispatched manually (**Retry**).
 
 ```text
-Documentation status:  Refreshed & verified against current code
-                       (research engine)
-Last verified:         2026-10-04
+Documentation status:  Refreshed & verified against current code (v1.27.3)
+Last verified:         2026-10-25
 ```
 
-## Cohere / embeddings
+## Embeddings (OpenAI-compatible) & reranker
 
 | Failure | Retry? | Attempts | Backoff | User-visible | Permanent? | Manual recovery |
 |---|---|---|---|---|---|---|
@@ -34,6 +34,12 @@ Last verified:         2026-10-04
 | 429 rate limit | adapter + job | 3 + 3 | honors `Retry-After` | "Provider rate limit" | no | none (auto) |
 | 500 / 5xx | adapter + job | 3 + 3 | exp | "Temporary provider error" | no | none (auto) |
 | malformed response (wrong shape / fewer embeddings than requested) | **no** | — | — | "Invalid provider response" | **yes** | check provider/model config; re-dispatch |
+
+The reranker is optional: a **missing** reranker integration falls back to vector
+order. A configured reranker that **fails** propagates the provider error out of
+retrieval; the writer catches it and continues with no retrieved context (warning
+event), so the article is written without knowledge-base context rather than failing.
+For indexing, embedding failures follow the rows above.
 
 ## LLM (OpenAI-compatible / Gemini)
 
@@ -77,15 +83,15 @@ non-retried errors — approval state is enforced in the handler, not just the U
 > skipped_duplicate). Expect schema-validation failure until either the schema or the
 > code is fixed. See SCHEMA.md §3.15 and TROUBLESHOOTING.md §8.
 
-## Image generation (v1.3.0: gemini / bfl FLUX / openai_compat)
+## Image generation (gemini / bfl FLUX / openai_compat)
 
 | Failure | Retry? | Attempts | Backoff | User-visible | Permanent? | Manual recovery |
 |---|---|---|---|---|---|---|
 | transient provider error (timeout, 429, 5xx) | job layer | `max(2, imageMaxRetries)` | jittered (+ Retry-After floor) | provider message (human-readable wrapper) | no | none (auto); fallback provider tried when configured |
-| permanent provider error (auth, 4xx, bad request) | fallback only | — | — | provider message | **yes** (if fallback also fails) | fix key/model in Integrations or **Images** tab; re-dispatch |
-| provider/integration mismatch (slot provider has no active integration) | **no** — fail fast | — | — | mismatch message | **yes** | fix the **Images** tab mapping |
+| permanent provider error (auth, 4xx, bad request) | fallback only | — | — | provider message | **yes** (if fallback also fails) | fix key/model in Connections or **Article images**; re-dispatch |
+| provider/integration mismatch (slot provider has no active integration) | **no** — fail fast | — | — | mismatch message | **yes** | fix the **Article images** mapping |
 | quality-gate rejection (bad dimensions/format) | **no** (`PermanentError`) | — | — | validation message | **yes** | adjust prompt/size config; regenerate |
-| oversized file (>10 MB / size limit) | **no** (`PermanentError`) | — | — | size message | **yes** | regenerate at smaller dims |
+| oversized file (>8 MiB / size limit) | **no** (`PermanentError`) | — | — | size message | **yes** | regenerate at smaller dims |
 | missing source file on re-optimize | **no** (`PermanentError`) | — | — | "Missing source file — regenerate" | **yes** | regenerate the image first |
 | WordPress media upload failure | **no** (`PermanentError`) | — | — | "Image upload to WordPress failed" | **yes** | check WP connectivity/credentials; re-dispatch |
 | no active image integration at plan time | chain skipped (warning event), plan still stored | — | — | warning in timeline | n/a | enable integration; re-plan or generate per slot |
@@ -102,13 +108,15 @@ media. Missing cover blocks `publish_article` (permanent) unless
 |---|---|---|---|---|---|---|
 | timeout / 5xx | adapter + job | 3 + 3 | exp 2 s; jittered | humanised on the run page | no | none (auto) |
 | 429 rate limit | adapter + job | 3 + 3 | honors `Retry-After` | humanised | no | none (auto); Keyword Planning concurrency defaults to 2 |
-| refresh token expired/revoked | **no** | — | — | "reconnect Google Ads" | **yes** | reconnect the account on the Research tab |
+| refresh token expired/revoked | **no** | — | — | "reconnect Google Ads" | **yes** | reconnect the account on **Find opportunities** |
 | access/permission denied (cloud project not allowed for Keyword Planning) | **no** | — | — | actionable message | **yes** | enable Google Ads API on the Cloud project that owns the OAuth client |
 | unresolvable language/country constant | **no** | — | — | "Google Ads does not recognise the language '…'" | **yes** | use an ISO code (e.g. `en`, `fa`, `es`) |
 
-Research runs are resumable: a transient failure restarts the run at the last
-completed stage (no re-paid Google Ads calls). Run-level fingerprint cache prevents
-duplicate work for identical targeting+seeds.
+Research runs are stage-checkpointed: a restart skips stages whose summary exists.
+A crash **inside** the keyword stage repeats that stage (stored rows are not
+duplicated, but the Google Ads calls are paid again). The run-level fingerprint cache
+prevents duplicate work for identical targeting+seeds on the Google Ads path; harvest
+and import runs are not fingerprinted.
 
 ## SERP (research, optional)
 
@@ -119,13 +127,35 @@ duplicate work for identical targeting+seeds.
 | 401 auth | **no** | — | — | "SERP provider rejected the key" | **yes** | fix the `serper` key in Connections; refresh the keyword |
 | no `serp` integration | n/a | — | — | SERP fields shown *unavailable* | n/a | add a `serper` integration if SERP data is wanted |
 
+The keyword drawer's on-demand SERP lookup currently passes empty provider/location
+and never matches stored observations, so it reports *unavailable* even when a
+provider is configured; the run's **SERP** tab shows what was actually observed.
+
 ## PocketBase
 
 | Failure | Retry? | Attempts | Backoff | User-visible | Permanent? | Manual recovery |
 |---|---|---|---|---|---|---|
-| temporary unavailability during a job (incl. config load) | job layer (network errors ⇒ transient) | 3 | jittered | "Temporary database error" | no | none (auto) |
 | temporary unavailability during polling | worker loop catches; polls again next cycle | ∞ (until recovery) | poll interval | none | no | none (auto) |
+| temporary unavailability **during config load** | **no** — the PocketBase SDK wraps transport errors in `ClientResponseError`, which the engine does not classify as transient | 1 | — | the job fails with the SDK error | **yes** | retry the job once PocketBase is reachable |
+| temporary unavailability during other PB calls | job layer when the raw error is `ConnectionError`/`TimeoutError` | 3 | jittered | "Temporary database error" | no | none (auto) |
 | stale job (worker died mid-flight; lease expired) | reclaimed by any worker once `leaseExpiresAt` passes | 1 (re-execution) | n/a | none | no | none (auto) |
+
+The reaper (schedule loop, every ~60 s) also requeues or fails articles/topics that
+are parked in `generating`/`publishing` with no live job after 15 minutes.
+
+## Payments (PayRam — optional, only when billing is enabled)
+
+| Failure | Retry? | Attempts | Backoff | User-visible | Permanent? | Manual recovery |
+|---|---|---|---|---|---|---|
+| checkout call times out/5xx | **no** (single call, 20 s timeout) | 1 | — | invoice `needs_review` + error | no | press **Check status**, or retry checkout |
+| webhook signature mismatch / unset secret | **no** | — | — | `401` to PayRam; event not stored | n/a | fix `PAYRAM_API_KEY` / `PAYRAM_WEBHOOK_SECRET` |
+| webhook for an unknown reference | n/a | — | — | stored `processed=true` with `error="unknown provider reference"`, returns 200 | n/a | inspect `billing_payment_events` |
+| authoritative re-read fails (PayRam unreachable) | PayRam retries delivery | — | provider-side (up to 48 h) | `503`; invoice unchanged | no | **Check status** or reopen the return page |
+| duplicate webhook | deduplicated by event key | — | — | 200 | n/a | none |
+| unknown provider status | n/a | — | — | invoice maps to `failed` | n/a | reconcile in the admin (`status=paid` + entitlement) |
+
+Only `paid` grants a plan/credits, exactly once. A webhook is never trusted for the
+amount: the service re-reads the invoice from PayRam. See [BILLING.md](BILLING.md).
 
 ## Worker crash simulations (kill + restart)
 
@@ -134,7 +164,7 @@ Verified by tests in `tests/test_failure_engineering.py`:
 | Crash point | Duplicated sections? | Duplicated WP posts? | Corrupt article state? | Recovery |
 |---|---|---|---|---|
 | during indexing | n/a | n/a | run record resumes from checkpoint; **no duplicate vector points** (deterministic point ids `{slug}:{wp_id}:{chunk}`) | restarted worker reclaims the stale run and finishes it |
-| during section generation | **no** — `(article, position)` unique forces UPDATE of the same row | n/a | article stays `generating`; assemble keeps waiting (20 s retry-after) | sections regenerate into the same rows; assemble completes → `review` |
+| during section generation | **no** — `(article, position)` unique forces UPDATE of the same row | n/a | article stays `generating`; assemble keeps waiting (20 s retry-after) — if the section job is gone, assemble fails it deterministically and the reaper parks it | sections regenerate into the same rows; assemble completes → `review` |
 | between WP `create_post` and storing the post id | n/a | **no** — retry finds the orphan via slug lookup and UPDATEs it (exactly one CREATE ever) | article stuck in `publishing`; the same job's retry is allowed (guard checks the job's own run record) | publish completes; article → `published` |
 | during outline generation | n/a | n/a | topic stuck in `planning` | retried `write_article` detects the crash artifact, resets to `planned` and resumes; saved outline reused when present |
 | full batch (write_article × 3) | **no** — exactly 9 sections, unique (article, position) | n/a | all articles end `review` with `finalHtml` | every job completes; exactly 3 assembles |
@@ -151,12 +181,13 @@ Guarantees:
 ## Operational notes
 
 - Retry policy is per-project (`retryPolicy`): `max_attempts` (3),
-  `backoff_base` (30 s), `backoff_max` (3600 s). Formula:
+  `backoff_base` (30 s), `backoff_max` (3600 s). The writer copies `max_attempts`
+  onto the jobs it enqueues; other job types use their own attempt budget. Formula:
   `delay = min(base × 2^(attempts−1), cap) × uniform(0.5–1.5)`.
 - `Retry-After` from 429 responses is always honored as a delay floor.
 - Permanent failures keep the full error (`errorCode`, `errorMessage`,
   `errorDetails`) — technical detail renders for admins only; manual retry creates a
-  fresh attempt under the same idempotency key.
+  fresh attempt under the same idempotency key and resets the attempt budget.
 - No retry storms: bounded concurrency (job / LLM / embedding / publish semaphores)
   plus adapter-level attempt caps keep cascading failures contained.
 

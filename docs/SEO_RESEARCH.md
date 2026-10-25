@@ -5,27 +5,43 @@ competitor pages into an evidence-backed article roadmap. It is **facts first,
 AI second**: the model interprets real data, it never invents metrics.
 
 ```text
-Documentation status:  Verified against app/services/research*.py, providers, schema
-Last verified:         2026-10-04
-Companion documents:   ARCHITECTURE.md §6.7–6.8 · SCHEMA.md §3.22–3.34 ·
+Documentation status:  Verified against app/services/research*.py, providers, schema (v1.27.3)
+Last verified:         2026-10-25
+Companion documents:   ARCHITECTURE.md §6.7–6.10 · SCHEMA.md §3.22–3.34 ·
                        CONFIGURATION.md · FAILURES.md
 Also served in-app at  /help/SEO_RESEARCH.md (auth-gated)
 ```
 
 ## What it does
 
-1. Connects a Google Ads account (OAuth) and picks a customer/account.
-2. Collects keyword ideas and metrics from Google Ads Keyword Planning.
-3. Mirrors your existing WordPress posts into the normal **Articles** section.
-4. Crawls competitor sites (sitemap-first, robots-respecting, cached).
-5. Clusters keywords, finds content gaps and matches them against your content.
-6. Reads a natural-language goal and generates `GENERATE` / `UPDATE` / `EXPAND` /
+1. Expands seeds into real queries — free autocomplete harvest, a Google Ads
+   account (OAuth), or an uploaded Keyword Planner export.
+2. Mirrors your existing WordPress posts into the normal **Articles** section.
+3. Crawls competitor sites (sitemap-first, robots-respecting, cached).
+4. Clusters keywords, finds content gaps and matches them against your content.
+5. Reads a natural-language goal and generates `GENERATE` / `UPDATE` / `EXPAND` /
    `SUPPORT` / `REJECT` opportunities with a transparent score.
-7. Hands accepted opportunities to the existing article generation and
+6. Hands accepted opportunities to the existing article generation and
    publishing pipeline — the research engine never writes or publishes itself.
 
-The whole feature works with **no paid SERP provider** and **no LLM** (clustering
-has a deterministic mode). Every optional capability degrades gracefully.
+The whole feature works with **no Google Ads account**, **no paid SERP provider** and
+**no LLM** (clustering has a deterministic mode). Every optional capability degrades
+gracefully. A separate `analyze_landing_page` job turns your own landing page into the
+product profile every research prompt reads (§ Landing-page analysis).
+
+## Run modes
+
+| Mode (`research_runs.researchType`) | Needs | What it collects |
+|---|---|---|
+| `harvest` | nothing | autocomplete suggestions from Google, YouTube, Bing, DuckDuckGo, Amazon (`keyword_source`/`autocomplete`) |
+| `keywords` / `site` / `competitors` / `mixed` | a `google_ads` connection + customer | Keyword Planner ideas, volumes, CPC, paid competition |
+| `import` | nothing | rows from a Keyword Planner CSV/XLSX |
+| `site` (WordPress stage) | a WordPress connection | the existing-post mirror |
+
+The UI's default, **Recommended** path is harvest: free, no account, and enough to
+build a roadmap. Volumes appear only where this project already collected one — an
+earlier import or Google Ads run — and everything else stays unmeasured rather than
+estimated.
 
 ## Google Ads setup
 
@@ -64,9 +80,10 @@ never leave the server. The project's research tab reads
 which resolves the enabled `google_ads` integration for that project.
 
 > **Projects are self-contained by default.** Env `GOOGLE_ADS_*` is an optional
-> **fallback** used only when a project has no enabled `google_ads` connection —
-> useful for a single shared OAuth client across all projects. Configure it on
-> the Connections tab unless you intentionally share one client everywhere.
+> **fallback**, resolved **per field**: a project connection with a blank
+> `redirect_uri` or `client_secret` inherits the env value for that field. Use it
+> for a single shared OAuth client across all projects. Configure the connection
+> on the Connections tab unless you intentionally share one client everywhere.
 
 If you do use the env fallback, set:
 
@@ -97,13 +114,17 @@ otherwise).
 ```
 Connect Google Ads -> Google consent -> /auth/google-ads/callback
                                      (or /projects/google-ads/callback)
-  -> exchange code -> store the refresh token ENCRYPTED -> list customers
+  -> exchange code -> store the refresh token ENCRYPTED
+  -> user presses "Refresh accounts" to list customers
   -> user picks an account -> connection verified
 ```
 
 - The callback is a **browser navigation**, so it redirects back to the project
-  page with a flag (`?ga=connected|unconfigured|denied|error`) and the page
-  renders an inline alert — it does not use `HX-Trigger`.
+  page with a flag and the page renders an inline alert — it does not use
+  `HX-Trigger`. The callback emits `?ga=connected|denied|error`;
+  `?ga=unconfigured` comes from the connect entry point when the client is missing.
+- Listing customers is a separate step: **Refresh accounts** calls
+  `discover_customers` and records `lastVerified`.
 - `state` is HMAC-signed and expires (see `app/services/google_ads.py`); it
   binds the flow to the user and project so one user can never attach another
   user's account.
@@ -130,14 +151,16 @@ metrics are stored per run/targeting (see `keyword_metrics`, `keywords`).
 Supported seed types (`research_seeds.seedType`): `keyword`, `url`, `site`,
 `competitor`. Keyword seeds are batched (~20 per `GenerateKeywordIdeas` call);
 URL/site/competitor seeds each become their own request. The per-run budget is
-shared across batches (`RESEARCH_MAX_KEYWORDS_PER_RUN`, default 5000).
+shared across batches (`RESEARCH_MAX_KEYWORDS_PER_RUN`, default `0` = uncapped;
+`.env.example` suggests `5000`). Harvest runs take seed keywords only and cap at
+`Maximum keywords` (blank/0 = no limit).
 
 ### File import (no Google Ads API access)
 
 If a user cannot get Google Ads API access, they can export keyword ideas from
-**Google Keyword Planner** (CSV or XLSX) and upload the file in the Research tab.
-This creates a research run with `researchType = "import"` and the file stored
-base64-encoded in `config.importPayload`; the run needs **no** Google Ads
+**Google Keyword Planner** (CSV or XLSX) and upload the file in **Find
+opportunities**. This creates a research run with `researchType = "import"` and the
+file stored base64-encoded in `config.importPayload`; the run needs **no** Google Ads
 connection or customer.
 
 - `app/services/research_import.py::parse_keyword_file(data, filename, mapping=None)`
@@ -151,22 +174,23 @@ connection or customer.
   API path and the import path share clustering, gaps, opportunities and the
   topic handoff. Google metrics are never invented or estimated — only
   classified/summarised by AI later.
-- `POST /projects/{id}/research/import/preview` returns the detected columns and
-  keyword count (and a small preview table) so the user can confirm before
-  starting. `POST /projects/{id}/research/import` starts the run.
-- If no keyword column can be detected, the preview says so and the route accepts
-  a manual `mapping_column` (column index) rather than failing.
+- The tab uploads and starts in one step (**Analyse imported keywords**); the run
+  page reports the detected columns and row count. An API-only preview route
+  (`/research/import/preview`) exists but is not linked from the UI, and the form has
+  no manual column-mapping field — if auto-detection fails, the run reports it.
 
 ## Caching, idempotency and resumability
 
 - **Run-level cache.** `ResearchRunRepo.fingerprint(targeting, seeds)` hashes
   the targeting plus the sorted, normalised seed set (project deliberately
-  excluded). Starting research with an identical fingerprint reuses the previous
-  run unless the user ticks **Refresh**. This is cheap and correct but coarse:
-  provenance is run-level, not per-seed (there is no keyword↔seed join table).
-- **Stage-level resume.** Each of the nine stages writes a summary into
+  excluded). Starting Google Ads research with an identical fingerprint reuses the
+  previous run unless the user ticks **Refresh cached data**. This is cheap and
+  coarse: provenance is run-level, not per-seed (there is no keyword↔seed join
+  table), and harvest/import runs are not fingerprinted.
+- **Stage-level resume.** Each stage writes a summary into
   `research_runs.stageState`. A re-run (or a worker restart) skips any stage
-  whose summary already exists, so an interrupted run never re-pays Google Ads.
+  whose summary already exists. A crash **inside** a stage repeats that stage —
+  keyword rows are not duplicated, but the Google Ads calls are paid again.
 - **Idempotent writes.** Keywords are keyed by
   `(project, normalizedKeyword, language, locationId)`; metrics by
   `(run, keyword)`; volumes by `(run, keyword, year, month)`; clusters by
@@ -179,7 +203,9 @@ connection or customer.
 `app/services/wordpress_sync.py` mirrors WordPress posts into the existing
 `articles` collection (with an auto-created topic per post, because
 `articles.topicId` is required). This means existing WordPress content appears
-in the **same Articles section** as EZDistro-generated drafts, badged by source.
+in the **same Articles section** as EzDistro-generated drafts, with
+`source=wordpress` on the record (the Articles list itself shows status, words and
+date; the mirror fields are not badged in the list yet).
 
 - **Remote identity** is `(project, wordpressPostId)` — never title, slug or URL,
   all of which change. A slug change updates the existing row.
@@ -200,67 +226,65 @@ they are never exposed to the browser after saving.
 
 ## Optional SERP provider
 
-`SERP_PROVIDER=none` is a **first-class state**, not an error. Without a SERP
-provider the engine still produces keyword discovery, search demand, historical
-trends, paid competition, CPC ranges, competitor analysis, content gaps,
-clusters and opportunities. Ranking positions, People Also Ask, featured
-snippets and SERP features simply show as *unavailable* — they are never
-estimated.
+No `serp` integration is a **first-class state**, not an error (there is no
+`SERP_PROVIDER` setting; the registry falls back to a credential-free no-op
+provider). Without a SERP provider the engine still produces keyword discovery,
+search demand, historical trends, paid competition, CPC ranges, competitor
+analysis, content gaps, clusters and opportunities. Ranking positions, People Also
+Ask, featured snippets and SERP features simply show as *unavailable* — they are
+never estimated.
 
 To enable SERP data add a `serp` integration in the project's **Connections**
 tab (provider `serper`, with an API key). Observations are cached
-(`serp_queries`/`serp_results`) with a TTL; a single keyword can be refreshed on
-demand from the keyword drawer. `RESEARCH_MAX_SERP_QUERIES` (default 0) caps how
-many live queries one run may spend.
+(`serp_queries`/`serp_results`) with a TTL. `RESEARCH_MAX_SERP_QUERIES` (default 0)
+caps how many live queries one run may spend, and a hard 200-keyword SERP limit
+applies regardless.
+
+> The keyword drawer's on-demand SERP lookup passes empty provider/location and
+> therefore never matches stored observations; use the run's **SERP** tab.
 
 ## AI connections
 
-The research engine reuses the project's AI connections and adds **dynamic model
-discovery**: when a Base URL and API key are configured, the available models
-are fetched from the provider's model-list endpoint (OpenAI-compatible `/models`,
-OpenRouter's models API). A manually entered model id is always accepted as a
-fallback, so a provider without a listing endpoint still works. Capabilities
-(chat / structured output / decision / embedding) are recorded where
-discoverable and left `unknown` otherwise.
+The research engine reuses the project's LLM connections and supports **model
+discovery**: when a base URL and API key are configured, the available models are
+fetched from the provider's model-list endpoint (OpenAI-compatible `/models`,
+Gemini). A manually entered model id is always accepted, so a provider without a
+listing endpoint still works.
 
-Decision-style models (e.g. Jev) are treated as a separate **decision**
-capability rather than ordinary chat. If a requested decision model is not
-exposed by the connection, the UI says so instead of silently sending a
-decision prompt through a chat-only endpoint. Jev is **optional**: research runs
-with deterministic clustering, existing embeddings, or any configured LLM.
-
-Cost is split by task: deterministic code for normalisation/dedupe/hashing,
-a cheap model for intent/action classification, a strong model for final
-opportunity synthesis.
+Clustering and opportunity synthesis both use the project's **`meta`** LLM role
+(one model, one temperature) — there is no separate cheap/strong model tier and no
+"decision" capability. Research runs fine with deterministic clustering, existing
+embeddings, or no LLM at all.
 
 ## Clustering
 
-Three modes, selectable per run (`config.clustering`):
+Four modes, selectable per run (`config.clustering`):
 
 | Mode | Behaviour |
 | --- | --- |
 | `auto` | embedding when the project has an embedding provider, else lexical |
-| `deterministic` | pure lexical grouping (`app/domain/keywords.py`), zero AI |
+| `deterministic` | pure lexical grouping (`app/services/research_clustering.py`), zero AI |
 | `embedding` | reuses the project's embedding provider |
 | `llm` | batched AI clustering with the `cluster_system`/`cluster_user` prompts |
 
-Deterministic clustering buckets by head term with an inverted token index and
-an intent "gate" (superlatives are neutral, so *gym software* and *best gym
-software* stay together while a pricing/cost query does not), giving O(n·k)
-behaviour rather than an n×n similarity matrix. LLM clustering degrades to
-deterministic per failing batch, so one bad response cannot break a run.
+Deterministic clustering buckets candidates by content token with an inverted token
+index (candidate cap 40 per bucket) and an intent "gate" (superlatives are neutral,
+so *gym software* and *best gym software* stay together while a pricing/cost query
+does not), giving roughly O(n·k) behaviour instead of an n×n similarity matrix. LLM
+clustering degrades to deterministic per failing batch, so one bad response cannot
+break a run.
 
 ## Opportunity engine
 
-The user describes a goal in natural language (Step 12). `parse_goal` builds a
-structured representation (objectives, priority intents, audience, min/max
-volume, excluded topics, max opportunities) with a deterministic heuristic, then
-the engine applies it: a lead-gen goal raises the intent bar toward
+The user describes a goal in natural language on the research form. `parse_goal`
+builds a structured representation (objectives, priority intents, audience,
+min/max volume, excluded topics, max opportunities) with a deterministic heuristic,
+then the engine applies it: a lead-gen goal raises the intent bar toward
 commercial/comparison, an authority goal favours pillar/supporting content, an
 update goal favours gaps/freshness.
 
-Generation is **batched** (a handful of clusters per LLM call, never one giant
-"give me 10,000 articles" prompt) and iterative. Every candidate is validated:
+Generation is **batched** (2 clusters per LLM call, 4 calls in flight, never one
+giant "give me 10,000 articles" prompt) and iterative. Every candidate is validated:
 
 - the primary keyword must resolve to a keyword **that was actually collected**;
 - the title must not be excluded by the goal;
@@ -268,21 +292,37 @@ Generation is **batched** (a handful of clusters per LLM call, never one giant
 - a candidate that matches an existing article is forced to `UPDATE` (a
   different title does not justify a new URL).
 
-The opportunity score is transparent and versioned (`scoreVersion='opp_v1'`,
-weights in `SCORE_WEIGHTS`): demand, business relevance, content gap, existing
-coverage and uniqueness. When SERP data is absent the SERP component is simply
-excluded — `scoreComponents.serp` is `null` and the UI says so.
+The opportunity score is transparent and versioned (`scoreVersion`, weights in
+`SCORE_WEIGHTS`): demand, business relevance, content gap, existing coverage and
+uniqueness. When SERP data is absent the SERP component is simply excluded —
+`scoreComponents.serp` is `null` and the UI says so.
+
+Operators can accept, reject or mark `roadmap` (individually or in bulk), accept /
+reject / reset clusters (also in bulk), cancel or resume a run, and export
+opportunities or keywords as CSV. **Keywords CSV** is the round trip to Keyword
+Planner when you want real volumes for a harvested set.
+
+## Landing-page analysis
+
+`analyze_landing_page` (started from **Website setup → Analyse page**) fetches the
+project's `landingPageUrl`, extracts a **factual** product profile with the LLM and
+stores it on `project_settings.productProfile`. Research, outline and section
+prompts can read `{{ product_profile }}` / `{{ landing_page_url }}`, so the writer
+understands the offer. It uses the project's LLM connection; without one the job
+fails permanently with the usual "no active llm integration" error.
 
 ## Handoff to articles
 
 `accept_opportunity` (in `app/services/research_handoff.py`):
 
-- `update` / `expand` attach a brief to the existing article — no new URL;
 - `generate` / `support` create **only** a topic at status `planned` — the
   content plan. No article row and no `write_article` job exist until the topic
   is actually written: the project's `write` schedule picks planned topics, or
   the user starts one from the content plan. Approving 100 opportunities adds
   100 planned topics and changes nothing in Articles.
+- `update` / `expand` reuse the existing topic for that page and refresh its
+  keyword/cluster. The content brief stays on the `article_ideas` row — it is not
+  copied onto the topic or the article.
 
 ## Cost, retention and caps
 
@@ -325,12 +365,13 @@ private prompts or article content to analytics.
 
 | Symptom | Cause / fix |
 | --- | --- |
-| "Google Ads is not configured for this project" | Add a Google Ads connection on the project's **Connections** tab (category `Google Ads (keyword research)`) with the Cloud OAuth client id, client secret and redirect URI. Env `GOOGLE_ADS_*` only acts as a fallback. |
+| "Google Ads is not configured for this project" | Add a Google Ads connection on the project's **Advanced → Connections** page (category `Google Ads (keyword research)`) with the Cloud OAuth client id, client secret and redirect URI. Env `GOOGLE_ADS_*` is a per-field fallback. |
 | `redirect_uri_mismatch` | The redirect URI must match the Google Cloud registration exactly (scheme, host, path). |
 | "Google Ads does not recognise the language '…'" | The language code is not in Google Ads' language constants; use an ISO code like `en`, `fa`, `es`. |
 | Keyword research produces nothing | Check the run's targeting, the chosen customer, and that the account allows Keyword Planning for the Cloud project. Errors are humanised in the run page; the technical error is in the job events. |
+| **Find opportunities** shows no Google Ads block | Expected until a `google_ads` connection exists; harvest and import still work. |
 | SERP tab shows "not configured" | Expected: add a `serp` integration, or keep working in Google Ads + site intelligence mode. |
-| WordPress posts missing from Articles | Run **Refresh accounts**/re-run the research; sync is paged and incremental. Check the WordPress connection health in Connections. |
-| A mirrored post shows `update_available` | The remote content changed while you had local work in progress — the engine refuses to overwrite local edits. |
-| Research run stuck in `running` | The worker must be running (`make worker`); runs are resumable, so a restart continues from the last completed stage. |
+| WordPress posts missing from Articles | Start a research run (harvest, Google Ads or import) — `wordpress_sync` runs as a research stage. **Refresh accounts** is a Google Ads customer-list action, not a sync. Check the WordPress connection health in Connections. |
+| A mirrored post is `update_available` | The remote content changed while you had local work in progress — the engine refuses to overwrite local edits. The Articles list does not render this badge yet; inspect the record. |
+| Research run stuck in `running` | The worker must be running (`make worker`); runs are stage-checkpointed, so a restart continues from the last completed stage. |
 | Provider rate limits | Keyword Planning has tight limits; `RESEARCH_GOOGLE_ADS_CONCURRENCY` defaults to 2. Retries use exponential backoff with jitter and respect `retry_after`. |

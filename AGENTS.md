@@ -10,7 +10,7 @@ EzDistro Platform: FastAPI + HTMX (Jinja2/DaisyUI) SEO automation platform (Word
 
 **Working directory matters**: both processes must be launched from the repo root. Config is pydantic-settings, which reads `.env` from the *current working directory* — `make web`/`make worker` already do this, but never start them from another folder. On this host, `make install-web-service` / `make install-worker-service` install systemd units (templates in `deploy/`) that run the same commands with `WorkingDirectory=__ROOT__`.
 
-The full schema (currently **33 collections**, e.g. `article_revisions`, `provider_metrics`, plus the 13 SEO-research collections) is defined **as code** in `app/scripts/bootstrap_pb.py` — treat the code as the source of truth. `docs/SCHEMA.md` / `docs/ARCHITECTURE.md` are committed (the Dockerfile copies `docs/` into the image) but may lag the code, so prefer the bootstrap script when they disagree.
+The full schema (currently **39 collections**: 20 core, 13 SEO-research and 6 optional billing, e.g. `article_revisions`, `provider_metrics`) is defined **as code** in `app/scripts/bootstrap_pb.py` — treat the code as the source of truth. `docs/SCHEMA.md` / `docs/ARCHITECTURE.md` are committed (the Dockerfile copies `docs/` into the image) but may lag the code, so prefer the bootstrap script when they disagree.
 
 ## Setup & env
 
@@ -23,7 +23,7 @@ npm install && make css
 - **`.env` parsing gotcha**: pydantic-settings treats everything after `=` as the value, so never put trailing comments or whitespace after a value (e.g. `SECRETS_KEY= # note` would set the key to `" # note"`). Keep each value on its own line with no inline comment.
 
 - A ready `.venv` (Python 3.12) already exists — use `.venv/bin/...` for pytest/ruff/mypy rather than reinstalling.
-- **Tests need no live services**: they run against an in-memory fake PocketBase (`tests/fakes.py`, includes unique-constraint + filter emulation) and fake providers. The full suite is ~260 tests and takes **~3 min** — a handful of real-time engine tests dominate (`test_performance.py`, `test_failure_engineering.py`, `test_production_smoke.py`), so give `make test` a long timeout. For focused work run a single file: `.venv/bin/pytest tests/test_engine.py -q`.
+- **Tests need no live services**: they run against an in-memory fake PocketBase (`tests/fakes.py`, includes unique-constraint + filter emulation) and fake providers. The full suite is ~990 tests and takes **~5 min** — a handful of real-time engine tests dominate (`test_performance.py`, `test_failure_engineering.py`, `test_production_smoke.py`), so give `make test` a long timeout. For focused work run a single file: `.venv/bin/pytest tests/test_engine.py -q`.
 - `tests/test_jobs_advanced.py::test_retry_uses_jittered_backoff` is **flaky** — it asserts jittered-backoff bounds against the wall clock and intermittently fails. Rerun it before debugging if the full suite reports it.
 - `app/scripts/benchmark.py` is a **heavy load-test** (real engine + handlers, fake providers, defaults of 10 concurrent jobs / 100 topics) — not a fixture; don't run casually. It is excluded from mypy.
 - The SSRF guard rejects private/loopback hosts by default — set `ALLOW_PRIVATE_NETWORKS=1` for local dev against localhost Qdrant/WP/PocketBase.
@@ -58,6 +58,6 @@ make check      # lint -> typecheck -> test
 
 - See [`docs/SEO_RESEARCH.md`](docs/SEO_RESEARCH.md). **Facts first, AI second** — never invent search volume, CPC, competition, rankings or existence of content; Google Ads competition is *paid* competition, never organic difficulty.
 - Google Ads is REST/JSON over `httpx` (`app/providers/google_ads.py`) with **zero new dependencies**; developer tokens were sunset (access rides on the Google Cloud project), so there is no developer-token onboarding. The OAuth **client** is configured **per project on the Connections tab** (integration category `google_ads`: client id / redirect URI / API version / login customer id in `configuration`, client secret + optional developer token encrypted in `secretsEnc`); `GOOGLE_ADS_CLIENT_ID`/`_CLIENT_SECRET`/`_REDIRECT_URI` (+ optional `_API_VERSION`) are only a fallback for a single shared client.
-- `SERP_PROVIDER=none` is first-class; every optional capability (SERP, LLM clustering, embeddings) degrades gracefully.
-- New job types: `research_run` and `wordpress_sync` in `app/jobs/handlers.py` `JOB_TYPES` (the worker and `app/api/jobs.py` derive from that single list).
+- No SERP integration is first-class (there is no `SERP_PROVIDER` setting); every optional capability (SERP, LLM clustering, embeddings) degrades gracefully.
+- New job types: `research_run`, `wordpress_sync`, `analyze_landing_page` and `build_internal_links` in `app/jobs/handlers.py` `JOB_TYPES` (the worker and `app/api/jobs.py` derive from that single list).
 - OAuth callback is a browser navigation → `RedirectResponse` with a `?ga=…` flag, not `HX-Trigger`. Refresh tokens are Fernet-encrypted via `SecretsService`; never log/render/return secrets.

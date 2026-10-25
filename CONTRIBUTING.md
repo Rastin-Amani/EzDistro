@@ -31,12 +31,13 @@ default).
 ```bash
 make lint       # ruff check + ruff format --check (format is enforced)
 make typecheck  # mypy app/  (tests are excluded)
-make test       # pytest tests/ -q  (~3 min; fakes only, no live services)
+make test       # pytest tests/ -q  (~5 min; fakes only, no live services)
 make check      # lint -> typecheck -> test
 ```
 
-- The full suite takes ~3 minutes (a few real-time engine tests dominate).
-  Run a single file while iterating: `.venv/bin/pytest tests/test_engine.py -q`.
+- The full suite (~990 tests) takes about five minutes, and a few real-time
+  engine tests dominate. Run a single file while iterating:
+  `.venv/bin/pytest tests/test_engine.py -q`.
 - `tests/test_jobs_advanced.py::test_retry_uses_jittered_backoff` is flaky
   (wall-clock bounds) — rerun it before debugging.
 - `app/scripts/benchmark.py` is a heavy load test, not a fixture; don't run it
@@ -76,7 +77,7 @@ Specifics you must not break:
 ## Schema changes
 
 `app/scripts/bootstrap_pb.py` is the source of truth for the PocketBase schema
-(currently 33 collections). After editing `COLLECTIONS`:
+(currently 39 collections). After editing `COLLECTIONS`:
 
 ```bash
 make bootstrap        # apply additively (delete_missing=False) + union select values
@@ -104,14 +105,18 @@ make schema-export    # regenerate pb_collections_import.json from the code
 ## Documentation
 
 - The `docs/` set is tracked and **served in-app at `/help/`** (auth-gated); the
-  Research tab links to `/help/SEO_RESEARCH.md`.
+  **Find opportunities** tab's **How this works** link opens
+  `/help/SEO_RESEARCH.md`.
 - Update the relevant doc when behavior changes; each doc carries a
-  "Documentation status / Last verified" block. `docs/SCHEMA.md` and
+  "Documentation status / Last verified" block — except `docs/BILLING.md`, whose
+  verification note lives in its introduction. `docs/SCHEMA.md` and
   `docs/ARCHITECTURE.md` must agree with `bootstrap_pb.py` and the code.
 - **Internal material stays out of the repo.** Pricing, positioning, strategy,
   PRDs and design briefs go in `private/` (gitignored, never copied into the
   image and never served at `/help/`). `docs/` is for what a self-hoster or
-  contributor needs: architecture, schema, operations, user guide.
+  contributor needs: architecture, schema, operations, user guide. The tracked
+  `DESIGN.md` and `PRODUCT.md` at the repo root are the deliberate exceptions:
+  they document the shipped product, not the roadmap.
 
 ## Commits and pull requests
 
@@ -126,6 +131,8 @@ make schema-export    # regenerate pb_collections_import.json from the code
   Fernet-encrypted (`app/services/secrets.py`); only masked previews reach the UI.
 - Keep the SSRF guard (`app/providers/http.py`) intact; `ALLOW_PRIVATE_NETWORKS`
   is a development-only escape hatch.
-- All PocketBase collection API rules stay `null` (superuser-only); tenant
-  isolation is enforced in `app/api/deps.py`.
+- All PocketBase collection API rules stay `null` (superuser-only), with the
+  single documented exception `users.createRule = '@request.context = "oauth2"'`
+  that PocketBase needs for first-time OAuth sign-up; tenant isolation is
+  enforced in `app/api/deps.py`.
 - See [SECURITY.md](SECURITY.md) for reporting and the security model.

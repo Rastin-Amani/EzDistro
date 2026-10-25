@@ -6,8 +6,8 @@ the repo root mirrors it for manual import). If this document and the code disag
 the code wins — please fix the doc.
 
 ```text
-Documentation status:  Verified against app/scripts/bootstrap_pb.py (research engine)
-Last verified:         2026-10-13
+Documentation status:  Verified against app/scripts/bootstrap_pb.py (v1.27.3)
+Last verified:         2026-10-25
 Requires:              PocketBase ≥ 0.23
 ```
 
@@ -21,8 +21,8 @@ Requires:              PocketBase ≥ 0.23
    PocketBase.
 5. Secrets never unencrypted at rest: `integrations.secretsEnc` holds Fernet
    ciphertext.
-6. Append-only audit: `job_events`, `article_revisions`, `publishing_runs` are
-   insert-mostly.
+6. Append-only audit: `job_events` and `article_revisions` are insert-only;
+   `publishing_runs` keeps one row per attempt, updated in place with the outcome.
 7. All collection API rules are superuser-only (`null` — PocketBase's "locked"
    state; `""` would mean **public**, guests included, not "locked"), with one
    exception: `users.createRule = '@request.context = "oauth2"'` so PocketBase
@@ -35,10 +35,10 @@ Requires:              PocketBase ≥ 0.23
 
 ## 2. Collections overview
 
-38 base collections (+ built-in `users`, extended with `role` / `displayName`).
+39 base collections (+ built-in `users`, extended with `role` / `displayName`).
 The first 20 are the core platform, the middle 13 are the SEO research engine
-(§3.22–§3.34, [SEO_RESEARCH.md](SEO_RESEARCH.md)), and the last 5 are billing
-and payments (§3.35–§3.39, [BILLING.md](BILLING.md)).
+(§3.22–§3.34, [SEO_RESEARCH.md](SEO_RESEARCH.md)), and the last 6 are billing
+and payments (§3.35–§3.40, [BILLING.md](BILLING.md)).
 
 > **Schema drift — always re-run `make bootstrap` after changing `COLLECTIONS`.**
 > `import_collections` adds new *fields* to existing collections, but PocketBase
@@ -71,9 +71,9 @@ and payments (§3.35–§3.39, [BILLING.md](BILLING.md)).
 | `jobs` | Persistent async jobs | unique `idempotencyKey` |
 | `job_leases` | Atomic claim primitive | unique `job` (CAS) |
 | `job_events` | Append-only job timeline | — |
-| `publishing_runs` | Append-only publish attempts | — |
+| `publishing_runs` | Publish attempts (one row per attempt, outcome updated in place) | — |
 | `provider_metrics` | Daily per-provider aggregates | unique `(project, provider, model, operation, day)` |
-| `schedules` | Interval schedules (`index` \| `write`) | — |
+| `schedules` | Interval schedules (`index` \| `write` \| `publish`) | — |
 | `worker_heartbeats` | Worker liveness beacons (v1.1.0) | unique `workerId` |
 | `app_settings` | Global defaults singleton | unique `key` (`default`) |
 | `project_members` | Authorization | unique `(project, user)` |
@@ -124,13 +124,16 @@ billing_products ──▶ billing_invoices      billing_invoices ──▶ cred
 
 Cascade deletes (relation `cascadeDelete=true`): deleting a project removes its
 settings, integrations, project prompts, topics → articles → sections/revisions/
-publishing runs, documents, index runs, jobs → leases/events, metrics, schedules and
-memberships. **Global prompts (empty `project`) survive.** Deleting a user cascades
-their memberships. Billing records never cascade: a user's invoices, usage rows and
-credit ledger survive deletion (the ledger is append-only). Audit pointers that
-intentionally do NOT cascade: `documents.lastRun`,
-`index_runs.job`, `publishing_runs.job`, `articles.lastJob`, `jobs.parent`,
-`topics.articleId` (cleared in app code).
+publishing runs, documents, index runs, jobs → leases/events, metrics, schedules,
+memberships, and the research rows (`research_runs`, `research_seeds`, `keywords`,
+`clusters`, `competitor_pages`, `content_gaps`, `article_ideas`, `serp_queries`).
+`google_ads_customers` links to a project **without** cascade; its
+`google_ads_connections` parent owns the credentials. **Global prompts (empty
+`project`) survive.** Deleting a user cascades their memberships. Billing records
+never cascade: a user's invoices, usage rows and credit ledger survive deletion
+(the ledger is append-only). Audit pointers that intentionally do NOT cascade:
+`documents.lastRun`, `index_runs.job`, `publishing_runs.job`, `articles.lastJob`,
+`jobs.parent`, `topics.articleId` (cleared in app code).
 
 Field naming: all names are camelCase because PB clients run with
 `auto_snake_case=False`; do not "fix" them to snake_case.
@@ -166,12 +169,13 @@ run `python -m app.scripts.drop_legacy_project_fields` (idempotent).
 | defaultLlmProvider / defaultLlmModel | text | legacy single-LLM fallback |
 | outlineProvider/Model, outlineTemperature, outlineMaxTokens, outlineTimeout, outlineRetry(json) | text/num/json | OUTLINE role overrides |
 | sectionProvider/Model, sectionTemperature, sectionMaxTokens, sectionTimeout, sectionRetry(json) | text/num/json | SECTION role overrides |
-| metaProvider/Model, reviewProvider/Model | text | optional META / REVIEW roles |
+| metaProvider/Model, metaTemperature, metaMaxTokens, metaTimeout, metaRetry(json) | text/num/json | optional META role overrides |
+| reviewProvider/Model, reviewTemperature, reviewMaxTokens, reviewTimeout, reviewRetry(json) | text/num/json | optional REVIEW role overrides |
 | embeddingProvider / embeddingModel / embeddingDimensions | text/text/num | vector index identity |
 | chunkSize / chunkOverlap | num | word-budget chunking (defaults applied at runtime: 500/100) |
 | separatorStrategy | text | `auto` \| `paragraph` \| `sentence` \| `word` |
 | maxChunkCount | num | 0 = unlimited |
-| retrievalTopK / similarityThreshold | num | candidate pool / min similarity (runtime fallback 0 = off) |
+| retrievalTopK / similarityThreshold | num | candidate pool / min similarity (defaults 20 / 0.35; `0` threshold = off) |
 | rerankingEnabled | bool | |
 | rerankerProvider / rerankerModel / rerankerTopN | text/text/num | runtime model fallback `rerank-v4.0`, top_n 8 |
 | contextMaxLinks / contextMaxPassages / contextMaxChars | num | prompt-context budget (runtime fallbacks 5 / 5 / 4000) |
@@ -179,11 +183,14 @@ run `python -m app.scripts.drop_legacy_project_fields` (idempotent).
 | minArticleWords | num | assembly validation gate (runtime default 300) |
 | retryPolicy | json | `{max_attempts, backoff_base, backoff_max}` (defaults 3 / 30 s / 3600 s) |
 | publishingMode | sel | `draft` \| `publish` |
+| defaultCategory | text | pinned WordPress category id; blank = choose from the site's live taxonomy |
 | targetLocale / targetCountry / targetAudience | text | market + locale + reader for every prompt; locale/market default to `en-US` / `US`, and a blank value falls back to that default (the writing language derives from `targetLocale`) |
 | brandName | text | empty = project name |
 | preferredTerminology / forbiddenTerminology | text | comma-separated wording rules |
 | urlPolicy | text | slug convention for non-Latin scripts |
 | productContext | text | brand offering in 1–2 sentences |
+| landingPageUrl | text | page fetched by the **Analyse page** action |
+| productProfile | json | structured profile from `analyze_landing_page`, injected into prompts |
 | autosave | json | `{enabled, interval_minutes}` |
 | autoPublish | json | auto-publish rule descriptor |
 | indexing | json | `{schedule_enabled, schedule_interval_minutes, wp_status}` |
@@ -200,15 +207,18 @@ run `python -m app.scripts.drop_legacy_project_fields` (idempotent).
 | imageStyle | json | style profile passed to the plan prompt |
 
 Note: there is no seeding of default values for new settings rows; runtime fallbacks
-live in `ProjectConfig` (`app/services/settings.py`) and the API form casts. Embedding
-fallback differs from the global seed — see ARCHITECTURE §11.4.
+live in `DEFAULT_SETTINGS` (`app/repositories/projects.py`), merged on every read by
+`ProjectSettingsRepo.get_for_project`, plus the derived values in `ProjectConfig`
+(`app/services/settings.py`). Embedding defaults therefore resolve to
+`openai_compat` / *(connection or `text-embedding-3-small`)* / `1536` — see
+ARCHITECTURE §11.4.
 
 ### 3.3 integrations
 
 | field | type | notes |
 |---|---|---|
 | project* R | projects | cascade |
-| category* | sel | `llm` \| `embedding` \| `reranker` \| `vector_store` \| `publisher` \| `image` (v1.3.0) \| `serp` \| `google_ads` |
+| category* | sel | `llm` \| `embedding` \| `reranker` \| `vector_store` \| `publisher` \| `image` \| `serp` \| `google_ads` |
 | provider* | text | e.g. `openai_compat`, `gemini`, `cohere_compat`, `qdrant`, `wordpress`, `bfl`, `serper`, `google_ads` |
 | displayName* | text | part of uniqueness |
 | model | text | provider/model hint for discovery-backed connections |
@@ -226,7 +236,7 @@ Indexes: (project, category); UNIQUE (project, category, provider, displayName).
 | field | type | notes |
 |---|---|---|
 | project R | projects | empty ⇒ **global default**; project row wins resolution |
-| type* | sel | `brand_voice` \| `seo_content_contract` \| `research_system` \| `research_user` \| `outline_system` \| `outline_user` \| `section_system` \| `section_user` \| `internal_linking` \| `metadata_system` \| `metadata_user` \| `article_qa_system` \| `article_qa_user` \| `article_repair_system` \| `article_repair_user` \| `image_plan_system` \| `image_plan_user` \| `output_validation` \| `content_refresh_system` \| `cluster_system` \| `cluster_user` \| `opportunity_system` \| `opportunity_user` \| legacy `seo_rules` \| `validation` (25 total) |
+| type* | sel | `brand_voice` \| `seo_content_contract` \| `research_system` \| `research_user` \| `outline_system` \| `outline_user` \| `section_system` \| `section_user` \| `internal_linking` \| `metadata_system` \| `metadata_user` \| `article_qa_system` \| `article_qa_user` \| `article_repair_system` \| `article_repair_user` \| `image_plan_system` \| `image_plan_user` \| `output_validation` \| `content_refresh_system` \| `cluster_system` \| `cluster_user` \| `opportunity_system` \| `opportunity_user` \| `category_system` \| `category_user` \| legacy `seo_rules` \| `validation` (27 total) |
 | name* | text | typically `default` |
 | content* | text (≤20000) | may contain `{{ variable }}` tokens (validated registry) |
 | version* | num | 1-based; each save inserts a NEW row |
@@ -236,12 +246,12 @@ Indexes: (project, category); UNIQUE (project, category, provider, displayName).
 
 Indexes: (project, type, active); UNIQUE (project, type, name, version).
 
-Bootstrap seeds all twenty-five global prompts (`DEFAULT_PROMPTS` in
+Bootstrap seeds all twenty-seven global prompts (`DEFAULT_PROMPTS` in
 `bootstrap_pb.py`) — the multilingual SEO-engine set (research / outline /
-section / metadata / QA / repair / image-plan / cluster / opportunity / contract
-/ brand voice) plus legacy `seo_rules` and `validation` aliases carrying the new
-contract / repair text. The single source of the type list is `PROMPT_TYPES` in
-`app/repositories/prompts.py` (25 values).
+section / metadata / QA / repair / image-plan / cluster / opportunity / category /
+contract / brand voice) plus legacy `seo_rules` and `validation` aliases carrying the
+new contract / repair text. The single source of the type list is `PROMPT_TYPES` in
+`app/repositories/prompts.py` (27 values).
 
 ### 3.5 topics
 
@@ -282,6 +292,7 @@ Indexes: (project, status, priority); (project, status); (project, week).
 | generatedAt / publishedAt | date | |
 | wordpressPostId | num | set on first successful publish |
 | wordpressUrl | text | |
+| wordpressCategoryId / wordpressCategory | text | category chosen for/returned by WordPress |
 | imagePlan | json | latest `ArticleImagePlan` snapshot (v1.3.0) |
 | imagePlanVersion | num | |
 | lastJob R | jobs | audit pointer, no cascade |
@@ -295,7 +306,7 @@ Indexes: (project, status, priority); (project, status); (project, week).
 | remoteMeta | json | remote metadata snapshot |
 | contentHash | text | local content hash |
 
-Indexes: (project, status); UNIQUE topicId.
+Indexes: (project, status); (project, wordpressPostId); UNIQUE topicId.
 
 ### 3.7 article_sections
 
@@ -409,8 +420,8 @@ Index: (project, created).
 | field | type | notes |
 |---|---|---|
 | project* R | projects | cascade |
-| type* | text | one of the 16 registered types (see ARCHITECTURE §5.8) |
-| entityType / entityId | text | polymorphic ref: project \| topic \| article \| section \| document |
+| type* | text | one of the 18 registered types (see ARCHITECTURE §5.8) |
+| entityType / entityId | text | polymorphic ref: project \| topic \| article \| section \| document \| research_run \| job |
 | status* | sel | `pending` \| `running` \| `completed` \| `failed` \| `cancelled` \| `retrying` — **there is no `claimed` value** |
 | priority | num | poll order desc |
 | payload | json | small descriptor only (topicId / sectionId / articleId / action / force / full / trigger …) |
@@ -458,7 +469,7 @@ Index: UNIQUE job; (expiresAt).
 
 Indexes: (job, created); (project, created).
 
-### 3.15 publishing_runs (append-only)
+### 3.15 publishing_runs (publish audit)
 
 | field | type | notes |
 |---|---|---|
@@ -470,6 +481,7 @@ Indexes: (job, created); (project, created).
 | mode | sel | `draft` \| `publish` — ⚠ unpublish writes `"unpublish"` (not allowed) |
 | wordpressPostId | num | |
 | wordpressUrl | text | |
+| wordpressCategoryId / wordpressCategory | text | category used for the published post |
 | responseMetadata | json | includes `requestId`, `responseStatus`, `mode`, `link` on success |
 | error | json | structured failure |
 | startedAt / completedAt | date | |
@@ -500,7 +512,7 @@ Accumulated in memory per worker; flushed every 30 s and at shutdown.
 |---|---|---|
 | project* R | projects | cascade |
 | name* | text | |
-| kind* | sel | `index` \| `write` |
+| kind* | sel | `index` \| `write` \| `publish` |
 | enabled | bool | |
 | intervalMinutes* | num | ≥1 |
 | nextRunAt / lastRunAt | date | due-polling on (enabled, nextRunAt) |
@@ -531,7 +543,7 @@ Index: UNIQUE workerId.
 | field | type | notes |
 |---|---|---|
 | key* U | text | `default` |
-| value | json | seeded global defaults: `default_llm_provider=openai_compat`, embedding seed `cohere` / `embed-v4.0` / 1024, `heartbeat_interval=15`, `llm.{outline|section|meta|review}` role configs (`gpt-4o-mini`, temp 0.7, max_tokens 4096, timeout 120; meta/review empty) |
+| value | json | seeded global defaults: `default_llm_provider=openai_compat`, `default_embedding_provider=openai_compat`, `default_embedding_model=""`, `default_embedding_dimensions=0`, `heartbeat_interval=15`, `llm.{outline|section|meta|review}` role configs (models empty — each project's connection supplies one; temp 0.7, max_tokens 4096, timeout 120) |
 
 ### 3.20 project_members
 
@@ -559,8 +571,8 @@ the platform admin by email.
 ### 3.22 google_ads_connections
 
 OAuth refresh token per user (encrypted), used by the research engine. One row per
-user (unique `user`). Managed from the project **Research** tab after connecting via
-the project's `google_ads` integration.
+user (unique `user`). Managed from the project **Find opportunities** tab after
+connecting via the project's `google_ads` integration.
 
 | field | type | notes |
 |---|---|---|
@@ -599,7 +611,7 @@ One row per research run. Stage summaries live in `stageState` (resumable).
 |---|---|---|
 | project* R | projects | cascade |
 | name | text | |
-| researchType | sel | `keywords` \| `site` \| `competitors` \| `mixed` \| `import` |
+| researchType | sel | `keywords` \| `site` \| `competitors` \| `mixed` \| `import` \| `harvest` |
 | status | sel | `pending` \| `running` \| `completed` \| `failed` \| `cancelled` \| `partial` |
 | currentStage | sel | `validate` \| `wordpress_sync` \| `keyword_collection` \| `competitor_crawl` \| `serp` \| `clustering` \| `gaps` \| `opportunities` \| `finalize` |
 | config / targeting | json | mode, clustering, goal, country/language/locale/network, import payload |
@@ -747,6 +759,9 @@ Index: (run, gapType).
 | status | sel | `proposed` \| `accepted` \| `roadmap` \| `rejected` \| `merged` \| `generated` |
 | confidence | sel | `high` \| `medium` \| `low` |
 | article R | articles | no cascade — created on handoff |
+| createdBy | text | user id that accepted/proposed the idea |
+
+Indexes: (run, status); (project, status, opportunityScore); (project, action).
 
 ### 3.33 serp_queries
 
@@ -754,7 +769,7 @@ Cached SERP observations (only when a `serp` integration exists).
 
 | field | type | notes |
 |---|---|---|
-| project R / run R | projects / research_runs | no cascade / cascade |
+| project R / run R | projects / research_runs | cascade / cascade |
 | keyword / provider / locale / location / device | text | identity |
 | resultCount | num | |
 | features / questions / relatedSearches / raw | json | |
@@ -862,7 +877,7 @@ own LLM integration (BYO keys) are unmetered and create no usage row.
 | user* R | users | no cascade |
 | project R | projects | |
 | operationKey* | text | U; e.g. `write:article:<topicId>` |
-| source* | sel | `credit` (legacy rows may be `free`) |
+| source* | sel | `credit` \| `free` (both permitted; `free` is legacy free-tier usage) |
 | quantity | num | managed-AI credits consumed |
 | unit | text | `article` |
 | status* | sel | `reserved` \| `completed` \| `released` |
@@ -930,8 +945,8 @@ deletion happens only on explicit full reindexes.
 - The old document described `publishing_runs.request_id` / `response_status` columns
   and a `claimed` job status; none exist (see §3.15 note and ARCHITECTURE §11).
 - Section numbering duplication (two “3.7b”/“3.15” blocks) fixed here.
-- Collection count is **38**: the core 20 (`article_images` added in v1.3.0,
+- Collection count is **39**: the core 20 (`article_images` added in v1.3.0,
   `worker_heartbeats` in v1.1.0), the 13 research collections added in 2026-10
-  (§3.22–§3.34), and the 5 billing collections added in v1.19.0 (§3.35–§3.39).
-  The `prompts.type` select carries 25 values and `jobs`
-  recognises 16 job types — both corrected here.
+  (§3.22–§3.34), and the 6 billing collections added in v1.19.0 (§3.35–§3.40).
+  The `prompts.type` select carries 27 values and `jobs`
+  recognises 18 job types — both corrected here.
