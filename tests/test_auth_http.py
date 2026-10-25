@@ -53,13 +53,18 @@ class _AuthUsersService:
         redirect_url: str,
         create_data: dict[str, Any] | None = None,
     ):
-        if code != "good-code":
+        if code != "good-code" and code != "new-code":
             raise ClientResponseError("invalid code", status=400)
         if (provider, code_verifier) not in {
             ("google", "verifier-google"),
             ("github", "verifier-github"),
         }:
             raise ClientResponseError("bad provider state", status=400)
+        if code == "new-code":
+            record = {"id": "unew", "email": "new@x.com", "role": "member"}
+            self._auth.token = "tok-unew"
+            self._auth.model = dict(record)
+            return SimpleNamespace(token="tok-unew", record=record, meta={"isNew": True})
         for record in self._storage.records("users"):
             if record.get("id") == "u1":
                 self._auth.token = "tok-u1"
@@ -301,6 +306,18 @@ def test_oauth_callback_sets_session_cookie(fake_pb):
         # The session is now valid for the middleware.
         assert client.get("/projects").status_code == 200
         assert client.get("/dashboard").status_code == 200
+
+
+def test_oauth_callback_marks_a_new_account_for_analytics(fake_pb):
+    """Analytics.js turns this one-shot flag into `signup_completed`."""
+    with TestClient(app) as client:
+        state = _login_state(client)
+        resp = client.get(
+            f"/auth/oauth2/callback?code=new-code&state={state}",
+            follow_redirects=False,
+        )
+        assert resp.status_code == 303
+        assert resp.headers["location"] == "/dashboard?welcome=1"
 
 
 def test_oauth_callback_works_for_github(fake_pb):
