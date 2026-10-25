@@ -24,7 +24,7 @@ from app.repositories.publishing_runs import PublishingRunRepo
 from app.repositories.topics import TopicRepo
 from app.services.billing import BillingError, BillingService
 from app.templates import templates
-from app.utils import error_response, success_response
+from app.utils import analytics_event, error_response, success_response
 
 router = APIRouter()
 
@@ -285,7 +285,12 @@ def publish_article(request: Request, project_id: str, article_id: str):
         return error_response("Article has no content yet")
     _queue_publish_job(request, project_id, article_id, "publish")
     return success_response(
-        ("Publishing started"), extra_events={"refreshArticle": True, "refreshJobs": True}
+        ("Publishing started"),
+        extra_events={
+            "refreshArticle": True,
+            "refreshJobs": True,
+            **analytics_event("article_publish_requested"),
+        },
     )
 
 

@@ -60,7 +60,14 @@ from app.services.topic_import import (
     store_preview,
 )
 from app.templates import templates
-from app.utils import error_response, fanout, hx_trigger, ok_with_redirect, success_response
+from app.utils import (
+    analytics_event,
+    error_response,
+    fanout,
+    hx_trigger,
+    ok_with_redirect,
+    success_response,
+)
 
 # Targeting options for the research tab. A short, common list is enough — the
 # Google Ads geo/language ids are resolved from these codes at collection time.
@@ -285,7 +292,11 @@ def create_project(
             raise
         copied = clone_summary(counts)
         message = f"Project created — duplicated {copied}" if copied else "Project created"
-    return ok_with_redirect(message, f"/projects/{project['id']}")
+    return ok_with_redirect(
+        message,
+        f"/projects/{project['id']}",
+        extra_events=analytics_event("project_created", {"cloned": bool(source_id)}),
+    )
 
 
 @router.post("/projects/{project_id}/delete")
@@ -1358,7 +1369,14 @@ def save_integration(
             enabled=payload["enabled"],
             created_by=payload["createdBy"],
         )
-    return success_response(("Connection saved"), extra_events={"refreshIntegrations": True})
+    extra_events: dict[str, Any] = {"refreshIntegrations": True}
+    # Activation milestone: a *new* WordPress connection is the first point the
+    # product can actually publish for this site.
+    if not existing and category == "publisher":
+        extra_events.update(
+            analytics_event("wordpress_connected", {"provider": payload["provider"]})
+        )
+    return success_response(("Connection saved"), extra_events=extra_events)
 
 
 @router.post("/projects/{project_id}/integrations/{record_id}/toggle")

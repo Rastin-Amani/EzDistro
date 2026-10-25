@@ -323,7 +323,11 @@ def oauth_callback(request: Request):
 
     is_new = bool((result.meta or {}).get("isNew")) if result else False
     logger.info("auth.oauth_success", provider=provider, is_new=is_new)
-    response = RedirectResponse(url="/dashboard", status_code=303)
+    # `welcome=1` is the one-shot signal analytics.js turns into signup_completed
+    # (the callback is a top-level navigation, so no HX-Trigger is available).
+    response = RedirectResponse(
+        url="/dashboard" + ("?welcome=1" if is_new else ""), status_code=303
+    )
     response.delete_cookie(OAUTH_STATE_COOKIE, path="/auth")
     response.set_cookie(
         "pb_auth",

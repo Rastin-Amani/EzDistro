@@ -37,6 +37,24 @@
         <meta name="theme-color" content="#ffffff" />
         <meta name="color-scheme" content="light dark" />
 
+        {% if umami_enabled %}
+        <script>
+            /* The OAuth callback sends brand-new accounts to /dashboard?welcome=1.
+               Strip the one-shot flag before the deferred tracker reads the URL,
+               so the pageview and the signup event agree on /dashboard. */
+            (function () {
+                try {
+                    var url = new URL(window.location.href);
+                    if (url.searchParams.get('welcome') === '1') {
+                        url.searchParams.delete('welcome');
+                        window.history.replaceState(null, '', url.pathname + url.search + url.hash);
+                        window.ezSignupCompleted = true;
+                    }
+                } catch (e) {}
+            })();
+        </script>
+        {% endif %}
+
         <link rel="manifest" href="/manifest.json" />
         <link rel="icon" href="/static/brand/ezdistro/favicon.ico" sizes="any" />
         <link rel="icon" type="image/svg+xml" href="/static/brand/ezdistro/favicon.svg" />
@@ -238,6 +256,14 @@
         <script type="module" src="{{ url_for('static', path='/app.js') }}?v={{ asset_version() }}"></script>
         <script defer src="{{ url_for('static', path='/js/theme.js') }}?v={{ asset_version() }}"></script>
         <script defer src="{{ url_for('static', path='/js/confirm-dialog.js') }}?v={{ asset_version() }}"></script>
+
+        {% if umami_enabled %}
+        {# Product analytics. The tracker follows HTMX's pushState navigations
+           (one pageview per boost) and tells the bot/domain filtering itself;
+           analytics.js only adds the named, decision-relevant events. #}
+        <script defer src="{{ umami_script_url }}" data-website-id="{{ umami_website_id }}" data-do-not-track="true"{% if umami_domains %} data-domains="{{ umami_domains }}"{% endif %}></script>
+        <script defer src="{{ url_for('static', path='/js/analytics.js') }}?v={{ asset_version() }}"></script>
+        {% endif %}
 
         <script>
             function getProgressBar() {

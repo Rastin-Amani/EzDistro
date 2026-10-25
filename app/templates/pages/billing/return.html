@@ -53,3 +53,25 @@
 {% endif %}
 {{ f.panel_close() }}
 {% endblock %}
+
+{% block body_end %}
+{{ super() }}
+{% if umami_enabled and invoice and invoice.status == 'paid' %}
+<script>
+    /* Checkout return reconciles the invoice against the provider before this
+       renders, so a paid status is confirmed, not assumed. Record once per
+       browser session: refreshing the page must not inflate purchases. */
+    window.ezAnalyticsEvents = [];
+    try {
+        var key = 'ez-analytics:invoice:{{ invoice.id }}';
+        if (!sessionStorage.getItem(key)) {
+            sessionStorage.setItem(key, '1');
+            window.ezAnalyticsEvents.push({
+                name: 'purchase_completed',
+                data: { plan: {{ (invoice.productCode or '') | tojson }} },
+            });
+        }
+    } catch (e) {}
+</script>
+{% endif %}
+{% endblock %}
