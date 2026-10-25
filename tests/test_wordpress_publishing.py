@@ -242,6 +242,33 @@ def test_publish_records_failure_in_runs():
     assert pb.collection("articles").get_one(article["id"])["status"] == "failed"
 
 
+def test_failed_refresh_keeps_a_live_article_published():
+    """A transient WP error while refreshing must not demote a live post.
+
+    It used to set the article to "failed", which then blocked every later
+    update — the article looked broken on the dashboard while the site was fine.
+    """
+    pb = FakePocketBase(default_unique_fields())
+    project = make_project(pb)
+    article = make_article(pb, project["id"], wp_id=77)
+    registry = FakeRegistry()
+    original = registry.publisher.update_post
+
+    async def boom(*args, **kwargs):
+        raise ProviderError("wp down", retryable=True)
+
+    registry.publisher.update_post = boom  # type: ignore[method-assign]
+    with pytest.raises(ProviderError):
+        run_publish(pb, registry, article["id"], action="update", key="refresh-fail")
+    assert pb.collection("articles").get_one(article["id"])["status"] == "published"
+
+    # A row left "failed" by an older build is still refreshable (idempotent).
+    pb.collection("articles").update(article["id"], {"status": "failed"})
+    registry.publisher.update_post = original  # type: ignore[method-assign]
+    result = run_publish(pb, registry, article["id"], action="update", key="refresh-retry")
+    assert result["updated"] is True
+
+
 def test_unpublish_sets_private_and_records_run():
     pb = FakePocketBase(default_unique_fields())
     project = make_project(pb)

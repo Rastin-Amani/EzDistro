@@ -81,39 +81,30 @@ async def handle_publish_article(ctx: JobContext) -> dict[str, Any]:
     if action == "unpublish":
         return await _unpublish(ctx, articles, runs, article, article_id)
 
-    # Workflow gate: publishing requires approval (retries from a failed state
-    # are allowed only when nothing was ever successfully published).
-    if article.get("status") == "published" and action == "update":
-        pass  # content refresh on a live post is always safe
-    elif article.get("status") == "approved":
-        pass
-    elif article.get("status") == "failed" and not runs.already_published(article_id):
-        pass  # retry of a failed first publish
-    elif article.get("status") == "publishing" and not runs.already_published(article_id):
-        # Crash-recovery: a previous attempt of THIS job died mid-publish and
-        # left the article stuck in "publishing". Retrying the same job is
-        # safe: publishing runs are idempotent and the WP ezdistro_article_id meta
-        # lookup prevents duplicate posts. Other jobs are still refused.
-        if not runs.first(filter=f'article="{article_id}" && job="{ctx.job_id}"'):
-            raise ProviderError(
-                "article is not approved for publishing (current state: %s)"
-                % (article.get("status") or "?"),
-                retryable=False,
-                details={
-                    "article": article_id,
-                    "required_state": "approved",
-                    "current_state": article.get("status"),
-                },
+    # Workflow gate: publishing requires approval. A retry is allowed for a job
+    # that already started (crash recovery) or for a post that is already live
+    # (its idempotent update can never create a second post).
+    status = article.get("status")
+    allowed = (
+        (status == "published" and action == "update")  # refreshing a live post
+        or status == "approved"
+        or status == "failed"  # retry of a first publish, or a failed refresh
+        or (
+            status == "publishing"
+            and (
+                runs.already_published(article_id)
+                or runs.first(filter=f'article="{article_id}" && job="{ctx.job_id}"')
             )
-    else:
+        )
+    )
+    if not allowed:
         raise ProviderError(
-            "article is not approved for publishing (current state: %s)"
-            % (article.get("status") or "?"),
+            "article is not approved for publishing (current state: %s)" % (status or "?"),
             retryable=False,
             details={
                 "article": article_id,
                 "required_state": "approved",
-                "current_state": article.get("status"),
+                "current_state": status,
             },
         )
 
@@ -126,6 +117,7 @@ async def handle_publish_article(ctx: JobContext) -> dict[str, Any]:
 
     mode = ctx.config.publishing["mode"]
     request_id = uuid.uuid4().hex[:16]
+    was_published = article.get("status") == "published"
     articles.set_status(article_id, "publishing")
     record = runs.start(
         project=ctx.project_id,
@@ -241,7 +233,9 @@ async def handle_publish_article(ctx: JobContext) -> dict[str, Any]:
         runs.mark_failed(
             record["id"], {"type": type(exc).__name__, "message": str(exc), "requestId": request_id}
         )
-        articles.set_status(article_id, "failed")
+        # A failed REFRESH must not demote a live post: the article is still
+        # published, and "failed" used to also block every later update.
+        articles.set_status(article_id, "published" if was_published else "failed")
         raise
 
     runs.mark_published(

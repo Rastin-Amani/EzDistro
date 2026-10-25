@@ -516,3 +516,52 @@ async def test_openai_compat_ping_and_list_models_filter():
     )
     with pytest.raises(PermanentError):
         await bad.ping()
+
+
+async def test_openai_image_sends_the_aspect_hint_alongside_size():
+    """A size-only gateway (Venice) ignores `size` and returns 1536x1536;
+    `aspect_ratio` is what it honours, so both must be sent."""
+    seen: dict = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen["body"] = json.loads(request.read())
+        return httpx.Response(200, json={"data": [{"b64_json": _png_b64(96, 54)}]})
+
+    adapter = OpenAICompatImage(
+        base_url="https://gw.test/v1",
+        model="venice-chroma",
+        api_key="k",
+        attempts=1,
+        transport=httpx.MockTransport(handler),
+    )
+    result = await adapter.generate_image(_req(width=1600, height=896, aspect_ratio="16:9"))
+    assert seen["body"]["aspect_ratio"] == "16:9"
+    assert seen["body"]["size"] == "1600x896"
+    assert result.data.startswith(b"\x89PNG")
+    await adapter.aclose()
+
+
+async def test_openai_image_drops_the_aspect_hint_when_the_server_rejects_it():
+    bodies: list[dict] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        body = json.loads(request.read())
+        bodies.append(body)
+        if "aspect_ratio" in body:
+            return httpx.Response(
+                400, json={"error": {"message": "Unrecognized request argument: aspect_ratio"}}
+            )
+        return httpx.Response(200, json={"data": [{"b64_json": _png_b64(96, 96)}]})
+
+    adapter = OpenAICompatImage(
+        base_url="https://api.openai.com/v1",
+        model="gpt-image-1",
+        api_key="k",
+        attempts=1,
+        transport=httpx.MockTransport(handler),
+    )
+    result = await adapter.generate_image(_req(width=1024, height=1024, aspect_ratio="1:1"))
+    assert len(bodies) == 2
+    assert "aspect_ratio" not in bodies[1]
+    assert result.data.startswith(b"\x89PNG")
+    await adapter.aclose()

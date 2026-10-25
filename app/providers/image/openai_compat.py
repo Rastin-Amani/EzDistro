@@ -83,6 +83,12 @@ class OpenAICompatImage(MetricMixin):
             "size": f"{request.width}x{request.height}",
             "n": 1,
         }
+        # Gateways that route by aspect (Venice and friends) silently IGNORE
+        # `size` and hand back their native canvas (1536x1536), which a 16:9
+        # theme then hard-crops. Both knobs are sent; a strict OpenAI-style
+        # server rejects the unknown field and the hint is dropped.
+        if request.aspect_ratio:
+            body["aspect_ratio"] = request.aspect_ratio
         retry_counter: list[int] = []
 
         async def _run() -> ImageResult:
@@ -91,7 +97,17 @@ class OpenAICompatImage(MetricMixin):
             started = time.monotonic()
 
             async def _call() -> httpx.Response:
-                return await self._client.post("/images/generations", json=body)
+                response = await self._client.post("/images/generations", json=body)
+                if (
+                    "aspect_ratio" in body
+                    and response.status_code == 400
+                    and "aspect" in response.text.lower()
+                ):
+                    # OpenAI's own API has no aspect_ratio field; drop the hint
+                    # once and honour the standard `size` request.
+                    body.pop("aspect_ratio", None)
+                    response = await self._client.post("/images/generations", json=body)
+                return response
 
             response = await with_retry(
                 _call,

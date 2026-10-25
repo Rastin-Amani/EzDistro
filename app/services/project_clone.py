@@ -30,23 +30,35 @@ def _copyable_settings(record: dict[str, Any]) -> dict[str, Any]:
     return {k: v for k, v in record.items() if k not in _SYSTEM_FIELDS and k != "project"}
 
 
+def _remap_connection_refs(
+    data: dict[str, Any], id_map: dict[str, str], source_ids: set[str]
+) -> dict[str, Any]:
+    """Point provider settings at the COPIED connections, not the source's ids.
+
+    A setting such as ``imageCoverProvider`` stores a connection id. Copied
+    verbatim it keeps naming the source project's connection, which the target
+    cannot resolve — every image job then dies with "unknown image provider".
+    References to a skipped connection (the publisher) are cleared.
+    """
+    return {
+        key: (id_map.get(value, "") if isinstance(value, str) and value in source_ids else value)
+        for key, value in data.items()
+    }
+
+
 def clone_project_configuration(
     pb: Any, *, source_id: str, target_id: str, user_id: str = ""
 ) -> dict[str, int]:
     """Copy configuration rows source → target. Returns the copied row counts."""
     counts = {"settings": 0, "integrations": 0, "prompts": 0, "schedules": 0}
 
-    settings = ProjectSettingsRepo(pb)
-    raw = settings.first(filter=f'project="{source_id}"')
-    if raw:
-        settings.upsert(target_id, _copyable_settings(raw))
-        counts["settings"] = 1
-
     integrations = IntegrationRepo(pb)
-    for row in integrations.list_for_project(source_id):
+    source_rows = integrations.list_for_project(source_id)
+    id_map: dict[str, str] = {}
+    for row in source_rows:
         if (row.get("category") or "") == "publisher":
             continue
-        integrations.create(
+        created = integrations.create(
             project=target_id,
             category=row.get("category") or "",
             provider=row.get("provider") or "",
@@ -57,7 +69,17 @@ def clone_project_configuration(
             enabled=bool(row.get("enabled")),
             created_by=user_id,
         )
+        id_map[str(row.get("id") or "")] = created["id"]
         counts["integrations"] += 1
+
+    settings = ProjectSettingsRepo(pb)
+    raw = settings.first(filter=f'project="{source_id}"')
+    if raw:
+        source_ids = {str(row.get("id") or "") for row in source_rows}
+        settings.upsert(
+            target_id, _remap_connection_refs(_copyable_settings(raw), id_map, source_ids)
+        )
+        counts["settings"] = 1
 
     # Only the ACTIVE version of each prompt type — history stays in the source.
     prompts = PromptRepo(pb)

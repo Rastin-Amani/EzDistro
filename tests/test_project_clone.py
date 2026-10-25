@@ -95,6 +95,57 @@ def test_create_project_duplicates_configuration_not_content():
     assert len(pb.storage.records("topics")) == 1
 
 
+def test_provider_settings_point_at_the_copied_connection():
+    """A copied `imageCoverProvider` id must name the NEW connection.
+
+    Keeping the source id made every image job in the copy fail with
+    "unknown image provider" — covers never generated, nothing published.
+    """
+    pb = make_pb()
+    source = _seed_source(pb)
+    image = IntegrationRepo(pb).create(
+        project=source["id"],
+        category="image",
+        provider="openai_compat",
+        display_name="Images",
+        model="chroma",
+        configuration={"base_url": "https://images.example.com"},
+        secrets_enc="img-ciphertext",
+    )
+    publisher = IntegrationRepo(pb).first(
+        filter=f'project="{source["id"]}" && category="publisher"'
+    )
+    ProjectSettingsRepo(pb).upsert(
+        source["id"],
+        {
+            "imageCoverProvider": image["id"],
+            "imageInteriorProvider": image["id"],
+            "defaultLlmProvider": publisher["id"],
+        },
+    )
+
+    call_route(
+        P.create_project,
+        make_req(pb, make_user(), ""),
+        name="Clone",
+        slug="clone",
+        source_project_id=source["id"],
+    )
+    target = ProjectRepo(pb).by_slug("clone")
+    copied_images = [
+        row
+        for row in IntegrationRepo(pb).list_for_project(target["id"])
+        if row["category"] == "image"
+    ]
+    assert len(copied_images) == 1
+    copied_settings = ProjectSettingsRepo(pb).get_for_project(target["id"])
+    assert copied_settings["imageCoverProvider"] == copied_images[0]["id"]
+    assert copied_settings["imageInteriorProvider"] == copied_images[0]["id"]
+    assert copied_settings["imageCoverProvider"] != image["id"]
+    # The publisher was skipped, so its id is not left dangling.
+    assert copied_settings["defaultLlmProvider"] == ""
+
+
 def test_create_project_without_source_stays_empty():
     pb = make_pb()
     _seed_source(pb)
