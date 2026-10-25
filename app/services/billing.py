@@ -1,13 +1,12 @@
 """Billing service — plans + managed-AI metering.
 
-Model (per PRICING-STRATEGY.md):
+Model:
 
 * Self-hosted / BYO provider keys → **unmetered**. The user pays their provider
   directly, so article generation costs nothing here.
 * Managed AI (a project with no enabled LLM integration) → metered against
-  purchased **managed-AI credits**, granted by the Cloud + Managed AI plan
-  (~30/month, prepaid) or a top-up pack. Over the counter → add your own keys
-  or buy more.
+  purchased **managed-AI credits**, granted by a plan's credit allowance or a
+  top-up pack. Over the counter → add your own keys or buy more.
 * **Plans** are prepaid hosting periods (PayRam cannot auto-charge a recurring
   subscription), so a renewal extends from the current expiry.
 * No feature gating: every capability is available on every plan.

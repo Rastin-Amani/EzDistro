@@ -9,6 +9,16 @@ release builds on. Format is based on [Keep a Changelog](https://keepachangelog.
 
 ## [Unreleased]
 
+### Fixed
+- **Covers are no longer square, and no longer watermarked.** A cloned project
+  copied the source project's image-connection id into its settings, so every
+  image job in the copy died with "unknown image provider"; the id is now
+  remapped to the copy's own connection. The OpenAI-compatible image adapter
+  also sends the requested `aspect_ratio` (gateways such as Venice ignore
+  `size` and hand back a square canvas that themes then hard-crop). The
+  Chroma model bakes a "Venice" signature into every image, so both projects
+  now generate with a clean model.
+
 ## [v1.27.3] — 2026-10-25
 
 ### Fixed
@@ -592,7 +602,7 @@ release builds on. Format is based on [Keep a Changelog](https://keepachangelog.
 ## [v1.4.0] — 2026-09-25
 
 ### Added
-- Team-features PRD (draft, unimplemented — see `docs/TEAM-FEATURES-PRD.md`).
+- Team-features PRD (draft, unimplemented — kept outside the repository).
 
 ### Security
 - Split session validation from superuser data access; locked PocketBase API

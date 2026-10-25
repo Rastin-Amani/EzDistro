@@ -1,14 +1,13 @@
 # Billing, plans & managed AI
 
-EzDistro's monetization follows `EzDistro-Marketing/PRICING-STRATEGY.md`:
+Billing is **optional and off by default** (`BILLING_ENABLED=false`): a
+self-hosted deployment runs with every feature and no paywall. When enabled, the
+app sells prepaid plan periods and managed-AI credits through PayRam.
 
-- **Self-hosted / bring-your-own keys** — free, all features, **unmetered**.
-- **Cloud** — a managed instance with unlimited projects and BYO keys.
-- **Cloud + Managed AI** — the same, plus ~30 managed-AI articles per period.
-- **Setup & onboarding** — a one-time service.
-
-Payments are crypto, through **PayRam**. Billing is off by default; existing
-deployments are unchanged until an operator enables it.
+`make bootstrap` seeds an example catalog (`cloud`, `cloud_ai`, `setup`) into
+`billing_products`; those rows are yours to re-price, rename or deactivate in the
+PocketBase admin, and a re-bootstrap never overwrites existing rows. Commercial
+terms are deployment-specific and are not documented in this repository.
 
 ## What is metered (and what is not)
 
@@ -32,18 +31,11 @@ charge. A plan therefore grants a **prepaid period** (`planDays`, e.g. 30 days)
 and a renewal **extends from the current expiry** (buying twice is safe and
 stacks). Renewal is manual: the user pays again before/after expiry.
 
-The seeded catalog (editable in the PocketBase admin):
-
-| Code | Type | Price | Period | Managed-AI credits |
-|---|---|---|---|---|
-| `cloud` | plan | $49 | 30 days | 0 |
-| `cloud_ai` | plan | $99 | 30 days | 30 |
-| `setup` | service | $299 | — | 0 |
-
-Top-up packs are `type=credit_pack` (set `credits`). None are seeded because the
-strategy document does not set a top-up price — add one in the admin if you
-sell them. Legacy `starter`/`growth`/`scale` credit packs are retired (set
-inactive) by the bootstrap, never deleted, so old invoices still resolve.
+Products are rows in `billing_products` with `type` `plan` or `service`,
+`priceCents`, `planDays` and `credits`. Top-up packs are `type=credit_pack`
+(set `credits`); add one in the admin if you sell them. Legacy
+`starter`/`growth`/`scale` credit packs are retired (set inactive) by the
+bootstrap, never deleted, so old invoices still resolve.
 
 ## PocketBase schema
 

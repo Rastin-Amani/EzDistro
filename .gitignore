@@ -16,9 +16,31 @@ dist/
 *.egg-info/
 
 .env
+.env.*
+!.env.example
+
+# --- Secrets: never commit ---
+secrets/
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+
+# --- Local data (PocketBase / Qdrant / scratch DBs) ---
+pb_data/
+qdrant_storage/
+*.db
+*.sqlite
 *.sqlite3
 
+# --- Private business docs (pricing, strategy, PRDs) — keep local, never push ---
+private/
+docs/private/
+
 .coverage
+.coverage.*
+coverage.xml
 htmlcov/
 .pytest_cache/
 .mypy_cache/
@@ -87,3 +109,5 @@ app/static/uploads/
 
 # Local distribution/marketing campaign output (regenerated, not product code)
 distribution/
+# Tool scratch (design briefs, screenshots) — local only
+.impeccable/
