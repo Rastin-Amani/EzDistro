@@ -36,6 +36,10 @@ app = FastAPI(
 # Compile every template now so no user request pays Jinja compilation.
 templates.env.globals["app_version"] = settings.app_version
 templates.env.globals["app_name"] = settings.app_name
+templates.env.globals["umami_enabled"] = settings.umami_enabled
+templates.env.globals["umami_script_url"] = settings.umami_script_url
+templates.env.globals["umami_website_id"] = settings.umami_website_id
+templates.env.globals["umami_domains"] = settings.umami_domains
 warm_templates()
 
 

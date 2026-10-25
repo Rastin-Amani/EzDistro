@@ -12,7 +12,7 @@ class Settings(BaseSettings):
 
     # --- app ---
     env: str = "dev"  # dev | production
-    app_version: str = "1.27.2"
+    app_version: str = "1.27.3"
     app_name: str = "EzDistro Platform"
 
     # --- PocketBase ---
@@ -81,6 +81,19 @@ class Settings(BaseSettings):
 
     # --- web ---
     page_size: int = 25  # default pagination for UI lists
+
+    # --- product analytics (Umami) ---
+    # Empty website id disables tracking entirely. `umami_domains` is passed to
+    # the tracker's data-domains, so dev/staging hosts (localhost, previews) are
+    # ignored even though the dashboard id is present in `.env`.
+    # Self-hosted Umami: point the script URL at your instance's /script.js.
+    umami_script_url: str = "https://cloud.umami.is/script.js"
+    umami_website_id: str = ""
+    umami_domains: str = ""
+
+    @property
+    def umami_enabled(self) -> bool:
+        return bool(self.umami_website_id)
 
     # --- public app URL ---
     # Canonical origin of THIS app, used for the billing checkout return URL and

@@ -13,6 +13,8 @@ from typing import Any
 
 from fastapi.responses import Response
 
+from app.config import settings
+
 # Independent read-only PocketBase queries fan out over this pool. Every
 # submitted task MUST be a leaf (never submit to this pool itself) — that
 # invariant makes the shared pool deadlock-free. Work is network-bound, so a
@@ -52,6 +54,22 @@ def hx_trigger(events: dict[str, Any]) -> dict[str, str]:
 def mutation_response(events: dict[str, Any]) -> Response:
     """200 OK, empty body, events attached — the canonical mutation response."""
     return Response(content="", headers=hx_trigger(events))
+
+
+def analytics_event(name: str, data: dict[str, Any] | None = None) -> dict[str, Any]:
+    """HX-Trigger entry that records an Umami event in the browser.
+
+    Returns ``{}`` when analytics is off, so a mutation never carries a dead
+    payload. Merge it into the response's ``extra_events``::
+
+        success_response("Saved", extra_events=analytics_event("thing_done"))
+    """
+    if not settings.umami_enabled:
+        return {}
+    payload: dict[str, Any] = {"name": name}
+    if data:
+        payload["data"] = data
+    return {"analytics-event": payload}
 
 
 def success_response(message: str, *, extra_events: dict[str, Any] | None = None) -> Response:
@@ -104,14 +122,21 @@ def navigate_response(
     return Response(content="", headers=headers)
 
 
-def ok_with_redirect(message: str, url: str, *, type: str = "success") -> Response:
+def ok_with_redirect(
+    message: str,
+    url: str,
+    *,
+    type: str = "success",
+    extra_events: dict[str, Any] | None = None,
+) -> Response:
     """Toast + delayed navigation for successful form submissions."""
-    return mutation_response(
-        {
-            "show-toast": {"message": message, "type": type},
-            "delayed-redirect": {"url": url},
-        }
-    )
+    events: dict[str, Any] = {
+        "show-toast": {"message": message, "type": type},
+        "delayed-redirect": {"url": url},
+    }
+    if extra_events:
+        events.update(extra_events)
+    return mutation_response(events)
 
 
 def humanize_error(exc: Exception, fallback: str) -> str:
