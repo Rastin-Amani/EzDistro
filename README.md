@@ -152,7 +152,8 @@ Architecture, data model, job-state design and provider interfaces: see [docs/AR
   → content gaps → transparent `GENERATE`/`UPDATE`/`EXPAND`/`SUPPORT`/`REJECT`
   opportunities → one-click handoff to the existing writer. Facts-first: it never
   invents volume/CPC/competition. Optional SERP provider; degrades gracefully without
-  Google Ads, SERP or LLM. See [docs/SEO_RESEARCH.md](docs/SEO_RESEARCH.md).
+  Google Ads, SERP or LLM. There is a [research engine walkthrough](https://ezdistro.space/en/how-to/research-engine) on the site and the
+technical detail in [docs/SEO_RESEARCH.md](docs/SEO_RESEARCH.md).
 - **[Scheduler](https://ezdistro.space/en/how-it-works)**: per-project interval schedules → idempotent job creation (per-window keys).
 - **[Security](https://ezdistro.space/en/security)**: Fernet-encrypted credentials at rest (masked in UI, never plaintext),
   SSRF guard on all provider URLs, HTML sanitization (bleach allowlist), HX-Request
@@ -242,7 +243,7 @@ New here? The [first-article walkthrough](https://ezdistro.space/en/how-to/first
 3. **Settings** tab: embedding model/dimensions, chunk size/overlap, retrieval
    top-k/threshold, rerank, LLM model/temperature, section concurrency, retry policy,
    publishing mode, SEO rules, schedules.
-4. **Prompts** tab: system / outline / section / SEO prompts (per-project; global
+4. **[Prompts](https://ezdistro.space/en/features/prompts)** tab: system / outline / section / SEO prompts (per-project; global
    defaults seeded by bootstrap).
 5. **Topics** tab: add topics (manually or bulk-import CSV/TSV), click **Write article**
    → writer job → article appears in **Articles** (edit outline/sections there) →
@@ -280,7 +281,8 @@ the Research tab's **Setup guide** link points there.
 | Chatting with an LLM | [EzDistro vs ChatGPT](https://ezdistro.space/en/vs/chatgpt) — context from your own site, not a blank prompt |
 
 Self-hosted is free and unmetered with your own provider keys; the managed cloud is
-optional — see [pricing](https://ezdistro.space/en/pricing) and the [security model](https://ezdistro.space/en/security).
+optional — see [pricing](https://ezdistro.space/en/pricing), the [security model](https://ezdistro.space/en/security) and the
+[privacy](https://ezdistro.space/en/privacy) and [terms](https://ezdistro.space/en/terms) of the hosted service.
 
 ## Development
 
@@ -332,6 +334,7 @@ leases make multi-worker safe).
 - Setup, checks, architecture rules and the schema workflow: [CONTRIBUTING.md](CONTRIBUTING.md).
 - Release history: [CHANGELOG.md](CHANGELOG.md).
 - Security model and how to report a vulnerability: [SECURITY.md](SECURITY.md).
+- Background: [what EzDistro is](https://ezdistro.space/en/about) and [what is coming next](https://ezdistro.space/en/roadmap).
 
 ## License
 
