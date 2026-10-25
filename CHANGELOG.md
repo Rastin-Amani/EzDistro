@@ -9,6 +9,27 @@ release builds on. Format is based on [Keep a Changelog](https://keepachangelog.
 
 ## [Unreleased]
 
+## [v1.28.0] — 2026-10-25
+
+### Added
+- **Privacy-friendly product analytics (Umami, optional).** Leave
+  `UMAMI_WEBSITE_ID` empty and nothing renders, nothing is sent. When set,
+  the tracker counts pageviews across HTMX navigations and five milestones
+  answer the product questions: `signup_completed`, `project_created`,
+  `wordpress_connected`, `article_publish_requested`, `purchase_completed`.
+  Setup, event dictionary and funnels: `docs/analytics/umami-measurement-plan.md`.
+
+### Documentation
+- **The whole doc set was re-verified against the working tree.** Counts and
+  contracts now match the code: 39 collections (20 core + 13 research + 6 billing),
+  18 job types, 27 prompt types, 8px selector radius, `publish` as the effective
+  default publishing mode, and the marketing-facing tab labels (Websites, Content
+  plan, Find opportunities, Site health, Article images, Writing rules, Activity).
+  `docs/BILLING.md` now describes what billing actually does — plans are recorded
+  entitlements with no feature gating, and managed-AI metering has no platform LLM
+  key yet, so a project needs its own LLM connection to generate. README, PRODUCT,
+  DESIGN, CONTRIBUTING, SECURITY and AGENTS were corrected alongside.
+
 ### Fixed
 - **Covers are no longer square, and no longer watermarked.** A cloned project
   copied the source project's image-connection id into its settings, so every
