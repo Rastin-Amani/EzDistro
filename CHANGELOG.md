@@ -9,6 +9,24 @@ release builds on. Format is based on [Keep a Changelog](https://keepachangelog.
 
 ## [Unreleased]
 
+## [v1.27.3] — 2026-10-25
+
+### Fixed
+- **First-time Google/GitHub sign-up works.** The `users` collection had every
+  API rule locked to superusers, including `createRule`. PocketBase's OAuth2
+  signup creates the account through that rule, so any identity that did not
+  already exist failed with `403 Only superusers can perform this action` —
+  existing accounts could still sign in, which made it look like "login works,
+  signup doesn't". `createRule` is now `@request.context = "oauth2"`: OAuth2
+  signup is allowed, direct REST creates on `/api/collections/users/records`
+  remain blocked (they get a 400 rule failure).
+
+### Changed
+- **Sign-in and sign-up are one page.** `/signup` redirects to `/login`, which
+  reads "Sign in or create an account": the provider signs in an existing
+  email or creates the account on first use, so a separate signup page only
+  added a step. The login page no longer branches on mode.
+
 ## [v1.27.2] — 2026-10-24
 
 ### Fixed
