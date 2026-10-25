@@ -127,9 +127,22 @@ make web                        # uvicorn app.main:app --port 8000
 make worker                     # python -m app.workers.worker
 ```
 
-Sign in with Google or GitHub (there is no password login). Register the app’s
-`/auth/oauth2/callback` URL at both providers before the first sign-in (the app
-builds it from the public origin it is served on); see
+### Container image
+
+Prebuilt images for `linux/amd64` and `linux/arm64` are published to GitHub
+Container Registry from `main` and from every release tag — no local build needed:
+
+```bash
+docker pull ghcr.io/rastin-amani/ezdistro:latest
+docker run --env-file .env -p 8000:8000 ghcr.io/rastin-amani/ezdistro:latest
+```
+
+The image runs the web process plus a pool of `WORKERS` worker processes (default 4)
+in one container; see [docs/OPERATIONS.md](docs/OPERATIONS.md#docker).
+
+Sign in or create an account with Google or GitHub (there is no password login).
+Register the app’s `/auth/oauth2/callback` URL at both providers before the first
+sign-in (the app builds it from the public origin it is served on); see
 [docs/CONFIGURATION.md](docs/CONFIGURATION.md#sign-in-oauth-only-google--github).
 
 ### Workflow

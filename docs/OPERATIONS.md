@@ -98,8 +98,16 @@ Restart=always
 
 ### Docker
 
-The included `Dockerfile` runs the web process plus a pool of `WORKERS` worker
-processes (`docker-entrypoint.sh`) in one container:
+Published images (built by `.github/workflows/docker-publish.yml` on `main` and
+every `v*` tag, `linux/amd64` + `linux/arm64`) are the fastest path:
+
+```bash
+docker pull ghcr.io/rastin-amani/ezdistro:latest
+docker run --env-file .env -p 8000:8000 ghcr.io/rastin-amani/ezdistro:latest
+```
+
+Or build locally. The included `Dockerfile` runs the web process plus a pool of
+`WORKERS` worker processes (`docker-entrypoint.sh`) in one container:
 
 ```bash
 docker build -t ezdistro .
@@ -137,6 +145,8 @@ cleanup.
       correct for billing return URLs
 - [ ] `make bootstrap` ran after configuring the OAuth providers — it disables
       password/OTP/MFA and prints `sign-in providers = google, github`
+- [ ] `users.createRule` is `@request.context = "oauth2"` (bootstrap enforces
+      it; a `null` rule blocks every first-time signup with a 403)
 - [ ] Sign in once with the Google/GitHub account whose email is
       `SEED_ADMIN_EMAIL` (or re-run bootstrap after that account exists to
       promote it to `role=admin`)
