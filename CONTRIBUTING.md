@@ -108,6 +108,10 @@ make schema-export    # regenerate pb_collections_import.json from the code
 - Update the relevant doc when behavior changes; each doc carries a
   "Documentation status / Last verified" block. `docs/SCHEMA.md` and
   `docs/ARCHITECTURE.md` must agree with `bootstrap_pb.py` and the code.
+- **Internal material stays out of the repo.** Pricing, positioning, strategy,
+  PRDs and design briefs go in `private/` (gitignored, never copied into the
+  image and never served at `/help/`). `docs/` is for what a self-hoster or
+  contributor needs: architecture, schema, operations, user guide.
 
 ## Commits and pull requests
 
