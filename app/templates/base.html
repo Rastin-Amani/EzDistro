@@ -3,7 +3,7 @@
 <html lang="en" dir="ltr">
     <head>
         <meta charset="UTF-8" />
-        <script>
+        <script data-cfasync="false">
             /* First paint follows the OS (Auto) unless the visitor picked a
                theme; a stored 'light'/'dark' wins over the system preference. */
             (function () {
@@ -130,7 +130,7 @@
         <!-- Global UI store: client-only view state (modals, toasts). Server
              data stays on the server; this lives outside #main-content so it
              survives boosted navigation. -->
-        <script>
+        <script data-cfasync="false">
             document.addEventListener('alpine:init', function () {
                 Alpine.store('ui', {
                     openModal: function (id) {
@@ -251,10 +251,10 @@
             })();
         </script>
 
-        <script type="module" src="{{ url_for('static', path='/js/integrations.js') }}?v={{ asset_version() }}"></script>
-        <script type="module" src="{{ url_for('static', path='/js/provider_defaults.js') }}?v={{ asset_version() }}"></script>
-        <script type="module" src="{{ url_for('static', path='/app.js') }}?v={{ asset_version() }}"></script>
-        <script defer src="{{ url_for('static', path='/js/theme.js') }}?v={{ asset_version() }}"></script>
+        <script data-cfasync="false" type="module" src="{{ url_for('static', path='/js/integrations.js') }}?v={{ asset_version() }}"></script>
+        <script data-cfasync="false" type="module" src="{{ url_for('static', path='/js/provider_defaults.js') }}?v={{ asset_version() }}"></script>
+        <script data-cfasync="false" type="module" src="{{ url_for('static', path='/app.js') }}?v={{ asset_version() }}"></script>
+        <script data-cfasync="false" defer src="{{ url_for('static', path='/js/theme.js') }}?v={{ asset_version() }}"></script>
         <script defer src="{{ url_for('static', path='/js/confirm-dialog.js') }}?v={{ asset_version() }}"></script>
 
         {% if umami_enabled %}
