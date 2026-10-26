@@ -9,6 +9,14 @@ release builds on. Format is based on [Keep a Changelog](https://keepachangelog.
 
 ## [Unreleased]
 
+## [v1.28.1] — 2026-10-26
+
+### Fixed
+- **Local scripts survive Cloudflare Rocket Loader.** Inline and first-party
+  scripts in `base.html` now carry `data-cfasync="false"`, so proxied sites
+  keep theme, UI-store and bundle execution order. Third-party scripts are
+  unaffected.
+
 ## [v1.28.0] — 2026-10-25
 
 ### Added
