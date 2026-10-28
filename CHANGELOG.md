@@ -9,6 +9,18 @@ release builds on. Format is based on [Keep a Changelog](https://keepachangelog.
 
 ## [Unreleased]
 
+## [v1.28.2] — 2026-10-28
+
+### Fixed
+- **Long-lived workers stay online past 24 hours.** The worker authenticated
+  with PocketBase once at startup, but the superuser token expires after 24 h
+  (`_superusers.authToken.duration`), so every request afterwards was a 401:
+  heartbeats stopped, the Workers page showed the worker offline, no job was
+  claimed and schedules stalled while the process itself was still running.
+  The worker now re-authenticates every 10 minutes (retrying every 60 s while
+  PocketBase is unreachable); the web process was already covered by its
+  5-minute superuser client cache.
+
 ## [v1.28.1] — 2026-10-26
 
 ### Fixed
