@@ -68,14 +68,13 @@ def get_pb() -> PocketBase:
     return _client()
 
 
-def get_admin_pb() -> PocketBase:
-    """Admin-authenticated client for workers, bootstrap and maintenance scripts."""
+def _authenticate_admin(pb: PocketBase) -> None:
+    """Log an existing client in as superuser, in place."""
     if not settings.pb_admin_email or not settings.pb_admin_password:
         raise RuntimeError(
             "PB_ADMIN_EMAIL/PB_ADMIN_PASSWORD are required for admin operations "
             "(worker, bootstrap)."
         )
-    pb = _client()
     # PocketBase >= 0.23 uses _superusers; older versions use _admins.
     try:
         pb.collection("_superusers").auth_with_password(
@@ -85,7 +84,23 @@ def get_admin_pb() -> PocketBase:
         pb.collection("_admins").auth_with_password(
             settings.pb_admin_email, settings.pb_admin_password
         )
+
+
+def get_admin_pb() -> PocketBase:
+    """Admin-authenticated client for workers, bootstrap and maintenance scripts."""
+    pb = _client()
+    _authenticate_admin(pb)
     return pb
+
+
+def reauth_admin(pb: PocketBase) -> None:
+    """Refresh a long-lived admin client's token in place.
+
+    The SDK reads `auth_store.token` on every request, so re-authenticating the
+    same client fixes the whole pipeline. The worker ticks this (see
+    `app/workers/worker.py`); the web is covered by `get_data_pb`'s 300 s cache.
+    """
+    _authenticate_admin(pb)
 
 
 def get_data_pb() -> PocketBase:

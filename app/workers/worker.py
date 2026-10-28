@@ -27,12 +27,19 @@ from app.config import settings  # noqa: E402
 from app.jobs.engine import JobEngine  # noqa: E402
 from app.jobs.handlers import ensure_registered  # noqa: E402
 from app.logging_config import logger  # noqa: E402
-from app.pb import get_admin_pb  # noqa: E402
+from app.pb import get_admin_pb, reauth_admin  # noqa: E402
 from app.services.scheduler import run_schedule_poll  # noqa: E402
 
 POLL_INTERVAL = max(1.0, settings.poll_interval_seconds)
 SCHEDULE_INTERVAL = max(10.0, settings.schedule_poll_interval_seconds)
 HEARTBEAT_INTERVAL = max(10.0, settings.heartbeat_interval_seconds)
+# Admin token lifetime is PocketBase's `_superusers.authToken.duration` (24 h by
+# default). A worker that never re-authenticates goes blind when it expires:
+# heartbeats stop → the Workers page shows it offline, no job is claimed and
+# schedules stall, while the process is still running. Refresh often enough for
+# any sane TTL; one auth request every 10 min costs nothing.
+ADMIN_REFRESH_INTERVAL = 600.0
+ADMIN_REFRESH_RETRY = 60.0
 
 
 def admin_pb_with_retry(max_delay: float = 30.0) -> Any:
@@ -59,6 +66,26 @@ def admin_pb_with_retry(max_delay: float = 30.0) -> Any:
             )
             time.sleep(delay)
             delay = min(delay * 2.0, max_delay)
+
+
+async def admin_token_refresh(pb: Any, stop: asyncio.Event) -> None:
+    """Re-authenticate the worker's admin client before its token dies.
+
+    The superuser token expires (`_superusers.authToken.duration`, 24 h by
+    default). Without this the process stays up but every PB call is a 401:
+    heartbeats stop, the Workers page shows it offline, jobs are never claimed
+    and schedules stall — with nothing in the UI explaining why.
+    """
+    delay = ADMIN_REFRESH_INTERVAL
+    while not stop.is_set():
+        await asyncio.sleep(delay)
+        try:
+            reauth_admin(pb)
+            delay = ADMIN_REFRESH_INTERVAL
+        except Exception:
+            # Until this succeeds the worker is blind to PB — retry soon.
+            logger.exception("worker.admin_token.refresh_error")
+            delay = ADMIN_REFRESH_RETRY
 
 
 async def main() -> None:
@@ -190,6 +217,7 @@ async def main() -> None:
         asyncio.create_task(schedule_poll_loop()),
         asyncio.create_task(worker_heartbeat_loop()),
         asyncio.create_task(metrics_flush_loop()),
+        asyncio.create_task(admin_token_refresh(pb, stop)),
     ]
     await stop.wait()
     for task in tasks:
