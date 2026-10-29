@@ -26,6 +26,8 @@ secrets/
 *.p12
 *.pfx
 *.jks
+# Local PocketBase admin token written by the dev tooling
+.pbtoken
 
 # --- Local data (PocketBase / Qdrant / scratch DBs) ---
 pb_data/
