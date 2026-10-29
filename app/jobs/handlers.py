@@ -27,6 +27,7 @@ JOB_TYPES = (
     "generate_section",
     "assemble_article",
     "publish_article",
+    "notify_search_engines",
     "build_internal_links",
     "retry_failed_job",
     "plan_article_images",
@@ -82,6 +83,7 @@ def ensure_registered() -> None:
             publishing_service,
             research,
             retry_service,
+            search_engines,
             wordpress_sync,
             writing,
         )
