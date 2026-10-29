@@ -9,6 +9,28 @@ release builds on. Format is based on [Keep a Changelog](https://keepachangelog.
 
 ## [Unreleased]
 
+## [v1.29.3] — 2026-10-29
+
+### Changed
+- **The Index Now setup is read-only, and every submission is verified first.**
+  EzDistro no longer uploads the key file into the WordPress media library: most
+  engines do not honour a non-root `keyLocation`, so the upload proved the wrong
+  thing and wrote into the customer's site. The owner places `<key>.txt` (the tab
+  gives the download and the exact URL it must open at), and the app checks it.
+  **Verify key file** now checks both the domain root and the configured key-file
+  URL and reports the HTTP status, redirect target or wrong content for each,
+  instead of one combined line.
+- **A submission now proves the key file before sending.** The domain root is
+  tried first (when it serves the key, no `keyLocation` is sent — the format every
+  engine supports); the configured URL is the fallback. If neither serves the
+  key, the job fails naming both URLs and their results instead of receiving the
+  engine's opaque "one or more URLs are not related to your site verified".
+
+### Removed
+- **Automatic key-file upload (added in v1.29.0).** The install route, its button
+  and the WordPress `.txt` MIME mapping are gone; use **Download** and the
+  documented URL instead. Regenerating a key clears the stale key-file URL.
+
 ## [v1.29.2] — 2026-10-29
 
 ### Fixed
