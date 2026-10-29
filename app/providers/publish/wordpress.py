@@ -444,6 +444,9 @@ def _guess_mime(filename: str) -> str:
         "jpeg": "image/jpeg",
         "avif": "image/avif",
         "gif": "image/gif",
+        # IndexNow key file — declared honestly so WordPress/hosts that inspect
+        # the upload type serve it as text instead of a download.
+        "txt": "text/plain",
     }.get(ext, "application/octet-stream")
 
 
