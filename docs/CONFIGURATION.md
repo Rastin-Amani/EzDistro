@@ -34,7 +34,7 @@ Environment=ENV=production   # in the unit (the .env value is not enough there)
 |---|---|---|
 | `ENV` | `dev` | `dev` \| `production`. Production hides `/docs` + `/openapi.json` + the debug router and makes a missing `SECRETS_KEY` an error on first use. JSON logs are selected from the **process** environment (`os.getenv`). |
 | `APP_NAME` | `EzDistro Platform` | Product name in the UI/`/health` |
-| `APP_VERSION` | `1.28.2` | Version label in the UI and `/health` — tracks the release tag |
+| `APP_VERSION` | `1.29.0` | Version label in the UI and `/health` — tracks the release tag |
 | `SECRETS_KEY` | *(empty)* | Fernet key (32-byte urlsafe base64). Required in production: there is no startup probe, but the first encrypted-secret operation raises. Dev derives a deterministic key from `pb_url`+env. Generate: `python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"`. ⚠️ Rotating it invalidates all stored integration secrets (they must be re-entered) |
 | `OAUTH_CALLBACK_PATH` | `/auth/oauth2/callback` | Path of the OAuth callback below `PUBLIC_APP_URL`. Change only if a reverse proxy rewrites the path |
 
