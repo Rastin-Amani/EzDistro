@@ -1,0 +1,224 @@
+{% import 'macros/forms.html' as f %}
+{{ f.section_head(('Index Now'), ('Tell the search engines a page is live — and see what each engine actually receives.')) }}
+
+<div id="index-now-tab">
+
+{# The refresh trigger is a hidden SIBLING, never a wrapper: hx-target/hx-select
+   are inherited by descendant htmx requests, so a link inside a "this"-targeted
+   container would ask for another page and then select a container that is not
+   in the response — a blank screen. #}
+<div class="hidden"
+     hx-get="/projects/{{ project.id }}/tabs/index_now"
+     hx-trigger="refreshIndexNow from:body"
+     hx-target="#index-now-tab"
+     hx-select="#index-now-tab"
+     hx-swap="outerHTML"></div>
+
+{# ── What this page can and cannot do ────────────────────────────────── #}
+<section class="mb-4 card border border-base-300 bg-base-100 min-w-0">
+    <div class="p-5 flex flex-col gap-3">
+        <div class="flex flex-wrap items-center gap-2">
+            <span class="badge badge-soft badge-success badge-sm">{{ ('Bing · Yandex · Naver · Seznam · Yep') }}</span>
+            <span class="badge badge-soft badge-warning badge-sm">{{ ('Google: not on IndexNow') }}</span>
+        </div>
+        <p class="max-w-2xl text-sm leading-relaxed text-base-content/65">
+            {{ ('One IndexNow submission is shared with every participating engine, so there is nothing to configure per engine. Google has never joined IndexNow — for Google, use the “Request indexing” link next to each URL below, which opens Google’s own URL Inspection tool.') }}
+        </p>
+        <p class="max-w-2xl text-xs leading-relaxed text-base-content/60">
+            {{ ('A submission is a receipt, not a promise: the engines decide when (and whether) to crawl.') }}
+        </p>
+    </div>
+</section>
+
+{# ── Setup ───────────────────────────────────────────────────────────── #}
+<section class="mb-4 card border border-base-300 bg-base-100 min-w-0">
+    <div class="flex items-center justify-between gap-2 border-b border-base-300 px-5 py-3.5">
+        <h3 class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">{{ ('Setup') }}</h3>
+        {% if index_now_ready %}
+        <span class="badge badge-sm {{ index_now.healthStatus|status_badge }}">{{ index_now.healthStatus }}</span>
+        {% endif %}
+    </div>
+    <form hx-post="/projects/{{ project.id }}/index-now/config" hx-swap="none" class="p-5 flex flex-col gap-4">
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <label class="flex flex-col gap-1 min-w-0">
+                {{ f.label(('Website host'), ('The domain whose pages you submit. Must match the URLs exactly, without a path.')) }}
+                <input name="host" class="input w-full" dir="ltr" autocomplete="off"
+                       value="{{ index_now.host or '' }}"
+                       placeholder="{{ index_now_default_host or 'example.com' }}" />
+                {% if index_now_default_host and not index_now.host %}
+                <p class="text-xs text-base-content/60">{{ ('From your WordPress connection: %(h)s') % {'h': index_now_default_host} }}</p>
+                {% endif %}
+            </label>
+            <label class="flex flex-col gap-1 min-w-0">
+                {{ f.label(('IndexNow endpoint'), ('One participating endpoint is enough — the submission is shared with the others.')) }}
+                <input name="endpoint" class="input w-full" dir="ltr" autocomplete="off"
+                       value="{{ index_now.endpoint or index_now_default_endpoint }}"
+                       placeholder="{{ index_now_default_endpoint }}" />
+            </label>
+        </div>
+
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <label class="flex flex-col gap-1 min-w-0">
+                {{ f.label(('Key file location (optional)'), ('Only needed when the key file is not at the site root, e.g. /wp-content/uploads/abc123.txt')) }}
+                <input name="key_location" class="input w-full" dir="ltr" autocomplete="off"
+                       value="{{ index_now.key_location or '' }}" placeholder="https://{{ index_now.host or 'example.com' }}/{{ index_now_key or '<key>' }}.txt" />
+            </label>
+            <div class="flex flex-col justify-end gap-1.5 pb-1">
+                {{ f.checkbox('auto_publish', ('Submit automatically after a new article is published'), value='1', checked=(index_now.auto_publish if index_now else true)) }}
+                {{ f.checkbox('auto_update', ('Submit automatically after a content update'), value='1', checked=(index_now.auto_update if index_now else true)) }}
+            </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2 border-t border-base-300 pt-4">
+            <button type="submit" class="btn btn-primary btn-sm" hx-disabled-elt="this">
+                <span class="loading loading-spinner loading-xs htmx-indicator"></span>
+                {{ ('Save') }}
+            </button>
+            {% if index_now_key %}
+            <a class="btn btn-ghost btn-sm" href="/projects/{{ project.id }}/index-now/key.txt" download="{{ index_now_key }}.txt">{{ ('Download key file') }}</a>
+            <button type="button" class="btn btn-ghost btn-sm"
+                    hx-post="/projects/{{ project.id }}/index-now/verify" hx-swap="none" hx-disabled-elt="this">
+                <span class="loading loading-spinner loading-xs htmx-indicator"></span>
+                {{ ('Verify key file') }}
+            </button>
+            <button type="button" class="btn btn-ghost btn-sm text-warning"
+                    hx-post="/projects/{{ project.id }}/index-now/key" hx-swap="none"
+                    hx-confirm="{{ ('Generate a new key? The current key file stops working until you upload the new one.') }}">{{ ('New key') }}</button>
+            {% endif %}
+        </div>
+    </form>
+</section>
+
+{# ── Key file ────────────────────────────────────────────────────────── #}
+<section class="mb-4 card border border-base-300 bg-base-100 min-w-0">
+    <div class="flex items-center justify-between gap-2 border-b border-base-300 px-5 py-3.5">
+        <h3 class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">{{ ('Key file') }}</h3>
+        {% if index_now_key_url %}<span class="text-xs text-base-content/60" dir="ltr">{{ index_now_key_url }}</span>{% endif %}
+    </div>
+    <div class="p-5 flex flex-col gap-3">
+        {% if index_now_key %}
+        <ol class="ms-4 list-decimal space-y-1.5 text-sm leading-relaxed text-base-content/70">
+            <li>{{ ('Download the key file (its name is the key, ending in .txt).') }}</li>
+            <li>{{ ('Upload it to the site root, so it opens at the address shown above — no redirects, no login, no CDN block.') }}</li>
+            <li>{{ ('Press “Verify key file”. Without this check every submission is accepted and then silently dropped.') }}</li>
+        </ol>
+        <div class="flex flex-wrap items-center gap-2">
+            <code class="rounded-field border border-base-300 bg-base-200 px-3 py-1.5 font-mono text-xs" dir="ltr">{{ index_now_key }}</code>
+            {% if index_now_key_url %}<a href="{{ index_now_key_url }}" target="_blank" rel="noopener" class="link link-primary text-xs" dir="ltr">{{ ('Open it') }}</a>{% endif %}
+        </div>
+        {% else %}
+        <p class="text-sm text-base-content/60">{{ ('Save the website host above — a key is generated for you and shown here.') }}</p>
+        {% endif %}
+    </div>
+</section>
+
+{# ── Manual submission ───────────────────────────────────────────────── #}
+<section class="mb-4 card border border-base-300 bg-base-100 min-w-0">
+    <div class="flex items-center justify-between gap-2 border-b border-base-300 px-5 py-3.5">
+        <h3 class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">{{ ('Submit URLs') }}</h3>
+        <span class="text-xs text-base-content/60">{{ ('one per line') }}</span>
+    </div>
+    <form hx-post="/projects/{{ project.id }}/index-now/submit" hx-swap="none" class="p-5 flex flex-col gap-3">
+        <label class="flex flex-col gap-1 min-w-0">
+            <textarea name="urls" rows="5" dir="ltr" class="textarea w-full font-mono text-xs leading-relaxed"
+                      placeholder="https://{{ index_now.host or 'example.com' }}/blog/my-new-article"></textarea>
+        </label>
+        <div class="flex flex-wrap items-center gap-2">
+            <button type="submit" class="btn btn-primary btn-sm" hx-disabled-elt="this" {% if not index_now_ready %}disabled{% endif %}>
+                <span class="loading loading-spinner loading-xs htmx-indicator"></span>
+                {{ ('Submit to IndexNow') }}
+            </button>
+            {% if not index_now_ready %}
+            <span class="text-xs text-base-content/60">{{ ('Save the host and key first.') }}</span>
+            {% endif %}
+        </div>
+    </form>
+</section>
+
+{# ── Published articles: submit + the Google link ────────────────────── #}
+{% if index_now_published %}
+<section class="mb-4 card border border-base-300 bg-base-100 min-w-0">
+    <div class="flex items-center justify-between gap-2 border-b border-base-300 px-5 py-3.5">
+        <h3 class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">{{ ('Published articles') }}</h3>
+        <span class="text-xs text-base-content/60">{{ ('%(n)s most recent') % {'n': index_now_published|length} }}</span>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="table table-sm">
+            <thead>
+                <tr class="text-[0.7rem] uppercase tracking-[0.073em] text-base-content/60">
+                    <th>{{ ('Article') }}</th>
+                    <th>{{ ('URL') }}</th>
+                    <th class="text-end">{{ ('Engines') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in index_now_published %}
+                {% set gsc = (index_now_gsc | selectattr('url', 'equalto', row.url) | list | first) %}
+                <tr>
+                    <td class="max-w-52 truncate text-xs font-medium">{{ row.title }}</td>
+                    <td class="max-w-64"><a href="{{ row.url }}" target="_blank" rel="noopener" class="link link-primary block truncate text-xs" dir="ltr">{{ row.url }}</a></td>
+                    <td class="whitespace-nowrap text-end">
+                        <div class="flex items-center justify-end gap-1">
+                            <button type="button" class="btn btn-ghost btn-xs"
+                                    hx-post="/projects/{{ project.id }}/index-now/submit"
+                                    hx-vals='{{ {"urls": row.url} | tojson }}'
+                                    hx-swap="none"
+                                    {% if not index_now_ready %}disabled{% endif %}
+                                    title="{{ ('Submit this URL to IndexNow') }}">{{ ('IndexNow') }}</button>
+                            {% if gsc %}
+                            <a class="btn btn-ghost btn-xs" href="{{ gsc.link }}" target="_blank" rel="noopener"
+                               title="{{ ('Open Google Search Console URL Inspection for this page') }}">{{ ('Google') }}</a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endif %}
+
+{# ── Submission history (the job records) ────────────────────────────── #}
+<section class="card border border-base-300 bg-base-100 min-w-0">
+    <div class="flex items-center justify-between gap-2 border-b border-base-300 px-5 py-3.5">
+        <h3 class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">{{ ('Submissions') }}</h3>
+        <a href="/jobs?job_type=notify_search_engines" class="text-xs link link-primary">{{ ('Open in Activity') }}</a>
+    </div>
+    {% if index_now_jobs %}
+    <div class="overflow-x-auto">
+        <table class="table table-sm">
+            <thead>
+                <tr class="text-[0.7rem] uppercase tracking-[0.073em] text-base-content/60">
+                    <th>{{ ('Status') }}</th>
+                    <th>{{ ('Source') }}</th>
+                    <th>{{ ('URLs') }}</th>
+                    <th>{{ ('Engine reply') }}</th>
+                    <th>{{ ('Time') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for j in index_now_jobs %}
+                <tr>
+                    <td><span class="badge badge-sm {{ j.status|status_badge }}">{{ j.status|status_label }}</span></td>
+                    <td class="text-xs text-base-content/65">{{ (j.payload or {}).get('source') or '—' }}</td>
+                    <td class="text-xs tabular-nums">{{ ((j.payload or {}).get('urls') or [])|length }}</td>
+                    <td class="max-w-64 text-xs text-base-content/65">
+                        {% if j.errorMessage %}
+                        <span class="text-error">{{ j.errorMessage|truncate(120) }}</span>
+                        {% elif (j.result or {}).get('statusCode') %}
+                        <span dir="ltr">HTTP {{ j.result.statusCode }} · {{ (j.result or {}).get('host') or '' }}</span>
+                        {% else %}—{% endif %}
+                    </td>
+                    <td class="whitespace-nowrap text-xs text-base-content/60">{{ j.created|loc_dt }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    {{ f.empty(('Nothing submitted yet'), ('Publish an article, or paste URLs above — every submission shows up here with the engine’s reply.'), compact=true) }}
+    {% endif %}
+</section>
+
+</div>

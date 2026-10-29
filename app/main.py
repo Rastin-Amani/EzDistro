@@ -13,6 +13,7 @@ from app.api import (
     billing,
     dashboard,
     images,
+    indexing,
     jobs,
     logs,
     projects,
@@ -87,6 +88,7 @@ app.include_router(articles.router)
 app.include_router(research.router)
 app.include_router(workspace.router)
 app.include_router(images.router)
+app.include_router(indexing.router)
 app.include_router(jobs.router)
 app.include_router(schedules.router)
 app.include_router(workers.router)

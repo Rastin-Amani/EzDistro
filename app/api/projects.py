@@ -110,6 +110,7 @@ TABS = [
     "articles",
     "images",
     "publishing",
+    "index_now",
     "research",
     "settings",
     "integrations",
@@ -720,6 +721,26 @@ def _tab_context(
         context.update(loaded)
     elif tab == "publishing":
         context["records"] = PublishingRunRepo(pb).list_for_project(project_id, per_page=30)
+    elif tab == "index_now":
+        from app.api import indexing as I
+
+        try:
+            context.update(I.tab_context(pb, project_id))
+        except Exception:
+            # A read-only tab must never take the whole project page down.
+            context.update(
+                {
+                    "index_now": {},
+                    "index_now_ready": False,
+                    "index_now_jobs": [],
+                    "index_now_published": [],
+                    "index_now_gsc": [],
+                    "index_now_key": "",
+                    "index_now_key_url": "",
+                    "index_now_default_host": "",
+                    "index_now_default_endpoint": "",
+                }
+            )
     elif tab == "logs":
         context["events"] = JobEventRepo(pb).list_for_project(project_id, per_page=40)
     elif tab == "research":
