@@ -36,6 +36,20 @@ def _select_values(collection: str, field: str) -> list[str]:
     raise AssertionError(f"{collection}.{field} not found in the mirror")
 
 
+def test_integration_categories_are_listed_in_the_select():
+    """Every category the repo can write must exist in the schema select.
+
+    PocketBase answers `category: Invalid value: indexing.` otherwise — the
+    failure a deployment hits when the code adds a category and the live
+    collection's select was never unioned (see `ensure_select_values`).
+    """
+    from app.repositories.integrations import INTEGRATION_CATEGORIES
+
+    values = _select_values("integrations", "category")
+    for category in INTEGRATION_CATEGORIES:
+        assert category in values, f"integrations.category is missing {category!r}"
+
+
 def test_research_type_select_covers_every_written_value():
     """A run is created with researchType='import' for file imports.
 

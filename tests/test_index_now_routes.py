@@ -208,6 +208,42 @@ def test_install_route_stores_the_verified_location(wp):
     assert location.startswith(f"{MEDIA_HOST}/wp-content/uploads/")
 
 
+def test_save_heals_a_database_that_predates_the_category(monkeypatch, wp):
+    """`category: Invalid value: indexing.` must not be a dead end."""
+    from pocketbase.errors import ClientResponseError
+
+    pb, project, req = _setup()
+    original = IntegrationRepo.create
+    calls = {"n": 0}
+
+    def flaky(self, **kwargs):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise ClientResponseError(
+                "Bad Request",
+                status=400,
+                data={
+                    "data": {
+                        "category": {
+                            "code": "validation_invalid_value",
+                            "message": "Invalid value: indexing.",
+                        }
+                    }
+                },
+            )
+        return original(self, **kwargs)
+
+    healed: list[bool] = []
+    monkeypatch.setattr(IntegrationRepo, "create", flaky)
+    monkeypatch.setattr(I, "_heal_category", lambda pb: healed.append(True))
+
+    resp = _save(req, project)
+    assert healed == [True]  # the reconciler ran once
+    config = I.load_config(pb, project["id"])
+    assert config["key"] and config["key_location"]
+    assert "error" not in toast_message(resp).lower()
+
+
 def test_key_file_download_serves_exactly_the_key(wp):
     pb, project, req = _setup()
     _save(req, project)

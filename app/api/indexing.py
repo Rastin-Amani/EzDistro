@@ -45,6 +45,26 @@ def load_config(pb: Any, project_id: str) -> dict[str, Any]:
     return search_engines.get_config(pb, project_id)
 
 
+def _heal_category(pb: Any) -> None:
+    """Union the code's select values into the live PocketBase (idempotent).
+
+    A category the collection does not list yet is rejected with
+    "category: Invalid value: indexing." — `make bootstrap` fixes that, but a
+    deployment that upgraded the code without re-running it would otherwise
+    never be able to save this connection. `ensure_select_values` is the same
+    reconciler bootstrap uses and is a no-op once the schema matches.
+    """
+    from app.scripts.bootstrap_pb import ensure_select_values
+
+    ensure_select_values(pb)
+
+
+def _is_invalid_value(exc: Exception) -> bool:
+    data = getattr(exc, "data", None)
+    text = f"{exc} {data if isinstance(data, dict) else ''}".lower()
+    return "invalid value" in text or "validation_invalid_value" in text
+
+
 def _save(
     pb: Any,
     project_id: str,
@@ -70,16 +90,33 @@ def _save(
     }
     if row:
         return repo.update(row["id"], {"configuration": configuration, "enabled": enabled})
-    return repo.create(
-        project=project_id,
-        category="indexing",
-        provider=PROVIDER,
-        display_name=DISPLAY_NAME,
-        configuration=configuration,
-        secrets_enc="",
-        enabled=enabled,
-        created_by=user_id,
-    )
+    try:
+        return repo.create(
+            project=project_id,
+            category="indexing",
+            provider=PROVIDER,
+            display_name=DISPLAY_NAME,
+            configuration=configuration,
+            secrets_enc="",
+            enabled=enabled,
+            created_by=user_id,
+        )
+    except Exception as exc:
+        if not _is_invalid_value(exc):
+            raise
+        # Older deployment whose `integrations.category` select predates this
+        # feature: heal the schema once and retry (see _heal_category).
+        _heal_category(pb)
+        return repo.create(
+            project=project_id,
+            category="indexing",
+            provider=PROVIDER,
+            display_name=DISPLAY_NAME,
+            configuration=configuration,
+            secrets_enc="",
+            enabled=enabled,
+            created_by=user_id,
+        )
 
 
 async def _install_key(
