@@ -9,6 +9,27 @@ release builds on. Format is based on [Keep a Changelog](https://keepachangelog.
 
 ## [Unreleased]
 
+## [v1.29.2] — 2026-10-29
+
+### Fixed
+- **IndexNow host mismatches are caught before the batch is dropped.** The
+  engine verifies the key file on the host it receives and then requires every
+  submitted URL to belong to it, so a `www.`/bare-domain difference, a mixed
+  batch or a key file served from another host (a CDN, a different subdomain)
+  was rejected as an opaque "URLs are not related to your site verified". The
+  submission now derives the host from the URLs and refuses a disagreeing
+  batch, key file or configured host, naming the fix in the message.
+- **Engine rejections are readable.** The JSON body IndexNow returns
+  (`errorCode` + `message`) is parsed: the message leads with a human sentence
+  and keeps the provider's own words plus the error code in the text and in the
+  job details, instead of one generic line per status.
+
+### Changed
+- **The host follows the key file.** When WordPress returns the uploaded file
+  from a different host than the one typed (typically `www.`), that host becomes
+  the website host on save, regenerate and reinstall — with a toast saying so.
+  A stored disagreement is flagged in the tab with the two ways to resolve it.
+
 ## [v1.29.1] — 2026-10-29
 
 ### Fixed
