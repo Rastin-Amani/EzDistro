@@ -92,6 +92,16 @@ def test_gsc_link_points_at_url_inspection_for_the_page():
 # ---------------------------------------------------------------------------
 # Queueing rules
 # ---------------------------------------------------------------------------
+def test_install_key_file_uploads_the_key_as_media():
+    from tests.fake_providers import FakePublisher
+
+    pub = FakePublisher()
+    media = asyncio.run(search_engines.install_key_file(pub, key="abc12345"))
+    assert media["url"].endswith("/abc12345.txt")
+    assert pub.media[-1]["filename"] == "abc12345.txt"
+    assert pub.media[-1]["size"] == len("abc12345")
+
+
 def test_queue_does_nothing_without_a_connection():
     home = make_project_home()
     assert (
