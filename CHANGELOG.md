@@ -13,9 +13,13 @@ release builds on. Format is based on [Keep a Changelog](https://keepachangelog.
 
 ### Added
 - **Tell the search engines a page is live (IndexNow).** A new **Index Now**
-  project tab sets the site host, generates the `<key>.txt` file to upload to
-  the site root, verifies that the live file actually serves the key, submits
-  URLs by hand and lists every submission with the engine's reply. After a live
+  project tab sets the site host, generates the `<key>.txt` file, submits URLs
+  by hand and lists every submission with the engine's reply. With a WordPress
+  connection the key file is installed for you: it is uploaded to the media
+  library, fetched back and compared to the key, and stored as the submission's
+  `keyLocation` — the manual "download and put it in the site root" path stays
+  for hosts that block `.txt` uploads, and **Verify key file** re-checks the
+  live address at any time. After a live
   publish (`publish`) and after a content refresh (`update`) a
   `notify_search_engines` job is queued — deduped per article per hour, and the
   publish never depends on it. One submission reaches Bing, Yandex, Naver,
