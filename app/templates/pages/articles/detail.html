@@ -13,6 +13,13 @@
     <ul id="article-actions" popover class="dropdown dropdown-end menu w-56 rounded-box border border-base-300 bg-base-100 p-1.5 [&_a:hover]:bg-base-200 [&_button:hover]:bg-base-200 [&_label:hover]:bg-base-200">
         <li><a href="/projects/{{ project.id }}/articles/{{ article.id }}/workspace">{{ ('Open writing workspace') }}</a></li>
         {% if article.wordpressUrl %}<li><a href="{{ article.wordpressUrl }}" target="_blank" rel="noopener">{{ ('View on WordPress') }}</a></li>{% endif %}
+        {% if article.wordpressUrl %}
+        <li><button type="button"
+                    hx-post="/projects/{{ project.id }}/index-now/submit"
+                    hx-vals='{{ {"urls": article.wordpressUrl} | tojson }}'
+                    hx-swap="none">{{ ('Tell search engines (IndexNow)') }}</button></li>
+        <li><a href="{{ gsc_link }}" target="_blank" rel="noopener">{{ ('Request indexing on Google') }}</a></li>
+        {% endif %}
         <li><button type="button" class="text-warning" hx-post="/projects/{{ project.id }}/articles/{{ article.id }}/regenerate" hx-swap="none" hx-confirm="{{ ('The current version is saved to history; continue full regeneration?') }}">{{ ('Regenerate the article') }}</button></li>
     </ul>{% endset %}
 
