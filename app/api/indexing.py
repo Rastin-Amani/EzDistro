@@ -25,7 +25,6 @@ from app.api.errors import hx_error
 from app.domain.validation import normalize_base_url
 from app.providers.indexnow import (
     DEFAULT_ENDPOINT,
-    IndexNowClient,
     generate_key,
     gsc_inspect_link,
     url_host,
@@ -120,62 +119,6 @@ def _save(
         )
 
 
-async def _install_key(
-    request: Request, project: dict[str, Any], project_id: str, *, host: str, key: str
-) -> tuple[str, str]:
-    """Upload ``<key>.txt`` to WordPress and verify the URL serves it.
-
-    Returns ``(key_location, message)``. Never raises: on failure the caller
-    saves without a keyLocation and tells the user to upload the file by hand —
-    a WordPress site that blocks .txt uploads must not break the setup.
-    """
-    pb = request.state.pb
-    if IntegrationRepo(pb).get_active(project_id, "publisher") is None:
-        return "", "No WordPress connection — upload the key file to the site root manually."
-    try:
-        publisher = _registry(request).get_publisher_provider(project, {})
-    except Exception as exc:
-        return "", f"WordPress is not usable: {exc}"
-    try:
-        media = await search_engines.install_key_file(publisher, key=key)
-    except Exception as exc:
-        return "", f"Could not upload the key file to WordPress: {exc}"
-    finally:
-        with contextlib.suppress(Exception):
-            await publisher.aclose()
-
-    url = str(media["url"])
-    client = IndexNowClient(host=host, key=key, key_location=url)
-    try:
-        await client.verify_key()
-    except Exception as exc:
-        return "", (
-            f"Uploaded to {url}, but that address does not serve the key ({exc}). "
-            "Upload the file to the site root manually, or set the key location."
-        )
-    finally:
-        with contextlib.suppress(Exception):
-            await client.aclose()
-    return url, f"Key file installed and verified at {url}"
-
-
-def _align_host(location: str, host: str, message: str) -> tuple[str, str]:
-    """Make the saved host the host that serves the key file.
-
-    IndexNow verifies the key on the host it receives and then demands every URL
-    belong to that host. WordPress knows its own canonical host (www vs bare is
-    a classic), so when the uploaded file lands elsewhere the *file's* host wins
-    — otherwise the engine answers "URLs are not related to your site verified".
-    """
-    file_host = url_host(location) if location else ""
-    if file_host and file_host != host:
-        return file_host, (
-            f"{message}. Website host set to {file_host} — the host serving the key file; "
-            "submitted URLs must be on that same host."
-        )
-    return host, message
-
-
 def _persist(pb: Any, project_id: str, config: dict[str, Any], **overrides: Any) -> None:
     """Save the connection from an existing (normalized) config plus overrides."""
     fields: dict[str, Any] = {
@@ -214,7 +157,7 @@ def _refresh(message: str, *, type: str = "success") -> Response:
 # ---------------------------------------------------------------------------
 @router.post("/projects/{project_id}/index-now/config")
 @hx_error("Saving the Index Now settings failed")
-async def save_config(
+def save_config(
     request: Request,
     project_id: str,
     host: str = Form(""),
@@ -224,7 +167,7 @@ async def save_config(
     auto_update: str = Form(""),
 ):
     require_hx(request)
-    project = require_project_access(request, project_id)
+    require_project_access(request, project_id)
     require_project_role(request, project_id)
 
     existing = load_config(request.state.pb, project_id)
@@ -236,14 +179,6 @@ async def save_config(
         )
     key = str(existing.get("key") or "") or generate_key()
     resolved_location = safe_str(key_location)
-    message = "Index Now settings saved"
-    if not resolved_location:
-        # First save (or a key that was never installed): put the file on the
-        # site ourselves when WordPress is connected, then verify it.
-        resolved_location, message = await _install_key(
-            request, project, project_id, host=resolved_host, key=key
-        )
-        resolved_host, message = _align_host(resolved_location, resolved_host, message)
     _save(
         request.state.pb,
         project_id,
@@ -256,57 +191,24 @@ async def save_config(
         enabled=True,
         user_id=request.state.user.get("id", "") if request.state.user else "",
     )
-    return _refresh(message, type="success" if resolved_location else "warning")
+    if not existing.get("key"):
+        return _refresh("Key generated — put the file on your site, then press Verify")
+    return _refresh("Index Now settings saved")
 
 
 @router.post("/projects/{project_id}/index-now/key")
 @hx_error("Generating a key failed")
-async def regenerate_key(request: Request, project_id: str):
+def regenerate_key(request: Request, project_id: str):
     """New key. Invalidates the old file — the page says so before it happens."""
     require_hx(request)
-    project = require_project_access(request, project_id)
+    require_project_access(request, project_id)
     require_project_role(request, project_id)
 
     existing = load_config(request.state.pb, project_id)
     if not existing:
         return error_response("Save the website host first, then generate the key")
-    key = generate_key()
-    # The stored keyLocation points at the OLD file, so it must be re-installed.
-    host = str(existing.get("host") or "")
-    location, message = await _install_key(request, project, project_id, host=host, key=key)
-    host, message = _align_host(location, host, message)
-    _persist(
-        request.state.pb,
-        project_id,
-        existing,
-        host=host,
-        key=key,
-        key_location=location,
-    )
-    return _refresh(f"New key generated. {message}", type="success" if location else "warning")
-
-
-@router.post("/projects/{project_id}/index-now/install")
-@hx_error("Installing the key file failed")
-async def install_key_file(request: Request, project_id: str):
-    """Upload the key to WordPress again (e.g. after the media library was wiped)."""
-    require_hx(request)
-    project = require_project_access(request, project_id)
-    require_project_role(request, project_id)
-
-    config = load_config(request.state.pb, project_id)
-    if not config.get("key") or not config.get("host"):
-        return error_response("Save the website host first — the key is generated with it")
-    location, message = await _install_key(
-        request, project, project_id, host=str(config["host"]), key=str(config["key"])
-    )
-    if not location:
-        return toast_response(message, type="error", extra_events={"refreshIndexNow": True})
-    host, message = _align_host(location, str(config["host"]), message)
-    _persist(request.state.pb, project_id, config, host=host, key_location=location)
-    return toast_response(
-        message, type="success", extra_events={"refreshIndexNow": True, "refreshJobs": True}
-    )
+    _persist(request.state.pb, project_id, existing, key=generate_key(), key_location="")
+    return _refresh("New key generated — replace the file on your site, then verify")
 
 
 @router.post("/projects/{project_id}/index-now/verify")
@@ -328,21 +230,44 @@ async def verify_key(request: Request, project_id: str):
     client = registry.get_indexing_provider({"id": project_id}, {}, integration=integration)
     if client is None:
         return error_response("Index Now is not enabled for this website")
+
+    # Check BOTH places an engine can look: the domain root (which every engine
+    # supports) and the configured location. The report is what the engines see.
+    checks = []
     try:
-        url = await client.verify_key()
-    except Exception as exc:
-        return toast_response(f"{exc}", type="error", extra_events={"refreshIndexNow": True})
+        root = await client.check_key(client.root_key_url)
+        checks.append(root)
+        if client.key_location and client.key_location != client.root_key_url:
+            checks.append(await client.check_key(client.key_location))
+        elif not client.key_location and client.key_url != client.root_key_url:
+            checks.append(await client.check_key(client.key_url))
     finally:
         close = getattr(client, "aclose", None)
         if close is not None:
             with contextlib.suppress(Exception):
                 await close()
+
+    ok = [c for c in checks if c.ok]
+    if not ok:
+        detail = " · ".join(f"{c.url} → {c.detail}" for c in checks)
+        return toast_response(
+            f"No key file is reachable: {detail}",
+            type="error",
+            extra_events={"refreshIndexNow": True},
+        )
+
     from app.repositories.jobs import now_utc
 
     IntegrationRepo(request.state.pb).mark_health(integration["id"], "healthy", now_utc())
-    return toast_response(
-        f"Key file verified at {url}", type="success", extra_events={"refreshIndexNow": True}
-    )
+    used = ok[0]
+    others = [c for c in checks if not c.ok]
+    message = f"Key file verified at {used.url}"
+    if used is not root:
+        message += f" — the domain root {root.url} does not serve it ({root.detail})"
+    for other in others:
+        if other is not root:
+            message += f" · {other.url} {other.detail}"
+    return toast_response(message, type="success", extra_events={"refreshIndexNow": True})
 
 
 @router.post("/projects/{project_id}/index-now/submit")
@@ -446,13 +371,12 @@ def tab_context(pb: Any, project_id: str) -> dict[str, Any]:
         "index_now_ready": search_engines.is_ready(config),
         "index_now_key": key,
         "index_now_key_url": key_url,
-        "index_now_installed": bool(config.get("key_location")),
-        # The engine verifies the key on the host it receives: when the file is
-        # served from another host (www vs bare, a CDN, a different subdomain)
-        # every submission is rejected — surface it instead of guessing later.
+        # The address the file must exist at, unless a key file URL is set.
+        "index_now_root_url": (f"https://{host}/{key}.txt" if host and key else ""),
+        # The engine verifies the key on the host it receives: a file served from
+        # another host (www vs bare, a CDN) is rejected — surface it up front.
         "index_now_key_host": key_host,
         "index_now_mismatch": bool(key_host) and key_host != host,
-        "index_now_can_auto": IntegrationRepo(pb).get_active(project_id, "publisher") is not None,
         "index_now_default_host": search_engines.publisher_host(pb, project_id),
         "index_now_site_url": search_engines.publisher_site_url(pb, project_id),
         "index_now_default_endpoint": DEFAULT_ENDPOINT,

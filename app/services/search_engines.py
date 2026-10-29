@@ -84,27 +84,6 @@ def is_ready(config: dict[str, Any]) -> bool:
     )
 
 
-async def install_key_file(publisher: Any, *, key: str) -> dict[str, Any]:
-    """Upload ``<key>.txt`` to the WordPress media library.
-
-    WordPress exposes no API for the site root, so the key goes in as media and
-    is referenced through IndexNow's `keyLocation` parameter — which exists
-    exactly for "the key file is not at the domain root". Returns
-    ``{url, mediaId}``; the caller verifies the URL before trusting it (a host
-    that blocks or rewrites .txt uploads would otherwise fail silently).
-    """
-    media = await publisher.upload_media(
-        data=key.encode("utf-8"),
-        filename=f"{key}.txt",
-        title="IndexNow key",
-        alt_text="IndexNow verification key",
-    )
-    url = str((media or {}).get("url") or "")
-    if not url:
-        raise ValueError("WordPress accepted the upload but returned no file URL")
-    return {"url": url, "mediaId": int((media or {}).get("id") or 0)}
-
-
 def should_notify(config: dict[str, Any], source: str) -> bool:
     if not is_ready(config):
         return False

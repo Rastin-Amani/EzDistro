@@ -1,26 +1,26 @@
-"""The Index Now page: it renders, saves, installs the key, and submits.
+"""The Index Now page: it renders, generates/replaces the key, verifies a URL, submits.
 
-These pin the parts that silently break in production:
+EzDistro never writes to the site: the key file is placed by the owner and the
+app verifies the URL it will be read from. These tests pin that contract:
+
 - the tab renders before anything is configured (no 500 on the project page);
 - saving derives the host from the WordPress connection when left empty;
-- saving INSTALLS the key through WordPress and stores its address (keyLocation),
-  with a graceful fallback when the site refuses the upload;
-- a key is generated once and survives later saves;
+- saving generates a key once and never rotates it silently;
+- "New key" replaces it and clears the old file URL;
+- verification checks the domain root AND the configured URL;
 - manual submission refuses URLs that are not on the configured host;
-- the key file download serves exactly the key (engines compare it byte-wise).
+- the key download serves exactly the key (engines compare it byte-wise).
 """
 
 from __future__ import annotations
 
 import asyncio
 
-import pytest
-
 from app.api import indexing as I
 from app.api import projects as P
+from app.providers.indexnow import KeyCheck
 from app.repositories.integrations import IntegrationRepo
 from app.repositories.jobs import JobRepo
-from tests.fake_providers import FakePublisher
 from tests.helpers import (
     call_route,
     hx_events,
@@ -33,7 +33,7 @@ from tests.helpers import (
     toast_message,
 )
 
-MEDIA_HOST = "https://blog.example.com"
+SITE = "https://blog.example.com"
 
 
 def _setup(*, publisher: bool = True):
@@ -46,43 +46,12 @@ def _setup(*, publisher: bool = True):
             category="publisher",
             provider="wordpress",
             display_name="WP",
-            configuration={"base_url": MEDIA_HOST, "username": "u"},
+            configuration={"base_url": SITE, "username": "u"},
             secrets_enc="",
             enabled=True,
         )
     req = make_req(pb, make_user(), project["id"])
     return pb, project, req
-
-
-@pytest.fixture
-def wp(monkeypatch):
-    """A WordPress connection whose media upload works and whose key URL resolves."""
-    pub = FakePublisher()
-
-    async def upload_media(**kwargs):
-        pub.next_media_id += 1
-        filename = kwargs["filename"]
-        pub.media.append({"filename": filename, "size": len(kwargs["data"])})
-        return {
-            "id": pub.next_media_id,
-            "url": f"{MEDIA_HOST}/wp-content/uploads/2026/10/{filename}",
-            "mime_type": "text/plain",
-        }
-
-    pub.upload_media = upload_media  # type: ignore[method-assign]
-
-    class Registry:
-        def get_publisher_provider(self, *args, **kwargs):
-            return pub
-
-    async def verified(self):
-        return self.key_url
-
-    monkeypatch.setattr(I, "_registry", lambda request: Registry())
-    # The key-file check does a real HTTP GET; the upload/URL logic is what is
-    # under test here (the fetch itself is covered in test_index_now.py).
-    monkeypatch.setattr(I.IndexNowClient, "verify_key", verified)
-    return pub
 
 
 def _save(req, project, **kwargs):
@@ -94,7 +63,7 @@ def _save(req, project, **kwargs):
         "auto_update": "1",
     }
     fields.update(kwargs)
-    return asyncio.run(I.save_config(req, project["id"], **fields))
+    return I.save_config(req, project["id"], **fields)
 
 
 def _render(pb, project) -> str:
@@ -115,128 +84,62 @@ def test_tab_renders_before_configuration():
     assert "blog.example.com" in body  # default host from the WordPress connection
 
 
-def test_saving_installs_the_key_on_wordpress(wp):
+def test_saving_generates_a_key_without_touching_the_site():
     pb, project, req = _setup()
     resp = _save(req, project)
 
     config = I.load_config(pb, project["id"])
     assert config["host"] == "blog.example.com"
     assert len(config["key"]) == 32
-    # uploaded through WordPress, and its address is what submissions carry
-    assert config["key_location"] == (
-        f"{MEDIA_HOST}/wp-content/uploads/2026/10/{config['key']}.txt"
-    )
-    assert wp.media[-1]["filename"] == f"{config['key']}.txt"
-    assert "installed" in toast_message(resp).lower()
+    assert config["key_location"] == ""  # never uploaded, never guessed
+    assert config["auto_publish"] and config["auto_update"]
+    assert "Key generated" in toast_message(resp)
 
 
-def test_install_is_skipped_when_a_location_is_given(wp):
-    pb, project, req = _setup()
-    _save(req, project, key_location="https://blog.example.com/key.txt")
-    config = I.load_config(pb, project["id"])
-    assert config["key_location"] == "https://blog.example.com/key.txt"
-    assert wp.media == []
-
-
-def test_save_falls_back_to_manual_when_wordpress_is_not_connected(wp):
-    pb, project, req = _setup(publisher=False)
-    # no WordPress connection → the host cannot be guessed, so it is typed in
-    resp = _save(req, project, host="blog.example.com")
-    config = I.load_config(pb, project["id"])
-    assert config["key_location"] == ""
-    assert len(config["key"]) == 32  # the key is still generated
-    assert "manually" in toast_message(resp)
-
-
-def test_save_survives_a_wordpress_that_refuses_the_upload(wp):
-    wp.upload_media_error = RuntimeError("upload_filetype_disallowed")
-
-    async def refuse(**_kwargs):
-        raise wp.upload_media_error
-
-    wp.upload_media = refuse  # type: ignore[method-assign]
-    pb, project, req = _setup()
-    resp = _save(req, project)
-
-    config = I.load_config(pb, project["id"])
-    assert config["key_location"] == ""
-    assert "Could not upload" in toast_message(resp)
-
-
-def test_saving_generates_a_key_once_and_keeps_it(wp):
+def test_saving_never_rotates_existing_key():
     pb, project, req = _setup()
     _save(req, project)
     first = I.load_config(pb, project["id"])["key"]
 
     _save(req, project, host="blog.example.com", auto_publish="")
     again = I.load_config(pb, project["id"])
-    assert again["key"] == first  # a save must not silently rotate the key
+    assert again["key"] == first
     assert again["auto_publish"] is False
-    assert again["key_location"].endswith(f"{first}.txt")
 
 
-def test_regenerating_the_key_reinstalls_the_new_file(wp):
+def test_saving_stores_a_key_file_url_and_flags_a_host_mismatch():
     pb, project, req = _setup()
-    _save(req, project)
-    old = I.load_config(pb, project["id"])
-
-    asyncio.run(I.regenerate_key(req, project["id"]))
-    new = I.load_config(pb, project["id"])
-    assert new["key"] != old["key"]
-    assert new["key_location"].endswith(f"{new['key']}.txt")
-    assert wp.media[-1]["filename"] == f"{new['key']}.txt"
-
-
-def test_install_route_reports_failure_without_losing_the_config(wp):
-    pb, project, req = _setup()
-    _save(req, project, key_location="https://blog.example.com/key.txt")
-
-    async def refuse(**_kwargs):
-        raise RuntimeError("wp down")
-
-    wp.upload_media = refuse  # type: ignore[method-assign]
-    resp = asyncio.run(I.install_key_file(req, project["id"]))
-    assert "Could not upload" in toast_message(resp)
-    assert I.load_config(pb, project["id"])["key_location"] == "https://blog.example.com/key.txt"
-
-
-def test_save_adopts_the_host_that_serves_the_key_file(wp):
-    """WordPress knows its canonical host (www vs bare) — the file wins."""
-
-    async def upload_on_www(**kwargs):
-        return {
-            "id": 1,
-            "url": f"https://www.blog.example.com/wp-content/uploads/{kwargs['filename']}",
-            "mime_type": "text/plain",
-        }
-
-    wp.upload_media = upload_on_www  # type: ignore[method-assign]
-    pb, project, req = _setup()
-    resp = _save(req, project)
-
-    config = I.load_config(pb, project["id"])
-    assert config["host"] == "www.blog.example.com"
-    assert "host set to www.blog.example.com" in toast_message(resp)
-
-
-def test_tab_warns_when_the_key_file_is_on_another_host(wp):
-    pb, project, req = _setup()
-    # a hand-entered location is stored as given, so the hosts can disagree
     _save(req, project, key_location="https://cdn.example.net/key.txt")
+    assert I.load_config(pb, project["id"])["key_location"] == "https://cdn.example.net/key.txt"
+
     body = _render(pb, project)
-    assert "The key file and the website host disagree" in body
+    assert "The key file URL and the website host disagree" in body
     assert "cdn.example.net" in body
 
 
-def test_install_route_stores_the_verified_location(wp):
+def test_save_requires_a_host_when_no_wordpress_connection_exists():
+    pb, project, req = _setup(publisher=False)
+    resp = _save(req, project)
+    assert "Enter the website host" in toast_message(resp)
+    assert I.load_config(pb, project["id"]) == {}
+
+    _save(req, project, host="blog.example.com")
+    assert I.load_config(pb, project["id"])["host"] == "blog.example.com"
+
+
+def test_new_key_replaces_it_and_clears_the_old_file_url():
     pb, project, req = _setup()
     _save(req, project, key_location="https://blog.example.com/old.txt")
-    asyncio.run(I.install_key_file(req, project["id"]))
-    location = I.load_config(pb, project["id"])["key_location"]
-    assert location.startswith(f"{MEDIA_HOST}/wp-content/uploads/")
+    old = I.load_config(pb, project["id"])
+
+    I.regenerate_key(req, project["id"])
+    new = I.load_config(pb, project["id"])
+    assert new["key"] != old["key"]
+    assert new["key_location"] == ""  # the old URL serves the old key
+    assert new["host"] == old["host"]
 
 
-def test_save_heals_a_database_that_predates_the_category(monkeypatch, wp):
+def test_save_heals_a_database_that_predates_the_category(monkeypatch):
     """`category: Invalid value: indexing.` must not be a dead end."""
     from pocketbase.errors import ClientResponseError
 
@@ -267,12 +170,14 @@ def test_save_heals_a_database_that_predates_the_category(monkeypatch, wp):
 
     resp = _save(req, project)
     assert healed == [True]  # the reconciler ran once
-    config = I.load_config(pb, project["id"])
-    assert config["key"] and config["key_location"]
+    assert I.load_config(pb, project["id"])["key"]
     assert "error" not in toast_message(resp).lower()
 
 
-def test_key_file_download_serves_exactly_the_key(wp):
+# ---------------------------------------------------------------------------
+# Key file
+# ---------------------------------------------------------------------------
+def test_key_file_download_serves_exactly_the_key():
     pb, project, req = _setup()
     _save(req, project)
     key = I.load_config(pb, project["id"])["key"]
@@ -281,15 +186,71 @@ def test_key_file_download_serves_exactly_the_key(wp):
     assert f'filename="{key}.txt"' in resp.headers["content-disposition"]
 
 
-def test_tab_renders_with_an_installed_key_jobs_and_published_articles(wp):
+def test_verify_reports_which_url_serves_the_key(monkeypatch):
+    pb, project, req = _setup()
+    _save(req, project)
+    config = I.load_config(pb, project["id"])
+    root = f"https://{config['host']}/{config['key']}.txt"
+    checked: list[str] = []
+
+    class StubClient:
+        root_key_url = root
+        key_location = ""
+        key_url = root
+
+        async def check_key(self, url):
+            checked.append(url)
+            return KeyCheck(url, True, 200, "ok")
+
+        async def aclose(self):
+            pass
+
+    class Registry:
+        def get_indexing_provider(self, *args, **kwargs):
+            return StubClient()
+
+    monkeypatch.setattr(I, "_registry", lambda request: Registry())
+    resp = asyncio.run(I.verify_key(req, project["id"]))
+    assert checked == [root]
+    assert f"Key file verified at {root}" in toast_message(resp)
+
+
+def test_verify_names_both_urls_when_none_serves_the_key(monkeypatch):
+    pb, project, req = _setup()
+    _save(req, project, key_location="https://blog.example.com/blog/key.txt")
+
+    class StubClient:
+        root_key_url = "https://blog.example.com/<key>.txt"
+        key_location = "https://blog.example.com/blog/key.txt"
+        key_url = key_location
+
+        async def check_key(self, url):
+            if url.endswith("/blog/key.txt"):
+                return KeyCheck(url, False, 301, "redirects to /wp-login.php")
+            return KeyCheck(url, False, 404, "HTTP 404")
+
+        async def aclose(self):
+            pass
+
+    class Registry:
+        def get_indexing_provider(self, *args, **kwargs):
+            return StubClient()
+
+    monkeypatch.setattr(I, "_registry", lambda request: Registry())
+    resp = asyncio.run(I.verify_key(req, project["id"]))
+    message = toast_message(resp)
+    assert "No key file is reachable" in message
+    assert "HTTP 404" in message and "redirects to /wp-login.php" in message
+
+
+def test_tab_renders_with_key_jobs_and_published_articles():
     pb, project, req = _setup()
     _save(req, project)
     make_article(pb, project["id"], status="published", wp_id=1001)
     call_route(I.submit_urls, req, project["id"], urls="https://blog.example.com/a")
 
     body = _render(pb, project)
-    assert "Installed on your site" in body
-    assert "/wp-content/uploads/" in body
+    assert "Put this file on your site yourself" in body
     assert "manual" in body  # the submission row's source
     assert "search.google.com/search-console/inspect" in body
 
@@ -297,7 +258,7 @@ def test_tab_renders_with_an_installed_key_jobs_and_published_articles(wp):
 # ---------------------------------------------------------------------------
 # Submission
 # ---------------------------------------------------------------------------
-def test_manual_submission_rejects_foreign_urls(wp):
+def test_manual_submission_rejects_foreign_urls():
     pb, project, req = _setup()
     _save(req, project)
     resp = call_route(I.submit_urls, req, project["id"], urls="https://elsewhere.io/post")
@@ -307,7 +268,7 @@ def test_manual_submission_rejects_foreign_urls(wp):
     ]
 
 
-def test_manual_submission_queues_the_job_and_follows_the_refresh_event(wp):
+def test_manual_submission_queues_the_job_and_follows_the_refresh_event():
     pb, project, req = _setup()
     _save(req, project)
     resp = call_route(

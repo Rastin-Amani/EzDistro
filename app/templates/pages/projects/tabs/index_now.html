@@ -62,9 +62,10 @@
 
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <label class="flex flex-col gap-1 min-w-0">
-                {{ f.label(('Key file location (optional)'), ('Set automatically when EzDistro installs the file on WordPress. Only needed for a custom path, e.g. /wp-content/uploads/abc123.txt')) }}
+                {{ f.label(('Key file URL (optional)'), ('Only when the file is not at the domain root. The full URL its content can be read at — it must be on the same host as the website.')) }}
                 <input name="key_location" class="input w-full" dir="ltr" autocomplete="off"
                        value="{{ index_now.key_location or '' }}" placeholder="https://{{ index_now.host or 'example.com' }}/{{ index_now_key or '<key>' }}.txt" />
+                <p class="text-xs leading-relaxed text-base-content/60">{{ ('Leave empty when the file is at') }} <span class="font-mono" dir="ltr">{{ index_now_root_url or 'https://<host>/<key>.txt' }}</span></p>
             </label>
             <div class="flex flex-col justify-end gap-1.5 pb-1">
                 {{ f.checkbox('auto_publish', ('Submit automatically after a new article is published'), value='1', checked=(index_now.auto_publish if index_now else true)) }}
@@ -77,17 +78,6 @@
                 <span class="loading loading-spinner loading-xs htmx-indicator"></span>
                 {{ ('Save') }}
             </button>
-            {% if index_now_key %}
-            <a class="btn btn-ghost btn-sm" href="/projects/{{ project.id }}/index-now/key.txt" download="{{ index_now_key }}.txt">{{ ('Download key file') }}</a>
-            <button type="button" class="btn btn-ghost btn-sm"
-                    hx-post="/projects/{{ project.id }}/index-now/verify" hx-swap="none" hx-disabled-elt="this">
-                <span class="loading loading-spinner loading-xs htmx-indicator"></span>
-                {{ ('Verify key file') }}
-            </button>
-            <button type="button" class="btn btn-ghost btn-sm text-warning"
-                    hx-post="/projects/{{ project.id }}/index-now/key" hx-swap="none"
-                    hx-confirm="{{ ('Generate a new key? The current key file stops working until you upload the new one.') }}">{{ ('New key') }}</button>
-            {% endif %}
         </div>
     </form>
 </section>
@@ -103,70 +93,48 @@
         <div class="flex items-start gap-2.5 rounded-box border border-error/40 bg-error/5 p-3">
             <span class="mt-0.5 text-error" aria-hidden="true">!</span>
             <div class="min-w-0">
-                <p class="text-sm font-medium">{{ ('The key file and the website host disagree') }}</p>
+                <p class="text-sm font-medium">{{ ('The key file URL and the website host disagree') }}</p>
                 <p class="mt-1 text-xs leading-relaxed text-base-content/60">
-                    {{ ('The file is served from') }} <span class="font-mono" dir="ltr">{{ index_now_key_host }}</span>
+                    {{ ('The file URL is on') }} <span class="font-mono" dir="ltr">{{ index_now_key_host }}</span>
                     {{ ('but the website host is') }} <span class="font-mono" dir="ltr">{{ index_now.host }}</span>.
-                    {{ ('IndexNow verifies the key on the host you submit and then requires every URL to belong to it, so submissions are rejected until both are the same. Set the host to the file’s host, or press “Reinstall” to put the file on the current host.') }}
+                    {{ ('IndexNow verifies the key on the host you submit and then requires every URL to belong to it, so submissions are rejected until both match.') }}
                 </p>
-            </div>
-        </div>
-        {% endif %}
-        {% if index_now_installed %}
-        <div class="flex items-start gap-2.5 rounded-box border border-success/40 bg-success/5 p-3">
-            <span class="mt-0.5 text-success" aria-hidden="true">✓</span>
-            <div class="min-w-0">
-                <p class="text-sm font-medium">{{ ('Installed on your site') }}</p>
-                <a href="{{ index_now_key_url }}" target="_blank" rel="noopener" class="link link-primary block truncate text-xs" dir="ltr">{{ index_now_key_url }}</a>
-                <p class="mt-1 text-xs leading-relaxed text-base-content/60">
-                    {{ ('Uploaded through your WordPress connection and served from the media library, so there is nothing to copy by hand.') }}
-                    {% if not index_now_ready %}{{ ('Press “Verify key file” to confirm it still resolves.') }}{% endif %}
-                </p>
-            </div>
-        </div>
-        {% elif index_now_can_auto and index_now_key %}
-        <div class="flex items-start gap-2.5 rounded-box border border-warning/40 bg-warning/5 p-3">
-            <span class="mt-0.5 text-warning" aria-hidden="true">!</span>
-            <div class="min-w-0">
-                <p class="text-sm font-medium">{{ ('Not installed yet') }}</p>
-                <p class="mt-1 text-xs leading-relaxed text-base-content/60">{{ ('Press “Install on WordPress” — the key is uploaded through your WordPress connection and verified automatically. If your host blocks .txt uploads, download the file and put it in the site root instead.') }}</p>
             </div>
         </div>
         {% endif %}
 
         {% if index_now_key %}
+        <p class="text-sm leading-relaxed text-base-content/70">
+            {{ ('Put this file on your site yourself — EzDistro does not write to it. The file name is the key and the content is the key, nothing else.') }}
+        </p>
         <ol class="ms-4 list-decimal space-y-1.5 text-sm leading-relaxed text-base-content/70">
-            {% if not index_now_installed %}
-            <li>{{ ('Download the key file (its name is the key, ending in .txt) — or let EzDistro install it through WordPress.') }}</li>
-            <li>{{ ('It must open at a public address with no redirect, login or CDN rule in front of it. On a site that lives in a subfolder (e.g. /blog) the domain root may belong to something else: put the file wherever the site can serve it and paste that URL into “Key file location” above.') }}</li>
-            <li>{{ ('Press “Verify key file”. Without this check every submission is accepted and then silently dropped.') }}</li>
-            {% else %}
-            <li>{{ ('Any address on this host works: the submission carries its location explicitly.') }}</li>
-            <li>{{ ('Re-run “Verify key file” whenever the media library or the domain changes.') }}</li>
-            {% endif %}
+            <li>{{ ('Download the file and upload it to the domain root, so it opens at') }}
+                <span class="font-mono text-xs" dir="ltr">{{ index_now_root_url or ('https://<host>/<key>.txt') }}</span>.</li>
+            <li>{{ ('If the site lives in a subfolder (e.g. /blog) and you cannot write to the domain root, put the file anywhere on the same host and paste its full URL into “Key file URL” above — every submission then names that location.') }}</li>
+            <li>{{ ('It must be served directly: no redirect, no login, no CDN rule, and nothing else in the response body.') }}</li>
+            <li>{{ ('Press “Verify key file”. It checks the URL above and tells you exactly what an engine would get.') }}</li>
         </ol>
         <div class="flex flex-wrap items-center gap-2">
             <code class="rounded-field border border-base-300 bg-base-200 px-3 py-1.5 font-mono text-xs" dir="ltr">{{ index_now_key }}</code>
             <a class="btn btn-ghost btn-xs" href="/projects/{{ project.id }}/index-now/key.txt" download="{{ index_now_key }}.txt">{{ ('Download') }}</a>
-            {% if index_now_can_auto %}
-            <button type="button" class="btn btn-primary btn-xs"
-                    hx-post="/projects/{{ project.id }}/index-now/install" hx-swap="none" hx-disabled-elt="this">
-                <span class="loading loading-spinner loading-xs htmx-indicator"></span>
-                {{ ('Install on WordPress' if not index_now_installed else 'Reinstall') }}
-            </button>
+            {% if index_now_key_url %}
+            <a class="btn btn-ghost btn-xs" href="{{ index_now_key_url }}" target="_blank" rel="noopener">{{ ('Open file') }}</a>
             {% endif %}
-            <button type="button" class="btn btn-ghost btn-xs"
+            <button type="button" class="btn btn-primary btn-xs"
                     hx-post="/projects/{{ project.id }}/index-now/verify" hx-swap="none" hx-disabled-elt="this">
                 <span class="loading loading-spinner loading-xs htmx-indicator"></span>
                 {{ ('Verify key file') }}
             </button>
+            <button type="button" class="btn btn-ghost btn-xs text-warning"
+                    hx-post="/projects/{{ project.id }}/index-now/key" hx-swap="none"
+                    hx-confirm="{{ ('Generate a new key? The file on your site stops matching until you replace it.') }}">{{ ('New key') }}</button>
         </div>
         {% else %}
         <div class="flex items-start gap-2.5 rounded-box border border-base-300 bg-base-200/40 p-3">
             <span class="mt-0.5 text-base-content/60" aria-hidden="true">→</span>
             <div class="min-w-0">
                 <p class="text-sm font-medium">{{ ('No key yet') }}</p>
-                <p class="mt-1 text-xs leading-relaxed text-base-content/60">{{ ('Press Save above. EzDistro generates the key and, since this website has a WordPress connection, uploads the file and verifies it for you.') }}</p>
+                <p class="mt-1 text-xs leading-relaxed text-base-content/60">{{ ('Press Save above. EzDistro generates the key and shows the exact URL the file has to exist at.') }}</p>
             </div>
         </div>
         {% endif %}
