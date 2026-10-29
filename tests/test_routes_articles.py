@@ -53,6 +53,49 @@ def test_article_detail_renders():
     assert "Article title" in resp.body.decode()
 
 
+def test_article_detail_google_link_uses_the_domain_property():
+    """The per-article Google action must be a valid Search Console deep link.
+
+    A bare-host `resource_id` is rejected by Google with a 400, so the property
+    has to be `sc-domain:<host>` (or a URL-prefix property from the config).
+    """
+    pb, proj_a, _ = _setup()
+    article = make_article(pb, proj_a["id"], status="published", wp_id=4242, final_html="<p>x</p>")
+    req = make_req(pb, make_user(), proj_a["id"])
+    body = call_route(A.article_detail, req, proj_a["id"], article["id"]).body.decode()
+
+    assert "Request indexing on Google" in body
+    assert (
+        "https://search.google.com/search-console/inspect"
+        "?resource_id=sc-domain%3As.test"
+        "&amp;url=https%3A%2F%2Fs.test%2F%3Fp%3D4242"
+    ) in body
+
+
+def test_article_detail_google_link_honours_the_configured_property():
+    from app.repositories.integrations import IntegrationRepo
+
+    pb, proj_a, _ = _setup()
+    IntegrationRepo(pb).create(
+        project=proj_a["id"],
+        category="indexing",
+        provider="indexnow",
+        display_name="Index Now",
+        configuration={
+            "host": "s.test",
+            "key": "k" * 32,
+            "gsc_property": "https://s.test/",
+        },
+        secrets_enc="",
+        enabled=True,
+    )
+    article = make_article(pb, proj_a["id"], status="published", wp_id=4243, final_html="<p>x</p>")
+    req = make_req(pb, make_user(), proj_a["id"])
+    body = call_route(A.article_detail, req, proj_a["id"], article["id"]).body.decode()
+
+    assert "resource_id=https%3A%2F%2Fs.test%2F" in body
+
+
 def test_article_detail_foreign_article_not_found_page():
     pb, proj_a, proj_b = _setup()
     foreign = make_article(pb, proj_b["id"], final_html="<p>x</p>")

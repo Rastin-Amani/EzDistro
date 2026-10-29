@@ -69,6 +69,9 @@ def get_config(pb: Any, project_id: str) -> dict[str, Any]:
         "key_location": str(cfg.get("key_location") or ""),
         "auto_publish": bool(cfg.get("auto_publish", True)),
         "auto_update": bool(cfg.get("auto_update", True)),
+        # Search Console property for the Google link: sc-domain:host (default)
+        # or a URL-prefix property like https://host/.
+        "gsc_property": str(cfg.get("gsc_property") or ""),
         "healthStatus": str(row.get("healthStatus") or "unknown"),
         "lastTestedAt": row.get("lastTestedAt") or "",
     }

@@ -110,11 +110,15 @@ def test_submission_rejects_a_key_file_on_a_different_host():
 
 
 def test_gsc_link_points_at_url_inspection_for_the_page():
-    link = gsc_inspect_link("https://example.com/blog/post", "https://example.com")
+    # no configured property → the page's own host as a Domain property
+    link = gsc_inspect_link("https://example.com/blog/post")
     assert link.startswith("https://search.google.com/search-console/inspect?")
-    # the property is a bare domain; an https:// value sends Google to the picker
-    assert "resource_id=example.com" in link
+    # Google only accepts sc-domain:host or https://host/ — a bare host is a 400
+    assert "resource_id=sc-domain%3Aexample.com" in link
     assert "url=https%3A%2F%2Fexample.com%2Fblog%2Fpost" in link
+    # a URL-prefix property is normalized with its trailing slash
+    prefix = gsc_inspect_link("https://example.com/blog/post", "https://example.com")
+    assert "resource_id=https%3A%2F%2Fexample.com%2F&" in prefix
 
 
 # ---------------------------------------------------------------------------

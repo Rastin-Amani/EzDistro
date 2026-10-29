@@ -45,8 +45,10 @@ def article_detail(request: Request, project_id: str, article_id: str):
     runs = PublishingRunRepo(request.state.pb).list_for_article(article_id, per_page=10)
     resume_job = find_resume_job(request.state.pb, article)
     from app.providers.indexnow import gsc_inspect_link
+    from app.services import search_engines
 
     wordpress_url = str(article.get("wordpressUrl") or "")
+    gsc_property = search_engines.get_config(request.state.pb, project_id).get("gsc_property") or ""
     return templates.TemplateResponse(
         request,
         "pages/articles/detail.html",
@@ -61,7 +63,7 @@ def article_detail(request: Request, project_id: str, article_id: str):
             "resume_label": resume_job_label(resume_job) if resume_job else "",
             # Google is not on IndexNow — this is its only per-URL path, and it
             # is manual by design (URL Inspection → Request indexing).
-            "gsc_link": gsc_inspect_link(wordpress_url) if wordpress_url else "",
+            "gsc_link": gsc_inspect_link(wordpress_url, gsc_property) if wordpress_url else "",
         },
     )
 

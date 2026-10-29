@@ -79,29 +79,38 @@ def site_origin(url: str) -> str:
     return f"{parsed.scheme}://{parsed.netloc}"
 
 
-def _property_name(value: str) -> str:
-    """A Search Console property name from a URL or a bare domain.
+def gsc_property(value: str) -> str:
+    """Normalize a Search Console property name.
 
-    `sc-domain:example.com` is kept verbatim (Domain property); anything with a
-    scheme is reduced to its host; a bare host is used as-is.
+    Google accepts exactly two shapes: a Domain property ``sc-domain:example.com``
+    or a URL-prefix property ``https://example.com/``. A bare host is rejected with
+    a 400 ("The server cannot process the request..."), so it is promoted to the
+    Domain-property form.
     """
     text = (value or "").strip()
-    if not text or text.startswith("sc-domain:"):
+    if not text:
+        return ""
+    if text.startswith("sc-domain:"):
         return text
     if "://" in text:
-        return url_host(text)
-    return text.strip("/")
+        return text if text.endswith("/") else text + "/"
+    return f"sc-domain:{text.strip('/')}"
+
+
+def gsc_property_link(property_name: str) -> str:
+    """The Search Console property overview (what Google itself links to)."""
+    return "https://search.google.com/search-console?" + urlencode(
+        {"resource_id": gsc_property(property_name)}
+    )
 
 
 def gsc_inspect_link(page_url: str, site_url: str = "") -> str:
     """Search Console URL Inspection, opened on this page.
 
-    `resource_id` must be the property as Search Console names it — a bare
-    domain ("example.com") or "sc-domain:example.com" for a Domain property.
-    An `https://…/` value makes Search Console fall back to the property picker
-    instead of the page, so the scheme is deliberately never sent.
+    `resource_id` is the property, in one of Google's two valid shapes; the
+    Domain property of the page's own host is the default.
     """
-    resource = _property_name(site_url) or url_host(page_url)
+    resource = gsc_property(site_url) or f"sc-domain:{url_host(page_url)}"
     return "https://search.google.com/search-console/inspect?" + urlencode(
         {"resource_id": resource, "url": page_url, "hl": "en"}
     )
@@ -446,13 +455,16 @@ def _selfcheck() -> None:
 
     url = "https://example.com/blog/post?a=1"
     link = gsc_inspect_link(url)
-    assert gsc_site_url(link) == "example.com"  # bare domain, never https://
-    assert "resource_id=example.com" in link
+    # a Domain property is the only shape Google accepts for a bare host
+    assert gsc_site_url(link) == "sc-domain:example.com"
+    assert "resource_id=sc-domain%3Aexample.com" in link
     assert "url=https%3A%2F%2Fexample.com%2Fblog%2Fpost%3Fa%3D1" in link
-    # a URL-prefix property is reduced to the same bare domain
-    assert gsc_site_url(gsc_inspect_link(url, "https://example.com/blog/")) == "example.com"
-    # a Domain property is passed through verbatim
+    # a URL-prefix property is normalized with its trailing slash
+    assert gsc_site_url(gsc_inspect_link(url, "https://example.com")) == "https://example.com/"
+    assert gsc_site_url(gsc_inspect_link(url, "example.com")) == "sc-domain:example.com"
     assert gsc_site_url(gsc_inspect_link(url, "sc-domain:example.com")) == "sc-domain:example.com"
+    # the property overview takes the same identifier
+    assert gsc_property_link("example.com").endswith("resource_id=sc-domain%3Aexample.com")
     assert url_host("https://WWW.Example.com/x") == "www.example.com"
     assert site_origin("http://s.test:8080/a/b") == "http://s.test:8080"
 
