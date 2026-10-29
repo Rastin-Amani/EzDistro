@@ -19,6 +19,7 @@ make the "copy this file to your site root" step impossible.
 
 from __future__ import annotations
 
+import json
 import logging
 import secrets as _secrets
 from collections.abc import Sequence
@@ -196,12 +197,34 @@ class IndexNowClient:
                 f"IndexNow takes at most {MAX_URLS} URLs per submission (got {len(clean)}) — "
                 "submit them in batches"
             )
-        host = self.host or url_host(clean[0])
-        if not host:
-            raise PermanentError("IndexNow needs the site host — set it on the Index Now tab")
+        # The URL host is the truth. IndexNow verifies the key file ON the host it
+        # receives and then requires every submitted URL to belong to it, so a
+        # mismatch between the saved host, the URLs and the key file is rejected
+        # by the engine with an opaque "InvalidRequestParameters".
+        hosts = {url_host(u) for u in clean}
+        if "" in hosts:
+            raise PermanentError(f"could not read a host from: {clean[0]}")
+        if len(hosts) > 1:
+            raise PermanentError(
+                "one submission cannot mix hosts ("
+                + ", ".join(sorted(hosts))
+                + ") — submit each site separately"
+            )
+        host = next(iter(hosts))
+        if self.host and host != self.host:
+            raise PermanentError(
+                f"these URLs are on {host}, but this website's host is set to {self.host}. "
+                f"IndexNow checks the key file on the host it receives, so both must be the "
+                f"same — set the website host to {host} on the Index Now tab."
+            )
+        if self.key_location and url_host(self.key_location) != host:
+            raise PermanentError(
+                f"the key file is served from {url_host(self.key_location)}, but these URLs "
+                f"are on {host}. IndexNow verifies the key on the submitted host, so the file "
+                f"must live on {host} too — reinstall it (Index Now → Install on WordPress) "
+                "or fix the key file location."
+            )
         for url in clean:
-            if url_host(url) != host:
-                raise PermanentError(f"url is not on {host}: {url}")
             if urlparse(url).scheme not in ("http", "https"):
                 raise PermanentError(f"url is not http(s): {url}")
         try:
@@ -241,8 +264,29 @@ class IndexNowClient:
                 host=host,
                 url_count=count,
             )
-        message = body or _HUMAN.get(status, f"HTTP {status}")
+        # The engine's body is JSON ({"errorCode", "message"}); show a human
+        # sentence first and keep the provider's own words in the details.
+        error_code = ""
+        provider_message = body
+        if body.startswith("{"):
+            try:
+                data = json.loads(body)
+                error_code = str(data.get("errorCode") or "")
+                provider_message = str(data.get("message") or "")
+            except (ValueError, TypeError):
+                pass
+        message = _HUMAN.get(status) or provider_message or f"HTTP {status}"
+        if provider_message and provider_message not in message:
+            message = f"{message} — {provider_message}"
+        if error_code:
+            message = f"{message} ({error_code})"
         details: dict[str, Any] = {"status": status, "host": host, "endpoint": self.endpoint}
+        if error_code:
+            details["errorCode"] = error_code
+        if provider_message:
+            details["providerMessage"] = provider_message
+        if self.key_location:
+            details["keyLocation"] = self.key_location
         if status == 429 or 500 <= status <= 599:
             raise TransientError(f"IndexNow: {message}", details)
         raise PermanentError(f"IndexNow: {message}", details)
@@ -274,8 +318,9 @@ _HUMAN = {
         "does not contain this exact key, so the batch will be dropped"
     ),
     422: (
-        "rejected: the submitted URLs do not belong to the host that was sent "
-        "(every URL must live on the configured site host)"
+        "the engine did not accept these URLs as belonging to the site it verified for "
+        "this key — the key file and the URLs must be on the SAME host (www.example.com "
+        "is a different host from example.com)"
     ),
     429: "too many requests — EZDistro will retry automatically",
 }
@@ -313,16 +358,47 @@ def _selfcheck() -> None:
 
         asyncio.run(IndexNowClient(host="example.com", key=key).submit([url, "https://evil.io/x"]))
     except PermanentError as exc:
-        assert "not on example.com" in str(exc)
+        assert "cannot mix hosts" in str(exc)
     else:
         raise AssertionError("foreign url was accepted")
 
+    # a key file on another host is the exact cause of the engine's
+    # "URLs are not related to your site verified" rejection
+    try:
+        import asyncio
+
+        asyncio.run(
+            IndexNowClient(key=key, key_location="https://cdn.example.net/key.txt").submit([url])
+        )
+    except PermanentError as exc:
+        assert "served from cdn.example.net" in str(exc)
+        assert "are on example.com" in str(exc)
+    else:
+        raise AssertionError("a key file on another host was accepted")
+
     class Resp:
+        status_code = 422
+        text = (
+            '{"errorCode":"InvalidRequestParameters","message":"One or more URLs are '
+            'not related to your site verified."}'
+        )
+
+    try:
+        client._classify(Resp(), "example.com", 1)  # type: ignore[arg-type]
+    except PermanentError as exc:
+        # human sentence first, provider detail kept, error code visible
+        assert "SAME host" in str(exc)
+        assert "InvalidRequestParameters" in str(exc)
+        assert "not related to your site" in str(exc)
+    else:
+        raise AssertionError("422 was accepted")
+
+    class Forbidden:
         status_code = 403
         text = ""
 
     try:
-        client._classify(Resp(), "example.com", 1)  # type: ignore[arg-type]
+        client._classify(Forbidden(), "example.com", 1)  # type: ignore[arg-type]
     except PermanentError as exc:
         assert "key was rejected" in str(exc)
     else:

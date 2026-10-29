@@ -77,9 +77,36 @@ def test_submission_rejects_a_url_outside_the_configured_host():
     try:
         asyncio.run(client.submit(["https://example.com/a", "https://evil.example.net/b"]))
     except PermanentError as exc:
-        assert "not on example.com" in str(exc)
+        assert "cannot mix hosts" in str(exc)
     else:  # pragma: no cover
         raise AssertionError("a foreign URL was accepted")
+
+
+def test_submission_rejects_urls_on_another_host_than_the_key():
+    """The engine's "not related to your site verified" is this mismatch."""
+    key = generate_key()
+    client = IndexNowClient(
+        host="www.example.com", key=key, key_location=f"https://example.com/{key}.txt"
+    )
+    try:
+        asyncio.run(client.submit(["https://example.com/blog/post"]))
+    except PermanentError as exc:
+        assert "website's host is set to www.example.com" in str(exc)
+        assert "set the website host to example.com" in str(exc)
+    else:  # pragma: no cover
+        raise AssertionError("a mismatched host was accepted")
+
+
+def test_submission_rejects_a_key_file_on_a_different_host():
+    key = generate_key()
+    client = IndexNowClient(key=key, key_location="https://cdn.example.net/key.txt")
+    try:
+        asyncio.run(client.submit(["https://example.com/blog/post"]))
+    except PermanentError as exc:
+        assert "served from cdn.example.net" in str(exc)
+        assert "reinstall" in str(exc).lower()
+    else:  # pragma: no cover
+        raise AssertionError("a key file on another host was accepted")
 
 
 def test_gsc_link_points_at_url_inspection_for_the_page():
