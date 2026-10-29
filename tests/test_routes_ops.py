@@ -333,3 +333,28 @@ async def test_prompt_tester_without_provider_errors_cleanly():
     assert resp.status_code == 200
     # either a rendered result or a safe, human-readable error toast — never a 500
     assert "response" in toast_message(resp) or "integration" in toast_message(resp)
+
+
+async def test_prompt_tester_survives_a_failing_retrieval_provider(monkeypatch):
+    """A broken (optional) embedding/vector provider must not 500 the tester."""
+    from app.providers.base import ProviderError
+    from app.services.retrieval import RetrievalService
+
+    async def boom(self, *args, **kwargs):
+        raise ProviderError("embedding provider is down")
+
+    monkeypatch.setattr(RetrievalService, "retrieve", boom)
+    pb, proj_a, _ = _setup()
+    topic = make_topic(pb, proj_a["id"])
+    req = make_req(pb, make_user(), proj_a["id"])
+    resp = await call_route_async(
+        P.test_prompt,
+        req,
+        proj_a["id"],
+        ptype="outline_user",
+        content="Return JSON.",
+        topic_id=topic["id"],
+    )
+    assert resp.status_code == 200
+    # rendered without retrieval context, or a safe toast — never a 500
+    assert "response" in toast_message(resp) or "integration" in toast_message(resp)

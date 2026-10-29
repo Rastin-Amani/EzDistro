@@ -1646,6 +1646,7 @@ async def test_prompt(
     # live retrieval context for the tester (same subsystem the writer uses)
     retrieval_context, links = "", []
     if topic and ptype in ("outline_user", "outline_system", "section_user", "section_system"):
+        from app.providers.base import ProviderError
         from app.services.internal_linking import ContextBuilder
         from app.services.retrieval import RetrievalService
 
@@ -1658,9 +1659,15 @@ async def test_prompt(
             rerank=bool(config.retrieval.get("rerank_enabled")),
             rerank_top_n=int(config.retrieval.get("rerank_top_n") or 8),
         )
-        results = await service.retrieve(
-            config, f"{topic.get('title') or ''} {topic.get('keyword') or ''}".strip(), options
-        )
+        results = []
+        # An optional embedding/vector provider must not 500 the prompt tester:
+        # render without retrieval context instead (as the writer does).
+        with contextlib.suppress(ProviderError):
+            results = await service.retrieve(
+                config,
+                f"{topic.get('title') or ''} {topic.get('keyword') or ''}".strip(),
+                options,
+            )
         builder = ContextBuilder(
             max_links=int(config.context.get("max_links") or 5),
             max_passages=int(config.context.get("max_passages") or 5),
