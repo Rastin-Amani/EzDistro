@@ -185,9 +185,26 @@
 {# ── Published articles: submit + the Google link ────────────────────── #}
 {% if index_now_published %}
 <section class="mb-4 card border border-base-300 bg-base-100 min-w-0">
-    <div class="flex items-center justify-between gap-2 border-b border-base-300 px-5 py-3.5">
-        <h3 class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">{{ ('Published articles') }}</h3>
-        <span class="text-xs text-base-content/60">{{ ('%(n)s most recent') % {'n': index_now_published|length} }}</span>
+    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-base-300 px-5 py-3.5">
+        <div class="flex min-w-0 items-center gap-2">
+            <h3 class="font-mono text-[0.7rem] font-normal uppercase tracking-[0.073em] text-base-content/60">{{ ('Published articles') }}</h3>
+            <span class="text-xs text-base-content/60">{{ ('%(n)s newest of %(t)s') % {'n': index_now_published|length, 't': index_now_published_total} }}</span>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+            {% if index_now_gsc_home %}
+            <a class="btn btn-ghost btn-xs" href="{{ index_now_gsc_home }}" target="_blank" rel="noopener"
+               title="{{ ('Open Search Console for this property. Google inspects one URL at a time, so use the Google button on a row.') }}">
+                {{ ('Search Console') }}
+            </a>
+            {% endif %}
+            <button type="button" class="btn btn-primary btn-xs"
+                    hx-post="/projects/{{ project.id }}/index-now/submit-all" hx-swap="none" hx-disabled-elt="this"
+                    {% if not index_now_ready %}disabled{% endif %}
+                    title="{{ ('Submit every published article in one go') }}">
+                <span class="loading loading-spinner loading-xs htmx-indicator"></span>
+                {{ ('Submit all %(n)s' ) % {'n': index_now_published_total} }}
+            </button>
+        </div>
     </div>
     <div class="overflow-x-auto">
         <table class="table table-sm">
@@ -200,7 +217,6 @@
             </thead>
             <tbody>
                 {% for row in index_now_published %}
-                {% set gsc = (index_now_gsc | selectattr('url', 'equalto', row.url) | list | first) %}
                 <tr>
                     <td class="max-w-52 truncate text-xs font-medium">{{ row.title }}</td>
                     <td class="max-w-64"><a href="{{ row.url }}" target="_blank" rel="noopener" class="link link-primary block truncate text-xs" dir="ltr">{{ row.url }}</a></td>
@@ -212,8 +228,8 @@
                                     hx-swap="none"
                                     {% if not index_now_ready %}disabled{% endif %}
                                     title="{{ ('Submit this URL to IndexNow') }}">{{ ('IndexNow') }}</button>
-                            {% if gsc %}
-                            <a class="btn btn-ghost btn-xs" href="{{ gsc.link }}" target="_blank" rel="noopener"
+                            {% if row.gsc_link %}
+                            <a class="btn btn-ghost btn-xs" href="{{ row.gsc_link }}" target="_blank" rel="noopener"
                                title="{{ ('Open Google Search Console URL Inspection for this page') }}">{{ ('Google') }}</a>
                             {% endif %}
                         </div>

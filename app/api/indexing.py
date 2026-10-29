@@ -25,10 +25,13 @@ from app.api.errors import hx_error
 from app.domain.validation import normalize_base_url
 from app.providers.indexnow import (
     DEFAULT_ENDPOINT,
+    MAX_URLS,
     generate_key,
     gsc_inspect_link,
+    gsc_property_link,
     url_host,
 )
+from app.repositories.articles import ArticleRepo
 from app.repositories.integrations import IntegrationRepo
 from app.repositories.jobs import JobRepo
 from app.services import search_engines
@@ -325,6 +328,43 @@ def submit_urls(request: Request, project_id: str, urls: str = Form("")):
     return _refresh(message)
 
 
+@router.post("/projects/{project_id}/index-now/submit-all")
+@hx_error("Submitting the published articles failed")
+def submit_all(request: Request, project_id: str):
+    """Submit every live article at once (one job per 10 000 URLs)."""
+    require_hx(request)
+    require_project_access(request, project_id)
+    require_project_role(request, project_id)
+
+    config = load_config(request.state.pb, project_id)
+    if not search_engines.is_ready(config):
+        return error_response("Save the website host and key before submitting")
+    host = str(config.get("host") or "")
+
+    everything = _published_urls(request.state.pb, project_id, limit=0)
+    accepted = [row["url"] for row in everything if url_host(row["url"]) == host]
+    if not accepted:
+        return error_response(f"No published article is on {host} yet")
+
+    queued = 0
+    for start in range(0, len(accepted), MAX_URLS):
+        job = search_engines.queue(
+            request.state.pb,
+            project=project_id,
+            urls=accepted[start : start + MAX_URLS],
+            source=search_engines.SOURCE_MANUAL,
+            force=True,
+        )
+        queued += 1 if job is not None else 0
+    message = f"Submitting {len(accepted)} published article(s) to IndexNow"
+    skipped = len(everything) - len(accepted)
+    if skipped:
+        message += f" — {skipped} skipped (not on {host})"
+    if not queued:  # pragma: no cover - manual runs always queue
+        return error_response("Could not queue the submission")
+    return _refresh(message)
+
+
 def _registry(request: Request) -> Any:
     from app.providers.registry import ProviderRegistry
 
@@ -371,6 +411,14 @@ def tab_context(pb: Any, project_id: str) -> dict[str, Any]:
             host=host, key=key, key_location=str(config.get("key_location") or "")
         ).key_url
     published = _published_urls(pb, project_id)
+    published_total = ArticleRepo(pb).count(
+        filter=f'project="{project_id}" && status="published" && wordpressUrl != ""'
+    )
+    gsc_prop = str(config.get("gsc_property") or "") or (f"sc-domain:{host}" if host else "")
+    # One link per row: Search Console inspects a single URL, so the row IS the
+    # Google action (there is no bulk endpoint to call).
+    for row in published:
+        row["gsc_link"] = gsc_inspect_link(row["url"], gsc_prop)
     return {
         "index_now": config,
         "index_now_ready": search_engines.is_ready(config),
@@ -385,27 +433,29 @@ def tab_context(pb: Any, project_id: str) -> dict[str, Any]:
         "index_now_default_host": search_engines.publisher_host(pb, project_id),
         "index_now_site_url": search_engines.publisher_site_url(pb, project_id),
         "index_now_default_endpoint": DEFAULT_ENDPOINT,
+        # What the Google buttons pass as the Search Console property.
+        "index_now_gsc_property": gsc_prop,
+        "index_now_gsc_home": gsc_property_link(gsc_prop) if gsc_prop else "",
         "index_now_jobs": jobs,
         "index_now_published": published,
-        "index_now_gsc": [
-            {
-                "url": row["url"],
-                "link": gsc_inspect_link(row["url"], f"https://{host}" if host else ""),
-            }
-            for row in published[:25]
-        ],
+        "index_now_published_total": published_total,
     }
 
 
-def _published_urls(pb: Any, project_id: str) -> list[dict[str, Any]]:
-    from app.repositories.articles import ArticleRepo
-
-    rows = ArticleRepo(pb).list_records(
-        filter=f'project="{project_id}" && status="published" && wordpressUrl != ""',
-        sort="-updated",
-        per_page=25,
-        fields="id,title,wordpressUrl,updated",
-    )
+def _published_urls(pb: Any, project_id: str, *, limit: int = 25) -> list[dict[str, Any]]:
+    """Live articles with a URL; ``limit=0`` means every one of them."""
+    filter_ = f'project="{project_id}" && status="published" && wordpressUrl != ""'
+    if limit:
+        rows = ArticleRepo(pb).list_records(
+            filter=filter_,
+            sort="-updated",
+            per_page=limit,
+            fields="id,title,wordpressUrl,updated",
+        )
+    else:
+        rows = ArticleRepo(pb).list_all(
+            filter=filter_, sort="-updated", fields="id,title,wordpressUrl,updated"
+        )
     return [
         {"id": r.get("id", ""), "title": r.get("title") or "", "url": r.get("wordpressUrl") or ""}
         for r in rows

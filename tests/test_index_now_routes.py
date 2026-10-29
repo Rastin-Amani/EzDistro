@@ -61,6 +61,7 @@ def _save(req, project, **kwargs):
         "key_location": "",
         "auto_publish": "1",
         "auto_update": "1",
+        "gsc_property": "",
     }
     fields.update(kwargs)
     return I.save_config(req, project["id"], **fields)
@@ -258,6 +259,39 @@ def test_tab_renders_with_key_jobs_and_published_articles():
 # ---------------------------------------------------------------------------
 # Submission
 # ---------------------------------------------------------------------------
+def test_submit_all_queues_every_published_article():
+    pb, project, req = _setup()
+    # the helper articles live on s.test — that is the host being submitted
+    _save(req, project, host="s.test")
+    for i in range(3):
+        make_article(pb, project["id"], status="published", wp_id=2000 + i)
+    # an article on another host must never ride along
+    foreign = make_article(pb, project["id"], status="published", wp_id=3000)
+    pb.collection("articles").update(foreign["id"], {"wordpressUrl": "https://elsewhere.io/post"})
+
+    resp = call_route(I.submit_all, req, project["id"])
+    assert "Submitting 3 published article(s)" in toast_message(resp)
+    assert "1 skipped" in toast_message(resp)
+    jobs = [
+        j for j in pb.collection("jobs").get_full_list({}) if j["type"] == "notify_search_engines"
+    ]
+    assert len(jobs) == 1
+    urls = jobs[0]["payload"]["urls"]
+    assert len(urls) == 3
+    assert all(u.startswith("https://s.test/") for u in urls)
+
+
+def test_gsc_property_override_is_saved_and_used():
+    pb, project, req = _setup()
+    _save(req, project)
+    _save(req, project, gsc_property="https://blog.example.com/")
+    assert I.load_config(pb, project["id"])["gsc_property"] == "https://blog.example.com/"
+
+    make_article(pb, project["id"], status="published", wp_id=4000)
+    body = _render(pb, project)
+    assert "resource_id=https%3A%2F%2Fblog.example.com%2F" in body
+
+
 def test_manual_submission_rejects_foreign_urls():
     pb, project, req = _setup()
     _save(req, project)

@@ -664,11 +664,18 @@ happened — the UI offers Google's Search Console *URL Inspection* link instead
   (HTTP status, a redirect, or wrong content).
 - **Storage.** One `integrations` row with `category = "indexing"`,
   `provider = "indexnow"`, `configuration = {host, key, endpoint, key_location,
-  auto_publish, auto_update}`. It is managed by the **Index Now** project tab, not
-  the generic Connections editor.
+  auto_publish, auto_update, gsc_property}`. It is managed by the **Index Now**
+  project tab, not the generic Connections editor.
+- **Google.** The Google buttons open Search Console's URL Inspection on the page
+  (Request indexing is manual, per URL, rate-limited). `resource_id` must be a
+  property Google recognises — `sc-domain:example.com` by default, or a
+  URL-prefix property `https://example.com/` from the **Search Console property**
+  field. A bare host is rejected by Google with a 400, so it is never sent.
 - **Triggers.** After a live publish (`publish`) and after a content refresh
-  (`update`) a job is queued, deduped per article+source+hour; the Index Now tab
-  can submit arbitrary URLs and is the manual path. Manual submissions always run.
+  (`update`) a job is queued, deduped per article+source+hour. The tab is the
+  manual path: arbitrary URLs, one article, or **Submit all N** for every live
+  article at once (chunked to the 10 000-URL protocol limit, foreign hosts
+  skipped). Manual submissions always run.
 - **Isolation.** The push is its own job and the publish hook is wrapped: a slow or
   failing search engine never delays or fails a publish. Every attempt is visible
   in **Activity** with the endpoint receipt or the rejection reason.
