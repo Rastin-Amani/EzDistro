@@ -200,6 +200,8 @@ async def handle_notify_search_engines(ctx: JobContext) -> dict[str, Any]:
                 await close()
 
     _mark_health(ctx, integration["id"], healthy=True)
+    if result.note:
+        ctx.warning(result.note, {"urls": urls, "keyLocation": result.note.split("=")[-1]})
     ctx.stage_completed(
         "indexnow",
         f"IndexNow accepted {result.url_count} URL(s)",

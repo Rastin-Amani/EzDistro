@@ -45,6 +45,17 @@ def generate_key() -> str:
 
 
 @dataclass
+class KeyCheck:
+    """What an engine sees when it fetches a key file."""
+
+    url: str
+    ok: bool
+    status: int = 0
+    detail: str = ""
+    redirect: str = ""
+
+
+@dataclass
 class IndexNowResult:
     """What the endpoint replied. A 200/202 is a RECEIPT, never "indexed"."""
 
@@ -54,6 +65,7 @@ class IndexNowResult:
     endpoint: str = ""
     host: str = ""
     url_count: int = 0
+    note: str = ""
 
 
 def url_host(url: str) -> str:
@@ -150,45 +162,66 @@ class IndexNowClient:
         if not (8 <= len(self.key) <= 128):
             raise PermanentError("IndexNow keys must be 8-128 characters")
 
-    async def verify_key(self) -> str:
-        """Fetch the key file; raise unless the site serves exactly this key.
+    @property
+    def root_key_url(self) -> str:
+        """Where engines look by default — the host root."""
+        return f"https://{self.host}/{self.key}.txt" if self.host and self.key else ""
 
-        This is THE failure mode of IndexNow: without a reachable key file every
-        submission is accepted (202) and then silently discarded.
-        """
+    async def check_key(self, url: str) -> KeyCheck:
+        """Fetch one key-file URL and report exactly what an engine would see."""
+        try:
+            checked = validate_url(url)
+        except UnsafeUrlError as exc:
+            return KeyCheck(url, False, 0, f"unsafe URL: {exc}")
+        client = await self._http()
+        response = await client.get(
+            checked, headers={"Accept": "text/plain"}, follow_redirects=False
+        )
+        status = int(response.status_code)
+        if 300 <= status < 400:
+            target = str(response.headers.get("location") or "somewhere")
+            return KeyCheck(
+                url,
+                False,
+                status,
+                f"redirects to {target} — the key file must be served directly "
+                "(engines do not reliably follow redirects for it)",
+                redirect=target,
+            )
+        if status == 429 or 500 <= status <= 599:
+            return KeyCheck(url, False, status, f"HTTP {status} (temporary)")
+        if not response.is_success:
+            return KeyCheck(url, False, status, f"HTTP {status}")
+        body = response.text.strip().strip("\ufeff")
+        if body != self.key:
+            return KeyCheck(
+                url,
+                False,
+                status,
+                f"serves {len(body)} characters that are not this key",
+            )
+        return KeyCheck(url, True, status, "ok")
+
+    async def verify_key(self) -> str:
+        """Check the key file the engines will actually fetch; raise otherwise."""
         self._require_key()
         url = self.key_url
         if not url:
             raise PermanentError("IndexNow needs the site host before it can check the key file")
-        try:
-            checked = validate_url(url)
-        except UnsafeUrlError as exc:
-            raise PermanentError(f"unsafe site URL for the key file: {exc}") from exc
-        client = await self._http()
-        response = await client.get(checked, headers={"Accept": "text/plain"})
-        status = response.status_code
-        if status in (429,) or 500 <= status <= 599:
-            raise TransientError(f"key file check got HTTP {status}", {"status": status})
-        if not response.is_success:
+        check = await self.check_key(url)
+        if check.status == 429 or 500 <= check.status <= 599:
+            raise TransientError(f"key file check got HTTP {check.status}", {"url": url})
+        if not check.ok:
             raise PermanentError(
-                f"{url} returned HTTP {status}. Upload the key file to the site root "
-                "and make sure it stays reachable (not blocked by auth, CDN rules or "
-                "a WordPress .htaccess).",
-                {"status": status, "url": url},
-            )
-        body = response.text.strip().strip("\ufeff")
-        if body != self.key:
-            raise PermanentError(
-                f"{url} does not serve this key (it returned {len(body)} characters). "
-                "The file must contain the key and nothing else — regenerate the key "
-                "and re-upload if the site was set up with a different one.",
-                {"url": url},
+                f"{url} {check.detail}. Upload <{self.key}>.txt so it opens at "
+                f"{self.root_key_url} with no redirect, login or CDN rule in front of it.",
+                {"url": url, "status": check.status},
             )
         return url
 
     # -- submission ------------------------------------------------------------
-    async def submit(self, urls: Sequence[str]) -> IndexNowResult:
-        self._require_key()
+    def _validate_targets(self, urls: Sequence[str]) -> tuple[str, list[str]]:
+        """Pure checks: one host, equal to the saved host and the key file's host."""
         clean = [str(u).strip() for u in urls if str(u).strip()]
         if not clean:
             raise PermanentError("no URLs to submit")
@@ -231,10 +264,58 @@ class IndexNowClient:
             validate_url(f"https://{host}")
         except UnsafeUrlError as exc:
             raise PermanentError(f"unsafe submission host {host}: {exc}") from exc
+        return host, clean
 
+    async def prepare(self, urls: Sequence[str]) -> tuple[str, list[str], dict[str, Any]]:
+        """Validate the URLs AND prove the key file where the engines look.
+
+        Engine-side ownership is checked against a *file on the host*; sending a
+        batch whose key file cannot be fetched is exactly what produces
+        "One or more URLs are not related to your site verified". So the root
+        file is tried first and wins (the format every engine supports), and the
+        configured location is the fallback.
+        """
+        self._require_key()
+        host, clean = self._validate_targets(urls)
         payload: dict[str, Any] = {"host": host, "key": self.key, "urlList": clean}
-        if self.key_location:
-            payload["keyLocation"] = self.key_location
+
+        root = await self.check_key(self.root_key_url)
+        if root.status == 429 or 500 <= root.status <= 599:
+            raise TransientError(f"key file check got HTTP {root.status}", {"url": root.url})
+        if root.ok:
+            # served at the root → do NOT send keyLocation (maximum compatibility)
+            return host, clean, payload
+
+        location = self.key_location
+        if location and location != self.root_key_url:
+            check = await self.check_key(location)
+            if check.status == 429 or 500 <= check.status <= 599:
+                raise TransientError(f"key file check got HTTP {check.status}", {"url": check.url})
+            if check.ok:
+                payload["keyLocation"] = location
+                return host, clean, payload
+            raise PermanentError(
+                f"IndexNow cannot verify {host} yet: {root.url} {root.detail}; "
+                f"{location} {check.detail}. The engines fetch the key before they "
+                "accept URLs, so nothing was sent.",
+                {"root": root.url, "keyLocation": location},
+            )
+        if not location and self.root_key_url == self.key_url:
+            raise PermanentError(
+                f"IndexNow cannot verify {host} yet: {root.url} {root.detail}. "
+                f"Make that URL return <{self.key}> as plain text (no redirect, no login, "
+                "no CDN rule in front of it).",
+                {"root": root.url},
+            )
+        raise PermanentError(
+            f"IndexNow cannot verify {host} yet: {root.url} {root.detail}. "
+            f"Upload <{self.key}>.txt to the domain root, or set a key file location "
+            "that is served on the same host.",
+            {"root": root.url},
+        )
+
+    async def submit(self, urls: Sequence[str]) -> IndexNowResult:
+        host, clean, payload = await self.prepare(urls)
 
         from app.providers.http import with_retry
 
@@ -247,7 +328,16 @@ class IndexNowClient:
             )
             return self._classify(response, host, len(clean))
 
-        return await with_retry(call, attempts=self.attempts, what="indexnow submit")
+        result = await with_retry(call, attempts=self.attempts, what="indexnow submit")
+        if payload.get("keyLocation"):
+            # Not an error (keyLocation is part of the protocol), but ownership is
+            # verified per host and not every engine honours a non-root file —
+            # worth saying once in the job log.
+            result.note = (
+                f"the key file is not at the domain root; the submission carried "
+                f"keyLocation={payload['keyLocation']}"
+            )
+        return result
 
     def _classify(self, response: Any, host: str, count: int) -> IndexNowResult:
         status = int(response.status_code)
@@ -280,6 +370,11 @@ class IndexNowClient:
             message = f"{message} — {provider_message}"
         if error_code:
             message = f"{message} ({error_code})"
+        if status == 422 and self.key_location and self.key_location != self.root_key_url:
+            message += (
+                f". If this persists, move the key file to {self.root_key_url} — ownership is "
+                "verified per host and not every engine honours a non-root keyLocation"
+            )
         details: dict[str, Any] = {"status": status, "host": host, "endpoint": self.endpoint}
         if error_code:
             details["errorCode"] = error_code
@@ -339,6 +434,15 @@ def _selfcheck() -> None:
     client = IndexNowClient(host="example.com", key=key)
     assert client.key_url == f"https://example.com/{key}.txt"
     assert client._origin == "https://api.indexnow.org" and client._path == "/indexnow"
+    assert client.root_key_url == f"https://example.com/{key}.txt"
+
+    # the saved host must equal the URLs' host (engine ownership is per host)
+    try:
+        IndexNowClient(host="www.example.com", key=key)._validate_targets(["https://example.com/a"])
+    except PermanentError as exc:
+        assert "set the website host to example.com" in str(exc)
+    else:
+        raise AssertionError("a host mismatch passed validation")
 
     url = "https://example.com/blog/post?a=1"
     link = gsc_inspect_link(url)
