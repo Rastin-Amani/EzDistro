@@ -9,6 +9,31 @@ release builds on. Format is based on [Keep a Changelog](https://keepachangelog.
 
 ## [Unreleased]
 
+## [v1.29.0] — 2026-10-29
+
+### Added
+- **Tell the search engines a page is live (IndexNow).** A new **Index Now**
+  project tab sets the site host, generates the `<key>.txt` file to upload to
+  the site root, verifies that the live file actually serves the key, submits
+  URLs by hand and lists every submission with the engine's reply. After a live
+  publish (`publish`) and after a content refresh (`update`) a
+  `notify_search_engines` job is queued — deduped per article per hour, and the
+  publish never depends on it. One submission reaches Bing, Yandex, Naver,
+  Seznam and Yep; a `202` is a receipt, not a promise. Google is deliberately
+  absent: it never joined IndexNow, so the UI offers Search Console URL
+  Inspection ("Request indexing") per URL instead of faking a push. The article
+  page offers both actions once the article has a live URL. Details:
+  `docs/ARCHITECTURE.md` §6.11.
+
+### Fixed
+- **The prompt tester no longer dies with an optional retrieval subsystem.**
+  With a topic selected it built live retrieval context, and a broken or
+  unconfigured embedding/vector connection raised instead of rendering. It now
+  renders without context, as the writer does.
+- **`venice-embed-1` is a known embedding model.** It maps to 3072 dimensions,
+  so a Venice embedding connection no longer creates a Qdrant collection with
+  the wrong vector size.
+
 ## [v1.28.2] — 2026-10-28
 
 ### Fixed
