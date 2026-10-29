@@ -200,6 +200,34 @@ def test_install_route_reports_failure_without_losing_the_config(wp):
     assert I.load_config(pb, project["id"])["key_location"] == "https://blog.example.com/key.txt"
 
 
+def test_save_adopts_the_host_that_serves_the_key_file(wp):
+    """WordPress knows its canonical host (www vs bare) — the file wins."""
+
+    async def upload_on_www(**kwargs):
+        return {
+            "id": 1,
+            "url": f"https://www.blog.example.com/wp-content/uploads/{kwargs['filename']}",
+            "mime_type": "text/plain",
+        }
+
+    wp.upload_media = upload_on_www  # type: ignore[method-assign]
+    pb, project, req = _setup()
+    resp = _save(req, project)
+
+    config = I.load_config(pb, project["id"])
+    assert config["host"] == "www.blog.example.com"
+    assert "host set to www.blog.example.com" in toast_message(resp)
+
+
+def test_tab_warns_when_the_key_file_is_on_another_host(wp):
+    pb, project, req = _setup()
+    # a hand-entered location is stored as given, so the hosts can disagree
+    _save(req, project, key_location="https://cdn.example.net/key.txt")
+    body = _render(pb, project)
+    assert "The key file and the website host disagree" in body
+    assert "cdn.example.net" in body
+
+
 def test_install_route_stores_the_verified_location(wp):
     pb, project, req = _setup()
     _save(req, project, key_location="https://blog.example.com/old.txt")

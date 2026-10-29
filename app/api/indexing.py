@@ -28,6 +28,7 @@ from app.providers.indexnow import (
     IndexNowClient,
     generate_key,
     gsc_inspect_link,
+    url_host,
 )
 from app.repositories.integrations import IntegrationRepo
 from app.repositories.jobs import JobRepo
@@ -158,6 +159,23 @@ async def _install_key(
     return url, f"Key file installed and verified at {url}"
 
 
+def _align_host(location: str, host: str, message: str) -> tuple[str, str]:
+    """Make the saved host the host that serves the key file.
+
+    IndexNow verifies the key on the host it receives and then demands every URL
+    belong to that host. WordPress knows its own canonical host (www vs bare is
+    a classic), so when the uploaded file lands elsewhere the *file's* host wins
+    — otherwise the engine answers "URLs are not related to your site verified".
+    """
+    file_host = url_host(location) if location else ""
+    if file_host and file_host != host:
+        return file_host, (
+            f"{message}. Website host set to {file_host} — the host serving the key file; "
+            "submitted URLs must be on that same host."
+        )
+    return host, message
+
+
 def _persist(pb: Any, project_id: str, config: dict[str, Any], **overrides: Any) -> None:
     """Save the connection from an existing (normalized) config plus overrides."""
     fields: dict[str, Any] = {
@@ -225,6 +243,7 @@ async def save_config(
         resolved_location, message = await _install_key(
             request, project, project_id, host=resolved_host, key=key
         )
+        resolved_host, message = _align_host(resolved_location, resolved_host, message)
     _save(
         request.state.pb,
         project_id,
@@ -253,13 +272,14 @@ async def regenerate_key(request: Request, project_id: str):
         return error_response("Save the website host first, then generate the key")
     key = generate_key()
     # The stored keyLocation points at the OLD file, so it must be re-installed.
-    location, message = await _install_key(
-        request, project, project_id, host=str(existing.get("host") or ""), key=key
-    )
+    host = str(existing.get("host") or "")
+    location, message = await _install_key(request, project, project_id, host=host, key=key)
+    host, message = _align_host(location, host, message)
     _persist(
         request.state.pb,
         project_id,
         existing,
+        host=host,
         key=key,
         key_location=location,
     )
@@ -282,7 +302,8 @@ async def install_key_file(request: Request, project_id: str):
     )
     if not location:
         return toast_response(message, type="error", extra_events={"refreshIndexNow": True})
-    _persist(request.state.pb, project_id, config, key_location=location)
+    host, message = _align_host(location, str(config["host"]), message)
+    _persist(request.state.pb, project_id, config, host=host, key_location=location)
     return toast_response(
         message, type="success", extra_events={"refreshIndexNow": True, "refreshJobs": True}
     )
@@ -411,6 +432,7 @@ def tab_context(pb: Any, project_id: str) -> dict[str, Any]:
     )
     key = str(config.get("key") or "")
     host = str(config.get("host") or "")
+    key_host = url_host(str(config.get("key_location") or ""))
     key_url = ""
     if key:
         from app.providers.indexnow import IndexNowClient
@@ -425,6 +447,11 @@ def tab_context(pb: Any, project_id: str) -> dict[str, Any]:
         "index_now_key": key,
         "index_now_key_url": key_url,
         "index_now_installed": bool(config.get("key_location")),
+        # The engine verifies the key on the host it receives: when the file is
+        # served from another host (www vs bare, a CDN, a different subdomain)
+        # every submission is rejected — surface it instead of guessing later.
+        "index_now_key_host": key_host,
+        "index_now_mismatch": bool(key_host) and key_host != host,
         "index_now_can_auto": IntegrationRepo(pb).get_active(project_id, "publisher") is not None,
         "index_now_default_host": search_engines.publisher_host(pb, project_id),
         "index_now_site_url": search_engines.publisher_site_url(pb, project_id),

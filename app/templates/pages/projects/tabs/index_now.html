@@ -99,6 +99,19 @@
         {% if index_now_key_url %}<span class="text-xs text-base-content/60" dir="ltr">{{ index_now_key_url }}</span>{% endif %}
     </div>
     <div class="p-5 flex flex-col gap-3">
+        {% if index_now_mismatch %}
+        <div class="flex items-start gap-2.5 rounded-box border border-error/40 bg-error/5 p-3">
+            <span class="mt-0.5 text-error" aria-hidden="true">!</span>
+            <div class="min-w-0">
+                <p class="text-sm font-medium">{{ ('The key file and the website host disagree') }}</p>
+                <p class="mt-1 text-xs leading-relaxed text-base-content/60">
+                    {{ ('The file is served from') }} <span class="font-mono" dir="ltr">{{ index_now_key_host }}</span>
+                    {{ ('but the website host is') }} <span class="font-mono" dir="ltr">{{ index_now.host }}</span>.
+                    {{ ('IndexNow verifies the key on the host you submit and then requires every URL to belong to it, so submissions are rejected until both are the same. Set the host to the file’s host, or press “Reinstall” to put the file on the current host.') }}
+                </p>
+            </div>
+        </div>
+        {% endif %}
         {% if index_now_installed %}
         <div class="flex items-start gap-2.5 rounded-box border border-success/40 bg-success/5 p-3">
             <span class="mt-0.5 text-success" aria-hidden="true">✓</span>
