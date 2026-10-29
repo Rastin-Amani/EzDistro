@@ -266,6 +266,27 @@ async def handle_publish_article(ctx: JobContext) -> dict[str, Any]:
     # per-document reindex of the WordPress post (idempotent by content hash).
     # Draft-mode pushes are skipped — draft content must not enter the corpus.
     if mode == "publish":
+        # Tell the search engines the page is live (IndexNow: Bing, Yandex,
+        # Naver, Seznam, Yep). Google is not on IndexNow — the Index Now tab
+        # links to Search Console for that. A separate job, so a slow engine
+        # can never hold up or fail the publish itself.
+        from app.services import search_engines
+
+        try:
+            search_engines.queue(
+                ctx.pb,
+                project=ctx.project_id,
+                urls=[result.link],
+                source=(
+                    search_engines.SOURCE_UPDATE if was_published else search_engines.SOURCE_PUBLISH
+                ),
+                article=article_id,
+            )
+        except Exception as exc:
+            # The article IS live: bookkeeping for a search-engine ping must
+            # never turn a successful publish into a failed job.
+            ctx.warning(f"could not queue the IndexNow submission: {exc}", {"article": article_id})
+
         JobRepo(ctx.pb).create(
             project=ctx.project_id,
             type="index_document",
