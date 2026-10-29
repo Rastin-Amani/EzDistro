@@ -85,7 +85,8 @@ def test_submission_rejects_a_url_outside_the_configured_host():
 def test_gsc_link_points_at_url_inspection_for_the_page():
     link = gsc_inspect_link("https://example.com/blog/post", "https://example.com")
     assert link.startswith("https://search.google.com/search-console/inspect?")
-    assert "resource_id=https%3A%2F%2Fexample.com" in link
+    # the property is a bare domain; an https:// value sends Google to the picker
+    assert "resource_id=example.com" in link
     assert "url=https%3A%2F%2Fexample.com%2Fblog%2Fpost" in link
 
 
