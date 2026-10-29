@@ -44,6 +44,9 @@ CATEGORY_PUBLISHER = "publisher"
 CATEGORY_IMAGE = "image"
 CATEGORY_SERP = "serp"
 CATEGORY_GOOGLE_ADS = "google_ads"
+# Search-engine notification (IndexNow). Not a "credential" connection: the only
+# settings are the site host, a public key and the endpoint.
+CATEGORY_INDEXING = "indexing"
 # Keyword sources need no credentials, so this is not an Integrations category —
 # it exists so a source is a table entry like any other provider.
 CATEGORY_KEYWORD_SOURCE = "keyword_source"
@@ -91,6 +94,7 @@ CATEGORIES = (
     CATEGORY_IMAGE,
     CATEGORY_SERP,
     CATEGORY_GOOGLE_ADS,
+    CATEGORY_INDEXING,
     CATEGORY_KEYWORD_SOURCE,
 )
 
@@ -103,6 +107,7 @@ DEFAULT_PROVIDER: dict[str, str] = {
     CATEGORY_IMAGE: "gemini",
     CATEGORY_SERP: "none",
     CATEGORY_GOOGLE_ADS: "google_ads",
+    CATEGORY_INDEXING: "indexnow",
 }
 
 SETTINGS_KEY: dict[str, str] = {
@@ -134,6 +139,7 @@ class ProviderRegistry:
         from app.providers.image.flux import FluxImage
         from app.providers.image.gemini import GeminiImage
         from app.providers.image.openai_compat import OpenAICompatImage
+        from app.providers.indexnow import IndexNowClient
         from app.providers.keyword_harvest import AutocompleteHarvester
         from app.providers.llm.gemini import GeminiLLM
         from app.providers.llm.openai_compat import OpenAICompatLLM
@@ -156,6 +162,7 @@ class ProviderRegistry:
             SerperSERPProvider,
             GoogleAdsOAuthProvider,
             AutocompleteHarvester,
+            IndexNowClient,
         ):
             adapter: Any = cls
             self._table[(adapter.category, adapter.provider_name)] = cls
@@ -298,6 +305,24 @@ class ProviderRegistry:
             return None
         return self._resolve(CATEGORY_GOOGLE_ADS, project, settings, observer, integration)
 
+    def get_indexing_provider(
+        self,
+        project: dict[str, Any],
+        settings: dict[str, Any],
+        observer: CallObserver | None = None,
+        integration: dict[str, Any] | None = None,
+    ) -> Any:
+        """IndexNow client for search-engine notification.
+
+        Returns None when the project has no enabled Index Now connection — the
+        publisher then simply skips the notification (it is an extra, never a
+        reason to fail a publish).
+        """
+        integration = integration or self._integrations.get_active(project["id"], CATEGORY_INDEXING)
+        if not integration:
+            return None
+        return self._resolve(CATEGORY_INDEXING, project, settings, observer, integration)
+
     def active_integration_for_provider(
         self, project_id: str, category: str, provider_name: str
     ) -> dict[str, Any] | None:
@@ -431,6 +456,7 @@ class ProviderRegistry:
             CATEGORY_IMAGE: self._config_image,
             CATEGORY_SERP: self._config_serp,
             CATEGORY_GOOGLE_ADS: self._config_google_ads,
+            CATEGORY_INDEXING: self._config_indexing,
         }
         builder = builders.get(category)
         if builder is None:
@@ -702,6 +728,27 @@ class ProviderRegistry:
             "timeout": 45.0,
         }
 
+    # -- search-engine notification (IndexNow) --------------------------------------
+    def _config_indexing(
+        self,
+        project: dict[str, Any],
+        integration: dict[str, Any] | None,
+        settings: dict[str, Any],
+        provider_name: str,
+    ) -> dict[str, Any]:
+        integration = self._integration_or_error(integration, CATEGORY_INDEXING)
+        config = integration.get("configuration") or {}
+        # The key is public (engines fetch <host>/<key>.txt), so it is NOT a
+        # secret: it lives in `configuration` where the UI can show it back.
+        return {
+            "host": str(config.get("host") or ""),
+            "key": str(config.get("key") or ""),
+            "endpoint": str(config.get("endpoint") or ""),
+            "key_location": str(config.get("key_location") or ""),
+            "attempts": self._retries(settings),
+            "timeout": 30.0,
+        }
+
     # ---------------------------------------------------------------------------
     # Model discovery (cached)
     # ---------------------------------------------------------------------------
@@ -780,6 +827,7 @@ class ProviderRegistry:
             CATEGORY_IMAGE: self.get_image_provider,
             CATEGORY_SERP: self.get_serp_provider,
             CATEGORY_GOOGLE_ADS: self.get_google_ads_provider,
+            CATEGORY_INDEXING: self.get_indexing_provider,
         }
         getter = getters.get(category)  # type: ignore[assignment]
         if getter is None:

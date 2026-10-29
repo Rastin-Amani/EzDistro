@@ -304,6 +304,7 @@ COLLECTIONS: list[dict[str, Any]] = [
                     "image",
                     "serp",
                     "google_ads",
+                    "indexing",
                 ],
                 required=True,
             ),

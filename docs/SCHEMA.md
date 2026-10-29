@@ -218,7 +218,7 @@ ARCHITECTURE §11.4.
 | field | type | notes |
 |---|---|---|
 | project* R | projects | cascade |
-| category* | sel | `llm` \| `embedding` \| `reranker` \| `vector_store` \| `publisher` \| `image` \| `serp` \| `google_ads` |
+| category* | sel | `llm` \| `embedding` \| `reranker` \| `vector_store` \| `publisher` \| `image` \| `serp` \| `google_ads` \| `indexing` |
 | provider* | text | e.g. `openai_compat`, `gemini`, `cohere_compat`, `qdrant`, `wordpress`, `bfl`, `serper`, `google_ads` |
 | displayName* | text | part of uniqueness |
 | model | text | provider/model hint for discovery-backed connections |
