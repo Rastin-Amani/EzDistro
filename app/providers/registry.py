@@ -72,6 +72,7 @@ EMBEDDING_MODEL_DIMENSIONS: dict[str, int] = {
     "e5-base": 768,
     "e5-small": 384,
     "multilingual-e5-large": 1024,
+    "venice-embed-1": 3072,
 }
 
 
