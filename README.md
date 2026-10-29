@@ -119,10 +119,10 @@ Architecture, data model, job-state design and provider interfaces: see [docs/AR
     (job.created → job.claimed → job.started → job.stage_* → job.completed/failed/cancelled)
   - bounded provider concurrency (LLM / embeddings / publishing rate limits)
   - idempotency keys; no duplicated irreversible operations (publish guard)
-  - 18 registered job types: 9 content/indexing types (index_project,
+  - 19 registered job types: 10 content/indexing types (index_project,
     index_document, write_article, generate_outline, generate_section,
-    assemble_article, publish_article, build_internal_links, retry_failed_job),
-    6 image-pipeline types (plan_article_images, generate_cover_image,
+    assemble_article, publish_article, notify_search_engines,
+    build_internal_links, retry_failed_job), 6 image-pipeline types (plan_article_images, generate_cover_image,
     generate_interior_image, generate_article_image, optimize_article_image,
     publish_article_image) and 3 research types (research_run, wordpress_sync,
     analyze_landing_page)

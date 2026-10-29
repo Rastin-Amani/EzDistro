@@ -420,7 +420,7 @@ Index: (project, created).
 | field | type | notes |
 |---|---|---|
 | project* R | projects | cascade |
-| type* | text | one of the 18 registered types (see ARCHITECTURE §5.8) |
+| type* | text | one of the 19 registered types (see ARCHITECTURE §5.8) |
 | entityType / entityId | text | polymorphic ref: project \| topic \| article \| section \| document \| research_run \| job |
 | status* | sel | `pending` \| `running` \| `completed` \| `failed` \| `cancelled` \| `retrying` — **there is no `claimed` value** |
 | priority | num | poll order desc |
@@ -949,4 +949,4 @@ deletion happens only on explicit full reindexes.
   `worker_heartbeats` in v1.1.0), the 13 research collections added in 2026-10
   (§3.22–§3.34), and the 6 billing collections added in v1.19.0 (§3.35–§3.40).
   The `prompts.type` select carries 27 values and `jobs`
-  recognises 18 job types — both corrected here.
+  recognises 19 job types — both corrected here.
