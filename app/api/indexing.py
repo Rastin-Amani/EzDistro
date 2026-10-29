@@ -75,6 +75,7 @@ def _save(
     key_location: str,
     auto_publish: bool,
     auto_update: bool,
+    gsc_property: str = "",
     enabled: bool = True,
     user_id: str = "",
 ) -> dict[str, Any]:
@@ -87,6 +88,7 @@ def _save(
         "key_location": key_location,
         "auto_publish": auto_publish,
         "auto_update": auto_update,
+        "gsc_property": gsc_property,
     }
     if row:
         return repo.update(row["id"], {"configuration": configuration, "enabled": enabled})
@@ -128,6 +130,7 @@ def _persist(pb: Any, project_id: str, config: dict[str, Any], **overrides: Any)
         "key_location": str(config.get("key_location") or ""),
         "auto_publish": bool(config.get("auto_publish", True)),
         "auto_update": bool(config.get("auto_update", True)),
+        "gsc_property": str(config.get("gsc_property") or ""),
         "enabled": True,
     }
     fields.update(overrides)
@@ -165,6 +168,7 @@ def save_config(
     key_location: str = Form(""),
     auto_publish: str = Form(""),
     auto_update: str = Form(""),
+    gsc_property: str = Form(""),
 ):
     require_hx(request)
     require_project_access(request, project_id)
@@ -188,6 +192,7 @@ def save_config(
         key_location=resolved_location,
         auto_publish=safe_bool(auto_publish),
         auto_update=safe_bool(auto_update),
+        gsc_property=safe_str(gsc_property),
         enabled=True,
         user_id=request.state.user.get("id", "") if request.state.user else "",
     )

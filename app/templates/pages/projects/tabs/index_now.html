@@ -67,10 +67,28 @@
                        value="{{ index_now.key_location or '' }}" placeholder="https://{{ index_now.host or 'example.com' }}/{{ index_now_key or '<key>' }}.txt" />
                 <p class="text-xs leading-relaxed text-base-content/60">{{ ('Leave empty when the file is at') }} <span class="font-mono" dir="ltr">{{ index_now_root_url or 'https://<host>/<key>.txt' }}</span></p>
             </label>
-            <div class="flex flex-col justify-end gap-1.5 pb-1">
-                {{ f.checkbox('auto_publish', ('Submit automatically after a new article is published'), value='1', checked=(index_now.auto_publish if index_now else true)) }}
-                {{ f.checkbox('auto_update', ('Submit automatically after a content update'), value='1', checked=(index_now.auto_update if index_now else true)) }}
-            </div>
+            <label class="flex flex-col gap-1 min-w-0">
+                {{ f.label(('Search Console property (for the Google links)'), ('Leave empty unless the Google links open the wrong property — then paste it exactly as Search Console names it, e.g. sc-domain:example.com.')) }}
+                <input name="gsc_property" class="input w-full" dir="ltr" autocomplete="off"
+                       value="{{ index_now.gsc_property or '' }}"
+                       placeholder="{{ index_now_gsc_property or 'sc-domain:example.com' }}" />
+                <p class="text-xs leading-relaxed text-base-content/60">
+                    {{ ('Google links use') }} <span class="font-mono" dir="ltr">{{ index_now_gsc_property or '—' }}</span>.
+                    {{ ('Empty means the Domain property of the website host, which is what almost every site has.') }}
+                    {{ ('A URL-prefix property must include the trailing slash (https://example.com/) — it is the only other form Google accepts, and it is a different property than the domain one.') }}
+                </p>
+                {% if index_now.gsc_property and index_now.gsc_property.startswith('http') %}
+                <p class="text-xs leading-relaxed text-warning">
+                    {{ ('That is a URL-prefix property. If Search Console offered to “add” it, it does not exist in your account — clear this field and save to go back to') }}
+                    <span class="font-mono" dir="ltr">sc-domain:{{ index_now.host }}</span>.
+                </p>
+                {% endif %}
+            </label>
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+            {{ f.checkbox('auto_publish', ('Submit automatically after a new article is published'), value='1', checked=(index_now.auto_publish if index_now else true)) }}
+            {{ f.checkbox('auto_update', ('Submit automatically after a content update'), value='1', checked=(index_now.auto_update if index_now else true)) }}
         </div>
 
         <div class="flex flex-wrap items-center gap-2 border-t border-base-300 pt-4">
