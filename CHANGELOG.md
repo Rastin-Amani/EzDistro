@@ -9,6 +9,28 @@ release builds on. Format is based on [Keep a Changelog](https://keepachangelog.
 
 ## [Unreleased]
 
+## [v1.30.0] — 2026-10-29
+
+### Added
+- **Submit every published article at once.** The Index Now tab gained
+  **Submit all N**, which queues every live article on the configured host in one
+  go — chunked to the protocol's 10 000-URL limit, with articles on another host
+  skipped and counted, and the count shown being the project's real number of
+  live articles. Search Console has no bulk endpoint, so Google keeps the
+  per-article URL Inspection button; the tab adds a link to the property itself.
+- **A project can set its Search Console property.** The Google buttons default
+  to the Domain property of the website host (`sc-domain:example.com`). A site
+  verified as a URL-prefix property (`https://example.com/`) can now name it in
+  the setup form, with a warning when the value is the shape Search Console would
+  offer to "add" — meaning it does not exist in the account.
+
+### Fixed
+- **The Google deep links use a property Google accepts.** `resource_id` was sent
+  as a bare host, which Google rejects with a 400 (only `sc-domain:host` or a
+  URL-prefix property are valid), so the per-article "Request indexing on Google"
+  action could not open URL Inspection. A bare host is now promoted to the Domain
+  property and URL-prefix values are normalized with their trailing slash.
+
 ## [v1.29.3] — 2026-10-29
 
 ### Changed
