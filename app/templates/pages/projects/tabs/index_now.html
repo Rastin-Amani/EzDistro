@@ -43,10 +43,13 @@
             <label class="flex flex-col gap-1 min-w-0">
                 {{ f.label(('Website host'), ('The domain whose pages you submit. Must match the URLs exactly, without a path.')) }}
                 <input name="host" class="input w-full" dir="ltr" autocomplete="off"
-                       value="{{ index_now.host or '' }}"
-                       placeholder="{{ index_now_default_host or 'example.com' }}" />
-                {% if index_now_default_host and not index_now.host %}
-                <p class="text-xs text-base-content/60">{{ ('From your WordPress connection: %(h)s') % {'h': index_now_default_host} }}</p>
+                       value="{{ index_now.host or index_now_default_host or '' }}"
+                       placeholder="example.com" />
+                {% if index_now_site_url %}
+                <p class="text-xs leading-relaxed text-base-content/60">
+                    {{ ('Publishing to') }} <span class="font-mono" dir="ltr">{{ index_now_site_url }}</span>.
+                    {{ ('IndexNow takes the domain only — page paths (like a /blog install) are fine, every submitted URL just has to be on this domain.') }}
+                </p>
                 {% endif %}
             </label>
             <label class="flex flex-col gap-1 min-w-0">
@@ -122,7 +125,7 @@
         <ol class="ms-4 list-decimal space-y-1.5 text-sm leading-relaxed text-base-content/70">
             {% if not index_now_installed %}
             <li>{{ ('Download the key file (its name is the key, ending in .txt) — or let EzDistro install it through WordPress.') }}</li>
-            <li>{{ ('It must open at a public address on this host, with no redirect, login or CDN rule in front of it.') }}</li>
+            <li>{{ ('It must open at a public address with no redirect, login or CDN rule in front of it. On a site that lives in a subfolder (e.g. /blog) the domain root may belong to something else: put the file wherever the site can serve it and paste that URL into “Key file location” above.') }}</li>
             <li>{{ ('Press “Verify key file”. Without this check every submission is accepted and then silently dropped.') }}</li>
             {% else %}
             <li>{{ ('Any address on this host works: the submission carries its location explicitly.') }}</li>
@@ -146,7 +149,13 @@
             </button>
         </div>
         {% else %}
-        <p class="text-sm text-base-content/60">{{ ('Save the website host above — a key is generated for you and shown here.') }}</p>
+        <div class="flex items-start gap-2.5 rounded-box border border-base-300 bg-base-200/40 p-3">
+            <span class="mt-0.5 text-base-content/60" aria-hidden="true">→</span>
+            <div class="min-w-0">
+                <p class="text-sm font-medium">{{ ('No key yet') }}</p>
+                <p class="mt-1 text-xs leading-relaxed text-base-content/60">{{ ('Press Save above. EzDistro generates the key and, since this website has a WordPress connection, uploads the file and verifies it for you.') }}</p>
+            </div>
+        </div>
         {% endif %}
     </div>
 </section>

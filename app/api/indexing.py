@@ -390,6 +390,7 @@ def tab_context(pb: Any, project_id: str) -> dict[str, Any]:
         "index_now_installed": bool(config.get("key_location")),
         "index_now_can_auto": IntegrationRepo(pb).get_active(project_id, "publisher") is not None,
         "index_now_default_host": search_engines.publisher_host(pb, project_id),
+        "index_now_site_url": search_engines.publisher_site_url(pb, project_id),
         "index_now_default_endpoint": DEFAULT_ENDPOINT,
         "index_now_jobs": jobs,
         "index_now_published": published,

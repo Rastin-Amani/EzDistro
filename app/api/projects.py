@@ -740,6 +740,7 @@ def _tab_context(
                     "index_now_installed": False,
                     "index_now_can_auto": False,
                     "index_now_default_host": "",
+                    "index_now_site_url": "",
                     "index_now_default_endpoint": "",
                 }
             )

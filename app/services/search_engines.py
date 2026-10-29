@@ -45,6 +45,14 @@ def publisher_host(pb: Any, project_id: str) -> str:
     return (urlparse(base).netloc or "").lower() if base else ""
 
 
+def publisher_site_url(pb: Any, project_id: str) -> str:
+    """The full WordPress site URL (with its subfolder), for display only."""
+    row = IntegrationRepo(pb).get_active(project_id, "publisher")
+    if not row:
+        return ""
+    return str((row.get("configuration") or {}).get("base_url") or "").strip().rstrip("/")
+
+
 def get_config(pb: Any, project_id: str) -> dict[str, Any]:
     """The Index Now connection, normalized with defaults ({} when absent)."""
     row = IntegrationRepo(pb).first(filter=f'project="{project_id}" && category="indexing"')
