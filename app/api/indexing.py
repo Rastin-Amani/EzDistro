@@ -23,7 +23,12 @@ from app.api.deps import (
 )
 from app.api.errors import hx_error
 from app.domain.validation import normalize_base_url
-from app.providers.indexnow import DEFAULT_ENDPOINT, generate_key, gsc_inspect_link
+from app.providers.indexnow import (
+    DEFAULT_ENDPOINT,
+    IndexNowClient,
+    generate_key,
+    gsc_inspect_link,
+)
 from app.repositories.integrations import IntegrationRepo
 from app.repositories.jobs import JobRepo
 from app.services import search_engines
@@ -77,6 +82,60 @@ def _save(
     )
 
 
+async def _install_key(
+    request: Request, project: dict[str, Any], project_id: str, *, host: str, key: str
+) -> tuple[str, str]:
+    """Upload ``<key>.txt`` to WordPress and verify the URL serves it.
+
+    Returns ``(key_location, message)``. Never raises: on failure the caller
+    saves without a keyLocation and tells the user to upload the file by hand —
+    a WordPress site that blocks .txt uploads must not break the setup.
+    """
+    pb = request.state.pb
+    if IntegrationRepo(pb).get_active(project_id, "publisher") is None:
+        return "", "No WordPress connection — upload the key file to the site root manually."
+    try:
+        publisher = _registry(request).get_publisher_provider(project, {})
+    except Exception as exc:
+        return "", f"WordPress is not usable: {exc}"
+    try:
+        media = await search_engines.install_key_file(publisher, key=key)
+    except Exception as exc:
+        return "", f"Could not upload the key file to WordPress: {exc}"
+    finally:
+        with contextlib.suppress(Exception):
+            await publisher.aclose()
+
+    url = str(media["url"])
+    client = IndexNowClient(host=host, key=key, key_location=url)
+    try:
+        await client.verify_key()
+    except Exception as exc:
+        return "", (
+            f"Uploaded to {url}, but that address does not serve the key ({exc}). "
+            "Upload the file to the site root manually, or set the key location."
+        )
+    finally:
+        with contextlib.suppress(Exception):
+            await client.aclose()
+    return url, f"Key file installed and verified at {url}"
+
+
+def _persist(pb: Any, project_id: str, config: dict[str, Any], **overrides: Any) -> None:
+    """Save the connection from an existing (normalized) config plus overrides."""
+    fields: dict[str, Any] = {
+        "host": str(config.get("host") or ""),
+        "key": str(config.get("key") or ""),
+        "endpoint": str(config.get("endpoint") or DEFAULT_ENDPOINT),
+        "key_location": str(config.get("key_location") or ""),
+        "auto_publish": bool(config.get("auto_publish", True)),
+        "auto_update": bool(config.get("auto_update", True)),
+        "enabled": True,
+    }
+    fields.update(overrides)
+    _save(pb, project_id, **fields)
+
+
 def _host_from_form(pb: Any, project_id: str, host: str) -> str:
     """Normalize the host; default to the WordPress site when left empty."""
     raw = safe_str(host).lower()
@@ -100,7 +159,7 @@ def _refresh(message: str, *, type: str = "success") -> Response:
 # ---------------------------------------------------------------------------
 @router.post("/projects/{project_id}/index-now/config")
 @hx_error("Saving the Index Now settings failed")
-def save_config(
+async def save_config(
     request: Request,
     project_id: str,
     host: str = Form(""),
@@ -110,7 +169,7 @@ def save_config(
     auto_update: str = Form(""),
 ):
     require_hx(request)
-    require_project_access(request, project_id)
+    project = require_project_access(request, project_id)
     require_project_role(request, project_id)
 
     existing = load_config(request.state.pb, project_id)
@@ -121,45 +180,75 @@ def save_config(
             "looked up there, so it cannot be guessed."
         )
     key = str(existing.get("key") or "") or generate_key()
+    resolved_location = safe_str(key_location)
+    message = "Index Now settings saved"
+    if not resolved_location:
+        # First save (or a key that was never installed): put the file on the
+        # site ourselves when WordPress is connected, then verify it.
+        resolved_location, message = await _install_key(
+            request, project, project_id, host=resolved_host, key=key
+        )
     _save(
         request.state.pb,
         project_id,
         host=resolved_host,
         key=key,
         endpoint=safe_str(endpoint) or DEFAULT_ENDPOINT,
-        key_location=safe_str(key_location),
+        key_location=resolved_location,
         auto_publish=safe_bool(auto_publish),
         auto_update=safe_bool(auto_update),
         enabled=True,
         user_id=request.state.user.get("id", "") if request.state.user else "",
     )
-    return _refresh("Index Now settings saved")
+    return _refresh(message, type="success" if resolved_location else "warning")
 
 
 @router.post("/projects/{project_id}/index-now/key")
 @hx_error("Generating a key failed")
-def regenerate_key(request: Request, project_id: str):
+async def regenerate_key(request: Request, project_id: str):
     """New key. Invalidates the old file — the page says so before it happens."""
     require_hx(request)
-    require_project_access(request, project_id)
+    project = require_project_access(request, project_id)
     require_project_role(request, project_id)
 
     existing = load_config(request.state.pb, project_id)
     if not existing:
         return error_response("Save the website host first, then generate the key")
     key = generate_key()
-    _save(
+    # The stored keyLocation points at the OLD file, so it must be re-installed.
+    location, message = await _install_key(
+        request, project, project_id, host=str(existing.get("host") or ""), key=key
+    )
+    _persist(
         request.state.pb,
         project_id,
-        host=str(existing.get("host") or ""),
+        existing,
         key=key,
-        endpoint=str(existing.get("endpoint") or DEFAULT_ENDPOINT),
-        key_location=str(existing.get("key_location") or ""),
-        auto_publish=bool(existing.get("auto_publish", True)),
-        auto_update=bool(existing.get("auto_update", True)),
-        enabled=True,
+        key_location=location,
     )
-    return _refresh("New key generated — upload the new file to your site root")
+    return _refresh(f"New key generated. {message}", type="success" if location else "warning")
+
+
+@router.post("/projects/{project_id}/index-now/install")
+@hx_error("Installing the key file failed")
+async def install_key_file(request: Request, project_id: str):
+    """Upload the key to WordPress again (e.g. after the media library was wiped)."""
+    require_hx(request)
+    project = require_project_access(request, project_id)
+    require_project_role(request, project_id)
+
+    config = load_config(request.state.pb, project_id)
+    if not config.get("key") or not config.get("host"):
+        return error_response("Save the website host first — the key is generated with it")
+    location, message = await _install_key(
+        request, project, project_id, host=str(config["host"]), key=str(config["key"])
+    )
+    if not location:
+        return toast_response(message, type="error", extra_events={"refreshIndexNow": True})
+    _persist(request.state.pb, project_id, config, key_location=location)
+    return toast_response(
+        message, type="success", extra_events={"refreshIndexNow": True, "refreshJobs": True}
+    )
 
 
 @router.post("/projects/{project_id}/index-now/verify")
@@ -298,6 +387,8 @@ def tab_context(pb: Any, project_id: str) -> dict[str, Any]:
         "index_now_ready": search_engines.is_ready(config),
         "index_now_key": key,
         "index_now_key_url": key_url,
+        "index_now_installed": bool(config.get("key_location")),
+        "index_now_can_auto": IntegrationRepo(pb).get_active(project_id, "publisher") is not None,
         "index_now_default_host": search_engines.publisher_host(pb, project_id),
         "index_now_default_endpoint": DEFAULT_ENDPOINT,
         "index_now_jobs": jobs,
