@@ -9,6 +9,25 @@ release builds on. Format is based on [Keep a Changelog](https://keepachangelog.
 
 ## [Unreleased]
 
+## [v1.29.1] — 2026-10-29
+
+### Fixed
+- **"Request indexing on Google" landed on the property picker.** The Search
+  Console link sent the site origin (`https://example.com`) as the property,
+  which Google does not match; it now sends the bare domain (or a
+  `sc-domain:` Domain property verbatim), so URL Inspection opens on the page.
+- **An older database no longer blocks the Index Now save.** A deployment that
+  upgraded the code without re-running bootstrap had an `integrations.category`
+  select without `indexing`, so every save failed with "Invalid value: indexing."
+  The first save now unions the code's select values into the live schema (the
+  same idempotent reconciler bootstrap uses) and retries once.
+
+### Changed
+- **The Index Now host is filled from the WordPress connection** and the tab
+  shows which site the project publishes to. The key-file steps now spell out
+  the subfolder case (a `/blog` install whose domain root belongs to something
+  else), where the key has to be served from wherever the site can serve it.
+
 ## [v1.29.0] — 2026-10-29
 
 ### Added
