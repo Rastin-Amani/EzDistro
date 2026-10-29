@@ -475,6 +475,7 @@ class FakeRegistry:
         self.image = FakeImageProvider()
         self.images: dict[str, FakeImageProvider] = {"primary": self.image}
         self.serp = NoneSERPProvider()
+        self.indexing = FakeIndexer()
 
     def get_llm_provider(
         self, project, settings, observer=None, integration=None, role="outline", role_config=None
@@ -513,6 +514,44 @@ class FakeRegistry:
         self, project, settings, observer=None, integration=None
     ) -> NoneSERPProvider:
         return self.serp
+
+    def get_indexing_provider(self, project, settings, observer=None, integration=None):
+        return self.indexing
+
+
+class FakeIndexer:
+    """IndexNow stand-in: records submissions, answers like the real endpoint."""
+
+    provider_name = "indexnow"
+
+    def __init__(self, *, status_code: int = 202, accepted: bool = True, message: str = "ok"):
+        self.status_code = status_code
+        self.accepted = accepted
+        self.message = message
+        self.submissions: list[list[str]] = []
+        self.closed = False
+
+    async def submit(self, urls):
+        from app.providers.indexnow import IndexNowResult
+
+        self.submissions.append(list(urls))
+        return IndexNowResult(
+            status_code=self.status_code,
+            accepted=self.accepted,
+            message=self.message,
+            endpoint="https://api.indexnow.org/indexnow",
+            host="s.test",
+            url_count=len(urls),
+        )
+
+    async def verify_key(self) -> str:
+        return "https://s.test/key.txt"
+
+    async def ping(self) -> None:
+        return None
+
+    async def aclose(self) -> None:
+        self.closed = True
 
 
 class _suppress:
