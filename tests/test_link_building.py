@@ -182,3 +182,19 @@ def test_handler_does_nothing_for_an_unpublished_article():
 
     assert result == {"linked": 0, "skipped": "not published"}
     assert registry.publisher.updated == []
+
+
+def test_link_phrases_fall_back_to_shorter_runs_of_a_long_keyword():
+    from app.services.link_building import _link_phrases
+
+    phrases = _link_phrases(
+        "how to automate content creation with ai",
+        "How to Automate Content Creation With AI: A Workflow",
+    )
+    assert phrases[0] == "how to automate content creation with ai"
+    assert "automate content creation" in phrases
+
+    html = "<p>Teams can automate content creation without a newsroom.</p>"
+    out = insert_contextual_link(html, TARGET, phrases)
+    assert out is not None
+    assert f'<a href="{TARGET}">automate content creation</a>' in out

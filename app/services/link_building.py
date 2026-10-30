@@ -79,6 +79,39 @@ def _same_url(left: str, right: str) -> bool:
     return left.rstrip("/").lower() == right.rstrip("/").lower()
 
 
+def _as_int(value: Any) -> int:
+    try:
+        return int(value or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
+def _link_phrases(keyword: str, title: str) -> list[str]:
+    """Anchors to look for, most specific first.
+
+    A long-tail keyword ("how to automate content creation with ai") almost
+    never appears verbatim in another article, so matching only the full keyword
+    and title is why most inbound-link jobs linked nothing. The keyword's word
+    runs still appear ("automate content creation"), so those are tried too —
+    longest run first, and never a run shorter than 8 characters.
+    """
+    from app.domain.keywords import content_tokens
+
+    bases = [keyword, title.split("|", 1)[-1] if "|" in title else title]
+    phrases: list[str] = []
+    for base in bases:
+        base = (base or "").strip()
+        if base and base not in phrases:
+            phrases.append(base)
+        words = content_tokens(base)
+        for size in (4, 3, 2):
+            for start in range(len(words) - size + 1):
+                phrase = " ".join(words[start : start + size])
+                if len(phrase) >= 8 and phrase not in phrases:
+                    phrases.append(phrase)
+    return phrases
+
+
 @register_job("build_internal_links")
 async def handle_build_internal_links(ctx: JobContext) -> dict[str, Any]:
     """Add one inbound internal link to the newest article's related pages."""
@@ -96,7 +129,7 @@ async def handle_build_internal_links(ctx: JobContext) -> dict[str, Any]:
 
     topic = TopicRepo(ctx.pb).get(str(article.get("topicId") or ""))
     keyword = str((topic or {}).get("keyword") or "")
-    phrases = [p for p in (keyword, str(article.get("title") or "")) if p.strip()]
+    phrases = _link_phrases(keyword, str(article.get("title") or ""))
     retrieval = ctx.config.retrieval
     if not phrases or not retrieval.get("top_k"):
         ctx.info("link building skipped: nothing to match on", {"article": article_id})
@@ -114,20 +147,42 @@ async def handle_build_internal_links(ctx: JobContext) -> dict[str, Any]:
     )
     results = await RetrievalService(ctx.pb, ctx.registry).retrieve(ctx.config, query, options)
 
+    candidates: list[dict[str, Any]] = [
+        {"url": str(result.source_url or ""), "postId": _as_int(result.metadata.get("source_id"))}
+        for result in results
+    ]
+    if not any(c["postId"] for c in candidates):
+        # Vector retrieval is down (or returned no addressable posts): rank the
+        # project's own published pages lexically instead of silently linking 0.
+        from app.services.internal_linking import published_link_candidates
+
+        candidates = [
+            {"url": candidate["url"], "postId": int(candidate["postId"])}
+            for candidate in published_link_candidates(
+                ctx.pb,
+                ctx.project_id,
+                query,
+                exclude_ids={article_id},
+                exclude_url=target_url,
+                max_links=MAX_INBOUND_PAGES,
+            )
+        ]
+        ctx.info(
+            "inbound link fallback: lexical candidates",
+            {"article": article_id, "candidates": len(candidates)},
+        )
+
     publisher = ctx.registry.get_publisher_provider(ctx.config.project, ctx.config.settings)
     jobs = JobRepo(ctx.pb)
     linked: list[dict[str, Any]] = []
     skipped = 0
-    for result in results:
+    for candidate in candidates:
         if len(linked) >= MAX_INBOUND_PAGES:
             break
-        url = str(result.source_url or "")
+        url = candidate["url"]
         if not url or _same_url(url, target_url):
             continue
-        try:
-            post_id = int(result.metadata.get("source_id") or 0)
-        except (TypeError, ValueError):
-            post_id = 0
+        post_id = candidate["postId"]
         if not post_id:
             skipped += 1
             continue
