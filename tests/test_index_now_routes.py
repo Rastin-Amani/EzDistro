@@ -253,7 +253,10 @@ def test_tab_renders_with_key_jobs_and_published_articles():
     body = _render(pb, project)
     assert "Put this file on your site yourself" in body
     assert "manual" in body  # the submission row's source
-    assert "search.google.com/search-console/inspect" in body
+    # the row carries the IndexNow action plus a copy-URL control, no Google button
+    assert "Search Console" in body
+    assert "Copy the page URL" in body
+    assert ">Google<" not in body
 
 
 # ---------------------------------------------------------------------------

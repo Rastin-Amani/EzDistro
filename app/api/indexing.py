@@ -27,7 +27,6 @@ from app.providers.indexnow import (
     DEFAULT_ENDPOINT,
     MAX_URLS,
     generate_key,
-    gsc_inspect_link,
     gsc_property_link,
     url_host,
 )
@@ -415,10 +414,6 @@ def tab_context(pb: Any, project_id: str) -> dict[str, Any]:
         filter=f'project="{project_id}" && status="published" && wordpressUrl != ""'
     )
     gsc_prop = str(config.get("gsc_property") or "") or (f"sc-domain:{host}" if host else "")
-    # One link per row: Search Console inspects a single URL, so the row IS the
-    # Google action (there is no bulk endpoint to call).
-    for row in published:
-        row["gsc_link"] = gsc_inspect_link(row["url"], gsc_prop)
     return {
         "index_now": config,
         "index_now_ready": search_engines.is_ready(config),

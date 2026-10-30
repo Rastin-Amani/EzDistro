@@ -193,7 +193,7 @@
         <div class="flex flex-wrap items-center gap-2">
             {% if index_now_gsc_home %}
             <a class="btn btn-ghost btn-xs" href="{{ index_now_gsc_home }}" target="_blank" rel="noopener"
-               title="{{ ('Open Search Console for this property. Google inspects one URL at a time, so use the Google button on a row.') }}">
+               title="{{ ('Open Google Search Console for this property — paste a page URL into “Inspect any URL” there') }}">
                 {{ ('Search Console') }}
             </a>
             {% endif %}
@@ -211,15 +211,17 @@
             <thead>
                 <tr class="text-[0.7rem] uppercase tracking-[0.073em] text-base-content/60">
                     <th>{{ ('Article') }}</th>
-                    <th>{{ ('URL') }}</th>
                     <th class="text-end">{{ ('Engines') }}</th>
                 </tr>
             </thead>
             <tbody>
                 {% for row in index_now_published %}
                 <tr>
-                    <td class="max-w-52 truncate text-xs font-medium">{{ row.title }}</td>
-                    <td class="max-w-64"><a href="{{ row.url }}" target="_blank" rel="noopener" class="link link-primary block truncate text-xs" dir="ltr">{{ row.url }}</a></td>
+                    <td class="max-w-72">
+                        <a href="{{ row.url }}" target="_blank" rel="noopener"
+                           class="block truncate text-xs font-medium link link-hover" dir="auto"
+                           title="{{ row.url }}">{{ row.title }}</a>
+                    </td>
                     <td class="whitespace-nowrap text-end">
                         <div class="flex items-center justify-end gap-1">
                             <button type="button" class="btn btn-ghost btn-xs"
@@ -228,10 +230,12 @@
                                     hx-swap="none"
                                     {% if not index_now_ready %}disabled{% endif %}
                                     title="{{ ('Submit this URL to IndexNow') }}">{{ ('IndexNow') }}</button>
-                            {% if row.gsc_link %}
-                            <a class="btn btn-ghost btn-xs" href="{{ row.gsc_link }}" target="_blank" rel="noopener"
-                               title="{{ ('Open Google Search Console URL Inspection for this page') }}">{{ ('Google') }}</a>
-                            {% endif %}
+                            <button type="button" class="btn btn-ghost btn-square btn-xs"
+                                    onclick='navigator.clipboard.writeText({{ row.url | tojson }}); this.classList.add("text-success"); setTimeout(() => this.classList.remove("text-success"), 1500);'
+                                    title="{{ ('Copy this page URL') }}"
+                                    aria-label="{{ ('Copy the page URL') }}">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="size-3.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75" /></svg>
+                            </button>
                         </div>
                     </td>
                 </tr>
