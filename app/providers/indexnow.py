@@ -109,10 +109,15 @@ def gsc_inspect_link(page_url: str, site_url: str = "") -> str:
 
     `resource_id` is the property, in one of Google's two valid shapes; the
     Domain property of the page's own host is the default.
+
+    `url` is what makes this a PAGE link. Google's own address bar rewrites the
+    page to `…&id=<inspection-id>` once it has inspected something; that form is
+    session-bound and re-opening it just falls back to the property home, so it
+    is never generated here.
     """
     resource = gsc_property(site_url) or f"sc-domain:{url_host(page_url)}"
     return "https://search.google.com/search-console/inspect?" + urlencode(
-        {"resource_id": resource, "url": page_url, "hl": "en"}
+        {"resource_id": resource, "url": page_url}
     )
 
 
@@ -459,6 +464,8 @@ def _selfcheck() -> None:
     assert gsc_site_url(link) == "sc-domain:example.com"
     assert "resource_id=sc-domain%3Aexample.com" in link
     assert "url=https%3A%2F%2Fexample.com%2Fblog%2Fpost%3Fa%3D1" in link
+    assert "hl=" not in link  # match Google's own form; no session-bound extras
+    assert "&id=" not in link
     # a URL-prefix property is normalized with its trailing slash
     assert gsc_site_url(gsc_inspect_link(url, "https://example.com")) == "https://example.com/"
     assert gsc_site_url(gsc_inspect_link(url, "example.com")) == "sc-domain:example.com"
