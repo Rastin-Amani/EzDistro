@@ -1258,9 +1258,15 @@ async def _retrieval_data(ctx: JobContext, topic: dict[str, Any]) -> dict[str, A
     RetrievalService (embed → project-filtered search → optional rerank) →
     InternalLinkingService (filter/dedupe/rank) → ContextBuilder (budgeted
     passages). The LLM never receives full documents.
+
+    When retrieval is unavailable (embeddings/Qdrant down, or no usable hits)
+    the link candidates fall back to the project's own published pages in
+    PocketBase, ranked lexically — otherwise every article silently ships
+    without internal links.
     """
     empty = {"context": "", "links": []}
     retrieval = ctx.config.retrieval
+    query = f"{topic.get('title') or ''} {topic.get('keyword') or ''}".strip()
     if not retrieval.get("top_k"):
         return empty
     try:
@@ -1268,7 +1274,6 @@ async def _retrieval_data(ctx: JobContext, topic: dict[str, Any]) -> dict[str, A
         from app.services.internal_linking import ContextBuilder
         from app.services.retrieval import RetrievalService
 
-        query = f"{topic.get('title') or ''} {topic.get('keyword') or ''}".strip()
         service = RetrievalService(ctx.pb, ctx.registry)
         options = RetrievalOptions(
             candidate_count=int(retrieval["top_k"]),
@@ -1278,7 +1283,7 @@ async def _retrieval_data(ctx: JobContext, topic: dict[str, Any]) -> dict[str, A
         )
         results = await service.retrieve(ctx.config, query, options)
         if not results:
-            return empty
+            return {"context": "", "links": _lexical_links(ctx, query)}
 
         budget = ctx.config.context
         builder = ContextBuilder(
@@ -1293,6 +1298,10 @@ async def _retrieval_data(ctx: JobContext, topic: dict[str, Any]) -> dict[str, A
             current_title=str(topic.get("title") or ""),
         )
         links = [link.to_dict() for link in retrieval_ctx.links]
+        if not links:
+            # Semantic search found passages but no addressable pages — keep the
+            # context, fill the link list from the project's own pages.
+            links = _lexical_links(ctx, query)
         ctx.info(
             "retrieval context built",
             {
@@ -1306,7 +1315,31 @@ async def _retrieval_data(ctx: JobContext, topic: dict[str, Any]) -> dict[str, A
         return {"context": retrieval_ctx.format_for_prompt(), "links": links}
     except Exception as exc:
         ctx.warning("retrieval context unavailable", {"error": str(exc)})
-        return empty
+        return {"context": "", "links": _lexical_links(ctx, query)}
+
+
+def _lexical_links(ctx: JobContext, query: str) -> list[dict[str, Any]]:
+    """Link candidates straight from PocketBase when the vector path yields none."""
+    try:
+        from app.services.internal_linking import published_link_candidates
+
+        links = published_link_candidates(
+            ctx.pb,
+            ctx.project_id,
+            query,
+            max_links=int(ctx.config.context.get("max_links") or 5),
+        )
+    except Exception as exc:
+        ctx.warning("lexical link candidates unavailable", {"error": str(exc)})
+        return []
+    if links:
+        ctx.info(
+            "lexical link candidates used",
+            {"links": len(links), "query": query},
+        )
+    else:
+        ctx.warning("no internal link candidates found", {"query": query})
+    return links
 
 
 def _prompt_config_error(which: str, exc: Any) -> ProviderError:

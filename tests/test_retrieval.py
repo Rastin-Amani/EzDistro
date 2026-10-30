@@ -10,6 +10,7 @@ from app.providers.base import VectorPoint
 from app.repositories.jobs import JobEventRepo, JobRepo, now_utc
 from app.repositories.projects import DEFAULT_SETTINGS
 from app.repositories.prompts import PromptRepo
+from app.repositories.topics import TopicRepo
 from app.schemas.retrieval import RetrievalOptions, RetrievalResult
 from app.services.internal_linking import ContextBuilder, InternalLinkingService
 from app.services.retrieval import RetrievalService, normalize_query
@@ -417,3 +418,62 @@ def test_writer_outline_prompt_contains_budgeted_context():
     # passages are snippet-length, NOT the full 20x-repeated text
     assert "relevant article text" in outline_call
     assert len(outline_call) < 6000  # context budget enforced (not full documents)
+
+
+# ---------------------------------------------------------------------------
+# Lexical fallback (no embeddings / vector store)
+# ---------------------------------------------------------------------------
+def test_published_link_candidates_rank_pages_without_vectors():
+    from app.services.internal_linking import published_link_candidates
+
+    pb = FakePocketBase(default_unique_fields())
+    project = make_project(pb)
+
+    def article(title: str, keyword: str, status: str, url: str, post_id: int) -> dict:
+        topic = TopicRepo(pb).create(project=project["id"], title=keyword, keyword=keyword)
+        return pb.collection("articles").create(
+            {
+                "project": project["id"],
+                "topicId": topic["id"],
+                "title": title,
+                "status": status,
+                "wordpressUrl": url,
+                "wordpressPostId": post_id,
+            }
+        )
+
+    gym = article(
+        "gym management software | Gym Management Software",
+        "gym management software",
+        "published",
+        "https://site.test/gym-software",
+        11,
+    )
+    article(
+        "restaurant accounting | Restaurant Accounting",
+        "restaurant accounting",
+        "published",
+        "https://site.test/accounting",
+        12,
+    )
+    article(
+        "gym management software pricing | Gym Pricing",
+        "gym management software pricing",
+        "draft",
+        "https://site.test/gym-pricing",
+        13,
+    )
+
+    links = published_link_candidates(pb, project["id"], "gym management software")
+
+    assert [link["url"] for link in links] == ["https://site.test/gym-software"]
+    assert links[0]["postId"] == 11
+    assert links[0]["anchor_text"] == "Gym Management Software"
+    assert links[0]["keyword"] == "gym management software"
+    # published pages outside the query topic never become candidates
+    assert links[0]["url"] != "https://site.test/accounting"
+    # an explicitly excluded page (the article being written) is skipped
+    excluded = published_link_candidates(
+        pb, project["id"], "gym management software", exclude_ids={gym["id"]}
+    )
+    assert excluded == []

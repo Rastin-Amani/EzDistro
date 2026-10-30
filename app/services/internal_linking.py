@@ -18,6 +18,73 @@ DEFAULT_MAX_LINKS = 5
 DEFAULT_MAX_PASSAGES = 5
 DEFAULT_MAX_CHARS = 4000
 MIN_LINK_SCORE = 0.0  # below this, a candidate is low-quality
+# ponytail: lexical relevance floor for the no-vector fallback, tune if it
+# starts offering unrelated pages (raise) or nothing (lower).
+MIN_LEXICAL_SCORE = 0.1
+
+
+def published_link_candidates(
+    pb: Any,
+    project_id: str,
+    query: str,
+    *,
+    exclude_ids: set[str] | None = None,
+    exclude_url: str = "",
+    max_links: int = DEFAULT_MAX_LINKS,
+) -> list[dict[str, Any]]:
+    """Rank the project's own published pages lexically — no embeddings, no Qdrant.
+
+    PocketBase already holds every published page (title + URL), so internal
+    linking must not vanish when the embedding or vector provider is down. The
+    result has the ``LinkCandidate`` fields plus ``keyword`` and ``postId`` so
+    callers can insert and target links without another lookup.
+    """
+    from app.domain.keywords import similarity
+    from app.repositories.articles import ArticleRepo
+    from app.repositories.topics import TopicRepo
+
+    query = (query or "").strip()
+    if not query or max_links <= 0:
+        return []
+    excluded = exclude_ids or set()
+    excluded_url = exclude_url.rstrip("/").lower()
+    rows = ArticleRepo(pb).list_all(
+        filter=f'project="{project_id}" && status="published"',
+        fields="id,title,topicId,wordpressUrl,wordpressPostId",
+    )
+    keyword_by_topic = {
+        str(topic["id"]): str(topic.get("keyword") or "")
+        for topic in TopicRepo(pb).list_all(filter=f'project="{project_id}"', fields="id,keyword")
+    }
+    scored: list[tuple[float, str, str, str, str, int]] = []
+    for row in rows:
+        url = str(row.get("wordpressUrl") or "").strip()
+        title = str(row.get("title") or "").strip()
+        if not url or not title or str(row.get("id") or "") in excluded:
+            continue
+        if excluded_url and url.rstrip("/").lower() == excluded_url:
+            continue
+        topic_keyword = keyword_by_topic.get(str(row.get("topicId") or ""), "")
+        score = similarity(query, f"{title} {topic_keyword}")
+        if score < MIN_LEXICAL_SCORE:
+            continue
+        # Titles are "keyword | Real Title" — the tail reads naturally as an anchor.
+        anchor = title.split("|", 1)[-1].strip() if "|" in title else title
+        scored.append(
+            (score, title, url, topic_keyword, anchor, int(row.get("wordpressPostId") or 0))
+        )
+    scored.sort(key=lambda item: item[0], reverse=True)
+    return [
+        {
+            "title": title,
+            "url": url,
+            "anchor_text": anchor,
+            "keyword": keyword or anchor,
+            "postId": post_id,
+            "relevance_score": score,
+        }
+        for score, title, url, keyword, anchor, post_id in scored[:max_links]
+    ]
 
 
 class InternalLinkingService:

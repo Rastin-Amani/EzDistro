@@ -466,3 +466,36 @@ def test_embedding_model_switch_triggers_reindex():
     doc2 = pb.collection("documents").get_full_list()[0]
     assert doc2["embeddingModel"] == "embed-v3.0"
     assert len(registry.vector.points) == 1  # re-embedded in the new namespace
+
+
+def test_retrieval_falls_back_to_published_pages_when_embedding_fails():
+    """A provider outage must not silently produce link-less articles."""
+    from app.repositories.articles import ArticleRepo
+    from app.repositories.topics import TopicRepo
+    from app.services.writing import _retrieval_data
+
+    pb = FakePocketBase(default_unique_fields())
+    project = make_project(pb)
+    topics = TopicRepo(pb)
+    related_topic = topics.create(
+        project=project["id"], title="gym software", keyword="gym software"
+    )
+    article = ArticleRepo(pb).create(
+        project=project["id"], topic_id=related_topic["id"], title="gym software | Gym Software"
+    )
+    ArticleRepo(pb).update(
+        article["id"],
+        {"status": "published", "wordpressUrl": "https://site.test/gym-software"},
+    )
+    topic = topics.create(project=project["id"], title="gym software", keyword="gym software")
+
+    class BrokenEmbedding:
+        async def embed_queries(self, texts):
+            raise RuntimeError("embeddings are down")
+
+    registry = FakeRegistry()
+    registry.embedding = BrokenEmbedding()  # type: ignore[assignment]
+    ctx = make_ctx(pb, registry, make_job(pb, project["id"], "write_article", {}, "qf2"))
+
+    data = asyncio_run(_retrieval_data(ctx, topic))
+    assert [link["url"] for link in data["links"]] == ["https://site.test/gym-software"]
