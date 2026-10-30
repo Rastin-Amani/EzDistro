@@ -613,6 +613,13 @@ most related to the new article and adds **one contextual link to each** (max 3)
 - Only the live post's `content` field is sent to WordPress; nothing else about the
   post changes, and each edited post is re-queued for indexing (`index_document`).
 - Triggered automatically after a successful live publish (`mode=publish`).
+- **The vector store is an optimisation, not a dependency.** When embeddings or
+  Qdrant fail, both this job and the writer's outline prompts fall back to
+  `published_link_candidates()` (`app/services/internal_linking.py`), which ranks the
+  project's own published pages in PocketBase lexically. Without it, a provider
+  outage silently produced articles with no internal links at all.
+  `app/scripts/backfill_internal_links.py` repairs articles published during such an
+  outage (contextual links where the text allows, plus a "Related" list).
 
 ## 6.10 Landing-page analysis (`analyze_landing_page`)
 

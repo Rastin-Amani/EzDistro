@@ -121,13 +121,14 @@ def _image_slots(article: dict, images: list[dict]) -> list[dict]:
 
 
 def _collect_links(article: dict) -> list[dict]:
-    """Deduplicated intended internal links from the outline snapshot."""
-    outline = article.get("outline")
-    if not isinstance(outline, dict):
-        return []
+    """Deduplicated internal links: outline sections + the backfilled link set."""
+    raw_outline = article.get("outline")
+    outline: dict = raw_outline if isinstance(raw_outline, dict) else {}
+    plans = list(outline.get("sections") or [])
+    plans.append({"internal_links": outline.get("internal_links") or []})
     seen: set[str] = set()
     links: list[dict] = []
-    for plan in outline.get("sections") or []:
+    for plan in plans:
         if not isinstance(plan, dict):
             continue
         for link in plan.get("internal_links") or []:
