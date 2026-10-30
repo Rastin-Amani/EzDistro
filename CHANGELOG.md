@@ -9,6 +9,26 @@ release builds on. Format is based on [Keep a Changelog](https://keepachangelog.
 
 ## [Unreleased]
 
+## [v1.30.2] — 2026-10-30
+
+### Fixed
+- **Internal links no longer disappear when retrieval is down.** The outline
+  only offered the writer the pages the vector store returned, so a failed
+  embedding or Qdrant call silently produced articles with zero internal links
+  (and zero inbound links in `build_internal_links`). Link candidates now fall
+  back to the project's own published pages in PocketBase, ranked lexically.
+  `app/scripts/backfill_internal_links.py` repairs articles that were published
+  without links.
+- **Inbound link building actually places links.** It only searched for the new
+  article's full keyword or title inside older pages, and a long-tail keyword
+  almost never appears verbatim — 71 of 76 completed jobs linked nothing. It now
+  also tries the keyword's shorter word runs (longest first), so a page saying
+  "automate content creation" can link to "how to automate content creation
+  with AI" without rewriting a single word.
+- **`mistral-embed` is a known embedding model.** It maps to 1024 dimensions, so
+  a Mistral embedding connection no longer creates a collection with the wrong
+  vector size.
+
 ## [v1.30.1] — 2026-10-30
 
 ### Fixed
