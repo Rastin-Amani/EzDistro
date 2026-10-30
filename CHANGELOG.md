@@ -9,6 +9,22 @@ release builds on. Format is based on [Keep a Changelog](https://keepachangelog.
 
 ## [Unreleased]
 
+## [v1.30.1] — 2026-10-30
+
+### Fixed
+- **The Search Console deep link no longer carries session-bound extras.**
+  Google's own UI rewrites an inspection page to `…&id=<inspection-id>`, and that
+  form is bound to the browser session — re-opening it from the app landed on the
+  property home instead of the page. The link now sends only `resource_id` and
+  `url` (what Google's own form uses) and never an `id` or `hl`.
+
+### Changed
+- **The published-articles rows trade the dead-end Google button for a copy-URL
+  control.** Google inspects one URL at a time and the tab already links the
+  property, so the row now copies its page URL (to paste into "Inspect any URL").
+  The article title is the clickable live URL, which drops the separate URL
+  column and keeps long URLs readable.
+
 ## [v1.30.0] — 2026-10-29
 
 ### Added
