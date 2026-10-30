@@ -12,7 +12,7 @@ class Settings(BaseSettings):
 
     # --- app ---
     env: str = "dev"  # dev | production
-    app_version: str = "1.30.0"
+    app_version: str = "1.30.1"
     app_name: str = "EzDistro Platform"
 
     # --- PocketBase ---
