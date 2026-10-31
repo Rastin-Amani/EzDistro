@@ -6,6 +6,9 @@ vite.config.js
 src/
 public/
 
+# GitHub-only assets (screenshots, the demo video) — never needed in the image
+.github/
+
 # Ignore Python cache files 🐍
 __pycache__/
 *.pyc
