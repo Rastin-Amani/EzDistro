@@ -61,8 +61,21 @@ LLM / embeddings / reranking / publishing. No Redis, no Celery, no n8n.
 
 Architecture, data model, job-state design and provider interfaces: see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
+## Demo
+
+<p align="center">
+  <a href=".github/assets/videos/ezdistro-demo.mp4">
+    <img src=".github/assets/videos/ezdistro-demo-poster.jpg" width="820" alt="Watch the EzDistro demo">
+  </a>
+  <br>
+  <sub><b>▶ <a href=".github/assets/videos/ezdistro-demo.mp4">Watch the demo</a></b> — 53 s, with audio: research, the RAG writing workspace, and the review + automation loop, in the real UI.</sub>
+</p>
+
+GitHub plays the file when you open it (that link is the video, not a still). Individual screens are below.
+
 ## Contents
 
+- [Demo](#demo)
 - [Screenshots](#screenshots)
 - [Features](#features)
 - [Stack](#stack)
