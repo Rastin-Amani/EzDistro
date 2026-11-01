@@ -9,6 +9,29 @@ release builds on. Format is based on [Keep a Changelog](https://keepachangelog.
 
 ## [Unreleased]
 
+## [v1.31.0] — 2026-11-01
+
+### Added
+- **Customers pay on our domain.** `/billing` now opens a self-hosted crypto
+  checkout at `/checkout/{reference}` instead of redirecting to PayRam's hosted
+  page: one card with the order total, a coin/network picker, the deposit
+  address with a client-generated QR code, a live expiry countdown and the
+  paid/partial/expired/error end states. PayRam stays the payment rail; the API
+  key remains server-side. New routes: `POST /api/checkout`,
+  `GET /api/checkout/{ref}` (three fields only), `GET /api/checkout/{ref}/options`
+  and the webhook alias `/api/payram/webhook`. The QR encoder is a small
+  byte-mode/ECC-M implementation in `app/static/js/qrcode.js` — no new
+  dependency and no image API.
+- **Card / Apple Pay / bank hand-off.** The method chooser now offers PayRam's
+  card and fiat on-ramp alongside crypto, with a short wallet/KYC explainer and
+  a same-tab jump to PayRam's hosted page (never iframed). The tab is hidden for
+  currency/network-restricted orders (`PAYRAM_CARD_ONRAMP_ENABLED=false` turns
+  it off entirely). `/checkout/{reference}/return` shows processing with a
+  manual refresh while the provider confirms, then thank-you/expired; the
+  webhook still fulfils exactly once. No create-onramp-session endpoint exists
+  in this PayRam version (`/swagger` and `/openapi.json` are disabled), so the
+  app does not invent one.
+
 ## [v1.30.2] — 2026-10-30
 
 ### Fixed
