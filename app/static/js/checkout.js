@@ -16,6 +16,8 @@ if (panel) {
     const cardAvailable = panel.dataset.cardAvailable === 'true';
     const cardUrl = panel.dataset.cardUrl || '';
     const supportUrl = panel.dataset.supportUrl || '';
+    const statusRegion = document.getElementById('checkout-status');
+    const pageBack = document.querySelector('[data-page-back]');
     const amount = Number(panel.dataset.amount || 0);
     const statusUrl = `/api/checkout/${encodeURIComponent(reference)}`;
     const optionsUrl = `/api/checkout/${encodeURIComponent(reference)}/options`;
@@ -30,6 +32,7 @@ if (panel) {
     let stopped = false;
     let busy = false;
     let view = 'loading';
+    let showAll = false;
 
     const esc = (value) =>
         String(value ?? '').replace(
@@ -68,11 +71,32 @@ if (panel) {
     function show(html, name = '') {
         panel.innerHTML = html;
         view = name;
+        panel.setAttribute('aria-busy', name === 'loading' ? 'true' : 'false');
+        // A state change is a cross-fade, not a slide: it keeps the card still.
+        if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            panel.animate(
+                [{ opacity: 0 }, { opacity: 1 }],
+                { duration: 180, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' }
+            );
+        }
+    }
+
+    function announce(message) {
+        if (statusRegion) statusRegion.textContent = message;
+    }
+
+    function setPageBack(visible) {
+        if (pageBack) pageBack.hidden = !visible;
+    }
+
+    function focusHeading() {
+        const heading = panel.querySelector('[data-state-heading]');
+        if (heading) heading.focus({ preventScroll: true });
     }
 
     function renderLoading() {
         show(`
-            <div class="animate-pulse space-y-3" aria-hidden="true">
+            <div class="motion-safe:animate-pulse space-y-3" aria-hidden="true">
                 <div class="h-3 w-24 rounded bg-base-200"></div>
                 <div class="h-14 rounded-field bg-base-200"></div>
                 <div class="h-14 rounded-field bg-base-200"></div>
@@ -89,18 +113,16 @@ if (panel) {
         return value;
     }
 
-    function renderSelect() {
+    function renderSelect(focus = false, quiet = false) {
+        if (trust) trust.textContent = 'Crypto';
         const sorted = [...(options || [])].sort((a, b) => score(b) - score(a));
         if (!sorted.length) return renderError('No payment methods are available right now.');
+        const shown = showAll ? sorted : sorted.slice(0, 4);
         show(`
             <div class="flex flex-col gap-3">
-                <div class="flex items-center justify-between gap-3">
-                    <p class="text-xs font-semibold">Choose a coin and network</p>
-                    <span class="badge badge-soft badge-neutral badge-sm">${sorted.length}</span>
-                </div>
-                <div class="relative">
-                <div role="radiogroup" aria-label="Coin and network" class="flex max-h-[18rem] flex-col gap-2 overflow-y-auto pe-1 pb-2">
-                    ${sorted
+                <p class="text-[0.8125rem] font-semibold" tabindex="-1" data-state-heading>Choose a coin and network</p>
+                <div role="group" aria-label="Coin and network" class="flex flex-col gap-2">
+                    ${shown
                         .map((option) => {
                             const active = option === chosen;
                             const tag = option.recommended
@@ -109,8 +131,8 @@ if (panel) {
                                   ? '<span class="badge badge-xs badge-soft badge-neutral">Most used</span>'
                                   : '';
                             return `
-                        <button type="button" role="radio" aria-checked="${active}" data-pick="${esc(option.id)}"
-                                class="flex min-h-14 w-full items-center gap-3 rounded-field border px-3 py-2.5 text-start transition-colors ${
+                        <button type="button" ${active ? 'aria-current="true"' : ''} data-pick="${esc(option.id)}"
+                                class="flex min-h-14 w-full items-center gap-3 rounded-field border px-3 py-2.5 text-start transition-[background-color,border-color,transform] duration-150 active:scale-[0.99] active:bg-base-200 ${
                                     active
                                         ? 'border-primary bg-primary/5 ring-1 ring-primary'
                                         : 'border-base-300 bg-base-100 hover:bg-base-200'
@@ -118,50 +140,68 @@ if (panel) {
                             <span class="grid size-8 flex-none place-items-center rounded-full bg-base-200 font-mono text-[10px] font-bold uppercase" aria-hidden="true">${esc(
                                 (option.currency || '?').slice(0, 4)
                             )}</span>
-                            <span class="min-w-0 flex-1">
-                                <span class="block truncate text-sm font-semibold">${esc(option.currency)}
-                                    <span class="font-normal text-base-content/55">on ${esc(option.network)}</span>
-                                </span>
-                                <span class="block truncate text-[11px] text-base-content/50">${esc(option.family)}</span>
+                            <span class="min-w-0 flex-1 truncate text-[0.9375rem] font-semibold">${esc(option.currency)}
+                                <span class="font-normal text-base-content/65">on ${esc(option.network)}</span>
                             </span>
                             ${tag}
                         </button>`;
                         })
                         .join('')}
                 </div>
-                <div aria-hidden="true" style="pointer-events:none;position:absolute;inset-inline:0;bottom:0;height:1.5rem;background:linear-gradient(to top,var(--color-base-100),transparent)"></div>
-                </div>
-                <p class="text-[11px] leading-relaxed text-base-content/50">
-                    Send the exact amount shown next. The address belongs to this order.
+                ${
+                    sorted.length > 4
+                        ? `<button type="button" data-more
+                                  class="btn btn-ghost btn-sm min-h-11 w-full gap-1.5 text-base-content/65">
+                               ${showAll ? 'Show fewer methods' : `Show ${sorted.length - 4} more`}
+                               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                    stroke-width="2" stroke="currentColor" aria-hidden="true"
+                                    class="size-3.5 transition-transform ${showAll ? 'rotate-180' : ''}">
+                                   <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                               </svg>
+                           </button>`
+                        : ''
+                }
+                <p class="text-[11px] leading-relaxed text-base-content/60">
+                    We'll show a deposit address for this order next.
                 </p>
                 ${
                     cardAvailable && safeHref(cardUrl)
                         ? `
                 <div class="flex items-center gap-3 pt-1">
                     <span class="h-px flex-1 bg-base-300" aria-hidden="true"></span>
-                    <span class="text-[10px] font-medium uppercase tracking-[0.073em] text-base-content/45">or</span>
+                    <span class="text-[11px] font-medium uppercase tracking-[0.073em] text-base-content/60">or</span>
                     <span class="h-px flex-1 bg-base-300" aria-hidden="true"></span>
                 </div>
                 <button type="button" data-card
-                        class="flex w-full items-start gap-3 rounded-field border border-base-300 bg-base-100 px-3 py-3 text-start transition-colors hover:bg-base-200">
+                        class="flex w-full items-start gap-3 rounded-field border border-base-300 bg-base-100 px-3 py-3 text-start transition-[background-color,border-color,transform] duration-150 hover:bg-base-200 active:scale-[0.99] active:bg-base-200">
                     <span class="grid size-8 flex-none place-items-center rounded-full bg-base-200" aria-hidden="true">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor" class="size-4"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 8.25A2.25 2.25 0 0 1 4.5 6h15a2.25 2.25 0 0 1 2.25 2.25m-19.5 0v9A2.25 2.25 0 0 0 4.5 19.5h15a2.25 2.25 0 0 0 2.25-2.25v-9" /></svg>
                     </span>
                     <span class="min-w-0 flex-1">
-                        <span class="flex flex-wrap items-center gap-1.5">
-                            <span class="text-sm font-semibold">Pay with card / Apple Pay / bank</span>
-                            <span class="badge badge-xs badge-soft badge-accent">Instant</span>
+                        <span class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                            <span class="text-[0.9375rem] font-semibold">Pay with card</span>
+                            <span class="badge badge-sm badge-soft badge-accent">Instant</span>
                         </span>
-                        <span class="mt-0.5 block text-[11px] leading-relaxed text-base-content/50">Card payments may include provider fees. You'll need a one-time identity check.</span>
+                        <span class="mt-0.5 block text-[12px] font-medium text-base-content/70">Apple Pay, bank & local methods</span>
+                        <span class="mt-1 block text-[11px] leading-relaxed text-base-content/60">Provider fees may apply. You'll need a one-time identity check.</span>
                     </span>
                 </button>`
                         : ''
                 }
             </div>
         `, 'select');
+        if (!quiet) {
+            announce(
+                cardAvailable && safeHref(cardUrl)
+                    ? 'Choose a coin and network, or pay by card.'
+                    : 'Choose a coin and network.'
+            );
+        }
+        setPageBack(true);
+        if (focus) focusHeading();
     }
 
-    function renderWaiting() {
+    function renderWaiting(focus = false) {
         if (!chosen) return renderSelect();
         if (trust) trust.textContent = `${chosen.network}`;
         let qr = '';
@@ -170,17 +210,20 @@ if (panel) {
         } catch (error) {
             qr = '';
         }
+        const expiryLabel = Number.isFinite(expiresAt)
+            ? new Date(expiresAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            : '';
         show(`
             <div class="flex flex-col gap-4">
                 <div class="flex items-center justify-between gap-3">
-                    <p class="flex items-center gap-2 text-sm font-semibold">
+                    <p class="flex items-center gap-2 text-sm font-semibold outline-none" tabindex="-1" data-state-heading>
                         <span class="relative flex size-2.5" aria-hidden="true">
-                            <span class="absolute inline-flex size-full animate-ping rounded-full bg-warning opacity-60"></span>
+                            <span class="absolute inline-flex size-full rounded-full bg-warning opacity-60 motion-safe:animate-ping"></span>
                             <span class="relative inline-flex size-2.5 rounded-full bg-warning"></span>
                         </span>
                         Waiting for payment
                     </p>
-                    <span class="badge badge-sm badge-soft badge-warning">${esc(chosen.network)}</span>
+                    <span class="badge badge-sm badge-soft badge-neutral">${esc(chosen.network)}</span>
                 </div>
                 ${
                     qr
@@ -190,13 +233,13 @@ if (panel) {
                         : ''
                 }
                 <div class="rounded-field border border-base-300 bg-base-200/50 px-3 py-2.5">
-                    <p class="text-[11px] font-medium uppercase tracking-[0.073em] text-base-content/55">Send exactly</p>
+                    <p class="text-[11px] font-medium uppercase tracking-[0.073em] text-base-content/60">Amount due</p>
                     <p class="mt-0.5 text-xl font-extrabold tabular-nums">${money(amount)}</p>
-                    <p class="text-[11px] text-base-content/55">in ${esc(chosen.currency)} on ${esc(chosen.network)}</p>
+                    <p class="text-[11px] text-base-content/60">USD value in ${esc(chosen.currency)} on ${esc(chosen.network)}</p>
                 </div>
                 <div class="min-w-0">
-                    <p class="text-[11px] font-medium uppercase tracking-[0.073em] text-base-content/55">Deposit address</p>
-                    <code class="mt-1 block w-full rounded-field border border-base-300 bg-base-200/50 px-3 py-2.5 font-mono text-[11px] leading-5 break-all" dir="ltr">${esc(
+                    <p class="text-[11px] font-medium uppercase tracking-[0.073em] text-base-content/60">Deposit address</p>
+                    <code class="mt-1 block w-full rounded-field border border-base-300 bg-base-200/50 px-3 py-2.5 font-mono text-[12px] leading-5 break-all" dir="ltr">${esc(
                         chosen.address
                     )}</code>
                 </div>
@@ -206,24 +249,29 @@ if (panel) {
                     Copy address
                 </button>
                 <div class="flex items-center justify-between gap-2 border-t border-base-300 pt-3 text-xs">
-                    <span class="text-base-content/55">Expires in</span>
-                    <span class="whitespace-nowrap font-mono font-semibold tabular-nums" data-countdown>--:--</span>
+                    <span class="text-base-content/65">Expires in</span>
+                    <span class="whitespace-nowrap font-mono font-semibold tabular-nums" data-countdown aria-hidden="true">--:--</span>
+                    ${expiryLabel ? `<span class="sr-only">Payment link expires at ${esc(expiryLabel)}.</span>` : ''}
                 </div>
                 <button type="button" data-change class="btn btn-ghost btn-sm min-h-11 w-full">Change payment method</button>
             </div>
         `, 'waiting');
+        announce('Waiting for payment.');
+        setPageBack(true);
         paintCountdown();
+        if (focus) focusHeading();
     }
 
     function renderCardExplainer() {
+        if (trust) trust.textContent = 'Card';
         const href = safeHref(cardUrl);
         if (!href) return renderSelect();
         show(`
             <div class="flex flex-col gap-4">
                 <div class="flex items-start justify-between gap-3">
                     <div class="min-w-0">
-                        <p class="text-base font-extrabold tracking-tight">Pay with card</p>
-                        <p class="mt-1 text-xs leading-relaxed text-base-content/60">
+                        <p class="text-base font-extrabold tracking-tight outline-none" tabindex="-1" data-state-heading>Pay with card</p>
+                        <p class="mt-1 text-xs leading-relaxed text-base-content/65">
                             You'll finish on PayRam's secure page. We never see your card details.
                         </p>
                     </div>
@@ -236,11 +284,14 @@ if (panel) {
                 </ol>
                 <a href="${esc(href)}" class="btn btn-primary min-h-11 w-full">Continue to card payment</a>
                 <button type="button" data-back class="btn btn-ghost btn-sm min-h-11 w-full">Back to crypto methods</button>
-                <p class="text-center text-[11px] leading-relaxed text-base-content/45">
+                <p class="text-center text-[11px] leading-relaxed text-base-content/60">
                     Card payments may include provider fees. Availability depends on your region and the provider.
                 </p>
             </div>
         `, 'card');
+        announce('Pay with card.');
+        setPageBack(true);
+        focusHeading();
     }
 
     function supportLink(extraClass = '') {
@@ -258,10 +309,10 @@ if (panel) {
                 </span>
                 <div>
                     <p class="text-lg font-extrabold tracking-tight">Payment is still processing</p>
-                    <p class="mt-1 text-sm leading-relaxed text-base-content/60">
+                    <p class="mt-1 text-sm leading-relaxed text-base-content/65">
                         Card payments can take a few minutes. We'll mark this order paid as soon as the provider confirms it.
                     </p>
-                    <p class="mt-2 text-xs leading-relaxed text-base-content/50">
+                    <p class="mt-2 text-xs leading-relaxed text-base-content/60">
                         You can safely close this page — confirmation happens in the background.
                     </p>
                 </div>
@@ -271,6 +322,8 @@ if (panel) {
                    class="btn btn-ghost btn-sm min-h-11 w-full">Back to checkout</a>
             </div>
         `, 'processing');
+        announce('Payment is still processing.');
+        setPageBack(false);
     }
 
     function renderPaid() {
@@ -281,7 +334,7 @@ if (panel) {
                 </span>
                 <div>
                     <p class="text-lg font-extrabold tracking-tight">Payment received</p>
-                    <p class="mt-1 text-sm leading-relaxed text-base-content/60">Thank you — your order is confirmed.</p>
+                    <p class="mt-1 text-sm leading-relaxed text-base-content/65">Thank you — your order is confirmed.</p>
                 </div>
                 <a href="/billing" hx-boost="false" class="btn btn-primary min-h-11 w-full">Back to billing</a>
                 ${
@@ -292,6 +345,8 @@ if (panel) {
                 }
             </div>
         `, 'paid');
+        announce('Payment received. Your order is confirmed.');
+        setPageBack(false);
     }
 
     function renderPartial() {
@@ -302,14 +357,16 @@ if (panel) {
                 </span>
                 <div>
                     <p class="text-lg font-extrabold tracking-tight">Partial payment received</p>
-                    <p class="mt-1 text-sm leading-relaxed text-base-content/60">
-                        We received less than ${money(amount)}. Send the remaining amount to the same address, then check again.
+                    <p class="mt-1 text-sm leading-relaxed text-base-content/65">
+                        We received less than ${money(amount)}. The order stays open until the full amount arrives.
                     </p>
                 </div>
                 <button type="button" data-refresh class="btn btn-primary min-h-11 w-full">Check again</button>
-                <a href="/billing" hx-boost="false" class="btn btn-ghost btn-sm min-h-11 w-full">Back to billing</a>
+                <a href="/checkout/${encodeURIComponent(reference)}" hx-boost="false" class="btn btn-ghost btn-sm min-h-11 w-full">Send the rest</a>
             </div>
         `, 'partial');
+        announce('Partial payment received. The order stays open until the full amount arrives.');
+        setPageBack(false);
     }
 
     function renderExpired() {
@@ -320,11 +377,13 @@ if (panel) {
                 </span>
                 <div>
                     <p class="text-lg font-extrabold tracking-tight">This payment link has expired</p>
-                    <p class="mt-1 text-sm leading-relaxed text-base-content/60">Start a new checkout to get a fresh address and amount.</p>
+                    <p class="mt-1 text-sm leading-relaxed text-base-content/65">Start a new checkout to get a fresh address and amount.</p>
                 </div>
                 <a href="/billing" hx-boost="false" class="btn btn-primary min-h-11 w-full">Start a new checkout</a>
             </div>
         `, 'expired');
+        announce('Payment link expired. Start a new checkout.');
+        setPageBack(false);
     }
 
     function renderError(message) {
@@ -335,7 +394,7 @@ if (panel) {
                 </span>
                 <div>
                     <p class="text-lg font-extrabold tracking-tight">We could not load this payment</p>
-                    <p class="mt-1 text-sm leading-relaxed text-base-content/60">${esc(
+                    <p class="mt-1 text-sm leading-relaxed text-base-content/65">${esc(
                         message || 'Please try again in a moment.'
                     )}</p>
                 </div>
@@ -343,6 +402,8 @@ if (panel) {
                 <a href="/billing" hx-boost="false" class="btn btn-ghost btn-sm min-h-11 w-full">Back to billing</a>
             </div>
         `, 'error');
+        announce('We could not load this payment.');
+        setPageBack(false);
     }
 
     // -- state --------------------------------------------------------------
@@ -510,7 +571,7 @@ if (panel) {
         if (pick) {
             chosen = (options || []).find((option) => String(option.id) === pick.dataset.pick) || null;
             if (chosen) {
-                renderWaiting();
+                renderWaiting(true);
                 schedulePoll();
                 scheduleCountdown();
             }
@@ -520,27 +581,42 @@ if (panel) {
         const copy = event.target.closest('[data-copy]');
         if (copy) {
             const address = copy.dataset.copy || '';
+            let copied = false;
             try {
                 await navigator.clipboard.writeText(address);
+                copied = true;
             } catch (error) {
-                const field = document.createElement('textarea');
-                field.value = address;
-                document.body.appendChild(field);
-                field.select();
-                document.execCommand('copy');
-                field.remove();
+                try {
+                    const field = document.createElement('textarea');
+                    field.value = address;
+                    document.body.appendChild(field);
+                    field.select();
+                    copied = document.execCommand('copy');
+                    field.remove();
+                } catch (fallbackError) {
+                    copied = false;
+                }
+            }
+            if (!copied) {
+                announce('Could not copy the address. Select it and copy manually.');
+                return;
             }
             const original = copy.innerHTML;
+            const originalClass = copy.className;
             copy.textContent = 'Copied';
+            copy.classList.remove('btn-outline');
+            copy.classList.add('btn-success');
+            announce('Deposit address copied.');
             setTimeout(() => {
                 copy.innerHTML = original;
+                copy.className = originalClass;
             }, 1800);
             return;
         }
 
         if (event.target.closest('[data-change]')) {
             pause();
-            renderSelect(); // chosen stays pinned and highlighted
+            renderSelect(true); // chosen stays pinned and highlighted
             return;
         }
         if (event.target.closest('[data-card]')) {
@@ -548,7 +624,14 @@ if (panel) {
             return;
         }
         if (event.target.closest('[data-back]')) {
-            renderSelect();
+            renderSelect(true);
+            return;
+        }
+        if (event.target.closest('[data-more]')) {
+            showAll = !showAll;
+            renderSelect(false, true);
+            const more = panel.querySelector('[data-more]');
+            if (more) more.focus({ preventScroll: true });
             return;
         }
         if (event.target.closest('[data-refresh]') || event.target.closest('[data-retry]')) {
