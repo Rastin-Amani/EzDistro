@@ -9,6 +9,25 @@ release builds on. Format is based on [Keep a Changelog](https://keepachangelog.
 
 ## [Unreleased]
 
+## [v1.31.1] — 2026-11-01
+
+### Fixed
+- **The deposit QR scans on the first try.** The encoder drew the symbol edge
+  to edge; ISO/IEC 18004 requires four modules of quiet zone, which phone
+  cameras in poor light are unforgiving about. The viewBox and background are
+  now padded by exactly that margin. The encoded payload is unchanged.
+
+### Changed
+- **The checkout page says what it is doing.** Each state is announced through
+  a live region, focus moves to the new state's heading, and the panel reports
+  `aria-busy` while loading. The coin picker opens with four methods and a
+  "Show N more" control instead of a long scroll; copying the address confirms
+  on the button and in the live region and no longer claims success when both
+  clipboard paths fail. State changes cross-fade, and the ping/pulse
+  animations and transitions respect `prefers-reduced-motion`. Small labels
+  gained contrast, the page respects safe-area insets, and a partial payment
+  links back to the same deposit address.
+
 ## [v1.31.0] — 2026-11-01
 
 ### Added
