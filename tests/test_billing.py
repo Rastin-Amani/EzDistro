@@ -103,9 +103,24 @@ class FakeProvider:
         self.created: list[dict] = []
 
     async def create_payment(
-        self, *, amount_usd, customer_email, customer_id, invoice_number, description=""
+        self,
+        *,
+        amount_usd,
+        customer_email,
+        customer_id,
+        invoice_number,
+        description="",
+        currency="",
+        network="",
     ):
-        self.created.append({"amount": amount_usd, "invoice": invoice_number})
+        self.created.append(
+            {
+                "amount": amount_usd,
+                "invoice": invoice_number,
+                "currency": currency,
+                "network": network,
+            }
+        )
         return ProviderPayment(
             reference=f"ref-{invoice_number}",
             status=STATUS_AWAITING,

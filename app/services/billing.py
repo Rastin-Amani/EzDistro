@@ -21,6 +21,7 @@ import datetime as dt
 import secrets
 import threading
 from typing import Any
+from urllib.parse import urlencode
 
 from structlog import get_logger
 
@@ -28,8 +29,11 @@ from app.config import settings
 from app.providers.payments.base import (
     PAID_STATUSES,
     STATUS_AWAITING,
+    STATUS_CANCELLED,
+    STATUS_FAILED,
     STATUS_PAID,
     STATUS_PARTIALLY_PAID,
+    TERMINAL_STATUSES,
     BillingConfigError,
     PaymentProviderError,
     get_payment_provider,
@@ -63,6 +67,23 @@ class BillingError(ValueError):
 
 class WebhookVerificationError(Exception):
     """The provider signature could not be verified — the request must be rejected."""
+
+
+class CheckoutNotFound(LookupError):
+    """No local order exists for that provider reference."""
+
+
+# PayRam payment links live 24 hours by default (then CANCELLED); the local
+# order mirrors that window so the checkout page can count down.
+CHECKOUT_WINDOW = dt.timedelta(hours=24)
+
+_PROVIDER_STATE = {
+    STATUS_AWAITING: "OPEN",
+    STATUS_PAID: "FILLED",
+    STATUS_PARTIALLY_PAID: "PARTIALLY_FILLED",
+    STATUS_CANCELLED: "CANCELLED",
+    STATUS_FAILED: "FAILED",
+}
 
 
 def _user_lock(user_id: str) -> threading.Lock:
@@ -271,7 +292,6 @@ class BillingService:
             return reuse
 
         invoice_number = self._new_invoice_number()
-        provider = get_payment_provider(settings.billing_provider)
         invoice = self.invoices.create(
             {
                 "user": user_id,
@@ -285,12 +305,13 @@ class BillingService:
                 "credits": credits,
                 "planDays": plan_days,
                 "status": "pending",
-                "provider": provider.name,
+                "provider": settings.billing_provider,
                 "providerReference": "",
                 "checkoutUrl": "",
                 "expectedAmountUsd": price_cents / 100.0,
                 "paidAmountUsd": 0,
                 "overpaidAmountUsd": 0,
+                "expiresAt": pb_dt(now_utc() + CHECKOUT_WINDOW),
                 "metadata": {},
             }
         )
@@ -300,14 +321,93 @@ class BillingService:
             user=user_id,
             product=product.get("code"),
         )
+        return await self._register_payment(invoice, user)
+
+    async def create_order(
+        self,
+        user: dict[str, Any],
+        *,
+        amount_usd: float,
+        invoice_number: str = "",
+        currency: str = "",
+        network: str = "",
+    ) -> dict[str, Any]:
+        """Create a one-off order (no catalog product) and register it with PayRam.
+
+        ``POST /api/checkout`` uses this. The caller is authenticated; the amount
+        is validated here rather than trusted from the browser.
+        """
+        if not self.enabled:
+            raise BillingError("Billing is disabled.")
+        user_id = str(user.get("id") or "")
+        if not user_id:
+            raise BillingError("You must be signed in to purchase.")
+
+        invoice_number = str(invoice_number or "").strip()[:64]
+        if invoice_number:
+            existing = self.invoices.by_number(invoice_number)
+            if existing is not None:
+                if str(existing.get("user") or "") != user_id:
+                    raise BillingError("That invoice number is already in use.")
+                if existing.get("providerReference"):
+                    return existing  # idempotent re-post of the same order
+                raise BillingError("That invoice number is already in use.")
 
         try:
+            amount = round(float(amount_usd), 2)
+        except (TypeError, ValueError):
+            raise BillingError("Enter a payment amount.") from None
+        if not 1 <= amount <= 100_000:
+            raise BillingError("Enter an amount between $1.00 and $100,000.00.")
+
+        currency = str(currency or "").strip().upper()
+        network = str(network or "").strip().upper()
+        if bool(currency) != bool(network):
+            raise BillingError("Choose both a currency and a network, or neither.")
+
+        invoice = self.invoices.create(
+            {
+                "user": user_id,
+                "invoiceNumber": invoice_number or self._new_invoice_number(),
+                "productCode": "",
+                "productName": "Payment",
+                "productType": "service",
+                "priceCents": int(round(amount * 100)),
+                "currency": settings.billing_currency,
+                "credits": 0,
+                "planDays": 0,
+                "status": "pending",
+                "provider": settings.billing_provider,
+                "providerReference": "",
+                "checkoutUrl": "",
+                "expectedAmountUsd": amount,
+                "paidAmountUsd": 0,
+                "overpaidAmountUsd": 0,
+                "expiresAt": pb_dt(now_utc() + CHECKOUT_WINDOW),
+                "metadata": {
+                    "source": "api_checkout",
+                    "currency": currency,
+                    "network": network,
+                },
+            }
+        )
+        return await self._register_payment(invoice, user)
+
+    async def _register_payment(
+        self, invoice: dict[str, Any], user: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Ask the provider for a reference and attach it to the local order."""
+        provider = get_payment_provider(settings.billing_provider)
+        metadata = invoice.get("metadata") or {}
+        try:
             payment = await provider.create_payment(
-                amount_usd=price_cents / 100.0,
+                amount_usd=float(invoice.get("expectedAmountUsd") or 0),
                 customer_email=str(user.get("email") or ""),
-                customer_id=user_id,
-                invoice_number=invoice_number,
-                description=str(product.get("name") or ""),
+                customer_id=str(user.get("id") or ""),
+                invoice_number=str(invoice.get("invoiceNumber") or ""),
+                description=str(invoice.get("productName") or ""),
+                currency=str(metadata.get("currency") or ""),
+                network=str(metadata.get("network") or ""),
             )
         except (PaymentProviderError, BillingConfigError) as exc:
             # Unknown outcome → keep the invoice for review, never a fake success.
@@ -329,10 +429,140 @@ class BillingService:
                 "providerReference": reference,
                 "checkoutUrl": payment.checkout_url,
                 "status": STATUS_AWAITING,
+                "expiresAt": (
+                    payment.expires_at
+                    or invoice.get("expiresAt")
+                    or pb_dt(now_utc() + CHECKOUT_WINDOW)
+                ),
             },
         )
         logger.info("billing.checkout_created", invoice=invoice["id"], reference=reference)
         return updated
+
+    # -- self-hosted checkout page ------------------------------------------------
+    def card_onramp_available(self, invoice: dict[str, Any]) -> bool:
+        """Can this order use PayRam's card/fiat on-ramp?
+
+        The on-ramp settles on whichever chain the provider picks, so it is only
+        offered when the payment is not pinned to one currency/network pair.
+        Two gates: the operator flag and the order's own restriction.
+        """
+        if not settings.payram_card_onramp_enabled:
+            return False
+        metadata = invoice.get("metadata") or {}
+        return not (metadata.get("currency") or metadata.get("network"))
+
+    def hosted_checkout_url(self, invoice: dict[str, Any]) -> str:
+        """PayRam's hosted payment page for this reference (never iframed).
+
+        There is no documented create-onramp-session endpoint in this PayRam
+        version (/swagger and /openapi.json are disabled), so the card flow is a
+        hand-off to the hosted page, where the Cards channel lives.
+        """
+        reference = str(invoice.get("providerReference") or "")
+        base = (settings.payram_base_url or "").rstrip("/")
+        if not reference or not base:
+            return str(invoice.get("checkoutUrl") or "")
+        return f"{base}/payments?" + urlencode({"reference_id": reference, "host": base})
+
+    def invoice_for_reference(self, reference: str) -> dict[str, Any]:
+        invoice = self.invoices.by_provider_reference(reference)
+        if invoice is None:
+            raise CheckoutNotFound(reference)
+        return invoice
+
+    async def checkout_status(self, reference: str) -> dict[str, Any]:
+        """Authoritative status for the checkout page — three public fields only.
+
+        Fulfils the order when PayRam reports a full payment, so a missed webhook
+        still ends in a paid order (the ledger is idempotent).
+        """
+        invoice = self.invoice_for_reference(reference)
+        amount = float(invoice.get("expectedAmountUsd") or 0)
+        expires = self._expiry(invoice)
+        status = str(invoice.get("status") or "")
+
+        if status == STATUS_PAID:
+            return {"amountInUSD": amount, "paymentState": "FILLED", "expiresAt": expires}
+        if status in TERMINAL_STATUSES and status != STATUS_PARTIALLY_PAID:
+            return {
+                "amountInUSD": amount,
+                "paymentState": _PROVIDER_STATE.get(status, "FAILED"),
+                "expiresAt": expires,
+            }
+
+        provider = get_payment_provider(settings.billing_provider)
+        payment = await provider.get_payment(reference)
+        amount = payment.amount_usd or amount
+
+        if payment.status in PAID_STATUSES:
+            self._fulfill(invoice, paid_usd=payment.filled_usd or amount)
+            state = "OVER_FILLED" if payment.provider_status == "OVER_FILLED" else "FILLED"
+        elif payment.status != STATUS_PARTIALLY_PAID and self._expired(expires):
+            self._apply_status(invoice, "expired", payment)
+            state = "CANCELLED"
+        else:
+            self._apply_status(invoice, payment.status, payment)
+            state = payment.provider_status or _PROVIDER_STATE.get(payment.status, "FAILED")
+        return {"amountInUSD": amount, "paymentState": state, "expiresAt": expires}
+
+    async def deposit_options(self, reference: str) -> list[dict[str, Any]]:
+        """Payable coin/network options, each with a deposit address.
+
+        PayRam assigns one static address per blockchain *family* (Ethereum, Base
+        and Polygon share ETH_Family), so an empty address triggers exactly one
+        assign call per family.
+        """
+        self.invoice_for_reference(reference)
+        provider = get_payment_provider(settings.billing_provider)
+        options = await provider.get_deposit_options(reference)
+        address_by_family = {o.family: o.address for o in options if o.address}
+        for option in options:
+            if not address_by_family.get(option.family):
+                try:
+                    address_by_family[option.family] = await provider.assign_deposit_address(
+                        reference, option.blockchain_code
+                    )
+                except PaymentProviderError as exc:
+                    # One unavailable family (no xpub, provider hiccup) must not
+                    # hide the coins that can be paid right now.
+                    logger.warning(
+                        "billing.deposit_address_failed",
+                        reference=reference,
+                        family=option.family,
+                        error=str(exc),
+                    )
+        return [
+            {
+                "id": o.id,
+                "network": o.network,
+                "currency": o.currency,
+                "family": o.family,
+                "blockchainCode": o.blockchain_code,
+                "address": address_by_family.get(o.family, ""),
+                "precision": o.precision,
+                "recommended": o.recommended,
+                "mostUsed": o.most_used,
+            }
+            for o in options
+            if address_by_family.get(o.family)
+        ]
+
+    @staticmethod
+    def _expiry(invoice: dict[str, Any]) -> str:
+        """Stable link expiry: the stored value, else creation + the PayRam window."""
+        stored = str(invoice.get("expiresAt") or "")
+        if stored:
+            return stored
+        created = _parse_pb_dt(invoice.get("created"))
+        if created is not None:
+            return pb_dt(created + CHECKOUT_WINDOW)
+        return pb_dt(now_utc() + CHECKOUT_WINDOW)
+
+    @staticmethod
+    def _expired(expires_at: str) -> bool:
+        parsed = _parse_pb_dt(expires_at)
+        return parsed is not None and parsed <= now_utc()
 
     def _recent_open_invoice(
         self, user_id: str, product_code: str, cooldown_seconds: int
