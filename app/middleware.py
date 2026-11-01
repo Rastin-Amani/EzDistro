@@ -26,6 +26,7 @@ PUBLIC_PATHS = [
     "/docs",
     "/offline",
     "/webhooks",
+    "/api/payram",
 ]
 
 # Paths that render identically for anonymous and authenticated visitors AND

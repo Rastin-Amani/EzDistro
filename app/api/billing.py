@@ -147,6 +147,7 @@ async def invoice_check(request: Request, invoice_id: str):
 # Webhook (public — added to PUBLIC_PATHS in app/middleware.py)
 # ---------------------------------------------------------------------------
 @router.post("/webhooks/payram")
+@router.post("/api/payram/webhook")
 async def payram_webhook(request: Request):
     raw = await request.body()
     if len(raw) > _MAX_WEBHOOK_BYTES:
