@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<main class="flex min-h-dvh flex-col items-center justify-center bg-base-100 px-4 py-6">
+    <div class="w-full max-w-[440px]">
+        <section class="rounded-box border border-base-300 bg-base-100 p-6 text-center shadow-sm">
+            <div class="mx-auto grid size-12 place-items-center rounded-full bg-base-200 text-base-content/60" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" /></svg>
+            </div>
+            <h1 class="mt-4 text-lg font-extrabold tracking-tight">{{ ('Checkout not found') }}</h1>
+            <p class="mt-1 text-sm leading-relaxed text-base-content/60">
+                {{ ('This payment link is invalid or no longer belongs to your account.') }}
+            </p>
+            <a href="/billing" hx-boost="false" class="btn btn-primary mt-5 min-h-11 w-full">{{ ('Back to billing') }}</a>
+        </section>
+    </div>
+</main>
+{% endblock %}

@@ -1,0 +1,79 @@
+{# Self-hosted crypto checkout. Deliberately not inside layouts/platform.html:
+   a customer paying should see one card, not the product sidebar. #}
+{% extends "base.html" %}
+{% block content %}
+<main class="flex min-h-dvh flex-col items-center justify-center bg-base-100 px-4 py-6 sm:py-10">
+    <div class="w-full max-w-[440px]">
+        <section class="rounded-box border border-base-300 bg-base-100 p-5 shadow-sm sm:p-7" aria-labelledby="checkout-heading">
+            <h1 id="checkout-heading" class="sr-only">{{ ('Checkout') }}</h1>
+
+            <!-- Header: our brand, not the payment provider's -->
+            <div class="flex items-center justify-between gap-3">
+                <div class="flex min-w-0 items-center gap-2">
+                    <span class="grid size-8 flex-none place-items-center overflow-hidden rounded-field bg-primary text-primary-content" aria-hidden="true">{% include "components/brand_mark.html" %}</span>
+                    <span class="truncate text-sm font-extrabold tracking-tight">EzDistro</span>
+                </div>
+                <span class="badge badge-soft badge-neutral gap-1 text-[11px]">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m9.75 0H6.75A1.5 1.5 0 0 0 5.25 12v7.5A1.5 1.5 0 0 0 6.75 21h10.5a1.5 1.5 0 0 0 1.5-1.5V12a1.5 1.5 0 0 0-1.5-1.5Z" /></svg>
+                    {{ ('Secure') }}
+                </span>
+            </div>
+
+            <!-- Order summary -->
+            <div class="mt-6 flex items-start justify-between gap-4">
+                <div class="min-w-0">
+                    <p class="text-[11px] font-medium uppercase tracking-[0.073em] text-base-content/55">{{ ('Order') }}</p>
+                    <p class="mt-1 truncate text-sm font-semibold">{{ invoice.productName or invoice.productCode or ('Payment') }}</p>
+                    <p class="mt-0.5 truncate font-mono text-[11px] text-base-content/45" dir="ltr">{{ invoice.invoiceNumber }}</p>
+                </div>
+                <div class="flex-none text-end">
+                    <p class="whitespace-nowrap text-[1.75rem] font-extrabold leading-none tabular-nums tracking-tight">{{ amount_usd|money_usd }}</p>
+                    <p class="mt-1 text-[11px] text-base-content/55">USD</p>
+                </div>
+            </div>
+
+            <div class="my-5 border-t border-base-300"></div>
+
+            <!-- States are rendered into this panel by js/checkout.js -->
+            <div id="checkout-panel" class="min-h-[19rem]" aria-live="polite"
+                 data-mode="{{ mode }}"
+                 data-reference="{{ reference }}"
+                 data-invoice-id="{{ invoice.id }}"
+                 data-amount="{{ amount_usd }}"
+                 data-expires="{{ expires_at }}"
+                 data-state="{{ initial_state }}"
+                 data-card-available="{{ 'true' if card_available else 'false' }}"
+                 data-card-url="{{ card_url }}"
+                 data-support-url="{{ support_url }}">
+                <div class="animate-pulse space-y-3" aria-hidden="true">
+                    <div class="h-3 w-24 rounded bg-base-200"></div>
+                    <div class="h-14 rounded-field bg-base-200"></div>
+                    <div class="h-14 rounded-field bg-base-200"></div>
+                </div>
+                <span class="sr-only">{{ ('Loading payment options') }}</span>
+            </div>
+
+            <!-- Trust row -->
+            <div class="mt-6 flex items-center justify-between gap-3 border-t border-base-300 pt-4 text-[11px] text-base-content/55">
+                <span class="flex min-w-0 items-center gap-1.5">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3 flex-none" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m9.75 0H6.75A1.5 1.5 0 0 0 5.25 12v7.5A1.5 1.5 0 0 0 6.75 21h10.5a1.5 1.5 0 0 0 1.5-1.5V12a1.5 1.5 0 0 0-1.5-1.5Z" /></svg>
+                    <span class="truncate">{{ ('Powered by') }} <span class="font-semibold text-base-content/70">EzDistro</span></span>
+                </span>
+                <span class="flex min-w-0 items-center gap-1.5">
+                    <span class="size-1.5 flex-none rounded-full bg-success" aria-hidden="true"></span>
+                    <span class="truncate" data-trust-network>{{ ('Card' if mode == 'return' else 'Crypto') }}</span>
+                </span>
+            </div>
+        </section>
+
+        <p class="mt-4 text-center text-xs text-base-content/50">
+            <a href="/billing" hx-boost="false" class="link link-hover">{{ ('Back to billing') }}</a>
+        </p>
+    </div>
+</main>
+{% endblock %}
+
+{% block body_end %}
+{{ super() }}
+<script data-cfasync="false" type="module" src="{{ url_for('static', path='/js/checkout.js') }}?v={{ asset_version() }}"></script>
+{% endblock %}

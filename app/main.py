@@ -11,6 +11,7 @@ from app.api import (
     articles,
     auth,
     billing,
+    checkout,
     dashboard,
     images,
     indexing,
@@ -94,6 +95,7 @@ app.include_router(schedules.router)
 app.include_router(workers.router)
 app.include_router(logs.router)
 app.include_router(billing.router)
+app.include_router(checkout.router)
 app.include_router(pwa.router)
 
 if not settings.is_prod:
