@@ -169,6 +169,8 @@ Self-hosted deployments with their own provider keys are unmetered. See
 | `PAYRAM_API_KEY` | *(empty)* | Project API key (server-side only) |
 | `PAYRAM_WEBHOOK_SECRET` | *(empty)* | Distinct HMAC signing secret; defaults to the API key |
 | `PAYRAM_TIMEOUT_SECONDS` | `20` | Provider call timeout |
+| `PAYRAM_CARD_ONRAMP_ENABLED` | `true` | Show the card/fiat hand-off on the checkout page. Also requires Cards enabled for the project in PayRam's Payment Options, and is always hidden for a currency/network-restricted payment |
+| `SUPPORT_URL` | *(empty)* | Support link (`mailto:` or `https://`) shown while a card payment is still processing; empty hides it |
 
 ### Analytics (optional; off unless a website ID is set)
 

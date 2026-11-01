@@ -140,6 +140,14 @@ class Settings(BaseSettings):
     # PayRam uses to sign the raw body (HMAC-SHA256, header X-Payram-Signature).
     payram_webhook_secret: str = ""
     payram_timeout_seconds: float = 20.0
+    # Card / fiat on-ramp is a channel on PayRam's hosted page (PayRam Wallet,
+    # Changelly, Wert). We only hand off to it — never a card form here. The tab
+    # also needs Cards enabled for the project in PayRam's Payment Options.
+    payram_card_onramp_enabled: bool = True
+
+    # Operator support link shown while a card payment is still processing
+    # (mailto:, https://help.example.com, …). Empty hides the link.
+    support_url: str = ""
 
     @property
     def payram_configured(self) -> bool:
