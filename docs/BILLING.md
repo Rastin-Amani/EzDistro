@@ -2,8 +2,9 @@
 
 ```text
 Documentation status:  Verified against app/services/billing.py, app/api/billing.py,
-                       app/providers/payments/payram.py, bootstrap schema (v1.27.3)
-Last verified:         2026-10-25
+                       app/api/checkout.py, app/providers/payments/payram.py,
+                       bootstrap schema (v1.30.2)
+Last verified:         2026-11-01
 ```
 
 Billing is **optional and off by default** (`BILLING_ENABLED=false`): a
@@ -62,6 +63,88 @@ Products are rows in `billing_products` with `type` `plan`, `credit_pack` or
 admin if you sell top-ups. Legacy `starter`/`growth`/`scale` credit packs are retired
 (set inactive) by the bootstrap, never deleted, so old invoices still resolve.
 
+## Self-hosted checkout page
+
+The customer pays on **our** domain at `/checkout/{reference}` — a single card
+(order summary, coin/network picker, deposit address, QR, countdown) instead of
+PayRam's hosted page. PayRam remains the payment rail.
+
+All browser traffic goes through our routes; `PAYRAM_API_KEY` never reaches the
+client bundle, HTML or logs:
+
+| Route | Purpose |
+| --- | --- |
+| `POST /api/checkout` | Creates the local order, then `POST {BASE_URL}/api/v1/payment`. Body `amountInUSD`, optional `invoiceID` (idempotent re-post), `productCode` (catalog price wins over the client amount), or `currency` + `network` together (restricts the payment and hides the card hand-off). `customerEmail`/`customerID` are accepted for API compatibility but the signed-in user is authoritative. Returns `{referenceID, invoiceID, url}`. |
+| `GET /api/checkout/{reference}` | Re-reads PayRam status and returns **only** `{amountInUSD, paymentState, expiresAt}` — never the raw payload (it carries internal ids). Fulfils a paid order exactly once. |
+| `GET /api/checkout/{reference}/options` | Maps `blockchain-currency` to coin/network options and assigns one deposit address per blockchain family (Ethereum/Base/Polygon share `ETH_Family`). |
+| `GET /checkout/{reference}` | The page itself. Owner-scoped and behind sign-in; a garbage reference renders a clean 404. |
+| `GET /checkout/{reference}/return` | Landing page after the hosted card flow. Polls once on mount, then offers a manual refresh; it never fulfils from the URL. |
+| `POST /webhooks/payram` (alias `/api/payram/webhook`) | Signed, idempotent webhook. Replay is a no-op. |
+
+The page polls `GET /api/checkout/{reference}` every 5 s only while the payment
+is `OPEN`, stops on `FILLED` / `PARTIALLY_FILLED` / `CANCELLED` / `FAILED` or when
+the 24-hour window (PayRam's default) runs out, and refetches once when the tab
+becomes visible again. Prices always come from the server: `productCode`
+purchases ignore the body amount, and one-off orders are validated to
+`$1.00–$100,000.00`.
+
+The QR code is generated in the browser by `app/static/js/qrcode.js` (byte mode,
+ECC level M, versions 1–6) from the deposit address — no image API and no new
+dependency. It encodes the address, not a crypto amount: PayRam quotes in USD,
+so an amount in the QR would be a guessed exchange rate.
+
+## Card / fiat on-ramp (hand-off only)
+
+Card, Apple Pay, bank and local methods are a **channel on PayRam's hosted
+page**, not an API. The customer creates a PayRam Wallet, completes a one-time
+KYC, and pays through the provider's widget; card data never touches this app.
+There is no card form here.
+
+This PayRam version exposes no documented create-onramp-session endpoint:
+`/swagger` redirects to `/swagger/`, which answers
+`{"error":"API documentation not available"}`, and `/api-docs`,
+`/openapi.json` and `/docs` are 404. The live payment payload has no channel or
+on-ramp field (top-level keys: `amountInUSD`, `paymentState`, `currencySymbol`,
+`blockchainSymbol`, `successURL`, `cancelURL`, …). So the checkout **hands off**
+to the hosted page and does not invent an endpoint.
+
+**When the tab appears** — both must hold:
+
+1. `PAYRAM_CARD_ONRAMP_ENABLED=true` (default), and Cards enabled for the
+   project in PayRam: *Settings → Account → Project → Payment Options → Cards*
+   (on by default).
+2. The order is **not** restricted to a currency/network pair. A restricted
+   payment (created with `currency` + `network`, e.g. `USDT`/`TRON`) hides the
+   tab: the providers settle on specific chains (PayRam Wallet → Base,
+   Changelly → Ethereum, Wert → Ethereum/Base/Polygon). The restriction is kept
+   on the local invoice (`metadata.currency`/`metadata.network`) because
+   PayRam's status payload does not expose it.
+
+**The flow** — the chooser shows "Pay with card / Apple Pay / bank" (Instant).
+Choosing it renders an explainer, then **Continue to card payment** navigates in
+the same tab to:
+
+```text
+{PAYRAM_BASE_URL}/payments?reference_id={reference}&host={PAYRAM_BASE_URL}
+```
+
+It is never iframed: KYC widgets and frame headers break in a frame.
+
+**Return path** — in the PayRam dashboard set the project's **Redirection URL**
+to `https://<your-host>/checkout/{reference}/return` (this app cannot change
+PayRam's settings). The route ignores the query string, reads authoritative
+status on mount, and shows:
+
+| Status | Page |
+| --- | --- |
+| `FILLED` / `OVER_FILLED` | thank-you |
+| `OPEN` / `PARTIALLY_FILLED` | "still processing" + **Refresh status** + `SUPPORT_URL` |
+| `CANCELLED` | expired |
+
+The webhook remains the source of truth for fulfilment. The return page never
+grants anything from the redirect alone — it only reads PayRam's status, and
+any fulfilment still goes through the idempotent ledger.
+
 ## PocketBase schema
 
 Six collections are added by `make bootstrap` (source of truth:
@@ -115,14 +198,16 @@ invoice without trusting query parameters.
 2. Find the **BASE_URL** under *Settings → Site URL*; set `PAYRAM_BASE_URL`.
    Include the port if non-default. Use `https://` in production.
 3. Register the webhook: *Settings → Webhook → Add Endpoint*, URL
-   `https://<your-host>/webhooks/payram`, mark it **active**.
+   `https://<your-host>/webhooks/payram` (the alias `/api/payram/webhook` is
+   identical), mark it **active**.
    - PayRam POSTs JSON and signs the **raw body** with HMAC-SHA256 keyed by the
      project API key, in header `X-Payram-Signature: sha256=<hex>`.
    - This app verifies that signature in constant time (legacy `API-KEY` header
      also accepted). It fails closed — an unset secret never verifies.
 4. Set the checkout return URL in PayRam to
    `https://<your-host>/billing/checkout/return` (the page reconciles the
-   invoice; it never grants access from query parameters).
+   invoice; it never grants access from query parameters). The customer does not
+   use PayRam's hosted page any more — see the checkout page below.
 5. `PAYRAM_API_KEY` must be set **on the server**. It is never rendered to the
    browser and never logged.
 
