@@ -314,6 +314,11 @@ export function qrMatrix(text) {
 
 export function qrSvg(text, label = 'Deposit address QR code') {
     const { size, matrix } = qrMatrix(text);
+    // ISO/IEC 18004 requires a 4-module quiet zone around the symbol. Scanners
+    // are much less forgiving of a tight crop than they look, especially on
+    // phone cameras in low light.
+    const quiet = 4;
+    const outer = size + quiet * 2;
     let path = '';
     for (let r = 0; r < size; r++) {
         for (let c = 0; c < size; c++) {
@@ -321,10 +326,10 @@ export function qrSvg(text, label = 'Deposit address QR code') {
         }
     }
     return (
-        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" ` +
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${-quiet} ${-quiet} ${outer} ${outer}" ` +
         `width="200" height="200" shape-rendering="crispEdges" role="img" ` +
         `aria-label="${label}">` +
-        `<rect width="${size}" height="${size}" fill="#ffffff"/>` +
+        `<rect x="${-quiet}" y="${-quiet}" width="${outer}" height="${outer}" fill="#ffffff"/>` +
         `<path d="${path}" fill="#111113"/></svg>`
     );
 }
