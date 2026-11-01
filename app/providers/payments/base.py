@@ -56,7 +56,25 @@ class ProviderPayment:
     amount_usd: float = 0.0
     filled_usd: float = 0.0
     currency: str = ""
+    # ISO-8601 payment-link expiry, when the provider reports one.
+    expires_at: str = ""
     raw: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class DepositOption:
+    """One coin/network the customer can pay with, plus its deposit address."""
+
+    id: str
+    network: str
+    currency: str
+    family: str
+    blockchain_code: str = ""
+    address: str = ""
+    token_address: str = ""
+    precision: int = 0
+    recommended: bool = False
+    most_used: bool = False
 
 
 @dataclass
@@ -87,9 +105,15 @@ class PaymentProvider(Protocol):
         customer_id: str,
         invoice_number: str,
         description: str = "",
+        currency: str = "",
+        network: str = "",
     ) -> ProviderPayment: ...
 
     async def get_payment(self, reference: str) -> ProviderPayment: ...
+
+    async def get_deposit_options(self, reference: str) -> list[DepositOption]: ...
+
+    async def assign_deposit_address(self, reference: str, blockchain_code: str) -> str: ...
 
     def verify_webhook(self, raw_body: bytes, headers: Mapping[str, str]) -> bool: ...
 

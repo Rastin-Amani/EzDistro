@@ -27,6 +27,7 @@ from app.providers.payments.base import (
     STATUS_PAID,
     STATUS_PARTIALLY_PAID,
     BillingConfigError,
+    DepositOption,
     PaymentProviderError,
     ProviderEvent,
     ProviderPayment,
@@ -78,6 +79,8 @@ class PayRamProvider:
         customer_id: str,
         invoice_number: str,
         description: str = "",
+        currency: str = "",
+        network: str = "",
     ) -> ProviderPayment:
         self._require_config()
         body = {
@@ -86,6 +89,11 @@ class PayRamProvider:
             "amountInUSD": amount_usd,
             "invoiceID": invoice_number,
         }
+        if currency and network:
+            # Documented pair. A restricted payment cannot use the card on-ramp,
+            # so both the request and the local order keep the restriction.
+            body["currency"] = currency
+            body["network"] = network
         try:
             async with httpx.AsyncClient(timeout=self._timeout) as client:
                 response = await client.post(
@@ -148,8 +156,84 @@ class PayRamProvider:
             amount_usd=_as_float(data.get("amountInUSD") or data.get("amount")),
             filled_usd=_as_float(data.get("filledAmountInUsd") or data.get("filled_amount_in_usd")),
             currency=str(data.get("currency") or "USD"),
+            expires_at=str(data.get("expiresAt") or data.get("expire") or ""),
             raw={},
         )
+
+    # -- deposit options ----------------------------------------------------------
+    async def get_deposit_options(self, reference: str) -> list[DepositOption]:
+        self._require_config()
+        try:
+            async with httpx.AsyncClient(timeout=self._timeout) as client:
+                response = await client.get(
+                    f"{self._base_url}/api/v1/blockchain-currency/reference/{reference}",
+                    headers=self._headers,
+                )
+        except httpx.HTTPError as exc:
+            raise PaymentProviderError(f"could not reach PayRam: {exc}", retryable=True) from exc
+        if response.status_code == 404:
+            raise PaymentProviderError(
+                "payment reference not found at PayRam",
+                retryable=False,
+                details={"status": 404},
+            )
+        if response.status_code >= 400:
+            raise PaymentProviderError(
+                f"PayRam deposit options failed (HTTP {response.status_code})",
+                retryable=response.status_code >= 500,
+            )
+        try:
+            data = response.json() if response.content else []
+        except ValueError as exc:
+            raise PaymentProviderError("PayRam returned a non-JSON response") from exc
+        if isinstance(data, dict):
+            data = data.get("data") or data.get("options") or []
+        if not isinstance(data, list):
+            raise PaymentProviderError("PayRam returned no deposit options")
+        options: list[DepositOption] = []
+        for item in data:
+            if not isinstance(item, dict):
+                continue
+            options.append(
+                DepositOption(
+                    id=str(item.get("id") or ""),
+                    network=str(item.get("network") or ""),
+                    currency=str(item.get("currency") or item.get("currencyCode") or ""),
+                    family=str(item.get("family") or ""),
+                    blockchain_code=str(
+                        item.get("blockchainCode") or item.get("blockchain_code") or ""
+                    ),
+                    address=str(item.get("customerAddress") or ""),
+                    token_address=str(item.get("tokenAddress") or ""),
+                    precision=int(_as_float(item.get("walletPrecision"))),
+                    recommended=bool(item.get("recommended")),
+                    most_used=bool(item.get("mostUsed")),
+                )
+            )
+        return options
+
+    async def assign_deposit_address(self, reference: str, blockchain_code: str) -> str:
+        """Assign (or reuse) this customer's static deposit address for a family."""
+        self._require_config()
+        try:
+            async with httpx.AsyncClient(timeout=self._timeout) as client:
+                response = await client.post(
+                    f"{self._base_url}/api/v1/deposit-address/reference/{reference}",
+                    headers=self._headers,
+                    json={"blockchain_code": blockchain_code},
+                )
+        except httpx.HTTPError as exc:
+            raise PaymentProviderError(f"could not reach PayRam: {exc}", retryable=True) from exc
+        if response.status_code >= 400:
+            raise PaymentProviderError(
+                f"PayRam could not assign a deposit address (HTTP {response.status_code})",
+                retryable=response.status_code >= 500,
+            )
+        data = self._json(response)
+        address = str(data.get("Address") or data.get("address") or "")
+        if not address:
+            raise PaymentProviderError("PayRam returned no deposit address")
+        return address
 
     # -- webhook ------------------------------------------------------------------
     def verify_webhook(self, raw_body: bytes, headers: Mapping[str, str]) -> bool:
