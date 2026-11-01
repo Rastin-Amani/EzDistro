@@ -472,13 +472,13 @@ def test_overview_route_renders_plan_catalog():
     assert "No active plan" in body
 
 
-def test_checkout_route_redirects_to_provider(monkeypatch):
+def test_checkout_route_redirects_to_self_hosted_page(monkeypatch):
     pb = _pb()
     _product(pb, code="cloud")
     monkeypatch.setattr("app.services.billing.get_payment_provider", lambda name: FakeProvider())
     req = make_req(pb, make_user("u1"), "p1")
     resp = asyncio.run(billing_api.billing_checkout(req, product_code="cloud"))
-    assert resp.headers.get("HX-Redirect", "").startswith("https://")
+    assert resp.headers.get("HX-Redirect", "").startswith("/checkout/")
 
 
 def test_checkout_route_rejects_unknown_product(monkeypatch):

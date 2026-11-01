@@ -79,14 +79,15 @@ async def billing_checkout(request: Request, product_code: str = Form("")):
 
         return error_response(str(exc))
 
-    checkout_url = str(invoice.get("checkoutUrl") or "")
-    if not checkout_url.startswith(("https://", "http://")):
+    reference = str(invoice.get("providerReference") or "")
+    if not reference:
         from app.utils import error_response
 
         return error_response("The payment page could not be opened. Please try again.")
     logger.info("billing.redirecting", invoice=invoice.get("id"))
-    # HX-Redirect navigates the whole browser to the trusted provider URL.
-    return Response(status_code=200, headers={"HX-Redirect": checkout_url})
+    # HX-Redirect navigates the whole browser to our own checkout page; PayRam's
+    # hosted page is never shown to the customer.
+    return Response(status_code=200, headers={"HX-Redirect": f"/checkout/{reference}"})
 
 
 # ---------------------------------------------------------------------------
