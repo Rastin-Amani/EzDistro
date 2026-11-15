@@ -9,6 +9,31 @@ release builds on. Format is based on [Keep a Changelog](https://keepachangelog.
 
 ## [Unreleased]
 
+## [v1.31.2] — 2026-11-15
+
+### Fixed
+- **A provider blip no longer kills an article for good.** Image jobs died
+  after three attempts (~90 seconds of backoff) when a gateway answered
+  `503 no_healthy_sellers`, and the publish that was waiting on the cover then
+  failed permanently, leaving the article `failed` with no retry. Image
+  generation now gets a twelve-attempt floor (~4 hours of jittered backoff,
+  `imageMaxRetries` can raise it), publishing waits the same distance, and
+  `python -m app.scripts.requeue_failed_work --apply` re-queues articles that
+  were failed this way. The fallback provider also keeps the smaller canvas the
+  primary stepped down to instead of asking the size with no sellers again.
+- **Alt text can no longer block an article.** The image-plan validator
+  rejected alt text over 300 characters while the prompt never stated the
+  limit, so a chatty model made the plan permanent and every publish behind it
+  failed. Overshooting alt text is now trimmed at a word boundary and the
+  prompt states the limit.
+- **Waiting for images is not a failed publish attempt.** The wait check ran
+  inside the publish `try`, so every 30-second poll recorded a failed
+  `publishing_runs` row and flipped the article to `failed` (513 of the 581
+  failed runs on the live install were these polls). The check now runs before
+  any publish state is written.
+- **Manual publishing waits for the article's images like auto-publish does**
+  (40 attempts instead of 3).
+
 ## [v1.31.1] — 2026-11-01
 
 ### Fixed
