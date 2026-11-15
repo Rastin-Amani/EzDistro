@@ -295,7 +295,7 @@ Model ids are data (persisted here), never hardcoded in the pipeline.
 | imageCoverAspectRatio / imageInteriorAspectRatio | `16:9` | e.g. `4:3` |
 | imageCoverMinWidth | `1200` | SEO/Google Discover floor |
 | imageMaxInteriorImages | `4` | hard cap; word-count density further limits (0/1/2/3/4) |
-| imageMaxRetries | `3` | generation job attempts = `max(2, this)` |
+| imageMaxRetries | `3` | generation job attempts = `max(12, this)` — the floor rides out a provider outage (~4 h of jittered backoff) |
 | imageOptimizationFormat | `webp` | `webp` \| `avif` \| `jpeg` |
 | imageAiQaEnabled | off | optional vision QA (extra model cost) |
 | imagePromptLanguage | `en` | visual-prompt language; alt/caption always use the article language |

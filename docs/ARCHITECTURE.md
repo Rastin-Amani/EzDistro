@@ -518,9 +518,11 @@ Details verified in `app/services/image_planning.py` + `app/services/images.py`:
   article language; no text is ever rendered inside images.
 - **Generation chaining**: the plan handler queues one generation job per slot
   (idempotency `image:{role}:{sectionKey}:{articleId}:v{version}`,
-  `max_attempts = max(2, imageMaxRetries)`), skipped with a warning when no
-  active `image` integration exists. Role jobs resolve provider/model from the
-  slot role (cover vs interior) with configured fallback on failure.
+  `max_attempts = max(12, imageMaxRetries)` — a transient provider outage is not
+  an article defect, and a 3-attempt budget dies within ~90 s), skipped with a
+  warning when no active `image` integration exists. Role jobs resolve
+  provider/model from the slot role (cover vs interior) with configured fallback
+  on failure.
 - **Versioning**: `article_images` holds one row per generation
   (`(article, role, sectionKey, version)` unique); `active` marks the selected
   one. Regenerate creates version+1; rollback flips `active`. Successful rows

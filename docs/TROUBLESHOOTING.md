@@ -217,6 +217,10 @@ content area — that's a theme setting, not a platform bug.
 - **Resolution:** generate/activate the cover (**Image generation** / **Use this
   image**), then publish again. If the image provider is down, publishing text-only
   requires the explicit override path.
+- **After a provider outage:** articles failed this way are not broken content.
+  `.venv/bin/python -m app.scripts.requeue_failed_work --apply` requeues the cover
+  and the publish that gave up waiting for it (same set as **Resume**), or use
+  **Resume** on each article.
 
 ## 9. Images
 
@@ -243,9 +247,11 @@ content area — that's a theme setting, not a platform bug.
 ### Symptom: image stuck `generating`/`optimizing`
 
 - Like all jobs, image jobs checkpoint via leases: a crashed worker's job is
-  reclaimed after lease expiry and retried per `imageMaxRetries`
-  (`max(2, value)` attempts). Inspect the job event timeline for the provider
-  error category (transient → auto-retry; permanent → fix config, then retry).
+  reclaimed after lease expiry and retried per `imageMaxRetries` with a floor of
+  12 attempts (`max(12, value)`, ~4 h of backoff) — a gateway's transient
+  `503 no_healthy_sellers` blip must not permanently fail the article. Inspect
+  the job event timeline for the provider error category (transient → auto-retry;
+  permanent → fix config, then retry).
 
 ### Symptom: WordPress shows the pre-re-optimization image
 
