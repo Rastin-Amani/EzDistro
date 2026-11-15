@@ -22,6 +22,7 @@ from app.api.deps import (
     safe_str,
 )
 from app.api.errors import hx_error
+from app.domain.images import image_job_attempts
 from app.repositories.article_images import ArticleImageRepo
 from app.repositories.articles import ArticleRepo
 from app.repositories.jobs import JobRepo
@@ -71,7 +72,7 @@ def _queue_job(
 
 def _image_max_attempts(request: Request, project_id: str) -> int:
     settings = ProjectSettingsRepo(request.state.pb).get_for_project(project_id)
-    return max(2, safe_int(settings.get("imageMaxRetries"), 3))
+    return image_job_attempts(safe_int(settings.get("imageMaxRetries"), 3))
 
 
 # ---------------------------------------------------------------------------

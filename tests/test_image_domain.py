@@ -147,6 +147,16 @@ class TestPlanValidation:
         assert not cover.alt_text.endswith(" ")
         assert validate_plan(plan, max_interior=2) == []
 
+    def test_image_job_attempts_ride_out_a_provider_outage(self):
+        """A 503 blip is not an article defect: image jobs get an hour-scale
+        retry budget, and the setting can only raise it."""
+        from app.domain.images import IMAGE_MIN_ATTEMPTS, image_job_attempts
+
+        assert image_job_attempts(3) == IMAGE_MIN_ATTEMPTS
+        assert image_job_attempts(40) == 40
+        assert image_job_attempts(None) == IMAGE_MIN_ATTEMPTS
+        assert image_job_attempts("nonsense") == IMAGE_MIN_ATTEMPTS
+
 
 class TestFingerprintAndFiles:
     def test_fingerprint_stable_and_sensitive(self):

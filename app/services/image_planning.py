@@ -19,6 +19,7 @@ from app.domain.images import (
     build_negative_prompt,
     build_visual_prompt,
     dims_for_aspect,
+    image_job_attempts,
     style_fingerprint_source,
     validate_plan,
 )
@@ -59,7 +60,7 @@ def _queue_generation_jobs(
     imgs = ctx.config.images
     jobs = JobRepo(ctx.pb)
     repo = ArticleImageRepo(ctx.pb)
-    max_attempts = max(2, int(imgs["max_retries"] or 3))
+    max_attempts = image_job_attempts(imgs["max_retries"])
     queued: list[str] = []
     for spec in plan.images:
         section_key = "cover" if spec.role == "cover" else (spec.section_key or "")
