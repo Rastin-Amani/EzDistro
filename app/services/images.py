@@ -454,7 +454,11 @@ async def _generate_image(ctx: JobContext, *, role: str, section_key: str) -> di
             used_cfg = fallback_cfg
             fallback = _build_image_provider(ctx, fallback_cfg, cache)
             try:
-                result = await fallback.generate_image(replace(request, width=width, height=height))
+                # Keep the request as-is: when the primary answered
+                # `no_healthy_sellers` and we already stepped down a canvas
+                # bucket, handing the fallback the *planned* size reintroduced
+                # exactly the size that had no sellers.
+                result = await fallback.generate_image(request)
             except ProviderError as fallback_exc:
                 repo.mark_failed(
                     image_id,

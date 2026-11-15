@@ -367,6 +367,48 @@ def test_generation_retries_a_smaller_canvas_when_no_seller_has_the_planned_size
     assert _smaller_canvas(provider.calls[0], min_width=1600) is None
 
 
+def test_fallback_keeps_the_smaller_canvas_the_primary_could_not_fill():
+    """When the primary answered `no_healthy_sellers` and stepped down a canvas
+    bucket, the fallback must not be handed the planned size again — that is
+    the size with no sellers, so the cover failed twice for the same reason."""
+    from app.providers.base import TransientError
+
+    pb = make_pb()
+    project = make_project(pb)
+    settings_id = pb.collection("project_settings").get_first_list_item(
+        f'project="{project["id"]}"'
+    )["id"]
+    pb.collection("project_settings").update(
+        settings_id, {"imageFallbackProvider": "fallback", "imageFallbackModel": "fb-1"}
+    )
+    article = make_plan_article(pb, project["id"])
+    set_plan(pb, article["id"], [])
+    plan = ArticleRepo(pb).get(article["id"])["imagePlan"]
+    plan["images"][0]["suggested_size"] = [1600, 896]
+    ArticleRepo(pb).set_image_plan(article["id"], plan, 1)
+    registry = FakeRegistry()
+    primary = img_provider(registry, "gemini")
+    no_sellers = TransientError(
+        "openai_image.generate failed with HTTP 503: "
+        '{"error":{"code":"no_healthy_sellers","message":"No available sellers"}}',
+        {"status": 503},
+    )
+    primary.queue(no_sellers, no_sellers)
+    fallback = img_provider(registry, "fallback")
+
+    run_job(
+        pb,
+        registry,
+        "generate_cover_image",
+        {"projectId": project["id"], "articleId": article["id"]},
+    )
+
+    assert fallback.calls and fallback.calls[0].width == 1280
+    row = ArticleImageRepo(pb).active_for_role(article["id"], "cover")
+    assert row["status"] == "ready"
+    assert row["provider"] == "fallback"
+
+
 def test_quality_gate_failure_marks_row_failed():
     pb = make_pb()
     project = make_project(pb)
