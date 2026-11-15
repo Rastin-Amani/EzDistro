@@ -133,7 +133,7 @@
 
                 <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
 
-                    {{ f.number('image_max_retries', ('Max retries'), settings.imageMaxRetries or 3, ('Job engine attempts for transient errors.')) }}
+                    {{ f.number('image_max_retries', ('Max retries'), settings.imageMaxRetries or 3, ('Job engine attempts for transient errors. Values below 12 are raised to 12 so a provider outage does not fail the article.')) }}
 
                     {{ f.select('image_optimization_format', ('Optimization format'), [('webp', 'WebP'), ('avif', 'AVIF'), ('jpeg', 'JPEG')], settings.imageOptimizationFormat or 'webp', ('AVIF when the server supports it; otherwise WebP.')) }}
 
