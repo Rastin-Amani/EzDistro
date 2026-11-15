@@ -126,6 +126,27 @@ class TestPlanValidation:
         with pytest.raises(ValueError):
             ArticleImagePlan.parse_llm({"nope": 1}, version=1, style=None)
 
+    def test_overlong_alt_text_is_trimmed_not_rejected(self):
+        """A chatty model must not kill the plan (and the whole article).
+
+        The plan validator used to reject alt_text > 300 chars while the prompt
+        never stated the limit, so such an article could never get images and
+        publishing was blocked forever.
+        """
+        long_alt = "a detailed photo of " + " ".join(["an engine bay part"] * 60)
+        raw = {
+            "images": [
+                {"role": "cover", "prompt": "c", "alt_text": long_alt},
+            ]
+        }
+        plan = ArticleImagePlan.parse_llm(raw, version=1, style=None)
+        cover = plan.cover()
+        assert cover is not None
+        assert 0 < len(cover.alt_text) <= 300
+        # cut on a word boundary, not mid-word
+        assert not cover.alt_text.endswith(" ")
+        assert validate_plan(plan, max_interior=2) == []
+
 
 class TestFingerprintAndFiles:
     def test_fingerprint_stable_and_sensitive(self):

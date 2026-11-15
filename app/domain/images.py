@@ -25,6 +25,9 @@ COVER_KEY = "cover"
 DEFAULT_INTERIOR_SIZE = (1280, 720)
 DEFAULT_COVER_SIZE = (1600, 900)
 MIN_COVER_WIDTH = 1200
+# Alt text longer than this is trimmed, never fatal — see PlannedImage.
+ALT_TEXT_MAX = 300
+
 MAX_SOURCE_BYTES = 8 * 1024 * 1024  # source generation guard (PB file cap headroom)
 MIN_SOURCE_BYTES = 5 * 1024
 
@@ -102,6 +105,22 @@ class PlannedImage(BaseModel):
             raise ValueError(f"suggested_size must be [width, height], got {v!r}")
         return [int(v[0]), int(v[1])]
 
+    @field_validator("alt_text")
+    @classmethod
+    def _alt_text_fits(cls, v: str) -> str:
+        """Trim overshooting alt text instead of failing the whole plan.
+
+        The LLM is asked for a short description but does not always obey; a
+        hard rejection made the plan job permanent, so the article never got
+        images and publishing blocked forever. The alt attribute is not worth
+        a dead article.
+        """
+        text = " ".join((v or "").split())
+        if len(text) <= ALT_TEXT_MAX:
+            return text
+        cut = text[:ALT_TEXT_MAX].rsplit(" ", 1)[0].rstrip(" ,.;:-")
+        return cut or text[:ALT_TEXT_MAX]
+
     @field_validator("aspect_ratio")
     @classmethod
     def _ar_shape(cls, v: str) -> str:
@@ -175,8 +194,12 @@ def validate_plan(plan: ArticleImagePlan, *, max_interior: int = 4) -> list[str]
     for img in plan.images:
         if len(img.prompt) > 4000:
             problems.append(f"prompt too long for {img.role} {img.section_key} (>4000 chars)")
-        if len(img.alt_text) > 300:
-            problems.append(f"alt_text too long for {img.role} {img.section_key} (>300 chars)")
+        # alt_text is clamped by the model validator; the check stays for plans
+        # built in code (dataclass-style callers bypassing validation).
+        if len(img.alt_text) > ALT_TEXT_MAX:
+            problems.append(
+                f"alt_text too long for {img.role} {img.section_key} (>{ALT_TEXT_MAX} chars)"
+            )
     return problems
 
 
@@ -556,4 +579,5 @@ __all__ = [
     "validate_alt_text",
     "validate_publishable_images",
     "parse_plan_or_none",
+    "ALT_TEXT_MAX",
 ]
