@@ -142,6 +142,11 @@ def test_publish_waits_while_images_are_still_queued(monkeypatch):
         run_publish(pb, registry, article["id"], project["id"], key="wait1")
 
     assert registry.publisher.created == []
+    # Waiting is not an attempt: the article must not be flipped to `failed`
+    # and no publishing run may be recorded as failed (that filled the runs
+    # list with failures that never happened).
+    assert pb.collection("articles").get_one(article["id"])["status"] == "approved"
+    assert pb.collection("publishing_runs").get_full_list() == []
 
 
 def test_publish_resolves_placeholders_and_sets_featured(monkeypatch):

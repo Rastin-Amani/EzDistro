@@ -112,6 +112,22 @@ async def handle_publish_article(ctx: JobContext) -> dict[str, Any]:
     if not html:
         raise ValueError("article has no content — run the writer first")
 
+    # The assembler queues the image plan (and the publish job) together, so a
+    # fast publish would race ahead of image generation and ship a post with no
+    # images at all. Wait while this article's image jobs are still running;
+    # a *failed* cover still blocks below, per the "no image, no publish" rule.
+    #
+    # This check sits before the article status and the publishing_runs
+    # bookkeeping on purpose: waiting is not a publish attempt. Doing it inside
+    # the try block wrote a FAILED publishing run and flipped the article to
+    # `failed` on every 30-second poll, so the runs list filled with failures
+    # that never happened.
+    if _images_still_queued(ctx, article_id):
+        raise TransientError(
+            "waiting for the article images before publishing",
+            {"retry_after_seconds": 30, "article": article_id},
+        )
+
     # WP renders the post title itself — avoid the duplicated <h1>.
     html = strip_leading_h1(html)
 
@@ -140,15 +156,8 @@ async def handle_publish_article(ctx: JobContext) -> dict[str, Any]:
 
         # The assembler queues the image plan (and the publish job) together, so
         # a fast publish would race ahead of image generation and ship a post
-        # with no images at all. Wait while this article's image jobs are still
-        # running; a *failed* cover still blocks below, per the "no image, no
-        # publish" rule.
-        if _images_still_queued(ctx, article_id):
-            raise TransientError(
-                "waiting for the article images before publishing",
-                {"retry_after_seconds": 30, "article": article_id},
-            )
-
+        # with no images at all — that wait already happened above, before any
+        # publish state was written.
         html, featured_media_id = await apply_images_to_html(
             ctx,
             article,
