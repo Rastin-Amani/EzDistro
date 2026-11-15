@@ -274,7 +274,10 @@ def _queue_publish_job(request: Request, project_id: str, article_id: str, actio
         type="publish_article",
         payload={"articleId": article_id, "action": action},
         idempotency_key=f"{action}:article:{article_id}:{int(time.time())}",
-        max_attempts=3,
+        # Publishing waits (retry) while the article's image jobs are running:
+        # a 3-attempt budget would give up on the images within ~90 s and fail
+        # the article for a cover that was still being generated.
+        max_attempts=40,
         entity_type="article",
         entity_id=article_id,
     )
