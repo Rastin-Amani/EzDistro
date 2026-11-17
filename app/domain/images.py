@@ -27,14 +27,6 @@ DEFAULT_COVER_SIZE = (1600, 900)
 MIN_COVER_WIDTH = 1200
 # Alt text longer than this is trimmed, never fatal — see PlannedImage.
 ALT_TEXT_MAX = 300
-
-# Image generation is idempotent and costs nothing when it fails, while a
-# transient provider outage (`503 no_healthy_sellers`, a gateway blip) is not an
-# article defect. With the engine's jittered backoff (30s base, 1h cap) three
-# attempts die within ~90 seconds and permanently fail the article *and* the
-# publish that was waiting on it. This floor buys ~4 hours of retries;
-# imageMaxRetries can raise it.
-IMAGE_MIN_ATTEMPTS = 12
 MAX_SOURCE_BYTES = 8 * 1024 * 1024  # source generation guard (PB file cap headroom)
 MIN_SOURCE_BYTES = 5 * 1024
 
@@ -482,15 +474,6 @@ def resolve_image_placeholders(
     return IMAGE_PLACEHOLDER_RE.sub(_sub, html or "")
 
 
-def image_job_attempts(configured: Any) -> int:
-    """Transient-error attempt budget for one image generation job."""
-    try:
-        value = int(configured or 0)
-    except (TypeError, ValueError):
-        value = 0
-    return max(IMAGE_MIN_ATTEMPTS, value)
-
-
 def validate_alt_text(
     alt: str,
     *,
@@ -596,6 +579,4 @@ __all__ = [
     "validate_publishable_images",
     "parse_plan_or_none",
     "ALT_TEXT_MAX",
-    "IMAGE_MIN_ATTEMPTS",
-    "image_job_attempts",
 ]

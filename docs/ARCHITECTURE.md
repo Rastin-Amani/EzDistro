@@ -518,9 +518,9 @@ Details verified in `app/services/image_planning.py` + `app/services/images.py`:
   article language; no text is ever rendered inside images.
 - **Generation chaining**: the plan handler queues one generation job per slot
   (idempotency `image:{role}:{sectionKey}:{articleId}:v{version}`,
-  `max_attempts = max(12, imageMaxRetries)` — a transient provider outage is not
-  an article defect, and a 3-attempt budget dies within ~90 s), skipped with a
-  warning when no active `image` integration exists. Role jobs resolve
+  `max_attempts = max(48, imageMaxRetries)` — a transient provider outage is not
+  an article defect, and a budget in the minutes kills the article), skipped with
+  a warning when no active `image` integration exists. Role jobs resolve
   provider/model from the slot role (cover vs interior) with configured fallback
   on failure.
 - **Versioning**: `article_images` holds one row per generation
@@ -866,7 +866,7 @@ here honestly rather than papered over:
 Measured-first tooling: `app/scripts/benchmark.py` runs the real engine and handlers
 against instrumented fakes (defaults: 10 concurrent jobs, 100 topics). It is a load
 test, not a fixture. Optimizations present in code: batched prompt resolution (~7
-queries per job config, cached 60 s per project), pooled keep-alive HTTP clients with an idle sweeper, batch
+queries per job config, cached 60 s per project), pooled keep-alive HTTP clients, batch
 embeddings, bounded concurrency at job and provider level, pagination everywhere,
 `fanout()` (`app/utils.py`) to overlap independent PocketBase round trips (dashboard
 aggregates, N+1 indexing/provider-health scans) into one wave, a process-wide warm

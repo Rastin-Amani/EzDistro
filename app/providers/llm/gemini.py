@@ -18,6 +18,7 @@ from app.providers.base import (
     LLMResult,
     ModelInfo,
     PermanentError,
+    TransientError,
 )
 from app.providers.http import acquire_async_client, raise_for_provider, with_retry
 from app.providers.metrics import MetricMixin
@@ -125,7 +126,9 @@ class GeminiLLM(MetricMixin):
         except (KeyError, IndexError, TypeError) as exc:
             raise PermanentError(f"gemini {what}: malformed candidates") from exc
         if not text:
-            raise PermanentError(f"gemini {what}: empty completion content")
+            # Same rule as the OpenAI-compatible adapter: an empty 200 is a
+            # provider hiccup, retry it (the job's attempt budget bounds it).
+            raise TransientError(f"gemini {what}: empty completion content")
         usage = data.get("usageMetadata") or {}
         return text, {
             "prompt_tokens": int(usage.get("promptTokenCount") or 0),

@@ -19,11 +19,11 @@ from app.domain.images import (
     build_negative_prompt,
     build_visual_prompt,
     dims_for_aspect,
-    image_job_attempts,
     style_fingerprint_source,
     validate_plan,
 )
 from app.domain.parsing import extract_json
+from app.domain.retries import image_job_attempts
 from app.jobs.context import JobContext
 from app.jobs.handlers import register_job
 from app.providers.base import GenerationParams, ProviderError

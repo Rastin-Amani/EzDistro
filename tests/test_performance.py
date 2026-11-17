@@ -223,7 +223,7 @@ def test_graceful_degradation_with_slow_providers(monkeypatch):
 # Client pooling
 # ---------------------------------------------------------------------------
 def test_http_client_pooling_reuses_connections():
-    from app.providers.http import _CLIENT_POOL, acquire_async_client, sweep_idle_clients
+    from app.providers.http import _CLIENT_POOL, acquire_async_client
 
     _CLIENT_POOL.clear()
     c1 = acquire_async_client("https://api.example.com/v1", api_key="k1", timeout=30)
@@ -231,10 +231,7 @@ def test_http_client_pooling_reuses_connections():
     assert c1 is c2  # same pooled client → connection reuse
     c3 = acquire_async_client("https://api.example.com/v1", api_key="k2", timeout=30)
     assert c3 is not c1  # different key → different client
-
-    # idle sweep closes pooled clients
-    closed = sweep_idle_clients(now=time.monotonic() + 9999)
-    assert closed == len(_CLIENT_POOL) or closed > 0
+    assert not c1.is_closed  # pooling never closes a live client
     _CLIENT_POOL.clear()
 
 

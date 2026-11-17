@@ -26,6 +26,7 @@ from app.domain.article_html import (
 )
 from app.domain.article_validation import ArticleValidator, SectionValidator
 from app.domain.parsing import extract_json
+from app.domain.retries import PUBLISH_ATTEMPTS
 from app.domain.sanitize import sanitize_html
 from app.domain.seo_score import seo_score
 from app.jobs.context import JobCancelled, JobContext
@@ -597,7 +598,7 @@ async def handle_assemble_article(ctx: JobContext) -> dict[str, Any]:
                 # The image plan + generation for this article are queued just
                 # above and take a while; publishing waits for them (transient
                 # retry), so the cap has to cover that wait, not just WP errors.
-                max_attempts=40,
+                max_attempts=PUBLISH_ATTEMPTS,
                 entity_type="article",
                 entity_id=article_id,
             )

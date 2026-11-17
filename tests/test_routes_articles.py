@@ -685,3 +685,39 @@ def test_resume_requeues_the_cover_and_the_publish_that_waited_for_it():
     assert resp.status_code == 200
     assert JobRepo(pb).get(cover["id"])["status"] in ("retrying", "pending")
     assert JobRepo(pb).get(publish["id"])["status"] in ("retrying", "pending")
+
+
+def test_resume_restarts_a_dead_section_stage_with_its_assembler():
+    """Sections died on a provider blip, the assembler then failed on them.
+
+    Requeuing only the assembler fails it again immediately (the sections are
+    still `failed`); only a section job leaves the assembler dead. The stage
+    restarts as one unit.
+    """
+    pb, proj_a, _ = _setup()
+    article = make_article(pb, proj_a["id"], status="failed")
+    section = make_section(pb, article["id"])
+    SectionRepo(pb).set_status(section["id"], "failed")
+    section_job = make_job(
+        pb,
+        proj_a["id"],
+        job_type="generate_section",
+        status="failed",
+        payload={"sectionId": section["id"]},
+    )
+    pb.collection("jobs").update(
+        section_job["id"], {"entityType": "section", "entityId": section["id"]}
+    )
+    assembler = make_job(
+        pb,
+        proj_a["id"],
+        job_type="assemble_article",
+        status="failed",
+        payload={"articleId": article["id"]},
+    )
+    req = make_req(pb, make_user(), proj_a["id"])
+    resp = call_route(A.resume_article, req, proj_a["id"], article["id"])
+    assert resp.status_code == 200
+    assert SectionRepo(pb).get(section["id"])["status"] == "pending"
+    assert JobRepo(pb).get(section_job["id"])["status"] in ("retrying", "pending")
+    assert JobRepo(pb).get(assembler["id"])["status"] in ("retrying", "pending")

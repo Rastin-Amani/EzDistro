@@ -47,12 +47,11 @@ def test_html_response_is_flagged_as_web_page_not_api():
     assert "<html" not in message
 
 
-def test_pooled_client_survives_a_job_longer_than_the_idle_ttl():
-    """A research/writing job holds ONE pooled client for many sequential calls.
-    The sweeper used to close it after IDLE_TTL mid-run, killing every later
-    call with 'Cannot send a request, as the client has been closed'."""
-    import asyncio
-
+def test_pooled_client_is_reused_and_never_closed_behind_the_provider():
+    """A provider caches its pooled client for its lifetime. An idle sweeper
+    used to close it, and the provider's next call died with 'Cannot send a
+    request, as the client has been closed' (seen live on a retry hours later).
+    Pooling therefore never closes a live client."""
     from app.providers import http as H
 
     H._CLIENT_POOL.clear()
@@ -60,21 +59,7 @@ def test_pooled_client_survives_a_job_longer_than_the_idle_ttl():
         client = H.acquire_async_client("https://api.example.com/v1", api_key="k", timeout=5)
         again = H.acquire_async_client("https://api.example.com/v1", api_key="k", timeout=5)
         assert again is client  # pooled, not rebuilt
-
-        # httpx awaits every request hook, so the hook must be awaitable
-        key = next(iter(H._CLIENT_POOL))
-        H._CLIENT_POOL[key] = (0.0, client, 5)
-        hook = client.event_hooks["request"][-1]
-        asyncio.run(hook(httpx.Request("POST", "https://api.example.com/v1")))
-        touched = H._CLIENT_POOL[key][0]
-        assert touched > H.IDLE_TTL  # stamp refreshed to "now"
-        assert H.sweep_idle_clients(now=touched + 1) == 0
-
-        # a client whose own request may still be in flight is never closed
-        H._CLIENT_POOL[key] = (touched - 200, client, 600)
-        assert H.sweep_idle_clients(now=touched) == 0
-        H._CLIENT_POOL[key] = (touched - 700, client, 600)
-        assert H.sweep_idle_clients(now=touched) == 1
+        assert not client.is_closed  # and nothing closes it asynchronously
     finally:
         H._CLIENT_POOL.clear()
 
@@ -94,9 +79,9 @@ def test_empty_content_from_a_reasoning_model_names_the_cause():
         validate_llm_json_response(reasoning, "llm.generate")
     assert "max_tokens" in str(excinfo.value)
 
-    # A genuinely empty answer (model stopped) keeps the plain message.
+    # A genuinely empty answer (model stopped) is a gateway hiccup → retry.
     stopped = {"choices": [{"message": {"content": ""}, "finish_reason": "stop"}]}
-    with pytest.raises(PermanentError) as excinfo:
+    with pytest.raises(TransientError) as excinfo:
         validate_llm_json_response(stopped, "llm.generate")
     assert "empty completion content" in str(excinfo.value)
 

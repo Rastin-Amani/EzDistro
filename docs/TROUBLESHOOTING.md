@@ -248,7 +248,7 @@ content area — that's a theme setting, not a platform bug.
 
 - Like all jobs, image jobs checkpoint via leases: a crashed worker's job is
   reclaimed after lease expiry and retried per `imageMaxRetries` with a floor of
-  12 attempts (`max(12, value)`, ~4 h of backoff) — a gateway's transient
+  48 attempts (`max(48, value)`, ~2 days of backoff) — a gateway's transient
   `503 no_healthy_sellers` blip must not permanently fail the article. Inspect
   the job event timeline for the provider error category (transient → auto-retry;
   permanent → fix config, then retry).

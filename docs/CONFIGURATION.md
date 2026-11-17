@@ -34,7 +34,7 @@ Environment=ENV=production   # in the unit (the .env value is not enough there)
 |---|---|---|
 | `ENV` | `dev` | `dev` \| `production`. Production hides `/docs` + `/openapi.json` + the debug router and makes a missing `SECRETS_KEY` an error on first use. JSON logs are selected from the **process** environment (`os.getenv`). |
 | `APP_NAME` | `EzDistro Platform` | Product name in the UI/`/health` |
-| `APP_VERSION` | `1.31.2` | Version label in the UI and `/health` — tracks the release tag |
+| `APP_VERSION` | `1.31.3` | Version label in the UI and `/health` — tracks the release tag |
 | `SECRETS_KEY` | *(empty)* | Fernet key (32-byte urlsafe base64). Required in production: there is no startup probe, but the first encrypted-secret operation raises. Dev derives a deterministic key from `pb_url`+env. Generate: `python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"`. ⚠️ Rotating it invalidates all stored integration secrets (they must be re-entered) |
 | `OAUTH_CALLBACK_PATH` | `/auth/oauth2/callback` | Path of the OAuth callback below `PUBLIC_APP_URL`. Change only if a reverse proxy rewrites the path |
 
@@ -295,7 +295,7 @@ Model ids are data (persisted here), never hardcoded in the pipeline.
 | imageCoverAspectRatio / imageInteriorAspectRatio | `16:9` | e.g. `4:3` |
 | imageCoverMinWidth | `1200` | SEO/Google Discover floor |
 | imageMaxInteriorImages | `4` | hard cap; word-count density further limits (0/1/2/3/4) |
-| imageMaxRetries | `3` | generation job attempts = `max(12, this)` — the floor rides out a provider outage (~4 h of jittered backoff) |
+| imageMaxRetries | `3` | generation job attempts = `max(48, this)` — the floor rides out a multi-hour provider outage (~2 days of jittered backoff) |
 | imageOptimizationFormat | `webp` | `webp` \| `avif` \| `jpeg` |
 | imageAiQaEnabled | off | optional vision QA (extra model cost) |
 | imagePromptLanguage | `en` | visual-prompt language; alt/caption always use the article language |

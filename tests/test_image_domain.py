@@ -148,14 +148,17 @@ class TestPlanValidation:
         assert validate_plan(plan, max_interior=2) == []
 
     def test_image_job_attempts_ride_out_a_provider_outage(self):
-        """A 503 blip is not an article defect: image jobs get an hour-scale
+        """A 503 blip is not an article defect: image jobs get a day-scale
         retry budget, and the setting can only raise it."""
-        from app.domain.images import IMAGE_MIN_ATTEMPTS, image_job_attempts
+        from app.domain.retries import IMAGE_MIN_ATTEMPTS, PUBLISH_ATTEMPTS, image_job_attempts
 
+        assert IMAGE_MIN_ATTEMPTS >= 48
         assert image_job_attempts(3) == IMAGE_MIN_ATTEMPTS
-        assert image_job_attempts(40) == 40
+        assert image_job_attempts(200) == 200
         assert image_job_attempts(None) == IMAGE_MIN_ATTEMPTS
         assert image_job_attempts("nonsense") == IMAGE_MIN_ATTEMPTS
+        # publishing must outlast the image horizon it waits for
+        assert PUBLISH_ATTEMPTS > IMAGE_MIN_ATTEMPTS
 
 
 class TestFingerprintAndFiles:

@@ -49,7 +49,7 @@ For indexing, embedding failures follow the rows above.
 | 429 | adapter + job | 3 + 3 | honors `Retry-After` | "Language model rate limit" | no | none (auto) |
 | invalid JSON output | **job only** (ValueError ⇒ transient) | 3 | jittered | "Model output could not be parsed" | no | none (auto) |
 | truncated response (missing content) | **no** | — | — | "Incomplete model response" | **yes** | re-dispatch |
-| empty response | **no** | — | — | "Empty model response" | **yes** | re-dispatch |
+| empty response (200, no content, `finish_reason=stop`) | adapter + job | 3 + job budget | exp; jittered | "empty completion content" | no | none (auto) — a gateway that returns no text on a long generation is retried, not treated as a dead article |
 
 Note: outline JSON additionally gets **one deterministic repair pass** through the
 `validation` prompt before the error is raised.
@@ -87,7 +87,7 @@ non-retried errors — approval state is enforced in the handler, not just the U
 
 | Failure | Retry? | Attempts | Backoff | User-visible | Permanent? | Manual recovery |
 |---|---|---|---|---|---|---|
-| transient provider error (timeout, 429, 5xx) | job layer | `max(12, imageMaxRetries)` (~4 h of backoff) | jittered (+ Retry-After floor) | provider message (human-readable wrapper) | no | none (auto); fallback provider tried when configured |
+| transient provider error (timeout, 429, 5xx) | job layer | `max(48, imageMaxRetries)` (~2 days of backoff) | jittered (+ Retry-After floor) | provider message (human-readable wrapper) | no | none (auto); fallback provider tried when configured |
 | permanent provider error (auth, 4xx, bad request) | fallback only | — | — | provider message | **yes** (if fallback also fails) | fix key/model in Connections or **Article images**; re-dispatch |
 | provider/integration mismatch (slot provider has no active integration) | **no** — fail fast | — | — | mismatch message | **yes** | fix the **Article images** mapping |
 | quality-gate rejection (bad dimensions/format) | **no** (`PermanentError`) | — | — | validation message | **yes** | adjust prompt/size config; regenerate |

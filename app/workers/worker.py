@@ -202,15 +202,6 @@ async def main() -> None:
                     logger.info("worker.metrics.flushed", rows=written)
             except Exception:
                 logger.exception("worker.metrics.flush.error")
-            # close pooled provider clients idle too long (connection leak guard)
-            try:
-                from app.providers.http import sweep_idle_clients
-
-                swept = sweep_idle_clients()
-                if swept:
-                    logger.info("worker.idle_clients.swept", closed=swept)
-            except Exception:
-                logger.exception("worker.idle_clients.sweep.error")
 
     tasks = [
         asyncio.create_task(job_poll_loop()),

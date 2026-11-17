@@ -28,6 +28,7 @@ from typing import Any
 
 import structlog
 
+from app.domain.retries import PUBLISH_ATTEMPTS
 from app.repositories.articles import ArticleRepo, SectionRepo
 from app.repositories.jobs import JobRepo, now_utc, pb_dt
 from app.repositories.projects import ProjectRepo
@@ -221,7 +222,7 @@ def _requeue_publish(
         type="publish_article",
         payload={"articleId": article_id, "action": "publish", "trigger": "reaper"},
         idempotency_key=f"reap:publish:{article_id}:{_window()}",
-        max_attempts=40,  # publishing waits for the article's images
+        max_attempts=PUBLISH_ATTEMPTS,  # publishing waits for the article's images
         entity_type="article",
         entity_id=article_id,
     )

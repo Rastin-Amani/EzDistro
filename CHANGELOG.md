@@ -7,7 +7,26 @@ release builds on. Format is based on [Keep a Changelog](https://keepachangelog.
 > `APP_VERSION` in `app/config.py` tracks the release tag (env-overridable
 > app label).
 
-## [Unreleased]
+## [v1.31.3] — 2026-11-17
+
+### Fixed
+- **A five-hour image outage still killed articles.** The retry floor was 12
+  attempts (~4 h) and the live gateway answered `503 no_healthy_sellers` for
+  longer than that; the cover died, the publish behind it died, and the article
+  was parked as `failed`. Image generation now gets a 48-attempt floor (~2
+  days of jittered backoff) and publishing 60, so it outlasts the horizon it
+  waits on.
+- **An empty completion is retried, not fatal.** The gateway answers 200 with
+  no text on long generations (`deepseek-v4.1-flash`), which was classified
+  `PermanentError` — one hiccup killed a section or a whole write job, and
+  assembly then failed with "3 section(s) have no job left". Empty content with
+  a normal `finish_reason` is now a transient error; the "model burned its
+  token budget" case keeps its actionable permanent message.
+- **A pooled HTTP client is no longer closed behind a provider's back.** The
+  worker's idle sweeper closed keep-alive clients after two minutes; a provider
+  caches its client for its lifetime, so its next call failed with "Cannot send
+  a request, as the client has been closed" (seen live on a retry hours later).
+  The pool is bounded by the number of integrations, so the sweeper is gone.
 
 ## [v1.31.2] — 2026-11-15
 

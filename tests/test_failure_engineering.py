@@ -150,8 +150,11 @@ async def test_llm_truncated_response_is_permanent():
 
 
 @pytest.mark.asyncio
-async def test_llm_empty_response_is_permanent():
-    with pytest.raises(PermanentError):
+async def test_llm_empty_response_is_retried():
+    """A 200 with no content is a gateway hiccup, not a dead article: the job
+    layer must see it as transient and retry. (The live reseller returns empty
+    completions on long generations.)"""
+    with pytest.raises(TransientError):
         await make_llm("empty").generate(system=None, user="hi")
 
 

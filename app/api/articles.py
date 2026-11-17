@@ -17,6 +17,7 @@ from app.api.deps import (
 )
 from app.api.errors import hx_error, page_guard
 from app.domain.article_html import slugify
+from app.domain.retries import PUBLISH_ATTEMPTS
 from app.domain.sanitize import sanitize_html
 from app.repositories.articles import ArticleRepo, SectionRepo
 from app.repositories.jobs import JobRepo
@@ -275,9 +276,9 @@ def _queue_publish_job(request: Request, project_id: str, article_id: str, actio
         payload={"articleId": article_id, "action": action},
         idempotency_key=f"{action}:article:{article_id}:{int(time.time())}",
         # Publishing waits (retry) while the article's image jobs are running:
-        # a 3-attempt budget would give up on the images within ~90 s and fail
-        # the article for a cover that was still being generated.
-        max_attempts=40,
+        # the budget must outlast the image retry horizon, or publishing dies
+        # first and the article is failed for a cover that was still coming.
+        max_attempts=PUBLISH_ATTEMPTS,
         entity_type="article",
         entity_id=article_id,
     )
@@ -369,10 +370,24 @@ def resume_article(request: Request, project_id: str, article_id: str):
         j for j in failed if j.get("type") in IMAGE_JOB_TYPES or j.get("type") == "publish_article"
     ]
     if blockers:
+        from app.services.recovery import requeue_attempts
+
         for job in blockers:
-            jobs.reset_for_retry(job["id"])
+            job_id = str(job["id"])
+            jobs.reset_for_retry(job_id)
+            # keep the retry visible: an old 3-attempt budget dies in ~90 s
+            jobs.update(job_id, {"maxAttempts": requeue_attempts(job)})
         return success_response(
             "Resuming the image and publishing steps",
+            extra_events={"refreshArticle": True, "refreshJobs": True},
+        )
+    # A dead section stage and the assembler that gave up on it restart
+    # together; resetting the assembler alone fails it on the same sections.
+    from app.services.recovery import requeue_failed_sections
+
+    if requeue_failed_sections(request.state.pb, article_id):
+        return success_response(
+            "Resuming the article sections",
             extra_events={"refreshArticle": True, "refreshJobs": True},
         )
     if failed:

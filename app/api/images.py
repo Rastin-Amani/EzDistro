@@ -22,7 +22,7 @@ from app.api.deps import (
     safe_str,
 )
 from app.api.errors import hx_error
-from app.domain.images import image_job_attempts
+from app.domain.retries import image_job_attempts
 from app.repositories.article_images import ArticleImageRepo
 from app.repositories.articles import ArticleRepo
 from app.repositories.jobs import JobRepo
